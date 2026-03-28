@@ -1,0 +1,57 @@
+# Aster Physics Approximations — DEVLOG
+
+## Phase 2 — Burn Simulator
+
+### 1. MOID Approximation
+**Method:** Sample each orbit at 120 evenly-spaced mean anomaly positions (independent of time). Find minimum pairwise distance across all 120×120 = 14,400 pairs.
+
+**Known error:** ±0.01 AU for typical NEAs with low-to-moderate eccentricity. The real MOID requires solving a 16th-degree polynomial system (Gronchi 2005). Sampled MOID is systematically overestimated (never underestimated) since it cannot find the true closest point between samples.
+
+**Impact:** Acceptable for mission planning display. Do not use for hazard assessment.
+
+---
+
+### 2. Lambert Solver — Short-Arc Only
+**Method:** Bate-Mueller-White universal variable method (1971). Newton-Raphson iteration on the universal variable `z` with finite-difference `dt/dz`.
+
+**Known limitation:** The solver uses the transfer direction determined by the z-component of `r1 × r2`. For transfers near 180° (cos(Δν) ≈ −1) the geometry is near-singular and returns `null`. Long-arc retrograde solutions are not attempted.
+
+**Impact:** Porkchop plots may have thin bands of missing data near 180° transfer angles. These are flagged as 20 km/s (maximum colormap value).
+
+---
+
+### 3. Porkchop Plot — No Perturbations
+**Method:** Keplerian-only position propagation for both asteroid and Earth. Grid resolution: 50×40 (departure × TOF).
+
+**Known error:** JPL Horizons uses a full N-body integration with J2, lunar, radiation pressure perturbations. Keplerian propagation accumulates ~0.1° error per year for inner planets, ~0.5° for outer asteroids. Over 5-year departure windows, launch date errors of ±3–5 days are expected.
+
+**Impact:** Use porkchop for mission planning orientation, not for trajectory design. Verify optimal windows with JPL Horizons.
+
+---
+
+### 4. Impulsive Burn Approximation
+**Method:** ΔV applied instantaneously at the current position. New orbit computed via `cart2kep` from the post-burn state vector.
+
+**Known error:** Real thrusters burn for minutes to hours (finite burn losses ≈ 2–5% of ΔV for typical burns). Impulsive model overestimates efficiency.
+
+**Impact:** Small for high-Isp engines. Add ~3% margin to ΔV budget for detailed mission design.
+
+---
+
+### 5. Fuel Mass Model
+**Method:** Single-stage Tsiolkovsky rocket equation: `m_prop = m_dry × (exp(ΔV/(g0×Isp)) - 1)`, Isp = 450 s, m_dry = 1000 kg.
+
+**Known limitation:** Actual spacecraft sizing requires iterative mass budget (structure, power, payload, margins). 1000 kg dry mass and 450 s Isp are rough estimates for a xenon-propelled spacecraft.
+
+**Impact:** Order-of-magnitude fuel mass estimate only.
+
+---
+
+### 6. cart2kep Edge Cases
+- Near-circular orbits (e < 1e-10): argument of periapsis undefined, set to 0.
+- Near-equatorial orbits (inclination ≈ 0): RAAN undefined, set to 0.
+- Both handled with clamped `acos` inputs to prevent NaN from floating-point error.
+
+---
+
+*Last updated: Phase 2 implementation, 2026-03-27*

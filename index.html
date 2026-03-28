@@ -26,7 +26,6 @@ body {
 
 canvas { display: block; }
 
-/* Top-left date/JD display */
 #jd-display {
   position: fixed;
   top: 14px;
@@ -39,12 +38,8 @@ canvas { display: block; }
   z-index: 10;
   line-height: 1.6;
 }
-#jd-value {
-  color: #4b5563;
-  font-size: 11px;
-}
+#jd-value { color: #4b5563; font-size: 11px; }
 
-/* Status line */
 #status {
   position: fixed;
   top: 14px;
@@ -61,7 +56,45 @@ canvas { display: block; }
 }
 #status.fade { opacity: 0; }
 
-/* Right info panel */
+/* ΔV overlay display (top center, shown in burn mode) */
+#dv-display {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 10;
+  pointer-events: none;
+}
+#dv-total {
+  color: #4af7c4;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+}
+#dv-breakdown {
+  color: #9ca3af;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+#burn-mode-badge {
+  position: fixed;
+  top: 14px;
+  right: 356px;
+  display: none;
+  padding: 3px 10px;
+  border: 1px solid #4af7c4;
+  color: #4af7c4;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  box-shadow: 0 0 8px #4af7c440;
+  z-index: 10;
+  pointer-events: none;
+}
+
 #right-panel {
   position: fixed;
   right: 0;
@@ -103,12 +136,7 @@ canvas { display: block; }
   letter-spacing: 0.1em;
   flex-shrink: 0;
 }
-.data-row .value {
-  color: #e5e7eb;
-  font-size: 13px;
-  text-align: right;
-  word-break: break-all;
-}
+.data-row .value { color: #e5e7eb; font-size: 13px; text-align: right; word-break: break-all; }
 .data-row .value.accent { color: #4af7c4; }
 .data-row .value.profit { color: #34d399; }
 .data-row .value.warning { color: #fb923c; }
@@ -121,7 +149,6 @@ canvas { display: block; }
   line-height: 1.8;
 }
 
-/* Planet labels */
 .planet-label {
   position: fixed;
   font-size: 10px;
@@ -133,7 +160,169 @@ canvas { display: block; }
   transform: translate(-50%, -100%);
 }
 
-/* Bottom bar */
+/* Action buttons */
+.action-btn {
+  background: transparent;
+  border: 1px solid #1f2937;
+  color: #60a5fa;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: border-color 0.1s, color 0.1s, box-shadow 0.1s;
+  width: 100%;
+  text-align: left;
+  margin-top: 8px;
+}
+.action-btn:hover {
+  border-color: #4af7c4;
+  color: #4af7c4;
+  box-shadow: 0 0 6px #4af7c440;
+}
+.action-btn.active-mode {
+  border-color: #4af7c4;
+  color: #4af7c4;
+  box-shadow: 0 0 6px #4af7c4;
+}
+.action-btn.danger {
+  border-color: #374151;
+  color: #f87171;
+}
+.action-btn.danger:hover {
+  border-color: #f87171;
+  box-shadow: 0 0 6px #f8717140;
+}
+
+/* Burn result compare grid */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 70px 1fr 1fr;
+  gap: 3px 6px;
+  margin-bottom: 8px;
+}
+.compare-grid .ch {
+  font-size: 9px;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #1f2937;
+}
+.compare-grid .cl {
+  font-size: 9px;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 0;
+}
+.compare-grid .cv {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: right;
+  padding: 3px 0;
+}
+.compare-grid .cv.new { color: #4af7c4; }
+.compare-grid .cv.warn { color: #fb923c; }
+
+/* Porkchop panel */
+#porkchop-panel { display: none; margin-top: 12px; }
+#porkchop-canvas {
+  display: block;
+  width: 308px;
+  height: 180px;
+  cursor: crosshair;
+  border: 1px solid #1f2937;
+}
+#porkchop-axes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #4b5563;
+  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+#porkchop-status {
+  font-size: 10px;
+  color: #4b5563;
+  margin-top: 4px;
+  letter-spacing: 0.08em;
+}
+#porkchop-tooltip {
+  position: absolute;
+  font-size: 10px;
+  color: #4af7c4;
+  pointer-events: none;
+  display: none;
+  background: rgba(5,5,8,0.9);
+  padding: 2px 6px;
+  border: 1px solid #1f2937;
+  white-space: nowrap;
+}
+
+/* Burn sequence */
+#burn-sequence { display: none; margin-top: 12px; }
+.burn-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border-bottom: 1px solid #111827;
+  border-left: 2px solid #4b5563;
+  font-size: 11px;
+  cursor: pointer;
+}
+.burn-item.active-burn { background: rgba(74,247,196,0.05); }
+.burn-item .bi-num { font-size: 11px; font-weight: bold; min-width: 20px; }
+.burn-item .bi-date { color: #9ca3af; flex: 1; font-size: 10px; }
+.burn-item .bi-dv { color: #fb923c; font-size: 11px; min-width: 54px; text-align: right; }
+.burn-item .bi-del {
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 0 2px;
+}
+.burn-item .bi-del:hover { color: #f87171; }
+#burn-seq-total { font-size: 10px; color: #4b5563; margin-top: 6px; letter-spacing: 0.08em; }
+#burn-seq-total span { color: #fb923c; }
+.btn-row { display: flex; gap: 6px; margin-top: 6px; }
+.btn-row .action-btn { margin-top: 0; width: auto; flex: 1; }
+
+/* Scenario save/load */
+#scenario-bar {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: center;
+}
+#scenario-bar input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid #1f2937;
+  color: #e5e7eb;
+  font-family: inherit;
+  font-size: 10px;
+  padding: 4px 8px;
+  outline: none;
+  letter-spacing: 0.05em;
+}
+#scenario-bar input:focus { border-color: #4af7c4; }
+#scenario-bar button {
+  background: transparent;
+  border: 1px solid #1f2937;
+  color: #60a5fa;
+  font-family: inherit;
+  font-size: 10px;
+  padding: 4px 8px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+}
+#scenario-bar button:hover { border-color: #4af7c4; color: #4af7c4; }
+
 #bottom-bar {
   position: fixed;
   bottom: 0;
@@ -164,11 +353,7 @@ canvas { display: block; }
   cursor: pointer;
 }
 
-#speed-controls {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
+#speed-controls { display: flex; gap: 4px; flex-shrink: 0; }
 
 button.speed-btn {
   background: transparent;
@@ -181,26 +366,11 @@ button.speed-btn {
   letter-spacing: 0.05em;
   transition: border-color 0.1s, color 0.1s, box-shadow 0.1s;
 }
-button.speed-btn:hover {
-  border-color: #4af7c4;
-  color: #4af7c4;
-  box-shadow: 0 0 6px #4af7c440;
-}
-button.speed-btn.active {
-  border-color: #4af7c4;
-  color: #4af7c4;
-  box-shadow: 0 0 6px #4af7c4;
-}
+button.speed-btn:hover { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0 6px #4af7c440; }
+button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0 6px #4af7c4; }
 
-#asteroid-count {
-  color: #4b5563;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+#asteroid-count { color: #4b5563; font-size: 10px; letter-spacing: 0.08em; white-space: nowrap; flex-shrink: 0; }
 
-/* Loading overlay */
 #loading {
   position: fixed;
   inset: 0;
@@ -212,60 +382,59 @@ button.speed-btn.active {
   z-index: 100;
   gap: 16px;
 }
-#loading h1 {
-  font-size: 32px;
-  letter-spacing: 0.3em;
-  color: #4af7c4;
-  text-transform: uppercase;
-}
-#loading-sub {
-  font-size: 11px;
-  color: #4b5563;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-#loading-bar {
-  width: 200px;
-  height: 2px;
-  background: #1f2937;
-  position: relative;
-  overflow: hidden;
-}
+#loading h1 { font-size: 32px; letter-spacing: 0.3em; color: #4af7c4; text-transform: uppercase; }
+#loading-sub { font-size: 11px; color: #4b5563; letter-spacing: 0.2em; text-transform: uppercase; }
+#loading-bar { width: 200px; height: 2px; background: #1f2937; position: relative; overflow: hidden; }
 #loading-bar::after {
   content: '';
   position: absolute;
-  left: -100%;
-  top: 0;
-  width: 100%;
-  height: 100%;
+  left: -100%; top: 0; width: 100%; height: 100%;
   background: #4af7c4;
   animation: sweep 1.2s linear infinite;
 }
-@keyframes sweep {
-  0% { left: -100%; }
-  100% { left: 100%; }
+@keyframes sweep { 0% { left: -100%; } 100% { left: 100%; } }
+
+/* Orbit delta labels (CSS-positioned overlays) */
+.orbit-label {
+  position: fixed;
+  font-size: 10px;
+  color: #ff7700;
+  pointer-events: none;
+  z-index: 6;
+  letter-spacing: 0.05em;
+  background: rgba(5,5,8,0.7);
+  padding: 1px 4px;
+  display: none;
 }
 </style>
 </head>
 <body>
 
-<!-- Loading screen -->
 <div id="loading">
   <h1>ASTER</h1>
   <div id="loading-bar"></div>
   <div id="loading-sub">Initializing solar system...</div>
 </div>
 
-<!-- Top-left date/JD display -->
 <div id="jd-display">
   <div id="calendar-date">2026-MAR-27</div>
   <div id="jd-value">JD 2461126.5</div>
 </div>
 
-<!-- Status line -->
 <div id="status">Loading asteroid catalog...</div>
 
-<!-- Right info panel -->
+<div id="dv-display">
+  <span id="dv-total">ΔV TOTAL: 0.0 km/s</span>
+  <span id="dv-breakdown">P: 0.0  N: 0.0  R: 0.0</span>
+</div>
+
+<div id="burn-mode-badge">▶ BURN MODE — ESC TO EXIT</div>
+
+<!-- Orbit delta labels -->
+<div class="orbit-label" id="label-perihelion"></div>
+<div class="orbit-label" id="label-period"></div>
+<div class="orbit-label" id="label-moid"></div>
+
 <div id="right-panel">
   <div class="panel-header">◈ TARGET INSPECTOR</div>
   <div id="panel-idle">
@@ -287,10 +456,64 @@ button.speed-btn.active {
     <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
     <div class="data-row" style="margin-top:8px"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
     <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
+    <button class="action-btn" id="btn-burn-mode">▶ BURN MODE [B]</button>
+  </div>
+
+  <!-- Burn result panel (shown when burn is active) -->
+  <div id="burn-panel" style="display:none; margin-top:12px;">
+    <div class="panel-header">△ BURN RESULT</div>
+    <div class="compare-grid">
+      <span class="ch"></span><span class="ch">BEFORE</span><span class="ch">AFTER</span>
+      <span class="cl">SMA</span><span class="cv" id="bp-a-before">—</span><span class="cv new" id="bp-a-after">—</span>
+      <span class="cl">ECC</span><span class="cv" id="bp-e-before">—</span><span class="cv new" id="bp-e-after">—</span>
+      <span class="cl">INC</span><span class="cv" id="bp-i-before">—</span><span class="cv new" id="bp-i-after">—</span>
+      <span class="cl">PERIOD</span><span class="cv" id="bp-T-before">—</span><span class="cv new" id="bp-T-after">—</span>
+      <span class="cl">MOID</span><span class="cv" id="bp-moid-before">—</span><span class="cv new" id="bp-moid-after">—</span>
+      <span class="cl">ΔV</span><span class="cv">—</span><span class="cv warn" id="bp-dv">—</span>
+    </div>
+    <div class="data-row"><span class="label">FUEL MASS</span><span class="value warning" id="bp-fuel">—</span></div>
+    <div class="data-row"><span class="label">NEXT APPROACH</span><span class="value accent" id="bp-approach">—</span></div>
+    <button class="action-btn" id="btn-show-porkchop">◈ SHOW LAUNCH WINDOWS</button>
+  </div>
+
+  <!-- Porkchop plot panel -->
+  <div id="porkchop-panel">
+    <div class="panel-header">◈ LAUNCH WINDOWS</div>
+    <div style="position:relative">
+      <canvas id="porkchop-canvas" width="308" height="180"></canvas>
+      <div id="porkchop-tooltip"></div>
+    </div>
+    <div id="porkchop-axes">
+      <span id="pc-x-start">—</span>
+      <span>DEPARTURE →</span>
+      <span id="pc-x-end">—</span>
+    </div>
+    <div id="porkchop-yaxis" style="display:flex;justify-content:space-between;font-size:9px;color:#4b5563;margin-top:1px">
+      <span>TOF: <span id="pc-tof-min">60d</span></span>
+      <span style="color:#60a5fa">↕ TOF</span>
+      <span><span id="pc-tof-max">450d</span></span>
+    </div>
+    <div id="porkchop-status">READY</div>
+  </div>
+
+  <!-- Multi-burn sequence panel -->
+  <div id="burn-sequence">
+    <div class="panel-header" style="margin-top:12px;">▶ BURN SEQUENCE</div>
+    <div id="burn-list"></div>
+    <div class="btn-row">
+      <button class="action-btn" id="btn-add-burn">+ ADD BURN</button>
+      <button class="action-btn danger" id="btn-clear-burns">✕ CLEAR</button>
+    </div>
+    <div id="burn-seq-total">TOTAL ΔV: <span id="total-dv-val">0.0</span> km/s</div>
+    <div class="panel-header" style="margin-top:12px;">▣ SCENARIO</div>
+    <div id="scenario-bar">
+      <input type="text" id="scenario-name" placeholder="scenario name" maxlength="32">
+      <button id="btn-save-scenario">SAVE</button>
+      <button id="btn-load-scenario">LOAD</button>
+    </div>
   </div>
 </div>
 
-<!-- Bottom bar -->
 <div id="bottom-bar">
   <div id="date-display">2026-MAR-27</div>
   <input type="range" id="time-scrubber" min="0" max="1" step="0.0001" value="0.5">
@@ -312,8 +535,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 const J2000 = 2451545.0;
 const DEG = Math.PI / 180;
 const TWO_PI = 2 * Math.PI;
+const GM = 1.327124400e20;  // m³/s²
+const AU_m = 1.496e11;       // m per AU
+const GM_AU3_S2 = GM / (AU_m * AU_m * AU_m);
 
-// Compute today's JD (2026-03-27 = JD 2461126.5)
 function dateToJD(year, month, day) {
   const A = Math.floor((14 - month) / 12);
   const Y = year + 4800 - A;
@@ -324,10 +549,9 @@ function dateToJD(year, month, day) {
 
 const now = new Date();
 const TODAY_JD = dateToJD(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate());
-const SCRUBBER_MIN = TODAY_JD - 365 * 3; // 3 years back
-const SCRUBBER_MAX = TODAY_JD + 365 * 5; // 5 years forward
+const SCRUBBER_MIN = TODAY_JD - 365 * 3;
+const SCRUBBER_MAX = TODAY_JD + 365 * 5;
 
-// JD → calendar string
 function jdToDate(jd) {
   const l = Math.floor(jd + 0.5) + 68569;
   const n = Math.floor((4 * l) / 146097);
@@ -343,7 +567,6 @@ function jdToDate(jd) {
   return `${year}-${MONTHS[month - 1]}-${String(day).padStart(2, '0')}`;
 }
 
-// Format large USD values
 function fmtUSD(v) {
   if (!v && v !== 0) return '—';
   const n = Number(v);
@@ -363,7 +586,6 @@ renderer.setClearColor(0x050508);
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.001, 2000);
 camera.position.set(0, 6, 18);
 camera.lookAt(0, 0, 0);
@@ -374,33 +596,31 @@ controls.dampingFactor = 0.08;
 controls.minDistance = 0.1;
 controls.maxDistance = 500;
 
-// Lights
 scene.add(new THREE.AmbientLight(0xffffff, 0.08));
 const sunLight = new THREE.PointLight(0xfff4e0, 2.5, 0);
 scene.add(sunLight);
 
-// Sun
-const sunGeo = new THREE.SphereGeometry(0.06, 16, 16);
-const sunMat = new THREE.MeshBasicMaterial({ color: 0xfff4e0 });
-const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+const sunMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.06, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0xfff4e0 })
+);
 scene.add(sunMesh);
-
-// Sun glow (additive sprite)
-const glowGeo = new THREE.SphereGeometry(0.12, 16, 16);
-const glowMat = new THREE.MeshBasicMaterial({ color: 0xfff4e0, transparent: true, opacity: 0.15 });
-scene.add(new THREE.Mesh(glowGeo, glowMat));
+scene.add(new THREE.Mesh(
+  new THREE.SphereGeometry(0.12, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0xfff4e0, transparent: true, opacity: 0.15 })
+));
 
 // Starfield
 (function() {
   const N = 8000;
   const pos = new Float32Array(N * 3);
-  for (let i = 0; i < N * 3; i++) {
+  for (let i = 0; i < N; i++) {
     const theta = Math.random() * TWO_PI;
     const phi = Math.acos(2 * Math.random() - 1);
     const r = 300 + Math.random() * 200;
-    pos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-    pos[i * 3 + 2] = r * Math.cos(phi);
+    pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i*3+2] = r * Math.cos(phi);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -425,47 +645,29 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
   const mesh = new THREE.Mesh(geo, mat);
   mesh.userData = { name: cfg.name, planetIdx: idx };
   scene.add(mesh);
-
-  // Saturn rings
   if (cfg.name === 'Saturn') {
-    const ringGeo = new THREE.TorusGeometry(0.07, 0.018, 2, 64);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xd4c47a, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.07, 0.018, 2, 64),
+      new THREE.MeshBasicMaterial({ color: 0xd4c47a, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+    );
     ring.rotation.x = Math.PI / 2.5;
     mesh.add(ring);
   }
-
   return mesh;
 });
 
-// Orbit guide rings for planets (subtle)
-function makePlanetOrbit(sma, color = 0x1f2937) {
+const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
+PLANET_SMA.forEach(sma => {
   const pts = [];
   for (let j = 0; j <= 128; j++) {
     const a = (j / 128) * TWO_PI;
     pts.push(new THREE.Vector3(Math.cos(a) * sma, 0, Math.sin(a) * sma));
   }
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.15 });
-  return new THREE.Line(geo, mat);
-}
+  scene.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x1f2937, transparent: true, opacity: 0.15 })));
+});
 
-// Approximate mean SMA for guide rings (visual only)
-const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
-PLANET_SMA.forEach(sma => scene.add(makePlanetOrbit(sma)));
-
-// ─── Asteroid Orbit Ellipse ───────────────────────────────────────────────────
-const orbitPts = new Float32Array(257 * 3);
-const orbitGeo = new THREE.BufferGeometry();
-orbitGeo.setAttribute('position', new THREE.BufferAttribute(orbitPts, 3));
-const orbitLine = new THREE.Line(
-  orbitGeo,
-  new THREE.LineBasicMaterial({ color: 0x4af7c4, transparent: true, opacity: 0.7 })
-);
-orbitLine.visible = false;
-scene.add(orbitLine);
-
-// Worker-side kep2cart (duplicated here for orbit drawing — avoids async round-trip)
+// ─── Keplerian math on main thread (for orbit drawing + gizmo preview) ───────
 function solveKepler(M, e) {
   let E = M;
   for (let i = 0; i < 15; i++) {
@@ -476,52 +678,249 @@ function solveKepler(M, e) {
   return E;
 }
 
-function kep2cartJS(a, e, i, Om, w, M0_rad, epoch_JD, t_JD) {
-  const GM = 1.327124400e20;
-  const AU_m = 1.496e11;
+function kep2cartJS(a, e, i_rad, Om_rad, w_rad, M0_rad, epoch_JD, t_JD) {
   const a_m = a * AU_m;
   const n = Math.sqrt(GM / (a_m * a_m * a_m));
   const dt = (t_JD - epoch_JD) * 86400;
   let M = M0_rad + n * dt;
   M = M - TWO_PI * Math.floor((M + Math.PI) / TWO_PI);
   const E = solveKepler(M, e);
-  const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+  const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E/2), Math.sqrt(1-e)*Math.cos(E/2));
   const r = a * (1 - e * Math.cos(E));
+  const r_m = r * AU_m;
   const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
-  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
-  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
-  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
+  const sqrtGMa = Math.sqrt(GM * a_m);
+  const vxo = -(sqrtGMa / r_m) * Math.sin(E);
+  const vyo =  (sqrtGMa / r_m) * Math.sqrt(1 - e*e) * Math.cos(E);
+  const cosOm = Math.cos(Om_rad), sinOm = Math.sin(Om_rad);
+  const cosI  = Math.cos(i_rad),  sinI  = Math.sin(i_rad);
+  const cosW  = Math.cos(w_rad),  sinW  = Math.sin(w_rad);
+  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
+  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
+  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
+  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
+  const Rzx = sinW*sinI;
+  const Rzy = cosW*sinI;
   return {
-    x: xo * (cosOm * cosW - sinOm * sinW * cosI) - yo * (cosOm * sinW + sinOm * cosW * cosI),
-    y: xo * (sinOm * cosW + cosOm * sinW * cosI) - yo * (sinOm * sinW - cosOm * cosW * cosI),
-    z: xo * (sinW * sinI) + yo * (cosW * sinI),
+    x: xo*Rxx + yo*Rxy,
+    y: xo*Ryx + yo*Ryy,
+    z: xo*Rzx + yo*Rzy,
+    vx: (vxo*Rxx + vyo*Rxy) / 1000,
+    vy: (vxo*Ryx + vyo*Ryy) / 1000,
+    vz: (vxo*Rzx + vyo*Rzy) / 1000,
   };
 }
 
-function drawOrbitEllipse(ast) {
-  const epochJD = ast.epoch + 2400000.5;
-  const a = ast.a, e = ast.e;
-  const i = ast.i * DEG, Om = ast.om * DEG, w = ast.w * DEG;
-  const M0 = ast.ma * DEG;
+function cart2kepJS(x, y, z, vx_kms, vy_kms, vz_kms, t_JD) {
+  const mu = GM_AU3_S2;
+  const vx = vx_kms * 1000 / AU_m;
+  const vy = vy_kms * 1000 / AU_m;
+  const vz2 = vz_kms * 1000 / AU_m;
+  const r_vec = [x, y, z];
+  const v_vec = [vx, vy, vz2];
+  const r = Math.sqrt(x*x + y*y + z*z);
+  const v2 = vx*vx + vy*vy + vz2*vz2;
+  const h_vec = [y*vz2-z*vy, z*vx-x*vz2, x*vy-y*vx];
+  const h = Math.sqrt(h_vec[0]**2 + h_vec[1]**2 + h_vec[2]**2);
+  const n_vec = [-h_vec[1], h_vec[0], 0];
+  const n_mag = Math.sqrt(n_vec[0]*n_vec[0] + n_vec[1]*n_vec[1]);
+  const vxh = [vy*h_vec[2]-vz2*h_vec[1], vz2*h_vec[0]-vx*h_vec[2], vx*h_vec[1]-vy*h_vec[0]];
+  const e_vec = [vxh[0]/mu - x/r, vxh[1]/mu - y/r, vxh[2]/mu - z/r];
+  const e = Math.sqrt(e_vec[0]**2 + e_vec[1]**2 + e_vec[2]**2);
+  const a = 1 / (2/r - v2/mu);
+  const inc = Math.acos(Math.max(-1, Math.min(1, h_vec[2]/h)));
+  let Om = 0;
+  if (n_mag > 1e-10) {
+    Om = Math.acos(Math.max(-1, Math.min(1, n_vec[0]/n_mag)));
+    if (n_vec[1] < 0) Om = TWO_PI - Om;
+  }
+  let w = 0;
+  if (n_mag > 1e-10 && e > 1e-10) {
+    w = Math.acos(Math.max(-1, Math.min(1, (n_vec[0]*e_vec[0]+n_vec[1]*e_vec[1])/(n_mag*e))));
+    if (e_vec[2] < 0) w = TWO_PI - w;
+  }
+  let nu_anom = 0;
+  if (e > 1e-10) {
+    nu_anom = Math.acos(Math.max(-1, Math.min(1, (e_vec[0]*x+e_vec[1]*y+e_vec[2]*z)/(e*r))));
+    if (x*vx+y*vy+z*vz2 < 0) nu_anom = TWO_PI - nu_anom;
+  }
+  const E_anom = 2 * Math.atan2(Math.sqrt(1-e)*Math.sin(nu_anom/2), Math.sqrt(1+e)*Math.cos(nu_anom/2));
+  const M0 = E_anom - e * Math.sin(E_anom);
+  return { a, e, i: inc, Om, w, M0, epoch_JD: t_JD, nu: nu_anom };
+}
 
-  const posArr = orbitGeo.attributes.position.array;
+// Apply impulsive burn on main thread (synchronous, for gizmo preview)
+function applyBurnJS(ast_or_el, dv_p, dv_n, dv_r, jd) {
+  let state;
+  if (ast_or_el.epoch_JD !== undefined) {
+    const el = ast_or_el;
+    state = kep2cartJS(el.a, el.e, el.i, el.Om, el.w, el.M0, el.epoch_JD, jd);
+  } else {
+    const ast = ast_or_el;
+    state = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, jd);
+  }
+  const rv = [state.x, state.y, state.z];
+  const vv = [state.vx, state.vy, state.vz];
+  const r_m = Math.sqrt(rv[0]**2+rv[1]**2+rv[2]**2);
+  const v_m = Math.sqrt(vv[0]**2+vv[1]**2+vv[2]**2);
+  if (r_m < 1e-15 || v_m < 1e-15) return null;
+  const p_hat = [vv[0]/v_m, vv[1]/v_m, vv[2]/v_m];
+  const h_vec = [rv[1]*vv[2]-rv[2]*vv[1], rv[2]*vv[0]-rv[0]*vv[2], rv[0]*vv[1]-rv[1]*vv[0]];
+  const h_m = Math.sqrt(h_vec[0]**2+h_vec[1]**2+h_vec[2]**2);
+  const n_hat = h_m > 1e-15 ? [h_vec[0]/h_m, h_vec[1]/h_m, h_vec[2]/h_m] : [0,0,1];
+  const r_hat = [rv[0]/r_m, rv[1]/r_m, rv[2]/r_m];
+  const vx_new = state.vx + dv_p*p_hat[0] + dv_n*n_hat[0] + dv_r*r_hat[0];
+  const vy_new = state.vy + dv_p*p_hat[1] + dv_n*n_hat[1] + dv_r*r_hat[1];
+  const vz_new = state.vz + dv_p*p_hat[2] + dv_n*n_hat[2] + dv_r*r_hat[2];
+  return cart2kepJS(state.x, state.y, state.z, vx_new, vy_new, vz_new, jd);
+}
+
+// Tsiolkovsky rocket equation
+function tsiolkovsky(dv_kms, isp, m_dry) {
+  isp = isp || 450;
+  m_dry = m_dry || 1000;
+  const g0 = 0.00980665; // km/s²
+  const mass = m_dry * (Math.exp(dv_kms / (g0 * isp)) - 1);
+  if (mass > 999999) return `>1000 t`;
+  if (mass > 999) return `${(mass/1000).toFixed(1)} t`;
+  return `${Math.round(mass)} kg`;
+}
+
+// ─── Orbit Lines ──────────────────────────────────────────────────────────────
+function makeOrbitLine(color, dashed, opacity) {
+  const mat = dashed
+    ? new THREE.LineDashedMaterial({ color, dashSize: 0.06, gapSize: 0.04, transparent: true, opacity: opacity || 0.6 })
+    : new THREE.LineBasicMaterial({ color, transparent: true, opacity: opacity || 0.85 });
+  const line = new THREE.Line(new THREE.BufferGeometry(), mat);
+  line.visible = false;
+  scene.add(line);
+  return line;
+}
+
+// Selected orbit (cyan, non-burn-mode)
+const orbitPts = new Float32Array(257 * 3);
+const orbitGeo = new THREE.BufferGeometry();
+orbitGeo.setAttribute('position', new THREE.BufferAttribute(orbitPts, 3));
+const orbitLine = new THREE.Line(orbitGeo, new THREE.LineBasicMaterial({ color: 0x4af7c4, transparent: true, opacity: 0.7 }));
+orbitLine.visible = false;
+scene.add(orbitLine);
+
+// Burn mode orbit lines
+const originalOrbitLine = makeOrbitLine(0xffffff, true, 0.5);  // white dashed = pre-burn
+const newOrbitLine = makeOrbitLine(0xff7700, false, 0.85);       // orange = post-burn
+
+// Up to 5 multi-burn orbit lines
+const BURN_COLORS = [0x4af7c4, 0xff7700, 0xffcc00, 0xff69b4, 0xff3344];
+const burnOrbitLines = BURN_COLORS.map(c => makeOrbitLine(c, false, 0.8));
+
+// Draw orbit from elements stored as {a,e,i,Om,w,M0,epoch_JD} (radians)
+function drawOrbitFromElements(line, el) {
+  const pts = line.geometry.attributes.position
+    ? line.geometry.attributes.position.array
+    : new Float32Array(257 * 3);
+  const { a, e, i, Om, w } = el;
+  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
+  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
+  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
+  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
+  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
+  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
+  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
+  const Rzx = sinW*sinI;
+  const Rzy = cosW*sinI;
   for (let k = 0; k <= 256; k++) {
     const M_step = (k / 256) * TWO_PI - Math.PI;
-    // Back-compute anomaly: use M directly as if epoch is the current JD
     const E_step = solveKepler(M_step, e);
-    const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E_step / 2), Math.sqrt(1 - e) * Math.cos(E_step / 2));
+    const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E_step/2), Math.sqrt(1-e)*Math.cos(E_step/2));
     const r = a * (1 - e * Math.cos(E_step));
     const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
-    const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
-    const cosI  = Math.cos(i),  sinI  = Math.sin(i);
-    const cosW  = Math.cos(w),  sinW  = Math.sin(w);
-    posArr[k * 3]     = xo * (cosOm * cosW - sinOm * sinW * cosI) - yo * (cosOm * sinW + sinOm * cosW * cosI);
-    posArr[k * 3 + 1] = xo * (sinOm * cosW + cosOm * sinW * cosI) - yo * (sinOm * sinW - cosOm * cosW * cosI);
-    posArr[k * 3 + 2] = xo * (sinW * sinI) + yo * (cosW * sinI);
+    pts[k*3]   = xo*Rxx + yo*Rxy;
+    pts[k*3+1] = xo*Ryx + yo*Ryy;
+    pts[k*3+2] = xo*Rzx + yo*Rzy;
+  }
+  if (!line.geometry.attributes.position) {
+    line.geometry.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+  } else {
+    line.geometry.attributes.position.needsUpdate = true;
+  }
+  if (line.material.isLineDashedMaterial) line.computeLineDistances();
+  line.visible = true;
+}
+
+// Draw orbit from Asterank asteroid (degrees, MJD epoch)
+function drawOrbitEllipse(ast) {
+  const e = ast.e, a = ast.a;
+  const i = ast.i * DEG, Om = ast.om * DEG, w = ast.w * DEG;
+  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
+  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
+  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
+  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
+  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
+  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
+  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
+  const Rzx = sinW*sinI;
+  const Rzy = cosW*sinI;
+  for (let k = 0; k <= 256; k++) {
+    const M_step = (k / 256) * TWO_PI - Math.PI;
+    const E_step = solveKepler(M_step, e);
+    const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E_step/2), Math.sqrt(1-e)*Math.cos(E_step/2));
+    const r = a * (1 - e * Math.cos(E_step));
+    const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
+    orbitPts[k*3]   = xo*Rxx + yo*Rxy;
+    orbitPts[k*3+1] = xo*Ryx + yo*Ryy;
+    orbitPts[k*3+2] = xo*Rzx + yo*Rzy;
   }
   orbitGeo.attributes.position.needsUpdate = true;
   orbitLine.visible = true;
 }
+
+// ─── Gizmo ────────────────────────────────────────────────────────────────────
+function makeArrow(color, axisName) {
+  const shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.008, 0.32, 8),
+    new THREE.MeshBasicMaterial({ color, depthTest: false })
+  );
+  shaft.position.y = 0.16;
+  const tip = new THREE.Mesh(
+    new THREE.ConeGeometry(0.018, 0.08, 8),
+    new THREE.MeshBasicMaterial({ color, depthTest: false })
+  );
+  tip.position.y = 0.36;
+  const grp = new THREE.Group();
+  grp.add(shaft, tip);
+  grp.userData = { axis: axisName };
+  return grp;
+}
+
+const gizmoGroup = new THREE.Group();
+const arrowPrograde = makeArrow(0x00ff44, 'prograde');  // green
+const arrowNormal   = makeArrow(0x4488ff, 'normal');    // blue
+const arrowRadial   = makeArrow(0xff3344, 'radial');    // red
+gizmoGroup.add(arrowPrograde, arrowNormal, arrowRadial);
+gizmoGroup.visible = false;
+gizmoGroup.renderOrder = 999;
+scene.add(gizmoGroup);
+
+// Burn marker (white dot at burn point)
+const burnMarker = new THREE.Mesh(
+  new THREE.SphereGeometry(0.01, 8, 8),
+  new THREE.MeshBasicMaterial({ color: 0xffffff })
+);
+burnMarker.visible = false;
+scene.add(burnMarker);
+
+// Ghost orbit tracers
+const ghostOriginal = new THREE.Mesh(
+  new THREE.SphereGeometry(0.012, 8, 8),
+  new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 })
+);
+const ghostNew = new THREE.Mesh(
+  new THREE.SphereGeometry(0.012, 8, 8),
+  new THREE.MeshBasicMaterial({ color: 0xff7700, transparent: true, opacity: 0.8 })
+);
+ghostOriginal.visible = false;
+ghostNew.visible = false;
+scene.add(ghostOriginal, ghostNew);
 
 // ─── Physics Worker ───────────────────────────────────────────────────────────
 const worker = new Worker('./physics.worker.js');
@@ -532,19 +931,47 @@ const dummy = new THREE.Object3D();
 let pendingPositions = null;
 
 worker.onmessage = ({ data }) => {
-  if (data.type !== 'positions') return;
-  pendingPositions = data.buffer;
+  if (data.type === 'positions') {
+    pendingPositions = data.buffer;
+    return;
+  }
+  if (data.type === 'burn_result') {
+    if (data.error) { console.warn('[burn]', data.error); return; }
+    onBurnResult(data);
+    return;
+  }
+  if (data.type === 'close_approaches') {
+    onCloseApproaches(data.results);
+    return;
+  }
+  if (data.type === 'porkchop') {
+    renderPorkchop(data);
+    return;
+  }
 };
 
-worker.onerror = (err) => {
-  console.error('[Worker error]', err);
-};
+worker.onerror = (err) => console.error('[Worker error]', err);
 
 // ─── Time State ───────────────────────────────────────────────────────────────
 let currentJD = TODAY_JD;
-let simSpeed = 0; // JD per real second (0 = paused)
+let simSpeed = 0;
 let lastRealTime = performance.now();
 let isScrubbing = false;
+
+// ─── Burn Mode State ──────────────────────────────────────────────────────────
+let burnModeActive = false;
+let burnDV = { p: 0, n: 0, r: 0 };
+let currentBurnElements = null;  // post-burn elements (radians/epoch_JD form)
+let lastBurnResult = null;       // latest apply_burn response
+let dragAxis = null;
+let dragStartScreen = null;
+let dragStartDV = 0;
+let ghostTime = 0;
+
+// Multi-burn sequence
+const MAX_BURNS = 5;
+let burns = [];          // [{dv_p, dv_n, dv_r, jd}, ...]
+let activeBurnIdx = -1;  // -1 = no saved burns yet
 
 // ─── Asterank API ─────────────────────────────────────────────────────────────
 const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
@@ -555,14 +982,13 @@ const CORS_PROXY = 'https://corsproxy.io/?';
 async function fetchAsteroids() {
   setStatus('Fetching asteroid catalog...');
   let data = null;
-
   try {
     const r = await fetch(ASTERANK_URL, { mode: 'cors' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     data = await r.json();
     setStatus(`Loaded ${data.length} asteroids`, true);
   } catch (err1) {
-    console.warn('[Asterank] Direct fetch failed, trying CORS proxy:', err1.message);
+    console.warn('[Asterank] Direct fetch failed:', err1.message);
     setStatus('Retrying via CORS proxy...');
     try {
       const r = await fetch(CORS_PROXY + encodeURIComponent(ASTERANK_URL));
@@ -575,15 +1001,12 @@ async function fetchAsteroids() {
       data = [];
     }
   }
-
   return data;
 }
 
 function buildAsteroidMesh(data) {
-  // Filter out bad entries
   asteroidData = data.filter(a => a.a > 0 && a.e >= 0 && a.e < 1 && a.epoch);
   asteroidCount = asteroidData.length;
-
   if (asteroidCount === 0) return;
 
   const geo = new THREE.SphereGeometry(0.002, 4, 4);
@@ -604,12 +1027,8 @@ function buildAsteroidMesh(data) {
 
   for (let i = 0; i < asteroidCount; i++) {
     const ast = asteroidData[i];
-    // Spectral type (first char)
     const spec = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
-    const col = specColors[spec] || defaultColor;
-    asteroidMesh.setColorAt(i, col);
-
-    // Initial position at origin until worker responds
+    asteroidMesh.setColorAt(i, specColors[spec] || defaultColor);
     dummy.position.set(0, 0, 0);
     dummy.scale.setScalar(1);
     dummy.updateMatrix();
@@ -618,15 +1037,11 @@ function buildAsteroidMesh(data) {
 
   asteroidMesh.instanceColor.needsUpdate = true;
   scene.add(asteroidMesh);
-
   document.getElementById('asteroid-count').textContent = `▲ ${asteroidCount} ASTEROIDS`;
   document.getElementById('panel-idle').innerHTML =
     `CLICK ANY ASTEROID<br>TO SELECT TARGET<br><br>— SOLAR SYSTEM —<br>8 PLANETS ACTIVE<br>${asteroidCount} ASTEROIDS LOADED`;
 
-  // Send to worker
   worker.postMessage({ cmd: 'init', asteroids: asteroidData });
-
-  // Initial propagation
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
 }
 
@@ -642,21 +1057,17 @@ function selectAsteroid(id) {
 
   const name = ast.full_name || ast.pdes || ast.name || '—';
   const spec = (ast.spec || ast.spec_T || '—').trim();
-  const diam = ast.diameter ? `${Number(ast.diameter).toFixed(2)} km` : (ast.H ? `~${(1329 / Math.sqrt(0.15) * Math.pow(10, -ast.H / 5)).toFixed(1)} km (est)` : '—');
-  const sma = ast.a ? `${Number(ast.a).toFixed(4)} AU` : '—';
-  const ecc = ast.e ? Number(ast.e).toFixed(5) : '—';
-  const inc = ast.i ? `${Number(ast.i).toFixed(3)}°` : '—';
-  const dv = ast.delta_v || ast.min_dv ? `${Number(ast.delta_v || ast.min_dv).toFixed(2)} km/s` : '—';
-  const moid = ast.moid ? `${Number(ast.moid).toFixed(4)} AU` : '—';
+  const diam = ast.diameter ? `${Number(ast.diameter).toFixed(2)} km`
+    : (ast.H ? `~${(1329 / Math.sqrt(0.15) * Math.pow(10, -ast.H / 5)).toFixed(1)} km (est)` : '—');
 
   document.getElementById('ast-name').textContent = name;
   document.getElementById('ast-type').textContent = spec;
   document.getElementById('ast-diam').textContent = diam;
-  document.getElementById('ast-sma').textContent = sma;
-  document.getElementById('ast-ecc').textContent = ecc;
-  document.getElementById('ast-inc').textContent = inc;
-  document.getElementById('ast-dv').textContent = dv;
-  document.getElementById('ast-moid').textContent = moid;
+  document.getElementById('ast-sma').textContent = ast.a ? `${Number(ast.a).toFixed(4)} AU` : '—';
+  document.getElementById('ast-ecc').textContent = ast.e ? Number(ast.e).toFixed(5) : '—';
+  document.getElementById('ast-inc').textContent = ast.i ? `${Number(ast.i).toFixed(3)}°` : '—';
+  document.getElementById('ast-dv').textContent = ast.delta_v ? `${Number(ast.delta_v).toFixed(2)} km/s` : '—';
+  document.getElementById('ast-moid').textContent = ast.moid ? `${Number(ast.moid).toFixed(4)} AU` : '—';
   document.getElementById('ast-price').textContent = fmtUSD(ast.price);
   document.getElementById('ast-profit').textContent = fmtUSD(ast.profit);
 
@@ -664,12 +1075,14 @@ function selectAsteroid(id) {
   document.getElementById('panel-data').style.display = 'flex';
 
   drawOrbitEllipse(ast);
+
+  // Exit burn mode on new selection
+  if (burnModeActive) cancelBurn();
 }
 
 renderer.domElement.addEventListener('click', (e) => {
   if (!asteroidMesh) return;
-  // Suppress click during orbit control drag
-  if (controls.state !== 0 && controls._isPointerDown) return;
+  if (dragAxis) return; // don't deselect during gizmo drag
 
   const rect = renderer.domElement.getBoundingClientRect();
   const mouse = new THREE.Vector2(
@@ -678,15 +1091,538 @@ renderer.domElement.addEventListener('click', (e) => {
   );
   raycaster.setFromCamera(mouse, camera);
 
+  // Check gizmo first in burn mode
+  if (burnModeActive) {
+    const gizmoHits = raycaster.intersectObjects(gizmoGroup.children, true);
+    if (gizmoHits.length > 0) return; // swallow click on gizmo
+  }
+
   const hits = raycaster.intersectObject(asteroidMesh);
   if (hits.length > 0 && hits[0].instanceId !== undefined) {
     selectAsteroid(hits[0].instanceId);
   } else {
-    // Deselect
     selectedId = -1;
     orbitLine.visible = false;
     document.getElementById('panel-data').style.display = 'none';
     document.getElementById('panel-idle').style.display = 'block';
+    if (burnModeActive) cancelBurn();
+  }
+});
+
+// ─── Burn Mode ────────────────────────────────────────────────────────────────
+function toggleBurnMode() {
+  if (selectedId < 0) return;
+  if (burnModeActive) {
+    cancelBurn();
+  } else {
+    burnModeActive = true;
+    burnDV = { p: 0, n: 0, r: 0 };
+    currentBurnElements = null;
+    gizmoGroup.visible = true;
+    orbitLine.visible = false;
+    document.getElementById('btn-burn-mode').classList.add('active-mode');
+    document.getElementById('btn-burn-mode').textContent = '◼ EXIT BURN MODE [ESC]';
+    document.getElementById('dv-display').style.display = 'flex';
+    document.getElementById('burn-mode-badge').style.display = 'block';
+    document.getElementById('burn-sequence').style.display = 'block';
+    updateBurnUI();
+  }
+}
+
+function cancelBurn() {
+  burnModeActive = false;
+  burnDV = { p: 0, n: 0, r: 0 };
+  currentBurnElements = null;
+  lastBurnResult = null;
+  gizmoGroup.visible = false;
+  newOrbitLine.visible = false;
+  originalOrbitLine.visible = false;
+  burnMarker.visible = false;
+  ghostOriginal.visible = false;
+  ghostNew.visible = false;
+  burnOrbitLines.forEach(l => { l.visible = false; });
+  document.getElementById('btn-burn-mode').classList.remove('active-mode');
+  document.getElementById('btn-burn-mode').textContent = '▶ BURN MODE [B]';
+  document.getElementById('dv-display').style.display = 'none';
+  document.getElementById('burn-mode-badge').style.display = 'none';
+  document.getElementById('burn-panel').style.display = 'none';
+  document.getElementById('porkchop-panel').style.display = 'none';
+  document.getElementById('burn-sequence').style.display = 'none';
+  hideOrbitLabels();
+  if (selectedId >= 0) drawOrbitEllipse(asteroidData[selectedId]);
+  orbitLine.visible = true;
+}
+
+function updateBurnUI() {
+  const total = Math.sqrt(burnDV.p**2 + burnDV.n**2 + burnDV.r**2);
+  document.getElementById('dv-total').textContent = `ΔV TOTAL: ${total.toFixed(2)} km/s`;
+  document.getElementById('dv-breakdown').textContent =
+    `P:${burnDV.p >= 0 ? '+' : ''}${burnDV.p.toFixed(1)}  N:${burnDV.n >= 0 ? '+' : ''}${burnDV.n.toFixed(1)}  R:${burnDV.r >= 0 ? '+' : ''}${burnDV.r.toFixed(1)}`;
+}
+
+function updateGizmo() {
+  if (!burnModeActive || selectedId < 0) return;
+  const ast = asteroidData[selectedId];
+  let state;
+  try {
+    if (currentBurnElements) {
+      state = kep2cartJS(currentBurnElements.a, currentBurnElements.e,
+        currentBurnElements.i, currentBurnElements.Om,
+        currentBurnElements.w, currentBurnElements.M0,
+        currentBurnElements.epoch_JD, currentJD);
+    } else {
+      state = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, currentJD);
+    }
+  } catch(_) { return; }
+
+  gizmoGroup.position.set(state.x, state.y, state.z);
+
+  const rv = new THREE.Vector3(state.x, state.y, state.z);
+  const vv = new THREE.Vector3(state.vx, state.vy, state.vz);
+  if (vv.lengthSq() < 1e-20) return;
+
+  const v_hat = vv.clone().normalize();
+  const h_hat = new THREE.Vector3().crossVectors(rv, vv).normalize();
+  const r_hat = rv.clone().normalize();
+
+  const up = new THREE.Vector3(0, 1, 0);
+  arrowPrograde.quaternion.setFromUnitVectors(up, v_hat);
+  arrowNormal.quaternion.setFromUnitVectors(up, h_hat);
+  arrowRadial.quaternion.setFromUnitVectors(up, r_hat);
+
+  const scale = camera.position.distanceTo(gizmoGroup.position) * 0.12;
+  gizmoGroup.scale.setScalar(Math.max(0.05, scale));
+}
+
+function previewBurn() {
+  if (selectedId < 0) return;
+  const total = Math.sqrt(burnDV.p**2 + burnDV.n**2 + burnDV.r**2);
+  if (total < 0.001) {
+    newOrbitLine.visible = false;
+    originalOrbitLine.visible = false;
+    burnMarker.visible = false;
+    currentBurnElements = null;
+    return;
+  }
+
+  const ast = asteroidData[selectedId];
+  const newEl = applyBurnJS(ast, burnDV.p, burnDV.n, burnDV.r, currentJD);
+  if (!newEl || newEl.a <= 0 || newEl.e >= 1) return;
+  currentBurnElements = newEl;
+
+  drawOrbitEllipse(ast);
+  // Copy original orbit to originalOrbitLine
+  const origEl = {
+    a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch+2400000.5
+  };
+  drawOrbitFromElements(originalOrbitLine, origEl);
+  drawOrbitFromElements(newOrbitLine, newEl);
+  orbitLine.visible = false;
+
+  // Burn marker at current asteroid position
+  const s = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, currentJD);
+  burnMarker.position.set(s.x, s.y, s.z);
+  burnMarker.visible = true;
+
+  // Request worker to compute MOID and period changes
+  worker.postMessage({ cmd: 'apply_burn', elements: origEl, jd: currentJD, dv_p: burnDV.p, dv_n: burnDV.n, dv_r: burnDV.r });
+}
+
+function onBurnResult(data) {
+  lastBurnResult = data;
+  const ast = asteroidData[selectedId];
+  if (!ast) return;
+
+  document.getElementById('burn-panel').style.display = 'block';
+
+  const origPeriod = data.orig_period_days;
+  const newPeriod = data.period_days;
+
+  document.getElementById('bp-a-before').textContent = `${ast.a.toFixed(3)} AU`;
+  document.getElementById('bp-a-after').textContent = `${data.elements.a.toFixed(3)} AU`;
+  document.getElementById('bp-e-before').textContent = ast.e.toFixed(4);
+  document.getElementById('bp-e-after').textContent = data.elements.e.toFixed(4);
+  document.getElementById('bp-i-before').textContent = `${ast.i.toFixed(2)}°`;
+  document.getElementById('bp-i-after').textContent = `${(data.elements.i / DEG).toFixed(2)}°`;
+  document.getElementById('bp-T-before').textContent = origPeriod ? `${origPeriod.toFixed(0)}d` : '—';
+  document.getElementById('bp-T-after').textContent = newPeriod ? `${newPeriod.toFixed(0)}d` : '—';
+  document.getElementById('bp-moid-before').textContent = ast.moid ? `${Number(ast.moid).toFixed(3)} AU` : '—';
+  document.getElementById('bp-moid-after').textContent = data.moid_approx != null ? `${data.moid_approx.toFixed(3)} AU` : '—';
+
+  const total = Math.sqrt(burnDV.p**2 + burnDV.n**2 + burnDV.r**2);
+  document.getElementById('bp-dv').textContent = `${total.toFixed(2)} km/s`;
+  document.getElementById('bp-fuel').textContent = tsiolkovsky(total);
+
+  // Request close approach scan
+  const origEl = { a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch+2400000.5 };
+  worker.postMessage({ cmd: 'close_approach_scan', elements: data.elements, jd_start: currentJD, years: 5 });
+
+  // Update orbit delta labels
+  updateOrbitLabels(data.elements);
+}
+
+function onCloseApproaches(results) {
+  if (results && results.length > 0) {
+    const best = results[0];
+    document.getElementById('bp-approach').textContent = `${jdToDate(best.jd)} (${best.dist.toFixed(3)} AU)`;
+  } else {
+    document.getElementById('bp-approach').textContent = 'None within 5yr';
+  }
+}
+
+function updateOrbitLabels(newEl) {
+  // Find perihelion point of new orbit and project to screen
+  if (!newEl) { hideOrbitLabels(); return; }
+  const perihelion = kep2cartJS(newEl.a, newEl.e, newEl.i, newEl.Om, newEl.w, 0, newEl.epoch_JD, newEl.epoch_JD);
+  const period = TWO_PI * Math.sqrt(newEl.a**3 / GM_AU3_S2) / 86400;
+  const ast = asteroidData[selectedId];
+
+  const pv = new THREE.Vector3(perihelion.x, perihelion.y, perihelion.z);
+  pv.project(camera);
+  const sx = (pv.x * 0.5 + 0.5) * window.innerWidth;
+  const sy = (-pv.y * 0.5 + 0.5) * window.innerHeight;
+
+  const lPeri = document.getElementById('label-perihelion');
+  const lPeriod = document.getElementById('label-period');
+  lPeri.style.display = 'block';
+  lPeri.style.left = sx + 'px';
+  lPeri.style.top = (sy - 14) + 'px';
+  lPeri.textContent = `q=${( newEl.a*(1-newEl.e) ).toFixed(3)} AU`;
+
+  const origPeriod = TWO_PI * Math.sqrt(ast.a**3 / GM_AU3_S2) / 86400;
+  const dPeriod = period - origPeriod;
+  lPeriod.style.display = 'block';
+  lPeriod.style.left = sx + 'px';
+  lPeriod.style.top = (sy - 28) + 'px';
+  lPeriod.textContent = `T${dPeriod >= 0 ? '+' : ''}${dPeriod.toFixed(0)}d`;
+}
+
+function hideOrbitLabels() {
+  ['label-perihelion','label-period','label-moid'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+}
+
+// ─── Gizmo Drag ───────────────────────────────────────────────────────────────
+const gizmoRaycaster = new THREE.Raycaster();
+
+renderer.domElement.addEventListener('pointerdown', onPointerDown);
+renderer.domElement.addEventListener('pointermove', onPointerMove);
+renderer.domElement.addEventListener('pointerup', onPointerUp);
+
+function screenToNDC(e) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  return new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+    -((e.clientY - rect.top) / rect.height) * 2 + 1
+  );
+}
+
+function onPointerDown(e) {
+  if (!burnModeActive) return;
+  const ndc = screenToNDC(e);
+  gizmoRaycaster.setFromCamera(ndc, camera);
+  const hits = gizmoRaycaster.intersectObjects(gizmoGroup.children, true);
+  if (hits.length === 0) return;
+  let obj = hits[0].object;
+  while (obj && !obj.userData.axis) obj = obj.parent;
+  if (!obj) return;
+  dragAxis = obj.userData.axis;
+  dragStartScreen = { x: e.clientX, y: e.clientY };
+  dragStartDV = burnDV[dragAxis[0]]; // 'p', 'n', or 'r'
+  controls.enabled = false;
+  e.stopPropagation();
+}
+
+function onPointerMove(e) {
+  if (!dragAxis) return;
+  const arrowMap = { prograde: arrowPrograde, normal: arrowNormal, radial: arrowRadial };
+  const arrow = arrowMap[dragAxis];
+  const worldDir = new THREE.Vector3(0, 1, 0).applyQuaternion(arrow.getWorldQuaternion(new THREE.Quaternion())).normalize();
+  const projected = worldDir.clone().project(camera);
+  projected.z = 0;
+  const sd = projected.length() > 1e-5 ? projected.normalize() : new THREE.Vector2(1, 0);
+
+  const delta = {
+    x: (e.clientX - dragStartScreen.x) / window.innerWidth,
+    y: -(e.clientY - dragStartScreen.y) / window.innerHeight,
+  };
+  const proj = delta.x * sd.x + delta.y * sd.y;
+  const dist = camera.position.distanceTo(gizmoGroup.position);
+  const sensitivity = 8 * Math.max(0.15, dist);
+  const dvDelta = proj * sensitivity;
+
+  const key = dragAxis[0];
+  burnDV[key] = Math.max(-12, Math.min(12, dragStartDV + dvDelta));
+  burnDV[key] = Math.round(burnDV[key] * 10) / 10; // snap to 0.1 km/s
+
+  previewBurn();
+  updateBurnUI();
+}
+
+function onPointerUp() {
+  if (dragAxis) {
+    dragAxis = null;
+    controls.enabled = true;
+  }
+}
+
+// ─── Keyboard Shortcuts ───────────────────────────────────────────────────────
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'b' || e.key === 'B') {
+    if (selectedId >= 0) toggleBurnMode();
+  }
+  if (e.key === 'Escape') {
+    if (burnModeActive) cancelBurn();
+  }
+});
+
+// ─── Porkchop Plot ────────────────────────────────────────────────────────────
+let porkchopData = null;
+
+document.getElementById('btn-show-porkchop').addEventListener('click', () => {
+  if (selectedId < 0) return;
+  document.getElementById('porkchop-panel').style.display = 'block';
+  document.getElementById('porkchop-status').textContent = 'COMPUTING...';
+  document.getElementById('pc-x-start').textContent = jdToDate(currentJD);
+  document.getElementById('pc-x-end').textContent = jdToDate(currentJD + 365 * 5);
+
+  worker.postMessage({
+    cmd: 'porkchop',
+    ast: asteroidData[selectedId],
+    burn_elements: currentBurnElements,
+    jd_start: currentJD,
+    jd_end: currentJD + 365 * 5,
+    tof_min: 60,
+    tof_max: 450,
+    nx: 50,
+    ny: 40,
+  });
+});
+
+function renderPorkchop(data) {
+  porkchopData = data;
+  const canvas = document.getElementById('porkchop-canvas');
+  const ctx = canvas.getContext('2d');
+  const { nx, ny, grid } = data;
+  const imgData = ctx.createImageData(nx, ny);
+
+  let minDV = 999, minI = 0, minJ = 0;
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < ny; j++) {
+      const dv = grid[i * ny + j];
+      if (dv < minDV) { minDV = dv; minI = i; minJ = j; }
+    }
+  }
+
+  for (let i = 0; i < nx; i++) {
+    for (let j = 0; j < ny; j++) {
+      const dv = grid[i * ny + j];
+      const t = Math.min(dv / 12, 1);
+      let r, g, b;
+      if (t < 0.5) {
+        r = Math.round(255 * 2 * t);
+        g = 255; b = 0;
+      } else {
+        r = 255;
+        g = Math.round(255 * 2 * (1 - t));
+        b = 0;
+      }
+      const idx = (j * nx + i) * 4; // note: j is row (tof), i is col (date)
+      imgData.data[idx]   = r;
+      imgData.data[idx+1] = g;
+      imgData.data[idx+2] = b;
+      imgData.data[idx+3] = 210;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+
+  // Mark minimum
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(minI + 0.5, minJ + 0.5, 3.5, 0, TWO_PI);
+  ctx.stroke();
+
+  // Annotate minimum
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.fillText(`${minDV.toFixed(1)} km/s`, Math.min(minI + 5, nx - 50), Math.max(minJ - 4, 10));
+
+  document.getElementById('porkchop-status').textContent =
+    `MIN ΔV: ${minDV.toFixed(2)} km/s  |  CLICK TO SET DEPARTURE`;
+  document.getElementById('pc-tof-min').textContent = `${data.tof_min}d`;
+  document.getElementById('pc-tof-max').textContent = `${data.tof_max}d`;
+}
+
+document.getElementById('porkchop-canvas').addEventListener('click', (e) => {
+  if (!porkchopData) return;
+  const canvas = document.getElementById('porkchop-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const ix = Math.floor((e.clientX - rect.left) / rect.width * porkchopData.nx);
+  const jd = porkchopData.jd_start + ix / (porkchopData.nx - 1) * (porkchopData.jd_end - porkchopData.jd_start);
+  currentJD = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, jd));
+  scrubber.value = currentJD;
+});
+
+document.getElementById('porkchop-canvas').addEventListener('mousemove', (e) => {
+  if (!porkchopData) return;
+  const canvas = document.getElementById('porkchop-canvas');
+  const tooltip = document.getElementById('porkchop-tooltip');
+  const rect = canvas.getBoundingClientRect();
+  const ix = Math.floor((e.clientX - rect.left) / rect.width * porkchopData.nx);
+  const iy = Math.floor((e.clientY - rect.top) / rect.height * porkchopData.ny);
+  if (ix < 0 || ix >= porkchopData.nx || iy < 0 || iy >= porkchopData.ny) {
+    tooltip.style.display = 'none'; return;
+  }
+  const dv = porkchopData.grid[ix * porkchopData.ny + iy];
+  const tof = porkchopData.tof_min + iy / (porkchopData.ny - 1) * (porkchopData.tof_max - porkchopData.tof_min);
+  const jd = porkchopData.jd_start + ix / (porkchopData.nx - 1) * (porkchopData.jd_end - porkchopData.jd_start);
+  tooltip.style.display = 'block';
+  tooltip.style.left = (e.clientX - rect.left + 6) + 'px';
+  tooltip.style.top = (e.clientY - rect.top - 18) + 'px';
+  tooltip.textContent = `${jdToDate(jd)} | TOF:${tof.toFixed(0)}d | ΔV:${dv.toFixed(2)} km/s`;
+});
+
+document.getElementById('porkchop-canvas').addEventListener('mouseleave', () => {
+  document.getElementById('porkchop-tooltip').style.display = 'none';
+});
+
+// ─── Multi-Burn Sequence ──────────────────────────────────────────────────────
+document.getElementById('btn-burn-mode').addEventListener('click', () => toggleBurnMode());
+
+document.getElementById('btn-add-burn').addEventListener('click', () => {
+  if (burns.length >= MAX_BURNS) return;
+  if (selectedId < 0) return;
+  const total = Math.sqrt(burnDV.p**2 + burnDV.n**2 + burnDV.r**2);
+  if (total < 0.001) return;
+  burns.push({ dv_p: burnDV.p, dv_n: burnDV.n, dv_r: burnDV.r, jd: currentJD });
+  activeBurnIdx = burns.length - 1;
+  burnDV = { p: 0, n: 0, r: 0 };
+  currentBurnElements = computeMultiBurnElements(activeBurnIdx);
+  renderBurnList();
+  recomputeAllBurnOrbits();
+  updateBurnUI();
+});
+
+document.getElementById('btn-clear-burns').addEventListener('click', () => {
+  burns = [];
+  activeBurnIdx = -1;
+  currentBurnElements = null;
+  burnOrbitLines.forEach(l => { l.visible = false; });
+  newOrbitLine.visible = false;
+  originalOrbitLine.visible = false;
+  renderBurnList();
+  updateBurnUI();
+});
+
+document.getElementById('burn-list').addEventListener('click', (e) => {
+  const del = e.target.closest('.bi-del');
+  if (del) {
+    const idx = parseInt(del.dataset.idx);
+    burns.splice(idx, 1);
+    if (activeBurnIdx >= burns.length) activeBurnIdx = burns.length - 1;
+    renderBurnList();
+    recomputeAllBurnOrbits();
+    return;
+  }
+  const item = e.target.closest('.burn-item');
+  if (item) {
+    activeBurnIdx = parseInt(item.dataset.idx);
+    renderBurnList();
+  }
+});
+
+function computeMultiBurnElements(upToIdx) {
+  if (selectedId < 0 || burns.length === 0) return null;
+  let el = null;
+  for (let i = 0; i <= Math.min(upToIdx, burns.length - 1); i++) {
+    const b = burns[i];
+    const src = el || asteroidData[selectedId];
+    el = applyBurnJS(src, b.dv_p, b.dv_n, b.dv_r, b.jd);
+    if (!el || el.e >= 1) return null;
+  }
+  return el;
+}
+
+function recomputeAllBurnOrbits() {
+  burnOrbitLines.forEach(l => { l.visible = false; });
+  newOrbitLine.visible = false;
+  originalOrbitLine.visible = false;
+  if (burns.length === 0) return;
+
+  const ast = asteroidData[selectedId];
+  const origEl = { a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch+2400000.5 };
+  drawOrbitFromElements(originalOrbitLine, origEl);
+
+  for (let i = 0; i < burns.length; i++) {
+    const el = computeMultiBurnElements(i);
+    if (el && el.e < 1 && burnOrbitLines[i]) {
+      burnOrbitLines[i].material.color.setHex(BURN_COLORS[i]);
+      drawOrbitFromElements(burnOrbitLines[i], el);
+    }
+  }
+  currentBurnElements = computeMultiBurnElements(burns.length - 1);
+}
+
+function renderBurnList() {
+  const container = document.getElementById('burn-list');
+  if (burns.length === 0) {
+    container.innerHTML = '<div style="font-size:10px;color:#4b5563;padding:6px 0">NO BURNS SAVED</div>';
+    document.getElementById('total-dv-val').textContent = '0.0';
+    return;
+  }
+
+  let totalDV = 0;
+  container.innerHTML = burns.map((b, i) => {
+    const dv = Math.sqrt(b.dv_p**2 + b.dv_n**2 + b.dv_r**2);
+    totalDV += dv;
+    const colorHex = '#' + BURN_COLORS[i].toString(16).padStart(6, '0');
+    return `<div class="burn-item ${i === activeBurnIdx ? 'active-burn' : ''}" data-idx="${i}" style="border-left-color:${colorHex}">
+      <span class="bi-num" style="color:${colorHex}">#${i+1}</span>
+      <span class="bi-date">${jdToDate(b.jd)}</span>
+      <span class="bi-dv">${dv.toFixed(1)} km/s</span>
+      <button class="bi-del" data-idx="${i}">✕</button>
+    </div>`;
+  }).join('');
+  document.getElementById('total-dv-val').textContent = totalDV.toFixed(2);
+}
+
+// ─── Scenario Save/Load ───────────────────────────────────────────────────────
+document.getElementById('btn-save-scenario').addEventListener('click', () => {
+  if (selectedId < 0) return;
+  const name = document.getElementById('scenario-name').value.trim();
+  if (!name) return;
+  const ast = asteroidData[selectedId];
+  const key = `aster_scenario_${name}`;
+  localStorage.setItem(key, JSON.stringify({
+    asteroidName: ast.full_name || ast.pdes || ast.name,
+    burns, jd: currentJD,
+  }));
+  setStatus(`Scenario "${name}" saved`, true);
+});
+
+document.getElementById('btn-load-scenario').addEventListener('click', () => {
+  const name = document.getElementById('scenario-name').value.trim();
+  if (!name) return;
+  const raw = localStorage.getItem(`aster_scenario_${name}`);
+  if (!raw) { setStatus(`Scenario "${name}" not found`, true); return; }
+  try {
+    const saved = JSON.parse(raw);
+    burns = saved.burns || [];
+    if (saved.jd) { currentJD = saved.jd; scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD)); }
+    const idx = asteroidData.findIndex(a => (a.full_name || a.pdes || a.name) === saved.asteroidName);
+    if (idx >= 0) {
+      selectAsteroid(idx);
+      if (!burnModeActive) toggleBurnMode();
+    }
+    renderBurnList();
+    recomputeAllBurnOrbits();
+    setStatus(`Scenario "${name}" loaded`, true);
+  } catch(err) {
+    console.error('[scenario load]', err);
+    setStatus(`Failed to load "${name}"`, true);
   }
 });
 
@@ -717,28 +1653,23 @@ document.querySelectorAll('.speed-btn').forEach(btn => {
 
 // ─── Status Helper ────────────────────────────────────────────────────────────
 let statusTimer = null;
-function setStatus(msg, autoFade = false) {
+function setStatus(msg, autoFade) {
   const el = document.getElementById('status');
   el.textContent = msg;
   el.classList.remove('fade');
   if (statusTimer) clearTimeout(statusTimer);
-  if (autoFade) {
-    statusTimer = setTimeout(() => el.classList.add('fade'), 3000);
-  }
+  if (autoFade) statusTimer = setTimeout(() => el.classList.add('fade'), 3000);
 }
 
 // ─── Animation Loop ───────────────────────────────────────────────────────────
 function applyPositions(buf) {
-  // Planets
   for (let i = 0; i < 8; i++) {
-    planets[i].position.set(buf[i * 3], buf[i * 3 + 1], buf[i * 3 + 2]);
+    planets[i].position.set(buf[i*3], buf[i*3+1], buf[i*3+2]);
   }
-
-  // Asteroids
   if (asteroidMesh && asteroidCount > 0) {
     const base = 24;
     for (let i = 0; i < asteroidCount; i++) {
-      dummy.position.set(buf[base + i * 3], buf[base + i * 3 + 1], buf[base + i * 3 + 2]);
+      dummy.position.set(buf[base+i*3], buf[base+i*3+1], buf[base+i*3+2]);
       dummy.updateMatrix();
       asteroidMesh.setMatrixAt(i, dummy.matrix);
     }
@@ -746,13 +1677,11 @@ function applyPositions(buf) {
   }
 }
 
-let frameCount = 0;
 function animate() {
   requestAnimationFrame(animate);
-  frameCount++;
 
   const now = performance.now();
-  const dt = Math.min((now - lastRealTime) / 1000, 0.1); // cap dt at 100ms
+  const dt = Math.min((now - lastRealTime) / 1000, 0.1);
   lastRealTime = now;
 
   if (!isScrubbing && simSpeed !== 0) {
@@ -760,18 +1689,40 @@ function animate() {
     scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
   }
 
-  // Dispatch propagation every frame
   if (!isScrubbing) {
     worker.postMessage({ cmd: 'propagate', jd: currentJD });
   }
 
-  // Apply most recent positions from worker
   if (pendingPositions) {
     applyPositions(pendingPositions);
     pendingPositions = null;
   }
 
-  // Update date displays
+  // Update gizmo in burn mode
+  if (burnModeActive && selectedId >= 0) {
+    updateGizmo();
+
+    // Ghost orbit tracers
+    if (currentBurnElements) {
+      ghostTime = (ghostTime + 0.0008) % 1;
+      const tJD = currentJD + ghostTime * 730;
+      const ast = asteroidData[selectedId];
+      try {
+        const posOrig = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, tJD);
+        const posNew = kep2cartJS(currentBurnElements.a, currentBurnElements.e,
+          currentBurnElements.i, currentBurnElements.Om, currentBurnElements.w,
+          currentBurnElements.M0, currentBurnElements.epoch_JD, tJD);
+        ghostOriginal.position.set(posOrig.x, posOrig.y, posOrig.z);
+        ghostNew.position.set(posNew.x, posNew.y, posNew.z);
+        ghostOriginal.visible = true;
+        ghostNew.visible = true;
+      } catch(_) {}
+    } else {
+      ghostOriginal.visible = false;
+      ghostNew.visible = false;
+    }
+  }
+
   const dateStr = jdToDate(currentJD);
   document.getElementById('calendar-date').textContent = dateStr;
   document.getElementById('jd-value').textContent = `JD ${currentJD.toFixed(1)}`;
@@ -781,7 +1732,6 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// ─── Resize ───────────────────────────────────────────────────────────────────
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -790,22 +1740,13 @@ window.addEventListener('resize', () => {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
-  // Initial planet positions
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
-
-  // Short delay for worker to respond before hiding loading screen
   await new Promise(r => setTimeout(r, 400));
-
-  // Hide loading screen
   const loading = document.getElementById('loading');
   loading.style.transition = 'opacity 0.6s';
   loading.style.opacity = '0';
   setTimeout(() => loading.style.display = 'none', 700);
-
-  // Start render loop
   animate();
-
-  // Fetch asteroids
   const data = await fetchAsteroids();
   buildAsteroidMesh(data);
 }
