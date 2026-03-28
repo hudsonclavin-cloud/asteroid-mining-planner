@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTER — Asteroid Mining Mission Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+    "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js"
+  }
+}
+</script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #050508;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  overflow: hidden;
+  color: #e5e7eb;
+}
+
+canvas { display: block; }
+
+/* Top-left date/JD display */
+#jd-display {
+  position: fixed;
+  top: 14px;
+  left: 16px;
+  color: #4af7c4;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 10;
+  line-height: 1.6;
+}
+#jd-value {
+  color: #4b5563;
+  font-size: 11px;
+}
+
+/* Status line */
+#status {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #60a5fa;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 1;
+  transition: opacity 1s;
+}
+#status.fade { opacity: 0; }
+
+/* Right info panel */
+#right-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 340px;
+  height: calc(100vh - 60px);
+  background: rgba(5, 5, 8, 0.93);
+  border-left: 1px solid #1f2937;
+  padding: 16px;
+  overflow-y: auto;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.panel-header {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #4af7c4;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #1f2937;
+  margin-bottom: 10px;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px solid #111827;
+  gap: 8px;
+}
+.data-row .label {
+  color: #4b5563;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+.data-row .value {
+  color: #e5e7eb;
+  font-size: 13px;
+  text-align: right;
+  word-break: break-all;
+}
+.data-row .value.accent { color: #4af7c4; }
+.data-row .value.profit { color: #34d399; }
+.data-row .value.warning { color: #fb923c; }
+
+#panel-idle {
+  color: #4b5563;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding-top: 8px;
+  line-height: 1.8;
+}
+
+/* Planet labels */
+.planet-label {
+  position: fixed;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4b5563;
+  pointer-events: none;
+  z-index: 5;
+  transform: translate(-50%, -100%);
+}
+
+/* Bottom bar */
+#bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: rgba(5, 5, 8, 0.95);
+  border-top: 1px solid #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  z-index: 10;
+}
+
+#date-display {
+  color: #e5e7eb;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+#time-scrubber {
+  flex: 1;
+  height: 4px;
+  accent-color: #4af7c4;
+  cursor: pointer;
+}
+
+#speed-controls {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+button.speed-btn {
+  background: transparent;
+  border: 1px solid #1f2937;
+  color: #60a5fa;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  transition: border-color 0.1s, color 0.1s, box-shadow 0.1s;
+}
+button.speed-btn:hover {
+  border-color: #4af7c4;
+  color: #4af7c4;
+  box-shadow: 0 0 6px #4af7c440;
+}
+button.speed-btn.active {
+  border-color: #4af7c4;
+  color: #4af7c4;
+  box-shadow: 0 0 6px #4af7c4;
+}
+
+#asteroid-count {
+  color: #4b5563;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Loading overlay */
+#loading {
+  position: fixed;
+  inset: 0;
+  background: #050508;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  gap: 16px;
+}
+#loading h1 {
+  font-size: 32px;
+  letter-spacing: 0.3em;
+  color: #4af7c4;
+  text-transform: uppercase;
+}
+#loading-sub {
+  font-size: 11px;
+  color: #4b5563;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+#loading-bar {
+  width: 200px;
+  height: 2px;
+  background: #1f2937;
+  position: relative;
+  overflow: hidden;
+}
+#loading-bar::after {
+  content: '';
+  position: absolute;
+  left: -100%;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: #4af7c4;
+  animation: sweep 1.2s linear infinite;
+}
+@keyframes sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loading">
+  <h1>ASTER</h1>
+  <div id="loading-bar"></div>
+  <div id="loading-sub">Initializing solar system...</div>
+</div>
+
+<!-- Top-left date/JD display -->
+<div id="jd-display">
+  <div id="calendar-date">2026-MAR-27</div>
+  <div id="jd-value">JD 2461126.5</div>
+</div>
+
+<!-- Status line -->
+<div id="status">Loading asteroid catalog...</div>
+
+<!-- Right info panel -->
+<div id="right-panel">
+  <div class="panel-header">◈ TARGET INSPECTOR</div>
+  <div id="panel-idle">
+    CLICK ANY ASTEROID<br>
+    TO SELECT TARGET<br><br>
+    — SOLAR SYSTEM —<br>
+    8 PLANETS ACTIVE<br>
+    ASTERANK CATALOG<br>
+    LOADING...
+  </div>
+  <div id="panel-data" style="display:none; flex-direction:column; gap:0;">
+    <div class="data-row"><span class="label">NAME</span><span class="value accent" id="ast-name">—</span></div>
+    <div class="data-row"><span class="label">TYPE</span><span class="value" id="ast-type">—</span></div>
+    <div class="data-row"><span class="label">DIAM</span><span class="value" id="ast-diam">—</span></div>
+    <div class="data-row"><span class="label">SMA</span><span class="value" id="ast-sma">—</span></div>
+    <div class="data-row"><span class="label">ECC</span><span class="value" id="ast-ecc">—</span></div>
+    <div class="data-row"><span class="label">INC</span><span class="value" id="ast-inc">—</span></div>
+    <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="ast-dv">—</span></div>
+    <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
+    <div class="data-row" style="margin-top:8px"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
+    <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
+  </div>
+</div>
+
+<!-- Bottom bar -->
+<div id="bottom-bar">
+  <div id="date-display">2026-MAR-27</div>
+  <input type="range" id="time-scrubber" min="0" max="1" step="0.0001" value="0.5">
+  <div id="speed-controls">
+    <button class="speed-btn active" data-speed="0">⏸</button>
+    <button class="speed-btn" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="100">100×</button>
+    <button class="speed-btn" data-speed="1000">1K×</button>
+    <button class="speed-btn" data-speed="10000">10K×</button>
+  </div>
+  <div id="asteroid-count">▲ 0 ASTEROIDS</div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+const J2000 = 2451545.0;
+const DEG = Math.PI / 180;
+const TWO_PI = 2 * Math.PI;
+
+// Compute today's JD (2026-03-27 = JD 2461126.5)
+function dateToJD(year, month, day) {
+  const A = Math.floor((14 - month) / 12);
+  const Y = year + 4800 - A;
+  const M = month + 12 * A - 3;
+  return day + Math.floor((153 * M + 2) / 5) + 365 * Y +
+    Math.floor(Y / 4) - Math.floor(Y / 100) + Math.floor(Y / 400) - 32045 - 0.5;
+}
+
+const now = new Date();
+const TODAY_JD = dateToJD(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate());
+const SCRUBBER_MIN = TODAY_JD - 365 * 3; // 3 years back
+const SCRUBBER_MAX = TODAY_JD + 365 * 5; // 5 years forward
+
+// JD → calendar string
+function jdToDate(jd) {
+  const l = Math.floor(jd + 0.5) + 68569;
+  const n = Math.floor((4 * l) / 146097);
+  const ll = l - Math.floor((146097 * n + 3) / 4);
+  const i = Math.floor((4000 * (ll + 1)) / 1461001);
+  const lll = ll - Math.floor((1461 * i) / 4) + 31;
+  const j = Math.floor((80 * lll) / 2447);
+  const day = lll - Math.floor((2447 * j) / 80);
+  const lll2 = Math.floor(j / 11);
+  const month = j + 2 - 12 * lll2;
+  const year = 100 * (n - 49) + i + lll2;
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  return `${year}-${MONTHS[month - 1]}-${String(day).padStart(2, '0')}`;
+}
+
+// Format large USD values
+function fmtUSD(v) {
+  if (!v && v !== 0) return '—';
+  const n = Number(v);
+  if (isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
+  if (abs >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
+  return `$${n.toFixed(0)}`;
+}
+
+// ─── Three.js Setup ───────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x050508);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.001, 2000);
+camera.position.set(0, 6, 18);
+camera.lookAt(0, 0, 0);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.1;
+controls.maxDistance = 500;
+
+// Lights
+scene.add(new THREE.AmbientLight(0xffffff, 0.08));
+const sunLight = new THREE.PointLight(0xfff4e0, 2.5, 0);
+scene.add(sunLight);
+
+// Sun
+const sunGeo = new THREE.SphereGeometry(0.06, 16, 16);
+const sunMat = new THREE.MeshBasicMaterial({ color: 0xfff4e0 });
+const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+scene.add(sunMesh);
+
+// Sun glow (additive sprite)
+const glowGeo = new THREE.SphereGeometry(0.12, 16, 16);
+const glowMat = new THREE.MeshBasicMaterial({ color: 0xfff4e0, transparent: true, opacity: 0.15 });
+scene.add(new THREE.Mesh(glowGeo, glowMat));
+
+// Starfield
+(function() {
+  const N = 8000;
+  const pos = new Float32Array(N * 3);
+  for (let i = 0; i < N * 3; i++) {
+    const theta = Math.random() * TWO_PI;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 300 + Math.random() * 200;
+    pos[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i * 3 + 2] = r * Math.cos(phi);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.3, sizeAttenuation: true, transparent: true, opacity: 0.5 })));
+})();
+
+// ─── Planets ──────────────────────────────────────────────────────────────────
+const PLANET_CONFIGS = [
+  { name: 'Mercury', color: 0xb5b5b5, r: 0.018 },
+  { name: 'Venus',   color: 0xe8cda0, r: 0.022 },
+  { name: 'Earth',   color: 0x4488ff, r: 0.022 },
+  { name: 'Mars',    color: 0xcc4400, r: 0.020 },
+  { name: 'Jupiter', color: 0xc88b3a, r: 0.040 },
+  { name: 'Saturn',  color: 0xe4d191, r: 0.035 },
+  { name: 'Uranus',  color: 0x7de8e8, r: 0.030 },
+  { name: 'Neptune', color: 0x5b6fcd, r: 0.028 },
+];
+
+const planets = PLANET_CONFIGS.map((cfg, idx) => {
+  const geo = new THREE.SphereGeometry(cfg.r, 12, 12);
+  const mat = new THREE.MeshStandardMaterial({ color: cfg.color, roughness: 0.8, metalness: 0.1 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.userData = { name: cfg.name, planetIdx: idx };
+  scene.add(mesh);
+
+  // Saturn rings
+  if (cfg.name === 'Saturn') {
+    const ringGeo = new THREE.TorusGeometry(0.07, 0.018, 2, 64);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xd4c47a, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2.5;
+    mesh.add(ring);
+  }
+
+  return mesh;
+});
+
+// Orbit guide rings for planets (subtle)
+function makePlanetOrbit(sma, color = 0x1f2937) {
+  const pts = [];
+  for (let j = 0; j <= 128; j++) {
+    const a = (j / 128) * TWO_PI;
+    pts.push(new THREE.Vector3(Math.cos(a) * sma, 0, Math.sin(a) * sma));
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.15 });
+  return new THREE.Line(geo, mat);
+}
+
+// Approximate mean SMA for guide rings (visual only)
+const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
+PLANET_SMA.forEach(sma => scene.add(makePlanetOrbit(sma)));
+
+// ─── Asteroid Orbit Ellipse ───────────────────────────────────────────────────
+const orbitPts = new Float32Array(257 * 3);
+const orbitGeo = new THREE.BufferGeometry();
+orbitGeo.setAttribute('position', new THREE.BufferAttribute(orbitPts, 3));
+const orbitLine = new THREE.Line(
+  orbitGeo,
+  new THREE.LineBasicMaterial({ color: 0x4af7c4, transparent: true, opacity: 0.7 })
+);
+orbitLine.visible = false;
+scene.add(orbitLine);
+
+// Worker-side kep2cart (duplicated here for orbit drawing — avoids async round-trip)
+function solveKepler(M, e) {
+  let E = M;
+  for (let i = 0; i < 15; i++) {
+    const dE = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    E -= dE;
+    if (Math.abs(dE) < 1e-12) break;
+  }
+  return E;
+}
+
+function kep2cartJS(a, e, i, Om, w, M0_rad, epoch_JD, t_JD) {
+  const GM = 1.327124400e20;
+  const AU_m = 1.496e11;
+  const a_m = a * AU_m;
+  const n = Math.sqrt(GM / (a_m * a_m * a_m));
+  const dt = (t_JD - epoch_JD) * 86400;
+  let M = M0_rad + n * dt;
+  M = M - TWO_PI * Math.floor((M + Math.PI) / TWO_PI);
+  const E = solveKepler(M, e);
+  const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+  const r = a * (1 - e * Math.cos(E));
+  const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
+  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
+  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
+  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
+  return {
+    x: xo * (cosOm * cosW - sinOm * sinW * cosI) - yo * (cosOm * sinW + sinOm * cosW * cosI),
+    y: xo * (sinOm * cosW + cosOm * sinW * cosI) - yo * (sinOm * sinW - cosOm * cosW * cosI),
+    z: xo * (sinW * sinI) + yo * (cosW * sinI),
+  };
+}
+
+function drawOrbitEllipse(ast) {
+  const epochJD = ast.epoch + 2400000.5;
+  const a = ast.a, e = ast.e;
+  const i = ast.i * DEG, Om = ast.om * DEG, w = ast.w * DEG;
+  const M0 = ast.ma * DEG;
+
+  const posArr = orbitGeo.attributes.position.array;
+  for (let k = 0; k <= 256; k++) {
+    const M_step = (k / 256) * TWO_PI - Math.PI;
+    // Back-compute anomaly: use M directly as if epoch is the current JD
+    const E_step = solveKepler(M_step, e);
+    const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E_step / 2), Math.sqrt(1 - e) * Math.cos(E_step / 2));
+    const r = a * (1 - e * Math.cos(E_step));
+    const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
+    const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
+    const cosI  = Math.cos(i),  sinI  = Math.sin(i);
+    const cosW  = Math.cos(w),  sinW  = Math.sin(w);
+    posArr[k * 3]     = xo * (cosOm * cosW - sinOm * sinW * cosI) - yo * (cosOm * sinW + sinOm * cosW * cosI);
+    posArr[k * 3 + 1] = xo * (sinOm * cosW + cosOm * sinW * cosI) - yo * (sinOm * sinW - cosOm * cosW * cosI);
+    posArr[k * 3 + 2] = xo * (sinW * sinI) + yo * (cosW * sinI);
+  }
+  orbitGeo.attributes.position.needsUpdate = true;
+  orbitLine.visible = true;
+}
+
+// ─── Physics Worker ───────────────────────────────────────────────────────────
+const worker = new Worker('./physics.worker.js');
+let asteroidData = [];
+let asteroidMesh = null;
+let asteroidCount = 0;
+const dummy = new THREE.Object3D();
+let pendingPositions = null;
+
+worker.onmessage = ({ data }) => {
+  if (data.type !== 'positions') return;
+  pendingPositions = data.buffer;
+};
+
+worker.onerror = (err) => {
+  console.error('[Worker error]', err);
+};
+
+// ─── Time State ───────────────────────────────────────────────────────────────
+let currentJD = TODAY_JD;
+let simSpeed = 0; // JD per real second (0 = paused)
+let lastRealTime = performance.now();
+let isScrubbing = false;
+
+// ─── Asterank API ─────────────────────────────────────────────────────────────
+const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
+  'query=%7B%22e%22%3A%7B%22%24lt%22%3A0.4%7D%2C%22i%22%3A%7B%22%24lt%22%3A20%7D%2C%22a%22%3A%7B%22%24lt%22%3A2.5%7D%7D' +
+  '&limit=2000&sort=score';
+const CORS_PROXY = 'https://corsproxy.io/?';
+
+async function fetchAsteroids() {
+  setStatus('Fetching asteroid catalog...');
+  let data = null;
+
+  try {
+    const r = await fetch(ASTERANK_URL, { mode: 'cors' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    data = await r.json();
+    setStatus(`Loaded ${data.length} asteroids`, true);
+  } catch (err1) {
+    console.warn('[Asterank] Direct fetch failed, trying CORS proxy:', err1.message);
+    setStatus('Retrying via CORS proxy...');
+    try {
+      const r = await fetch(CORS_PROXY + encodeURIComponent(ASTERANK_URL));
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      data = await r.json();
+      setStatus(`Loaded ${data.length} asteroids (proxy)`, true);
+    } catch (err2) {
+      console.error('[Asterank] Both fetches failed:', err2);
+      setStatus('Asteroid catalog unavailable — planets only', false);
+      data = [];
+    }
+  }
+
+  return data;
+}
+
+function buildAsteroidMesh(data) {
+  // Filter out bad entries
+  asteroidData = data.filter(a => a.a > 0 && a.e >= 0 && a.e < 1 && a.epoch);
+  asteroidCount = asteroidData.length;
+
+  if (asteroidCount === 0) return;
+
+  const geo = new THREE.SphereGeometry(0.002, 4, 4);
+  const mat = new THREE.MeshBasicMaterial({ vertexColors: true });
+  asteroidMesh = new THREE.InstancedMesh(geo, mat, asteroidCount);
+  asteroidMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+  const specColors = {
+    'C': new THREE.Color(0x5577aa),
+    'S': new THREE.Color(0xcc7733),
+    'M': new THREE.Color(0xaaaaaa),
+    'X': new THREE.Color(0xccaa22),
+    'D': new THREE.Color(0x996644),
+    'V': new THREE.Color(0x88aa55),
+    'B': new THREE.Color(0x6688bb),
+  };
+  const defaultColor = new THREE.Color(0x667788);
+
+  for (let i = 0; i < asteroidCount; i++) {
+    const ast = asteroidData[i];
+    // Spectral type (first char)
+    const spec = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
+    const col = specColors[spec] || defaultColor;
+    asteroidMesh.setColorAt(i, col);
+
+    // Initial position at origin until worker responds
+    dummy.position.set(0, 0, 0);
+    dummy.scale.setScalar(1);
+    dummy.updateMatrix();
+    asteroidMesh.setMatrixAt(i, dummy.matrix);
+  }
+
+  asteroidMesh.instanceColor.needsUpdate = true;
+  scene.add(asteroidMesh);
+
+  document.getElementById('asteroid-count').textContent = `▲ ${asteroidCount} ASTEROIDS`;
+  document.getElementById('panel-idle').innerHTML =
+    `CLICK ANY ASTEROID<br>TO SELECT TARGET<br><br>— SOLAR SYSTEM —<br>8 PLANETS ACTIVE<br>${asteroidCount} ASTEROIDS LOADED`;
+
+  // Send to worker
+  worker.postMessage({ cmd: 'init', asteroids: asteroidData });
+
+  // Initial propagation
+  worker.postMessage({ cmd: 'propagate', jd: currentJD });
+}
+
+// ─── Selection ────────────────────────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+raycaster.params.Points = { threshold: 0.05 };
+let selectedId = -1;
+
+function selectAsteroid(id) {
+  selectedId = id;
+  const ast = asteroidData[id];
+  if (!ast) return;
+
+  const name = ast.full_name || ast.pdes || ast.name || '—';
+  const spec = (ast.spec || ast.spec_T || '—').trim();
+  const diam = ast.diameter ? `${Number(ast.diameter).toFixed(2)} km` : (ast.H ? `~${(1329 / Math.sqrt(0.15) * Math.pow(10, -ast.H / 5)).toFixed(1)} km (est)` : '—');
+  const sma = ast.a ? `${Number(ast.a).toFixed(4)} AU` : '—';
+  const ecc = ast.e ? Number(ast.e).toFixed(5) : '—';
+  const inc = ast.i ? `${Number(ast.i).toFixed(3)}°` : '—';
+  const dv = ast.delta_v || ast.min_dv ? `${Number(ast.delta_v || ast.min_dv).toFixed(2)} km/s` : '—';
+  const moid = ast.moid ? `${Number(ast.moid).toFixed(4)} AU` : '—';
+
+  document.getElementById('ast-name').textContent = name;
+  document.getElementById('ast-type').textContent = spec;
+  document.getElementById('ast-diam').textContent = diam;
+  document.getElementById('ast-sma').textContent = sma;
+  document.getElementById('ast-ecc').textContent = ecc;
+  document.getElementById('ast-inc').textContent = inc;
+  document.getElementById('ast-dv').textContent = dv;
+  document.getElementById('ast-moid').textContent = moid;
+  document.getElementById('ast-price').textContent = fmtUSD(ast.price);
+  document.getElementById('ast-profit').textContent = fmtUSD(ast.profit);
+
+  document.getElementById('panel-idle').style.display = 'none';
+  document.getElementById('panel-data').style.display = 'flex';
+
+  drawOrbitEllipse(ast);
+}
+
+renderer.domElement.addEventListener('click', (e) => {
+  if (!asteroidMesh) return;
+  // Suppress click during orbit control drag
+  if (controls.state !== 0 && controls._isPointerDown) return;
+
+  const rect = renderer.domElement.getBoundingClientRect();
+  const mouse = new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+    -((e.clientY - rect.top) / rect.height) * 2 + 1
+  );
+  raycaster.setFromCamera(mouse, camera);
+
+  const hits = raycaster.intersectObject(asteroidMesh);
+  if (hits.length > 0 && hits[0].instanceId !== undefined) {
+    selectAsteroid(hits[0].instanceId);
+  } else {
+    // Deselect
+    selectedId = -1;
+    orbitLine.visible = false;
+    document.getElementById('panel-data').style.display = 'none';
+    document.getElementById('panel-idle').style.display = 'block';
+  }
+});
+
+// ─── UI Controls ─────────────────────────────────────────────────────────────
+const scrubber = document.getElementById('time-scrubber');
+scrubber.min = SCRUBBER_MIN;
+scrubber.max = SCRUBBER_MAX;
+scrubber.value = TODAY_JD;
+
+scrubber.addEventListener('mousedown', () => { isScrubbing = true; });
+scrubber.addEventListener('touchstart', () => { isScrubbing = true; });
+scrubber.addEventListener('input', () => {
+  currentJD = parseFloat(scrubber.value);
+  worker.postMessage({ cmd: 'propagate', jd: currentJD });
+});
+scrubber.addEventListener('mouseup', () => { isScrubbing = false; });
+scrubber.addEventListener('touchend', () => { isScrubbing = false; });
+
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const s = parseInt(btn.dataset.speed, 10);
+    simSpeed = s === 0 ? 0 : s / 86400.0;
+    lastRealTime = performance.now();
+  });
+});
+
+// ─── Status Helper ────────────────────────────────────────────────────────────
+let statusTimer = null;
+function setStatus(msg, autoFade = false) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.classList.remove('fade');
+  if (statusTimer) clearTimeout(statusTimer);
+  if (autoFade) {
+    statusTimer = setTimeout(() => el.classList.add('fade'), 3000);
+  }
+}
+
+// ─── Animation Loop ───────────────────────────────────────────────────────────
+function applyPositions(buf) {
+  // Planets
+  for (let i = 0; i < 8; i++) {
+    planets[i].position.set(buf[i * 3], buf[i * 3 + 1], buf[i * 3 + 2]);
+  }
+
+  // Asteroids
+  if (asteroidMesh && asteroidCount > 0) {
+    const base = 24;
+    for (let i = 0; i < asteroidCount; i++) {
+      dummy.position.set(buf[base + i * 3], buf[base + i * 3 + 1], buf[base + i * 3 + 2]);
+      dummy.updateMatrix();
+      asteroidMesh.setMatrixAt(i, dummy.matrix);
+    }
+    asteroidMesh.instanceMatrix.needsUpdate = true;
+  }
+}
+
+let frameCount = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  frameCount++;
+
+  const now = performance.now();
+  const dt = Math.min((now - lastRealTime) / 1000, 0.1); // cap dt at 100ms
+  lastRealTime = now;
+
+  if (!isScrubbing && simSpeed !== 0) {
+    currentJD += simSpeed * dt;
+    scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
+  }
+
+  // Dispatch propagation every frame
+  if (!isScrubbing) {
+    worker.postMessage({ cmd: 'propagate', jd: currentJD });
+  }
+
+  // Apply most recent positions from worker
+  if (pendingPositions) {
+    applyPositions(pendingPositions);
+    pendingPositions = null;
+  }
+
+  // Update date displays
+  const dateStr = jdToDate(currentJD);
+  document.getElementById('calendar-date').textContent = dateStr;
+  document.getElementById('jd-value').textContent = `JD ${currentJD.toFixed(1)}`;
+  document.getElementById('date-display').textContent = dateStr;
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// ─── Resize ───────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  // Initial planet positions
+  worker.postMessage({ cmd: 'propagate', jd: currentJD });
+
+  // Short delay for worker to respond before hiding loading screen
+  await new Promise(r => setTimeout(r, 400));
+
+  // Hide loading screen
+  const loading = document.getElementById('loading');
+  loading.style.transition = 'opacity 0.6s';
+  loading.style.opacity = '0';
+  setTimeout(() => loading.style.display = 'none', 700);
+
+  // Start render loop
+  animate();
+
+  // Fetch asteroids
+  const data = await fetchAsteroids();
+  buildAsteroidMesh(data);
+}
+
+init();
+</script>
+</body>
+</html>
