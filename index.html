@@ -498,6 +498,21 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
 
 <div id="burn-mode-badge">▶ BURN MODE — ESC TO EXIT</div>
 
+<div id="earth-hud" style="display:none; position:fixed; top:14px; left:50%; transform:translateX(-50%);
+  background:rgba(5,5,8,0.85); border:1px solid #1f2937; padding:10px 20px; z-index:10;
+  font-family:'JetBrains Mono','Courier New',monospace; font-size:10px; color:#4b5563;
+  letter-spacing:0.1em; text-align:center;">
+  <div style="color:#4af7c4;font-size:12px;letter-spacing:0.2em">◉ EARTH LAYER</div>
+  <div id="sat-count" style="margin-top:4px">LOADING...</div>
+  <div style="margin-top:6px;display:flex;gap:12px;justify-content:center">
+    <span style="color:#3b82f6">● LEO</span>
+    <span style="color:#10b981">● MEO</span>
+    <span style="color:#fbbf24">● GEO</span>
+    <span style="color:#ff4af7">● ISS</span>
+  </div>
+  <div style="margin-top:6px;font-size:9px">ZOOM OUT TO RETURN TO SOLAR SYSTEM</div>
+</div>
+
 <!-- Orbit delta labels -->
 <div class="orbit-label" id="label-perihelion"></div>
 <div class="orbit-label" id="label-period"></div>
@@ -582,6 +597,15 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
     8 PLANETS ACTIVE<br>
     ASTERANK CATALOG<br>
     LOADING...
+  </div>
+  <div id="sat-panel" style="display:none; flex-direction:column; gap:0;">
+    <div class="data-row"><span class="label">NAME</span><span class="value accent" id="sat-name">—</span></div>
+    <div class="data-row"><span class="label">NORAD ID</span><span class="value" id="sat-norad">—</span></div>
+    <div class="data-row"><span class="label">ALTITUDE</span><span class="value" id="sat-alt">—</span></div>
+    <div class="data-row"><span class="label">INCLINATION</span><span class="value" id="sat-inc-val">—</span></div>
+    <div class="data-row"><span class="label">PERIOD</span><span class="value" id="sat-period">—</span></div>
+    <div class="data-row"><span class="label">REGIME</span><span class="value accent" id="sat-regime">—</span></div>
+    <div class="data-row" style="margin-top:8px"><span class="label">EPOCH</span><span class="value" id="sat-epoch">—</span></div>
   </div>
   <div id="panel-data" style="display:none; flex-direction:column; gap:0;">
     <div class="data-row"><span class="label">NAME</span><span class="value accent" id="ast-name">—</span></div>
