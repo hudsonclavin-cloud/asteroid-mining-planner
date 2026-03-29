@@ -784,10 +784,28 @@ function fmtUSD(v) {
   return `$${n.toFixed(0)}`;
 }
 
-// ─── Phase 3: Scoring + Composition ─────────────────────────────────────────
+// ─── Phase 3: ΔV helper + Scoring + Composition ──────────────────────────────
+function getAsteroidDV(ast) {
+  // Try all known Asterank field names
+  if (ast.delta_v && Number(ast.delta_v) > 0) return Number(ast.delta_v);
+  if (ast.dv      && Number(ast.dv)      > 0) return Number(ast.dv);
+  if (ast.min_dv  && Number(ast.min_dv)  > 0) return Number(ast.min_dv);
+  // Fallback: Shoemaker-Helin perihelion approximation
+  const a = Number(ast.a) || 1.5;
+  const e = Number(ast.e) || 0;
+  const i_rad = (Number(ast.i) || 0) * Math.PI / 180;
+  const mu = 1.0; // normalized AU³/yr²
+  const v_earth = Math.sqrt(mu / 1.0); // 1 AU/yr ≈ 4.740 km/s
+  const v_ast = Math.sqrt(mu * (1 + e) / (a * (1 - e))); // perihelion velocity
+  const dv_transfer = Math.abs(v_ast - v_earth);
+  const dv_inc = 2 * v_earth * Math.sin(i_rad / 2);
+  const dv_au_yr = dv_transfer + dv_inc * 0.5;
+  return Math.max(3.0, Math.min(12.0, dv_au_yr * 4.740)); // AU/yr → km/s
+}
+
 function computeScore(ast) {
   const profit_score = Math.log10(Math.max(1, Number(ast.profit) || 0)) / 12;
-  const access_score = 1 - Math.min(12, Number(ast.delta_v) || 12) / 12;
+  const access_score = 1 - Math.min(12, getAsteroidDV(ast)) / 12;
   const H = Number(ast.H) || 20;
   const diameter_m = (1329 / Math.sqrt(0.15)) * Math.pow(10, -H / 5) * 1000;
   const size_score = Math.min(1, Math.log10(Math.max(1, diameter_m)) / 6);
@@ -1268,7 +1286,7 @@ function buildAsteroidMesh(data) {
     const H = Number(ast.H) || 20;
     ast._score = computeScore(ast);
     ast._diam_m = (1329 / Math.sqrt(0.15)) * Math.pow(10, -H / 5) * 1000;
-    ast._nhats = (Number(ast.delta_v) || 99) <= 12;
+    ast._nhats = getAsteroidDV(ast) <= 12;
   }
 
   positionCache = new Float32Array(asteroidCount * 3);
@@ -1317,7 +1335,7 @@ function applyFilters() {
     const ast = asteroidData[i];
     let vis = true;
     if ((ast._score || 0) < filterScore) vis = false;
-    if ((Number(ast.delta_v) || 12) > filterDV) vis = false;
+    if (getAsteroidDV(ast) > filterDV) vis = false;
     if ((ast._diam_m || 0) < filterDiam) vis = false;
     if ((Number(ast.i) || 0) > filterInc) vis = false;
     if ((Number(ast.a) || 1) > filterSMA) vis = false;
@@ -1363,7 +1381,7 @@ function renderLeaderboard() {
       <span class="lb-name" title="${ast.full_name||''}">${(ast.full_name||ast.pdes||'—').substring(0,16)}${nhats}</span>
       <div class="lb-bar"><div class="lb-fill" style="width:${ast._score||0}%;background:${scoreColor}"></div></div>
       <span class="lb-score">${ast._score||0}</span>
-      <span class="lb-dv">${ast.delta_v?Number(ast.delta_v).toFixed(1):'—'}</span>
+      <span class="lb-dv">${getAsteroidDV(ast).toFixed(1)}</span>
     </div>`;
   }).join('');
 
@@ -1396,7 +1414,7 @@ function renderEconomicsTab(id) {
   document.getElementById('econ-no-selection').style.display = 'none';
   document.getElementById('econ-content').style.display = 'block';
 
-  const dv = Number(ast.delta_v) || 4;
+  const dv = getAsteroidDV(ast);
   const dryMass = Number(document.getElementById('eco-dry-mass').value) || 1000;
   const isp = Number(document.getElementById('eco-isp').value) || 450;
   const g0 = 9.80665;
@@ -1577,7 +1595,9 @@ function selectAsteroid(id) {
   document.getElementById('ast-sma').textContent = ast.a ? `${Number(ast.a).toFixed(4)} AU` : '—';
   document.getElementById('ast-ecc').textContent = ast.e ? Number(ast.e).toFixed(5) : '—';
   document.getElementById('ast-inc').textContent = ast.i ? `${Number(ast.i).toFixed(3)}°` : '—';
-  document.getElementById('ast-dv').textContent = ast.delta_v ? `${Number(ast.delta_v).toFixed(2)} km/s` : '—';
+  const dv_val = getAsteroidDV(ast);
+  const dv_suffix = (ast.delta_v && Number(ast.delta_v) > 0) ? '' : ' (est)';
+  document.getElementById('ast-dv').textContent = `${dv_val.toFixed(2)} km/s${dv_suffix}`;
   document.getElementById('ast-moid').textContent = ast.moid ? `${Number(ast.moid).toFixed(4)} AU` : '—';
   document.getElementById('ast-price').textContent = fmtUSD(ast.price);
   document.getElementById('ast-profit').textContent = fmtUSD(ast.profit);
