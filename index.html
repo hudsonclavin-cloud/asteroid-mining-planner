@@ -1624,9 +1624,35 @@ function selectAsteroid(id) {
   if (burnModeActive) cancelBurn();
 }
 
+const CLICK_THRESHOLD_PX = 12;
+const _clickMat4 = new THREE.Matrix4();
+const _clickVec3 = new THREE.Vector3();
+
+function findClosestAsteroidToClick(clientX, clientY) {
+  if (!asteroidMesh || asteroidCount === 0) return -1;
+  const rect = renderer.domElement.getBoundingClientRect();
+  let bestId = -1;
+  let bestDist = CLICK_THRESHOLD_PX;
+  for (let i = 0; i < asteroidCount; i++) {
+    if (visibleScale.length > i && visibleScale[i] < 0.01) continue;
+    asteroidMesh.getMatrixAt(i, _clickMat4);
+    _clickVec3.setFromMatrixPosition(_clickMat4);
+    const projected = _clickVec3.clone().project(camera);
+    if (projected.z > 1) continue; // behind camera clip
+    const sx = (projected.x * 0.5 + 0.5) * rect.width;
+    const sy = (-projected.y * 0.5 + 0.5) * rect.height;
+    const dx = clientX - rect.left - sx;
+    const dy = clientY - rect.top - sy;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < bestDist) { bestDist = dist; bestId = i; }
+  }
+  return bestId;
+}
+
 renderer.domElement.addEventListener('click', (e) => {
   if (!asteroidMesh) return;
-  if (dragAxis) return; // don't deselect during gizmo drag
+  if (wasDragging) { wasDragging = false; return; }
+  if (dragAxis) return;
 
   const rect = renderer.domElement.getBoundingClientRect();
   const mouse = new THREE.Vector2(
@@ -1641,9 +1667,9 @@ renderer.domElement.addEventListener('click', (e) => {
     if (gizmoHits.length > 0) return; // swallow click on gizmo
   }
 
-  const hits = raycaster.intersectObject(asteroidMesh);
-  if (hits.length > 0 && hits[0].instanceId !== undefined) {
-    selectAsteroid(hits[0].instanceId);
+  const hitId = findClosestAsteroidToClick(e.clientX, e.clientY);
+  if (hitId >= 0) {
+    selectAsteroid(hitId);
   } else {
     selectedId = -1;
     orbitLine.visible = false;
