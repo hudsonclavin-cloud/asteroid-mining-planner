@@ -100,3 +100,27 @@
 - **Porkchop:** offscreen canvas at native 50×40 resolution, scaled via `ctx.drawImage()` to full 308×180 with `imageSmoothingEnabled = false`; marker position scaled proportionally
 - **ΔV field:** `getAsteroidDV(ast)` tries `delta_v/dv/min_dv` fields then falls back to Shoemaker-Helin perihelion approximation (perihelion velocity delta + half-weighted inclination penalty, converted AU/yr → km/s, clamped [3, 12]); displayed with `(est)` suffix when fallback used
 - **Scenario save:** validation reordered — name check before selection check, both show `setStatus()` feedback; success shows `✓ Scenario "name" saved`
+
+---
+
+## Phase 4 — Earth Layer (2026-03-29)
+
+### Satellite Propagator Approximation
+**Method:** Mean-motion propagator using OMM fields (MEAN_MOTION, ECCENTRICITY, INCLINATION, RA_OF_ASC_NODE, ARG_OF_PERICENTER, MEAN_ANOMALY, EPOCH). Semi-major axis from `a = (GM_earth/n²)^(1/3)`. Newton-Raphson eccentric anomaly (8 iterations). Standard 3-1-3 ECI rotation.
+
+**Known limitation:** This is NOT full SGP4. Omits J2 zonal harmonic, atmospheric drag, solar radiation pressure, lunar/solar gravity. Errors grow roughly:
+- LEO: ~1–5 km/day from J2; ~10 km/day with drag at 200 km altitude
+- MEO/GPS: ~0.1 km/day (drag negligible, J2 minor)
+- GEO: ~1 km/week (station-keeping not modeled)
+
+**Impact:** Visually plausible for display; do not use for conjunction analysis or maneuver planning.
+
+### Zoom Trigger Threshold
+- Earth layer activates when camera is within 0.15 AU of `planets[2]` (Earth)
+- 0.15 AU ≈ 22.4 million km — inside Venus closest approach distance
+- Satellite positions updated every 3rd frame; ISS orbit redrawn every 30 frames
+
+### Satellite Cache
+- CelesTrak OMM JSON cached in localStorage (6-hour TTL, key `aster_satellites_v1`)
+- Groups: stations, active, starlink — deduplicated by NORAD_CAT_ID
+- Instance cap: 8,000 satellites (InstancedMesh limit for 60fps performance)
