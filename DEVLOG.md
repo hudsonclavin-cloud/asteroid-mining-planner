@@ -54,4 +54,39 @@
 
 ---
 
-*Last updated: Phase 2 implementation, 2026-03-27*
+*Last updated: Phase 3 implementation, 2026-03-27*
+
+---
+
+## Phase 3 — Mining Intelligence Layer
+
+### Composite Score Formula
+- `profit_score = log10(max(1, profit_USD)) / 12` — divisor 12 because log10($1T) ≈ 12
+- `access_score = 1 - min(12, ΔV_kms)/12` — hard cap at 12 km/s (mission infeasible beyond that)
+- `size_score = min(1, log10(max(1, diameter_m))/6)` — ~0.5 for 1 km, ~0.83 for 10 km
+- Weights 0.4/0.4/0.2: equal emphasis on economic return and mission feasibility; size secondary
+- Score is independent of current filter state; computed once in `buildAsteroidMesh`
+
+### Score Color Mapping
+- 0–33: `#7f1d1d` (dim red — low value/accessibility)
+- 34–66: `#92400e` (amber — moderate)
+- 67–85: `#4af7c4` (cyan — good target)
+- 86–100: `#fef3c7` (white-gold — elite target)
+
+### Resource Value Model
+- Water price: $1,000/kg in-space ($1M/ton) — estimated in-situ propellant market value (Keck Institute 2012). **CAVEAT:** this market does not yet exist; treat as upper bound.
+- Iron/nickel: $0.15/kg (Earth spot price, no extraction margin)
+- M-type metals: $30/kg (rough blended PGM estimate; actual composition unknown)
+- Densities: C=1400, S=2700, M=5300, D=1200 kg/m³ (Carry 2012 mean values)
+- Uses H-derived diameter (albedo=0.15 assumed); if `ast.diameter` available, prefer that
+
+### Mission Cost Model (Economics Tab)
+- Launch cost: spacecraft_mass × $2,700/kg (Falcon 9 commercial rate, 2024)
+- Total cost multiplier: 1.8× (accounts for operations, insurance, development amortization)
+- ΔV uses single-stage Tsiolkovsky with user-configurable Isp (default 450 s) and dry mass (default 1000 kg)
+- **Known limitation:** real missions range 1.5–5× launch cost overhead; this is planning-level only
+
+### NHATS Approximation
+- Primary: `delta_v ≤ 12 km/s` — coarse approximation pending API load
+- Secondary: real NHATS API fetch (`ssd-api.jpl.nasa.gov/nhats.api`) attempted on init; merged on success, silently skipped on CORS failure
+- Designation matching: exact `pdes` string match; ~5–10% expected mismatches due to format differences

@@ -406,6 +406,74 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
   padding: 1px 4px;
   display: none;
 }
+
+/* ─── Phase 3: Left Filter Panel ─────────────────────────────────────────────── */
+#btn-toggle-filters {
+  position: fixed; left: 0; top: 50%; transform: translateY(-50%);
+  background: rgba(5,5,8,0.9); border: 1px solid #1f2937;
+  border-left: none; color: #4af7c4; font-size: 14px;
+  padding: 10px 6px; cursor: pointer; z-index: 11;
+  writing-mode: vertical-rl; letter-spacing: 0.1em;
+  transition: left 0.2s; user-select: none;
+}
+#left-panel {
+  position: fixed; left: 0; top: 0; width: 280px;
+  height: calc(100vh - 60px); background: rgba(5,5,8,0.93);
+  border-right: 1px solid #1f2937; padding: 16px;
+  overflow-y: auto; z-index: 10; display: none;
+}
+.filter-group { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.filter-row { display: flex; align-items: center; gap: 6px; }
+.flabel { color: #4b5563; font-size: 9px; letter-spacing:0.08em; text-transform:uppercase; min-width: 68px; flex-shrink:0; }
+.filter-slider { flex: 1; height: 3px; accent-color: #4af7c4; cursor: pointer; }
+.fval { color: #e5e7eb; font-size: 10px; min-width: 32px; text-align: right; }
+.filter-checks { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.check-label { font-size: 10px; color: #9ca3af; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.check-label input { accent-color: #4af7c4; }
+.ftoggle {
+  background: transparent; border: 1px solid #1f2937; color: #4b5563;
+  font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 9px; letter-spacing: 0.1em;
+  padding: 4px 8px; cursor: pointer; text-align: left; text-transform: uppercase; width: 100%;
+}
+.ftoggle[data-on="true"] { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0 4px #4af7c440; }
+.sort-btn {
+  background: transparent; border: 1px solid #1f2937; color: #4b5563;
+  font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 9px; padding: 2px 5px; cursor: pointer; letter-spacing: 0.05em;
+}
+.sort-btn.active { border-color: #4af7c4; color: #4af7c4; }
+.lb-row {
+  display: flex; align-items: center; gap: 5px; padding: 5px 2px;
+  cursor: pointer; border-bottom: 1px solid #111827; font-size: 10px;
+}
+.lb-row:hover { background: rgba(74,247,196,0.05); }
+.lb-row.lb-selected { background: rgba(74,247,196,0.08); border-left: 2px solid #4af7c4; }
+.lb-rank { color: #4b5563; font-size: 9px; min-width: 22px; }
+.lb-type { padding: 1px 4px; font-size: 9px; font-weight: bold; letter-spacing: 0.1em; border: 1px solid; }
+.lb-type-C { color: #60a5fa; border-color: #1e3a5f; }
+.lb-type-S { color: #fb923c; border-color: #431407; }
+.lb-type-M { color: #e5e7eb; border-color: #374151; }
+.lb-type-X { color: #fbbf24; border-color: #451a03; }
+.lb-type-D, .lb-type-O { color: #9ca3af; border-color: #1f2937; }
+.lb-name { flex: 1; color: #c8d6e5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-bar { width: 36px; height: 3px; background: #1f2937; flex-shrink: 0; }
+.lb-fill { height: 100%; }
+.lb-score { color: #4af7c4; min-width: 22px; text-align: right; font-size: 11px; }
+.lb-dv { color: #4b5563; min-width: 30px; text-align: right; font-size: 10px; }
+/* ─── Phase 3: Tab System ─────────────────────────────────────────────────────── */
+#panel-tabs { display: flex; margin-bottom: 12px; border-bottom: 1px solid #1f2937; flex-shrink: 0; }
+.tab-btn {
+  background: transparent; border: none; color: #4b5563;
+  font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 10px; padding: 8px 12px;
+  cursor: pointer; letter-spacing: 0.1em; border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tab-btn.active { color: #4af7c4; border-bottom-color: #4af7c4; }
+/* ─── Phase 3: External Links + Score Bar ────────────────────────────────────── */
+.ext-link {
+  font-size: 9px; color: #4b5563; letter-spacing: 0.1em; text-decoration: none;
+  border: 1px solid #1f2937; padding: 3px 8px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+.ext-link:hover { color: #4af7c4; border-color: #4af7c4; }
 </style>
 </head>
 <body>
@@ -435,7 +503,77 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
 <div class="orbit-label" id="label-period"></div>
 <div class="orbit-label" id="label-moid"></div>
 
+<div id="btn-toggle-filters" onclick="toggleLeftPanel()">⬡ FILTERS</div>
+
+<div id="left-panel">
+  <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+    <span>⬡ TARGET FILTERS</span>
+    <span id="filter-count" style="color:#4af7c4;font-size:10px">0 TARGETS</span>
+  </div>
+
+  <div class="filter-group">
+    <div class="filter-row">
+      <span class="flabel">MIN SCORE</span>
+      <input type="range" id="filter-score" class="filter-slider" min="0" max="100" step="1" value="0">
+      <span class="fval" id="filter-score-val">0</span>
+    </div>
+    <div class="filter-row">
+      <span class="flabel">MAX ΔV km/s</span>
+      <input type="range" id="filter-dv" class="filter-slider" min="0" max="12" step="0.1" value="12">
+      <span class="fval" id="filter-dv-val">12.0</span>
+    </div>
+    <div class="filter-row">
+      <span class="flabel">MIN DIAM m</span>
+      <input type="range" id="filter-diam" class="filter-slider" min="0" max="5000" step="10" value="0">
+      <span class="fval" id="filter-diam-val">0</span>
+    </div>
+    <div class="filter-row">
+      <span class="flabel">MAX INC °</span>
+      <input type="range" id="filter-inc" class="filter-slider" min="0" max="30" step="0.5" value="30">
+      <span class="fval" id="filter-inc-val">30.0</span>
+    </div>
+    <div class="filter-row">
+      <span class="flabel">MAX SMA AU</span>
+      <input type="range" id="filter-sma" class="filter-slider" min="0.5" max="3.5" step="0.05" value="3.5">
+      <span class="fval" id="filter-sma-val">3.5</span>
+    </div>
+  </div>
+
+  <div class="panel-header" style="margin-top:12px">COMPOSITION</div>
+  <div class="filter-checks">
+    <label class="check-label"><input type="checkbox" id="filter-C" checked> C &nbsp;water/carbon</label>
+    <label class="check-label"><input type="checkbox" id="filter-S" checked> S &nbsp;iron/silicate</label>
+    <label class="check-label"><input type="checkbox" id="filter-M" checked> M &nbsp;metal (high $)</label>
+    <label class="check-label"><input type="checkbox" id="filter-X" checked> X &nbsp;unknown</label>
+    <label class="check-label"><input type="checkbox" id="filter-D" checked> D &nbsp;outer belt</label>
+    <label class="check-label"><input type="checkbox" id="filter-other" checked> other</label>
+  </div>
+
+  <div class="panel-header" style="margin-top:12px">QUICK FILTERS</div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <button class="ftoggle" id="filter-nhats" data-on="false">NHATS ONLY</button>
+    <button class="ftoggle" id="filter-pha"   data-on="false">PHA ONLY</button>
+    <button class="ftoggle" id="filter-water" data-on="false">HIGH WATER</button>
+  </div>
+
+  <div class="panel-header" style="margin-top:16px;display:flex;align-items:center;gap:8px">
+    <span>★ TOP TARGETS</span>
+    <div style="display:flex;gap:3px;margin-left:auto">
+      <button class="sort-btn active" data-sort="score">SCR</button>
+      <button class="sort-btn" data-sort="value">VAL</button>
+      <button class="sort-btn" data-sort="dv">ΔV</button>
+      <button class="sort-btn" data-sort="diam">SZ</button>
+    </div>
+  </div>
+  <div id="leaderboard-list" style="max-height:400px;overflow-y:auto;margin-top:4px"></div>
+</div>
+
 <div id="right-panel">
+  <div id="panel-tabs">
+    <button class="tab-btn active" data-tab="inspector">◈ INSPECTOR</button>
+    <button class="tab-btn" data-tab="economics">$ ECONOMICS</button>
+  </div>
+  <div id="tab-inspector" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;min-height:0">
   <div class="panel-header">◈ TARGET INSPECTOR</div>
   <div id="panel-idle">
     CLICK ANY ASTEROID<br>
@@ -456,6 +594,27 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
     <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
     <div class="data-row" style="margin-top:8px"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
     <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
+
+    <div class="panel-header" style="margin-top:10px">◆ COMPOSITION</div>
+    <div id="ast-composition" style="font-size:10px;color:#6a8a9a;line-height:1.8;white-space:pre;margin-bottom:8px"></div>
+
+    <div class="panel-header">$ RESOURCE VALUE</div>
+    <div class="data-row"><span class="label">WATER (space)</span><span class="value accent" id="ast-water-val">—</span></div>
+    <div class="data-row"><span class="label">METALS</span><span class="value" id="ast-metal-val">—</span></div>
+    <div class="data-row"><span class="label">TOTAL EST.</span><span class="value profit" id="ast-total-val">—</span></div>
+    <div class="data-row" style="margin-top:6px">
+      <span class="label">SCORE</span>
+      <span class="value accent" id="ast-score-display">—</span>
+    </div>
+    <div style="height:3px;background:#1f2937;margin:4px 0 10px">
+      <div id="ast-score-bar" style="height:100%;background:#4af7c4;transition:width 0.3s;width:0%"></div>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <a id="link-jpl" href="#" target="_blank" class="ext-link">JPL →</a>
+      <a id="link-papers" href="#" target="_blank" class="ext-link">PAPERS →</a>
+    </div>
+
     <button class="action-btn" id="btn-burn-mode">▶ BURN MODE [B]</button>
   </div>
 
@@ -512,6 +671,53 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
       <button id="btn-load-scenario">LOAD</button>
     </div>
   </div>
+  </div><!-- /tab-inspector -->
+
+  <div id="tab-economics" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="econ-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
+      SELECT AN ASTEROID TO VIEW ECONOMICS
+    </div>
+    <div id="econ-content" style="display:none">
+      <div class="panel-header">◆ MISSION ECONOMICS</div>
+
+      <div class="data-row">
+        <span class="label">DRY MASS</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="eco-dry-mass" value="1000" min="100" max="10000"
+            style="width:60px;background:transparent;border:1px solid #1f2937;color:#e5e7eb;
+            font-family:'JetBrains Mono','Courier New',monospace;font-size:12px;text-align:right;padding:2px 4px">
+          <span class="value">kg</span>
+        </span>
+      </div>
+      <div class="data-row">
+        <span class="label">Isp</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="eco-isp" value="450" min="100" max="10000"
+            style="width:60px;background:transparent;border:1px solid #1f2937;color:#e5e7eb;
+            font-family:'JetBrains Mono','Courier New',monospace;font-size:12px;text-align:right;padding:2px 4px">
+          <span class="value">s</span>
+        </span>
+      </div>
+
+      <div class="panel-header" style="margin-top:10px">MISSION COST</div>
+      <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="eco-dv">—</span></div>
+      <div class="data-row"><span class="label">PROPELLANT</span><span class="value" id="eco-propellant">—</span></div>
+      <div class="data-row"><span class="label">LAUNCH MASS</span><span class="value" id="eco-launch-mass">—</span></div>
+      <div class="data-row"><span class="label">LAUNCH COST</span><span class="value" id="eco-launch-cost">—</span></div>
+      <div class="data-row"><span class="label">TOTAL COST</span><span class="value warning" id="eco-total-cost">—</span></div>
+
+      <div class="panel-header" style="margin-top:10px">RETURNS</div>
+      <div class="data-row"><span class="label">WATER VALUE</span><span class="value accent" id="eco-water">—</span></div>
+      <div class="data-row"><span class="label">METAL VALUE</span><span class="value" id="eco-metals">—</span></div>
+      <div class="data-row"><span class="label">ASTERANK VALUE</span><span class="value accent" id="eco-asterank">—</span></div>
+      <div class="data-row" style="margin-top:6px"><span class="label">ROI MULTIPLE</span><span class="value profit" id="eco-roi">—</span></div>
+
+      <div id="eco-isru-note" style="display:none;border:1px solid #4af7c4;padding:8px;
+        color:#4af7c4;font-size:10px;line-height:1.6;margin-top:10px"></div>
+
+      <button class="action-btn" id="btn-export-report" style="margin-top:10px">↓ EXPORT MISSION REPORT</button>
+    </div>
+  </div><!-- /tab-economics -->
 </div>
 
 <div id="bottom-bar">
@@ -577,6 +783,41 @@ function fmtUSD(v) {
   if (abs >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
   return `$${n.toFixed(0)}`;
 }
+
+// ─── Phase 3: Scoring + Composition ─────────────────────────────────────────
+function computeScore(ast) {
+  const profit_score = Math.log10(Math.max(1, Number(ast.profit) || 0)) / 12;
+  const access_score = 1 - Math.min(12, Number(ast.delta_v) || 12) / 12;
+  const H = Number(ast.H) || 20;
+  const diameter_m = (1329 / Math.sqrt(0.15)) * Math.pow(10, -H / 5) * 1000;
+  const size_score = Math.min(1, Math.log10(Math.max(1, diameter_m)) / 6);
+  return Math.round((profit_score * 0.40 + access_score * 0.40 + size_score * 0.20) * 100);
+}
+
+function scoreToColor(score) {
+  if (score >= 86) return new THREE.Color(0xfef3c7);
+  if (score >= 67) return new THREE.Color(0x4af7c4);
+  if (score >= 34) return new THREE.Color(0x92400e);
+  return new THREE.Color(0x7f1d1d);
+}
+
+const COMPOSITIONS = {
+  C: 'Water ice: ~8% mass\nCarbon/org: ~15%\nIron/nickel: ~20%\nSilicates: ~57%',
+  B: 'Water ice: ~10% mass\nCarbon: ~20%\nIron/nickel: ~18%\nSilicates: ~52%',
+  S: 'Iron/nickel: ~25%\nOlivine: ~35%\nPyroxene: ~30%\nOther: ~10%',
+  M: 'Iron: ~55%\nNickel: ~35%\nCobalt: ~5%\nTrace PGMs: <1%',
+  D: 'Volatiles: ~15%\nCarbon/org: ~25%\nSilicates: ~55%\nOther: ~5%',
+  X: 'Composition uncertain\nCould be M, E, or P type\nRequires spectroscopy',
+};
+const DENSITIES = { C:1400, B:1400, S:2700, M:5300, D:1200 };
+const FRACTIONS = {
+  C: { water:0.08, metals:0.20 },
+  B: { water:0.10, metals:0.18 },
+  S: { water:0,    metals:0.25 },
+  M: { water:0,    metals:0.90 },
+  D: { water:0.05, metals:0.10 },
+  DEFAULT: { water:0.02, metals:0.15 },
+};
 
 // ─── Three.js Setup ───────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -930,6 +1171,17 @@ let asteroidCount = 0;
 const dummy = new THREE.Object3D();
 let pendingPositions = null;
 
+// Phase 3 state
+let positionCache = new Float32Array(0);
+let visibleScale = new Float32Array(0);
+let filteredIds = [];
+let lbSortMode = 'score';
+let flyTarget = null;
+let leftPanelOpen = false;
+let filterScore = 0, filterDV = 12, filterDiam = 0, filterInc = 30, filterSMA = 3.5;
+let filterSpec = { C:true, S:true, M:true, X:true, D:true, other:true };
+let filterNHATS = false, filterPHA = false, filterWater = false;
+
 worker.onmessage = ({ data }) => {
   if (data.type === 'positions') {
     pendingPositions = data.buffer;
@@ -1009,26 +1261,26 @@ function buildAsteroidMesh(data) {
   asteroidCount = asteroidData.length;
   if (asteroidCount === 0) return;
 
+  // Compute scores + derived fields
+  for (let i = 0; i < asteroidCount; i++) {
+    const ast = asteroidData[i];
+    const H = Number(ast.H) || 20;
+    ast._score = computeScore(ast);
+    ast._diam_m = (1329 / Math.sqrt(0.15)) * Math.pow(10, -H / 5) * 1000;
+    ast._nhats = (Number(ast.delta_v) || 99) <= 12;
+  }
+
+  positionCache = new Float32Array(asteroidCount * 3);
+  visibleScale  = new Float32Array(asteroidCount).fill(1.0);
+
   const geo = new THREE.SphereGeometry(0.002, 4, 4);
   const mat = new THREE.MeshBasicMaterial({ vertexColors: true });
   asteroidMesh = new THREE.InstancedMesh(geo, mat, asteroidCount);
   asteroidMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
-  const specColors = {
-    'C': new THREE.Color(0x5577aa),
-    'S': new THREE.Color(0xcc7733),
-    'M': new THREE.Color(0xaaaaaa),
-    'X': new THREE.Color(0xccaa22),
-    'D': new THREE.Color(0x996644),
-    'V': new THREE.Color(0x88aa55),
-    'B': new THREE.Color(0x6688bb),
-  };
-  const defaultColor = new THREE.Color(0x667788);
-
   for (let i = 0; i < asteroidCount; i++) {
     const ast = asteroidData[i];
-    const spec = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
-    asteroidMesh.setColorAt(i, specColors[spec] || defaultColor);
+    asteroidMesh.setColorAt(i, scoreToColor(ast._score));
     dummy.position.set(0, 0, 0);
     dummy.scale.setScalar(1);
     dummy.updateMatrix();
@@ -1043,7 +1295,265 @@ function buildAsteroidMesh(data) {
 
   worker.postMessage({ cmd: 'init', asteroids: asteroidData });
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
+
+  // Initial filter pass to populate leaderboard
+  applyFilters();
 }
+
+// ─── Phase 3: Filter + Leaderboard ───────────────────────────────────────────
+function getSpecKey(ast) {
+  const s = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
+  if (['C','S','M','X','D'].includes(s)) return s;
+  if (['B','P'].includes(s)) return 'C';
+  return 'other';
+}
+
+function applyFilters() {
+  if (!asteroidMesh || asteroidCount === 0) return;
+  let matchCount = 0;
+  filteredIds = [];
+  for (let i = 0; i < asteroidCount; i++) {
+    const ast = asteroidData[i];
+    let vis = true;
+    if ((ast._score || 0) < filterScore) vis = false;
+    if ((Number(ast.delta_v) || 12) > filterDV) vis = false;
+    if ((ast._diam_m || 0) < filterDiam) vis = false;
+    if ((Number(ast.i) || 0) > filterInc) vis = false;
+    if ((Number(ast.a) || 1) > filterSMA) vis = false;
+    const sk = getSpecKey(ast);
+    if (!filterSpec[sk]) vis = false;
+    if (filterNHATS && !ast._nhats) vis = false;
+    if (filterPHA && ast.pha !== 'Y') vis = false;
+    if (filterWater && !['C','D'].includes(getSpecKey(ast))) vis = false;
+
+    visibleScale[i] = vis ? 1.0 : 0.0001;
+    dummy.position.set(positionCache[i*3], positionCache[i*3+1], positionCache[i*3+2]);
+    dummy.scale.setScalar(visibleScale[i]);
+    dummy.updateMatrix();
+    asteroidMesh.setMatrixAt(i, dummy.matrix);
+    if (vis) { matchCount++; filteredIds.push({ i, score: ast._score || 0 }); }
+  }
+  asteroidMesh.instanceMatrix.needsUpdate = true;
+  const fc = document.getElementById('filter-count');
+  if (fc) fc.textContent = `${matchCount} TARGETS`;
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const container = document.getElementById('leaderboard-list');
+  if (!container) return;
+
+  const sorted = [...filteredIds];
+  if (lbSortMode === 'value') sorted.sort((a,b) => (Number(asteroidData[b.i].price)||0)-(Number(asteroidData[a.i].price)||0));
+  else if (lbSortMode === 'dv') sorted.sort((a,b) => (Number(asteroidData[a.i].delta_v)||99)-(Number(asteroidData[b.i].delta_v)||99));
+  else if (lbSortMode === 'diam') sorted.sort((a,b) => (asteroidData[b.i]._diam_m||0)-(asteroidData[a.i]._diam_m||0));
+  else sorted.sort((a,b) => b.score - a.score);
+
+  const top50 = sorted.slice(0, 50);
+  container.innerHTML = top50.map(({i: idx}, rank) => {
+    const ast = asteroidData[idx];
+    const sk = getSpecKey(ast);
+    const skClass = ['C','S','M','X','D'].includes(sk) ? sk : 'O';
+    const scoreColor = ast._score >= 86 ? '#fef3c7' : ast._score >= 67 ? '#4af7c4' : ast._score >= 34 ? '#d97706' : '#7f1d1d';
+    const nhats = ast._nhats ? '<span style="color:#34d399;font-size:9px;margin-left:2px">N</span>' : '';
+    return `<div class="lb-row ${selectedId===idx?'lb-selected':''}" data-idx="${idx}">
+      <span class="lb-rank">#${rank+1}</span>
+      <span class="lb-type lb-type-${skClass}">${skClass}</span>
+      <span class="lb-name" title="${ast.full_name||''}">${(ast.full_name||ast.pdes||'—').substring(0,16)}${nhats}</span>
+      <div class="lb-bar"><div class="lb-fill" style="width:${ast._score||0}%;background:${scoreColor}"></div></div>
+      <span class="lb-score">${ast._score||0}</span>
+      <span class="lb-dv">${ast.delta_v?Number(ast.delta_v).toFixed(1):'—'}</span>
+    </div>`;
+  }).join('');
+
+  container.querySelectorAll('.lb-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = parseInt(row.dataset.idx);
+      selectAsteroid(idx);
+      flyTo(idx);
+    });
+  });
+}
+
+function flyTo(astIdx) {
+  if (!positionCache.length) return;
+  const x = positionCache[astIdx*3], y = positionCache[astIdx*3+1], z = positionCache[astIdx*3+2];
+  flyTarget = { x, y, z, dist: 2, progress: 0 };
+}
+
+function toggleLeftPanel() {
+  leftPanelOpen = !leftPanelOpen;
+  const lp = document.getElementById('left-panel');
+  const btn = document.getElementById('btn-toggle-filters');
+  if (lp) lp.style.display = leftPanelOpen ? 'block' : 'none';
+  if (btn) btn.style.left = leftPanelOpen ? '280px' : '0';
+}
+
+function renderEconomicsTab(id) {
+  const ast = asteroidData[id];
+  if (!ast) return;
+  document.getElementById('econ-no-selection').style.display = 'none';
+  document.getElementById('econ-content').style.display = 'block';
+
+  const dv = Number(ast.delta_v) || 4;
+  const dryMass = Number(document.getElementById('eco-dry-mass').value) || 1000;
+  const isp = Number(document.getElementById('eco-isp').value) || 450;
+  const g0 = 9.80665;
+  const propMass = dryMass * (Math.exp(dv * 1000 / (g0 * isp)) - 1);
+  const launchMass = dryMass + propMass;
+  const launchCost = launchMass * 2700;
+  const totalCost = launchCost * 1.8;
+
+  document.getElementById('eco-dv').textContent = `${dv.toFixed(2)} km/s`;
+  document.getElementById('eco-propellant').textContent = propMass > 999
+    ? `${(propMass/1000).toFixed(1)} t` : `${Math.round(propMass)} kg`;
+  document.getElementById('eco-launch-mass').textContent = `${Math.round(launchMass)} kg`;
+  document.getElementById('eco-launch-cost').textContent = fmtUSD(launchCost);
+  document.getElementById('eco-total-cost').textContent = fmtUSD(totalCost);
+
+  const spec = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
+  const frac = FRACTIONS[spec] || FRACTIONS.DEFAULT;
+  const dens = DENSITIES[spec] || 2000;
+  const r_m = (ast._diam_m || 500) / 2;
+  const mass_kg = (4/3) * Math.PI * r_m * r_m * r_m * dens;
+  const waterVal = mass_kg * frac.water * 1000;
+  const metalPrice = spec === 'M' ? 30 : 0.15;
+  const metalVal = mass_kg * frac.metals * metalPrice;
+  document.getElementById('eco-water').textContent = fmtUSD(waterVal);
+  document.getElementById('eco-metals').textContent = fmtUSD(metalVal);
+  document.getElementById('eco-asterank').textContent = fmtUSD(ast.price);
+
+  const totalReturn = Math.max(waterVal + metalVal, Number(ast.price) || 0);
+  const roi = totalCost > 0 ? totalReturn / totalCost : 0;
+  const roiEl = document.getElementById('eco-roi');
+  roiEl.textContent = `${roi.toFixed(0)}×`;
+  roiEl.className = 'value ' + (roi > 10 ? 'profit' : roi > 1 ? 'warning' : '');
+
+  const isruNote = document.getElementById('eco-isru-note');
+  if (['C','B','D'].includes(spec) && waterVal > 0) {
+    const waterTons = mass_kg * frac.water / 1000;
+    const missions = Math.round(waterTons / 5);
+    isruNote.style.display = 'block';
+    isruNote.textContent = `◈ WATER POSITIVE — Contains ~${(waterTons/1000).toFixed(0)}k tons of water. Sufficient to refuel ~${missions} additional missions via in-situ propellant production (ISRU).`;
+  } else {
+    isruNote.style.display = 'none';
+  }
+}
+
+async function fetchNHATSApprox() {
+  try {
+    const r = await fetch('https://ssd-api.jpl.nasa.gov/nhats.api', { mode: 'cors' });
+    if (!r.ok) return;
+    const json = await r.json();
+    if (!json.data) return;
+    const desSet = new Set(json.data.map(row => (row.des || '').trim()));
+    asteroidData.forEach(ast => {
+      const des = (ast.pdes || '').trim();
+      if (desSet.has(des)) ast._nhats = true;
+    });
+    applyFilters();
+    console.log('[NHATS] real data merged');
+  } catch(err) {
+    console.warn('[NHATS] API fetch failed, using approximation:', err.message);
+  }
+}
+
+// ─── Phase 3: Filter event wiring ─────────────────────────────────────────────
+(function initFilterEvents() {
+  const wire = (id, prop, parser) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      const v = parser(el.value);
+      if (prop === 'filterScore') filterScore = v;
+      else if (prop === 'filterDV') filterDV = v;
+      else if (prop === 'filterDiam') filterDiam = v;
+      else if (prop === 'filterInc') filterInc = v;
+      else if (prop === 'filterSMA') filterSMA = v;
+      const valEl = document.getElementById(id + '-val');
+      if (valEl) valEl.textContent = prop === 'filterDV' || prop === 'filterInc' || prop === 'filterSMA'
+        ? Number(v).toFixed(1) : v;
+      applyFilters();
+    });
+  };
+  wire('filter-score', 'filterScore', Number);
+  wire('filter-dv',    'filterDV',    Number);
+  wire('filter-diam',  'filterDiam',  Number);
+  wire('filter-inc',   'filterInc',   Number);
+  wire('filter-sma',   'filterSMA',   Number);
+
+  ['C','S','M','X','D','other'].forEach(k => {
+    const el = document.getElementById('filter-' + k);
+    if (el) el.addEventListener('change', () => { filterSpec[k] = el.checked; applyFilters(); });
+  });
+
+  ['nhats','pha','water'].forEach(key => {
+    const el = document.getElementById('filter-' + key);
+    if (!el) return;
+    el.addEventListener('click', () => {
+      const on = el.dataset.on === 'true';
+      el.dataset.on = String(!on);
+      if (key === 'nhats') filterNHATS = !on;
+      else if (key === 'pha') filterPHA = !on;
+      else if (key === 'water') filterWater = !on;
+      applyFilters();
+    });
+  });
+
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      lbSortMode = btn.dataset.sort;
+      renderLeaderboard();
+    });
+  });
+
+  document.getElementById('panel-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('tab-inspector').style.display = tab === 'inspector' ? 'flex' : 'none';
+    document.getElementById('tab-economics').style.display = tab === 'economics' ? 'block' : 'none';
+    if (tab === 'economics' && selectedId >= 0) renderEconomicsTab(selectedId);
+  });
+
+  ['eco-dry-mass','eco-isp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { if (selectedId >= 0) renderEconomicsTab(selectedId); });
+  });
+
+  document.getElementById('btn-export-report').addEventListener('click', () => {
+    if (selectedId < 0) return;
+    const ast = asteroidData[selectedId];
+    const name = ast.full_name || ast.pdes || 'unknown';
+    const lines = [
+      `ASTER MISSION REPORT — ${name}`,
+      `Generated: ${new Date().toISOString()}`,
+      '',
+      `Spectral Type: ${ast.spec || '—'}`,
+      `Diameter: ${ast._diam_m ? (ast._diam_m/1000).toFixed(2) + ' km' : '—'}`,
+      `Semi-major axis: ${ast.a} AU`,
+      `Eccentricity: ${ast.e}`,
+      `Inclination: ${ast.i}°`,
+      `ΔV (rendezvous): ${ast.delta_v || '—'} km/s`,
+      `Mining Score: ${ast._score || 0} / 100`,
+      '',
+      `Asterank Est. Value: ${fmtUSD(ast.price)}`,
+      `Asterank Est. Profit: ${fmtUSD(ast.profit)}`,
+      '',
+      `NHATS accessible: ${ast._nhats ? 'YES' : 'NO'}`,
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `aster_report_${(name).replace(/\s+/g,'_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+})();
 
 // ─── Selection ────────────────────────────────────────────────────────────────
 const raycaster = new THREE.Raycaster();
@@ -1071,9 +1581,43 @@ function selectAsteroid(id) {
   document.getElementById('ast-price').textContent = fmtUSD(ast.price);
   document.getElementById('ast-profit').textContent = fmtUSD(ast.profit);
 
+  // Phase 3: composition + resource value + score
+  const spec3 = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
+  document.getElementById('ast-composition').textContent = COMPOSITIONS[spec3] || 'No composition data';
+
+  const D_m = ast._diam_m || 500;
+  const r_m3 = D_m / 2;
+  const vol_m3 = (4/3) * Math.PI * r_m3 * r_m3 * r_m3;
+  const dens3 = DENSITIES[spec3] || 2000;
+  const mass_kg3 = vol_m3 * dens3;
+  const frac3 = FRACTIONS[spec3] || FRACTIONS.DEFAULT;
+  const waterVal3 = mass_kg3 * frac3.water * 1000;
+  const metalPrice3 = spec3 === 'M' ? 30 : 0.15;
+  const metalVal3 = mass_kg3 * frac3.metals * metalPrice3;
+  const totalVal3 = waterVal3 + metalVal3;
+
+  document.getElementById('ast-water-val').textContent = fmtUSD(waterVal3);
+  document.getElementById('ast-metal-val').textContent = fmtUSD(metalVal3);
+  document.getElementById('ast-total-val').textContent = fmtUSD(totalVal3);
+  document.getElementById('ast-score-display').textContent = `${ast._score || 0} / 100`;
+  document.getElementById('ast-score-bar').style.width = `${ast._score || 0}%`;
+
+  const des3 = ast.pdes || ast.full_name || '';
+  document.getElementById('link-jpl').href =
+    `https://ssd.jpl.nasa.gov/sbdb.cgi?sstr=${encodeURIComponent(des3)}`;
+  document.getElementById('link-papers').href =
+    `https://www.semanticscholar.org/search?q=${encodeURIComponent(des3)}&sort=Relevance`;
+
   document.getElementById('panel-idle').style.display = 'none';
   document.getElementById('panel-data').style.display = 'flex';
 
+  // Switch to inspector tab if on economics
+  const activeTab = document.querySelector('.tab-btn.active');
+  if (activeTab && activeTab.dataset.tab === 'economics') {
+    renderEconomicsTab(id);
+  }
+
+  renderLeaderboard();
   drawOrbitEllipse(ast);
 
   // Exit burn mode on new selection
@@ -1105,6 +1649,12 @@ renderer.domElement.addEventListener('click', (e) => {
     orbitLine.visible = false;
     document.getElementById('panel-data').style.display = 'none';
     document.getElementById('panel-idle').style.display = 'block';
+    // Reset economics tab on deselect
+    const econContent = document.getElementById('econ-content');
+    const econNone = document.getElementById('econ-no-selection');
+    if (econContent) econContent.style.display = 'none';
+    if (econNone) econNone.style.display = 'block';
+    renderLeaderboard();
     if (burnModeActive) cancelBurn();
   }
 });
@@ -1669,7 +2219,10 @@ function applyPositions(buf) {
   if (asteroidMesh && asteroidCount > 0) {
     const base = 24;
     for (let i = 0; i < asteroidCount; i++) {
-      dummy.position.set(buf[base+i*3], buf[base+i*3+1], buf[base+i*3+2]);
+      const x = buf[base+i*3], y = buf[base+i*3+1], z = buf[base+i*3+2];
+      positionCache[i*3] = x; positionCache[i*3+1] = y; positionCache[i*3+2] = z;
+      dummy.position.set(x, y, z);
+      dummy.scale.setScalar(visibleScale.length > i ? visibleScale[i] : 1.0);
       dummy.updateMatrix();
       asteroidMesh.setMatrixAt(i, dummy.matrix);
     }
@@ -1728,6 +2281,19 @@ function animate() {
   document.getElementById('jd-value').textContent = `JD ${currentJD.toFixed(1)}`;
   document.getElementById('date-display').textContent = dateStr;
 
+  // Fly-to animation
+  if (flyTarget) {
+    flyTarget.progress = Math.min(1, flyTarget.progress + (16/1500));
+    const t = flyTarget.progress;
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+    const tgtV = new THREE.Vector3(flyTarget.x, flyTarget.y, flyTarget.z);
+    const dir = new THREE.Vector3(0.3, 0.4, 1).normalize();
+    const dest = tgtV.clone().add(dir.multiplyScalar(flyTarget.dist));
+    camera.position.lerp(dest, ease * 0.08);
+    controls.target.lerp(tgtV, ease * 0.08);
+    if (flyTarget.progress >= 1) flyTarget = null;
+  }
+
   controls.update();
   renderer.render(scene, camera);
 }
@@ -1749,6 +2315,7 @@ async function init() {
   animate();
   const data = await fetchAsteroids();
   buildAsteroidMesh(data);
+  fetchNHATSApprox(); // non-blocking
 }
 
 init();
