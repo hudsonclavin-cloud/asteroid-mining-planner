@@ -1172,6 +1172,7 @@ const dummy = new THREE.Object3D();
 let pendingPositions = null;
 
 // Phase 3 state
+let wasDragging = false;
 let positionCache = new Float32Array(0);
 let visibleScale = new Float32Array(0);
 let filteredIds = [];
@@ -1895,6 +1896,7 @@ function screenToNDC(e) {
 }
 
 function onPointerDown(e) {
+  wasDragging = false;
   if (!burnModeActive) return;
   const ndc = screenToNDC(e);
   gizmoRaycaster.setFromCamera(ndc, camera);
@@ -1912,6 +1914,7 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   if (!dragAxis) return;
+  wasDragging = true;
   const arrowMap = { prograde: arrowPrograde, normal: arrowNormal, radial: arrowRadial };
   const arrow = arrowMap[dragAxis];
   const worldDir = new THREE.Vector3(0, 1, 0).applyQuaternion(arrow.getWorldQuaternion(new THREE.Quaternion())).normalize();
