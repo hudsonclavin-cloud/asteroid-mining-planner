@@ -2588,6 +2588,7 @@ function applyPositions(buf) {
 function animate() {
   requestAnimationFrame(animate);
 
+  frameCount++;
   const now = performance.now();
   const dt = Math.min((now - lastRealTime) / 1000, 0.1);
   lastRealTime = now;
@@ -2647,6 +2648,36 @@ function animate() {
     camera.position.lerp(dest, ease * 0.08);
     controls.target.lerp(tgtV, ease * 0.08);
     if (flyTarget.progress >= 1) flyTarget = null;
+  }
+
+  // ─── Phase 4: Earth Layer ─────────────────────────────────────────────────
+  const earthPos = planets[2].position;
+  const distToEarth = camera.position.distanceTo(earthPos);
+  if (distToEarth < 0.15 && !earthLayerActive) activateEarthLayer();
+  else if (distToEarth >= 0.15 && earthLayerActive) deactivateEarthLayer();
+
+  if (earthLayerActive) {
+    earthDetailGroup.position.copy(earthPos);
+    shellGroup.position.copy(earthPos);
+
+    if (satelliteMesh && satelliteData.length > 0 && frameCount % 3 === 0) {
+      const satCount = Math.min(satelliteData.length, 8000);
+      for (let i = 0; i < satCount; i++) {
+        try {
+          const pos = propagateSatellite(satelliteData[i], currentJD);
+          dummy.position.set(earthPos.x+pos.x, earthPos.y+pos.y, earthPos.z+pos.z);
+          dummy.scale.setScalar(1);
+        } catch(_) {
+          dummy.position.set(earthPos.x, earthPos.y, earthPos.z);
+          dummy.scale.setScalar(0);
+        }
+        dummy.updateMatrix();
+        satelliteMesh.setMatrixAt(i, dummy.matrix);
+      }
+      satelliteMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    if (issIndex >= 0 && frameCount % 30 === 0) drawISSOrbit();
   }
 
   controls.update();
