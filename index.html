@@ -1920,29 +1920,43 @@ function selectAsteroid(id) {
   if (burnModeActive) cancelBurn();
 }
 
-const CLICK_THRESHOLD_PX = 12;
+const CLICK_THRESHOLD_PX = 14;
 const _clickMat4 = new THREE.Matrix4();
 const _clickVec3 = new THREE.Vector3();
 
-function findClosestAsteroidToClick(clientX, clientY) {
-  if (!asteroidMesh || asteroidCount === 0) return -1;
+function findClosestObjectToClick(clientX, clientY) {
   const rect = renderer.domElement.getBoundingClientRect();
-  let bestId = -1;
-  let bestDist = CLICK_THRESHOLD_PX;
-  for (let i = 0; i < asteroidCount; i++) {
-    if (visibleScale.length > i && visibleScale[i] < 0.01) continue;
-    asteroidMesh.getMatrixAt(i, _clickMat4);
-    _clickVec3.setFromMatrixPosition(_clickMat4);
-    const projected = _clickVec3.clone().project(camera);
-    if (projected.z > 1) continue; // behind camera clip
-    const sx = (projected.x * 0.5 + 0.5) * rect.width;
-    const sy = (-projected.y * 0.5 + 0.5) * rect.height;
-    const dx = clientX - rect.left - sx;
-    const dy = clientY - rect.top - sy;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < bestDist) { bestDist = dist; bestId = i; }
+  let bestDist = CLICK_THRESHOLD_PX, bestId = -1, bestType = 'asteroid';
+
+  // Check asteroids (skip filtered-out)
+  if (asteroidMesh && asteroidCount > 0) {
+    for (let i = 0; i < asteroidCount; i++) {
+      if (visibleScale.length > i && visibleScale[i] < 0.01) continue;
+      asteroidMesh.getMatrixAt(i, _clickMat4);
+      _clickVec3.setFromMatrixPosition(_clickMat4);
+      const p = _clickVec3.clone().project(camera);
+      if (p.z > 1) continue;
+      const sx = (p.x*0.5+0.5)*rect.width, sy = (-p.y*0.5+0.5)*rect.height;
+      const d = Math.sqrt((clientX-rect.left-sx)**2 + (clientY-rect.top-sy)**2);
+      if (d < bestDist) { bestDist=d; bestId=i; bestType='asteroid'; }
+    }
   }
-  return bestId;
+
+  // Check satellites when Earth layer active
+  if (earthLayerActive && satelliteMesh && satelliteData.length > 0) {
+    const count = Math.min(satelliteData.length, 8000);
+    for (let i = 0; i < count; i++) {
+      satelliteMesh.getMatrixAt(i, _clickMat4);
+      _clickVec3.setFromMatrixPosition(_clickMat4);
+      const p = _clickVec3.clone().project(camera);
+      if (p.z > 1) continue;
+      const sx = (p.x*0.5+0.5)*rect.width, sy = (-p.y*0.5+0.5)*rect.height;
+      const d = Math.sqrt((clientX-rect.left-sx)**2 + (clientY-rect.top-sy)**2);
+      if (d < bestDist) { bestDist=d; bestId=i; bestType='satellite'; }
+    }
+  }
+
+  return { id: bestId, type: bestType };
 }
 
 renderer.domElement.addEventListener('click', (e) => {
@@ -1963,13 +1977,17 @@ renderer.domElement.addEventListener('click', (e) => {
     if (gizmoHits.length > 0) return; // swallow click on gizmo
   }
 
-  const hitId = findClosestAsteroidToClick(e.clientX, e.clientY);
-  if (hitId >= 0) {
-    selectAsteroid(hitId);
+  const hit = findClosestObjectToClick(e.clientX, e.clientY);
+  if (hit.id >= 0 && hit.type === 'asteroid') {
+    selectAsteroid(hit.id);
+  } else if (hit.id >= 0 && hit.type === 'satellite') {
+    onSatelliteSelect(hit.id);
   } else {
     selectedId = -1;
+    selectedSatId = -1;
     orbitLine.visible = false;
     document.getElementById('panel-data').style.display = 'none';
+    document.getElementById('sat-panel').style.display = 'none';
     document.getElementById('panel-idle').style.display = 'block';
     // Reset economics tab on deselect
     const econContent = document.getElementById('econ-content');
