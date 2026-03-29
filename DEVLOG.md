@@ -90,3 +90,13 @@
 - Primary: `delta_v ≤ 12 km/s` — coarse approximation pending API load
 - Secondary: real NHATS API fetch (`ssd-api.jpl.nasa.gov/nhats.api`) attempted on init; merged on success, silently skipped on CORS failure
 - Designation matching: exact `pdes` string match; ~5–10% expected mismatches due to format differences
+
+---
+
+## Phase 2 Bug Fixes (QA Session — 2026-03-29)
+
+- **Asteroid click:** replaced 3D raycaster with 12px screen-space proximity search — `findClosestAsteroidToClick()` iterates all visible instances, projects to screen, finds closest within threshold
+- **Gizmo drag:** `wasDragging` flag set in `onPointerMove`, checked + cleared at top of click handler — prevents the pointer-up → click sequence from deselecting the asteroid
+- **Porkchop:** offscreen canvas at native 50×40 resolution, scaled via `ctx.drawImage()` to full 308×180 with `imageSmoothingEnabled = false`; marker position scaled proportionally
+- **ΔV field:** `getAsteroidDV(ast)` tries `delta_v/dv/min_dv` fields then falls back to Shoemaker-Helin perihelion approximation (perihelion velocity delta + half-weighted inclination penalty, converted AU/yr → km/s, clamped [3, 12]); displayed with `(est)` suffix when fallback used
+- **Scenario save:** validation reordered — name check before selection check, both show `setStatus()` feedback; success shows `✓ Scenario "name" saved`
