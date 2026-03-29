@@ -1205,6 +1205,53 @@ ghostOriginal.visible = false;
 ghostNew.visible = false;
 scene.add(ghostOriginal, ghostNew);
 
+// ─── Phase 4: Earth Detail + Orbital Shells ──────────────────────────────────
+const earthDetailGroup = new THREE.Group();
+scene.add(earthDetailGroup);
+earthDetailGroup.visible = false;
+
+const earthDetailMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.0425, 32, 32),
+  new THREE.MeshBasicMaterial({ color: 0x1a4a7a })
+);
+earthDetailGroup.add(earthDetailMesh);
+
+const atmMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.045, 32, 32),
+  new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.12, side: THREE.BackSide })
+);
+earthDetailGroup.add(atmMesh);
+
+const eqPts4 = [];
+for (let _j4 = 0; _j4 <= 128; _j4++) {
+  const _a4 = (_j4/128) * Math.PI * 2;
+  eqPts4.push(new THREE.Vector3(Math.cos(_a4)*0.0425, 0, Math.sin(_a4)*0.0425));
+}
+earthDetailGroup.add(new THREE.Line(
+  new THREE.BufferGeometry().setFromPoints(eqPts4),
+  new THREE.LineBasicMaterial({ color: 0x2255aa, transparent: true, opacity: 0.4 })
+));
+
+function kmToAU(km) { return km * 6.67e-6; }
+
+function makeShellRing(radiusAU, color, opacity, tube) {
+  tube = tube || 0.0002;
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(radiusAU, tube, 2, 128),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity })
+  );
+  ring.rotation.x = Math.PI / 2;
+  return ring;
+}
+
+const shellGroup = new THREE.Group();
+shellGroup.add(makeShellRing(0.0425 + kmToAU(400),   0x3b82f6, 0.3));
+shellGroup.add(makeShellRing(0.0425 + kmToAU(2000),  0x3b82f6, 0.15));
+shellGroup.add(makeShellRing(0.0425 + kmToAU(20200), 0x10b981, 0.2));
+shellGroup.add(makeShellRing(0.0425 + kmToAU(35786), 0xfbbf24, 0.5, 0.0006));
+scene.add(shellGroup);
+shellGroup.visible = false;
+
 // ─── Physics Worker ───────────────────────────────────────────────────────────
 const worker = new Worker('./physics.worker.js');
 let asteroidData = [];
@@ -1224,6 +1271,15 @@ let leftPanelOpen = false;
 let filterScore = 0, filterDV = 12, filterDiam = 0, filterInc = 30, filterSMA = 3.5;
 let filterSpec = { C:true, S:true, M:true, X:true, D:true, other:true };
 let filterNHATS = false, filterPHA = false, filterWater = false;
+
+// Phase 4: Earth layer
+let earthLayerActive = false;
+let satelliteData = [];
+let satelliteMesh = null;
+let selectedSatId = -1;
+let issIndex = -1;
+let issOrbitLine = null;
+let frameCount = 0;
 
 worker.onmessage = ({ data }) => {
   if (data.type === 'positions') {
