@@ -1557,6 +1557,201 @@ async function fetchNHATSApprox() {
   }
 }
 
+// ─── Phase 4: Satellite Propagation + CelesTrak ──────────────────────────────
+function propagateSatellite(omm, jd) {
+  const n = omm.MEAN_MOTION * 2 * Math.PI / 86400;
+  const e = omm.ECCENTRICITY || 0;
+  const i = omm.INCLINATION * Math.PI / 180;
+  const Om = omm.RA_OF_ASC_NODE * Math.PI / 180;
+  const w  = omm.ARG_OF_PERICENTER * Math.PI / 180;
+  const M0 = omm.MEAN_ANOMALY * Math.PI / 180;
+  const epochDate = new Date(omm.EPOCH);
+  const epochJD = dateToJD(
+    epochDate.getUTCFullYear(), epochDate.getUTCMonth() + 1, epochDate.getUTCDate()
+  ) + (epochDate.getUTCHours()*3600 + epochDate.getUTCMinutes()*60 + epochDate.getUTCSeconds()) / 86400;
+  const dt = (jd - epochJD) * 86400;
+  let M = M0 + n * dt;
+  M = M - 2*Math.PI * Math.floor((M + Math.PI) / (2*Math.PI));
+  let E = M;
+  for (let k = 0; k < 8; k++) E = E - (E - e*Math.sin(E) - M) / (1 - e*Math.cos(E));
+  const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E/2), Math.sqrt(1-e)*Math.cos(E/2));
+  const GM_earth = 3.986e14;
+  const a_m = Math.pow(GM_earth / (n*n), 1/3);
+  const r_m = a_m * (1 - e*Math.cos(E));
+  const xo = r_m * Math.cos(nu), yo = r_m * Math.sin(nu);
+  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
+  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
+  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
+  return {
+    x: (xo*(cosOm*cosW - sinOm*sinW*cosI) - yo*(cosOm*sinW + sinOm*cosW*cosI)) / AU_m,
+    y: (xo*(sinOm*cosW + cosOm*sinW*cosI) - yo*(sinOm*sinW - cosOm*cosW*cosI)) / AU_m,
+    z: (xo*sinW*sinI + yo*cosW*sinI) / AU_m
+  };
+}
+
+const CELESTRAK_GROUPS = [
+  { name: 'stations', url: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json' },
+  { name: 'active',   url: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json' },
+  { name: 'starlink', url: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json' },
+];
+
+async function fetchSatellites() {
+  setStatus('Fetching satellite catalog...');
+  const cacheKey = 'aster_satellites_v1';
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < 6 * 3600 * 1000) {
+        console.log(`[CelesTrak] cache hit: ${data.length} sats`);
+        buildSatelliteMesh(data); return;
+      }
+    } catch(_) {}
+  }
+  let allSats = [];
+  for (const group of CELESTRAK_GROUPS) {
+    try {
+      const r = await fetch(group.url);
+      if (!r.ok) continue;
+      const gdata = await r.json();
+      if (Array.isArray(gdata)) {
+        allSats = allSats.concat(gdata);
+        console.log(`[CelesTrak] ${group.name}: ${gdata.length}`);
+      }
+    } catch(err) { console.warn(`[CelesTrak] ${group.name}:`, err.message); }
+  }
+  const seen = new Set();
+  const unique = allSats.filter(s => {
+    if (seen.has(s.NORAD_CAT_ID)) return false;
+    seen.add(s.NORAD_CAT_ID); return true;
+  });
+  if (unique.length > 0) {
+    try { localStorage.setItem(cacheKey, JSON.stringify({ data: unique, timestamp: Date.now() })); } catch(_) {}
+    buildSatelliteMesh(unique);
+  } else {
+    setStatus('Satellite data unavailable (CORS)', true);
+  }
+}
+
+function buildSatelliteMesh(data) {
+  satelliteData = data.filter(s => s.MEAN_MOTION && s.INCLINATION !== undefined);
+  const count = Math.min(satelliteData.length, 8000);
+  if (satelliteMesh) { scene.remove(satelliteMesh); satelliteMesh = null; }
+  const leoColor   = new THREE.Color(0x3b82f6);
+  const meoColor   = new THREE.Color(0x10b981);
+  const geoColor   = new THREE.Color(0xfbbf24);
+  const otherColor = new THREE.Color(0x6b7280);
+  satelliteMesh = new THREE.InstancedMesh(
+    new THREE.SphereGeometry(0.0003, 4, 4),
+    new THREE.MeshBasicMaterial(),
+    count
+  );
+  satelliteMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  for (let i = 0; i < count; i++) {
+    const s = satelliteData[i];
+    const n_rs = s.MEAN_MOTION * 2 * Math.PI / 86400;
+    const a_m  = Math.pow(3.986e14 / (n_rs*n_rs), 1/3);
+    const alt_km = (a_m - 6371000) / 1000;
+    let col = alt_km < 2000 ? leoColor : alt_km < 35000 ? meoColor : alt_km < 36500 ? geoColor : otherColor;
+    if (s.OBJECT_NAME && s.OBJECT_NAME.includes('ISS')) col = new THREE.Color(0xff4af7);
+    satelliteMesh.setColorAt(i, col);
+    dummy.position.set(0,0,0); dummy.scale.setScalar(0); dummy.updateMatrix();
+    satelliteMesh.setMatrixAt(i, dummy.matrix);
+  }
+  satelliteMesh.instanceColor.needsUpdate = true;
+  satelliteMesh.visible = false;
+  scene.add(satelliteMesh);
+  const countEl = document.getElementById('sat-count');
+  if (countEl) countEl.textContent = `${count} SATELLITES LOADED`;
+  console.log(`[Satellites] mesh built: ${count}`);
+  findISS();
+}
+
+function findISS() {
+  issIndex = satelliteData.findIndex(s =>
+    s.OBJECT_NAME && (s.OBJECT_NAME.includes('ISS') || s.NORAD_CAT_ID === 25544)
+  );
+  if (issIndex >= 0) {
+    console.log('[ISS] index', issIndex);
+    issOrbitLine = new THREE.Line(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({ color: 0x4af7c4, transparent: true, opacity: 0.6 })
+    );
+    scene.add(issOrbitLine);
+    drawISSOrbit();
+  }
+}
+
+function drawISSOrbit() {
+  if (issIndex < 0 || !issOrbitLine) return;
+  const iss = satelliteData[issIndex];
+  const earthPos = planets[2].position;
+  const period_days = 1 / iss.MEAN_MOTION;
+  const pts = [];
+  for (let k = 0; k <= 128; k++) {
+    try {
+      const pos = propagateSatellite(iss, currentJD + (k/128)*period_days);
+      pts.push(new THREE.Vector3(earthPos.x+pos.x, earthPos.y+pos.y, earthPos.z+pos.z));
+    } catch(_) {}
+  }
+  if (pts.length > 0) {
+    issOrbitLine.geometry.setFromPoints(pts);
+    issOrbitLine.visible = earthLayerActive;
+  }
+}
+
+function activateEarthLayer() {
+  earthLayerActive = true;
+  const earthPos = planets[2].position;
+  earthDetailGroup.position.copy(earthPos);
+  shellGroup.position.copy(earthPos);
+  earthDetailGroup.visible = true;
+  shellGroup.visible = true;
+  planets[2].visible = false;
+  if (satelliteMesh) satelliteMesh.visible = true;
+  if (issOrbitLine) issOrbitLine.visible = true;
+  document.getElementById('earth-hud').style.display = 'block';
+  setStatus('EARTH LAYER — satellite orbits active', true);
+  if (satelliteData.length === 0) fetchSatellites();
+}
+
+function deactivateEarthLayer() {
+  earthLayerActive = false;
+  earthDetailGroup.visible = false;
+  shellGroup.visible = false;
+  planets[2].visible = true;
+  if (satelliteMesh) satelliteMesh.visible = false;
+  if (issOrbitLine) issOrbitLine.visible = false;
+  document.getElementById('earth-hud').style.display = 'none';
+  if (selectedSatId >= 0) {
+    selectedSatId = -1;
+    document.getElementById('sat-panel').style.display = 'none';
+    document.getElementById('panel-idle').style.display = 'block';
+  }
+}
+
+function onSatelliteSelect(idx) {
+  selectedSatId = idx;
+  selectedId = -1;
+  orbitLine.visible = false;
+  const s = satelliteData[idx];
+  const n_rs = s.MEAN_MOTION * 2 * Math.PI / 86400;
+  const a_m  = Math.pow(3.986e14 / (n_rs*n_rs), 1/3);
+  const alt_km = Math.round((a_m - 6371000) / 1000);
+  const regime = alt_km < 2000 ? 'LEO' : alt_km < 35000 ? 'MEO' : alt_km < 36500 ? 'GEO' : 'HEO/Other';
+  document.getElementById('sat-name').textContent   = s.OBJECT_NAME || '—';
+  document.getElementById('sat-norad').textContent  = s.NORAD_CAT_ID || '—';
+  document.getElementById('sat-alt').textContent    = `${alt_km.toLocaleString()} km`;
+  document.getElementById('sat-inc-val').textContent = `${Number(s.INCLINATION).toFixed(2)}°`;
+  document.getElementById('sat-period').textContent = `${(1440/s.MEAN_MOTION).toFixed(1)} min`;
+  document.getElementById('sat-regime').textContent = regime;
+  document.getElementById('sat-epoch').textContent  = s.EPOCH ? s.EPOCH.substring(0,10) : '—';
+  document.getElementById('panel-idle').style.display  = 'none';
+  document.getElementById('panel-data').style.display  = 'none';
+  document.getElementById('sat-panel').style.display   = 'flex';
+  if (issIndex === idx && issOrbitLine) issOrbitLine.visible = true;
+}
+
 // ─── Phase 3: Filter event wiring ─────────────────────────────────────────────
 (function initFilterEvents() {
   const wire = (id, prop, parser) => {
