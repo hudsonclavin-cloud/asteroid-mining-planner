@@ -2068,7 +2068,7 @@ function encodeStateToURL() {
       y: +camera.position.y.toFixed(3),
       z: +camera.position.z.toFixed(3),
     },
-    burns: burns.map(b => ({ p: +b.prograde.toFixed(4), r: +b.radial.toFixed(4), n: +b.normal.toFixed(4) })),
+    burns: burns.map(b => ({ p: +b.dv_p.toFixed(4), r: +b.dv_r.toFixed(4), n: +b.dv_n.toFixed(4), jd: b.jd })),
   };
   try {
     window.location.hash = btoa(JSON.stringify(state));
@@ -2099,7 +2099,7 @@ function loadStateFromURL() {
     if (state.cam) camera.position.set(state.cam.x, state.cam.y, state.cam.z);
     if (state.burns && state.burns.length) {
       burns.length = 0;
-      state.burns.forEach(b => burns.push({ prograde: b.p, radial: b.r, normal: b.n }));
+      state.burns.forEach(b => burns.push({ dv_p: b.p, dv_r: b.r, dv_n: b.n, jd: b.jd || currentJD }));
       activeBurnIdx = 0;
     }
     setStatus(`✓ Loaded shared state: ${state.des}`);
