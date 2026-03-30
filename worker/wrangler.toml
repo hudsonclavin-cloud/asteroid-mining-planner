@@ -1,0 +1,10 @@
+name            = "aster-proxy"
+main            = "index.js"
+compatibility_date = "2024-11-01"
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+# Never commit the actual API key.  Set it once via:
+#
+#   wrangler secret put PERPLEXITY_API_KEY
+#
+# Cloudflare stores it encrypted; the worker accesses it as env.PERPLEXITY_API_KEY.

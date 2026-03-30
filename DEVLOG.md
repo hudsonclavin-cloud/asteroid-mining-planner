@@ -235,3 +235,55 @@ The NHATS fetch is delegated to the physics Web Worker via `cmd: 'fetch_nhats'`.
 - Columns: designation, spec_type, score, delta_v_kms, value_usd, profit_usd, diameter_km, inclination_deg, nhats_*, occ
 
 *Last updated: Phase 7 advanced filters complete, 2026-03-30*
+
+---
+
+## Phase 8 — Cloudflare Worker: Perplexity AI Research Proxy (2026-03-30)
+
+### Architecture
+
+A Cloudflare Worker (`worker/index.js`) proxies `POST /api/research` from the GitHub Pages frontend to the Perplexity API. The `PERPLEXITY_API_KEY` is stored as a Cloudflare encrypted secret — it never appears in source code or git history.
+
+**Request flow:**
+1. Browser POSTs `{ asteroidName, designation, spectralType, orbit, miningScore }` to the worker URL
+2. Worker validates the request, checks rate limit, parses body
+3. Worker calls `buildPrompt()` to construct a structured 5-section research briefing prompt
+4. Worker POSTs to `https://api.perplexity.ai/chat/completions` with `Authorization: Bearer ${env.PERPLEXITY_API_KEY}`
+5. Worker extracts `choices[0].message.content` and returns `{ content, model, usage }` to the browser
+
+### Rate Limiting
+- **Method:** In-process `Map<ip, {count, resetAt}>` at module scope (10 req/min per IP)
+- **Known limitation:** Resets on V8 isolate restart or when Cloudflare spins up a new isolate; not strictly enforced across all worker instances
+- **Impact:** Best-effort for a hobby project. For strict enforcement, use Cloudflare Rate Limiting API or Durable Objects.
+
+### CORS
+- Restricted to `https://hudsonclavin.github.io`
+- Preflight (OPTIONS) returns 204 with `Access-Control-Allow-Origin/Methods/Headers`
+- Non-allowed origins receive the hardcoded `ALLOWED_ORIGIN` value (browser will block the response)
+
+### Prompt Construction (`buildPrompt`)
+Generates a structured prompt covering 5 areas:
+1. Physical properties — size, mass, composition, albedo, rotation period; spectral class
+2. Orbital characteristics — SMA, eccentricity, inclination, MOID
+3. Mining potential — resources, estimated value, extraction challenges
+4. Scientific findings — observations, missions, discoveries
+5. Mission feasibility — ΔV, launch windows, mission concepts
+
+All fields are optional — prompt degrades gracefully with "unknown" / "orbital elements not provided" fallbacks. Response capped at 800 words.
+
+### Model
+- `sonar` (Perplexity's search-augmented model, real-time web search included)
+- `max_tokens: 1000`
+
+### Files Created
+- `worker/index.js` — Cloudflare Worker source
+- `worker/wrangler.toml` — Wrangler config (`name=aster-proxy`, `compatibility_date=2024-11-01`)
+- `worker/README.md` — Full deployment guide with API reference, error codes, local dev instructions
+
+### Deploy
+```bash
+wrangler secret put PERPLEXITY_API_KEY
+cd worker/ && wrangler deploy
+```
+
+*Last updated: Phase 8 complete, 2026-03-30*
