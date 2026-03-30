@@ -196,3 +196,42 @@ The NHATS fetch is delegated to the physics Web Worker via `cmd: 'fetch_nhats'`.
 - App continues with score-based `_nhats` approximation from Phase 3
 
 *Last updated: Phase 6 NHATS overlay complete, 2026-03-30*
+
+---
+
+## Phase 7 — Advanced Multi-Parameter Filter Panel (2026-03-30)
+
+### Filter State Changes
+- Replaced `filterDV` single cap (12 km/s) with `filterDvMin`/`filterDvMax` dual range (0–15 km/s)
+- Added `filterValMin`/`filterValMax` log-scale value filter (slider pos 0–100 → $0–$100T)
+- Added `filterWindowStart`/`filterWindowEnd` mission window (2025–2045, gates NHATS targets only)
+- Existing `filterScore`, `filterSpec`, `filterNHATS`, `filterPHA`, `filterWater` retained
+
+### Dim-instead-of-Hide
+- Changed non-matching asteroid appearance from scale 0.0001 (invisible) to `setColorAt(i, 0x0d0d12)` (10% dim)
+- All asteroids remain in the InstancedMesh at scale 1.0; `instanceColor.needsUpdate = true` on each filter call
+- Performance: same O(N) loop, ~same wall time as before
+
+### Dual-Range Slider
+- Two overlapping `<input type="range">` elements with transparent backgrounds
+- Track fill div (`#dv-fill`, `#val-fill`) positioned via `left`/`width` percentage CSS
+- Crossover prevented: min handler clamps value ≤ max; max handler clamps value ≥ min
+
+### Log-Scale Value Slider
+- `sliderPosToValue(pos)`: `Math.pow(10, pos/100 * log10(1e14))` — pos 50 ≈ $1B, pos 75 ≈ $10T
+- `fmtSliderVal(pos)` calls existing `fmtUSD()` for consistent display
+
+### Presets
+- 4 built-in presets: Easy Reach, Platinum Hunt, Near-Term, Deep Space
+- User presets: `localStorage.setItem('aster_filter_presets', JSON.stringify({key: {...}}))`
+- Preset select `<optgroup>` separates built-in from saved; `populateSavedPresets()` rebuilds on save
+
+### Sort
+- Replaced 4 `.sort-btn` buttons with `<select id="lb-sort-select">`
+- Added 'duration' sort: `ast.nhats?.minDur ?? 9999` ascending (NHATS asteroids first)
+
+### Export Filtered Catalog
+- `exportFilteredCatalog()` exports up to 500 filtered asteroids as CSV
+- Columns: designation, spec_type, score, delta_v_kms, value_usd, profit_usd, diameter_km, inclination_deg, nhats_*, occ
+
+*Last updated: Phase 7 advanced filters complete, 2026-03-30*
