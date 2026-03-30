@@ -124,3 +124,34 @@
 - CelesTrak OMM JSON cached in localStorage (6-hour TTL, key `aster_satellites_v1`)
 - Groups: stations, active, starlink — deduplicated by NORAD_CAT_ID
 - Instance cap: 8,000 satellites (InstancedMesh limit for 60fps performance)
+
+---
+
+## Phase 5 — Polish, Export & Sharing (2026-03-29)
+
+### Orbital Trail Rendering
+- Past trail: 90 samples at 1-day intervals behind `currentJD`, `LineBasicMaterial` cyan (#4af7c4), opacity 0.55
+- Future projection: 90 samples forward, `LineDashedMaterial` blue (#60a5fa), opacity 0.35; `computeLineDistances()` required for dashes to render
+- Trails update when `|currentJD - lastTrailJD| > 1` to avoid per-frame recompute; cleared on asteroid deselect
+- Mobile: trail steps reduced to 45, trails default off
+
+### CSS Label Pool
+- 20 pre-created `<div>` elements projected each frame via `vec.project(camera)`
+- Labels rendered: 8 planet names + selected asteroid name (cyan) + top 5 leaderboard targets (amber)
+- Culled if off-screen or behind camera (z > 1 or z < -1)
+
+### Shareable URL
+- State encoded: `{ des, jd, cam: {x,y,z}, burns: [{p,r,n}] }`
+- Encoding: `btoa(JSON.stringify(state))` → `window.location.hash`
+- Load: retry loop at 100ms intervals, max 30 attempts, waits for asteroid data to arrive
+
+### Mobile Degradation
+- Detection: `window.innerWidth < 768 || navigator.maxTouchPoints > 1`
+- Asteroid limit: 500 (vs 2000), satellite limit: 2000 (vs 8000), trails disabled by default
+- Dynamic limits via `window.ASTEROID_LIMIT` and `window.SAT_LIMIT` checked at fetch time
+
+### Onboarding Tour
+- 5-step positioned tooltip overlay, localStorage gated (`aster_toured` key)
+- Skip + Next/Done buttons; tour restarts if localStorage cleared
+
+*Last updated: Phase 5 complete, 2026-03-29*

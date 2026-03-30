@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Real-time 3D asteroid mining mission planner. Identify high-value targets, simulate orbital burns, and calculate mission economics — in the browser.">
+<meta property="og:title" content="ASTER — Asteroid Mining Mission Planner">
+<meta property="og:description" content="The Bloomberg Terminal of space resource extraction. Find your asteroid, plan your burn, calculate your ROI.">
+<meta property="og:type" content="website">
 <title>ASTER — Asteroid Mining Mission Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -478,6 +482,46 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
 </head>
 <body>
 
+<div id="shortcut-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,5,8,0.92);z-index:200;
+  font-family:'JetBrains Mono','Courier New',monospace;align-items:center;justify-content:center;">
+  <div style="border:1px solid #1f2937;padding:32px 40px;min-width:360px;max-width:480px">
+    <div style="color:#4af7c4;font-size:13px;letter-spacing:0.2em;margin-bottom:20px">⌨ KEYBOARD SHORTCUTS</div>
+    <table style="border-collapse:collapse;width:100%;font-size:12px">
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0;width:80px">?</td><td style="color:#e5e7eb">Toggle this panel</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">SPACE</td><td style="color:#e5e7eb">Play / Pause</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">[ / ]</td><td style="color:#e5e7eb">Slower / Faster</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">B</td><td style="color:#e5e7eb">Toggle burn mode</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">F</td><td style="color:#e5e7eb">Fly to selected</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">E</td><td style="color:#e5e7eb">Fly to Earth</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">R</td><td style="color:#e5e7eb">Reset camera</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">T</td><td style="color:#e5e7eb">Toggle trails</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">M</td><td style="color:#e5e7eb">Toggle left panel</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">ESC</td><td style="color:#e5e7eb">Cancel burn / close</td></tr>
+    </table>
+    <div style="margin-top:20px;font-size:10px;color:#4b5563;text-align:center">PRESS ? OR ESC TO CLOSE</div>
+  </div>
+</div>
+
+<div id="tour-overlay" style="display:none;position:fixed;inset:0;z-index:190;pointer-events:none">
+  <div id="tour-box" style="position:absolute;background:rgba(5,5,8,0.95);border:1px solid #4af7c4;
+    padding:16px 20px;max-width:280px;font-family:'JetBrains Mono','Courier New',monospace;pointer-events:all">
+    <div style="color:#4af7c4;font-size:11px;letter-spacing:0.15em;margin-bottom:8px" id="tour-step-label">STEP 1 OF 5</div>
+    <div style="color:#e5e7eb;font-size:12px;line-height:1.6" id="tour-text"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+      <button id="btn-tour-skip" style="background:none;border:1px solid #1f2937;color:#4b5563;
+        font-family:inherit;font-size:10px;padding:4px 10px;cursor:pointer">SKIP</button>
+      <button id="btn-tour-next" style="background:none;border:1px solid #4af7c4;color:#4af7c4;
+        font-family:inherit;font-size:10px;padding:4px 10px;cursor:pointer">NEXT →</button>
+    </div>
+  </div>
+</div>
+
+<div id="perf-monitor" style="position:fixed;bottom:70px;right:8px;font-family:'JetBrains Mono','Courier New',monospace;
+  font-size:9px;color:#4b5563;text-align:right;pointer-events:none;z-index:5">
+  <div id="fps-display">-- FPS</div>
+  <div id="obj-count-display"></div>
+</div>
+
 <div id="loading">
   <h1>ASTER</h1>
   <div id="loading-bar"></div>
@@ -740,6 +784,7 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
         color:#4af7c4;font-size:10px;line-height:1.6;margin-top:10px"></div>
 
       <button class="action-btn" id="btn-export-report" style="margin-top:10px">↓ EXPORT MISSION REPORT</button>
+      <button class="action-btn" id="btn-share" style="margin-top:4px">⬡ SHARE MISSION URL</button>
     </div>
   </div><!-- /tab-economics -->
 </div>
@@ -755,6 +800,11 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
     <button class="speed-btn" data-speed="10000">10K×</button>
   </div>
   <div id="asteroid-count">▲ 0 ASTEROIDS</div>
+  <div id="bottom-hints" style="font-size:9px;color:#4b5563;letter-spacing:0.08em;display:flex;gap:16px;align-items:center">
+    <span style="cursor:pointer" id="btn-shortcut-hint">? SHORTCUTS</span>
+    <a href="https://github.com/hudsonclavin/asteroid-mining-planner" target="_blank"
+      style="color:#4b5563;text-decoration:none">⬡ GITHUB</a>
+  </div>
 </div>
 
 <script type="module">
@@ -1252,6 +1302,112 @@ shellGroup.add(makeShellRing(0.0425 + kmToAU(35786), 0xfbbf24, 0.5, 0.0006));
 scene.add(shellGroup);
 shellGroup.visible = false;
 
+// ─── Phase 5: Orbital Trails ──────────────────────────────────────────────────
+trailLine = new THREE.Line(
+  new THREE.BufferGeometry(),
+  new THREE.LineBasicMaterial({ color: 0x4af7c4, transparent: true, opacity: 0.55 })
+);
+trailLine.visible = false;
+scene.add(trailLine);
+
+futureLine = new THREE.Line(
+  new THREE.BufferGeometry(),
+  new THREE.LineDashedMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.35, dashSize: 0.01, gapSize: 0.015 })
+);
+futureLine.visible = false;
+scene.add(futureLine);
+
+function clearTrail() {
+  trailLine.geometry.setFromPoints([]);
+  futureLine.geometry.setFromPoints([]);
+  trailLine.visible = false;
+  futureLine.visible = false;
+  lastTrailJD = null;
+}
+
+function updateTrailGeometry(ast) {
+  if (!trailsEnabled || selectedId < 0) return;
+  const steps = isMobile ? 45 : 90;
+  const pts = [];
+  for (let k = steps; k >= 0; k--) {
+    const jd = currentJD - k;
+    const p = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, jd);
+    if (p) pts.push(new THREE.Vector3(p.x/AU_m, p.y/AU_m, p.z/AU_m));
+  }
+  if (pts.length > 1) { trailLine.geometry.setFromPoints(pts); trailLine.visible = true; }
+}
+
+function computeFutureTrail(ast) {
+  if (!trailsEnabled) return;
+  const steps = isMobile ? 45 : 90;
+  const pts = [];
+  for (let k = 0; k <= steps; k++) {
+    const jd = currentJD + k;
+    const p = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, jd);
+    if (p) pts.push(new THREE.Vector3(p.x/AU_m, p.y/AU_m, p.z/AU_m));
+  }
+  if (pts.length > 1) {
+    futureLine.geometry.setFromPoints(pts);
+    futureLine.computeLineDistances();
+    futureLine.visible = true;
+  }
+  lastTrailJD = currentJD;
+}
+
+// ─── Phase 5: CSS Label Pool ──────────────────────────────────────────────────
+(function initLabelPool() {
+  for (let i = 0; i < 20; i++) {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;pointer-events:none;font-family:"JetBrains Mono","Courier New",monospace;' +
+      'font-size:10px;color:#60a5fa;letter-spacing:0.05em;white-space:nowrap;display:none;' +
+      'text-shadow:0 0 4px rgba(0,0,0,0.8)';
+    document.body.appendChild(el);
+    labelPool.push({ el, active: false });
+  }
+})();
+
+const _labelVec = new THREE.Vector3();
+function placeLabels() {
+  for (const lbl of labelPool) { lbl.el.style.display = 'none'; lbl.active = false; }
+  let li = 0;
+  const W = window.innerWidth, H = window.innerHeight;
+  function project3D(x, y, z, text, color) {
+    if (li >= labelPool.length) return;
+    _labelVec.set(x, y, z);
+    const p = _labelVec.clone().project(camera);
+    if (p.z > 1 || p.z < -1) return;
+    const sx = (p.x * 0.5 + 0.5) * W;
+    const sy = (-p.y * 0.5 + 0.5) * H;
+    if (sx < 0 || sx > W || sy < 0 || sy > H) return;
+    const lbl = labelPool[li++];
+    lbl.el.style.left = (sx + 6) + 'px';
+    lbl.el.style.top = (sy - 6) + 'px';
+    lbl.el.style.color = color || '#60a5fa';
+    lbl.el.style.display = 'block';
+    lbl.el.textContent = text;
+    lbl.active = true;
+  }
+  const PLANET_NAMES = ['Mercury','Venus','Earth','Mars','Jupiter','Saturn','Uranus','Neptune'];
+  for (let i = 0; i < planets.length; i++) {
+    const pl = planets[i];
+    if (!pl) continue;
+    project3D(pl.position.x, pl.position.y, pl.position.z, PLANET_NAMES[i], '#60a5fa');
+  }
+  if (selectedId >= 0 && positionCache.length > selectedId * 3) {
+    const x = positionCache[selectedId*3], y = positionCache[selectedId*3+1], z = positionCache[selectedId*3+2];
+    const name = (asteroidData[selectedId]?.full_name || asteroidData[selectedId]?.pdes || '?').trim();
+    project3D(x, y, z, name, '#4af7c4');
+  }
+  const top5 = filteredIds.slice(0, 5);
+  for (const id of top5) {
+    if (id === selectedId) continue;
+    if (positionCache.length <= id * 3) continue;
+    const x = positionCache[id*3], y = positionCache[id*3+1], z = positionCache[id*3+2];
+    const name = (asteroidData[id]?.full_name || asteroidData[id]?.pdes || '?').trim().split(' ')[0];
+    project3D(x, y, z, name, '#92400e');
+  }
+}
+
 // ─── Physics Worker ───────────────────────────────────────────────────────────
 const worker = new Worker('./physics.worker.js');
 let asteroidData = [];
@@ -1280,6 +1436,14 @@ let selectedSatId = -1;
 let issIndex = -1;
 let issOrbitLine = null;
 let frameCount = 0;
+
+// Phase 5: trails + labels + UI
+let trailsEnabled = true;
+let trailLine = null, futureLine = null;
+let lastTrailJD = null;
+let labelPool = [];
+let fpsFrames = 0, fpsLast = performance.now();
+const isMobile = window.innerWidth < 768 || navigator.maxTouchPoints > 1;
 
 worker.onmessage = ({ data }) => {
   if (data.type === 'positions') {
@@ -1327,7 +1491,7 @@ let activeBurnIdx = -1;  // -1 = no saved burns yet
 // ─── Asterank API ─────────────────────────────────────────────────────────────
 const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
   'query=%7B%22e%22%3A%7B%22%24lt%22%3A0.4%7D%2C%22i%22%3A%7B%22%24lt%22%3A20%7D%2C%22a%22%3A%7B%22%24lt%22%3A2.5%7D%7D' +
-  '&limit=2000&sort=score';
+  '&limit=' + (window.ASTEROID_LIMIT || 2000) + '&sort=score';
 const CORS_PROXY = 'https://corsproxy.io/?';
 
 async function fetchAsteroids() {
@@ -1635,7 +1799,7 @@ async function fetchSatellites() {
 
 function buildSatelliteMesh(data) {
   satelliteData = data.filter(s => s.MEAN_MOTION && s.INCLINATION !== undefined);
-  const count = Math.min(satelliteData.length, 8000);
+  const count = Math.min(satelliteData.length, window.SAT_LIMIT || 8000);
   if (satelliteMesh) { scene.remove(satelliteMesh); satelliteMesh = null; }
   const leoColor   = new THREE.Color(0x3b82f6);
   const meoColor   = new THREE.Color(0x10b981);
@@ -1819,35 +1983,170 @@ function onSatelliteSelect(idx) {
     if (el) el.addEventListener('input', () => { if (selectedId >= 0) renderEconomicsTab(selectedId); });
   });
 
-  document.getElementById('btn-export-report').addEventListener('click', () => {
-    if (selectedId < 0) return;
-    const ast = asteroidData[selectedId];
-    const name = ast.full_name || ast.pdes || 'unknown';
-    const lines = [
-      `ASTER MISSION REPORT — ${name}`,
-      `Generated: ${new Date().toISOString()}`,
-      '',
-      `Spectral Type: ${ast.spec || '—'}`,
-      `Diameter: ${ast._diam_m ? (ast._diam_m/1000).toFixed(2) + ' km' : '—'}`,
-      `Semi-major axis: ${ast.a} AU`,
-      `Eccentricity: ${ast.e}`,
-      `Inclination: ${ast.i}°`,
-      `ΔV (rendezvous): ${ast.delta_v || '—'} km/s`,
-      `Mining Score: ${ast._score || 0} / 100`,
-      '',
-      `Asterank Est. Value: ${fmtUSD(ast.price)}`,
-      `Asterank Est. Profit: ${fmtUSD(ast.profit)}`,
-      '',
-      `NHATS accessible: ${ast._nhats ? 'YES' : 'NO'}`,
-    ];
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `aster_report_${(name).replace(/\s+/g,'_')}.txt`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
+  document.getElementById('btn-export-report').addEventListener('click', exportMissionReport);
 })();
+
+// ─── Phase 5: Full Mission Report Export ─────────────────────────────────────
+function exportMissionReport() {
+  if (selectedId < 0) { setStatus('Select an asteroid first', true); return; }
+  const ast = asteroidData[selectedId];
+  const name = ast.full_name || ast.pdes || 'unknown';
+  const dv = getAsteroidDV(ast);
+  const dvSuffix = (ast.delta_v && Number(ast.delta_v) > 0) ? '' : ' (estimated)';
+  const D_m = ast._diam_m || 500;
+  const spec3 = (ast.spec || ast.spec_T || '?').trim().charAt(0).toUpperCase();
+  const vol_m3 = (4/3) * Math.PI * Math.pow(D_m/2, 3);
+  const dens = { C:1400, S:2700, M:5300, D:1200 }[spec3] || 2000;
+  const mass_kg = vol_m3 * dens;
+  const m_prop = tsiolkovsky(dv);
+  const launchCost = (1000 + m_prop) * 2700 * 1.8;
+  const burnLines = burns.map((b, i) =>
+    `  Burn ${i+1}: prograde ${b.prograde.toFixed(3)} km/s, radial ${b.radial.toFixed(3)} km/s, normal ${b.normal.toFixed(3)} km/s`
+  );
+  const lines = [
+    '═══════════════════════════════════════════════════════════',
+    '  ASTER MISSION REPORT',
+    `  Target: ${name}`,
+    `  Generated: ${new Date().toISOString()}`,
+    `  Simulation Date: ${jdToDate(currentJD)}`,
+    '═══════════════════════════════════════════════════════════',
+    '',
+    '── TARGET PROFILE ──────────────────────────────────────────',
+    `  Spectral Type:     ${ast.spec || ast.spec_T || '—'}`,
+    `  Diameter:          ${(D_m/1000).toFixed(3)} km`,
+    `  Est. Mass:         ${mass_kg.toExponential(2)} kg`,
+    `  Mining Score:      ${ast._score || 0} / 100`,
+    `  NHATS Accessible:  ${ast._nhats ? 'YES' : 'NO'}`,
+    '',
+    '── ORBITAL ELEMENTS ────────────────────────────────────────',
+    `  Semi-major axis:   ${Number(ast.a).toFixed(6)} AU`,
+    `  Eccentricity:      ${Number(ast.e).toFixed(6)}`,
+    `  Inclination:       ${Number(ast.i).toFixed(4)}°`,
+    `  RAAN (Ω):          ${Number(ast.om).toFixed(4)}°`,
+    `  Arg. of Periapsis: ${Number(ast.w).toFixed(4)}°`,
+    `  Mean Anomaly:      ${Number(ast.ma).toFixed(4)}°`,
+    `  MOID (Earth):      ${ast.moid ? Number(ast.moid).toFixed(6) + ' AU' : '—'}`,
+    '',
+    '── MISSION ΔV BUDGET ───────────────────────────────────────',
+    `  Min. Rendezvous ΔV: ${dv.toFixed(3)} km/s${dvSuffix}`,
+    `  Propellant mass:    ${m_prop.toFixed(1)} kg (Isp=450s, m_dry=1000kg)`,
+    ...(burns.length > 0 ? ['', '  Planned Burns:', ...burnLines] : []),
+    '',
+    '── ECONOMICS ───────────────────────────────────────────────',
+    `  Asterank Value:    ${fmtUSD(ast.price)}`,
+    `  Asterank Profit:   ${fmtUSD(ast.profit)}`,
+    `  Est. Launch Cost:  ${fmtUSD(launchCost)} (Falcon 9 rate × 1.8 overhead)`,
+    '',
+    '── CAVEATS ─────────────────────────────────────────────────',
+    '  ΔV from Keplerian propagation only (no perturbations)',
+    '  Economics are order-of-magnitude estimates',
+    '  Verify launch windows with JPL Horizons before mission design',
+    '',
+    '═══════════════════════════════════════════════════════════',
+    '  Generated by ASTER — asteroid-mining-planner',
+    '═══════════════════════════════════════════════════════════',
+  ];
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `aster_report_${name.replace(/[^a-z0-9]/gi, '_')}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  setStatus(`✓ Report exported: ${name}`);
+}
+
+// ─── Phase 5: Shareable URL ───────────────────────────────────────────────────
+function encodeStateToURL() {
+  if (selectedId < 0) { setStatus('Select an asteroid first', true); return; }
+  const ast = asteroidData[selectedId];
+  const state = {
+    des: ast.pdes || ast.full_name,
+    jd: Math.round(currentJD),
+    cam: {
+      x: +camera.position.x.toFixed(3),
+      y: +camera.position.y.toFixed(3),
+      z: +camera.position.z.toFixed(3),
+    },
+    burns: burns.map(b => ({ p: +b.prograde.toFixed(4), r: +b.radial.toFixed(4), n: +b.normal.toFixed(4) })),
+  };
+  try {
+    window.location.hash = btoa(JSON.stringify(state));
+    navigator.clipboard.writeText(window.location.href).then(
+      () => setStatus('✓ URL copied to clipboard'),
+      () => setStatus('✓ URL encoded in address bar')
+    );
+  } catch(err) {
+    setStatus('URL encode failed', true);
+    console.error('[Share]', err);
+  }
+}
+
+function loadStateFromURL() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return;
+  let state;
+  try { state = JSON.parse(atob(hash)); } catch(_) { return; }
+  if (!state || !state.des) return;
+  function tryApply(attempt) {
+    if (attempt > 30) return;
+    const idx = asteroidData.findIndex(a =>
+      (a.pdes && a.pdes === state.des) || (a.full_name && a.full_name === state.des)
+    );
+    if (idx < 0) { setTimeout(() => tryApply(attempt + 1), 100); return; }
+    selectAsteroid(idx);
+    if (state.jd) currentJD = state.jd;
+    if (state.cam) camera.position.set(state.cam.x, state.cam.y, state.cam.z);
+    if (state.burns && state.burns.length) {
+      burns.length = 0;
+      state.burns.forEach(b => burns.push({ prograde: b.p, radial: b.r, normal: b.n }));
+      activeBurnIdx = 0;
+    }
+    setStatus(`✓ Loaded shared state: ${state.des}`);
+  }
+  setTimeout(() => tryApply(0), 200);
+}
+
+document.getElementById('btn-share').addEventListener('click', encodeStateToURL);
+document.getElementById('btn-shortcut-hint').addEventListener('click', () => {
+  document.getElementById('shortcut-overlay').style.display = 'flex';
+});
+
+// ─── Phase 5: Onboarding Tour ─────────────────────────────────────────────────
+const TOUR_STEPS = [
+  { text: 'Welcome to ASTER — the asteroid mining mission planner. This 5-step tour shows you the key features.', pos: { bottom: '80px', left: '50%', transform: 'translateX(-50%)' } },
+  { text: 'The left panel ranks asteroids by mining score. Click any row to select a target, or use the filters at the top.', pos: { top: '80px', left: '340px' } },
+  { text: 'Click any asteroid in the 3D view to inspect it. The right panel shows orbital elements, economics, and resource composition.', pos: { top: '80px', right: '360px' } },
+  { text: 'Select an asteroid then press B (or click PLAN MISSION) to enter burn mode. Drag the gizmo arrows to simulate a ΔV maneuver.', pos: { bottom: '80px', right: '360px' } },
+  { text: 'Press ? to see all keyboard shortcuts. Use [ and ] to control time speed, F to fly to your selected asteroid.', pos: { bottom: '80px', left: '50%', transform: 'translateX(-50%)' } },
+];
+let tourStep = 0;
+
+function showTour() {
+  tourStep = 0;
+  showTourStep();
+}
+
+function showTourStep() {
+  if (tourStep >= TOUR_STEPS.length) {
+    document.getElementById('tour-overlay').style.display = 'none';
+    localStorage.setItem('aster_toured', '1');
+    return;
+  }
+  const step = TOUR_STEPS[tourStep];
+  document.getElementById('tour-step-label').textContent = `STEP ${tourStep + 1} OF ${TOUR_STEPS.length}`;
+  document.getElementById('tour-text').textContent = step.text;
+  const box = document.getElementById('tour-box');
+  Object.assign(box.style, { top:'', bottom:'', left:'', right:'', transform:'' });
+  Object.assign(box.style, step.pos);
+  document.getElementById('btn-tour-next').textContent = tourStep < TOUR_STEPS.length - 1 ? 'NEXT →' : 'DONE ✓';
+  document.getElementById('tour-overlay').style.display = 'block';
+}
+
+document.getElementById('btn-tour-next').addEventListener('click', () => { tourStep++; showTourStep(); });
+document.getElementById('btn-tour-skip').addEventListener('click', () => {
+  document.getElementById('tour-overlay').style.display = 'none';
+  localStorage.setItem('aster_toured', '1');
+});
 
 // ─── Selection ────────────────────────────────────────────────────────────────
 const raycaster = new THREE.Raycaster();
@@ -1856,6 +2155,7 @@ let selectedId = -1;
 
 function selectAsteroid(id) {
   selectedId = id;
+  clearTrail();
   const ast = asteroidData[id];
   if (!ast) return;
 
@@ -1918,6 +2218,8 @@ function selectAsteroid(id) {
 
   // Exit burn mode on new selection
   if (burnModeActive) cancelBurn();
+
+  if (trailsEnabled) { updateTrailGeometry(ast); computeFutureTrail(ast); }
 }
 
 const CLICK_THRESHOLD_PX = 14;
@@ -2260,12 +2562,68 @@ function onPointerUp() {
 }
 
 // ─── Keyboard Shortcuts ───────────────────────────────────────────────────────
+const SPEED_STEPS = [0, 1, 100, 1000, 10000];
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'b' || e.key === 'B') {
-    if (selectedId >= 0) toggleBurnMode();
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  const so = document.getElementById('shortcut-overlay');
+  if (e.key === '?') {
+    so.style.display = so.style.display === 'flex' ? 'none' : 'flex';
+    return;
   }
   if (e.key === 'Escape') {
+    if (so.style.display === 'flex') { so.style.display = 'none'; return; }
     if (burnModeActive) cancelBurn();
+    return;
+  }
+  if (e.key === 'b' || e.key === 'B') { if (selectedId >= 0) toggleBurnMode(); return; }
+  if (e.key === ' ') {
+    e.preventDefault();
+    const wasRunning = simSpeed !== 0;
+    simSpeed = wasRunning ? 0 : 1000;
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.speed) === simSpeed);
+    });
+    return;
+  }
+  if (e.key === '[') {
+    const idx = SPEED_STEPS.indexOf(Math.abs(simSpeed));
+    simSpeed = idx > 0 ? SPEED_STEPS[idx - 1] : 0;
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.speed) === simSpeed);
+    });
+    return;
+  }
+  if (e.key === ']') {
+    const idx = SPEED_STEPS.indexOf(Math.abs(simSpeed));
+    if (idx < SPEED_STEPS.length - 1) simSpeed = SPEED_STEPS[idx + 1];
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.speed) === simSpeed);
+    });
+    return;
+  }
+  if (e.key === 'f' || e.key === 'F') { if (selectedId >= 0) flyTo(selectedId); return; }
+  if (e.key === 'e' || e.key === 'E') {
+    const ep = planets[2].position;
+    flyTarget = { x: ep.x, y: ep.y + 0.05, z: ep.z + 0.1, dist: 0, progress: 0 };
+    return;
+  }
+  if (e.key === 'r' || e.key === 'R') {
+    camera.position.set(0, 6, 18);
+    controls.target.set(0, 0, 0);
+    flyTarget = null;
+    return;
+  }
+  if (e.key === 't' || e.key === 'T') {
+    trailsEnabled = !trailsEnabled;
+    if (!trailsEnabled) clearTrail();
+    else if (selectedId >= 0) { const ast = asteroidData[selectedId]; if (ast) { updateTrailGeometry(ast); computeFutureTrail(ast); } }
+    setStatus(trailsEnabled ? 'Trails ON' : 'Trails OFF');
+    return;
+  }
+  if (e.key === 'm' || e.key === 'M') {
+    document.getElementById('btn-toggle-left').click();
+    return;
   }
 });
 
@@ -2593,6 +2951,15 @@ function animate() {
   const dt = Math.min((now - lastRealTime) / 1000, 0.1);
   lastRealTime = now;
 
+  // FPS counter
+  fpsFrames++;
+  if (now - fpsLast >= 1000) {
+    document.getElementById('fps-display').textContent = fpsFrames + ' FPS';
+    document.getElementById('obj-count-display').textContent = asteroidCount + ' AST';
+    fpsFrames = 0;
+    fpsLast = now;
+  }
+
   if (!isScrubbing && simSpeed !== 0) {
     currentJD += simSpeed * dt;
     scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
@@ -2680,6 +3047,18 @@ function animate() {
     if (issIndex >= 0 && frameCount % 30 === 0) drawISSOrbit();
   }
 
+  // ─── Phase 5: Trail update ────────────────────────────────────────────────
+  if (trailsEnabled && selectedId >= 0 && asteroidData.length > 0) {
+    const _tast = asteroidData[selectedId];
+    if (_tast && (lastTrailJD === null || Math.abs(currentJD - lastTrailJD) > 1)) {
+      updateTrailGeometry(_tast);
+      computeFutureTrail(_tast);
+    }
+  }
+
+  // ─── Phase 5: Labels ──────────────────────────────────────────────────────
+  placeLabels();
+
   controls.update();
   renderer.render(scene, camera);
 }
@@ -2692,6 +3071,13 @@ window.addEventListener('resize', () => {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
+  // Mobile degradation
+  if (isMobile) {
+    window.ASTEROID_LIMIT = 500;
+    window.SAT_LIMIT = 2000;
+    trailsEnabled = false;
+    console.log('[Mobile] degraded mode: 500 asteroids, trails off');
+  }
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
   await new Promise(r => setTimeout(r, 400));
   const loading = document.getElementById('loading');
@@ -2702,6 +3088,8 @@ async function init() {
   const data = await fetchAsteroids();
   buildAsteroidMesh(data);
   fetchNHATSApprox(); // non-blocking
+  loadStateFromURL();
+  if (!localStorage.getItem('aster_toured')) showTour();
 }
 
 init();
