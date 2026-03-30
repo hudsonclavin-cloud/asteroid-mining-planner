@@ -509,4 +509,21 @@ self.onmessage = function(e) {
     self.postMessage({ type: 'porkchop', grid, nx, ny, jd_start, jd_end, tof_min, tof_max }, [grid.buffer]);
     return;
   }
+
+  if (msg.cmd === 'fetch_nhats') {
+    (async function fetchNHATSData(url) {
+      try {
+        const r = await fetch(url, { mode: 'cors' });
+        if (!r.ok) {
+          self.postMessage({ type: 'nhats_result', ok: false, error: `HTTP ${r.status}` });
+          return;
+        }
+        const json = await r.json();
+        self.postMessage({ type: 'nhats_result', ok: true, data: json.data || [] });
+      } catch(err) {
+        self.postMessage({ type: 'nhats_result', ok: false, error: err.message });
+      }
+    })(msg.url);
+    return;
+  }
 };

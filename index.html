@@ -678,6 +678,11 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
       <div id="ast-score-bar" style="height:100%;background:#4af7c4;transition:width 0.3s;width:0%"></div>
     </div>
 
+    <div id="nhats-badge" style="display:none;margin:6px 0 4px;padding:5px 8px;border:1px solid #fbbf24;color:#fbbf24;font-size:10px;letter-spacing:0.12em">
+      ◈ NHATS VERIFIED
+      <div id="nhats-details" style="color:#9ca3af;font-size:9px;margin-top:3px;line-height:1.7"></div>
+    </div>
+
     <div style="display:flex;gap:6px;margin-bottom:10px">
       <a id="link-jpl" href="#" target="_blank" class="ext-link">JPL →</a>
       <a id="link-papers" href="#" target="_blank" class="ext-link">PAPERS →</a>
@@ -1140,6 +1145,13 @@ const orbitLine = new THREE.Line(orbitGeo, new THREE.LineBasicMaterial({ color: 
 orbitLine.visible = false;
 scene.add(orbitLine);
 
+// NHATS pulsing ring — shown on selected NHATS-verified asteroid
+const nhatsRingGeo = new THREE.RingGeometry(0.008, 0.012, 32);
+const nhatsRingMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
+const nhatsRing = new THREE.Mesh(nhatsRingGeo, nhatsRingMat);
+nhatsRing.visible = false;
+scene.add(nhatsRing);
+
 // Burn mode orbit lines
 const originalOrbitLine = makeOrbitLine(0xffffff, true, 0.5);  // white dashed = pre-burn
 const newOrbitLine = makeOrbitLine(0xff7700, false, 0.85);       // orange = post-burn
@@ -1437,6 +1449,7 @@ let leftPanelOpen = false;
 let filterScore = 0, filterDV = 12, filterDiam = 0, filterInc = 30, filterSMA = 3.5;
 let filterSpec = { C:true, S:true, M:true, X:true, D:true, other:true };
 let filterNHATS = false, filterPHA = false, filterWater = false;
+let nhatsMap = null; // Map<string, nhats_row> keyed by des.trim() — null until loaded
 
 // Phase 4: Earth layer
 let earthLayerActive = false;
@@ -1463,6 +1476,18 @@ worker.onmessage = ({ data }) => {
   }
   if (data.type === 'porkchop') {
     renderPorkchop(data);
+    return;
+  }
+  if (data.type === 'nhats_result') {
+    if (!data.ok) {
+      console.warn('[NHATS] API failed:', data.error);
+      setStatus('NHATS: offline', false);
+      return;
+    }
+    try {
+      localStorage.setItem('aster_nhats_v1', JSON.stringify({ data: data.data, timestamp: Date.now() }));
+    } catch(_) {}
+    applyNHATSData(data.data);
     return;
   }
 };
@@ -1706,22 +1731,54 @@ function renderEconomicsTab(id) {
   }
 }
 
-async function fetchNHATSApprox() {
-  try {
-    const r = await fetch('https://ssd-api.jpl.nasa.gov/nhats.api', { mode: 'cors' });
-    if (!r.ok) return;
-    const json = await r.json();
-    if (!json.data) return;
-    const desSet = new Set(json.data.map(row => (row.des || '').trim()));
-    asteroidData.forEach(ast => {
-      const des = (ast.pdes || '').trim();
-      if (desSet.has(des)) ast._nhats = true;
-    });
-    applyFilters();
-    console.log('[NHATS] real data merged');
-  } catch(err) {
-    console.warn('[NHATS] API fetch failed, using approximation:', err.message);
+async function fetchNHATSData() {
+  const NHATS_URL = 'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035';
+  const cacheKey = 'aster_nhats_v1';
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < 24 * 3600 * 1000) {
+        console.log(`[NHATS] cache hit: ${data.length} entries`);
+        applyNHATSData(data);
+        return;
+      }
+    } catch(_) {}
   }
+  worker.postMessage({ cmd: 'fetch_nhats', url: NHATS_URL });
+}
+
+function applyNHATSData(rows) {
+  if (!asteroidData || asteroidData.length === 0) return;
+  nhatsMap = new Map();
+  rows.forEach(row => nhatsMap.set((row.des || '').trim(), row));
+  let matchCount = 0;
+  for (let i = 0; i < asteroidData.length; i++) {
+    const ast = asteroidData[i];
+    const des = (ast.pdes || '').trim();
+    const row = nhatsMap.get(des);
+    if (row) {
+      ast.nhats = { accessible: true, minDv: row.min_dv, minDur: row.min_dur, nTrajectories: row.n_via_points, stayTime: row.min_stay, occ: row.occ };
+      ast._nhats = true;
+      matchCount++;
+    } else {
+      ast.nhats = { accessible: false };
+      // Do NOT clear _nhats — preserves score-based approximation for non-catalog targets
+    }
+  }
+  updateNHATSColors();
+  applyFilters();
+  setStatus(`NHATS: ${matchCount} targets loaded`, false);
+  console.log(`[NHATS] real data merged: ${matchCount} matches`);
+}
+
+function updateNHATSColors() {
+  if (!asteroidMesh) return;
+  const amber = new THREE.Color(0xfbbf24);
+  for (let i = 0; i < asteroidData.length; i++) {
+    if (asteroidData[i].nhats?.accessible) asteroidMesh.setColorAt(i, amber);
+  }
+  asteroidMesh.instanceColor.needsUpdate = true;
 }
 
 // ─── Phase 4: Satellite Propagation + CelesTrak ──────────────────────────────
@@ -2020,7 +2077,7 @@ function exportMissionReport() {
     `  Diameter:          ${(D_m/1000).toFixed(3)} km`,
     `  Est. Mass:         ${mass_kg.toExponential(2)} kg`,
     `  Mining Score:      ${ast._score || 0} / 100`,
-    `  NHATS Accessible:  ${ast._nhats ? 'YES' : 'NO'}`,
+    `  NHATS Status:      ${ast.nhats?.accessible ? 'VERIFIED (JPL)' : ast._nhats ? 'ESTIMATED' : 'NO'}`,
     '',
     '── ORBITAL ELEMENTS ────────────────────────────────────────',
     `  Semi-major axis:   ${Number(ast.a).toFixed(6)} AU`,
@@ -2201,6 +2258,15 @@ function selectAsteroid(id) {
   document.getElementById('ast-total-val').textContent = fmtUSD(totalVal3);
   document.getElementById('ast-score-display').textContent = `${ast._score || 0} / 100`;
   document.getElementById('ast-score-bar').style.width = `${ast._score || 0}%`;
+
+  const nhatsBadge = document.getElementById('nhats-badge');
+  if (ast.nhats?.accessible) {
+    document.getElementById('nhats-details').textContent =
+      `Min ΔV: ${ast.nhats.minDv} km/s  ·  Duration: ${ast.nhats.minDur}d  ·  Trajectories: ${ast.nhats.nTrajectories}  ·  OCC: ${ast.nhats.occ}`;
+    nhatsBadge.style.display = 'block';
+  } else {
+    nhatsBadge.style.display = 'none';
+  }
 
   const des3 = ast.pdes || ast.full_name || '';
   document.getElementById('link-jpl').href =
@@ -3011,6 +3077,16 @@ function animate() {
     pendingPositions = null;
   }
 
+  // NHATS pulsing ring
+  if (selectedId >= 0 && asteroidData[selectedId]?.nhats?.accessible && positionCache.length > selectedId * 3) {
+    nhatsRing.position.set(positionCache[selectedId*3], positionCache[selectedId*3+1], positionCache[selectedId*3+2]);
+    nhatsRing.quaternion.copy(camera.quaternion);
+    nhatsRingMat.opacity = Math.sin(Date.now() * 0.002) * 0.3 + 0.5;
+    nhatsRing.visible = true;
+  } else {
+    nhatsRing.visible = false;
+  }
+
   // Update gizmo in burn mode
   if (burnModeActive && selectedId >= 0) {
     updateGizmo();
@@ -3124,7 +3200,7 @@ async function init() {
   animate();
   const data = await fetchAsteroids();
   buildAsteroidMesh(data);
-  fetchNHATSApprox(); // non-blocking
+  fetchNHATSData(); // non-blocking — NHATS real data, worker-backed, 24h cache
   loadStateFromURL();
   if (!localStorage.getItem('aster_toured')) showTour();
 }

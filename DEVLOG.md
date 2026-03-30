@@ -155,3 +155,44 @@
 - Skip + Next/Done buttons; tour restarts if localStorage cleared
 
 *Last updated: Phase 5 complete, 2026-03-29*
+
+---
+
+## Phase 6 — NHATS Real Data Overlay (2026-03-30)
+
+### Architecture
+
+The NHATS fetch is delegated to the physics Web Worker via `cmd: 'fetch_nhats'`. The worker issues a `fetch()` call to the JPL NHATS API and posts back raw JSON rows. The main thread owns all localStorage operations (workers have no localStorage access).
+
+**Call sequence:**
+1. `init()` calls `fetchNHATSData()` after `buildAsteroidMesh()` returns
+2. `fetchNHATSData()` checks `aster_nhats_v1` in localStorage (24-hour TTL)
+3. Cache hit → `applyNHATSData(cached.data)` directly
+4. Cache miss → `worker.postMessage({ cmd: 'fetch_nhats', url: NHATS_URL })`
+5. Worker fetches, posts `{ type: 'nhats_result', ok, data }`
+6. Main thread caches response, calls `applyNHATSData(data.data)`
+
+### NHATS API
+- **URL:** `https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035`
+- **Parameters:** max ΔV = 12 km/s, max duration = 450 days, min stay = 8 days, launch window 2025–2035
+- **Response fields used:** `des`, `min_dv`, `min_dur`, `n_via_points`, `min_stay`, `occ`
+- **Cache TTL:** 24 hours (matches satellite cache pattern)
+
+### Designation Matching
+- Key: `ast.pdes.trim()` matched against `row.des.trim()`
+- Expected match rate: ~5–20% of loaded synthetic asteroids (NHATS catalog ≈ 100–200 targets)
+- Non-matching asteroids retain their `_nhats` boolean approximation from Phase 3 (dv ≤ 12 km/s)
+
+### Visual Indicators
+- **Color:** NHATS-verified asteroids recolored amber `#fbbf24` via `asteroidMesh.setColorAt()` — overrides score-based color
+- **Pulsing ring:** `THREE.RingGeometry` billboard on selected NHATS asteroid, opacity pulsed via `Math.sin(Date.now() * 0.002) * 0.3 + 0.5`
+
+### Info Panel
+- `#nhats-badge` div shown/hidden in `selectAsteroid()`; displays minDv, minDur, nTrajectories, OCC
+- Export report: `NHATS Status: VERIFIED (JPL)` | `ESTIMATED` | `NO`
+
+### Failure Handling
+- Worker fetch error → `setStatus('NHATS: offline', false)` — persistent, no autoFade
+- App continues with score-based `_nhats` approximation from Phase 3
+
+*Last updated: Phase 6 NHATS overlay complete, 2026-03-30*
