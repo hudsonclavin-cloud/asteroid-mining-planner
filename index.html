@@ -2627,6 +2627,18 @@ window.addEventListener('keydown', (e) => {
     toggleLeftPanel();
     return;
   }
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    currentJD -= 1;
+    scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
+    return;
+  }
+  if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    currentJD += 1;
+    scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
+    return;
+  }
 });
 
 // ─── Porkchop Plot ────────────────────────────────────────────────────────────
