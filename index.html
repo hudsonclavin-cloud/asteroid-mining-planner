@@ -1302,6 +1302,14 @@ shellGroup.add(makeShellRing(0.0425 + kmToAU(35786), 0xfbbf24, 0.5, 0.0006));
 scene.add(shellGroup);
 shellGroup.visible = false;
 
+// Phase 5: trails + labels + UI
+let trailsEnabled = true;
+let trailLine = null, futureLine = null;
+let lastTrailJD = null;
+let labelPool = [];
+let fpsFrames = 0, fpsLast = performance.now();
+const isMobile = window.innerWidth < 768 || navigator.maxTouchPoints > 1;
+
 // ─── Phase 5: Orbital Trails ──────────────────────────────────────────────────
 trailLine = new THREE.Line(
   new THREE.BufferGeometry(),
@@ -1436,14 +1444,6 @@ let selectedSatId = -1;
 let issIndex = -1;
 let issOrbitLine = null;
 let frameCount = 0;
-
-// Phase 5: trails + labels + UI
-let trailsEnabled = true;
-let trailLine = null, futureLine = null;
-let lastTrailJD = null;
-let labelPool = [];
-let fpsFrames = 0, fpsLast = performance.now();
-const isMobile = window.innerWidth < 768 || navigator.maxTouchPoints > 1;
 
 worker.onmessage = ({ data }) => {
   if (data.type === 'positions') {
