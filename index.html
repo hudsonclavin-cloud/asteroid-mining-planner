@@ -1489,12 +1489,13 @@ let burns = [];          // [{dv_p, dv_n, dv_r, jd}, ...]
 let activeBurnIdx = -1;  // -1 = no saved burns yet
 
 // ─── Asterank API ─────────────────────────────────────────────────────────────
-const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
+const ASTERANK_BASE_URL = 'https://www.asterank.com/api/asterank?' +
   'query=%7B%22e%22%3A%7B%22%24lt%22%3A0.4%7D%2C%22i%22%3A%7B%22%24lt%22%3A20%7D%2C%22a%22%3A%7B%22%24lt%22%3A2.5%7D%7D' +
-  '&limit=' + (window.ASTEROID_LIMIT || 2000) + '&sort=score';
+  '&sort=score';
 const CORS_PROXY = 'https://corsproxy.io/?';
 
 async function fetchAsteroids() {
+  const ASTERANK_URL = ASTERANK_BASE_URL + '&limit=' + (window.ASTEROID_LIMIT || 2000);
   setStatus('Fetching asteroid catalog...');
   let data = null;
   try {
