@@ -1998,10 +1998,11 @@ function exportMissionReport() {
   const vol_m3 = (4/3) * Math.PI * Math.pow(D_m/2, 3);
   const dens = { C:1400, S:2700, M:5300, D:1200 }[spec3] || 2000;
   const mass_kg = vol_m3 * dens;
-  const m_prop = tsiolkovsky(dv);
+  const g0 = 0.00980665;
+  const m_prop = 1000 * (Math.exp(dv / (g0 * 450)) - 1);
   const launchCost = (1000 + m_prop) * 2700 * 1.8;
   const burnLines = burns.map((b, i) =>
-    `  Burn ${i+1}: prograde ${b.prograde.toFixed(3)} km/s, radial ${b.radial.toFixed(3)} km/s, normal ${b.normal.toFixed(3)} km/s`
+    `  Burn ${i+1}: prograde ${b.dv_p.toFixed(3)} km/s, radial ${b.dv_r.toFixed(3)} km/s, normal ${b.dv_n.toFixed(3)} km/s`
   );
   const lines = [
     '═══════════════════════════════════════════════════════════',
@@ -2029,7 +2030,7 @@ function exportMissionReport() {
     '',
     '── MISSION ΔV BUDGET ───────────────────────────────────────',
     `  Min. Rendezvous ΔV: ${dv.toFixed(3)} km/s${dvSuffix}`,
-    `  Propellant mass:    ${m_prop.toFixed(1)} kg (Isp=450s, m_dry=1000kg)`,
+    `  Propellant mass:    ${m_prop.toFixed(0)} kg (Isp=450s, m_dry=1000kg)`,
     ...(burns.length > 0 ? ['', '  Planned Burns:', ...burnLines] : []),
     '',
     '── ECONOMICS ───────────────────────────────────────────────',
