@@ -990,6 +990,7 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
 });
 
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
+const planetOrbitGroup = new THREE.Group();
 PLANET_SMA.forEach(sma => {
   const pts = [];
   for (let j = 0; j <= 128; j++) {
@@ -997,8 +998,9 @@ PLANET_SMA.forEach(sma => {
     pts.push(new THREE.Vector3(Math.cos(a) * sma, 0, Math.sin(a) * sma));
   }
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  scene.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x1f2937, transparent: true, opacity: 0.15 })));
+  planetOrbitGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x1f2937, transparent: true, opacity: 0.15 })));
 });
+scene.add(planetOrbitGroup);
 
 // ─── Keplerian math on main thread (for orbit drawing + gizmo preview) ───────
 function solveKepler(M, e) {
@@ -2637,6 +2639,27 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     currentJD += 1;
     scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
+    return;
+  }
+  if (e.key === '1') {
+    if (asteroidMesh) { asteroidMesh.visible = !asteroidMesh.visible; setStatus(asteroidMesh.visible ? 'Asteroid cloud ON' : 'Asteroid cloud OFF'); }
+    return;
+  }
+  if (e.key === '2') {
+    planetOrbitGroup.visible = !planetOrbitGroup.visible;
+    setStatus(planetOrbitGroup.visible ? 'Planet orbits ON' : 'Planet orbits OFF');
+    return;
+  }
+  if (e.key === '3') {
+    trailsEnabled = !trailsEnabled;
+    if (!trailsEnabled) clearTrail();
+    else if (selectedId >= 0) { const ast = asteroidData[selectedId]; if (ast) { updateTrailGeometry(ast); computeFutureTrail(ast); } }
+    setStatus(trailsEnabled ? 'Trails ON' : 'Trails OFF');
+    return;
+  }
+  if (e.key === '4') {
+    if (earthLayerActive) deactivateEarthLayer(); else activateEarthLayer();
+    setStatus(earthLayerActive ? 'Earth layer ON' : 'Earth layer OFF');
     return;
   }
 });
