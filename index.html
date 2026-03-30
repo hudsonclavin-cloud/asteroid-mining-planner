@@ -2909,7 +2909,7 @@ document.querySelectorAll('.speed-btn').forEach(btn => {
     document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const s = parseInt(btn.dataset.speed, 10);
-    simSpeed = s === 0 ? 0 : s / 86400.0;
+    simSpeed = s;
     lastRealTime = performance.now();
   });
 });
@@ -2961,7 +2961,7 @@ function animate() {
   }
 
   if (!isScrubbing && simSpeed !== 0) {
-    currentJD += simSpeed * dt;
+    currentJD += (simSpeed / 86400) * dt;
     scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
   }
 
