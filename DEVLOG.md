@@ -287,3 +287,49 @@ cd worker/ && wrangler deploy
 ```
 
 *Last updated: Phase 8 complete, 2026-03-30*
+
+---
+
+## Phase 9 — Frontend Research Tab (Perplexity Integration) (2026-03-31)
+
+### Architecture
+
+The right panel gains a third tab — **⬡ RESEARCH** — that POSTs to the Cloudflare Worker (`WORKER_URL`) when clicked with an asteroid selected. The tab is lazy: it never auto-fetches on asteroid selection (avoids burning API quota on every click); it only fetches when the user explicitly opens the tab.
+
+**Fetch trigger logic:**
+- Tab click + `selectedId >= 0` → `fetchResearch(ast)`
+- Tab already active when a new asteroid is selected → `fetchResearch(ast)` (auto-refreshes)
+
+### Cache
+- `sessionStorage` keyed by `research_<pdes>` (falls back to `full_name`)
+- Stores `{ html, meta }` — the rendered HTML string + token usage line
+- Scope: session only (cleared on tab close); no TTL needed since asteroid data doesn't change mid-session
+
+### Markdown Rendering (`markdownToHtml`)
+Lightweight inline renderer — no library:
+- `## / ###` headings → `<h2>/<h3>` (styled cyan, 10px)
+- `**bold**` → `<strong>` (color `#e5e7eb`)
+- `* item` / `- item` lines → `<li>` wrapped in `<ul>`
+- Double newlines → `</p><p>`
+- Bare text lines → wrapped in `<p>`
+
+### `WORKER_URL` Constant
+Added near top of `<script>` alongside Asterank/CORS constants:
+```javascript
+const WORKER_URL = 'https://aster-proxy.YOUR_SUBDOMAIN.workers.dev';
+```
+Developer replaces `YOUR_SUBDOMAIN` after `wrangler deploy`. No secrets in client code.
+
+### UI States (5 divs inside `#tab-research`)
+| Div | Shown when |
+|---|---|
+| `#research-prompt-hint` | No fetch triggered yet (initial state after asteroid select) |
+| `#research-loading` | Fetch in-flight |
+| `#research-error` | Fetch failed or non-OK status |
+| `#research-content` | Success — HTML injected via `.innerHTML` |
+| `#research-meta` | Success — token usage line below content |
+
+### Reset on Asteroid Change
+`selectAsteroid()` resets all 5 divs to initial state (hint visible, all others hidden) so stale content from the previous asteroid never flashes.
+
+*Last updated: Phase 9 complete, 2026-03-31*

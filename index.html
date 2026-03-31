@@ -511,6 +511,12 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
   cursor: pointer; letter-spacing: 0.1em; border-bottom: 2px solid transparent; margin-bottom: -1px;
 }
 .tab-btn.active { color: #4af7c4; border-bottom-color: #4af7c4; }
+/* ─── Phase 9: Research Tab Content ─────────────────────────────────────────── */
+#research-content h2, #research-content h3 { color: #4af7c4; font-size: 10px; letter-spacing: 0.1em; margin: 10px 0 4px; }
+#research-content ul { margin: 4px 0 8px 12px; padding: 0; }
+#research-content li { margin-bottom: 3px; }
+#research-content strong { color: #e5e7eb; }
+#research-content p { margin: 0 0 6px; }
 /* ─── Phase 3: External Links + Score Bar ────────────────────────────────────── */
 .ext-link {
   font-size: 9px; color: #4b5563; letter-spacing: 0.1em; text-decoration: none;
@@ -716,6 +722,7 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
   <div id="panel-tabs">
     <button class="tab-btn active" data-tab="inspector">◈ INSPECTOR</button>
     <button class="tab-btn" data-tab="economics">$ ECONOMICS</button>
+    <button class="tab-btn" data-tab="research">⬡ RESEARCH</button>
   </div>
   <div id="tab-inspector" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;min-height:0">
   <div class="panel-header">◈ TARGET INSPECTOR</div>
@@ -877,6 +884,18 @@ button.speed-btn.active { border-color: #4af7c4; color: #4af7c4; box-shadow: 0 0
       <button class="action-btn" id="btn-share" style="margin-top:4px">⬡ SHARE MISSION URL</button>
     </div>
   </div><!-- /tab-economics -->
+
+  <div id="tab-research" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="research-prompt-hint" style="color:#4b5563;font-size:10px;text-align:center;padding:40px 12px;line-height:1.6">
+      Select an asteroid then click RESEARCH<br>to load an AI briefing.
+    </div>
+    <div id="research-loading" style="display:none;text-align:center;padding:40px 12px">
+      <div style="color:#4af7c4;font-size:10px;letter-spacing:0.15em">FETCHING BRIEFING…</div>
+    </div>
+    <div id="research-error" style="display:none;padding:12px;border:1px solid #7f1d1d;color:#f87171;font-size:10px;line-height:1.6;margin:8px 0"></div>
+    <div id="research-content" style="display:none;font-size:10px;line-height:1.7;color:#d1d5db"></div>
+    <div id="research-meta" style="display:none;margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1f2937;padding-top:6px"></div>
+  </div><!-- /tab-research -->
 </div>
 
 <div id="bottom-bar">
@@ -1604,6 +1623,9 @@ const MAX_BURNS = 5;
 let burns = [];          // [{dv_p, dv_n, dv_r, jd}, ...]
 let activeBurnIdx = -1;  // -1 = no saved burns yet
 
+// ─── Cloudflare Worker (Perplexity research proxy) ────────────────────────────
+const WORKER_URL = 'https://aster-proxy.YOUR_SUBDOMAIN.workers.dev';
+
 // ─── Asterank API ─────────────────────────────────────────────────────────────
 const ASTERANK_BASE_URL = 'https://www.asterank.com/api/asterank?' +
   'query=%7B%22e%22%3A%7B%22%24lt%22%3A0.4%7D%2C%22i%22%3A%7B%22%24lt%22%3A20%7D%2C%22a%22%3A%7B%22%24lt%22%3A2.5%7D%7D' +
@@ -2024,6 +2046,79 @@ async function fetchNHATSData() {
   worker.postMessage({ cmd: 'fetch_nhats', url: NHATS_URL });
 }
 
+// ─── Phase 9: Research Tab ─────────────────────────────────────────────────────
+
+function markdownToHtml(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^\* (.+)$/gm, '<li>$1</li>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[^<]*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/^([^<\n][^\n]*)$/gm, '<p>$1</p>')
+    .replace(/<p><\/p>/g, '');
+}
+
+async function fetchResearch(ast) {
+  const cacheKey = 'research_' + (ast.pdes || ast.full_name || 'unknown');
+  const contentEl = document.getElementById('research-content');
+  const loadingEl = document.getElementById('research-loading');
+  const errorEl   = document.getElementById('research-error');
+  const metaEl    = document.getElementById('research-meta');
+  const hintEl    = document.getElementById('research-prompt-hint');
+
+  hintEl.style.display    = 'none';
+  errorEl.style.display   = 'none';
+  contentEl.style.display = 'none';
+  metaEl.style.display    = 'none';
+
+  const cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const { html, meta } = JSON.parse(cached);
+      contentEl.innerHTML     = html;
+      metaEl.textContent      = meta;
+      contentEl.style.display = 'block';
+      metaEl.style.display    = 'block';
+      return;
+    } catch(_) {}
+  }
+
+  loadingEl.style.display = 'block';
+  try {
+    const res = await fetch(WORKER_URL + '/api/research', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        asteroidName: ast.full_name || ast.pdes,
+        designation:  ast.pdes,
+        spectralType: ast.spec || ast.spec_T || '',
+        orbit: { a: ast.a, e: ast.e, i: ast.i },
+        miningScore: ast._score != null ? Math.round(ast._score) : null,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    const html = markdownToHtml(data.content || '');
+    const meta = data.usage
+      ? `Model: ${data.model || 'sonar'} · ${data.usage.prompt_tokens ?? '?'} prompt + ${data.usage.completion_tokens ?? '?'} completion tokens`
+      : '';
+    sessionStorage.setItem(cacheKey, JSON.stringify({ html, meta }));
+    contentEl.innerHTML     = html;
+    metaEl.textContent      = meta;
+    contentEl.style.display = 'block';
+    metaEl.style.display    = 'block';
+  } catch (err) {
+    errorEl.textContent   = `Research unavailable: ${err.message}`;
+    errorEl.style.display = 'block';
+  } finally {
+    loadingEl.style.display = 'none';
+  }
+}
+
 function applyNHATSData(rows) {
   if (!asteroidData || asteroidData.length === 0) return;
   nhatsMap = new Map();
@@ -2368,9 +2463,11 @@ function onSatelliteSelect(idx) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const tab = btn.dataset.tab;
-    document.getElementById('tab-inspector').style.display = tab === 'inspector' ? 'flex' : 'none';
+    document.getElementById('tab-inspector').style.display = tab === 'inspector' ? 'flex'  : 'none';
     document.getElementById('tab-economics').style.display = tab === 'economics' ? 'block' : 'none';
+    document.getElementById('tab-research').style.display  = tab === 'research'  ? 'block' : 'none';
     if (tab === 'economics' && selectedId >= 0) renderEconomicsTab(selectedId);
+    if (tab === 'research'  && selectedId >= 0) { const ast = asteroids[selectedId]; if (ast) fetchResearch(ast); }
   });
 
   ['eco-dry-mass','eco-isp'].forEach(id => {
@@ -2607,6 +2704,17 @@ function selectAsteroid(id) {
     nhatsBadge.style.display = 'block';
   } else {
     nhatsBadge.style.display = 'none';
+  }
+
+  // Reset research tab — clear stale content from previous selection
+  document.getElementById('research-content').style.display = 'none';
+  document.getElementById('research-meta').style.display    = 'none';
+  document.getElementById('research-error').style.display   = 'none';
+  document.getElementById('research-loading').style.display = 'none';
+  document.getElementById('research-prompt-hint').style.display = 'block';
+  // Auto-fetch if research tab is already active
+  if (document.querySelector('.tab-btn[data-tab="research"]')?.classList.contains('active')) {
+    fetchResearch(ast);
   }
 
   const des3 = ast.pdes || ast.full_name || '';
