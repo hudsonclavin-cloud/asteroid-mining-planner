@@ -1,9 +1,9 @@
 # aster-proxy — Cloudflare Worker
 
 Proxies `POST /api/research` requests from the Aster frontend
-(`hudsonclavin.github.io`) to the Perplexity AI API.
+(`hudsonclavin.github.io`) to the OpenAI AI API.
 
-The Perplexity API key is stored as a Cloudflare encrypted secret — it never
+The OpenAI API key is stored as a Cloudflare encrypted secret — it never
 appears in source code or git history.
 
 ---
@@ -26,7 +26,7 @@ wrangler login
 
 # 3. Set the API key secret (you'll be prompted to paste it)
 #    This is stored encrypted in Cloudflare — never committed to git.
-wrangler secret put PERPLEXITY_API_KEY
+wrangler secret put OPENAI_API_KEY
 
 # 4. Deploy from the worker/ directory
 cd worker/
@@ -50,7 +50,7 @@ wrangler dev
 Wrangler will prompt you to use a local `.dev.vars` file for secrets during dev.
 Create `worker/.dev.vars` (gitignored):
 ```
-PERPLEXITY_API_KEY=pplx-your-key-here
+OPENAI_API_KEY=pplx-your-key-here
 ```
 
 Then POST to `http://localhost:8787/api/research`.
@@ -90,7 +90,7 @@ Then POST to `http://localhost:8787/api/research`.
 ```json
 {
   "content": "## 433 Eros Research Briefing\n...",
-  "model": "sonar",
+  "model": "gpt-4o-mini",
   "usage": { "prompt_tokens": 180, "completion_tokens": 620 }
 }
 ```
@@ -102,7 +102,7 @@ Then POST to `http://localhost:8787/api/research`.
 | 400 | Missing or malformed request body |
 | 404 | Wrong path or method |
 | 429 | Rate limit exceeded (10 req/min per IP) |
-| 502 | Perplexity API unreachable or returned an error |
+| 502 | OpenAI API unreachable or returned an error |
 
 ---
 
@@ -112,7 +112,7 @@ Then POST to `http://localhost:8787/api/research`.
   Cloudflare recycles the worker isolate. Adequate for a hobby project; for
   strict enforcement use Cloudflare Rate Limiting or Durable Objects.
 - **CORS:** restricted to `https://hudsonclavin.github.io`.
-- **Model:** `sonar` (Perplexity's search-augmented model). Change in
+- **Model:** `gpt-4o-mini` (OpenAI's search-augmented model). Change in
   `index.js` if needed.
-- **Cost:** Cloudflare Workers free tier allows 100,000 requests/day. Perplexity
+- **Cost:** Cloudflare Workers free tier allows 100,000 requests/day. OpenAI
   charges per token — budget accordingly.

@@ -2,10 +2,10 @@
  * aster-proxy — Cloudflare Worker
  *
  * Proxies POST /api/research from the Aster frontend to the Perplexity API.
- * Keeps PERPLEXITY_API_KEY server-side via a Cloudflare secret.
+ * Keeps OPENAI_API_KEY server-side via a Cloudflare secret.
  *
  * Deploy:
- *   wrangler secret put PERPLEXITY_API_KEY
+ *   wrangler secret put OPENAI_API_KEY
  *   wrangler deploy
  */
 
@@ -124,14 +124,14 @@ export default {
     // ── Call Perplexity ──────────────────────────────────────────────────────
     let perplexityRes;
     try {
-      perplexityRes = await fetch('https://api.perplexity.ai/chat/completions', {
+      perplexityRes = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${env.PERPLEXITY_API_KEY}`,
+          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'sonar',
+          model: 'gpt-4o-mini',
           max_tokens: 1000,
           messages: [{ role: 'user', content: buildPrompt(body) }],
         }),
@@ -147,7 +147,7 @@ export default {
     if (!perplexityRes.ok) {
       const detail = await perplexityRes.text().catch(() => '');
       return jsonResponse(
-        { error: 'Perplexity API error', status: perplexityRes.status, detail },
+        { error: 'OpenAI API error', status: perplexityRes.status, detail },
         502,
         origin,
       );

@@ -333,3 +333,18 @@ Developer replaces `YOUR_SUBDOMAIN` after `wrangler deploy`. No secrets in clien
 `selectAsteroid()` resets all 5 divs to initial state (hint visible, all others hidden) so stale content from the previous asteroid never flashes.
 
 *Last updated: Phase 9 complete, 2026-03-31*
+
+---
+
+## Phase 8 Amendment — Swap to OpenAI (2026-03-31)
+
+Replaced Perplexity `sonar` with OpenAI `gpt-4o-mini` in `worker/index.js`.
+
+| | Before | After |
+|---|---|---|
+| API URL | `https://api.perplexity.ai/chat/completions` | `https://api.openai.com/v1/chat/completions` |
+| Model | `sonar` | `gpt-4o-mini` |
+| Secret | `PERPLEXITY_API_KEY` | `OPENAI_API_KEY` |
+
+Response shape (`choices[0].message.content`) is identical — no frontend changes required.
+To redeploy: `wrangler secret put OPENAI_API_KEY` then `wrangler deploy`.
