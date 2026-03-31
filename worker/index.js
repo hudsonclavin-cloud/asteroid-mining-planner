@@ -1,7 +1,7 @@
 /**
  * aster-proxy — Cloudflare Worker
  *
- * Proxies POST /api/research from the Aster frontend to the Perplexity API.
+ * Proxies POST /api/research from the Aster frontend to the OpenAI API.
  * Keeps OPENAI_API_KEY server-side via a Cloudflare secret.
  *
  * Deploy:
@@ -9,7 +9,10 @@
  *   wrangler deploy
  */
 
-const ALLOWED_ORIGIN = 'https://hudsonclavin.github.io';
+const ALLOWED_ORIGINS = new Set([
+  'https://hudsonclavin.github.io',
+  'http://localhost:8080',
+]);
 const RATE_LIMIT = 10;         // max requests per window per IP
 const RATE_WINDOW_MS = 60_000; // 1 minute
 
@@ -33,8 +36,7 @@ function checkRateLimit(ip) {
 }
 
 function corsHeaders(origin) {
-  // Reflect the allowed origin; default to ALLOWED_ORIGIN for non-browser callers.
-  const allowed = origin === ALLOWED_ORIGIN ? origin : ALLOWED_ORIGIN;
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://hudsonclavin.github.io';
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -51,8 +53,8 @@ function jsonResponse(body, status, origin) {
 }
 
 /**
- * Build a structured Perplexity prompt from the asteroid context the client
- * provides. All fields are optional — the prompt degrades gracefully.
+ * Build a structured prompt from the asteroid context the client provides.
+ * All fields are optional — the prompt degrades gracefully.
  */
 function buildPrompt({ asteroidName, designation, spectralType, orbit, miningScore }) {
   const name = asteroidName || designation || 'unknown';
@@ -121,10 +123,10 @@ export default {
       );
     }
 
-    // ── Call Perplexity ──────────────────────────────────────────────────────
-    let perplexityRes;
+    // ── Call OpenAI ──────────────────────────────────────────────────────────
+    let openAIRes;
     try {
-      perplexityRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      openAIRes = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${env.OPENAI_API_KEY}`,
@@ -144,16 +146,16 @@ export default {
       );
     }
 
-    if (!perplexityRes.ok) {
-      const detail = await perplexityRes.text().catch(() => '');
+    if (!openAIRes.ok) {
+      const detail = await openAIRes.text().catch(() => '');
       return jsonResponse(
-        { error: 'OpenAI API error', status: perplexityRes.status, detail },
+        { error: 'OpenAI API error', status: openAIRes.status, detail },
         502,
         origin,
       );
     }
 
-    const data = await perplexityRes.json();
+    const data = await openAIRes.json();
     const content = data?.choices?.[0]?.message?.content ?? '';
 
     return jsonResponse(

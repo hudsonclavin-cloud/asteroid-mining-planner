@@ -2064,6 +2064,7 @@ function markdownToHtml(text) {
 
 async function fetchResearch(ast) {
   const cacheKey = 'research_' + (ast.pdes || ast.full_name || 'unknown');
+  console.log('[Research] fetchResearch called for', cacheKey);
   const contentEl = document.getElementById('research-content');
   const loadingEl = document.getElementById('research-loading');
   const errorEl   = document.getElementById('research-error');
@@ -2077,6 +2078,7 @@ async function fetchResearch(ast) {
 
   const cached = sessionStorage.getItem(cacheKey);
   if (cached) {
+    console.log('[Research] cache hit — rendering from sessionStorage');
     try {
       const { html, meta } = JSON.parse(cached);
       contentEl.innerHTML     = html;
@@ -2087,24 +2089,30 @@ async function fetchResearch(ast) {
     } catch(_) {}
   }
 
+  const endpoint = WORKER_URL + '/api/research';
+  console.log('[Research] cache miss — POSTing to', endpoint);
   loadingEl.style.display = 'block';
   try {
-    const res = await fetch(WORKER_URL + '/api/research', {
+    const payload = {
+      asteroidName: ast.full_name || ast.pdes,
+      designation:  ast.pdes,
+      spectralType: ast.spec || ast.spec_T || '',
+      orbit: { a: ast.a, e: ast.e, i: ast.i },
+      miningScore: ast._score != null ? Math.round(ast._score) : null,
+    };
+    console.log('[Research] request payload:', payload);
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        asteroidName: ast.full_name || ast.pdes,
-        designation:  ast.pdes,
-        spectralType: ast.spec || ast.spec_T || '',
-        orbit: { a: ast.a, e: ast.e, i: ast.i },
-        miningScore: ast._score != null ? Math.round(ast._score) : null,
-      }),
+      body: JSON.stringify(payload),
     });
+    console.log('[Research] response status:', res.status, res.ok);
     const data = await res.json();
+    console.log('[Research] response data:', data);
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     const html = markdownToHtml(data.content || '');
     const meta = data.usage
-      ? `Model: ${data.model || 'sonar'} · ${data.usage.prompt_tokens ?? '?'} prompt + ${data.usage.completion_tokens ?? '?'} completion tokens`
+      ? `Model: ${data.model || 'gpt-4o-mini'} · ${data.usage.prompt_tokens ?? '?'} prompt + ${data.usage.completion_tokens ?? '?'} completion tokens`
       : '';
     sessionStorage.setItem(cacheKey, JSON.stringify({ html, meta }));
     contentEl.innerHTML     = html;
@@ -2112,6 +2120,7 @@ async function fetchResearch(ast) {
     contentEl.style.display = 'block';
     metaEl.style.display    = 'block';
   } catch (err) {
+    console.error('[Research] fetch error:', err);
     errorEl.textContent   = `Research unavailable: ${err.message}`;
     errorEl.style.display = 'block';
   } finally {
