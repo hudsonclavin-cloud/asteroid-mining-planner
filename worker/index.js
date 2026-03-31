@@ -10,7 +10,7 @@
  */
 
 const ALLOWED_ORIGINS = new Set([
-  'https://hudsonclavin.github.io',
+  'https://hudsonclavin-cloud.github.io',
   'http://localhost:8080',
 ]);
 const RATE_LIMIT = 10;         // max requests per window per IP
@@ -36,7 +36,7 @@ function checkRateLimit(ip) {
 }
 
 function corsHeaders(origin) {
-  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://hudsonclavin.github.io';
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://hudsonclavin-cloud.github.io';
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
