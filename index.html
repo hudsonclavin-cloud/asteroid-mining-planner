@@ -574,6 +574,45 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   width:100%; text-align:right; outline:none;
 }
 .mp-burn-row input[type=number]:focus { border-color:#00d4ff; }
+/* ─── Phase 7F: Mission Visualization ───────────────────────────────────────── */
+#mission-timeline {
+  position:fixed;bottom:60px;left:0;width:100%;height:36px;
+  background:rgba(5,8,16,0.96);border-top:1px solid #1a2235;z-index:9;
+  display:none;overflow:hidden;
+}
+#mission-timeline-inner { display:flex;height:100%;position:relative; }
+.mt-segment {
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  overflow:hidden;cursor:pointer;border-right:1px solid #0d1420;
+  position:absolute;height:100%;transition:filter 0.1s;
+}
+.mt-segment:hover { filter:brightness(1.4); }
+.mt-segment-label {
+  font-family:'Space Mono',monospace;font-size:7px;letter-spacing:0.06em;
+  color:rgba(255,255,255,0.7);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:100%;padding:0 3px;
+}
+.mt-segment-date { font-family:'Space Mono',monospace;font-size:6px;color:rgba(255,255,255,0.35);white-space:nowrap; }
+#mt-cursor {
+  position:absolute;top:0;bottom:0;width:1px;background:#fff;
+  opacity:0.6;pointer-events:none;z-index:2;
+}
+#burn-tooltip {
+  position:fixed;background:rgba(5,8,16,0.95);border:1px solid #1a2235;
+  padding:6px 10px;font-family:'Space Mono',monospace;font-size:9px;
+  color:#c8d6e5;pointer-events:none;z-index:300;display:none;line-height:1.6;
+}
+#mp-anim-controls {
+  display:none;margin-top:14px;padding:10px;
+  background:#050810;border:1px solid #1a2235;border-radius:2px;
+}
+#mp-anim-controls .panel-header { margin-bottom:8px; }
+.anim-speed-btn {
+  background:transparent;border:1px solid #1a2235;color:#4b5563;
+  font-family:'Space Mono',monospace;font-size:8px;padding:3px 6px;
+  cursor:pointer;letter-spacing:0.06em;
+}
+.anim-speed-btn.anim-speed-active { border-color:#00d4ff;color:#00d4ff; }
 /* ─── Phase 9: Research Tab Content ─────────────────────────────────────────── */
 #research-content h2, #research-content h3 { color: #00d4ff; font-size: 10px; letter-spacing: 0.1em; margin: 10px 0 4px; }
 #research-content ul { margin: 4px 0 8px 12px; padding: 0; }
@@ -1132,6 +1171,27 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
         <button id="btn-mp-export" class="action-btn" style="flex:1;font-size:9px;padding:6px">↓ EXPORT PLAN</button>
         <button id="btn-mp-share" class="action-btn" style="flex:1;font-size:9px;padding:6px">⬡ SHARE MISSION</button>
       </div>
+      <div style="margin-top:6px">
+        <button id="btn-mp-play" class="action-btn"
+          style="width:100%;font-size:10px;padding:7px;letter-spacing:0.1em">▶ PLAY MISSION</button>
+      </div>
+      <div id="mp-anim-controls">
+        <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+          ◈ FLIGHT PREVIEW
+          <button id="btn-anim-stop" class="action-btn"
+            style="font-size:8px;padding:2px 8px;color:#ff4444;border-color:#ff4444">■ STOP</button>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:8px">
+          <button id="btn-anim-playpause" class="action-btn" style="flex:1;font-size:10px;padding:5px">▶</button>
+        </div>
+        <div style="display:flex;gap:3px">
+          <button class="anim-speed-btn" data-aspeed="10">10×</button>
+          <button class="anim-speed-btn anim-speed-active" data-aspeed="100">100×</button>
+          <button class="anim-speed-btn" data-aspeed="1000">1K×</button>
+          <button class="anim-speed-btn" data-aspeed="10000">10K×</button>
+          <button class="anim-speed-btn" data-aspeed="86400">1d/s</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1217,6 +1277,13 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 </div><!-- /right-panel -->
 
 <div id="asteroid-tooltip"></div>
+<div id="burn-tooltip"></div>
+
+<div id="mission-timeline">
+  <div id="mission-timeline-inner">
+    <div id="mt-cursor"></div>
+  </div>
+</div>
 
 <div id="bottom-bar">
   <div id="date-display">2026-MAR-27</div>
@@ -2181,6 +2248,14 @@ worker.onmessage = ({ data }) => {
     onPlanResult(data.results);
     return;
   }
+  if (data.type === 'query_pos_result' && data.reqId === 'earth_return' && data.ok) {
+    missionEarthReturnPos = { x: data.x, y: data.y, z: data.z };
+    if (optimalTrajectory) {
+      drawBurnVectors(optimalTrajectory);
+      _redrawReturnArc(optimalTrajectory);
+    }
+    return;
+  }
 };
 
 worker.onerror = (err) => console.error('[Worker error]', err);
@@ -2215,7 +2290,19 @@ let selectedTrajIdx   = -1;
 let optimalTrajectory = null;
 let trajectoryLine    = null;
 let trajectoryArrows  = [];
+let returnArcLine     = null;
 let mpBurns           = [];
+
+// ── Phase 7F: Mission Visualization ──────────────────────────────────────────
+let burnVectorArrows       = [];
+let missionEarthReturnPos  = null;
+const missionAnim = {
+  active: false, playing: false, speed: 100,
+  animJD: 0, phase: 'idle',
+  outboundPts: [], returnPts: [],
+  spacecraft: null, engineLight: null,
+  trailLine: null, trailPts: [],
+};
 
 // ─── Cloudflare Worker (Perplexity research proxy) ────────────────────────────
 const WORKER_URL = 'https://aster-proxy.hudsonclavin.workers.dev';
@@ -3260,12 +3347,17 @@ function openMissionPlanner(id) {
 function closeMissionPlanner() {
   document.getElementById('mission-planner').classList.remove('mp-open');
   clearTrajectoryLine();
+  missionEarthReturnPos = null;
 }
 
 function clearTrajectoryLine() {
   if (trajectoryLine) { scene.remove(trajectoryLine); trajectoryLine.geometry.dispose(); trajectoryLine = null; }
   trajectoryArrows.forEach(a => scene.remove(a));
   trajectoryArrows = [];
+  if (returnArcLine) { scene.remove(returnArcLine); returnArcLine = null; }
+  clearBurnVectors();
+  stopMissionAnimation();
+  hideMissionTimeline();
 }
 
 function runMissionOptimizer() {
@@ -3337,8 +3429,13 @@ function selectTrajectory(idx) {
   if (!traj) return;
   document.querySelectorAll('.mp-traj-card').forEach((c, i) =>
     c.classList.toggle('mp-traj-selected', i === idx));
+  missionEarthReturnPos = null;
   clearTrajectoryLine();
   drawTrajectoryLine(traj.earthPos, traj.astPos);
+  // Request accurate Earth return position
+  if (traj.jd_ret_arr) {
+    worker.postMessage({ cmd:'query_pos', jd: traj.jd_ret_arr, planetIdx: 2, reqId: 'earth_return' });
+  }
   const profile = computeMissionProfile(traj);
   document.getElementById('mp-profile-text').textContent = profile.text;
   document.getElementById('mp-profile').style.display = 'block';
@@ -3352,6 +3449,8 @@ function selectTrajectory(idx) {
   renderBurnEditTable();
   document.getElementById('mp-burns').style.display   = 'block';
   document.getElementById('mp-actions').style.display = 'block';
+  drawBurnVectors(traj);
+  buildMissionTimeline(traj);
 }
 
 function computeMissionProfile(traj) {
@@ -3457,6 +3556,30 @@ function drawTrajectoryLine(earthPos, astPos) {
   // Arrival arrow (red, retro-burn)
   const arr2 = new THREE.ArrowHelper(dir.clone().negate(), new THREE.Vector3(ax, ay, az), 0.12, 0xff4444, 0.05, 0.025);
   scene.add(arr2); trajectoryArrows.push(arr2);
+  // Return arc (dashed) — drawn once Earth return pos is known
+  if (optimalTrajectory) _redrawReturnArc(optimalTrajectory);
+}
+
+function _redrawReturnArc(traj) {
+  if (returnArcLine) { scene.remove(returnArcLine); returnArcLine = null; }
+  const ep = missionEarthReturnPos || traj.earthPos;
+  const ax = traj.astPos.x, ay = traj.astPos.y, az = traj.astPos.z;
+  const dx2 = ep.x - ax, dy2 = ep.y - ay;
+  const mid2X = (ax + ep.x) / 2;
+  const mid2Y = (ay + ep.y) / 2 + Math.hypot(dx2, dy2) * 0.25;
+  const mid2Z = (az + ep.z) / 2;
+  const retCurve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(ax, ay, az),
+    new THREE.Vector3(mid2X, mid2Y, mid2Z),
+    new THREE.Vector3(ep.x, ep.y, ep.z));
+  const retPts = retCurve.getPoints(80);
+  const retGeo = new THREE.BufferGeometry().setFromPoints(retPts);
+  const retLine = new THREE.Line(retGeo,
+    new THREE.LineDashedMaterial({ color: 0x00d4ff, opacity: 0.35, transparent: true,
+      dashSize: 0.05, gapSize: 0.04 }));
+  retLine.computeLineDistances();
+  scene.add(retLine);
+  returnArcLine = retLine;
 }
 
 function renderBurnEditTable() {
@@ -3476,6 +3599,7 @@ function renderBurnEditTable() {
 function onMpBurnChange(idx, val) {
   mpBurns[idx].dv_kms = parseFloat(val) || 0;
   updateMpBurnTotals();
+  if (optimalTrajectory && burnVectorArrows.length) drawBurnVectors(optimalTrajectory);
 }
 
 function removeMpBurn(idx) {
@@ -3491,6 +3615,265 @@ function updateMpBurnTotals() {
   const fuelEl = document.getElementById('mp-total-fuel');
   if (dvEl)   dvEl.textContent   = totalDv.toFixed(3);
   if (fuelEl) fuelEl.textContent = Math.round(fuelKg).toLocaleString();
+}
+
+// ─── Phase 7F: Mission Visualization ─────────────────────────────────────────
+
+function getBurnColor(label) {
+  const l = label.toLowerCase();
+  if (l.includes('capture') || l.includes('arrival')) return 0xff4444;
+  if (l.includes('mcc'))    return 0xffcc00;
+  if (l.includes('mining')) return 0x44ff44;
+  return 0x00d4ff;
+}
+
+function drawBurnVectors(traj) {
+  clearBurnVectors();
+  const ep = missionEarthReturnPos || traj.earthPos;
+  const burnDefs = [
+    { pos: traj.earthPos, label: mpBurns[0]?.label || '1 · DEPARTURE',       dv: traj.dv_dep, jd: traj.jd_dep },
+    { pos: traj.astPos,   label: mpBurns[1]?.label || '2 · ASTEROID ARRIVAL', dv: traj.dv_arr, jd: traj.jd_arr },
+    { pos: { x:(traj.earthPos.x+traj.astPos.x)/2, y:(traj.earthPos.y+traj.astPos.y)/2+0.05, z:(traj.earthPos.z+traj.astPos.z)/2 },
+      label: mpBurns[2]?.label || '3 · MCC', dv: traj.dv_mcc||0, jd: mpBurns[2]?.jd },
+    { pos: traj.astPos, label: mpBurns[3]?.label || '4 · ASTEROID DEP.', dv: traj.dv_return, jd: traj.jd_ret_dep, offset:[0.04,0,0] },
+    { pos: ep, label: mpBurns[4]?.label || '5 · DEST. CAPTURE', dv: traj.dv_capture||0, jd: traj.jd_ret_arr, offset:[0,0.04,0] },
+  ];
+
+  const outDir = new THREE.Vector3(
+    traj.astPos.x-traj.earthPos.x, traj.astPos.y-traj.earthPos.y, traj.astPos.z-traj.earthPos.z).normalize();
+  const retroDir = outDir.clone().negate();
+  const mccDir   = new THREE.Vector3(-outDir.y, outDir.x, 0).normalize();
+  const retDir   = new THREE.Vector3(ep.x-traj.astPos.x, ep.y-traj.astPos.y, ep.z-traj.astPos.z).normalize();
+  const capDir   = retDir.clone().negate();
+  const DIRS     = [outDir, retroDir, mccDir, retDir, capDir];
+
+  burnDefs.forEach((b, i) => {
+    if (!b.dv || b.dv < 0.001) return;
+    const len    = Math.max(0.06, Math.min(0.28, b.dv * 0.04));
+    const col    = getBurnColor(b.label);
+    const ox     = b.offset?.[0]||0, oy = b.offset?.[1]||0, oz = b.offset?.[2]||0;
+    const origin = new THREE.Vector3(b.pos.x+ox, b.pos.y+oy, b.pos.z+oz);
+    const arrow  = new THREE.ArrowHelper(DIRS[i], origin, len, col, len*0.3, len*0.12);
+    arrow.userData = { burnLabel: b.label, dv: b.dv, jd: b.jd };
+    scene.add(arrow);
+    burnVectorArrows.push(arrow);
+  });
+}
+
+function clearBurnVectors() {
+  burnVectorArrows.forEach(a => scene.remove(a));
+  burnVectorArrows = [];
+}
+
+function buildMissionTimeline(traj) {
+  const el    = document.getElementById('mission-timeline');
+  const inner = document.getElementById('mission-timeline-inner');
+  const jd0   = traj.jd_dep;
+  const jd1   = traj.jd_arr;
+  const jd2   = traj.jd_ret_dep;
+  const jd3   = traj.jd_ret_arr || (jd2 + (traj.tof_return || traj.tof));
+  const span  = jd3 - jd0;
+  if (span <= 0) return;
+
+  inner.innerHTML = '<div id="mt-cursor" style="position:absolute;top:0;bottom:0;width:1px;background:#fff;opacity:0.6;pointer-events:none;z-index:2"></div>';
+
+  const phases = [
+    { label:'COAST 1', start:jd0, end:jd1,  color:'#0d1d2e' },
+    { label:'MINING',  start:jd1, end:jd2,  color:'#2a1e00' },
+    { label:'COAST 2', start:jd2, end:jd3,  color:'#0d1d2e' },
+  ];
+  const burnMarkers = [
+    { label:'DEP',     jd:jd0, color:'#00d4ff' },
+    { label:'ARR',     jd:jd1, color:'#ff4444' },
+    { label:'AST-DEP', jd:jd2, color:'#00d4ff' },
+    { label:'CAP',     jd:jd3, color:'#cc44cc' },
+  ];
+
+  phases.forEach(p => {
+    const pct  = (p.end - p.start) / span * 100;
+    const left = (p.start - jd0) / span * 100;
+    const seg  = document.createElement('div');
+    seg.className = 'mt-segment';
+    seg.style.cssText = `left:${left.toFixed(2)}%;width:${pct.toFixed(2)}%;background:${p.color}`;
+    seg.innerHTML = `<span class="mt-segment-label">${p.label}</span>
+      <span class="mt-segment-date">${jdToDate(p.start).slice(0,7)}</span>`;
+    seg.title = `${p.label}: ${Math.round(p.end-p.start)} days`;
+    seg.addEventListener('click', () => {
+      currentJD = p.start;
+      document.getElementById('time-scrubber').value = currentJD;
+      worker.postMessage({ cmd:'propagate', jd:currentJD });
+    });
+    inner.appendChild(seg);
+  });
+
+  burnMarkers.forEach(b => {
+    const left   = (b.jd - jd0) / span * 100;
+    const marker = document.createElement('div');
+    marker.style.cssText = `position:absolute;left:${left.toFixed(2)}%;top:0;bottom:0;width:3px;background:${b.color};z-index:1;opacity:0.85;cursor:pointer`;
+    marker.title = `${b.label}: ${jdToDate(b.jd)}`;
+    marker.addEventListener('click', () => {
+      currentJD = b.jd;
+      document.getElementById('time-scrubber').value = currentJD;
+      worker.postMessage({ cmd:'propagate', jd:currentJD });
+    });
+    inner.appendChild(marker);
+  });
+
+  el.style.display = 'block';
+  document.getElementById('bottom-bar').style.bottom = '36px';
+}
+
+function hideMissionTimeline() {
+  document.getElementById('mission-timeline').style.display = 'none';
+  document.getElementById('bottom-bar').style.bottom = '0px';
+}
+
+function updateTimelineIndicator() {
+  if (!optimalTrajectory) return;
+  const traj = optimalTrajectory;
+  const jd0  = traj.jd_dep;
+  const jd3  = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return||traj.tof));
+  const span = jd3 - jd0;
+  if (span <= 0) return;
+  const pct    = Math.max(0, Math.min(100, (currentJD - jd0) / span * 100));
+  const cursor = document.getElementById('mt-cursor');
+  if (cursor) cursor.style.left = pct.toFixed(2) + '%';
+}
+
+function startMissionAnimation(traj) {
+  stopMissionAnimation();
+  const dx   = traj.astPos.x - traj.earthPos.x, dy = traj.astPos.y - traj.earthPos.y;
+  const midX = (traj.earthPos.x + traj.astPos.x) / 2;
+  const midY = (traj.earthPos.y + traj.astPos.y) / 2 + Math.hypot(dx, dy) * 0.3;
+  const midZ = (traj.earthPos.z + traj.astPos.z) / 2;
+  const outCurve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(traj.earthPos.x, traj.earthPos.y, traj.earthPos.z),
+    new THREE.Vector3(midX, midY, midZ),
+    new THREE.Vector3(traj.astPos.x, traj.astPos.y, traj.astPos.z));
+  missionAnim.outboundPts = outCurve.getPoints(200);
+
+  const ep    = missionEarthReturnPos || traj.earthPos;
+  const dx2   = ep.x - traj.astPos.x, dy2 = ep.y - traj.astPos.y;
+  const midX2 = (traj.astPos.x + ep.x) / 2;
+  const midY2 = (traj.astPos.y + ep.y) / 2 + Math.hypot(dx2, dy2) * 0.3;
+  const midZ2 = (traj.astPos.z + ep.z) / 2;
+  const retCurve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(traj.astPos.x, traj.astPos.y, traj.astPos.z),
+    new THREE.Vector3(midX2, midY2, midZ2),
+    new THREE.Vector3(ep.x, ep.y, ep.z));
+  missionAnim.returnPts = retCurve.getPoints(200);
+
+  const scGeo = new THREE.ConeGeometry(0.008, 0.025, 8);
+  scGeo.rotateX(Math.PI / 2);
+  const scMat = new THREE.MeshStandardMaterial({ color:0xd0e8ff, emissive:0x203060, roughness:0.4 });
+  missionAnim.spacecraft = new THREE.Mesh(scGeo, scMat);
+  missionAnim.spacecraft.position.copy(missionAnim.outboundPts[0]);
+  scene.add(missionAnim.spacecraft);
+
+  missionAnim.engineLight = new THREE.PointLight(0x00aaff, 2.0, 0.25);
+  missionAnim.spacecraft.add(missionAnim.engineLight);
+
+  const trailGeo = new THREE.BufferGeometry();
+  const trailMat = new THREE.LineBasicMaterial({ color:0x4488aa, opacity:0.5, transparent:true });
+  missionAnim.trailLine = new THREE.Line(trailGeo, trailMat);
+  scene.add(missionAnim.trailLine);
+  missionAnim.trailPts = [];
+
+  missionAnim.active  = true;
+  missionAnim.playing = false;
+  missionAnim.animJD  = traj.jd_dep;
+  missionAnim.phase   = 'outbound';
+
+  document.getElementById('mp-anim-controls').style.display = 'block';
+  document.getElementById('btn-mp-play').textContent = '⏸ PAUSE MISSION';
+}
+
+function stopMissionAnimation() {
+  if (missionAnim.spacecraft) { scene.remove(missionAnim.spacecraft); missionAnim.spacecraft = null; }
+  if (missionAnim.trailLine)  { scene.remove(missionAnim.trailLine);  missionAnim.trailLine  = null; }
+  missionAnim.active = false;
+  missionAnim.playing = false;
+  missionAnim.phase  = 'idle';
+  missionAnim.trailPts = [];
+  missionAnim.outboundPts = [];
+  missionAnim.returnPts   = [];
+  const ctrl = document.getElementById('mp-anim-controls');
+  if (ctrl) ctrl.style.display = 'none';
+  const playBtn = document.getElementById('btn-mp-play');
+  if (playBtn) playBtn.textContent = '▶ PLAY MISSION';
+}
+
+function updateMissionAnimation(dt) {
+  if (!missionAnim.active || !optimalTrajectory) return;
+  const traj = optimalTrajectory;
+
+  if (missionAnim.playing) missionAnim.animJD += (missionAnim.speed / 86400) * dt;
+
+  const jd = missionAnim.animJD;
+  let pos   = null;
+  const jd_ret_arr = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
+
+  if (jd <= traj.jd_arr) {
+    missionAnim.phase = 'outbound';
+    const t = Math.max(0, Math.min(1, (jd - traj.jd_dep) / traj.tof));
+    pos = missionAnim.outboundPts[Math.floor(t * (missionAnim.outboundPts.length - 1))].clone();
+    if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t < 0.06 || t > 0.94) ? 3.0 : 0.4;
+  } else if (jd <= traj.jd_ret_dep) {
+    missionAnim.phase = 'mining';
+    const wobble = (jd - traj.jd_arr) * 0.3;
+    pos = new THREE.Vector3(
+      traj.astPos.x + 0.01 * Math.sin(wobble),
+      traj.astPos.y + 0.01 * Math.cos(wobble),
+      traj.astPos.z);
+    if (missionAnim.engineLight) missionAnim.engineLight.intensity = 0.1;
+  } else if (jd <= jd_ret_arr) {
+    missionAnim.phase = 'return';
+    const retTof = traj.tof_return || traj.tof;
+    const t = Math.max(0, Math.min(1, (jd - traj.jd_ret_dep) / retTof));
+    pos = missionAnim.returnPts[Math.floor(t * (missionAnim.returnPts.length - 1))].clone();
+    if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t > 0.92) ? 3.0 : 0.4;
+  } else {
+    missionAnim.phase   = 'done';
+    missionAnim.playing = false;
+    pos = missionAnim.returnPts[missionAnim.returnPts.length - 1].clone();
+    const ppBtn = document.getElementById('btn-anim-playpause');
+    if (ppBtn) ppBtn.textContent = '▶';
+  }
+
+  if (!pos || !missionAnim.spacecraft) return;
+
+  missionAnim.spacecraft.position.copy(pos);
+
+  // Orient nose along travel direction
+  const pts  = missionAnim.phase === 'return' ? missionAnim.returnPts : missionAnim.outboundPts;
+  const jd0b = missionAnim.phase === 'return' ? traj.jd_ret_dep : traj.jd_dep;
+  const tofb = missionAnim.phase === 'return' ? (traj.tof_return||traj.tof) : traj.tof;
+  if (pts.length > 1 && tofb > 0) {
+    const t   = Math.max(0, Math.min(0.999, (jd - jd0b) / tofb));
+    const i   = Math.floor(t * (pts.length - 1));
+    const nxt = pts[Math.min(i + 1, pts.length - 1)];
+    const vel = new THREE.Vector3().subVectors(nxt, pos);
+    if (vel.length() > 1e-6) {
+      missionAnim.spacecraft.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 0, 1), vel.normalize());
+    }
+  }
+
+  // Trail
+  missionAnim.trailPts.push(pos.x, pos.y, pos.z);
+  if (missionAnim.trailPts.length > 900) missionAnim.trailPts.splice(0, 3);
+  if (missionAnim.trailPts.length >= 6) {
+    const buf = new Float32Array(missionAnim.trailPts);
+    missionAnim.trailLine.geometry.setAttribute('position', new THREE.BufferAttribute(buf, 3));
+    missionAnim.trailLine.geometry.computeBoundingSphere();
+  }
+
+  // Chase camera
+  if (missionAnim.playing) {
+    const offset = new THREE.Vector3(0.2, 0.15, 0.2);
+    camera.position.lerp(pos.clone().add(offset), 0.025);
+    camera.lookAt(pos);
+  }
 }
 
 function exportMissionPlan() {
@@ -4343,6 +4726,63 @@ document.getElementById('btn-mp-add-burn').addEventListener('click', () => {
   mpBurns.push({ label:`${mpBurns.length+1} · MCC`, jd:lastJD, dv_kms:0.050 });
   renderBurnEditTable();
 });
+// ── Phase 7F: Animation + burn vector event wiring ───────────────────────────
+document.getElementById('btn-mp-play').addEventListener('click', () => {
+  if (!missionAnim.active) {
+    if (!optimalTrajectory) return;
+    startMissionAnimation(optimalTrajectory);
+    missionAnim.playing = true;
+    document.getElementById('btn-anim-playpause').textContent = '⏸';
+    document.getElementById('btn-mp-play').textContent = '⏸ PAUSE MISSION';
+  } else {
+    missionAnim.playing = !missionAnim.playing;
+    const pp = missionAnim.playing;
+    document.getElementById('btn-anim-playpause').textContent = pp ? '⏸' : '▶';
+    document.getElementById('btn-mp-play').textContent = pp ? '⏸ PAUSE MISSION' : '▶ PLAY MISSION';
+  }
+});
+document.getElementById('btn-anim-playpause').addEventListener('click', () => {
+  missionAnim.playing = !missionAnim.playing;
+  document.getElementById('btn-anim-playpause').textContent = missionAnim.playing ? '⏸' : '▶';
+});
+document.getElementById('btn-anim-stop').addEventListener('click', stopMissionAnimation);
+document.querySelectorAll('.anim-speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    missionAnim.speed = parseInt(btn.dataset.aspeed);
+    document.querySelectorAll('.anim-speed-btn').forEach(b => b.classList.remove('anim-speed-active'));
+    btn.classList.add('anim-speed-active');
+  });
+});
+
+// Burn vector hover tooltip
+renderer.domElement.addEventListener('mousemove', (e) => {
+  const tooltip = document.getElementById('burn-tooltip');
+  if (!burnVectorArrows.length) { tooltip.style.display = 'none'; return; }
+  const rect  = renderer.domElement.getBoundingClientRect();
+  const mouse = new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width)  * 2 - 1,
+    -((e.clientY - rect.top) / rect.height) * 2 + 1);
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(burnVectorArrows, true);
+  if (hits.length) {
+    let obj = hits[0].object;
+    while (obj && !obj.userData.burnLabel) obj = obj.parent;
+    if (obj?.userData.burnLabel) {
+      const sc     = SPACECRAFT[missionConfig.spacecraft] || SPACECRAFT.medium;
+      const fuelKg = propellantKgNum(obj.userData.dv, sc.isp, sc.dry_kg);
+      tooltip.style.display = 'block';
+      tooltip.style.left    = (e.clientX + 14) + 'px';
+      tooltip.style.top     = (e.clientY - 12) + 'px';
+      tooltip.innerHTML     = `<b>${obj.userData.burnLabel}</b><br>` +
+        `ΔV: ${obj.userData.dv.toFixed(3)} km/s<br>` +
+        `Date: ${obj.userData.jd ? jdToDate(obj.userData.jd) : '—'}<br>` +
+        `Fuel: ~${Math.round(fuelKg).toLocaleString()} kg`;
+      return;
+    }
+  }
+  tooltip.style.display = 'none';
+});
+
 // Spacecraft card selection
 document.querySelectorAll('.mp-craft-card').forEach(card => {
   card.addEventListener('click', () => {
@@ -4562,6 +5002,11 @@ function animate() {
   const now = performance.now();
   const dt = Math.min((now - lastRealTime) / 1000, 0.1);
   lastRealTime = now;
+
+  updateMissionAnimation(dt);
+  if (optimalTrajectory && document.getElementById('mission-timeline').style.display !== 'none') {
+    updateTimelineIndicator();
+  }
 
   // FPS counter
   fpsFrames++;

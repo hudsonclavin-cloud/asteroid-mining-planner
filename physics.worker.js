@@ -799,6 +799,18 @@ self.onmessage = function(e) {
     return;
   }
 
+  if (msg.cmd === 'query_pos') {
+    const { jd, planetIdx, reqId } = msg;
+    try {
+      const s = propagatePlanet(planetIdx, jd);
+      self.postMessage({ type: 'query_pos_result', reqId, ok: true,
+        x: s.x, y: s.y, z: s.z, vx: s.vx, vy: s.vy, vz: s.vz });
+    } catch(e) {
+      self.postMessage({ type: 'query_pos_result', reqId, ok: false });
+    }
+    return;
+  }
+
   if (msg.cmd === 'fetch_nhats') {
     (async function() {
       const urls = [
