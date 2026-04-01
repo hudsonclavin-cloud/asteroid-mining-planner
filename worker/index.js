@@ -24,6 +24,16 @@ const RATE_WINDOW_MS = 60_000; // 1 minute
  */
 const rateLimitStore = new Map();
 
+// ── Static commodity prices + in-memory cache for /api/prices ────────────────
+const STATIC_PRICES = {
+  water: 0, iron: 0.12, nickel: 16, cobalt: 28, pgm: 31000,
+  gold: 92000, silver: 1050, copper: 9.50, carbon: 0.50,
+  silicates: 0.01, rareEarth: 250,
+};
+let priceCache = null;
+let priceCacheTime = 0;
+const PRICE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 function checkRateLimit(ip) {
   const now = Date.now();
   let entry = rateLimitStore.get(ip);
@@ -39,7 +49,7 @@ function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://hudsonclavin-cloud.github.io';
   return {
     'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
   };
@@ -89,6 +99,45 @@ export default {
     // ── Preflight ────────────────────────────────────────────────────────────
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    // ── GET /api/prices ──────────────────────────────────────────────────────
+    if (url.pathname === '/api/prices' && request.method === 'GET') {
+      if (priceCache && Date.now() - priceCacheTime < PRICE_CACHE_TTL) {
+        return jsonResponse(priceCache, 200, origin);
+      }
+      // Try live metals API if key is configured (optional)
+      if (env.METALS_API_KEY) {
+        try {
+          const r = await fetch(
+            `https://metals-api.com/api/latest?access_key=${env.METALS_API_KEY}&base=USD&symbols=XAU,XAG,XPT,XPD,COPPER,NICKEL,COBALT`,
+            { cf: { cacheTtl: 3600 } }
+          );
+          if (r.ok) {
+            const raw = await r.json();
+            const oz2kg = 1 / 32.1507; // troy oz → kg
+            priceCache = {
+              prices: {
+                ...STATIC_PRICES,
+                gold:    raw.rates?.XAU ? 1 / (raw.rates.XAU * oz2kg) : STATIC_PRICES.gold,
+                silver:  raw.rates?.XAG ? 1 / (raw.rates.XAG * oz2kg) : STATIC_PRICES.silver,
+                pgm:     raw.rates?.XPT ? 1 / (raw.rates.XPT * oz2kg) : STATIC_PRICES.pgm,
+                nickel:  raw.rates?.NICKEL ? raw.rates.NICKEL          : STATIC_PRICES.nickel,
+                cobalt:  raw.rates?.COBALT ? raw.rates.COBALT          : STATIC_PRICES.cobalt,
+                copper:  raw.rates?.COPPER ? raw.rates.COPPER          : STATIC_PRICES.copper,
+              },
+              source: 'metals-api',
+              timestamp: Date.now(),
+            };
+            priceCacheTime = Date.now();
+            return jsonResponse(priceCache, 200, origin);
+          }
+        } catch (_) {}
+      }
+      // Fallback to static prices
+      priceCache = { prices: STATIC_PRICES, source: 'static', timestamp: Date.now() };
+      priceCacheTime = Date.now();
+      return jsonResponse(priceCache, 200, origin);
     }
 
     // ── Route guard ──────────────────────────────────────────────────────────

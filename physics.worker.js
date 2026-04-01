@@ -510,6 +510,70 @@ self.onmessage = function(e) {
     return;
   }
 
+  if (msg.cmd === 'plan_mission') {
+    const { ast, jd_start, jd_end, destination } = msg;
+    const DEST_DV = { leo:0, geo:3.9, l1:3.77, l2:3.43, lunar:6.0, mars:5.6 };
+    const destOverhead = DEST_DV[destination] || 0;
+    const STEP_DAYS = 15;
+    const TOF_MIN = 30, TOF_MAX = 600, TOF_STEPS = 24;
+    const AU_m = 1.496e11;
+    const results = [];
+    const totalDeps = Math.ceil((jd_end - jd_start) / STEP_DAYS);
+    let depIdx = 0;
+
+    for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += STEP_DAYS) {
+      depIdx++;
+      if (depIdx % 20 === 0) {
+        const windowsScanned = depIdx * (TOF_STEPS + 1);
+        self.postMessage({
+          type: 'plan_progress',
+          pct: depIdx / totalDeps,
+          label: `Scanning ${windowsScanned.toLocaleString()} launch windows...`,
+        });
+      }
+      let earthDep;
+      try { earthDep = propagatePlanet(2, jd_dep); } catch(_) { continue; }
+      const r1_m = Math.hypot(earthDep.x, earthDep.y, earthDep.z) * AU_m;
+
+      for (let step = 0; step <= TOF_STEPS; step++) {
+        const tof = TOF_MIN + (TOF_MAX - TOF_MIN) * step / TOF_STEPS;
+        const jd_arr = jd_dep + tof;
+        let astArr;
+        try { astArr = propagateAsteroid(ast, jd_arr); } catch(_) { continue; }
+        const r2_m = Math.hypot(astArr.x, astArr.y, astArr.z) * AU_m;
+
+        // Vis-viva: minimum-energy Hohmann-like transfer ellipse
+        const a_m = (r1_m + r2_m) / 2;
+        if (a_m <= 0 || r1_m <= 0 || r2_m <= 0) continue;
+        const twoOverR1 = 2 / r1_m, twoOverR2 = 2 / r2_m, oneOverA = 1 / a_m;
+        if (twoOverR1 - oneOverA < 0 || twoOverR2 - oneOverA < 0) continue;
+
+        const v_trans_dep = Math.sqrt(GM_sun * (twoOverR1 - oneOverA));
+        const v_trans_arr = Math.sqrt(GM_sun * (twoOverR2 - oneOverA));
+        const v_earth_circ = Math.sqrt(GM_sun / r1_m);
+        const v_ast_circ   = Math.sqrt(GM_sun / r2_m);
+
+        const dv_dep_kms    = Math.abs(v_trans_dep - v_earth_circ) / 1000;
+        const dv_arr_kms    = Math.abs(v_trans_arr - v_ast_circ)   / 1000;
+        const dv_return_kms = dv_dep_kms + dv_arr_kms;   // symmetric estimate
+        const dv_total      = dv_dep_kms + dv_arr_kms + dv_return_kms + destOverhead;
+
+        results.push({
+          jd_dep, jd_arr, tof,
+          dv_dep:    +dv_dep_kms.toFixed(3),
+          dv_arr:    +dv_arr_kms.toFixed(3),
+          dv_return: +dv_return_kms.toFixed(3),
+          dv_total:  +dv_total.toFixed(3),
+          earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
+          astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z   },
+        });
+      }
+    }
+    results.sort((a, b) => a.dv_total - b.dv_total);
+    self.postMessage({ type: 'plan_result', results: results.slice(0, 10) });
+    return;
+  }
+
   if (msg.cmd === 'fetch_nhats') {
     (async function() {
       const urls = [
