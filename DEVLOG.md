@@ -348,3 +348,53 @@ Replaced Perplexity `sonar` with OpenAI `gpt-4o-mini` in `worker/index.js`.
 
 Response shape (`choices[0].message.content`) is identical — no frontend changes required.
 To redeploy: `wrangler secret put OPENAI_API_KEY` then `wrangler deploy`.
+
+---
+
+## Phase 10 — NASA Mission-Control UI + NHATS Fix (2026-03-31)
+
+### Summary
+Three concurrent workstreams: NHATS reliability fix, Research panel verification, and full UI overhaul.
+
+### NHATS Fix (`physics.worker.js`)
+- Removed `mode: 'cors'` from worker fetch (was blocking JPL cross-origin requests)
+- Added two-URL fallback: primary with `launch=2025-2035`, secondary without
+- Handle both `json.data` and `json.nhats` response shapes
+- Added `console.log` breadcrumbs at every stage: fetch start, HTTP status, row count, postMessage
+- Frontend: added breadcrumbs to `fetchNHATSData()`, `applyNHATSData()`, and `nhats_result` handler
+- On failure: updates `#hud-nhats` to `NHATS: OFFLINE` and auto-retries after 30s
+- On success: updates `#hud-nhats` to `NHATS: N TARGETS`
+
+### UI Overhaul (`index.html`)
+
+#### Font + Color System
+- Font: Space Mono replacing JetBrains Mono
+- Background: `#0a0e1a` (deep space navy)
+- Accent: `#00d4ff` (cyan) replacing `#4af7c4` (green)
+- Body text: `#c8d6e5`, borders: `#1a2235`
+
+#### Top Toolbar (48px)
+- `◈ ASTER` logo + center action buttons (FILTERS, EXPORT, SHARE, HELP)
+- Right HUD readouts: date, asteroid count, selected target, filter status, NHATS count, FPS
+- All buttons wired; filter badge synced to toolbar via `updateFilterBadge()`
+- `updateToolbarHUD()` called from `applyFilters()`, `selectAsteroid()`, `deselectAsteroid()`
+
+#### Asteroid Rendering
+- Colors by spectral type: C/B=blue `#4488ff`, S/Q/A=orange `#ff8844`, M/E/P=gold `#ffcc00`, X/V/T=purple `#cc66ff`, unknown=cyan `#00d4ff`
+- Size by log-scaled resource value: min 0.6×, max 2.0× (`log10(price)/14`)
+- Base geometry increased from 0.002 to 0.003 AU radius
+
+#### Interactivity
+- Hover detection: 18px proximity threshold, tooltip with name/type/score/value, pointer cursor
+- Click ripple: CSS `@keyframes rippleOut` animation spawned at click coordinates
+- Right panel: slide-in from off-screen right (`transition: right 0.3s ease`, `.panel-open`)
+- Camera nudge: 8% lerp toward selected asteroid on select
+- `deselectAsteroid()`: hides panel, clears orbit line/trail/ring
+- Escape key: closes shortcut overlay → exits burn mode → deselects asteroid (priority chain)
+
+#### Filter Panel
+- Spectral chip colors per type match 3D asteroid colors
+- Left panel + bottom bar restyled to match new palette
+- Custom scrollbar styling
+
+*Last updated: Phase 10 complete, 2026-03-31*

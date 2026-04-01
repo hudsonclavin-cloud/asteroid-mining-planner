@@ -511,19 +511,29 @@ self.onmessage = function(e) {
   }
 
   if (msg.cmd === 'fetch_nhats') {
-    (async function fetchNHATSData(url) {
-      try {
-        const r = await fetch(url, { mode: 'cors' });
-        if (!r.ok) {
-          self.postMessage({ type: 'nhats_result', ok: false, error: `HTTP ${r.status}` });
+    (async function() {
+      const urls = [
+        'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035',
+        'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8',
+      ];
+      for (const url of urls) {
+        try {
+          console.log('[NHATS worker] fetching:', url);
+          const r = await fetch(url);
+          console.log('[NHATS worker] status:', r.status, r.ok);
+          if (!r.ok) { console.warn('[NHATS worker] HTTP error:', r.status); continue; }
+          const json = await r.json();
+          console.log('[NHATS worker] raw keys:', Object.keys(json));
+          const rows = json.data || json.nhats || [];
+          console.log('[NHATS worker] parsed', rows.length, 'rows');
+          self.postMessage({ type: 'nhats_result', ok: true, data: rows });
           return;
+        } catch(err) {
+          console.warn('[NHATS worker] fetch error:', err.message);
         }
-        const json = await r.json();
-        self.postMessage({ type: 'nhats_result', ok: true, data: json.data || [] });
-      } catch(err) {
-        self.postMessage({ type: 'nhats_result', ok: false, error: err.message });
       }
-    })(msg.url);
+      self.postMessage({ type: 'nhats_result', ok: false, error: 'All NHATS URLs failed' });
+    })();
     return;
   }
 };
