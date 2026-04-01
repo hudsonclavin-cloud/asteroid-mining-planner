@@ -1074,6 +1074,15 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       </select>
     </div>
 
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">PARKING ORBIT ALTITUDE</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="mp-park-alt" type="number" min="200" max="2000" value="400"
+          class="mp-input" style="width:70px">
+        <span style="font-size:9px;color:#4b5563">km above Earth surface</span>
+      </div>
+    </div>
+
     <button id="btn-find-route" class="action-btn"
       style="width:100%;font-size:11px;padding:10px;background:linear-gradient(135deg,#003322,#005544);
       border-color:#00d4ff;color:#00d4ff;letter-spacing:0.15em">🚀 FIND BEST ROUTE</button>
@@ -3278,7 +3287,17 @@ function runMissionOptimizer() {
   document.getElementById('mp-actions').style.display   = 'none';
   document.getElementById('mp-progress-bar').style.width = '0%';
   document.getElementById('mp-progress-label').textContent = 'Initializing scan...';
-  worker.postMessage({ cmd:'plan_mission', ast, jd_start, jd_end, destination:missionConfig.destination });
+  const parkAlt  = parseInt(document.getElementById('mp-park-alt').value) || 400;
+  const sc       = missionConfig.spacecraft;
+  const STAY_MAP = { light:14, medium:45, heavy:90 };
+  missionConfig.parkingAlt_km = parkAlt;
+  worker.postMessage({
+    cmd: 'plan_mission', ast, jd_start, jd_end,
+    destination: missionConfig.destination,
+    parkingAlt_km: parkAlt,
+    spacecraft: sc,
+    stayDays: STAY_MAP[sc] || 45,
+  });
 }
 
 function onPlanResult(results) {
@@ -3299,10 +3318,14 @@ function renderTrajectoryList() {
     const arr = jdToDate(t.jd_arr);
     const card = document.createElement('div');
     card.className = 'mp-traj-card' + (i === selectedTrajIdx ? ' mp-traj-selected' : '');
-    card.innerHTML = `<div class="mp-traj-rank">#${i+1}</div>
+    const gaBadge = t.lunarAssist
+      ? '<span style="font-size:7px;color:#fbbf24;border:1px solid #fbbf24;padding:1px 4px;margin-left:5px;vertical-align:middle">LUNAR GA</span>'
+      : '';
+    card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} km/s</div>
-      <div class="mp-traj-meta">Out ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>`;
+      <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
+      <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>`;
     card.addEventListener('click', () => selectTrajectory(i));
     list.appendChild(card);
   });
@@ -3320,10 +3343,11 @@ function selectTrajectory(idx) {
   document.getElementById('mp-profile-text').textContent = profile.text;
   document.getElementById('mp-profile').style.display = 'block';
   mpBurns = [
-    { label:'1 · DEPARTURE',  jd: traj.jd_dep,             dv_kms: traj.dv_dep              },
-    { label:'2 · ARRIVAL',    jd: traj.jd_arr,             dv_kms: traj.dv_arr              },
-    { label:'3 · RETURN DEP', jd: traj.jd_arr + 30,        dv_kms: +(traj.dv_return * 0.5).toFixed(3) },
-    { label:'4 · RETURN ARR', jd: traj.jd_arr + 30 + traj.tof, dv_kms: +(traj.dv_return * 0.5).toFixed(3) },
+    { label:'1 · DEPARTURE',       jd: traj.jd_dep,                       dv_kms: traj.dv_dep    },
+    { label:'2 · ASTEROID ARRIVAL',jd: traj.jd_arr,                       dv_kms: traj.dv_arr    },
+    { label:'3 · MCC',             jd: (traj.jd_dep + traj.jd_arr) / 2,   dv_kms: traj.dv_mcc || +(traj.dv_dep * 0.02).toFixed(3) },
+    { label:'4 · ASTEROID DEP.',   jd: traj.jd_ret_dep || traj.jd_arr+30, dv_kms: traj.dv_return },
+    { label:'5 · DEST. CAPTURE',   jd: traj.jd_ret_arr || traj.jd_arr+30+(traj.tof_return||traj.tof), dv_kms: traj.dv_capture || 0 },
   ];
   renderBurnEditTable();
   document.getElementById('mp-burns').style.display   = 'block';
@@ -3367,11 +3391,21 @@ function computeMissionProfile(traj) {
     sep('TRAJECTORY'),
     dot('LAUNCH DATE', jdToDate(traj.jd_dep)),
     dot('ARRIVAL DATE', jdToDate(traj.jd_arr)),
-    dot('MISSION DURATION', opsDays + ' days'),
-    dot('OUTBOUND ΔV', traj.dv_dep.toFixed(2) + ' km/s'),
-    dot('ARRIVAL ΔV', traj.dv_arr.toFixed(2) + ' km/s'),
-    dot('RETURN ΔV', traj.dv_return.toFixed(2) + ' km/s'),
-    dot('TOTAL ΔV', traj.dv_total.toFixed(2) + ' km/s'),
+    dot('MINING STAY', (traj.stay_days || '?') + ' days'),
+    dot('RETURN DEPART', traj.jd_ret_dep ? jdToDate(traj.jd_ret_dep) : '—'),
+    dot('RETURN ARRIVAL', traj.jd_ret_arr ? jdToDate(traj.jd_ret_arr) : '—'),
+    dot('MISSION DURATION', opsDays + ' days (est)'),
+    sep('DELTA-V BUDGET'),
+    dot('1 · DEPARTURE BURN', traj.dv_dep.toFixed(3) + ' km/s  (from ' + (missionConfig.parkingAlt_km||400) + ' km LEO)'),
+    dot('2 · ASTEROID ARRIVAL', traj.dv_arr.toFixed(3) + ' km/s'),
+    dot('3 · MID-COURSE (MCC)', (traj.dv_mcc||0).toFixed(3) + ' km/s  (2% budget)'),
+    dot('4 · ASTEROID DEPART', traj.dv_return.toFixed(3) + ' km/s'),
+    dot('5 · DEST. CAPTURE', (traj.dv_capture||0).toFixed(3) + ' km/s'),
+    dot('TOTAL MISSION ΔV', traj.dv_total.toFixed(2) + ' km/s'),
+    dot('C3', (traj.C3||0).toFixed(2) + ' km²/s²'),
+    dot('V∞ DEPARTURE', (traj.vinf_dep||0).toFixed(2) + ' km/s'),
+    dot('V∞ ARRIVAL', (traj.vinf_arr||0).toFixed(2) + ' km/s'),
+    traj.lunarAssist ? dot('LUNAR GRAVITY ASSIST', 'CANDIDATE (low C3)') : '',
     sep('PROPULSION'),
     dot('DRY MASS', sc.dry_kg.toLocaleString() + ' kg'),
     dot('PROPELLANT MASS', Math.round(propKg).toLocaleString() + ' kg'),
@@ -3393,7 +3427,7 @@ function computeMissionProfile(traj) {
     breakEvenKg ? dot('BREAK-EVEN PAYLOAD', breakEvenKg.toLocaleString() + ' kg') : '',
     '',
     '═'.repeat(50),
-    '  Vis-viva approximation · Full Lambert solver in 7E',
+    '  Patched-conic model · Izzo 2015 Lambert solver · Phase 7E',
     '═'.repeat(50),
   ].filter(l => l !== undefined);
   return { text: lines.join('\n'), totalCost, totalRevenue, roi };
