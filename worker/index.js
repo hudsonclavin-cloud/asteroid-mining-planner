@@ -16,6 +16,15 @@ const ALLOWED_ORIGINS = new Set([
 const RATE_LIMIT = 10;         // max requests per window per IP
 const RATE_WINDOW_MS = 60_000; // 1 minute
 
+const pricesCache = { data: null, at: 0 };
+const PRICE_CACHE_MS = 60 * 60 * 1000; // 1 hour
+
+const FALLBACK_PRICES = {
+  gold: 92000, silver: 1050, platinum: 31000, palladium: 32000,
+  iridium: 52000, copper: 9.5, nickel: 16, cobalt: 28,
+  iron: 0.12, rareEarth: 250, water: 0, carbon: 0.5, silicates: 0.01,
+};
+
 /**
  * In-process rate limit store.
  * Persists within a single V8 isolate instance; resets on worker restart or
@@ -39,7 +48,7 @@ function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://hudsonclavin-cloud.github.io';
   return {
     'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
   };
@@ -89,6 +98,52 @@ export default {
     // ── Preflight ────────────────────────────────────────────────────────────
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    // ── GET /api/prices ──────────────────────────────────────────────────────
+    if (url.pathname === '/api/prices' && request.method === 'GET') {
+      const now = Date.now();
+      if (pricesCache.data && now - pricesCache.at < PRICE_CACHE_MS) {
+        return jsonResponse({ prices: pricesCache.data, source: 'cache', at: pricesCache.at }, 200, origin);
+      }
+      let prices = null;
+      let source = 'fallback';
+      if (env.METALS_API_KEY) {
+        try {
+          const symbols = 'XAU,XAG,XPT,XPD,XCU,XNI,XCO';
+          const r = await fetch(
+            `https://metals-api.com/api/latest?access_key=${env.METALS_API_KEY}&base=USD&symbols=${symbols}`,
+            { cf: { cacheTtl: 3600 } }
+          );
+          if (r.ok) {
+            const json = await r.json();
+            if (json.success && json.rates) {
+              const tr = json.rates;
+              const oz2kg = 32.1507;
+              prices = {
+                gold:      tr.XAU ? (1 / tr.XAU) * oz2kg : FALLBACK_PRICES.gold,
+                silver:    tr.XAG ? (1 / tr.XAG) * oz2kg : FALLBACK_PRICES.silver,
+                platinum:  tr.XPT ? (1 / tr.XPT) * oz2kg : FALLBACK_PRICES.platinum,
+                palladium: tr.XPD ? (1 / tr.XPD) * oz2kg : FALLBACK_PRICES.palladium,
+                copper:    tr.XCU ? (1 / tr.XCU) * oz2kg : FALLBACK_PRICES.copper,
+                nickel:    tr.XNI ? (1 / tr.XNI) * oz2kg : FALLBACK_PRICES.nickel,
+                cobalt:    tr.XCO ? (1 / tr.XCO) * oz2kg : FALLBACK_PRICES.cobalt,
+                iron:      FALLBACK_PRICES.iron,
+                iridium:   FALLBACK_PRICES.iridium,
+                rareEarth: FALLBACK_PRICES.rareEarth,
+                water:     FALLBACK_PRICES.water,
+                carbon:    FALLBACK_PRICES.carbon,
+                silicates: FALLBACK_PRICES.silicates,
+              };
+              source = 'metals-api';
+            }
+          }
+        } catch(_) {}
+      }
+      if (!prices) prices = { ...FALLBACK_PRICES };
+      pricesCache.data = prices;
+      pricesCache.at = now;
+      return jsonResponse({ prices, source, at: now }, 200, origin);
     }
 
     // ── Route guard ──────────────────────────────────────────────────────────
