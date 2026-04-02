@@ -112,6 +112,7 @@ canvas { display: block; }
   box-shadow: -4px 0 24px rgba(0,0,0,0.5);
   padding: 20px;
   box-sizing: border-box;
+  overflow-x: hidden;
   overflow-y: auto;
   z-index: 200;
   display: flex;
@@ -535,7 +536,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 #mat-table tr.total-row td { border-top:1px solid #1a2235; color:#00d4ff; }
 #mat-table td.value-col { text-align:right; }
 /* ─── Phase 7D: Mission Planner (panel-integrated) ──────────────────────────── */
-#right-panel.mp-mode { width: 500px; overflow: hidden; padding: 0; transition: right 0.3s ease; }
+#right-panel.mp-mode { width: 500px; overflow-x: hidden; overflow-y: hidden; padding: 0; transition: right 0.3s ease; }
 .mp-select {
   width:100%; background:#0d1627; border:1px solid #1a2235; color:#c8d6e5;
   font-family:'Space Mono',monospace; font-size:9px; padding:5px 8px;
@@ -1122,7 +1123,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <button id="btn-planner-back" style="background:transparent;border:1px solid #1a2235;
       color:#6a8a9a;font-family:'Space Mono',monospace;font-size:9px;padding:4px 8px;
       cursor:pointer;letter-spacing:0.08em">← BACK</button>
-    <div style="flex:1;font-size:11px;color:#00d4ff;letter-spacing:0.15em;
+    <div style="flex:1;min-width:0;overflow:hidden;font-size:11px;color:#00d4ff;letter-spacing:0.15em;
       font-family:'Space Mono',monospace">⚡ MISSION PLANNER</div>
     <div id="mp-target-name" style="font-size:9px;color:#6a8a9a;
       font-family:'Space Mono',monospace;text-align:right;max-width:140px;

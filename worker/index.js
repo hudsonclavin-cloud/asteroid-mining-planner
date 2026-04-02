@@ -163,6 +163,20 @@ export default {
       }
     }
 
+    // ── GET /api/sbdb ────────────────────────────────────────────────────────
+    if (url.pathname === '/api/sbdb' && request.method === 'GET') {
+      const nasaUrl = new URL('https://ssd-api.jpl.nasa.gov/sbdb_query.api');
+      for (const [k, v] of url.searchParams) nasaUrl.searchParams.set(k, v);
+      try {
+        const r = await fetch(nasaUrl.toString(), { cf: { cacheTtl: 3600 } });
+        if (!r.ok) throw new Error(`NASA HTTP ${r.status}`);
+        const data = await r.json();
+        return jsonResponse(data, 200, origin);
+      } catch (err) {
+        return jsonResponse({ error: 'SBDB proxy failed', detail: err.message }, 502, origin);
+      }
+    }
+
     // ── Route guard ──────────────────────────────────────────────────────────
     if (url.pathname !== '/api/research' || request.method !== 'POST') {
       return jsonResponse({ error: 'Not found' }, 404, origin);

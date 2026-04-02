@@ -844,7 +844,7 @@ self.onmessage = function(e) {
       const CORS_PROXY = 'https://corsproxy.io/?';
 
       // ── SBDB: all NEAs with H≤22, returns column-format JSON ────────────────
-      const SBDB_URL = 'https://ssd-api.jpl.nasa.gov/sbdb_query.api?' +
+      const SBDB_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/sbdb?' +
         'fields=spkid,full_name,pdes,name,diameter,albedo,spec_B,spec_T,e,a,i,om,w,ma,epoch,per,class' +
         '&sb-kind=an&sb-class=IEO,ATE,APO,AMO&sb-H-max=22';
 
@@ -927,7 +927,7 @@ self.onmessage = function(e) {
       // ── Build lookup maps ────────────────────────────────────────────────
       const asterankMap = new Map();
       for (const ast of asterankRows) {
-        const key = (ast.pdes || ast.full_name || '').trim();
+        const key = String(ast.pdes || ast.full_name || '').trim();
         if (key) asterankMap.set(key, ast);
         // Also index by bare number (e.g. "433" → matches "433 Eros")
         const numKey = key.replace(/\s+.*/, '');

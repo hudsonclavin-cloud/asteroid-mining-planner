@@ -4,6 +4,22 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Bug Fixes #2 (2026-04-01)
+
+### Fix 1 — SBDB CORS (worker + physics.worker.js)
+Added `GET /api/sbdb` proxy endpoint to `worker/index.js` (1-hour Cloudflare edge cache, forwards all query params to `ssd-api.jpl.nasa.gov/sbdb_query.api`). Updated `SBDB_URL` in `physics.worker.js` to route through `aster-proxy.hudsonclavin.workers.dev/api/sbdb`. NHATS was already proxied. **Deploy:** `cd worker && wrangler deploy`
+
+### Fix 2 — TypeError: .trim is not a function (physics.worker.js:930)
+Asterank rows can have numeric `pdes`/`full_name` fields. Wrapped with `String()` before `.trim()`.
+
+### Fix 3 — toggleLeftPanel cascade
+Resolved by Fix 2 — function was always defined (hoisted), but the TypeError was interrupting catalog initialization.
+
+### Fix 4 — Mission planner header text clipped
+Added `overflow-x: hidden` to `#right-panel` base; changed `#right-panel.mp-mode` overflow to explicit axes; added `min-width: 0; overflow: hidden` to the flex title div to prevent content overflow in the flex row.
+
+---
+
 ## Bug Fixes (2026-04-01)
 
 ### Fix 1 — SyntaxError: duplicate `MAT_DIFFICULTY` declaration
