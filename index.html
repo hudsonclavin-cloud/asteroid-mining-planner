@@ -2336,8 +2336,8 @@ worker.onmessage = ({ data }) => {
     console.log('[Catalog] catalog_ready:', data.data.length, 'asteroids');
     // Cache to IndexedDB; fall back to localStorage (top 2000 only)
     const payload = { data: data.data, timestamp: Date.now() };
-    saveToIndexedDB('aster_catalog_v1', payload).catch(() => {
-      try { localStorage.setItem('aster_catalog_v1', JSON.stringify({ data: data.data.slice(0, 2000), timestamp: Date.now() })); } catch(_) {}
+    saveToIndexedDB('aster_catalog_v2', payload).catch(() => {
+      try { localStorage.setItem('aster_catalog_v2', JSON.stringify({ data: data.data.slice(0, 2000), timestamp: Date.now() })); } catch(_) {}
     });
     // Cache NHATS rows alongside
     if (data.nhatsRows && data.nhatsRows.length > 0) {
@@ -5473,9 +5473,13 @@ async function init() {
   animate();
   fetchCommodityPrices(); // non-blocking — populates commodityPrices for Materials tab
 
+  // ── Clear stale SBDB-merged cache (v1) ─────────────────────────────────
+  try { localStorage.removeItem('aster_catalog_v1'); } catch(_) {}
+  saveToIndexedDB('aster_catalog_v1', null).catch(() => {});
+
   // ── Check IndexedDB catalog cache ──────────────────────────────────────
   try {
-    const cached = await getFromIndexedDB('aster_catalog_v1');
+    const cached = await getFromIndexedDB('aster_catalog_v2');
     if (cached && cached.timestamp && Date.now() - cached.timestamp < 24 * 3600 * 1000 && cached.data.length > 0) {
       console.log('[Catalog] IndexedDB cache hit:', cached.data.length, 'asteroids');
       const sub = document.getElementById('loading-sub');
@@ -5493,7 +5497,7 @@ async function init() {
   } catch(_) {
     // IndexedDB unavailable — try localStorage fallback
     try {
-      const raw = localStorage.getItem('aster_catalog_v1');
+      const raw = localStorage.getItem('aster_catalog_v2');
       if (raw) {
         const { data: cachedData, timestamp } = JSON.parse(raw);
         if (Date.now() - timestamp < 24 * 3600 * 1000 && cachedData.length > 0) {

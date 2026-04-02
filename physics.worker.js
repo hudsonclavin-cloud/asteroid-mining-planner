@@ -843,39 +843,12 @@ self.onmessage = function(e) {
       const limit = msg.limit || 5000;
       const CORS_PROXY = 'https://corsproxy.io/?';
 
-      // ── SBDB: all NEAs with H≤22, returns column-format JSON ────────────────
-      const SBDB_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/sbdb?' +
-        'fields=pdes,name,full_name,e,a,i,om,w,ma,epoch,per,class,diameter,spec_B,spec_T' +
-        '&sb-kind=an&sb-class=IEO,ATE,APO,AMO&sb-H-max=22';
-
       // ── Asterank: broad query, sorted by score ────────────────────────────
       const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
         'query=%7B%7D&limit=5000&sort=score';
 
       // ── NHATS: human-accessible targets ──────────────────────────────────
       const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035';
-
-      async function fetchSBDB() {
-        try {
-          console.log('[Catalog] fetching SBDB...');
-          const r = await fetch(SBDB_URL);
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          const json = await r.json();
-          const fields = json.fields || [];
-          const rows = (json.data || []).map(row => {
-            const obj = {};
-            fields.forEach((f, idx) => { obj[f] = row[idx]; });
-            return obj;
-          });
-          console.log('[Catalog] SBDB:', rows.length, 'rows');
-          self.postMessage({ type: 'load_progress', source: 'sbdb', status: 'ok', count: rows.length });
-          return rows;
-        } catch(err) {
-          console.warn('[Catalog] SBDB failed:', err.message);
-          self.postMessage({ type: 'load_progress', source: 'sbdb', status: 'error', error: err.message });
-          return [];
-        }
-      }
 
       async function fetchAsterankWorker() {
         try {
@@ -919,20 +892,10 @@ self.onmessage = function(e) {
         return [];
       }
 
-      // Fetch all three in parallel
-      const [sbdbRows, asterankRows, nhatsRows] = await Promise.all([
-        fetchSBDB(), fetchAsterankWorker(), fetchNHATSWorker()
+      // Fetch in parallel
+      const [asterankRows, nhatsRows] = await Promise.all([
+        fetchAsterankWorker(), fetchNHATSWorker()
       ]);
-
-      // ── Build lookup maps ────────────────────────────────────────────────
-      const asterankMap = new Map();
-      for (const ast of asterankRows) {
-        const key = String(ast.pdes || ast.full_name || '').trim();
-        if (key) asterankMap.set(key, ast);
-        // Also index by bare number (e.g. "433" → matches "433 Eros")
-        const numKey = key.replace(/\s+.*/, '');
-        if (numKey && numKey !== key) asterankMap.set(numKey, ast);
-      }
 
       const nhatsLookup = new Map();
       for (const row of nhatsRows) {
@@ -952,55 +915,55 @@ self.onmessage = function(e) {
         return vol * density * valuePerKg;
       }
 
-      // ── Merge ─────────────────────────────────────────────────────────────
-      const merged = [];
-      for (const row of sbdbRows) {
+      // ── Build catalog from Asterank (primary source) ─────────────────────
+      const catalog = [];
+      for (const row of asterankRows) {
         const a = Number(row.a);
         const e = Number(row.e);
-        const epochJD = Number(row.epoch);
-        if (!a || a <= 0 || e < 0 || e >= 1 || !epochJD) continue;
+        if (!a || a <= 0 || e < 0 || e >= 1) continue;
 
-        const pdes = (row.pdes || '').trim();
-        const ark = asterankMap.get(pdes) ||
-                    asterankMap.get(pdes.replace(/\s+.*/, '')) ||
-                    null;
-        const nhatsRow = nhatsLookup.get(pdes);
-        const specRaw = (row.spec_B || row.spec_T || (ark ? (ark.spec || ark.spec_T) : '') || '').trim();
+        const pdes     = String(row.pdes || row.full_name || '').trim();
+        const epoch    = Number(row.epoch) || 51544.5; // Asterank gives MJD directly
+        const diameter = Number(row.diameter) || 0;
+        const specRaw  = String(row.spec || row.spec_T || '').trim();
+        const per      = Number(row.per) || Math.sqrt(a * a * a); // Kepler's 3rd law: T = a^1.5 yr
 
-        merged.push({
-          // Orbital — epoch stored as MJD (worker expects ast.epoch as MJD)
-          a,
-          e,
-          i:     Number(row.i)   || 0,
-          om:    Number(row.om)  || 0,
-          w:     Number(row.w)   || 0,
-          ma:    Number(row.ma)  || 0,
-          epoch: epochJD - 2400000.5, // SBDB gives JD → convert to MJD for worker
-          per:   Number(row.per) || 0,
+        // Derive NEA class from orbital elements when Asterank omits it
+        let astClass = String(row.class || '').trim();
+        if (!astClass) {
+          const q = a * (1 - e); // perihelion AU
+          const Q = a * (1 + e); // aphelion  AU
+          if (Q < 0.983)      astClass = 'IEO';
+          else if (a < 1.0)   astClass = 'ATE';
+          else if (q < 1.017) astClass = 'APO';
+          else                astClass = 'AMO';
+        }
 
-          // Identity
+        const nhatsRow = nhatsLookup.get(pdes) ||
+                         nhatsLookup.get(pdes.replace(/\s+.*/, ''));
+
+        catalog.push({
+          a, e,
+          i:         Number(row.i)       || 0,
+          om:        Number(row.om)      || 0,
+          w:         Number(row.w)       || 0,
+          ma:        Number(row.ma)      || 0,
+          epoch, per,
           pdes,
-          full_name: (row.full_name || '').trim(),
-          name:      (row.name || '').trim(),
-          pha:       ark ? (ark.pha || 'N') : 'N',
-          class:     (row.class || '').trim(),
-
-          // Physical
-          H:        ark ? (Number(ark.H)        || 20)   : 20,
-          diameter: Number(row.diameter) || (ark ? Number(ark.diameter) : 0) || 0,
-          albedo:   Number(row.albedo)   || (ark ? Number(ark.albedo)   : 0.15) || 0.15,
-          spec:     specRaw,
-          spec_T:   (row.spec_T || (ark ? ark.spec_T : '') || '').trim(),
-
-          // Economic
-          price:  ark ? (Number(ark.price)  || 0) : estimateValue(specRaw, row.diameter, row.albedo),
-          profit: ark ? (Number(ark.profit) || 0) : 0,
-
-          // Navigation
-          moid:    ark ? (Number(ark.moid)    || 0) : 0,
-          delta_v: ark ? (Number(ark.delta_v) || 0) : 0,
-
-          // NHATS
+          full_name: String(row.full_name || row.name || pdes).trim(),
+          name:      String(row.name     || '').trim(),
+          class:     astClass,
+          pha:       row.pha  || 'N',
+          H:         Number(row.H)       || 20,
+          diameter,
+          albedo:    Number(row.albedo)  || 0.15,
+          spec:      specRaw || 'C',
+          spec_T:    String(row.spec_T   || specRaw || '').trim(),
+          price:     Number(row.price)   || estimateValue(specRaw, diameter, 0.15),
+          profit:    Number(row.profit)  || 0,
+          moid:      Number(row.moid)    || 0,
+          delta_v:   Number(row.delta_v) || 0,
+          _score:    Number(row.score)   || 0,
           nhats: nhatsRow ? {
             accessible:    true,
             minDv:         nhatsRow.min_dv,
@@ -1013,12 +976,12 @@ self.onmessage = function(e) {
         });
       }
 
-      // Sort by estimated value descending, then trim to limit
-      merged.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
-      const catalog = merged.slice(0, limit);
+      // Sort by value descending, trim to limit
+      catalog.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+      const trimmed = catalog.slice(0, limit);
 
-      console.log('[Catalog] merged', merged.length, '→ sending', catalog.length, 'asteroids');
-      self.postMessage({ type: 'catalog_ready', data: catalog, nhatsRows });
+      console.log('[Catalog] Asterank →', catalog.length, 'valid, sending', trimmed.length, 'asteroids');
+      self.postMessage({ type: 'catalog_ready', data: trimmed, nhatsRows });
     })();
     return;
   }
