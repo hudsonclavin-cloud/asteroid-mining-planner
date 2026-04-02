@@ -110,7 +110,9 @@ canvas { display: block; }
   border-left: 1px solid #1a2235;
   box-shadow: -4px 0 24px rgba(0,0,0,0.5);
   padding: 16px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-width: calc(100vw - 20px);
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -420,8 +422,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   position: fixed; left: 0; top: 56px; transform: none;
   background: rgba(10,14,26,0.95); border: 1px solid #1a2235;
   border-left: none; color: #00d4ff; font-size: 11px;
-  padding: 8px 6px; cursor: pointer; z-index: 110;
-  writing-mode: vertical-rl; letter-spacing: 0.1em;
+  padding: 8px 10px; cursor: pointer; z-index: 110;
+  letter-spacing: 0.1em;
   transition: left 0.2s, color 0.2s; user-select: none;
 }
 #btn-toggle-filters:hover { color: #fff; border-color: #00d4ff; }
@@ -1206,6 +1208,17 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
   return mesh;
 });
 
+// ─── Moon ─────────────────────────────────────────────────────────────────────
+const moonMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.006, 8, 8),
+  new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.95, metalness: 0.0 })
+);
+scene.add(moonMesh);
+const MOON_SMA    = 0.00257;                    // AU (~384,400 km)
+const MOON_PERIOD = 27.321582;                  // sidereal days
+const MOON_L0     = 218.316 * (Math.PI / 180); // mean longitude at J2000
+const MOON_INC    = 5.145  * (Math.PI / 180);  // ~5° ecliptic inclination
+
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
 const planetOrbitGroup = new THREE.Group();
 PLANET_SMA.forEach(sma => {
@@ -1357,6 +1370,17 @@ const orbitLine = new THREE.Line(orbitGeo, new THREE.LineBasicMaterial({ color: 
 orbitLine.visible = false;
 scene.add(orbitLine);
 
+// Hover orbit preview — faint ellipse shown when hovering before clicking
+const hoverOrbitPts = new Float32Array(257 * 3);
+const hoverOrbitGeo = new THREE.BufferGeometry();
+hoverOrbitGeo.setAttribute('position', new THREE.BufferAttribute(hoverOrbitPts, 3));
+const hoverOrbitLine = new THREE.Line(
+  hoverOrbitGeo,
+  new THREE.LineBasicMaterial({ color: 0x4a5568, transparent: true, opacity: 0.35 })
+);
+hoverOrbitLine.visible = false;
+scene.add(hoverOrbitLine);
+
 // NHATS pulsing ring — shown on selected NHATS-verified asteroid
 const nhatsRingGeo = new THREE.RingGeometry(0.008, 0.012, 32);
 const nhatsRingMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
@@ -1431,6 +1455,33 @@ function drawOrbitEllipse(ast) {
   }
   orbitGeo.attributes.position.needsUpdate = true;
   orbitLine.visible = true;
+}
+
+function drawHoverOrbit(ast) {
+  if (!ast) { hoverOrbitLine.visible = false; return; }
+  const e = ast.e, a = ast.a;
+  const i = ast.i * DEG, Om = ast.om * DEG, w = ast.w * DEG;
+  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
+  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
+  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
+  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
+  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
+  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
+  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
+  const Rzx = sinW*sinI;
+  const Rzy = cosW*sinI;
+  for (let k = 0; k <= 256; k++) {
+    const M_step = (k / 256) * TWO_PI - Math.PI;
+    const E_step = solveKepler(M_step, e);
+    const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E_step/2), Math.sqrt(1-e)*Math.cos(E_step/2));
+    const r = a * (1 - e * Math.cos(E_step));
+    const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
+    hoverOrbitPts[k*3]   = xo*Rxx + yo*Rxy;
+    hoverOrbitPts[k*3+1] = xo*Ryx + yo*Ryy;
+    hoverOrbitPts[k*3+2] = xo*Rzx + yo*Rzy;
+  }
+  hoverOrbitGeo.attributes.position.needsUpdate = true;
+  hoverOrbitLine.visible = true;
 }
 
 // ─── Gizmo ────────────────────────────────────────────────────────────────────
@@ -1642,6 +1693,34 @@ function placeLabels() {
   }
 }
 
+// ─── IndexedDB catalog cache ──────────────────────────────────────────────────
+function openAsterDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('AsterDB', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('catalog');
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function getFromIndexedDB(key) {
+  const db = await openAsterDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('catalog', 'readonly');
+    const req = tx.objectStore('catalog').get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function saveToIndexedDB(key, value) {
+  const db = await openAsterDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('catalog', 'readwrite');
+    tx.objectStore('catalog').put(value, key);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 // ─── Physics Worker ───────────────────────────────────────────────────────────
 const worker = new Worker('./physics.worker.js');
 let asteroidData = [];
@@ -1676,6 +1755,9 @@ let issIndex = -1;
 let issOrbitLine = null;
 let frameCount = 0;
 let hoveredId = -1;
+let dustMesh = null;    // THREE.Points for overflow asteroids beyond interactive limit
+let dustCount = 0;
+let loadSourceStatus = {}; // tracks per-source load progress for loading overlay
 
 worker.onmessage = ({ data }) => {
   if (data.type === 'positions') {
@@ -1714,12 +1796,44 @@ worker.onmessage = ({ data }) => {
     applyNHATSData(data.data);
     return;
   }
+
+  if (data.type === 'load_progress') {
+    const icon = data.status === 'ok' ? '✓' : '✗';
+    const label = data.source.toUpperCase();
+    const detail = data.status === 'ok' ? `${data.count}` : 'offline';
+    loadSourceStatus[data.source] = `${label} ${icon} ${detail}`;
+    const sub = document.getElementById('loading-sub');
+    if (sub) sub.textContent = Object.values(loadSourceStatus).join('  ·  ');
+    return;
+  }
+
+  if (data.type === 'catalog_ready') {
+    console.log('[Catalog] catalog_ready:', data.data.length, 'asteroids');
+    // Cache to IndexedDB; fall back to localStorage (top 2000 only)
+    const payload = { data: data.data, timestamp: Date.now() };
+    saveToIndexedDB('aster_catalog_v1', payload).catch(() => {
+      try { localStorage.setItem('aster_catalog_v1', JSON.stringify({ data: data.data.slice(0, 2000), timestamp: Date.now() })); } catch(_) {}
+    });
+    // Cache NHATS rows alongside
+    if (data.nhatsRows && data.nhatsRows.length > 0) {
+      try { localStorage.setItem('aster_nhats_v1', JSON.stringify({ data: data.nhatsRows, timestamp: Date.now() })); } catch(_) {}
+    }
+    buildAsteroidMesh(data.data);
+    const loading = document.getElementById('loading');
+    loading.style.transition = 'opacity 0.6s';
+    loading.style.opacity = '0';
+    setTimeout(() => loading.style.display = 'none', 700);
+    loadStateFromURL();
+    if (!localStorage.getItem('aster_toured')) showTour();
+    return;
+  }
 };
 
 worker.onerror = (err) => console.error('[Worker error]', err);
 
 // ─── Time State ───────────────────────────────────────────────────────────────
 let currentJD = TODAY_JD;
+let lastPropJD = -Infinity; // JD of last propagate message sent; avoids flooding worker when paused
 let simSpeed = 0;
 let lastRealTime = performance.now();
 let isScrubbing = false;
@@ -1742,42 +1856,67 @@ let activeBurnIdx = -1;  // -1 = no saved burns yet
 // ─── Cloudflare Worker (Perplexity research proxy) ────────────────────────────
 const WORKER_URL = 'https://aster-proxy.hudsonclavin.workers.dev';
 
-// ─── Asterank API ─────────────────────────────────────────────────────────────
-const ASTERANK_BASE_URL = 'https://www.asterank.com/api/asterank?' +
-  'query=%7B%22e%22%3A%7B%22%24lt%22%3A0.4%7D%2C%22i%22%3A%7B%22%24lt%22%3A20%7D%2C%22a%22%3A%7B%22%24lt%22%3A2.5%7D%7D' +
-  '&sort=score';
+// ─── Legacy single-source Asterank fetch (kept for manual fallback only) ──────
 const CORS_PROXY = 'https://corsproxy.io/?';
 
-async function fetchAsteroids() {
-  const ASTERANK_URL = ASTERANK_BASE_URL + '&limit=' + (window.ASTEROID_LIMIT || 2000);
-  setStatus('Fetching asteroid catalog...');
-  let data = null;
-  try {
-    const r = await fetch(ASTERANK_URL, { mode: 'cors' });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    data = await r.json();
-    setStatus(`Loaded ${data.length} asteroids`, true);
-  } catch (err1) {
-    console.warn('[Asterank] Direct fetch failed:', err1.message);
-    setStatus('Retrying via CORS proxy...');
-    try {
-      const r = await fetch(CORS_PROXY + encodeURIComponent(ASTERANK_URL));
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      data = await r.json();
-      setStatus(`Loaded ${data.length} asteroids (proxy)`, true);
-    } catch (err2) {
-      console.error('[Asterank] Both fetches failed:', err2);
-      setStatus('Asteroid catalog unavailable — planets only', false);
-      data = [];
-    }
-  }
-  return data;
+// Lightweight Kepler position for static dust cloud (no worker needed)
+function keplerPosAU(ast, jd) {
+  const DEG = Math.PI / 180;
+  const GM = 3.964e-14; // AU³/s²
+  const epochJD = ast.epoch + 2400000.5;
+  const n = Math.sqrt(GM / (ast.a * ast.a * ast.a));
+  let M = (ast.ma * DEG) + n * (jd - epochJD) * 86400;
+  M = M - 2 * Math.PI * Math.floor((M + Math.PI) / (2 * Math.PI));
+  let E = M;
+  for (let k = 0; k < 8; k++) E -= (E - ast.e * Math.sin(E) - M) / (1 - ast.e * Math.cos(E));
+  const nu = 2 * Math.atan2(Math.sqrt(1 + ast.e) * Math.sin(E / 2), Math.sqrt(1 - ast.e) * Math.cos(E / 2));
+  const r = ast.a * (1 - ast.e * Math.cos(E));
+  const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
+  const i = ast.i * DEG, Om = ast.om * DEG, w = ast.w * DEG;
+  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
+  const cosI = Math.cos(i), sinI = Math.sin(i);
+  const cosW = Math.cos(w), sinW = Math.sin(w);
+  return {
+    x: xo * (cosOm * cosW - sinOm * sinW * cosI) + yo * (-(cosOm * sinW + sinOm * cosW * cosI)),
+    y: xo * (sinOm * cosW + cosOm * sinW * cosI) + yo * (-(sinOm * sinW - cosOm * cosW * cosI)),
+    z: xo * (sinW * sinI) + yo * (cosW * sinI),
+  };
 }
 
+const INTERACTIVE_LIMIT = 3000; // max asteroids in animated InstancedMesh
+
 function buildAsteroidMesh(data) {
-  asteroidData = data.filter(a => a.a > 0 && a.e >= 0 && a.e < 1 && a.epoch);
+  const allValid = data.filter(a => a.a > 0 && a.e >= 0 && a.e < 1 && a.epoch);
+
+  // Split: interactive (propagated by worker) vs dust cloud (static)
+  const interactiveData = allValid.slice(0, INTERACTIVE_LIMIT);
+  const overflowData = allValid.slice(INTERACTIVE_LIMIT);
+
+  asteroidData = interactiveData;
   asteroidCount = asteroidData.length;
   if (asteroidCount === 0) return;
+
+  // Build dust cloud from overflow asteroids
+  if (dustMesh) { scene.remove(dustMesh); dustMesh = null; dustCount = 0; }
+  if (overflowData.length > 0) {
+    dustCount = overflowData.length;
+    const dustPositions = new Float32Array(dustCount * 3);
+    const jd = currentJD;
+    for (let i = 0; i < dustCount; i++) {
+      try {
+        const p = keplerPosAU(overflowData[i], jd);
+        dustPositions[i * 3]     = p.x;
+        dustPositions[i * 3 + 1] = p.y;
+        dustPositions[i * 3 + 2] = p.z;
+      } catch(_) {}
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+    const dustMat = new THREE.PointsMaterial({ color: 0x1a2a3a, size: 0.002, sizeAttenuation: true, transparent: true, opacity: 0.35 });
+    dustMesh = new THREE.Points(dustGeo, dustMat);
+    scene.add(dustMesh);
+    console.log('[Catalog] dust cloud:', dustCount, 'static asteroids');
+  }
 
   // Compute scores + derived fields
   for (let i = 0; i < asteroidCount; i++) {
@@ -2874,6 +3013,7 @@ function selectAsteroid(id) {
 
   renderLeaderboard();
   drawOrbitEllipse(ast);
+  hoverOrbitLine.visible = false; // clear hover preview when selection confirmed
 
   // Exit burn mode on new selection
   if (burnModeActive) cancelBurn();
@@ -3261,9 +3401,11 @@ function onPointerMove(e) {
           tt.innerHTML = `<span style="color:#00d4ff">${name}</span><br>${spec}-type · Score ${ast._score || 0}<br>${fmtUSD(Number(ast.price) || 0)}`;
           tt.style.display = 'block';
           renderer.domElement.style.cursor = 'pointer';
+          drawHoverOrbit(ast);
         } else if (tt) {
           tt.style.display = 'none';
           renderer.domElement.style.cursor = 'default';
+          hoverOrbitLine.visible = false;
         }
       }
       if (hoveredId >= 0) {
@@ -3678,6 +3820,7 @@ scrubber.addEventListener('touchstart', () => { isScrubbing = true; });
 scrubber.addEventListener('input', () => {
   currentJD = parseFloat(scrubber.value);
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
+  lastPropJD = currentJD; // prevent duplicate send from animate loop
 });
 scrubber.addEventListener('mouseup', () => { isScrubbing = false; });
 scrubber.addEventListener('touchend', () => { isScrubbing = false; });
@@ -3707,6 +3850,14 @@ function applyPositions(buf) {
   for (let i = 0; i < 8; i++) {
     planets[i].position.set(buf[i*3], buf[i*3+1], buf[i*3+2]);
   }
+  // Moon: simplified circular orbit around Earth derived from Earth's propagated position
+  const moonAngle = MOON_L0 + (2 * Math.PI / MOON_PERIOD) * (currentJD - 2451545.0);
+  const ep = planets[2].position; // Earth is planets[2]
+  moonMesh.position.set(
+    ep.x + MOON_SMA * Math.cos(moonAngle),
+    ep.y + MOON_SMA * Math.sin(moonAngle) * Math.cos(MOON_INC),
+    ep.z + MOON_SMA * Math.sin(moonAngle) * Math.sin(MOON_INC)
+  );
   if (asteroidMesh && asteroidCount > 0) {
     const base = 24;
     for (let i = 0; i < asteroidCount; i++) {
@@ -3745,8 +3896,9 @@ function animate() {
     scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
   }
 
-  if (!isScrubbing) {
+  if (!isScrubbing && currentJD !== lastPropJD) {
     worker.postMessage({ cmd: 'propagate', jd: currentJD });
+    lastPropJD = currentJD;
   }
 
   if (pendingPositions) {
@@ -3870,16 +4022,53 @@ async function init() {
   }
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
   await new Promise(r => setTimeout(r, 400));
-  const loading = document.getElementById('loading');
-  loading.style.transition = 'opacity 0.6s';
-  loading.style.opacity = '0';
-  setTimeout(() => loading.style.display = 'none', 700);
   animate();
-  const data = await fetchAsteroids();
-  buildAsteroidMesh(data);
-  fetchNHATSData(); // non-blocking — NHATS real data, worker-backed, 24h cache
-  loadStateFromURL();
-  if (!localStorage.getItem('aster_toured')) showTour();
+
+  // ── Check IndexedDB catalog cache ──────────────────────────────────────
+  try {
+    const cached = await getFromIndexedDB('aster_catalog_v1');
+    if (cached && cached.timestamp && Date.now() - cached.timestamp < 24 * 3600 * 1000) {
+      console.log('[Catalog] IndexedDB cache hit:', cached.data.length, 'asteroids');
+      const sub = document.getElementById('loading-sub');
+      if (sub) sub.textContent = `Cache: ${cached.data.length} asteroids`;
+      buildAsteroidMesh(cached.data);
+      const loading = document.getElementById('loading');
+      loading.style.transition = 'opacity 0.6s';
+      loading.style.opacity = '0';
+      setTimeout(() => loading.style.display = 'none', 700);
+      fetchNHATSData(); // refresh NHATS in background
+      loadStateFromURL();
+      if (!localStorage.getItem('aster_toured')) showTour();
+      return;
+    }
+  } catch(_) {
+    // IndexedDB unavailable — try localStorage fallback
+    try {
+      const raw = localStorage.getItem('aster_catalog_v1');
+      if (raw) {
+        const { data: cachedData, timestamp } = JSON.parse(raw);
+        if (Date.now() - timestamp < 24 * 3600 * 1000 && cachedData.length > 0) {
+          console.log('[Catalog] localStorage cache hit:', cachedData.length, 'asteroids');
+          buildAsteroidMesh(cachedData);
+          const loading = document.getElementById('loading');
+          loading.style.transition = 'opacity 0.6s';
+          loading.style.opacity = '0';
+          setTimeout(() => loading.style.display = 'none', 700);
+          fetchNHATSData();
+          loadStateFromURL();
+          if (!localStorage.getItem('aster_toured')) showTour();
+          return;
+        }
+      }
+    } catch(_2) {}
+  }
+
+  // ── Fresh fetch via worker (loading overlay stays up until catalog_ready) ─
+  const sub = document.getElementById('loading-sub');
+  if (sub) sub.textContent = 'Connecting to NASA databases...';
+  loadSourceStatus = {};
+  worker.postMessage({ cmd: 'fetch_catalog', limit: window.ASTEROID_LIMIT || 5000 });
+  // loadStateFromURL and showTour are called from catalog_ready handler
 }
 
 init();

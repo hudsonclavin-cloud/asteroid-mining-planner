@@ -1,5 +1,70 @@
 # Aster Physics Approximations — DEVLOG
 
+## Phase 12 — Moon, Hover Orbit Ellipse, Propagation Throttle
+
+### What was already done (no changes needed)
+Full Keplerian propagation was implemented in Phase 2: `kep2cart` (3D Euler rotations),
+`propagateAsteroid` (MJD→JD conversion), `propagatePlanet` (Standish 1992 secular elements),
+`solveKepler` (Newton-Raphson, 1e-12 tolerance), Float32Array buffer transfer, time-scrubber
+→ worker → `applyPositions` pipeline, and `drawOrbitEllipse` (256-point Kepler sampling).
+
+### Moon
+**Method:** Simplified circular orbit. Computed in main thread from Earth's propagated
+heliocentric position. No worker changes needed.
+
+**Parameters:**
+- SMA: 0.00257 AU (384,400 km)
+- Period: 27.321582 days (sidereal)
+- Mean longitude at J2000: 218.316°
+- Ecliptic inclination: 5.145°
+
+**Known approximation:** Ignores lunar eccentricity (0.0549) and the 18.6-year nodal
+precession. Position accurate to ~1-2° for visual purposes.
+
+### Hover Orbit Ellipse
+Separate `hoverOrbitLine` / `hoverOrbitPts` geometry (dim gray, opacity 0.35) drawn via
+`drawHoverOrbit()` when `hoveredId` changes. Hidden when an asteroid is clicked/selected
+(replaced by the brighter cyan selection orbit).
+
+### Propagation Throttle
+Added `lastPropJD` guard in animate loop: `worker.postMessage` only fires when
+`currentJD !== lastPropJD`. Eliminates redundant worker messages at 60fps when simulation
+is paused. Scrubber `input` handler sets `lastPropJD = currentJD` to prevent the immediate
+next animate frame from re-sending.
+
+---
+
+## Phase 11 — Real NEO Catalog (SBDB + Asterank + NHATS)
+
+### Architecture
+
+Three-source parallel data pipeline, all fetched in `physics.worker.js` via the new `fetch_catalog` command.
+
+**Sources:**
+- **JPL SBDB Query API** — primary/authoritative. All NEAs (IEO, ATE, APO, AMO classes) with H ≤ 22 (~3500 objects). Provides orbital elements (a, e, i, Ω, ω, M, epoch), physical properties (diameter, albedo), and spectral types (spec_B = SMASS, spec_T = Tholen).
+- **Asterank API** — economic data. Up to 5000 asteroids sorted by mining score. Provides `price` (estimated value USD), `profit`, `delta_v`, `moid`, `pha`.
+- **NHATS API** — accessibility data. Human-spaceflight-reachable targets (ΔV ≤ 12 km/s, duration ≤ 450 days). Provides `min_dv`, `min_dur`, `n_via_points`, `occ`.
+
+**Merge:** SBDB is the primary record. Asterank and NHATS rows are cross-referenced by `pdes` (designation). Asteroids not in Asterank get estimated value from spectral type + diameter composition model (M-type: 100$/kg, S-type: 10$/kg, C-type: 50$/kg water).
+
+### Epoch format
+SBDB returns `epoch` as JD. Asterank returns `epoch` as MJD. Worker expects MJD (`ast.epoch`, internally adds 2400000.5 to get JD). SBDB epochs are converted: `epoch = epochJD - 2400000.5` before storing in merged objects.
+
+### LOD — Dust Cloud
+If merged catalog > 3000 asteroids, the first 3000 (sorted by value) form the interactive `InstancedMesh` propagated by the worker. Overflow asteroids get a static `THREE.Points` dust cloud with positions computed once at load time via `keplerPosAU()` (inline Kepler solver, no worker).
+
+### Caching
+- IndexedDB (`AsterDB`, store `catalog`, key `aster_catalog_v1`) — stores full merged array, 24hr TTL.
+- localStorage fallback — top 2000 asteroids if IndexedDB unavailable.
+- NHATS rows also cached in `aster_nhats_v1` (localStorage) alongside catalog.
+- On cache hit, `fetch_catalog` is skipped entirely; NHATS refreshes independently in background.
+
+### Loading overlay
+`#loading-sub` text updates as each source responds via `load_progress` worker messages.
+Format: `SBDB ✓ 3412  ·  ASTERANK ✓ 4983  ·  NHATS ✓ 2165`
+
+---
+
 ## Phase 2 — Burn Simulator
 
 ### 1. MOID Approximation

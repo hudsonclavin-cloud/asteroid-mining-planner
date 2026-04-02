@@ -536,4 +536,189 @@ self.onmessage = function(e) {
     })();
     return;
   }
+
+  if (msg.cmd === 'fetch_catalog') {
+    (async function() {
+      const limit = msg.limit || 5000;
+      const CORS_PROXY = 'https://corsproxy.io/?';
+
+      // ── SBDB: all NEAs with H≤22, returns column-format JSON ────────────────
+      const SBDB_URL = 'https://ssd-api.jpl.nasa.gov/sbdb_query.api?' +
+        'fields=spkid,full_name,pdes,name,diameter,albedo,spec_B,spec_T,e,a,i,om,w,ma,epoch,per,class' +
+        '&sb-kind=an&sb-class=IEO,ATE,APO,AMO&sb-H-max=22';
+
+      // ── Asterank: broad query, sorted by score ────────────────────────────
+      const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
+        'query=%7B%7D&limit=5000&sort=score';
+
+      // ── NHATS: human-accessible targets ──────────────────────────────────
+      const NHATS_URL = 'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035';
+
+      async function fetchSBDB() {
+        try {
+          console.log('[Catalog] fetching SBDB...');
+          const r = await fetch(SBDB_URL);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const json = await r.json();
+          const fields = json.fields || [];
+          const rows = (json.data || []).map(row => {
+            const obj = {};
+            fields.forEach((f, idx) => { obj[f] = row[idx]; });
+            return obj;
+          });
+          console.log('[Catalog] SBDB:', rows.length, 'rows');
+          self.postMessage({ type: 'load_progress', source: 'sbdb', status: 'ok', count: rows.length });
+          return rows;
+        } catch(err) {
+          console.warn('[Catalog] SBDB failed:', err.message);
+          self.postMessage({ type: 'load_progress', source: 'sbdb', status: 'error', error: err.message });
+          return [];
+        }
+      }
+
+      async function fetchAsterankWorker() {
+        try {
+          let r = await fetch(ASTERANK_URL);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const rows = await r.json();
+          console.log('[Catalog] Asterank:', rows.length, 'rows');
+          self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
+          return rows;
+        } catch(err1) {
+          console.warn('[Catalog] Asterank direct failed, trying proxy:', err1.message);
+          try {
+            const r = await fetch(CORS_PROXY + encodeURIComponent(ASTERANK_URL));
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const rows = await r.json();
+            console.log('[Catalog] Asterank (proxy):', rows.length, 'rows');
+            self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
+            return rows;
+          } catch(err2) {
+            console.warn('[Catalog] Asterank proxy also failed:', err2.message);
+            self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: err2.message });
+            return [];
+          }
+        }
+      }
+
+      async function fetchNHATSWorker() {
+        const urls = [NHATS_URL, 'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8'];
+        for (const url of urls) {
+          try {
+            const r = await fetch(url);
+            if (!r.ok) continue;
+            const json = await r.json();
+            const rows = json.data || json.nhats || [];
+            console.log('[Catalog] NHATS:', rows.length, 'rows');
+            self.postMessage({ type: 'load_progress', source: 'nhats', status: 'ok', count: rows.length });
+            return rows;
+          } catch(_) {}
+        }
+        self.postMessage({ type: 'load_progress', source: 'nhats', status: 'error', error: 'offline' });
+        return [];
+      }
+
+      // Fetch all three in parallel
+      const [sbdbRows, asterankRows, nhatsRows] = await Promise.all([
+        fetchSBDB(), fetchAsterankWorker(), fetchNHATSWorker()
+      ]);
+
+      // ── Build lookup maps ────────────────────────────────────────────────
+      const asterankMap = new Map();
+      for (const ast of asterankRows) {
+        const key = (ast.pdes || ast.full_name || '').trim();
+        if (key) asterankMap.set(key, ast);
+        // Also index by bare number (e.g. "433" → matches "433 Eros")
+        const numKey = key.replace(/\s+.*/, '');
+        if (numKey && numKey !== key) asterankMap.set(numKey, ast);
+      }
+
+      const nhatsLookup = new Map();
+      for (const row of nhatsRows) {
+        const key = (row.des || '').trim();
+        if (key) nhatsLookup.set(key, row);
+      }
+
+      // ── Estimate value for asteroids not in Asterank ──────────────────────
+      function estimateValue(specStr, diamKm, albedoStr) {
+        const d = Number(diamKm) || 0;
+        if (d <= 0) return 0;
+        const dM = d * 1000;
+        const vol = (4 / 3) * Math.PI * Math.pow(dM / 2, 3);
+        const s = (specStr || '').trim().charAt(0).toUpperCase();
+        const density = (s === 'M' || s === 'E') ? 5000 : (s === 'S' || s === 'Q') ? 2700 : 1700;
+        const valuePerKg = (s === 'M' || s === 'E') ? 100 : (s === 'S' || s === 'Q') ? 10 : 50;
+        return vol * density * valuePerKg;
+      }
+
+      // ── Merge ─────────────────────────────────────────────────────────────
+      const merged = [];
+      for (const row of sbdbRows) {
+        const a = Number(row.a);
+        const e = Number(row.e);
+        const epochJD = Number(row.epoch);
+        if (!a || a <= 0 || e < 0 || e >= 1 || !epochJD) continue;
+
+        const pdes = (row.pdes || '').trim();
+        const ark = asterankMap.get(pdes) ||
+                    asterankMap.get(pdes.replace(/\s+.*/, '')) ||
+                    null;
+        const nhatsRow = nhatsLookup.get(pdes);
+        const specRaw = (row.spec_B || row.spec_T || (ark ? (ark.spec || ark.spec_T) : '') || '').trim();
+
+        merged.push({
+          // Orbital — epoch stored as MJD (worker expects ast.epoch as MJD)
+          a,
+          e,
+          i:     Number(row.i)   || 0,
+          om:    Number(row.om)  || 0,
+          w:     Number(row.w)   || 0,
+          ma:    Number(row.ma)  || 0,
+          epoch: epochJD - 2400000.5, // SBDB gives JD → convert to MJD for worker
+          per:   Number(row.per) || 0,
+
+          // Identity
+          pdes,
+          full_name: (row.full_name || '').trim(),
+          name:      (row.name || '').trim(),
+          pha:       ark ? (ark.pha || 'N') : 'N',
+          class:     (row.class || '').trim(),
+
+          // Physical
+          H:        ark ? (Number(ark.H)        || 20)   : 20,
+          diameter: Number(row.diameter) || (ark ? Number(ark.diameter) : 0) || 0,
+          albedo:   Number(row.albedo)   || (ark ? Number(ark.albedo)   : 0.15) || 0.15,
+          spec:     specRaw,
+          spec_T:   (row.spec_T || (ark ? ark.spec_T : '') || '').trim(),
+
+          // Economic
+          price:  ark ? (Number(ark.price)  || 0) : estimateValue(specRaw, row.diameter, row.albedo),
+          profit: ark ? (Number(ark.profit) || 0) : 0,
+
+          // Navigation
+          moid:    ark ? (Number(ark.moid)    || 0) : 0,
+          delta_v: ark ? (Number(ark.delta_v) || 0) : 0,
+
+          // NHATS
+          nhats: nhatsRow ? {
+            accessible:    true,
+            minDv:         nhatsRow.min_dv,
+            minDur:        nhatsRow.min_dur,
+            nTrajectories: nhatsRow.n_via_points,
+            stayTime:      nhatsRow.min_stay,
+            occ:           nhatsRow.occ,
+          } : { accessible: false },
+          _nhats: !!nhatsRow,
+        });
+      }
+
+      // Sort by estimated value descending, then trim to limit
+      merged.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+      const catalog = merged.slice(0, limit);
+
+      console.log('[Catalog] merged', merged.length, '→ sending', catalog.length, 'asteroids');
+      self.postMessage({ type: 'catalog_ready', data: catalog, nhatsRows });
+    })();
+    return;
+  }
 };
