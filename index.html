@@ -1039,9 +1039,85 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   </div>
   </div><!-- /tab-inspector -->
 
-<!-- ══════════════════════════════════════════════════════════════════
-     MISSION PLANNER OVERLAY — slides in over right panel
-     ══════════════════════════════════════════════════════════════ -->
+  <div id="tab-economics" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="econ-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
+      SELECT AN ASTEROID TO VIEW ECONOMICS
+    </div>
+    <div id="econ-content" style="display:none">
+      <div class="panel-header">◆ MISSION ECONOMICS</div>
+
+      <div class="data-row">
+        <span class="label">DRY MASS</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="eco-dry-mass" value="1000" min="100" max="10000"
+            style="width:60px;background:transparent;border:1px solid #1a2235;color:#e5e7eb;
+            font-family:'Space Mono','Courier New',monospace;font-size:12px;text-align:right;padding:2px 4px">
+          <span class="value">kg</span>
+        </span>
+      </div>
+      <div class="data-row">
+        <span class="label">Isp</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="eco-isp" value="450" min="100" max="10000"
+            style="width:60px;background:transparent;border:1px solid #1a2235;color:#e5e7eb;
+            font-family:'Space Mono','Courier New',monospace;font-size:12px;text-align:right;padding:2px 4px">
+          <span class="value">s</span>
+        </span>
+      </div>
+
+      <div class="panel-header" style="margin-top:10px">MISSION COST</div>
+      <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="eco-dv">—</span></div>
+      <div class="data-row"><span class="label">PROPELLANT</span><span class="value" id="eco-propellant">—</span></div>
+      <div class="data-row"><span class="label">LAUNCH MASS</span><span class="value" id="eco-launch-mass">—</span></div>
+      <div class="data-row"><span class="label">LAUNCH COST</span><span class="value" id="eco-launch-cost">—</span></div>
+      <div class="data-row"><span class="label">TOTAL COST</span><span class="value warning" id="eco-total-cost">—</span></div>
+
+      <div class="panel-header" style="margin-top:10px">RETURNS</div>
+      <div class="data-row"><span class="label">WATER VALUE</span><span class="value accent" id="eco-water">—</span></div>
+      <div class="data-row"><span class="label">METAL VALUE</span><span class="value" id="eco-metals">—</span></div>
+      <div class="data-row"><span class="label">ASTERANK VALUE</span><span class="value accent" id="eco-asterank">—</span></div>
+      <div class="data-row" style="margin-top:6px"><span class="label">ROI MULTIPLE</span><span class="value profit" id="eco-roi">—</span></div>
+
+      <div id="eco-isru-note" style="display:none;border:1px solid #00d4ff;padding:8px;
+        color:#00d4ff;font-size:10px;line-height:1.6;margin-top:10px"></div>
+
+      <button class="action-btn" id="btn-export-report" style="margin-top:10px">↓ EXPORT MISSION REPORT</button>
+      <button class="action-btn" id="btn-share" style="margin-top:4px">⬡ SHARE MISSION URL</button>
+    </div>
+  </div><!-- /tab-economics -->
+
+  <div id="tab-materials" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="mat-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
+      SELECT AN ASTEROID TO VIEW MATERIALS
+    </div>
+    <div id="mat-content" style="display:none">
+      <div style="display:flex;gap:6px;margin:0 0 8px;align-items:center">
+        <button id="mat-price-toggle" class="action-btn" style="flex:1;font-size:9px;padding:5px 0">EARTH PRICES</button>
+        <button id="mat-price-refresh" class="action-btn" style="font-size:9px;padding:5px 8px" title="Refresh prices">↺</button>
+      </div>
+      <div class="panel-header">◆ COMPOSITION</div>
+      <div id="mat-donut" style="display:flex;justify-content:center;margin:6px 0"></div>
+      <div class="panel-header" style="margin-top:8px">◆ VALUE BY MATERIAL</div>
+      <div id="mat-bars" style="padding:4px 0;overflow:hidden"></div>
+      <div class="panel-header" style="margin-top:8px">◆ DETAILED BREAKDOWN</div>
+      <div id="mat-table" style="overflow-x:auto"></div>
+      <div id="mat-price-info" style="margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px;line-height:1.6"></div>
+    </div>
+  </div><!-- /tab-materials -->
+
+  <div id="tab-research" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="research-prompt-hint" style="color:#4b5563;font-size:10px;text-align:center;padding:40px 12px;line-height:1.6">
+      Select an asteroid then click RESEARCH<br>to load an AI briefing.
+    </div>
+    <div id="research-loading" style="display:none;text-align:center;padding:40px 12px">
+      <div style="color:#00d4ff;font-size:10px;letter-spacing:0.15em">FETCHING BRIEFING…</div>
+    </div>
+    <div id="research-error" style="display:none;padding:12px;border:1px solid #7f1d1d;color:#f87171;font-size:10px;line-height:1.6;margin:8px 0"></div>
+    <div id="research-content" style="display:none;font-size:10px;line-height:1.7;color:#d1d5db"></div>
+    <div id="research-meta" style="display:none;margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px"></div>
+  </div><!-- /tab-research -->
+</div><!-- /right-panel -->
+
 <div id="mission-planner" style="position:fixed;top:0;right:-520px;width:500px;height:100%;
   background:rgba(10,14,26,0.94);backdrop-filter:blur(14px);
   border-left:1px solid #1a2235;display:flex;flex-direction:column;
@@ -1202,85 +1278,6 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 
   </div>
 </div><!-- /mission-planner -->
-
-  <div id="tab-economics" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
-    <div id="econ-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
-      SELECT AN ASTEROID TO VIEW ECONOMICS
-    </div>
-    <div id="econ-content" style="display:none">
-      <div class="panel-header">◆ MISSION ECONOMICS</div>
-
-      <div class="data-row">
-        <span class="label">DRY MASS</span>
-        <span style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="eco-dry-mass" value="1000" min="100" max="10000"
-            style="width:60px;background:transparent;border:1px solid #1a2235;color:#e5e7eb;
-            font-family:'Space Mono','Courier New',monospace;font-size:12px;text-align:right;padding:2px 4px">
-          <span class="value">kg</span>
-        </span>
-      </div>
-      <div class="data-row">
-        <span class="label">Isp</span>
-        <span style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="eco-isp" value="450" min="100" max="10000"
-            style="width:60px;background:transparent;border:1px solid #1a2235;color:#e5e7eb;
-            font-family:'Space Mono','Courier New',monospace;font-size:12px;text-align:right;padding:2px 4px">
-          <span class="value">s</span>
-        </span>
-      </div>
-
-      <div class="panel-header" style="margin-top:10px">MISSION COST</div>
-      <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="eco-dv">—</span></div>
-      <div class="data-row"><span class="label">PROPELLANT</span><span class="value" id="eco-propellant">—</span></div>
-      <div class="data-row"><span class="label">LAUNCH MASS</span><span class="value" id="eco-launch-mass">—</span></div>
-      <div class="data-row"><span class="label">LAUNCH COST</span><span class="value" id="eco-launch-cost">—</span></div>
-      <div class="data-row"><span class="label">TOTAL COST</span><span class="value warning" id="eco-total-cost">—</span></div>
-
-      <div class="panel-header" style="margin-top:10px">RETURNS</div>
-      <div class="data-row"><span class="label">WATER VALUE</span><span class="value accent" id="eco-water">—</span></div>
-      <div class="data-row"><span class="label">METAL VALUE</span><span class="value" id="eco-metals">—</span></div>
-      <div class="data-row"><span class="label">ASTERANK VALUE</span><span class="value accent" id="eco-asterank">—</span></div>
-      <div class="data-row" style="margin-top:6px"><span class="label">ROI MULTIPLE</span><span class="value profit" id="eco-roi">—</span></div>
-
-      <div id="eco-isru-note" style="display:none;border:1px solid #00d4ff;padding:8px;
-        color:#00d4ff;font-size:10px;line-height:1.6;margin-top:10px"></div>
-
-      <button class="action-btn" id="btn-export-report" style="margin-top:10px">↓ EXPORT MISSION REPORT</button>
-      <button class="action-btn" id="btn-share" style="margin-top:4px">⬡ SHARE MISSION URL</button>
-    </div>
-  </div><!-- /tab-economics -->
-
-  <div id="tab-materials" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
-    <div id="mat-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
-      SELECT AN ASTEROID TO VIEW MATERIALS
-    </div>
-    <div id="mat-content" style="display:none">
-      <div style="display:flex;gap:6px;margin:0 0 8px;align-items:center">
-        <button id="mat-price-toggle" class="action-btn" style="flex:1;font-size:9px;padding:5px 0">EARTH PRICES</button>
-        <button id="mat-price-refresh" class="action-btn" style="font-size:9px;padding:5px 8px" title="Refresh prices">↺</button>
-      </div>
-      <div class="panel-header">◆ COMPOSITION</div>
-      <div id="mat-donut" style="display:flex;justify-content:center;margin:6px 0"></div>
-      <div class="panel-header" style="margin-top:8px">◆ VALUE BY MATERIAL</div>
-      <div id="mat-bars" style="padding:4px 0;overflow:hidden"></div>
-      <div class="panel-header" style="margin-top:8px">◆ DETAILED BREAKDOWN</div>
-      <div id="mat-table" style="overflow-x:auto"></div>
-      <div id="mat-price-info" style="margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px;line-height:1.6"></div>
-    </div>
-  </div><!-- /tab-materials -->
-
-  <div id="tab-research" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
-    <div id="research-prompt-hint" style="color:#4b5563;font-size:10px;text-align:center;padding:40px 12px;line-height:1.6">
-      Select an asteroid then click RESEARCH<br>to load an AI briefing.
-    </div>
-    <div id="research-loading" style="display:none;text-align:center;padding:40px 12px">
-      <div style="color:#00d4ff;font-size:10px;letter-spacing:0.15em">FETCHING BRIEFING…</div>
-    </div>
-    <div id="research-error" style="display:none;padding:12px;border:1px solid #7f1d1d;color:#f87171;font-size:10px;line-height:1.6;margin:8px 0"></div>
-    <div id="research-content" style="display:none;font-size:10px;line-height:1.7;color:#d1d5db"></div>
-    <div id="research-meta" style="display:none;margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px"></div>
-  </div><!-- /tab-research -->
-</div><!-- /right-panel -->
 
 <div id="asteroid-tooltip"></div>
 <div id="burn-tooltip"></div>
