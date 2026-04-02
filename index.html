@@ -103,16 +103,17 @@ canvas { display: block; }
   position: fixed;
   right: -400px;
   top: 48px;
-  width: 380px;
+  width: 400px;
+  max-width: 400px;
   height: calc(100vh - 108px);
   background: rgba(10, 14, 26, 0.96);
   backdrop-filter: blur(12px);
   border-left: 1px solid #1a2235;
   box-shadow: -4px 0 24px rgba(0,0,0,0.5);
-  padding: 16px;
+  padding: 20px;
+  box-sizing: border-box;
   overflow-y: auto;
   overflow-x: hidden;
-  max-width: calc(100vw - 20px);
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -423,7 +424,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   background: rgba(10,14,26,0.95); border: 1px solid #1a2235;
   border-left: none; color: #00d4ff; font-size: 11px;
   padding: 8px 10px; cursor: pointer; z-index: 110;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.1em; min-width: 24px;
   transition: left 0.2s, color 0.2s; user-select: none;
 }
 #btn-toggle-filters:hover { color: #fff; border-color: #00d4ff; }
