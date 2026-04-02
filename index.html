@@ -1357,6 +1357,17 @@ function fmtUSD(v) {
   return `$${n.toFixed(0)}`;
 }
 
+// Asteroid resource value display — applies 10%–30% extraction efficiency range.
+// Values above $100T are flagged as uncertain (Asterank raw estimates are theoretical maxima).
+function fmtAstValue(v) {
+  const n = Number(v);
+  if (!v || isNaN(n) || n <= 0) return '—';
+  const lo = n * 0.10; // conservative extraction
+  const hi = n * 0.30; // optimistic extraction
+  if (hi > 1e14) return 'Estimate uncertain';
+  return `${fmtUSD(lo)} – ${fmtUSD(hi)} (est.)`;
+}
+
 function fmtTons(t) {
   if (!t && t !== 0) return '—';
   const n = Number(t);
@@ -2530,7 +2541,11 @@ function buildAsteroidMesh(data) {
     const ast = asteroidData[i];
     const H = Number(ast.H) || 20;
     ast._score = computeScore(ast);
-    ast._diam_m = (1329 / Math.sqrt(0.15)) * Math.pow(10, -H / 5) * 1000;
+    const _albedo = Number(ast.albedo) || 0.15;
+    const _diamKm = ast.diameter && Number(ast.diameter) > 0
+      ? Math.min(35, Number(ast.diameter))
+      : (H ? Math.min(35, (1329 / Math.sqrt(_albedo)) * Math.pow(10, -H / 5)) : 0.05);
+    ast._diam_m = _diamKm * 1000;
     ast._nhats = getAsteroidDV(ast) <= 12;
   }
 
@@ -2871,7 +2886,7 @@ function renderEconomicsTab(id) {
   const metalVal = mass_kg * frac.metals * metalPrice;
   document.getElementById('eco-water').textContent = fmtUSD(waterVal);
   document.getElementById('eco-metals').textContent = fmtUSD(metalVal);
-  document.getElementById('eco-asterank').textContent = fmtUSD(ast.price);
+  document.getElementById('eco-asterank').textContent = fmtAstValue(ast.price);
 
   const totalReturn = Math.max(waterVal + metalVal, Number(ast.price) || 0);
   const roi = totalCost > 0 ? totalReturn / totalCost : 0;
@@ -4315,7 +4330,7 @@ function selectAsteroid(id) {
   const comp3    = MAT_COMP[spec3g] || MAT_COMP['other'];
   let revPerKg3  = 0;
   if (comp3) MAT_KEYS.forEach(k => { revPerKg3 += (comp3[k] / 100) * (prices3[k] || 0); });
-  const diam3m   = ast._diam_m || (ast.H ? (1329 / Math.sqrt(0.15)) * Math.pow(10, -ast.H / 5) * 1000 : 500);
+  const diam3m   = ast._diam_m || 500;
   const r3       = diam3m / 2;
   const dens3    = MAT_DENSITY_KGM3[spec3g] || 2000;
   const mass3    = (4/3) * Math.PI * r3 * r3 * r3 * dens3;
@@ -4323,8 +4338,8 @@ function selectAsteroid(id) {
 
   const displayPrice  = (Number(ast.price)  > 0) ? ast.price  : totalVal3;
   const displayProfit = (Number(ast.profit) > 0) ? ast.profit : totalVal3 * 0.1;
-  document.getElementById('ast-price').textContent  = fmtUSD(displayPrice);
-  document.getElementById('ast-profit').textContent = fmtUSD(displayProfit);
+  document.getElementById('ast-price').textContent  = fmtAstValue(displayPrice);
+  document.getElementById('ast-profit').textContent = fmtUSD(Math.min(displayProfit, 1e13));
 
   const D_m = ast._diam_m || 500;
   const r_m3 = D_m / 2;
