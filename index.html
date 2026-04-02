@@ -111,6 +111,8 @@ canvas { display: block; }
   box-shadow: -4px 0 24px rgba(0,0,0,0.5);
   padding: 16px;
   overflow: hidden;
+  overflow-x: hidden;
+  box-sizing: border-box;
   z-index: 200;
   display: flex;
   flex-direction: column;
@@ -136,6 +138,7 @@ canvas { display: block; }
   padding: 5px 0;
   border-bottom: 1px solid #111827;
   gap: 8px;
+  min-width: 0;
 }
 .data-row .label {
   color: #4b5563;
@@ -143,8 +146,9 @@ canvas { display: block; }
   text-transform: uppercase;
   letter-spacing: 0.1em;
   flex-shrink: 0;
+  max-width: 50%;
 }
-.data-row .value { color: #e5e7eb; font-size: 13px; text-align: right; word-break: break-all; }
+.data-row .value { color: #e5e7eb; font-size: 13px; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .data-row .value.accent { color: #00d4ff; }
 .data-row .value.profit { color: #34d399; }
 .data-row .value.warning { color: #fb923c; }
@@ -1348,9 +1352,11 @@ function fmtUSD(v) {
   const n = Number(v);
   if (isNaN(n)) return '—';
   const abs = Math.abs(n);
-  if (abs >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (abs >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
-  if (abs >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
+  if (abs >= 1e15) return `$${(n / 1e15).toFixed(1)}Q`;
+  if (abs >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9)  return `$${(n / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6)  return `$${(n / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3)  return `$${(n / 1e3).toFixed(1)}K`;
   return `$${n.toFixed(0)}`;
 }
 
@@ -1391,7 +1397,7 @@ function scoreToColor(score) {
 
 // ─── Phase 10: Spectral-type based asteroid colors ────────────────────────────
 function spectralTypeColor(ast) {
-  const spec = (ast.spec || ast.spec_T || '').trim().toUpperCase().charAt(0);
+  const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().toUpperCase().charAt(0);
   if (spec === 'C' || spec === 'B') return new THREE.Color(0x4488ff); // blue
   if (spec === 'D')                 return new THREE.Color(0x3366cc); // darker blue
   if (spec === 'S' || spec === 'Q' || spec === 'A') return new THREE.Color(0xff8844); // orange
@@ -2680,7 +2686,7 @@ function renderEconomicsTab(id) {
   document.getElementById('eco-launch-cost').textContent = fmtUSD(launchCost);
   document.getElementById('eco-total-cost').textContent = fmtUSD(totalCost);
 
-  const spec = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
+  const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
   const frac = FRACTIONS[spec] || FRACTIONS.DEFAULT;
   const dens = DENSITIES[spec] || 2000;
   const r_m = (ast._diam_m || 500) / 2;
@@ -3967,7 +3973,7 @@ function selectAsteroid(id) {
   if (!ast) return;
 
   const name = ast.full_name || ast.pdes || ast.name || '—';
-  const spec = (ast.spec || ast.spec_T || '—').trim();
+  const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '?').trim();
   const diam = ast.diameter ? `${Number(ast.diameter).toFixed(2)} km`
     : (ast.H ? `~${(1329 / Math.sqrt(0.15) * Math.pow(10, -ast.H / 5)).toFixed(1)} km (est)` : '—');
 
@@ -3981,23 +3987,39 @@ function selectAsteroid(id) {
   const dv_suffix = (ast.delta_v && Number(ast.delta_v) > 0) ? '' : ' (est)';
   document.getElementById('ast-dv').textContent = `${dv_val.toFixed(2)} km/s${dv_suffix}`;
   document.getElementById('ast-moid').textContent = ast.moid ? `${Number(ast.moid).toFixed(4)} AU` : '—';
-  document.getElementById('ast-price').textContent = fmtUSD(ast.price);
-  document.getElementById('ast-profit').textContent = fmtUSD(ast.profit);
-
   // Phase 3: composition + resource value + score
-  const spec3 = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
-  document.getElementById('ast-composition').textContent = COMPOSITIONS[spec3] || 'No composition data';
+  const spec3 = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
+  const compText = COMPOSITIONS[spec3]
+    || COMPOSITIONS[getMatSpec(ast)]
+    || ((ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy) ? 'Composition model not available' : 'No composition data');
+  document.getElementById('ast-composition').textContent = compText;
+
+  // Compute MAT_COMP-based total for consistent price display
+  const prices3 = getActivePrices();
+  const spec3g   = getMatSpec(ast);
+  const comp3    = MAT_COMP[spec3g] || MAT_COMP['other'];
+  let revPerKg3  = 0;
+  if (comp3) MAT_KEYS.forEach(k => { revPerKg3 += (comp3[k] / 100) * (prices3[k] || 0); });
+  const diam3m   = ast._diam_m || (ast.H ? (1329 / Math.sqrt(0.15)) * Math.pow(10, -ast.H / 5) * 1000 : 500);
+  const r3       = diam3m / 2;
+  const dens3    = MAT_DENSITY_KGM3[spec3g] || 2000;
+  const mass3    = (4/3) * Math.PI * r3 * r3 * r3 * dens3;
+  const totalVal3 = mass3 * revPerKg3;
+
+  const displayPrice  = (Number(ast.price)  > 0) ? ast.price  : totalVal3;
+  const displayProfit = (Number(ast.profit) > 0) ? ast.profit : totalVal3 * 0.1;
+  document.getElementById('ast-price').textContent  = fmtUSD(displayPrice);
+  document.getElementById('ast-profit').textContent = fmtUSD(displayProfit);
 
   const D_m = ast._diam_m || 500;
   const r_m3 = D_m / 2;
   const vol_m3 = (4/3) * Math.PI * r_m3 * r_m3 * r_m3;
-  const dens3 = DENSITIES[spec3] || 2000;
-  const mass_kg3 = vol_m3 * dens3;
+  const dens3b = DENSITIES[spec3] || 2000;
+  const mass_kg3 = vol_m3 * dens3b;
   const frac3 = FRACTIONS[spec3] || FRACTIONS.DEFAULT;
   const waterVal3 = mass_kg3 * frac3.water * 1000;
   const metalPrice3 = spec3 === 'M' ? 30 : 0.15;
   const metalVal3 = mass_kg3 * frac3.metals * metalPrice3;
-  const totalVal3 = waterVal3 + metalVal3;
 
   document.getElementById('ast-water-val').textContent = fmtUSD(waterVal3);
   document.getElementById('ast-metal-val').textContent = fmtUSD(metalVal3);
