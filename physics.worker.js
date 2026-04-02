@@ -845,7 +845,7 @@ self.onmessage = function(e) {
 
       // ── SBDB: all NEAs with H≤22, returns column-format JSON ────────────────
       const SBDB_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/sbdb?' +
-        'fields=spkid,full_name,pdes,name,diameter,albedo,spec_B,spec_T,e,a,i,om,w,ma,epoch,per,class' +
+        'fields=pdes,name,full_name,e,a,i,om,w,ma,epoch,per,class,diameter,spec_B,spec_T' +
         '&sb-kind=an&sb-class=IEO,ATE,APO,AMO&sb-H-max=22';
 
       // ── Asterank: broad query, sorted by score ────────────────────────────
@@ -853,7 +853,7 @@ self.onmessage = function(e) {
         'query=%7B%7D&limit=5000&sort=score';
 
       // ── NHATS: human-accessible targets ──────────────────────────────────
-      const NHATS_URL = 'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035';
+      const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035';
 
       async function fetchSBDB() {
         try {
@@ -903,7 +903,7 @@ self.onmessage = function(e) {
       }
 
       async function fetchNHATSWorker() {
-        const urls = [NHATS_URL, 'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8'];
+        const urls = [NHATS_URL, 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8'];
         for (const url of urls) {
           try {
             const r = await fetch(url);

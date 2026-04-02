@@ -2310,7 +2310,7 @@ worker.onmessage = ({ data }) => {
       if (nEl) nEl.textContent = 'NHATS: OFFLINE';
       setTimeout(() => {
         console.log('[NHATS] retrying after 30s...');
-        worker.postMessage({ cmd: 'fetch_nhats', url: 'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035' });
+        worker.postMessage({ cmd: 'fetch_nhats', url: 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035' });
       }, 30000);
       return;
     }
@@ -3005,7 +3005,7 @@ function renderMaterialsTab(id) {
 
 async function fetchNHATSData() {
   console.log('[NHATS] fetchNHATSData called');
-  const NHATS_URL = 'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035';
+  const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035';
   const cacheKey = 'aster_nhats_v1';
   const cached = localStorage.getItem(cacheKey);
   if (cached) {
