@@ -113,12 +113,11 @@ canvas { display: block; }
   padding: 20px;
   box-sizing: border-box;
   overflow-y: auto;
-  overflow-x: hidden;
   z-index: 200;
   display: flex;
   flex-direction: column;
   gap: 0;
-  transition: right 0.3s ease, width 0.3s ease;
+  transition: right 0.3s ease;
 }
 #right-panel.panel-open { right: 0; }
 
@@ -536,7 +535,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 #mat-table tr.total-row td { border-top:1px solid #1a2235; color:#00d4ff; }
 #mat-table td.value-col { text-align:right; }
 /* ─── Phase 7D: Mission Planner (panel-integrated) ──────────────────────────── */
-#right-panel.mp-mode { width: 500px; overflow: hidden; padding: 0; }
+#right-panel.mp-mode { width: 500px; overflow: hidden; padding: 0; transition: right 0.3s ease; }
 .mp-select {
   width:100%; background:#0d1627; border:1px solid #1a2235; color:#c8d6e5;
   font-family:'Space Mono',monospace; font-size:9px; padding:5px 8px;
@@ -1468,9 +1467,6 @@ const MAT_NAMES = { water:'Water', iron:'Iron', nickel:'Nickel', cobalt:'Cobalt'
 const MAT_COLORS_HEX = { water:'#4488ff', iron:'#cc6633', nickel:'#aaaaaa', cobalt:'#6699cc',
   carbon:'#555566', silicates:'#8B7355', pgm:'#00d4ff', gold:'#ffcc00',
   silver:'#cccccc', copper:'#cc8833', rareEarth:'#aa44cc' };
-const MAT_DIFFICULTY = { water:'easy', iron:'medium', nickel:'medium', cobalt:'hard',
-  carbon:'easy', silicates:'easy', pgm:'extreme', gold:'extreme',
-  silver:'hard', copper:'hard', rareEarth:'extreme' };
 const MAT_COMP = {
   C: { water:10,  carbon:3,    silicates:65, iron:15,  nickel:2,   cobalt:0.05,  pgm:0.003,  gold:0.0001,  silver:0.001,  copper:0.001,  rareEarth:0.01  },
   S: { water:0.5, carbon:0.2,  silicates:68, iron:22,  nickel:3,   cobalt:0.10,  pgm:0.005,  gold:0.0002,  silver:0.002,  copper:0.002,  rareEarth:0.02  },

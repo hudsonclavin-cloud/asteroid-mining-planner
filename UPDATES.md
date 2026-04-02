@@ -4,6 +4,21 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Bug Fixes (2026-04-01)
+
+### Fix 1 — SyntaxError: duplicate `MAT_DIFFICULTY` declaration
+Merge conflict resolution left two `const MAT_DIFFICULTY` declarations in `index.html`. Removed the second (lowercase-valued) duplicate at line 1471. Kept the uppercase version (`EASY/MED/HARD/EXTR`) which is consistent with the `DIFF_COLOR` lookup used at render time. This also resolved the cascade `ReferenceError: toggleLeftPanel is not defined` (the script never loaded).
+
+### Fix 2 — Right panel / mission planner content clipping
+`overflow-x: hidden` on `#right-panel` clipped the left edge of mission planner content during the 400→500px width transition. Removed `overflow-x: hidden` from the base rule (not needed; `overflow: hidden` in `.mp-mode` covers it). Also removed `width` from the panel's transition so it applies instantly — only `right` animates, eliminating the clipping window.
+
+### Fix 3 — NHATS CORS failure
+`physics.worker.js` was fetching NASA's `ssd-api.jpl.nasa.gov/nhats.api` directly. NASA does not send CORS headers, blocking all browser-side fetches. Added `GET /api/nhats` proxy endpoint to `worker/index.js` that forwards query params and returns NASA's response with proper CORS headers via the existing `jsonResponse()` helper (24h Cloudflare edge cache via `cf.cacheTtl`). Updated both NHATS URLs in `physics.worker.js` to route through `aster-proxy.hudsonclavin.workers.dev/api/nhats`.
+
+**Deploy:** `cd worker && wrangler deploy`
+
+---
+
 ## Phase 7C — Materials Tab (2026-04-01)
 
 **Agent:** data-layer / mining-economics / ui-hud

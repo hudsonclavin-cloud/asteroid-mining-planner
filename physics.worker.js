@@ -814,8 +814,8 @@ self.onmessage = function(e) {
   if (msg.cmd === 'fetch_nhats') {
     (async function() {
       const urls = [
-        'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035',
-        'https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8',
+        'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035',
+        'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8',
       ];
       for (const url of urls) {
         try {
