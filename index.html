@@ -104,7 +104,7 @@ canvas { display: block; }
   right: -400px;
   top: 48px;
   width: 400px;
-  max-width: 400px;
+  max-width: 500px;
   height: calc(100vh - 108px);
   background: rgba(10, 14, 26, 0.96);
   backdrop-filter: blur(12px);
@@ -118,7 +118,7 @@ canvas { display: block; }
   display: flex;
   flex-direction: column;
   gap: 0;
-  transition: right 0.3s ease;
+  transition: right 0.3s ease, width 0.3s ease;
 }
 #right-panel.panel-open { right: 0; }
 
@@ -535,8 +535,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 #mat-table td { padding:4px 6px; border-bottom:1px solid #0d1220; color:#c8d6e5; white-space:nowrap; }
 #mat-table tr.total-row td { border-top:1px solid #1a2235; color:#00d4ff; }
 #mat-table td.value-col { text-align:right; }
-/* ─── Phase 7D: Mission Planner Overlay ──────────────────────────────────────── */
-#mission-planner.mp-open { right: 0 !important; }
+/* ─── Phase 7D: Mission Planner (panel-integrated) ──────────────────────────── */
+#right-panel.mp-mode { width: 500px; overflow: hidden; padding: 0; }
 .mp-select {
   width:100%; background:#0d1627; border:1px solid #1a2235; color:#c8d6e5;
   font-family:'Space Mono',monospace; font-size:9px; padding:5px 8px;
@@ -920,7 +920,6 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <button class="tab-btn" data-tab="economics">$ ECONOMICS</button>
     <button class="tab-btn" data-tab="materials">◆ MATERIALS</button>
     <button class="tab-btn" data-tab="research">⬡ RESEARCH</button>
-    <button class="tab-btn" data-tab="materials">◆ MATERIALS</button>
   </div>
   <div id="tab-inspector" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;min-height:0">
   <div class="panel-header">◈ TARGET INSPECTOR</div>
@@ -1116,12 +1115,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div id="research-content" style="display:none;font-size:10px;line-height:1.7;color:#d1d5db"></div>
     <div id="research-meta" style="display:none;margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px"></div>
   </div><!-- /tab-research -->
-</div><!-- /right-panel -->
 
-<div id="mission-planner" style="position:fixed;top:0;right:-520px;width:500px;height:100%;
-  background:rgba(10,14,26,0.94);backdrop-filter:blur(14px);
-  border-left:1px solid #1a2235;display:flex;flex-direction:column;
-  transition:right 0.3s ease;z-index:200;overflow:hidden">
+<div id="mission-planner" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
 
   <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;
     border-bottom:1px solid #1a2235;flex-shrink:0">
@@ -1278,6 +1273,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 
   </div>
 </div><!-- /mission-planner -->
+</div><!-- /right-panel -->
 
 <div id="asteroid-tooltip"></div>
 <div id="burn-tooltip"></div>
@@ -3668,11 +3664,25 @@ function openMissionPlanner(id) {
   document.getElementById('mp-actions').style.display   = 'none';
   document.getElementById('mp-progress-bar').style.width = '0%';
   missionResults = []; selectedTrajIdx = -1;
-  document.getElementById('mission-planner').classList.add('mp-open');
+  // Expand right panel into mission-planner mode
+  const rp = document.getElementById('right-panel');
+  rp.classList.add('panel-open', 'mp-mode');
+  document.getElementById('panel-tabs').style.display = 'none';
+  document.getElementById('btn-close-panel').style.display = 'none';
+  ['tab-inspector','tab-economics','tab-materials','tab-research'].forEach(t => {
+    const el = document.getElementById(t); if (el) el.style.display = 'none';
+  });
+  document.getElementById('mission-planner').style.display = 'flex';
 }
 
 function closeMissionPlanner() {
-  document.getElementById('mission-planner').classList.remove('mp-open');
+  // Restore panel to normal tab view
+  const rp = document.getElementById('right-panel');
+  rp.classList.remove('mp-mode');
+  document.getElementById('panel-tabs').style.display = '';
+  document.getElementById('btn-close-panel').style.display = '';
+  document.getElementById('tab-inspector').style.display = 'flex';
+  document.getElementById('mission-planner').style.display = 'none';
   clearTrajectoryLine();
   missionEarthReturnPos = null;
 }
@@ -4837,7 +4847,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (so.style.display === 'flex') { so.style.display = 'none'; return; }
     const mp = document.getElementById('mission-planner');
-    if (mp && mp.classList.contains('mp-open')) { closeMissionPlanner(); return; }
+    if (mp && mp.style.display === 'flex') { closeMissionPlanner(); return; }
     if (burnModeActive) { cancelBurn(); return; }
     if (selectedId >= 0) { deselectAsteroid(); return; }
     return;
