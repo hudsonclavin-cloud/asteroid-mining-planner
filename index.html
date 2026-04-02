@@ -1556,14 +1556,6 @@ function computeMaterialRows(ast) {
   return { rows, massKg, spec };
 }
 
-function fmtTons(t) {
-  if (t >= 1e12) return (t/1e12).toFixed(2) + 'T';
-  if (t >= 1e9)  return (t/1e9).toFixed(2) + 'B';
-  if (t >= 1e6)  return (t/1e6).toFixed(2) + 'M';
-  if (t >= 1e3)  return (t/1e3).toFixed(1) + 'k';
-  return t.toFixed(0);
-}
-
 function buildDonutSVG(rows, massKg) {
   const W=220, H=162, cx=80, cy=81, R=62, ri=36;
   const visible = rows.filter(r => r.pct >= 0.1);
@@ -1639,23 +1631,6 @@ function matSort(key) {
   if (matSortKey === key) matSortAsc = !matSortAsc;
   else { matSortKey = key; matSortAsc = false; }
   if (selectedId >= 0) renderMaterialsTab(selectedId);
-}
-
-function renderMaterialsTab(id) {
-  const ast = asteroidData[id];
-  const noSel = document.getElementById('mat-no-selection');
-  const content = document.getElementById('mat-content');
-  if (!ast) { noSel.style.display = 'block'; content.style.display = 'none'; return; }
-  noSel.style.display = 'none';
-  content.style.display = 'block';
-  const { rows, massKg } = computeMaterialRows(ast);
-  document.getElementById('mat-donut').innerHTML = buildDonutSVG(rows, massKg);
-  document.getElementById('mat-bars').innerHTML  = buildBarsSVG(rows);
-  document.getElementById('mat-table').innerHTML = buildMaterialsTable(rows);
-  document.getElementById('mat-price-toggle').textContent = matPriceMode === 'earth' ? 'EARTH PRICES' : 'SPACE PRICES';
-  const src = cachedPriceData?.source || 'static';
-  const ts  = cachedPriceData?.timestamp ? new Date(cachedPriceData.timestamp).toUTCString().slice(0, 22) : '—';
-  document.getElementById('mat-price-info').innerHTML = `Prices as of ${ts} UTC<br>Source: ${src === 'metals-api' ? 'Metals-API (live)' : 'Fallback static prices'}`;
 }
 
 // ─── Three.js Setup ───────────────────────────────────────────────────────────
