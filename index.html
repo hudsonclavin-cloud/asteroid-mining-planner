@@ -367,6 +367,7 @@ canvas { display: block; }
 }
 
 #speed-controls { display: flex; gap: 4px; flex-shrink: 0; }
+#btn-play-pause { min-width: 28px; margin-right: 4px; }
 
 button.speed-btn {
   background: transparent;
@@ -1287,11 +1288,12 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 <div id="bottom-bar">
   <div id="date-display">2026-MAR-27</div>
   <input type="range" id="time-scrubber" min="0" max="1" step="0.0001" value="0.5">
+  <button id="btn-play-pause" class="speed-btn" title="Play / Pause (Space)">▶</button>
   <div id="speed-controls">
-    <button class="speed-btn active" data-speed="0">⏸</button>
-    <button class="speed-btn" data-speed="1" title="Real-time (1 day = 1 day)">1× RT</button>
+    <button class="speed-btn" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="10">10×</button>
     <button class="speed-btn" data-speed="100">100×</button>
-    <button class="speed-btn" data-speed="1000">1K×</button>
+    <button class="speed-btn active" data-speed="1000">1K×</button>
     <button class="speed-btn" data-speed="10000">10K×</button>
   </div>
   <div id="asteroid-count">▲ 0 ASTEROIDS</div>
@@ -2380,6 +2382,9 @@ worker.onerror = (err) => console.error('[Worker error]', err);
 let currentJD = TODAY_JD;
 let lastPropJD = -Infinity; // JD of last propagate message sent; avoids flooding worker when paused
 let simSpeed = 0;
+let isPlaying = false;
+let lastSpeed = 1000;              // speed to resume when ▶ is pressed
+let wasPlayingBeforeScrub = false;
 let lastRealTime = performance.now();
 let isScrubbing = false;
 let lastSentJD = null;
@@ -4807,7 +4812,7 @@ function onPointerUp() {
 }
 
 // ─── Keyboard Shortcuts ───────────────────────────────────────────────────────
-const SPEED_STEPS = [0, 1, 100, 1000, 10000];
+const SPEED_STEPS = [1, 10, 100, 1000, 10000];
 window.addEventListener('keydown', (e) => {
   const tag = e.target.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA') return;
@@ -4827,27 +4832,18 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'b' || e.key === 'B') { if (selectedId >= 0) toggleBurnMode(); return; }
   if (e.key === ' ') {
     e.preventDefault();
-    const wasRunning = simSpeed !== 0;
-    simSpeed = wasRunning ? 0 : 1000;
-    document.querySelectorAll('.speed-btn').forEach(btn => {
-      btn.classList.toggle('active', Number(btn.dataset.speed) === simSpeed);
-    });
+    setPlayState(!isPlaying);
     return;
   }
   if (e.key === '[') {
-    const idx = SPEED_STEPS.indexOf(Math.abs(simSpeed));
-    simSpeed = idx > 0 ? SPEED_STEPS[idx - 1] : 0;
-    document.querySelectorAll('.speed-btn').forEach(btn => {
-      btn.classList.toggle('active', Number(btn.dataset.speed) === simSpeed);
-    });
+    const idx = SPEED_STEPS.indexOf(lastSpeed);
+    if (idx > 0) { lastSpeed = SPEED_STEPS[idx - 1]; if (isPlaying) simSpeed = lastSpeed; syncSpeedButtons(); }
+    else setPlayState(false);
     return;
   }
   if (e.key === ']') {
-    const idx = SPEED_STEPS.indexOf(Math.abs(simSpeed));
-    if (idx < SPEED_STEPS.length - 1) simSpeed = SPEED_STEPS[idx + 1];
-    document.querySelectorAll('.speed-btn').forEach(btn => {
-      btn.classList.toggle('active', Number(btn.dataset.speed) === simSpeed);
-    });
+    const idx = SPEED_STEPS.indexOf(lastSpeed);
+    if (idx < SPEED_STEPS.length - 1) { lastSpeed = SPEED_STEPS[idx + 1]; if (isPlaying) simSpeed = lastSpeed; syncSpeedButtons(); }
     return;
   }
   if (e.key === 'f' || e.key === 'F') { if (selectedId >= 0) flyTo(selectedId); return; }
@@ -5264,23 +5260,52 @@ scrubber.min = SCRUBBER_MIN;
 scrubber.max = SCRUBBER_MAX;
 scrubber.value = TODAY_JD;
 
-scrubber.addEventListener('mousedown', () => { isScrubbing = true; });
-scrubber.addEventListener('touchstart', () => { isScrubbing = true; });
+scrubber.addEventListener('mousedown', () => {
+  isScrubbing = true;
+  wasPlayingBeforeScrub = isPlaying;
+  if (isPlaying) setPlayState(false);
+});
+scrubber.addEventListener('touchstart', () => {
+  isScrubbing = true;
+  wasPlayingBeforeScrub = isPlaying;
+  if (isPlaying) setPlayState(false);
+}, { passive: true });
 scrubber.addEventListener('input', () => {
   currentJD = parseFloat(scrubber.value);
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
   lastPropJD = currentJD; // prevent duplicate send from animate loop
 });
-scrubber.addEventListener('mouseup', () => { isScrubbing = false; });
-scrubber.addEventListener('touchend', () => { isScrubbing = false; });
+scrubber.addEventListener('mouseup', () => {
+  isScrubbing = false;
+  if (wasPlayingBeforeScrub) setPlayState(true);
+});
+scrubber.addEventListener('touchend', () => {
+  isScrubbing = false;
+  if (wasPlayingBeforeScrub) setPlayState(true);
+});
 
-document.querySelectorAll('.speed-btn').forEach(btn => {
+function syncSpeedButtons() {
+  document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.speed) === lastSpeed);
+  });
+}
+
+function setPlayState(playing) {
+  isPlaying = playing;
+  simSpeed = playing ? lastSpeed : 0;
+  document.getElementById('btn-play-pause').textContent = playing ? '❚❚' : '▶';
+  if (playing) lastRealTime = performance.now();
+  syncSpeedButtons();
+}
+
+document.getElementById('btn-play-pause').addEventListener('click', () => {
+  setPlayState(!isPlaying);
+});
+
+document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const s = parseInt(btn.dataset.speed, 10);
-    simSpeed = s;
-    lastRealTime = performance.now();
+    lastSpeed = parseInt(btn.dataset.speed, 10);
+    setPlayState(true);
   });
 });
 
