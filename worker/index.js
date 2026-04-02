@@ -156,8 +156,10 @@ export default {
       try {
         const r = await fetch(nasaUrl.toString(), { cf: { cacheTtl: 86400 } });
         if (!r.ok) throw new Error(`NASA HTTP ${r.status}`);
-        const data = await r.json();
-        return jsonResponse(data, 200, origin);
+        return new Response(r.body, {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+        });
       } catch (err) {
         return jsonResponse({ error: 'NHATS proxy failed', detail: err.message }, 502, origin);
       }
@@ -170,8 +172,10 @@ export default {
       try {
         const r = await fetch(nasaUrl.toString(), { cf: { cacheTtl: 3600 } });
         if (!r.ok) throw new Error(`NASA HTTP ${r.status}`);
-        const data = await r.json();
-        return jsonResponse(data, 200, origin);
+        return new Response(r.body, {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
+        });
       } catch (err) {
         return jsonResponse({ error: 'SBDB proxy failed', detail: err.message }, 502, origin);
       }

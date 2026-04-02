@@ -5476,7 +5476,7 @@ async function init() {
   // ── Check IndexedDB catalog cache ──────────────────────────────────────
   try {
     const cached = await getFromIndexedDB('aster_catalog_v1');
-    if (cached && cached.timestamp && Date.now() - cached.timestamp < 24 * 3600 * 1000) {
+    if (cached && cached.timestamp && Date.now() - cached.timestamp < 24 * 3600 * 1000 && cached.data.length > 0) {
       console.log('[Catalog] IndexedDB cache hit:', cached.data.length, 'asteroids');
       const sub = document.getElementById('loading-sub');
       if (sub) sub.textContent = `Cache: ${cached.data.length} asteroids`;
