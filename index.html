@@ -139,6 +139,7 @@ canvas { display: block; }
   padding: 5px 0;
   border-bottom: 1px solid #111827;
   gap: 8px;
+  min-width: 0;
 }
 .data-row .label {
   color: #4b5563;
@@ -146,8 +147,9 @@ canvas { display: block; }
   text-transform: uppercase;
   letter-spacing: 0.1em;
   flex-shrink: 0;
+  max-width: 50%;
 }
-.data-row .value { color: #e5e7eb; font-size: 13px; text-align: right; word-break: break-all; }
+.data-row .value { color: #e5e7eb; font-size: 13px; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .data-row .value.accent { color: #00d4ff; }
 .data-row .value.profit { color: #34d399; }
 .data-row .value.warning { color: #fb923c; }
@@ -520,6 +522,102 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   cursor: pointer; letter-spacing: 0.1em; border-bottom: 2px solid transparent; margin-bottom: -1px;
 }
 .tab-btn.active { color: #00d4ff; border-bottom-color: #00d4ff; }
+/* ─── Materials Tab ──────────────────────────────────────────────────────────── */
+.mat-badge { display:inline-block; padding:1px 5px; border-radius:2px; font-size:9px; letter-spacing:0.05em; font-family:'Space Mono',monospace; }
+.mat-badge.easy    { background:#14532d; color:#4ade80; }
+.mat-badge.medium  { background:#713f12; color:#fbbf24; }
+.mat-badge.hard    { background:#7c2d12; color:#fb923c; }
+.mat-badge.extreme { background:#4c0519; color:#f87171; }
+#mat-table table { width:100%; border-collapse:collapse; font-size:9px; font-family:'Space Mono',monospace; }
+#mat-table th { color:#4b5563; text-align:left; padding:4px 6px; cursor:pointer; border-bottom:1px solid #1a2235; white-space:nowrap; user-select:none; }
+#mat-table th:hover { color:#00d4ff; }
+#mat-table th.sorted { color:#00d4ff; }
+#mat-table td { padding:4px 6px; border-bottom:1px solid #0d1220; color:#c8d6e5; white-space:nowrap; }
+#mat-table tr.total-row td { border-top:1px solid #1a2235; color:#00d4ff; }
+#mat-table td.value-col { text-align:right; }
+/* ─── Phase 7D: Mission Planner Overlay ──────────────────────────────────────── */
+#mission-planner.mp-open { right: 0 !important; }
+.mp-select {
+  width:100%; background:#0d1627; border:1px solid #1a2235; color:#c8d6e5;
+  font-family:'Space Mono',monospace; font-size:9px; padding:5px 8px;
+  cursor:pointer; outline:none; letter-spacing:0.04em;
+}
+.mp-select:focus { border-color:#00d4ff; }
+.mp-input {
+  background:#0d1627; border:1px solid #1a2235; color:#c8d6e5;
+  font-family:'Space Mono',monospace; font-size:10px; padding:4px 6px;
+  outline:none; text-align:center;
+}
+.mp-input:focus { border-color:#00d4ff; }
+.mp-craft-card {
+  display:flex; flex-direction:column; padding:7px 10px; border:1px solid #1a2235;
+  cursor:pointer; background:#0d1627; transition:border-color 0.15s;
+}
+.mp-craft-card.mp-craft-selected { border-color:#00d4ff; background:#04111f; }
+.mp-craft-card:hover { border-color:#2a4060; }
+.mp-craft-name { font-size:9px; color:#c8d6e5; letter-spacing:0.1em; }
+.mp-craft-card.mp-craft-selected .mp-craft-name { color:#00d4ff; }
+.mp-craft-specs { font-size:8px; color:#4b5563; margin-top:2px; }
+.mp-traj-card {
+  padding:7px 10px; border:1px solid #1a2235; cursor:pointer;
+  background:#0d1627; transition:border-color 0.15s; display:flex;
+  flex-direction:column; gap:3px;
+}
+.mp-traj-card:hover { border-color:#2a4060; }
+.mp-traj-card.mp-traj-selected { border-color:#00d4ff; background:#04111f; }
+.mp-traj-rank  { font-size:8px; color:#4b5563; }
+.mp-traj-dates { font-size:9px; color:#c8d6e5; }
+.mp-traj-dv    { font-size:10px; color:#00d4ff; letter-spacing:0.06em; }
+.mp-traj-meta  { font-size:8px; color:#6a8a9a; }
+.mp-burn-row {
+  display:grid; grid-template-columns:18px 1fr 64px 74px 22px;
+  gap:4px; align-items:center; margin-bottom:3px; font-size:9px;
+}
+.mp-burn-row input[type=number] {
+  background:#0d1627; border:1px solid #1a2235; color:#c8d6e5;
+  font-family:'Space Mono',monospace; font-size:9px; padding:2px 4px;
+  width:100%; text-align:right; outline:none;
+}
+.mp-burn-row input[type=number]:focus { border-color:#00d4ff; }
+/* ─── Phase 7F: Mission Visualization ───────────────────────────────────────── */
+#mission-timeline {
+  position:fixed;bottom:60px;left:0;width:100%;height:36px;
+  background:rgba(5,8,16,0.96);border-top:1px solid #1a2235;z-index:9;
+  display:none;overflow:hidden;
+}
+#mission-timeline-inner { display:flex;height:100%;position:relative; }
+.mt-segment {
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  overflow:hidden;cursor:pointer;border-right:1px solid #0d1420;
+  position:absolute;height:100%;transition:filter 0.1s;
+}
+.mt-segment:hover { filter:brightness(1.4); }
+.mt-segment-label {
+  font-family:'Space Mono',monospace;font-size:7px;letter-spacing:0.06em;
+  color:rgba(255,255,255,0.7);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:100%;padding:0 3px;
+}
+.mt-segment-date { font-family:'Space Mono',monospace;font-size:6px;color:rgba(255,255,255,0.35);white-space:nowrap; }
+#mt-cursor {
+  position:absolute;top:0;bottom:0;width:1px;background:#fff;
+  opacity:0.6;pointer-events:none;z-index:2;
+}
+#burn-tooltip {
+  position:fixed;background:rgba(5,8,16,0.95);border:1px solid #1a2235;
+  padding:6px 10px;font-family:'Space Mono',monospace;font-size:9px;
+  color:#c8d6e5;pointer-events:none;z-index:300;display:none;line-height:1.6;
+}
+#mp-anim-controls {
+  display:none;margin-top:14px;padding:10px;
+  background:#050810;border:1px solid #1a2235;border-radius:2px;
+}
+#mp-anim-controls .panel-header { margin-bottom:8px; }
+.anim-speed-btn {
+  background:transparent;border:1px solid #1a2235;color:#4b5563;
+  font-family:'Space Mono',monospace;font-size:8px;padding:3px 6px;
+  cursor:pointer;letter-spacing:0.06em;
+}
+.anim-speed-btn.anim-speed-active { border-color:#00d4ff;color:#00d4ff; }
 /* ─── Phase 9: Research Tab Content ─────────────────────────────────────────── */
 #research-content h2, #research-content h3 { color: #00d4ff; font-size: 10px; letter-spacing: 0.1em; margin: 10px 0 4px; }
 #research-content ul { margin: 4px 0 8px 12px; padding: 0; }
@@ -820,6 +918,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   <div id="panel-tabs">
     <button class="tab-btn active" data-tab="inspector">◈ INSPECTOR</button>
     <button class="tab-btn" data-tab="economics">$ ECONOMICS</button>
+    <button class="tab-btn" data-tab="materials">◆ MATERIALS</button>
     <button class="tab-btn" data-tab="research">⬡ RESEARCH</button>
     <button class="tab-btn" data-tab="materials">◆ MATERIALS</button>
   </div>
@@ -880,6 +979,9 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     </div>
 
     <button class="action-btn" id="btn-burn-mode">▶ BURN MODE [B]</button>
+    <button class="action-btn" id="btn-plan-mission"
+      style="margin-top:6px;background:linear-gradient(135deg,#004466,#006688);
+      border-color:#00d4ff;color:#00d4ff;font-weight:bold;letter-spacing:0.12em">⚡ PLAN MISSION</button>
   </div>
 
   <!-- Burn result panel (shown when burn is active) -->
@@ -937,6 +1039,170 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   </div>
   </div><!-- /tab-inspector -->
 
+<!-- ══════════════════════════════════════════════════════════════════
+     MISSION PLANNER OVERLAY — slides in over right panel
+     ══════════════════════════════════════════════════════════════ -->
+<div id="mission-planner" style="position:fixed;top:0;right:-520px;width:500px;height:100%;
+  background:rgba(10,14,26,0.94);backdrop-filter:blur(14px);
+  border-left:1px solid #1a2235;display:flex;flex-direction:column;
+  transition:right 0.3s ease;z-index:200;overflow:hidden">
+
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;
+    border-bottom:1px solid #1a2235;flex-shrink:0">
+    <button id="btn-planner-back" style="background:transparent;border:1px solid #1a2235;
+      color:#6a8a9a;font-family:'Space Mono',monospace;font-size:9px;padding:4px 8px;
+      cursor:pointer;letter-spacing:0.08em">← BACK</button>
+    <div style="flex:1;font-size:11px;color:#00d4ff;letter-spacing:0.15em;
+      font-family:'Space Mono',monospace">⚡ MISSION PLANNER</div>
+    <div id="mp-target-name" style="font-size:9px;color:#6a8a9a;
+      font-family:'Space Mono',monospace;text-align:right;max-width:140px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+  </div>
+
+  <div id="mp-scroll" style="overflow-y:auto;flex:1;padding:12px 14px">
+
+    <div class="panel-header">◈ MISSION CONFIGURATION</div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">DELIVERY DESTINATION</div>
+      <select id="mp-destination" class="mp-select">
+        <option value="leo">Low Earth Orbit (LEO) — 400 km · Lowest cost, highest demand</option>
+        <option value="geo">High Earth Orbit (GEO) — 35,786 km · Telecom satellite refueling</option>
+        <option value="l1">Earth-Moon L1 — 326,000 km · Lunar gateway staging node</option>
+        <option value="l2">Earth-Moon L2 — 444,000 km · Deep space transit hub</option>
+        <option value="lunar">Lunar Surface — Direct delivery · In-situ resource use</option>
+        <option value="mars">Mars Orbit — Interplanetary · Long-range fuel depot</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">LAUNCH WINDOW</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="mp-year-start" type="number" min="2025" max="2044" value="2026"
+          class="mp-input" style="width:70px" placeholder="FROM">
+        <span style="color:#4b5563;font-size:10px">—</span>
+        <input id="mp-year-end" type="number" min="2026" max="2045" value="2035"
+          class="mp-input" style="width:70px" placeholder="TO">
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:6px">SPACECRAFT CLASS</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label class="mp-craft-card" data-craft="light">
+          <input type="radio" name="mp-craft" value="light" style="display:none">
+          <div class="mp-craft-name">LIGHT PROSPECTOR</div>
+          <div class="mp-craft-specs">500 kg dry · 200 kg payload · Isp 3000s (ion)</div>
+        </label>
+        <label class="mp-craft-card mp-craft-selected" data-craft="medium">
+          <input type="radio" name="mp-craft" value="medium" checked style="display:none">
+          <div class="mp-craft-name">MEDIUM MINER</div>
+          <div class="mp-craft-specs">5,000 kg dry · 2,000 kg payload · Isp 320s (chem)</div>
+        </label>
+        <label class="mp-craft-card" data-craft="heavy">
+          <input type="radio" name="mp-craft" value="heavy" style="display:none">
+          <div class="mp-craft-name">HEAVY HAULER</div>
+          <div class="mp-craft-specs">50,000 kg dry · 20,000 kg payload · Isp 320s (chem)</div>
+        </label>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">LAUNCH VEHICLE</div>
+      <select id="mp-launch-vehicle" class="mp-select">
+        <option value="f9_rs">Falcon 9 Rideshare — $5,000/kg · 1,000 kg max</option>
+        <option value="f9" selected>Falcon 9 — $2,700/kg · 22,800 kg max</option>
+        <option value="fh">Falcon Heavy — $1,500/kg · 63,800 kg max</option>
+        <option value="starship">Starship [projected] — $100/kg · 150,000 kg max</option>
+        <option value="vulcan">Vulcan Centaur — $4,000/kg · 27,200 kg max</option>
+        <option value="ng">New Glenn [projected] — $2,000/kg · 45,000 kg max</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">PARKING ORBIT ALTITUDE</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="mp-park-alt" type="number" min="200" max="2000" value="400"
+          class="mp-input" style="width:70px">
+        <span style="font-size:9px;color:#4b5563">km above Earth surface</span>
+      </div>
+    </div>
+
+    <button id="btn-find-route" class="action-btn"
+      style="width:100%;font-size:11px;padding:10px;background:linear-gradient(135deg,#003322,#005544);
+      border-color:#00d4ff;color:#00d4ff;letter-spacing:0.15em">🚀 FIND BEST ROUTE</button>
+
+    <div id="mp-computing" style="display:none;margin-top:14px">
+      <div class="panel-header">◈ OPTIMIZING TRAJECTORY</div>
+      <div id="mp-progress-label" style="font-size:9px;color:#6a8a9a;margin-bottom:6px">Scanning launch windows...</div>
+      <div style="height:4px;background:#1a2235;margin-bottom:10px">
+        <div id="mp-progress-bar" style="height:100%;background:#00d4ff;width:0%;transition:width 0.2s"></div>
+      </div>
+    </div>
+
+    <div id="mp-results" style="display:none;margin-top:14px">
+      <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between">
+        ◈ TRAJECTORY OPTIONS
+        <span id="mp-result-count" style="color:#6a8a9a;font-size:9px;font-weight:normal"></span>
+      </div>
+      <div id="mp-trajectory-list" style="display:flex;flex-direction:column;gap:4px"></div>
+    </div>
+
+    <div id="mp-profile" style="display:none;margin-top:14px">
+      <div class="panel-header">◈ MISSION PROFILE</div>
+      <div id="mp-profile-text" style="font-family:'Space Mono',monospace;font-size:8.5px;line-height:1.8;
+        color:#c8d6e5;background:#050810;border:1px solid #1a2235;padding:10px;
+        white-space:pre;overflow-x:auto;border-radius:2px"></div>
+    </div>
+
+    <div id="mp-burns" style="display:none;margin-top:14px">
+      <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+        ◈ DELTA-V BUDGET
+        <button id="btn-mp-reset-optimal" style="background:transparent;border:1px solid #1a2235;
+          font-family:'Space Mono',monospace;font-size:8px;color:#6a8a9a;padding:2px 6px;
+          cursor:pointer;letter-spacing:0.06em">↺ RESET</button>
+      </div>
+      <div id="mp-burn-table"></div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button id="btn-mp-add-burn" class="action-btn" style="flex:1;font-size:9px;padding:5px">+ ADD BURN</button>
+      </div>
+      <div style="font-size:9px;color:#4b5563;margin-top:6px;border-top:1px solid #1a2235;padding-top:6px">
+        TOTAL ΔV: <span id="mp-total-dv" style="color:#00d4ff">—</span> km/s
+        &nbsp;·&nbsp; FUEL: <span id="mp-total-fuel" style="color:#fbbf24">—</span> kg
+      </div>
+    </div>
+
+    <div id="mp-actions" style="display:none;margin-top:14px;padding-bottom:20px">
+      <div style="display:flex;gap:6px">
+        <button id="btn-mp-export" class="action-btn" style="flex:1;font-size:9px;padding:6px">↓ EXPORT PLAN</button>
+        <button id="btn-mp-share" class="action-btn" style="flex:1;font-size:9px;padding:6px">⬡ SHARE MISSION</button>
+      </div>
+      <div style="margin-top:6px">
+        <button id="btn-mp-play" class="action-btn"
+          style="width:100%;font-size:10px;padding:7px;letter-spacing:0.1em">▶ PLAY MISSION</button>
+      </div>
+      <div id="mp-anim-controls">
+        <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+          ◈ FLIGHT PREVIEW
+          <button id="btn-anim-stop" class="action-btn"
+            style="font-size:8px;padding:2px 8px;color:#ff4444;border-color:#ff4444">■ STOP</button>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:8px">
+          <button id="btn-anim-playpause" class="action-btn" style="flex:1;font-size:10px;padding:5px">▶</button>
+        </div>
+        <div style="display:flex;gap:3px">
+          <button class="anim-speed-btn" data-aspeed="10">10×</button>
+          <button class="anim-speed-btn anim-speed-active" data-aspeed="100">100×</button>
+          <button class="anim-speed-btn" data-aspeed="1000">1K×</button>
+          <button class="anim-speed-btn" data-aspeed="10000">10K×</button>
+          <button class="anim-speed-btn" data-aspeed="86400">1d/s</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /mission-planner -->
+
   <div id="tab-economics" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
     <div id="econ-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
       SELECT AN ASTEROID TO VIEW ECONOMICS
@@ -984,6 +1250,25 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     </div>
   </div><!-- /tab-economics -->
 
+  <div id="tab-materials" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="mat-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
+      SELECT AN ASTEROID TO VIEW MATERIALS
+    </div>
+    <div id="mat-content" style="display:none">
+      <div style="display:flex;gap:6px;margin:0 0 8px;align-items:center">
+        <button id="mat-price-toggle" class="action-btn" style="flex:1;font-size:9px;padding:5px 0">EARTH PRICES</button>
+        <button id="mat-price-refresh" class="action-btn" style="font-size:9px;padding:5px 8px" title="Refresh prices">↺</button>
+      </div>
+      <div class="panel-header">◆ COMPOSITION</div>
+      <div id="mat-donut" style="display:flex;justify-content:center;margin:6px 0"></div>
+      <div class="panel-header" style="margin-top:8px">◆ VALUE BY MATERIAL</div>
+      <div id="mat-bars" style="padding:4px 0;overflow:hidden"></div>
+      <div class="panel-header" style="margin-top:8px">◆ DETAILED BREAKDOWN</div>
+      <div id="mat-table" style="overflow-x:auto"></div>
+      <div id="mat-price-info" style="margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px;line-height:1.6"></div>
+    </div>
+  </div><!-- /tab-materials -->
+
   <div id="tab-research" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
     <div id="research-prompt-hint" style="color:#4b5563;font-size:10px;text-align:center;padding:40px 12px;line-height:1.6">
       Select an asteroid then click RESEARCH<br>to load an AI briefing.
@@ -995,41 +1280,16 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div id="research-content" style="display:none;font-size:10px;line-height:1.7;color:#d1d5db"></div>
     <div id="research-meta" style="display:none;margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px"></div>
   </div><!-- /tab-research -->
-
-  <div id="tab-materials" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
-    <div id="mat-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
-      SELECT AN ASTEROID TO VIEW COMPOSITION
-    </div>
-    <div id="mat-content" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;
-        padding:6px 0;border-bottom:1px solid #1a2235;margin-bottom:8px">
-        <span style="color:#4a5568;font-size:9px;letter-spacing:0.1em">PRICE BASIS</span>
-        <div style="display:flex;gap:0">
-          <button id="btn-earth-prices" style="font-size:9px;padding:3px 10px;border:1px solid #1a2235;
-            background:#1a2235;color:#00d4ff;font-family:'Space Mono',monospace;cursor:pointer;
-            letter-spacing:0.08em">EARTH</button>
-          <button id="btn-space-prices" style="font-size:9px;padding:3px 10px;border:1px solid #1a2235;
-            background:transparent;color:#4a5568;font-family:'Space Mono',monospace;cursor:pointer;
-            letter-spacing:0.08em">SPACE</button>
-        </div>
-      </div>
-      <div class="panel-header">◆ COMPOSITION</div>
-      <div id="mat-donut-wrap" style="position:relative;text-align:center;margin:8px 0"></div>
-      <div class="panel-header" style="margin-top:10px">VALUE BY MATERIAL</div>
-      <div id="mat-bars-wrap" style="margin:8px 0"></div>
-      <div class="panel-header" style="margin-top:10px">DETAILED BREAKDOWN</div>
-      <div id="mat-table-wrap" style="margin:8px 0;overflow-x:auto"></div>
-      <div id="mat-price-footer" style="margin-top:10px;padding-top:6px;border-top:1px solid #1a2235;
-        font-size:9px;color:#4a5568;display:flex;justify-content:space-between;align-items:center">
-        <span id="mat-price-source">—</span>
-        <button id="btn-refresh-prices" style="background:transparent;border:none;color:#4a5568;
-          cursor:pointer;font-family:'Space Mono',monospace;font-size:9px;padding:0">↺</button>
-      </div>
-    </div>
-  </div><!-- /tab-materials -->
-</div>
+</div><!-- /right-panel -->
 
 <div id="asteroid-tooltip"></div>
+<div id="burn-tooltip"></div>
+
+<div id="mission-timeline">
+  <div id="mission-timeline-inner">
+    <div id="mt-cursor"></div>
+  </div>
+</div>
 
 <div id="bottom-bar">
   <div id="date-display">2026-MAR-27</div>
@@ -1094,9 +1354,11 @@ function fmtUSD(v) {
   const n = Number(v);
   if (isNaN(n)) return '—';
   const abs = Math.abs(n);
-  if (abs >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (abs >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
-  if (abs >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
+  if (abs >= 1e15) return `$${(n / 1e15).toFixed(1)}Q`;
+  if (abs >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9)  return `$${(n / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6)  return `$${(n / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3)  return `$${(n / 1e3).toFixed(1)}K`;
   return `$${n.toFixed(0)}`;
 }
 
@@ -1147,7 +1409,7 @@ function scoreToColor(score) {
 
 // ─── Phase 10: Spectral-type based asteroid colors ────────────────────────────
 function spectralTypeColor(ast) {
-  const spec = (ast.spec || ast.spec_T || '').trim().toUpperCase().charAt(0);
+  const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().toUpperCase().charAt(0);
   if (spec === 'C' || spec === 'B') return new THREE.Color(0x4488ff); // blue
   if (spec === 'D')                 return new THREE.Color(0x3366cc); // darker blue
   if (spec === 'S' || spec === 'Q' || spec === 'A') return new THREE.Color(0xff8844); // orange
@@ -1174,7 +1436,7 @@ const FRACTIONS = {
   DEFAULT: { water:0.02, metals:0.15 },
 };
 
-// Detailed composition by spectral group (mass %)
+// Detailed composition by spectral group (mass %) — used by local renderMaterialsTab
 const COMPOSITION = {
   C: { water:10, iron:15,  nickel:1.5, cobalt:0.1, carbon:5,  silicates:65, platinum:0.003, gold:0.0001, silver:0.0003, copper:0.02, rareEarth:0.1  },
   S: { water:0.5,iron:25,  nickel:2,   cobalt:0.2, carbon:0.5,silicates:68, platinum:0.005, gold:0.0003, silver:0.001,  copper:0.05, rareEarth:0.2  },
@@ -1206,6 +1468,206 @@ const MAT_DIFFICULTY = {
   platinum:'EXTR', gold:'EXTR', rareEarth:'EXTR',
 };
 const DIFF_COLOR = { EASY:'#34d399', MED:'#fbbf24', HARD:'#f97316', EXTR:'#f87171' };
+// ─── Materials Tab: Composition + Pricing Data ───────────────────────────────
+const MAT_KEYS = ['water','iron','nickel','cobalt','carbon','silicates','pgm','gold','silver','copper','rareEarth'];
+const MAT_NAMES = { water:'Water', iron:'Iron', nickel:'Nickel', cobalt:'Cobalt', carbon:'Carbon',
+  silicates:'Silicates', pgm:'PGMs', gold:'Gold', silver:'Silver', copper:'Copper', rareEarth:'Rare Earth' };
+const MAT_COLORS_HEX = { water:'#4488ff', iron:'#cc6633', nickel:'#aaaaaa', cobalt:'#6699cc',
+  carbon:'#555566', silicates:'#8B7355', pgm:'#00d4ff', gold:'#ffcc00',
+  silver:'#cccccc', copper:'#cc8833', rareEarth:'#aa44cc' };
+const MAT_DIFFICULTY = { water:'easy', iron:'medium', nickel:'medium', cobalt:'hard',
+  carbon:'easy', silicates:'easy', pgm:'extreme', gold:'extreme',
+  silver:'hard', copper:'hard', rareEarth:'extreme' };
+const MAT_COMP = {
+  C: { water:10,  carbon:3,    silicates:65, iron:15,  nickel:2,   cobalt:0.05,  pgm:0.003,  gold:0.0001,  silver:0.001,  copper:0.001,  rareEarth:0.01  },
+  S: { water:0.5, carbon:0.2,  silicates:68, iron:22,  nickel:3,   cobalt:0.10,  pgm:0.005,  gold:0.0002,  silver:0.002,  copper:0.002,  rareEarth:0.02  },
+  M: { water:0.1, carbon:0.05, silicates:4.8,iron:88,  nickel:7,   cobalt:0.10,  pgm:0.010,  gold:0.001,   silver:0.005,  copper:0.010,  rareEarth:0.005 },
+  X: { water:5,   carbon:2,    silicates:67, iron:18,  nickel:2.5, cobalt:0.08,  pgm:0.004,  gold:0.00015, silver:0.0015, copper:0.0015, rareEarth:0.015 },
+};
+const MAT_DENSITY_KGM3 = { C:1300, S:2700, M:5300, X:2000 };
+const STATIC_PRICES_EARTH = {
+  water:0, iron:0.12, nickel:16, cobalt:28, pgm:31000,
+  gold:92000, silver:1050, copper:9.50, carbon:0.50, silicates:0.01, rareEarth:250,
+};
+const STATIC_PRICES_SPACE = {
+  water:50000, iron:0.12, nickel:16, cobalt:28, pgm:31000,
+  gold:92000, silver:1050, copper:9.50, carbon:10000, silicates:5000, rareEarth:250,
+};
+
+// ─── Mission Planner Constants ─────────────────────────────────────────────────
+const SPACECRAFT = {
+  light:  { name:'Light Prospector', dry_kg:500,   payload_kg:200,   isp:3000, cost_usd:50e6  },
+  medium: { name:'Medium Miner',     dry_kg:5000,  payload_kg:2000,  isp:320,  cost_usd:180e6 },
+  heavy:  { name:'Heavy Hauler',     dry_kg:50000, payload_kg:20000, isp:320,  cost_usd:500e6 },
+};
+const LAUNCH_VEHICLES = {
+  f9_rs:   { name:'Falcon 9 Rideshare', cost_per_kg:5000,  max_kg:1000,   label:'F9 Rideshare' },
+  f9:      { name:'Falcon 9',           cost_per_kg:2700,  max_kg:22800,  label:'Falcon 9'     },
+  fh:      { name:'Falcon Heavy',       cost_per_kg:1500,  max_kg:63800,  label:'Falcon Heavy' },
+  starship:{ name:'Starship',           cost_per_kg:100,   max_kg:150000, label:'Starship*'    },
+  vulcan:  { name:'Vulcan Centaur',     cost_per_kg:4000,  max_kg:27200,  label:'Vulcan'       },
+  ng:      { name:'New Glenn',          cost_per_kg:2000,  max_kg:45000,  label:'New Glenn*'   },
+};
+const DEST_LABELS = {
+  leo:'LEO (400 km)', geo:'GEO (35,786 km)', l1:'Earth-Moon L1',
+  l2:'Earth-Moon L2', lunar:'Lunar Surface', mars:'Mars Orbit',
+};
+
+let cachedPriceData = null;
+let matPriceMode = 'earth';
+let matSortKey = 'totalValue';
+let matSortAsc = false;
+
+async function fetchPrices(forceRefresh = false) {
+  const CACHE_KEY = 'aster_prices_v1';
+  if (!forceRefresh) {
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY);
+      if (raw) { cachedPriceData = JSON.parse(raw); return; }
+    } catch(_) {}
+  }
+  try {
+    const res = await fetch('https://aster-proxy.hudsonclavin.workers.dev/api/prices');
+    if (res.ok) {
+      cachedPriceData = await res.json();
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(cachedPriceData));
+      return;
+    }
+  } catch(_) {}
+  cachedPriceData = { prices: STATIC_PRICES_EARTH, source: 'static', timestamp: Date.now() };
+}
+
+function getActivePrices() {
+  const base = cachedPriceData?.prices || STATIC_PRICES_EARTH;
+  return matPriceMode === 'space' ? { ...base, ...STATIC_PRICES_SPACE } : base;
+}
+
+function getMatSpec(ast) {
+  const s = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
+  if ('CBP D'.includes(s) && s) return 'C';
+  if ('SQA'.includes(s) && s) return 'S';
+  if ('ME'.includes(s) && s) return 'M';
+  return 'X';
+}
+
+function computeMaterialRows(ast) {
+  const spec = getMatSpec(ast);
+  const comp = MAT_COMP[spec];
+  const dens = MAT_DENSITY_KGM3[spec];
+  const D_m  = ast._diam_m || 100;
+  const r    = D_m / 2;
+  const massKg = (4/3) * Math.PI * r * r * r * dens;
+  const prices = getActivePrices();
+  const rows = MAT_KEYS.map(k => {
+    const pct = comp[k] || 0;
+    const kg  = massKg * (pct / 100);
+    const priceKg = prices[k] || 0;
+    return { key:k, name:MAT_NAMES[k], pct, kg, priceKg, totalValue: kg * priceKg, difficulty: MAT_DIFFICULTY[k] };
+  });
+  return { rows, massKg, spec };
+}
+
+function fmtTons(t) {
+  if (t >= 1e12) return (t/1e12).toFixed(2) + 'T';
+  if (t >= 1e9)  return (t/1e9).toFixed(2) + 'B';
+  if (t >= 1e6)  return (t/1e6).toFixed(2) + 'M';
+  if (t >= 1e3)  return (t/1e3).toFixed(1) + 'k';
+  return t.toFixed(0);
+}
+
+function buildDonutSVG(rows, massKg) {
+  const W=220, H=162, cx=80, cy=81, R=62, ri=36;
+  const visible = rows.filter(r => r.pct >= 0.1);
+  const totalPct = visible.reduce((s,r) => s + r.pct, 0);
+  let angle = -Math.PI / 2, paths = '', legend = '';
+  visible.forEach((m, idx) => {
+    const sweep = (m.pct / totalPct) * 2 * Math.PI;
+    const a0 = angle, a1 = angle + sweep;
+    const lg = sweep > Math.PI ? 1 : 0;
+    const x1 = cx + R*Math.cos(a0), y1 = cy + R*Math.sin(a0);
+    const x2 = cx + R*Math.cos(a1), y2 = cy + R*Math.sin(a1);
+    const xi1 = cx + ri*Math.cos(a0), yi1 = cy + ri*Math.sin(a0);
+    const xi2 = cx + ri*Math.cos(a1), yi2 = cy + ri*Math.sin(a1);
+    const col = MAT_COLORS_HEX[m.key] || '#888';
+    const f = n => n.toFixed(1);
+    paths += `<path d="M${f(x1)},${f(y1)} A${R},${R} 0 ${lg},1 ${f(x2)},${f(y2)} L${f(xi2)},${f(yi2)} A${ri},${ri} 0 ${lg},0 ${f(xi1)},${f(yi1)} Z" fill="${col}" opacity="0.85" stroke="#0a0e1a" stroke-width="1"><title>${m.name}: ${m.pct.toFixed(2)}% · ${fmtTons(m.kg/1000)} Mt</title></path>`;
+    if (idx < 8) {
+      const ly = 12 + idx * 18;
+      legend += `<rect x="130" y="${ly}" width="8" height="8" fill="${col}" opacity="0.85"/>`;
+      legend += `<text x="142" y="${ly+8}" fill="#c8d6e5" font-size="8.5" font-family="Space Mono,monospace">${m.name} ${m.pct.toFixed(1)}%</text>`;
+    }
+    angle += sweep;
+  });
+  const massLabel = fmtTons(massKg / 1000);
+  return `<svg width="${W}" height="${H}" style="display:block;max-width:100%">${paths}<circle cx="${cx}" cy="${cy}" r="${ri-2}" fill="#0a0e1a"/><text x="${cx}" y="${cy-8}" text-anchor="middle" fill="#6a8a9a" font-size="8" font-family="Space Mono,monospace">MASS</text><text x="${cx}" y="${cy+7}" text-anchor="middle" fill="#00d4ff" font-size="12" font-family="Space Mono,monospace">${massLabel}</text><text x="${cx}" y="${cy+20}" text-anchor="middle" fill="#6a8a9a" font-size="8" font-family="Space Mono,monospace">Mt</text>${legend}</svg>`;
+}
+
+function buildBarsSVG(rows) {
+  const sorted = [...rows].filter(r => r.totalValue > 0).sort((a,b) => b.totalValue - a.totalValue).slice(0, 10);
+  if (!sorted.length) return '<div style="color:#4b5563;font-size:10px;padding:8px">No extractable value — try switching to Space prices.</div>';
+  const maxVal = sorted[0].totalValue;
+  const ROW_H=20, PAD_L=58, BAR_MAX=112, W=244, H=ROW_H*sorted.length+8;
+  let rects = '';
+  sorted.forEach((m, i) => {
+    const y = 4 + i * ROW_H;
+    const bw = Math.max(1, (m.totalValue / maxVal) * BAR_MAX);
+    const col = MAT_COLORS_HEX[m.key] || '#888';
+    rects += `<text x="${PAD_L-4}" y="${y+13}" text-anchor="end" fill="#c8d6e5" font-size="8.5" font-family="Space Mono,monospace">${m.name.substring(0,7)}</text>`;
+    rects += `<rect x="${PAD_L}" y="${y+2}" width="${bw.toFixed(1)}" height="13" fill="${col}" opacity="0.8"><title>${m.name}: ${fmtUSD(m.totalValue)}</title></rect>`;
+    rects += `<text x="${PAD_L+bw+4}" y="${y+13}" fill="#6a8a9a" font-size="8" font-family="Space Mono,monospace">${fmtUSD(m.totalValue)}</text>`;
+  });
+  return `<svg width="${W}" height="${H}" style="display:block;max-width:100%;overflow:visible">${rects}</svg>`;
+}
+
+function buildMaterialsTable(rows) {
+  const sorted = [...rows].sort((a,b) => {
+    const av = typeof a[matSortKey] === 'string' ? a[matSortKey] : (a[matSortKey] ?? 0);
+    const bv = typeof b[matSortKey] === 'string' ? b[matSortKey] : (b[matSortKey] ?? 0);
+    if (av < bv) return matSortAsc ? -1 : 1;
+    if (av > bv) return matSortAsc ? 1 : -1;
+    return 0;
+  });
+  const mkTh = (key, label) => {
+    const arrow = matSortKey === key ? (matSortAsc ? ' ▲' : ' ▼') : '';
+    return `<th onclick="matSort('${key}')"${matSortKey===key?' class="sorted"':''}>${label}${arrow}</th>`;
+  };
+  const diffBadge = d => `<span class="mat-badge ${d}">${d.toUpperCase()}</span>`;
+  const trs = sorted.map(m => `<tr>
+    <td>${m.name}</td>
+    <td class="value-col">${m.pct >= 0.001 ? m.pct.toFixed(3)+'%' : '<0.001%'}</td>
+    <td class="value-col">${fmtTons(m.kg/1000)}</td>
+    <td class="value-col">${m.priceKg > 0 ? '$'+m.priceKg.toLocaleString() : '—'}</td>
+    <td class="value-col">${m.totalValue > 0 ? fmtUSD(m.totalValue) : '—'}</td>
+    <td>${diffBadge(m.difficulty)}</td>
+  </tr>`).join('');
+  const totalVal = rows.reduce((s,r) => s + r.totalValue, 0);
+  const totalKg  = rows.reduce((s,r) => s + r.kg, 0);
+  const totalRow = `<tr class="total-row"><td>TOTAL</td><td></td><td class="value-col">${fmtTons(totalKg/1000)}</td><td></td><td class="value-col">${fmtUSD(totalVal)}</td><td></td></tr>`;
+  return `<table><thead><tr>${mkTh('name','MATERIAL')}${mkTh('pct','MASS%')}${mkTh('kg','TONNAGE')}${mkTh('priceKg','$/KG')}${mkTh('totalValue','VALUE')}${mkTh('difficulty','EXTRACT')}</tr></thead><tbody>${trs}${totalRow}</tbody></table>`;
+}
+
+function matSort(key) {
+  if (matSortKey === key) matSortAsc = !matSortAsc;
+  else { matSortKey = key; matSortAsc = false; }
+  if (selectedId >= 0) renderMaterialsTab(selectedId);
+}
+
+function renderMaterialsTab(id) {
+  const ast = asteroidData[id];
+  const noSel = document.getElementById('mat-no-selection');
+  const content = document.getElementById('mat-content');
+  if (!ast) { noSel.style.display = 'block'; content.style.display = 'none'; return; }
+  noSel.style.display = 'none';
+  content.style.display = 'block';
+  const { rows, massKg } = computeMaterialRows(ast);
+  document.getElementById('mat-donut').innerHTML = buildDonutSVG(rows, massKg);
+  document.getElementById('mat-bars').innerHTML  = buildBarsSVG(rows);
+  document.getElementById('mat-table').innerHTML = buildMaterialsTable(rows);
+  document.getElementById('mat-price-toggle').textContent = matPriceMode === 'earth' ? 'EARTH PRICES' : 'SPACE PRICES';
+  const src = cachedPriceData?.source || 'static';
+  const ts  = cachedPriceData?.timestamp ? new Date(cachedPriceData.timestamp).toUTCString().slice(0, 22) : '—';
+  document.getElementById('mat-price-info').innerHTML = `Prices as of ${ts} UTC<br>Source: ${src === 'metals-api' ? 'Metals-API (live)' : 'Fallback static prices'}`;
+}
 
 // ─── Three.js Setup ───────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -1287,14 +1749,10 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
 
 // ─── Moon ─────────────────────────────────────────────────────────────────────
 const moonMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.006, 8, 8),
-  new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.95, metalness: 0.0 })
+  new THREE.SphereGeometry(0.0015, 8, 8),
+  new THREE.MeshBasicMaterial({ color: 0x888888 })
 );
 scene.add(moonMesh);
-const MOON_SMA    = 0.00257;                    // AU (~384,400 km)
-const MOON_PERIOD = 27.321582;                  // sidereal days
-const MOON_L0     = 218.316 * (Math.PI / 180); // mean longitude at J2000
-const MOON_INC    = 5.145  * (Math.PI / 180);  // ~5° ecliptic inclination
 
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
 const planetOrbitGroup = new THREE.Group();
@@ -1351,6 +1809,35 @@ function kep2cartJS(a, e, i_rad, Om_rad, w_rad, M0_rad, epoch_JD, t_JD) {
     vy: (vxo*Ryx + vyo*Ryy) / 1000,
     vz: (vxo*Rzx + vyo*Rzy) / 1000,
   };
+}
+
+// Rotate orbital-plane coords to ecliptic frame (reuses kep2cartJS rotation matrix)
+function orbitPlaneToEcliptic(xOrb, yOrb, i_rad, Om_rad, w_rad) {
+  const cosOm = Math.cos(Om_rad), sinOm = Math.sin(Om_rad);
+  const cosI  = Math.cos(i_rad),  sinI  = Math.sin(i_rad);
+  const cosW  = Math.cos(w_rad),  sinW  = Math.sin(w_rad);
+  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
+  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
+  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
+  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
+  const Rzx = sinW*sinI;
+  const Rzy = cosW*sinI;
+  return { x: xOrb*Rxx + yOrb*Rxy, y: xOrb*Ryx + yOrb*Ryy, z: xOrb*Rzx + yOrb*Rzy };
+}
+
+// Sample N+1 points evenly around the full orbital ellipse (in AU, scene coords)
+function buildOrbitPoints(ast, steps) {
+  const pts = [];
+  const e = ast.e, a = ast.a;
+  const i_rad = ast.i * DEG, Om_rad = ast.om * DEG, w_rad = ast.w * DEG;
+  for (let k = 0; k <= steps; k++) {
+    const nu = (TWO_PI * k) / steps;
+    const E = 2 * Math.atan2(Math.sqrt(1 - e) * Math.sin(nu / 2), Math.sqrt(1 + e) * Math.cos(nu / 2));
+    const r = a * (1 - e * Math.cos(E));
+    const p = orbitPlaneToEcliptic(r * Math.cos(nu), r * Math.sin(nu), i_rad, Om_rad, w_rad);
+    pts.push(new THREE.Vector3(p.x, p.y, p.z));
+  }
+  return pts;
 }
 
 function cart2kepJS(x, y, z, vx_kms, vy_kms, vz_kms, t_JD) {
@@ -1658,7 +2145,7 @@ shellGroup.visible = false;
 
 // Phase 5: trails + labels + UI
 let trailsEnabled = true;
-let trailLine = null, futureLine = null;
+let trailLine = null, futureLine = null, hoverEllipseLine = null;
 let lastTrailJD = null;
 let labelPool = [];
 let fpsFrames = 0, fpsLast = performance.now();
@@ -1687,33 +2174,29 @@ function clearTrail() {
   lastTrailJD = null;
 }
 
-function updateTrailGeometry(ast) {
-  if (!trailsEnabled || selectedId < 0) return;
-  const steps = isMobile ? 45 : 90;
-  const pts = [];
-  for (let k = steps; k >= 0; k--) {
-    const jd = currentJD - k;
-    const p = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, jd);
-    if (p) pts.push(new THREE.Vector3(p.x/AU_m, p.y/AU_m, p.z/AU_m));
-  }
-  if (pts.length > 1) { trailLine.geometry.setFromPoints(pts); trailLine.visible = true; }
+function updateOrbitEllipse(ast) {
+  if (!trailsEnabled || !ast) return;
+  const pts = buildOrbitPoints(ast, isMobile ? 60 : 100);
+  trailLine.geometry.setFromPoints(pts);
+  trailLine.visible = true;
+  futureLine.visible = false;
 }
 
-function computeFutureTrail(ast) {
-  if (!trailsEnabled) return;
-  const steps = isMobile ? 45 : 90;
-  const pts = [];
-  for (let k = 0; k <= steps; k++) {
-    const jd = currentJD + k;
-    const p = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, jd);
-    if (p) pts.push(new THREE.Vector3(p.x/AU_m, p.y/AU_m, p.z/AU_m));
+function showHoverEllipse(ast) {
+  if (!ast || !ast.a || !ast.e) return;
+  if (!hoverEllipseLine) {
+    hoverEllipseLine = new THREE.Line(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.25 })
+    );
+    scene.add(hoverEllipseLine);
   }
-  if (pts.length > 1) {
-    futureLine.geometry.setFromPoints(pts);
-    futureLine.computeLineDistances();
-    futureLine.visible = true;
-  }
-  lastTrailJD = currentJD;
+  hoverEllipseLine.geometry.setFromPoints(buildOrbitPoints(ast, isMobile ? 60 : 100));
+  hoverEllipseLine.visible = true;
+}
+
+function hideHoverEllipse() {
+  if (hoverEllipseLine) hoverEllipseLine.visible = false;
 }
 
 // ─── Phase 5: CSS Label Pool ──────────────────────────────────────────────────
@@ -1904,6 +2387,26 @@ worker.onmessage = ({ data }) => {
     if (!localStorage.getItem('aster_toured')) showTour();
     return;
   }
+
+  if (data.type === 'plan_progress') {
+    const bar = document.getElementById('mp-progress-bar');
+    const lbl = document.getElementById('mp-progress-label');
+    if (bar) bar.style.width = (data.pct * 100) + '%';
+    if (lbl) lbl.textContent = data.label;
+    return;
+  }
+  if (data.type === 'plan_result') {
+    onPlanResult(data.results);
+    return;
+  }
+  if (data.type === 'query_pos_result' && data.reqId === 'earth_return' && data.ok) {
+    missionEarthReturnPos = { x: data.x, y: data.y, z: data.z };
+    if (optimalTrajectory) {
+      drawBurnVectors(optimalTrajectory);
+      _redrawReturnArc(optimalTrajectory);
+    }
+    return;
+  }
 };
 
 worker.onerror = (err) => console.error('[Worker error]', err);
@@ -1914,6 +2417,7 @@ let lastPropJD = -Infinity; // JD of last propagate message sent; avoids floodin
 let simSpeed = 0;
 let lastRealTime = performance.now();
 let isScrubbing = false;
+let lastSentJD = null;
 
 // ─── Burn Mode State ──────────────────────────────────────────────────────────
 let burnModeActive = false;
@@ -1929,6 +2433,28 @@ let ghostTime = 0;
 const MAX_BURNS = 5;
 let burns = [];          // [{dv_p, dv_n, dv_r, jd}, ...]
 let activeBurnIdx = -1;  // -1 = no saved burns yet
+
+// ─── Mission Planner State ────────────────────────────────────────────────────
+let missionConfig = { destination:'leo', launchYearStart:2026, launchYearEnd:2035,
+                      spacecraft:'medium', launchVehicle:'f9' };
+let missionResults    = [];
+let selectedTrajIdx   = -1;
+let optimalTrajectory = null;
+let trajectoryLine    = null;
+let trajectoryArrows  = [];
+let returnArcLine     = null;
+let mpBurns           = [];
+
+// ── Phase 7F: Mission Visualization ──────────────────────────────────────────
+let burnVectorArrows       = [];
+let missionEarthReturnPos  = null;
+const missionAnim = {
+  active: false, playing: false, speed: 100,
+  animJD: 0, phase: 'idle',
+  outboundPts: [], returnPts: [],
+  spacecraft: null, engineLight: null,
+  trailLine: null, trailPts: [],
+};
 
 // ─── Cloudflare Worker (Perplexity research proxy) ────────────────────────────
 const WORKER_URL = 'https://aster-proxy.hudsonclavin.workers.dev';
@@ -2365,7 +2891,7 @@ function renderEconomicsTab(id) {
   document.getElementById('eco-launch-cost').textContent = fmtUSD(launchCost);
   document.getElementById('eco-total-cost').textContent = fmtUSD(totalCost);
 
-  const spec = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
+  const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
   const frac = FRACTIONS[spec] || FRACTIONS.DEFAULT;
   const dens = DENSITIES[spec] || 2000;
   const r_m = (ast._diam_m || 500) / 2;
@@ -2962,11 +3488,12 @@ function onSatelliteSelect(idx) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     const tab = btn.dataset.tab;
-    document.getElementById('tab-inspector').style.display = tab === 'inspector' ? 'flex'  : 'none';
-    document.getElementById('tab-economics').style.display = tab === 'economics' ? 'block' : 'none';
-    document.getElementById('tab-research').style.display  = tab === 'research'  ? 'block' : 'none';
-    document.getElementById('tab-materials').style.display = tab === 'materials' ? 'block' : 'none';
+    document.getElementById('tab-inspector').style.display  = tab === 'inspector'  ? 'flex'  : 'none';
+    document.getElementById('tab-economics').style.display  = tab === 'economics'  ? 'block' : 'none';
+    document.getElementById('tab-materials').style.display  = tab === 'materials'  ? 'block' : 'none';
+    document.getElementById('tab-research').style.display   = tab === 'research'   ? 'block' : 'none';
     if (tab === 'economics' && selectedId >= 0) renderEconomicsTab(selectedId);
+    if (tab === 'materials' && selectedId >= 0) renderMaterialsTab(selectedId);
     if (tab === 'research'  && selectedId >= 0) { const ast = asteroids[selectedId]; if (ast) fetchResearch(ast); }
     if (tab === 'materials' && selectedId >= 0) renderMaterialsTab(selectedId);
   });
@@ -2978,23 +3505,13 @@ function onSatelliteSelect(idx) {
 
   document.getElementById('btn-export-report').addEventListener('click', exportMissionReport);
 
-  // Materials tab price toggles
-  document.getElementById('btn-earth-prices').addEventListener('click', () => {
-    spacePriceMode = false;
-    document.getElementById('btn-earth-prices').style.cssText += ';background:#1a2235;color:#00d4ff';
-    document.getElementById('btn-space-prices').style.cssText += ';background:transparent;color:#4a5568';
+  // Materials: price mode toggle + refresh
+  document.getElementById('mat-price-toggle').addEventListener('click', () => {
+    matPriceMode = matPriceMode === 'earth' ? 'space' : 'earth';
     if (selectedId >= 0) renderMaterialsTab(selectedId);
   });
-  document.getElementById('btn-space-prices').addEventListener('click', () => {
-    spacePriceMode = true;
-    document.getElementById('btn-space-prices').style.cssText += ';background:#1a2235;color:#00d4ff';
-    document.getElementById('btn-earth-prices').style.cssText += ';background:transparent;color:#4a5568';
-    if (selectedId >= 0) renderMaterialsTab(selectedId);
-  });
-  document.getElementById('btn-refresh-prices').addEventListener('click', async () => {
-    sessionStorage.removeItem('aster_prices_v1');
-    commodityPrices = null;
-    await fetchCommodityPrices();
+  document.getElementById('mat-price-refresh').addEventListener('click', async () => {
+    await fetchPrices(true);
     if (selectedId >= 0) renderMaterialsTab(selectedId);
   });
 
@@ -3134,6 +3651,597 @@ document.getElementById('btn-shortcut-hint').addEventListener('click', () => {
 // Toolbar button wiring
 document.getElementById('btn-filters-toolbar').addEventListener('click', toggleLeftPanel);
 document.getElementById('btn-export-toolbar').addEventListener('click', exportFilteredCatalog);
+// ─── Phase 7D: Mission Planner ────────────────────────────────────────────────
+
+function propellantKgNum(dv_kms, isp, m_dry) {
+  // Numeric Tsiolkovsky (returns kg, not string)
+  const g0 = 0.00980665; // km/s²
+  return m_dry * (Math.exp(dv_kms / (g0 * isp)) - 1);
+}
+
+function openMissionPlanner(id) {
+  const ast = asteroidData[id];
+  if (!ast) return;
+  document.getElementById('mp-target-name').textContent =
+    (ast.name || ast.full_name || ast.designation || '').split(' ').slice(0,4).join(' ');
+  document.getElementById('mp-computing').style.display = 'none';
+  document.getElementById('mp-results').style.display   = 'none';
+  document.getElementById('mp-profile').style.display   = 'none';
+  document.getElementById('mp-burns').style.display     = 'none';
+  document.getElementById('mp-actions').style.display   = 'none';
+  document.getElementById('mp-progress-bar').style.width = '0%';
+  missionResults = []; selectedTrajIdx = -1;
+  document.getElementById('mission-planner').classList.add('mp-open');
+}
+
+function closeMissionPlanner() {
+  document.getElementById('mission-planner').classList.remove('mp-open');
+  clearTrajectoryLine();
+  missionEarthReturnPos = null;
+}
+
+function clearTrajectoryLine() {
+  if (trajectoryLine) { scene.remove(trajectoryLine); trajectoryLine.geometry.dispose(); trajectoryLine = null; }
+  trajectoryArrows.forEach(a => scene.remove(a));
+  trajectoryArrows = [];
+  if (returnArcLine) { scene.remove(returnArcLine); returnArcLine = null; }
+  clearBurnVectors();
+  stopMissionAnimation();
+  hideMissionTimeline();
+}
+
+function runMissionOptimizer() {
+  if (selectedId < 0) return;
+  const ast = asteroidData[selectedId];
+  const ys = parseInt(document.getElementById('mp-year-start').value) || 2026;
+  const ye = parseInt(document.getElementById('mp-year-end').value)   || 2035;
+  missionConfig.destination     = document.getElementById('mp-destination').value;
+  missionConfig.spacecraft      = document.querySelector('input[name="mp-craft"]:checked')?.value || 'medium';
+  missionConfig.launchVehicle   = document.getElementById('mp-launch-vehicle').value;
+  missionConfig.launchYearStart = ys;
+  missionConfig.launchYearEnd   = ye;
+  const jd_start = J2000 + (ys - 2000) * 365.25;
+  const jd_end   = J2000 + (ye - 2000) * 365.25;
+  document.getElementById('mp-computing').style.display = 'block';
+  document.getElementById('mp-results').style.display   = 'none';
+  document.getElementById('mp-profile').style.display   = 'none';
+  document.getElementById('mp-burns').style.display     = 'none';
+  document.getElementById('mp-actions').style.display   = 'none';
+  document.getElementById('mp-progress-bar').style.width = '0%';
+  document.getElementById('mp-progress-label').textContent = 'Initializing scan...';
+  const parkAlt  = parseInt(document.getElementById('mp-park-alt').value) || 400;
+  const sc       = missionConfig.spacecraft;
+  const STAY_MAP = { light:14, medium:45, heavy:90 };
+  missionConfig.parkingAlt_km = parkAlt;
+  worker.postMessage({
+    cmd: 'plan_mission', ast, jd_start, jd_end,
+    destination: missionConfig.destination,
+    parkingAlt_km: parkAlt,
+    spacecraft: sc,
+    stayDays: STAY_MAP[sc] || 45,
+  });
+}
+
+function onPlanResult(results) {
+  document.getElementById('mp-computing').style.display = 'none';
+  missionResults = results;
+  optimalTrajectory = results[0] || null;
+  renderTrajectoryList();
+  document.getElementById('mp-results').style.display = 'block';
+  document.getElementById('mp-result-count').textContent = `(${results.length} options)`;
+  if (results.length) selectTrajectory(0);
+}
+
+function renderTrajectoryList() {
+  const list = document.getElementById('mp-trajectory-list');
+  list.innerHTML = '';
+  missionResults.forEach((t, i) => {
+    const dep = jdToDate(t.jd_dep);
+    const arr = jdToDate(t.jd_arr);
+    const card = document.createElement('div');
+    card.className = 'mp-traj-card' + (i === selectedTrajIdx ? ' mp-traj-selected' : '');
+    const gaBadge = t.lunarAssist
+      ? '<span style="font-size:7px;color:#fbbf24;border:1px solid #fbbf24;padding:1px 4px;margin-left:5px;vertical-align:middle">LUNAR GA</span>'
+      : '';
+    card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}</div>
+      <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
+      <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} km/s</div>
+      <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
+      <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>`;
+    card.addEventListener('click', () => selectTrajectory(i));
+    list.appendChild(card);
+  });
+}
+
+function selectTrajectory(idx) {
+  selectedTrajIdx = idx;
+  const traj = missionResults[idx];
+  if (!traj) return;
+  document.querySelectorAll('.mp-traj-card').forEach((c, i) =>
+    c.classList.toggle('mp-traj-selected', i === idx));
+  missionEarthReturnPos = null;
+  clearTrajectoryLine();
+  drawTrajectoryLine(traj.earthPos, traj.astPos);
+  // Request accurate Earth return position
+  if (traj.jd_ret_arr) {
+    worker.postMessage({ cmd:'query_pos', jd: traj.jd_ret_arr, planetIdx: 2, reqId: 'earth_return' });
+  }
+  const profile = computeMissionProfile(traj);
+  document.getElementById('mp-profile-text').textContent = profile.text;
+  document.getElementById('mp-profile').style.display = 'block';
+  mpBurns = [
+    { label:'1 · DEPARTURE',       jd: traj.jd_dep,                       dv_kms: traj.dv_dep    },
+    { label:'2 · ASTEROID ARRIVAL',jd: traj.jd_arr,                       dv_kms: traj.dv_arr    },
+    { label:'3 · MCC',             jd: (traj.jd_dep + traj.jd_arr) / 2,   dv_kms: traj.dv_mcc || +(traj.dv_dep * 0.02).toFixed(3) },
+    { label:'4 · ASTEROID DEP.',   jd: traj.jd_ret_dep || traj.jd_arr+30, dv_kms: traj.dv_return },
+    { label:'5 · DEST. CAPTURE',   jd: traj.jd_ret_arr || traj.jd_arr+30+(traj.tof_return||traj.tof), dv_kms: traj.dv_capture || 0 },
+  ];
+  renderBurnEditTable();
+  document.getElementById('mp-burns').style.display   = 'block';
+  document.getElementById('mp-actions').style.display = 'block';
+  drawBurnVectors(traj);
+  buildMissionTimeline(traj);
+}
+
+function computeMissionProfile(traj) {
+  const ast  = asteroidData[selectedId];
+  const sc   = SPACECRAFT[missionConfig.spacecraft]    || SPACECRAFT.medium;
+  const lv   = LAUNCH_VEHICLES[missionConfig.launchVehicle] || LAUNCH_VEHICLES.f9;
+  const dest = DEST_LABELS[missionConfig.destination]  || 'LEO';
+  const propKg   = propellantKgNum(traj.dv_total, sc.isp, sc.dry_kg);
+  const wetKg    = sc.dry_kg + propKg;
+  const frac     = propKg / wetKg;
+  const launchCost = wetKg * lv.cost_per_kg;
+  const opsDays    = Math.round(traj.tof * 2 + 30);
+  const opsCost    = (opsDays / 30) * 2e6;
+  const totalCost  = launchCost + sc.cost_usd + opsCost;
+  const fits       = wetKg <= lv.max_kg;
+  // Revenue from composition model on extracted payload
+  const prices  = getActivePrices();
+  const spec    = getMatSpec(ast);
+  const comp    = MAT_COMP[spec];
+  let revenuePerKg = 0;
+  MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
+  const totalRevenue = sc.payload_kg * revenuePerKg;
+  const roi      = totalCost > 0 ? (totalRevenue - totalCost) / totalCost * 100 : 0;
+  const breakEvenKg = revenuePerKg > 0 ? Math.ceil(totalCost / revenuePerKg) : null;
+  const dot = (label, val) => `  ${label.padEnd(22, '.')} ${val}`;
+  const sep = (label) => `\n─── ${label} ${'─'.repeat(Math.max(0, 45 - label.length))}`;
+  const lines = [
+    '═'.repeat(50),
+    `  ⚡ MISSION PLAN — ${(ast.name || ast.full_name || ast.designation || '').toUpperCase().slice(0,30)}`,
+    '═'.repeat(50),
+    dot('TARGET', (ast.name || ast.full_name || ast.designation || '?').slice(0,28)),
+    dot('TYPE', `${ast.spec || ast.spec_T || 'X'}-type`),
+    dot('DIAMETER', ast._diam_m ? (ast._diam_m/1000).toFixed(2)+' km' : '? km'),
+    dot('DESTINATION', dest),
+    dot('SPACECRAFT', sc.name),
+    dot('LAUNCH VEHICLE', lv.name),
+    sep('TRAJECTORY'),
+    dot('LAUNCH DATE', jdToDate(traj.jd_dep)),
+    dot('ARRIVAL DATE', jdToDate(traj.jd_arr)),
+    dot('MINING STAY', (traj.stay_days || '?') + ' days'),
+    dot('RETURN DEPART', traj.jd_ret_dep ? jdToDate(traj.jd_ret_dep) : '—'),
+    dot('RETURN ARRIVAL', traj.jd_ret_arr ? jdToDate(traj.jd_ret_arr) : '—'),
+    dot('MISSION DURATION', opsDays + ' days (est)'),
+    sep('DELTA-V BUDGET'),
+    dot('1 · DEPARTURE BURN', traj.dv_dep.toFixed(3) + ' km/s  (from ' + (missionConfig.parkingAlt_km||400) + ' km LEO)'),
+    dot('2 · ASTEROID ARRIVAL', traj.dv_arr.toFixed(3) + ' km/s'),
+    dot('3 · MID-COURSE (MCC)', (traj.dv_mcc||0).toFixed(3) + ' km/s  (2% budget)'),
+    dot('4 · ASTEROID DEPART', traj.dv_return.toFixed(3) + ' km/s'),
+    dot('5 · DEST. CAPTURE', (traj.dv_capture||0).toFixed(3) + ' km/s'),
+    dot('TOTAL MISSION ΔV', traj.dv_total.toFixed(2) + ' km/s'),
+    dot('C3', (traj.C3||0).toFixed(2) + ' km²/s²'),
+    dot('V∞ DEPARTURE', (traj.vinf_dep||0).toFixed(2) + ' km/s'),
+    dot('V∞ ARRIVAL', (traj.vinf_arr||0).toFixed(2) + ' km/s'),
+    traj.lunarAssist ? dot('LUNAR GRAVITY ASSIST', 'CANDIDATE (low C3)') : '',
+    sep('PROPULSION'),
+    dot('DRY MASS', sc.dry_kg.toLocaleString() + ' kg'),
+    dot('PROPELLANT MASS', Math.round(propKg).toLocaleString() + ' kg'),
+    dot('WET MASS', Math.round(wetKg).toLocaleString() + ' kg'),
+    dot('MASS FRACTION', (frac*100).toFixed(1) + '%'),
+    dot('LAUNCH CAPACITY', lv.max_kg.toLocaleString()+' kg '+(fits?'✓ FITS':'✗ OVERWEIGHT')),
+    sep('COSTS'),
+    dot('LAUNCH', fmtUSD(launchCost)),
+    dot('SPACECRAFT', fmtUSD(sc.cost_usd)),
+    dot('OPERATIONS', fmtUSD(opsCost)),
+    dot('TOTAL MISSION', fmtUSD(totalCost)),
+    sep('REVENUE ESTIMATE'),
+    dot('ORE PAYLOAD', sc.payload_kg.toLocaleString() + ' kg max'),
+    dot('REVENUE / KG', '$' + revenuePerKg.toFixed(2)),
+    dot('TOTAL REVENUE', fmtUSD(totalRevenue)),
+    sep('RETURNS'),
+    dot('ROI', roi.toFixed(0) + '%'),
+    dot('NET PROFIT', fmtUSD(totalRevenue - totalCost)),
+    breakEvenKg ? dot('BREAK-EVEN PAYLOAD', breakEvenKg.toLocaleString() + ' kg') : '',
+    '',
+    '═'.repeat(50),
+    '  Patched-conic model · Izzo 2015 Lambert solver · Phase 7E',
+    '═'.repeat(50),
+  ].filter(l => l !== undefined);
+  return { text: lines.join('\n'), totalCost, totalRevenue, roi };
+}
+
+function drawTrajectoryLine(earthPos, astPos) {
+  const ex = earthPos.x, ey = earthPos.y, ez = earthPos.z;
+  const ax = astPos.x,   ay = astPos.y,   az = astPos.z;
+  const dx = ax - ex, dy = ay - ey;
+  const midX = (ex + ax) / 2;
+  const midY = (ey + ay) / 2 + Math.hypot(dx, dy) * 0.3;
+  const midZ = (ez + az) / 2;
+  const curve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(ex, ey, ez),
+    new THREE.Vector3(midX, midY, midZ),
+    new THREE.Vector3(ax, ay, az),
+  );
+  const pts = curve.getPoints(100);
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  trajectoryLine = new THREE.Line(geo,
+    new THREE.LineBasicMaterial({ color:0x00d4ff, opacity:0.7, transparent:true }));
+  scene.add(trajectoryLine);
+  // Departure arrow (green, pointing toward asteroid)
+  const dir = new THREE.Vector3(ax - ex, ay - ey, az - ez).normalize();
+  const arr1 = new THREE.ArrowHelper(dir, new THREE.Vector3(ex, ey, ez), 0.12, 0x00ff88, 0.05, 0.025);
+  scene.add(arr1); trajectoryArrows.push(arr1);
+  // Arrival arrow (red, retro-burn)
+  const arr2 = new THREE.ArrowHelper(dir.clone().negate(), new THREE.Vector3(ax, ay, az), 0.12, 0xff4444, 0.05, 0.025);
+  scene.add(arr2); trajectoryArrows.push(arr2);
+  // Return arc (dashed) — drawn once Earth return pos is known
+  if (optimalTrajectory) _redrawReturnArc(optimalTrajectory);
+}
+
+function _redrawReturnArc(traj) {
+  if (returnArcLine) { scene.remove(returnArcLine); returnArcLine = null; }
+  const ep = missionEarthReturnPos || traj.earthPos;
+  const ax = traj.astPos.x, ay = traj.astPos.y, az = traj.astPos.z;
+  const dx2 = ep.x - ax, dy2 = ep.y - ay;
+  const mid2X = (ax + ep.x) / 2;
+  const mid2Y = (ay + ep.y) / 2 + Math.hypot(dx2, dy2) * 0.25;
+  const mid2Z = (az + ep.z) / 2;
+  const retCurve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(ax, ay, az),
+    new THREE.Vector3(mid2X, mid2Y, mid2Z),
+    new THREE.Vector3(ep.x, ep.y, ep.z));
+  const retPts = retCurve.getPoints(80);
+  const retGeo = new THREE.BufferGeometry().setFromPoints(retPts);
+  const retLine = new THREE.Line(retGeo,
+    new THREE.LineDashedMaterial({ color: 0x00d4ff, opacity: 0.35, transparent: true,
+      dashSize: 0.05, gapSize: 0.04 }));
+  retLine.computeLineDistances();
+  scene.add(retLine);
+  returnArcLine = retLine;
+}
+
+function renderBurnEditTable() {
+  const el = document.getElementById('mp-burn-table');
+  el.innerHTML = '<div class="mp-burn-row" style="font-size:8px;color:#4b5563;border-bottom:1px solid #1a2235;padding-bottom:3px;margin-bottom:4px"><span></span><span>BURN</span><span style="text-align:right">DATE</span><span style="text-align:right">ΔV km/s</span><span></span></div>' +
+    mpBurns.map((b, i) => `<div class="mp-burn-row">
+      <span style="color:#4b5563">${i+1}</span>
+      <span style="font-size:8px;color:#6a8a9a;overflow:hidden;text-overflow:ellipsis">${b.label}</span>
+      <span style="font-size:8px;color:#4b5563;text-align:right">${jdToDate(b.jd).slice(0,7)}</span>
+      <input type="number" step="0.001" min="0" max="30" value="${b.dv_kms.toFixed(3)}"
+        onchange="onMpBurnChange(${i},this.value)">
+      <button onclick="removeMpBurn(${i})" style="background:transparent;border:none;color:#4b5563;cursor:pointer;font-size:11px;padding:0">✕</button>
+    </div>`).join('');
+  updateMpBurnTotals();
+}
+
+function onMpBurnChange(idx, val) {
+  mpBurns[idx].dv_kms = parseFloat(val) || 0;
+  updateMpBurnTotals();
+  if (optimalTrajectory && burnVectorArrows.length) drawBurnVectors(optimalTrajectory);
+}
+
+function removeMpBurn(idx) {
+  mpBurns.splice(idx, 1);
+  renderBurnEditTable();
+}
+
+function updateMpBurnTotals() {
+  const sc = SPACECRAFT[missionConfig.spacecraft] || SPACECRAFT.medium;
+  const totalDv = mpBurns.reduce((s, b) => s + b.dv_kms, 0);
+  const fuelKg  = propellantKgNum(totalDv, sc.isp, sc.dry_kg);
+  const dvEl   = document.getElementById('mp-total-dv');
+  const fuelEl = document.getElementById('mp-total-fuel');
+  if (dvEl)   dvEl.textContent   = totalDv.toFixed(3);
+  if (fuelEl) fuelEl.textContent = Math.round(fuelKg).toLocaleString();
+}
+
+// ─── Phase 7F: Mission Visualization ─────────────────────────────────────────
+
+function getBurnColor(label) {
+  const l = label.toLowerCase();
+  if (l.includes('capture') || l.includes('arrival')) return 0xff4444;
+  if (l.includes('mcc'))    return 0xffcc00;
+  if (l.includes('mining')) return 0x44ff44;
+  return 0x00d4ff;
+}
+
+function drawBurnVectors(traj) {
+  clearBurnVectors();
+  const ep = missionEarthReturnPos || traj.earthPos;
+  const burnDefs = [
+    { pos: traj.earthPos, label: mpBurns[0]?.label || '1 · DEPARTURE',       dv: traj.dv_dep, jd: traj.jd_dep },
+    { pos: traj.astPos,   label: mpBurns[1]?.label || '2 · ASTEROID ARRIVAL', dv: traj.dv_arr, jd: traj.jd_arr },
+    { pos: { x:(traj.earthPos.x+traj.astPos.x)/2, y:(traj.earthPos.y+traj.astPos.y)/2+0.05, z:(traj.earthPos.z+traj.astPos.z)/2 },
+      label: mpBurns[2]?.label || '3 · MCC', dv: traj.dv_mcc||0, jd: mpBurns[2]?.jd },
+    { pos: traj.astPos, label: mpBurns[3]?.label || '4 · ASTEROID DEP.', dv: traj.dv_return, jd: traj.jd_ret_dep, offset:[0.04,0,0] },
+    { pos: ep, label: mpBurns[4]?.label || '5 · DEST. CAPTURE', dv: traj.dv_capture||0, jd: traj.jd_ret_arr, offset:[0,0.04,0] },
+  ];
+
+  const outDir = new THREE.Vector3(
+    traj.astPos.x-traj.earthPos.x, traj.astPos.y-traj.earthPos.y, traj.astPos.z-traj.earthPos.z).normalize();
+  const retroDir = outDir.clone().negate();
+  const mccDir   = new THREE.Vector3(-outDir.y, outDir.x, 0).normalize();
+  const retDir   = new THREE.Vector3(ep.x-traj.astPos.x, ep.y-traj.astPos.y, ep.z-traj.astPos.z).normalize();
+  const capDir   = retDir.clone().negate();
+  const DIRS     = [outDir, retroDir, mccDir, retDir, capDir];
+
+  burnDefs.forEach((b, i) => {
+    if (!b.dv || b.dv < 0.001) return;
+    const len    = Math.max(0.06, Math.min(0.28, b.dv * 0.04));
+    const col    = getBurnColor(b.label);
+    const ox     = b.offset?.[0]||0, oy = b.offset?.[1]||0, oz = b.offset?.[2]||0;
+    const origin = new THREE.Vector3(b.pos.x+ox, b.pos.y+oy, b.pos.z+oz);
+    const arrow  = new THREE.ArrowHelper(DIRS[i], origin, len, col, len*0.3, len*0.12);
+    arrow.userData = { burnLabel: b.label, dv: b.dv, jd: b.jd };
+    scene.add(arrow);
+    burnVectorArrows.push(arrow);
+  });
+}
+
+function clearBurnVectors() {
+  burnVectorArrows.forEach(a => scene.remove(a));
+  burnVectorArrows = [];
+}
+
+function buildMissionTimeline(traj) {
+  const el    = document.getElementById('mission-timeline');
+  const inner = document.getElementById('mission-timeline-inner');
+  const jd0   = traj.jd_dep;
+  const jd1   = traj.jd_arr;
+  const jd2   = traj.jd_ret_dep;
+  const jd3   = traj.jd_ret_arr || (jd2 + (traj.tof_return || traj.tof));
+  const span  = jd3 - jd0;
+  if (span <= 0) return;
+
+  inner.innerHTML = '<div id="mt-cursor" style="position:absolute;top:0;bottom:0;width:1px;background:#fff;opacity:0.6;pointer-events:none;z-index:2"></div>';
+
+  const phases = [
+    { label:'COAST 1', start:jd0, end:jd1,  color:'#0d1d2e' },
+    { label:'MINING',  start:jd1, end:jd2,  color:'#2a1e00' },
+    { label:'COAST 2', start:jd2, end:jd3,  color:'#0d1d2e' },
+  ];
+  const burnMarkers = [
+    { label:'DEP',     jd:jd0, color:'#00d4ff' },
+    { label:'ARR',     jd:jd1, color:'#ff4444' },
+    { label:'AST-DEP', jd:jd2, color:'#00d4ff' },
+    { label:'CAP',     jd:jd3, color:'#cc44cc' },
+  ];
+
+  phases.forEach(p => {
+    const pct  = (p.end - p.start) / span * 100;
+    const left = (p.start - jd0) / span * 100;
+    const seg  = document.createElement('div');
+    seg.className = 'mt-segment';
+    seg.style.cssText = `left:${left.toFixed(2)}%;width:${pct.toFixed(2)}%;background:${p.color}`;
+    seg.innerHTML = `<span class="mt-segment-label">${p.label}</span>
+      <span class="mt-segment-date">${jdToDate(p.start).slice(0,7)}</span>`;
+    seg.title = `${p.label}: ${Math.round(p.end-p.start)} days`;
+    seg.addEventListener('click', () => {
+      currentJD = p.start;
+      document.getElementById('time-scrubber').value = currentJD;
+      worker.postMessage({ cmd:'propagate', jd:currentJD });
+    });
+    inner.appendChild(seg);
+  });
+
+  burnMarkers.forEach(b => {
+    const left   = (b.jd - jd0) / span * 100;
+    const marker = document.createElement('div');
+    marker.style.cssText = `position:absolute;left:${left.toFixed(2)}%;top:0;bottom:0;width:3px;background:${b.color};z-index:1;opacity:0.85;cursor:pointer`;
+    marker.title = `${b.label}: ${jdToDate(b.jd)}`;
+    marker.addEventListener('click', () => {
+      currentJD = b.jd;
+      document.getElementById('time-scrubber').value = currentJD;
+      worker.postMessage({ cmd:'propagate', jd:currentJD });
+    });
+    inner.appendChild(marker);
+  });
+
+  el.style.display = 'block';
+  document.getElementById('bottom-bar').style.bottom = '36px';
+}
+
+function hideMissionTimeline() {
+  document.getElementById('mission-timeline').style.display = 'none';
+  document.getElementById('bottom-bar').style.bottom = '0px';
+}
+
+function updateTimelineIndicator() {
+  if (!optimalTrajectory) return;
+  const traj = optimalTrajectory;
+  const jd0  = traj.jd_dep;
+  const jd3  = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return||traj.tof));
+  const span = jd3 - jd0;
+  if (span <= 0) return;
+  const pct    = Math.max(0, Math.min(100, (currentJD - jd0) / span * 100));
+  const cursor = document.getElementById('mt-cursor');
+  if (cursor) cursor.style.left = pct.toFixed(2) + '%';
+}
+
+function startMissionAnimation(traj) {
+  stopMissionAnimation();
+  const dx   = traj.astPos.x - traj.earthPos.x, dy = traj.astPos.y - traj.earthPos.y;
+  const midX = (traj.earthPos.x + traj.astPos.x) / 2;
+  const midY = (traj.earthPos.y + traj.astPos.y) / 2 + Math.hypot(dx, dy) * 0.3;
+  const midZ = (traj.earthPos.z + traj.astPos.z) / 2;
+  const outCurve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(traj.earthPos.x, traj.earthPos.y, traj.earthPos.z),
+    new THREE.Vector3(midX, midY, midZ),
+    new THREE.Vector3(traj.astPos.x, traj.astPos.y, traj.astPos.z));
+  missionAnim.outboundPts = outCurve.getPoints(200);
+
+  const ep    = missionEarthReturnPos || traj.earthPos;
+  const dx2   = ep.x - traj.astPos.x, dy2 = ep.y - traj.astPos.y;
+  const midX2 = (traj.astPos.x + ep.x) / 2;
+  const midY2 = (traj.astPos.y + ep.y) / 2 + Math.hypot(dx2, dy2) * 0.3;
+  const midZ2 = (traj.astPos.z + ep.z) / 2;
+  const retCurve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(traj.astPos.x, traj.astPos.y, traj.astPos.z),
+    new THREE.Vector3(midX2, midY2, midZ2),
+    new THREE.Vector3(ep.x, ep.y, ep.z));
+  missionAnim.returnPts = retCurve.getPoints(200);
+
+  const scGeo = new THREE.ConeGeometry(0.008, 0.025, 8);
+  scGeo.rotateX(Math.PI / 2);
+  const scMat = new THREE.MeshStandardMaterial({ color:0xd0e8ff, emissive:0x203060, roughness:0.4 });
+  missionAnim.spacecraft = new THREE.Mesh(scGeo, scMat);
+  missionAnim.spacecraft.position.copy(missionAnim.outboundPts[0]);
+  scene.add(missionAnim.spacecraft);
+
+  missionAnim.engineLight = new THREE.PointLight(0x00aaff, 2.0, 0.25);
+  missionAnim.spacecraft.add(missionAnim.engineLight);
+
+  const trailGeo = new THREE.BufferGeometry();
+  const trailMat = new THREE.LineBasicMaterial({ color:0x4488aa, opacity:0.5, transparent:true });
+  missionAnim.trailLine = new THREE.Line(trailGeo, trailMat);
+  scene.add(missionAnim.trailLine);
+  missionAnim.trailPts = [];
+
+  missionAnim.active  = true;
+  missionAnim.playing = false;
+  missionAnim.animJD  = traj.jd_dep;
+  missionAnim.phase   = 'outbound';
+
+  document.getElementById('mp-anim-controls').style.display = 'block';
+  document.getElementById('btn-mp-play').textContent = '⏸ PAUSE MISSION';
+}
+
+function stopMissionAnimation() {
+  if (missionAnim.spacecraft) { scene.remove(missionAnim.spacecraft); missionAnim.spacecraft = null; }
+  if (missionAnim.trailLine)  { scene.remove(missionAnim.trailLine);  missionAnim.trailLine  = null; }
+  missionAnim.active = false;
+  missionAnim.playing = false;
+  missionAnim.phase  = 'idle';
+  missionAnim.trailPts = [];
+  missionAnim.outboundPts = [];
+  missionAnim.returnPts   = [];
+  const ctrl = document.getElementById('mp-anim-controls');
+  if (ctrl) ctrl.style.display = 'none';
+  const playBtn = document.getElementById('btn-mp-play');
+  if (playBtn) playBtn.textContent = '▶ PLAY MISSION';
+}
+
+function updateMissionAnimation(dt) {
+  if (!missionAnim.active || !optimalTrajectory) return;
+  const traj = optimalTrajectory;
+
+  if (missionAnim.playing) missionAnim.animJD += (missionAnim.speed / 86400) * dt;
+
+  const jd = missionAnim.animJD;
+  let pos   = null;
+  const jd_ret_arr = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
+
+  if (jd <= traj.jd_arr) {
+    missionAnim.phase = 'outbound';
+    const t = Math.max(0, Math.min(1, (jd - traj.jd_dep) / traj.tof));
+    pos = missionAnim.outboundPts[Math.floor(t * (missionAnim.outboundPts.length - 1))].clone();
+    if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t < 0.06 || t > 0.94) ? 3.0 : 0.4;
+  } else if (jd <= traj.jd_ret_dep) {
+    missionAnim.phase = 'mining';
+    const wobble = (jd - traj.jd_arr) * 0.3;
+    pos = new THREE.Vector3(
+      traj.astPos.x + 0.01 * Math.sin(wobble),
+      traj.astPos.y + 0.01 * Math.cos(wobble),
+      traj.astPos.z);
+    if (missionAnim.engineLight) missionAnim.engineLight.intensity = 0.1;
+  } else if (jd <= jd_ret_arr) {
+    missionAnim.phase = 'return';
+    const retTof = traj.tof_return || traj.tof;
+    const t = Math.max(0, Math.min(1, (jd - traj.jd_ret_dep) / retTof));
+    pos = missionAnim.returnPts[Math.floor(t * (missionAnim.returnPts.length - 1))].clone();
+    if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t > 0.92) ? 3.0 : 0.4;
+  } else {
+    missionAnim.phase   = 'done';
+    missionAnim.playing = false;
+    pos = missionAnim.returnPts[missionAnim.returnPts.length - 1].clone();
+    const ppBtn = document.getElementById('btn-anim-playpause');
+    if (ppBtn) ppBtn.textContent = '▶';
+  }
+
+  if (!pos || !missionAnim.spacecraft) return;
+
+  missionAnim.spacecraft.position.copy(pos);
+
+  // Orient nose along travel direction
+  const pts  = missionAnim.phase === 'return' ? missionAnim.returnPts : missionAnim.outboundPts;
+  const jd0b = missionAnim.phase === 'return' ? traj.jd_ret_dep : traj.jd_dep;
+  const tofb = missionAnim.phase === 'return' ? (traj.tof_return||traj.tof) : traj.tof;
+  if (pts.length > 1 && tofb > 0) {
+    const t   = Math.max(0, Math.min(0.999, (jd - jd0b) / tofb));
+    const i   = Math.floor(t * (pts.length - 1));
+    const nxt = pts[Math.min(i + 1, pts.length - 1)];
+    const vel = new THREE.Vector3().subVectors(nxt, pos);
+    if (vel.length() > 1e-6) {
+      missionAnim.spacecraft.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 0, 1), vel.normalize());
+    }
+  }
+
+  // Trail
+  missionAnim.trailPts.push(pos.x, pos.y, pos.z);
+  if (missionAnim.trailPts.length > 900) missionAnim.trailPts.splice(0, 3);
+  if (missionAnim.trailPts.length >= 6) {
+    const buf = new Float32Array(missionAnim.trailPts);
+    missionAnim.trailLine.geometry.setAttribute('position', new THREE.BufferAttribute(buf, 3));
+    missionAnim.trailLine.geometry.computeBoundingSphere();
+  }
+
+  // Chase camera
+  if (missionAnim.playing) {
+    const offset = new THREE.Vector3(0.2, 0.15, 0.2);
+    camera.position.lerp(pos.clone().add(offset), 0.025);
+    camera.lookAt(pos);
+  }
+}
+
+function exportMissionPlan() {
+  if (selectedTrajIdx < 0 || !missionResults[selectedTrajIdx]) return;
+  const profile = computeMissionProfile(missionResults[selectedTrajIdx]);
+  const ast = asteroidData[selectedId];
+  const blob = new Blob([profile.text], { type:'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `aster-mission-${(ast.designation || ast.full_name || 'asteroid').replace(/[\s/]/g,'-')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function shareMissionPlan() {
+  if (selectedTrajIdx < 0) return;
+  const ast = asteroidData[selectedId];
+  const state = {
+    des: ast?.designation || ast?.full_name,
+    mp:  {
+      dest: missionConfig.destination,
+      sc:   missionConfig.spacecraft,
+      lv:   missionConfig.launchVehicle,
+      ys:   missionConfig.launchYearStart,
+      ye:   missionConfig.launchYearEnd,
+      ti:   selectedTrajIdx,
+    },
+  };
+  try {
+    window.location.hash = btoa(JSON.stringify(state));
+    navigator.clipboard?.writeText(window.location.href);
+    setStatus('Mission URL copied to clipboard', true);
+  } catch(_) {
+    setStatus('Copy URL from address bar', true);
+  }
+}
+
 document.getElementById('btn-share-toolbar').addEventListener('click', encodeStateToURL);
 document.getElementById('btn-shortcuts-toolbar').addEventListener('click', () => {
   document.getElementById('shortcut-overlay').style.display = 'flex';
@@ -3189,7 +4297,7 @@ function selectAsteroid(id) {
   if (!ast) return;
 
   const name = ast.full_name || ast.pdes || ast.name || '—';
-  const spec = (ast.spec || ast.spec_T || '—').trim();
+  const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '?').trim();
   const diam = ast.diameter ? `${Number(ast.diameter).toFixed(2)} km`
     : (ast.H ? `~${(1329 / Math.sqrt(0.15) * Math.pow(10, -ast.H / 5)).toFixed(1)} km (est)` : '—');
 
@@ -3203,23 +4311,39 @@ function selectAsteroid(id) {
   const dv_suffix = (ast.delta_v && Number(ast.delta_v) > 0) ? '' : ' (est)';
   document.getElementById('ast-dv').textContent = `${dv_val.toFixed(2)} km/s${dv_suffix}`;
   document.getElementById('ast-moid').textContent = ast.moid ? `${Number(ast.moid).toFixed(4)} AU` : '—';
-  document.getElementById('ast-price').textContent = fmtUSD(ast.price);
-  document.getElementById('ast-profit').textContent = fmtUSD(ast.profit);
-
   // Phase 3: composition + resource value + score
-  const spec3 = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
-  document.getElementById('ast-composition').textContent = COMPOSITIONS[spec3] || 'No composition data';
+  const spec3 = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
+  const compText = COMPOSITIONS[spec3]
+    || COMPOSITIONS[getMatSpec(ast)]
+    || ((ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy) ? 'Composition model not available' : 'No composition data');
+  document.getElementById('ast-composition').textContent = compText;
+
+  // Compute MAT_COMP-based total for consistent price display
+  const prices3 = getActivePrices();
+  const spec3g   = getMatSpec(ast);
+  const comp3    = MAT_COMP[spec3g] || MAT_COMP['other'];
+  let revPerKg3  = 0;
+  if (comp3) MAT_KEYS.forEach(k => { revPerKg3 += (comp3[k] / 100) * (prices3[k] || 0); });
+  const diam3m   = ast._diam_m || (ast.H ? (1329 / Math.sqrt(0.15)) * Math.pow(10, -ast.H / 5) * 1000 : 500);
+  const r3       = diam3m / 2;
+  const dens3    = MAT_DENSITY_KGM3[spec3g] || 2000;
+  const mass3    = (4/3) * Math.PI * r3 * r3 * r3 * dens3;
+  const totalVal3 = mass3 * revPerKg3;
+
+  const displayPrice  = (Number(ast.price)  > 0) ? ast.price  : totalVal3;
+  const displayProfit = (Number(ast.profit) > 0) ? ast.profit : totalVal3 * 0.1;
+  document.getElementById('ast-price').textContent  = fmtUSD(displayPrice);
+  document.getElementById('ast-profit').textContent = fmtUSD(displayProfit);
 
   const D_m = ast._diam_m || 500;
   const r_m3 = D_m / 2;
   const vol_m3 = (4/3) * Math.PI * r_m3 * r_m3 * r_m3;
-  const dens3 = DENSITIES[spec3] || 2000;
-  const mass_kg3 = vol_m3 * dens3;
+  const dens3b = DENSITIES[spec3] || 2000;
+  const mass_kg3 = vol_m3 * dens3b;
   const frac3 = FRACTIONS[spec3] || FRACTIONS.DEFAULT;
   const waterVal3 = mass_kg3 * frac3.water * 1000;
   const metalPrice3 = spec3 === 'M' ? 30 : 0.15;
   const metalVal3 = mass_kg3 * frac3.metals * metalPrice3;
-  const totalVal3 = waterVal3 + metalVal3;
 
   document.getElementById('ast-water-val').textContent = fmtUSD(waterVal3);
   document.getElementById('ast-metal-val').textContent = fmtUSD(metalVal3);
@@ -3256,7 +4380,7 @@ function selectAsteroid(id) {
   document.getElementById('panel-idle').style.display = 'none';
   document.getElementById('panel-data').style.display = 'flex';
 
-  // Switch to inspector tab if on economics
+  // Auto-render active tab content on asteroid change
   const activeTab = document.querySelector('.tab-btn.active');
   if (activeTab && activeTab.dataset.tab === 'economics') {
     renderEconomicsTab(id);
@@ -3272,7 +4396,8 @@ function selectAsteroid(id) {
   // Exit burn mode on new selection
   if (burnModeActive) cancelBurn();
 
-  if (trailsEnabled) { updateTrailGeometry(ast); computeFutureTrail(ast); }
+  hideHoverEllipse();
+  if (trailsEnabled) updateOrbitEllipse(ast);
 
   // Slide-in right panel
   document.getElementById('right-panel').classList.add('panel-open');
@@ -3655,11 +4780,12 @@ function onPointerMove(e) {
           tt.innerHTML = `<span style="color:#00d4ff">${name}</span><br>${spec}-type · Score ${ast._score || 0}<br>${fmtUSD(Number(ast.price) || 0)}`;
           tt.style.display = 'block';
           renderer.domElement.style.cursor = 'pointer';
-          drawHoverOrbit(ast);
+          if (bestId !== selectedId) showHoverEllipse(ast);
+          else hideHoverEllipse();
         } else if (tt) {
           tt.style.display = 'none';
           renderer.domElement.style.cursor = 'default';
-          hoverOrbitLine.visible = false;
+          hideHoverEllipse();
         }
       }
       if (hoveredId >= 0) {
@@ -3713,6 +4839,8 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.key === 'Escape') {
     if (so.style.display === 'flex') { so.style.display = 'none'; return; }
+    const mp = document.getElementById('mission-planner');
+    if (mp && mp.classList.contains('mp-open')) { closeMissionPlanner(); return; }
     if (burnModeActive) { cancelBurn(); return; }
     if (selectedId >= 0) { deselectAsteroid(); return; }
     return;
@@ -3758,7 +4886,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 't' || e.key === 'T') {
     trailsEnabled = !trailsEnabled;
     if (!trailsEnabled) clearTrail();
-    else if (selectedId >= 0) { const ast = asteroidData[selectedId]; if (ast) { updateTrailGeometry(ast); computeFutureTrail(ast); } }
+    else if (selectedId >= 0) { const ast = asteroidData[selectedId]; if (ast) updateOrbitEllipse(ast); }
     setStatus(trailsEnabled ? 'Trails ON' : 'Trails OFF');
     return;
   }
@@ -3790,7 +4918,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === '3') {
     trailsEnabled = !trailsEnabled;
     if (!trailsEnabled) clearTrail();
-    else if (selectedId >= 0) { const ast = asteroidData[selectedId]; if (ast) { updateTrailGeometry(ast); computeFutureTrail(ast); } }
+    else if (selectedId >= 0) { const ast = asteroidData[selectedId]; if (ast) updateOrbitEllipse(ast); }
     setStatus(trailsEnabled ? 'Trails ON' : 'Trails OFF');
     return;
   }
@@ -3928,6 +5056,94 @@ document.getElementById('porkchop-canvas').addEventListener('mouseleave', () => 
 
 // ─── Multi-Burn Sequence ──────────────────────────────────────────────────────
 document.getElementById('btn-burn-mode').addEventListener('click', () => toggleBurnMode());
+
+// ── Mission Planner event wiring ──────────────────────────────────────────────
+document.getElementById('btn-plan-mission').addEventListener('click', () => {
+  if (selectedId >= 0) openMissionPlanner(selectedId);
+});
+document.getElementById('btn-planner-back').addEventListener('click', closeMissionPlanner);
+document.getElementById('btn-find-route').addEventListener('click', runMissionOptimizer);
+document.getElementById('btn-mp-export').addEventListener('click', exportMissionPlan);
+document.getElementById('btn-mp-share').addEventListener('click', shareMissionPlan);
+document.getElementById('btn-mp-reset-optimal').addEventListener('click', () => {
+  if (optimalTrajectory && missionResults.length) selectTrajectory(0);
+});
+document.getElementById('btn-mp-add-burn').addEventListener('click', () => {
+  const lastJD = mpBurns.length ? mpBurns[mpBurns.length-1].jd + 15 : currentJD;
+  mpBurns.push({ label:`${mpBurns.length+1} · MCC`, jd:lastJD, dv_kms:0.050 });
+  renderBurnEditTable();
+});
+// ── Phase 7F: Animation + burn vector event wiring ───────────────────────────
+document.getElementById('btn-mp-play').addEventListener('click', () => {
+  if (!missionAnim.active) {
+    if (!optimalTrajectory) return;
+    startMissionAnimation(optimalTrajectory);
+    missionAnim.playing = true;
+    document.getElementById('btn-anim-playpause').textContent = '⏸';
+    document.getElementById('btn-mp-play').textContent = '⏸ PAUSE MISSION';
+  } else {
+    missionAnim.playing = !missionAnim.playing;
+    const pp = missionAnim.playing;
+    document.getElementById('btn-anim-playpause').textContent = pp ? '⏸' : '▶';
+    document.getElementById('btn-mp-play').textContent = pp ? '⏸ PAUSE MISSION' : '▶ PLAY MISSION';
+  }
+});
+document.getElementById('btn-anim-playpause').addEventListener('click', () => {
+  missionAnim.playing = !missionAnim.playing;
+  document.getElementById('btn-anim-playpause').textContent = missionAnim.playing ? '⏸' : '▶';
+});
+document.getElementById('btn-anim-stop').addEventListener('click', stopMissionAnimation);
+document.querySelectorAll('.anim-speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    missionAnim.speed = parseInt(btn.dataset.aspeed);
+    document.querySelectorAll('.anim-speed-btn').forEach(b => b.classList.remove('anim-speed-active'));
+    btn.classList.add('anim-speed-active');
+  });
+});
+
+// Burn vector hover tooltip
+renderer.domElement.addEventListener('mousemove', (e) => {
+  const tooltip = document.getElementById('burn-tooltip');
+  if (!burnVectorArrows.length) { tooltip.style.display = 'none'; return; }
+  const rect  = renderer.domElement.getBoundingClientRect();
+  const mouse = new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width)  * 2 - 1,
+    -((e.clientY - rect.top) / rect.height) * 2 + 1);
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(burnVectorArrows, true);
+  if (hits.length) {
+    let obj = hits[0].object;
+    while (obj && !obj.userData.burnLabel) obj = obj.parent;
+    if (obj?.userData.burnLabel) {
+      const sc     = SPACECRAFT[missionConfig.spacecraft] || SPACECRAFT.medium;
+      const fuelKg = propellantKgNum(obj.userData.dv, sc.isp, sc.dry_kg);
+      tooltip.style.display = 'block';
+      tooltip.style.left    = (e.clientX + 14) + 'px';
+      tooltip.style.top     = (e.clientY - 12) + 'px';
+      tooltip.innerHTML     = `<b>${obj.userData.burnLabel}</b><br>` +
+        `ΔV: ${obj.userData.dv.toFixed(3)} km/s<br>` +
+        `Date: ${obj.userData.jd ? jdToDate(obj.userData.jd) : '—'}<br>` +
+        `Fuel: ~${Math.round(fuelKg).toLocaleString()} kg`;
+      return;
+    }
+  }
+  tooltip.style.display = 'none';
+});
+
+// Spacecraft card selection
+document.querySelectorAll('.mp-craft-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.mp-craft-card').forEach(c => c.classList.remove('mp-craft-selected'));
+    card.classList.add('mp-craft-selected');
+    card.querySelector('input[type=radio]').checked = true;
+  });
+});
+// Launch year validation
+document.getElementById('mp-year-start').addEventListener('change', function() {
+  const ys = parseInt(this.value);
+  const yeEl = document.getElementById('mp-year-end');
+  if (parseInt(yeEl.value) <= ys) yeEl.value = ys + 1;
+});
 
 document.getElementById('btn-add-burn').addEventListener('click', () => {
   if (burns.length >= MAX_BURNS) return;
@@ -4100,18 +5316,19 @@ function setStatus(msg, autoFade) {
 }
 
 // ─── Animation Loop ───────────────────────────────────────────────────────────
+function updateMoonPosition(jd) {
+  const MOON_A = 0.00257;       // AU
+  const MOON_PERIOD = 27.32;    // days
+  const angle = (TWO_PI / MOON_PERIOD) * (jd - J2000);
+  const ep = planets[2].position; // Earth is index 2
+  moonMesh.position.set(ep.x + MOON_A * Math.cos(angle), ep.y + MOON_A * Math.sin(angle), ep.z);
+}
+
 function applyPositions(buf) {
   for (let i = 0; i < 8; i++) {
     planets[i].position.set(buf[i*3], buf[i*3+1], buf[i*3+2]);
   }
-  // Moon: simplified circular orbit around Earth derived from Earth's propagated position
-  const moonAngle = MOON_L0 + (2 * Math.PI / MOON_PERIOD) * (currentJD - 2451545.0);
-  const ep = planets[2].position; // Earth is planets[2]
-  moonMesh.position.set(
-    ep.x + MOON_SMA * Math.cos(moonAngle),
-    ep.y + MOON_SMA * Math.sin(moonAngle) * Math.cos(MOON_INC),
-    ep.z + MOON_SMA * Math.sin(moonAngle) * Math.sin(MOON_INC)
-  );
+  updateMoonPosition(currentJD);
   if (asteroidMesh && asteroidCount > 0) {
     const base = 24;
     for (let i = 0; i < asteroidCount; i++) {
@@ -4133,6 +5350,11 @@ function animate() {
   const now = performance.now();
   const dt = Math.min((now - lastRealTime) / 1000, 0.1);
   lastRealTime = now;
+
+  updateMissionAnimation(dt);
+  if (optimalTrajectory && document.getElementById('mission-timeline').style.display !== 'none') {
+    updateTimelineIndicator();
+  }
 
   // FPS counter
   fpsFrames++;
@@ -4243,14 +5465,7 @@ function animate() {
     if (issIndex >= 0 && frameCount % 30 === 0) drawISSOrbit();
   }
 
-  // ─── Phase 5: Trail update ────────────────────────────────────────────────
-  if (trailsEnabled && selectedId >= 0 && asteroidData.length > 0) {
-    const _tast = asteroidData[selectedId];
-    if (_tast && (lastTrailJD === null || Math.abs(currentJD - lastTrailJD) > 1)) {
-      updateTrailGeometry(_tast);
-      computeFutureTrail(_tast);
-    }
-  }
+  // Orbital ellipse is static per selection — no per-frame trail update needed
 
   // ─── Phase 5: Labels ──────────────────────────────────────────────────────
   placeLabels();

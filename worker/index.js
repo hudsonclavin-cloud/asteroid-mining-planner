@@ -33,6 +33,16 @@ const FALLBACK_PRICES = {
  */
 const rateLimitStore = new Map();
 
+// ── Static commodity prices + in-memory cache for /api/prices ────────────────
+const STATIC_PRICES = {
+  water: 0, iron: 0.12, nickel: 16, cobalt: 28, pgm: 31000,
+  gold: 92000, silver: 1050, copper: 9.50, carbon: 0.50,
+  silicates: 0.01, rareEarth: 250,
+};
+let priceCache = null;
+let priceCacheTime = 0;
+const PRICE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 function checkRateLimit(ip) {
   const now = Date.now();
   let entry = rateLimitStore.get(ip);
@@ -48,7 +58,7 @@ function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://hudsonclavin-cloud.github.io';
   return {
     'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
   };
@@ -102,48 +112,41 @@ export default {
 
     // ── GET /api/prices ──────────────────────────────────────────────────────
     if (url.pathname === '/api/prices' && request.method === 'GET') {
-      const now = Date.now();
-      if (pricesCache.data && now - pricesCache.at < PRICE_CACHE_MS) {
-        return jsonResponse({ prices: pricesCache.data, source: 'cache', at: pricesCache.at }, 200, origin);
+      if (priceCache && Date.now() - priceCacheTime < PRICE_CACHE_TTL) {
+        return jsonResponse(priceCache, 200, origin);
       }
-      let prices = null;
-      let source = 'fallback';
+      // Try live metals API if key is configured (optional)
       if (env.METALS_API_KEY) {
         try {
-          const symbols = 'XAU,XAG,XPT,XPD,XCU,XNI,XCO';
           const r = await fetch(
-            `https://metals-api.com/api/latest?access_key=${env.METALS_API_KEY}&base=USD&symbols=${symbols}`,
+            `https://metals-api.com/api/latest?access_key=${env.METALS_API_KEY}&base=USD&symbols=XAU,XAG,XPT,XPD,COPPER,NICKEL,COBALT`,
             { cf: { cacheTtl: 3600 } }
           );
           if (r.ok) {
-            const json = await r.json();
-            if (json.success && json.rates) {
-              const tr = json.rates;
-              const oz2kg = 32.1507;
-              prices = {
-                gold:      tr.XAU ? (1 / tr.XAU) * oz2kg : FALLBACK_PRICES.gold,
-                silver:    tr.XAG ? (1 / tr.XAG) * oz2kg : FALLBACK_PRICES.silver,
-                platinum:  tr.XPT ? (1 / tr.XPT) * oz2kg : FALLBACK_PRICES.platinum,
-                palladium: tr.XPD ? (1 / tr.XPD) * oz2kg : FALLBACK_PRICES.palladium,
-                copper:    tr.XCU ? (1 / tr.XCU) * oz2kg : FALLBACK_PRICES.copper,
-                nickel:    tr.XNI ? (1 / tr.XNI) * oz2kg : FALLBACK_PRICES.nickel,
-                cobalt:    tr.XCO ? (1 / tr.XCO) * oz2kg : FALLBACK_PRICES.cobalt,
-                iron:      FALLBACK_PRICES.iron,
-                iridium:   FALLBACK_PRICES.iridium,
-                rareEarth: FALLBACK_PRICES.rareEarth,
-                water:     FALLBACK_PRICES.water,
-                carbon:    FALLBACK_PRICES.carbon,
-                silicates: FALLBACK_PRICES.silicates,
-              };
-              source = 'metals-api';
-            }
+            const raw = await r.json();
+            const oz2kg = 1 / 32.1507; // troy oz → kg
+            priceCache = {
+              prices: {
+                ...STATIC_PRICES,
+                gold:    raw.rates?.XAU ? 1 / (raw.rates.XAU * oz2kg) : STATIC_PRICES.gold,
+                silver:  raw.rates?.XAG ? 1 / (raw.rates.XAG * oz2kg) : STATIC_PRICES.silver,
+                pgm:     raw.rates?.XPT ? 1 / (raw.rates.XPT * oz2kg) : STATIC_PRICES.pgm,
+                nickel:  raw.rates?.NICKEL ? raw.rates.NICKEL          : STATIC_PRICES.nickel,
+                cobalt:  raw.rates?.COBALT ? raw.rates.COBALT          : STATIC_PRICES.cobalt,
+                copper:  raw.rates?.COPPER ? raw.rates.COPPER          : STATIC_PRICES.copper,
+              },
+              source: 'metals-api',
+              timestamp: Date.now(),
+            };
+            priceCacheTime = Date.now();
+            return jsonResponse(priceCache, 200, origin);
           }
-        } catch(_) {}
+        } catch (_) {}
       }
-      if (!prices) prices = { ...FALLBACK_PRICES };
-      pricesCache.data = prices;
-      pricesCache.at = now;
-      return jsonResponse({ prices, source, at: now }, 200, origin);
+      // Fallback to static prices
+      priceCache = { prices: STATIC_PRICES, source: 'static', timestamp: Date.now() };
+      priceCacheTime = Date.now();
+      return jsonResponse(priceCache, 200, origin);
     }
 
     // ── Route guard ──────────────────────────────────────────────────────────

@@ -7,6 +7,8 @@ const J2000 = 2451545.0;       // JD of J2000 epoch
 const TWO_PI = 2 * Math.PI;
 const DEG = Math.PI / 180;
 const GM_AU3_S2 = GM_sun / (AU * AU * AU); // ~3.964e-14 AU³/s²
+const GM_earth  = 3.986004418e14;          // m³/s²
+const R_earth   = 6.3781e6;               // m
 
 // Standish 1992 planet elements at J2000 + secular rates
 // Format: [a0, da, e0, de, i0, di, Om0, dOm, L0, dL, wb0, dwb]
@@ -378,6 +380,156 @@ function lambert(r1v, r2v, tof_days) {
   };
 }
 
+// ─── Izzo 2015 Lambert solver ─────────────────────────────────────────────────
+// r1v, r2v: [x,y,z] in AU; tof_days: days; direction: 1=prograde, -1=retrograde
+// Returns { v1, v2 } in km/s, or null on failure.
+function izzoLambert(r1v, r2v, tof_days, direction) {
+  direction = direction || 1;
+  const tof = tof_days * 86400; // seconds
+  const mu  = GM_sun;
+
+  const r1 = r1v.map(v => v * AU);
+  const r2 = r2v.map(v => v * AU);
+  const r1n = Math.hypot(r1[0], r1[1], r1[2]);
+  const r2n = Math.hypot(r2[0], r2[1], r2[2]);
+  if (r1n < 1e3 || r2n < 1e3 || tof <= 0) return null;
+
+  const c = Math.hypot(r2[0]-r1[0], r2[1]-r1[1], r2[2]-r1[2]);
+  const s = (r1n + r2n + c) / 2;
+  if (s < 1e3 || c < 1e3) return null;
+
+  // Cross product for transfer direction
+  const cross = [
+    r1[1]*r2[2] - r1[2]*r2[1],
+    r1[2]*r2[0] - r1[0]*r2[2],
+    r1[0]*r2[1] - r1[1]*r2[0],
+  ];
+  const thetaGt180 = (direction === 1) ? (cross[2] < 0) : (cross[2] >= 0);
+
+  const lambda2 = 1 - c / s;
+  let lambda = Math.sqrt(Math.max(0, lambda2));
+  if (thetaGt180) lambda = -lambda;
+
+  // Non-dimensional TOF
+  const T = tof * Math.sqrt(2 * mu / (s * s * s));
+  if (!isFinite(T) || T <= 0) return null;
+
+  // Initial guess
+  const sqL = Math.sqrt(1 - lambda * lambda);
+  const T0 = Math.acos(lambda) + lambda * sqL;
+  let x = (T >= T0) ? (T0 / T - 1) : Math.min(0.98, T0 / T);
+
+  // Householder 3rd-order iterations
+  for (let iter = 0; iter < 60; iter++) {
+    const { T: Tx, dT, d2T, d3T } = _izzTofDerivs(x, lambda);
+    const dx = Tx - T;
+    if (Math.abs(dx) < 1e-12 * (Math.abs(T) + 1)) break;
+    if (Math.abs(dT) < 1e-20) break;
+    const h2 = d2T / (2 * dT);
+    const h3 = d3T / (6 * dT) - h2 * h2;
+    const step = dx / (dT * (1 + dx * (h2 + dx * h3)));
+    x -= step;
+    if (x <= -1) x = -0.99;
+    else if (x >= 1) x = 0.99;
+  }
+  if (!isFinite(x) || Math.abs(x) >= 1) return null;
+
+  // Recover velocities
+  const gamma = Math.sqrt(mu * s / 2);
+  const rho   = (r1n - r2n) / c;
+  const sigma = Math.sqrt(Math.max(0, 1 - rho * rho));
+  const y     = Math.sqrt(Math.max(0, 1 - lambda2 * (1 - x * x)));
+  if (y < 1e-10) return null;
+
+  const Vr1 =  gamma * ((lambda * y - x) - rho * (lambda * y + x)) / r1n;
+  const Vr2 = -gamma * ((lambda * y - x) + rho * (lambda * y + x)) / r2n;
+  const Vt1 =  gamma * sigma * (y + lambda * x) / r1n;
+  const Vt2 =  gamma * sigma * (y + lambda * x) / r2n;
+
+  const r1hat = r1.map(v => v / r1n);
+  const r2hat = r2.map(v => v / r2n);
+  const th1 = _unitVec([
+    r1hat[1]*cross[2] - r1hat[2]*cross[1],
+    r1hat[2]*cross[0] - r1hat[0]*cross[2],
+    r1hat[0]*cross[1] - r1hat[1]*cross[0],
+  ]);
+  const th2 = _unitVec([
+    r2hat[1]*cross[2] - r2hat[2]*cross[1],
+    r2hat[2]*cross[0] - r2hat[0]*cross[2],
+    r2hat[0]*cross[1] - r2hat[1]*cross[0],
+  ]);
+
+  const f = 1 / 1000; // m/s → km/s
+  return {
+    v1: [(Vr1*r1hat[0] + Vt1*th1[0])*f, (Vr1*r1hat[1] + Vt1*th1[1])*f, (Vr1*r1hat[2] + Vt1*th1[2])*f],
+    v2: [(Vr2*r2hat[0] + Vt2*th2[0])*f, (Vr2*r2hat[1] + Vt2*th2[1])*f, (Vr2*r2hat[2] + Vt2*th2[2])*f],
+  };
+}
+
+function _izzTofDerivs(x, lam) {
+  // Elliptic Lancaster-Blanchard TOF (Izzo 2015, Eq. 9) + derivatives
+  const x2 = x * x;
+  const omx2 = 1 - x2;
+  if (omx2 < 1e-14) return { T: 1e30, dT: 0, d2T: 0, d3T: 0 };
+  const inner = Math.max(0, 1 - lam * lam * omx2);
+  const sqrtInner = Math.sqrt(inner);
+  const b = lam * x;
+  const T  = (Math.acos(x) + b * sqrtInner) / omx2;
+  if (!isFinite(T)) return { T: 1e30, dT: 0, d2T: 0, d3T: 0 };
+  const q  = (sqrtInner > 1e-14) ? b / sqrtInner : 0;
+  const dT  = (1 - q * T) / omx2;
+  const d2T = (2 * dT - q * dT * T + lam * lam) * (-x) / omx2;
+  const d3T = (3 * d2T * x - 2 * dT + q * (T + T)) / omx2;
+  return { T, dT, d2T, d3T };
+}
+
+function _unitVec(v) {
+  const n = Math.hypot(v[0], v[1], v[2]);
+  return n > 0 ? [v[0]/n, v[1]/n, v[2]/n] : [0, 0, 0];
+}
+
+// ─── Patched-conic helpers ────────────────────────────────────────────────────
+
+// Compute patched-conic departure + arrival burns from a Lambert solution.
+// v_earth, v_ast: heliocentric velocity vectors [km/s]
+// v_t1, v_t2:    Lambert transfer velocities [km/s] at Earth and asteroid ends
+// r_park_km:     parking orbit radius (km) from Earth centre
+// Returns { dv_dep, dv_arr, C3, vinf_dep_mag, vinf_arr_mag }
+function patchedConic(v_earth, v_t1, v_ast, v_t2, r_park_km) {
+  const mu_e = 398600.4418; // km³/s²
+  const rp   = r_park_km;
+
+  const vinf_dep = [v_t1[0]-v_earth[0], v_t1[1]-v_earth[1], v_t1[2]-v_earth[2]];
+  const vinf_dep_mag = Math.hypot(vinf_dep[0], vinf_dep[1], vinf_dep[2]);
+  const C3 = vinf_dep_mag * vinf_dep_mag;
+
+  const v_park = Math.sqrt(mu_e / rp);
+  const v_hyp  = Math.sqrt(C3 + 2 * mu_e / rp);
+  const dv_dep = v_hyp - v_park;
+
+  const vinf_arr = [v_t2[0]-v_ast[0], v_t2[1]-v_ast[1], v_t2[2]-v_ast[2]];
+  const dv_arr   = Math.hypot(vinf_arr[0], vinf_arr[1], vinf_arr[2]);
+
+  return { dv_dep, dv_arr, C3, vinf_dep_mag, vinf_arr_mag: dv_arr };
+}
+
+// Compute destination-capture ΔV on return.
+// v_inf_mag: arrival v-infinity at Earth [km/s]
+function destinationCaptureDv(v_inf_mag, destination, r_park_km) {
+  const mu_e = 398600.4418;
+  const rp   = r_park_km;
+  const v_circ = Math.sqrt(mu_e / rp);
+  const v_hyp  = Math.sqrt(v_inf_mag * v_inf_mag + 2 * mu_e / rp);
+  const dv_leo = v_hyp - v_circ;
+  const extras = { leo:0, geo:1.5, l1:0.5, l2:0.5, lunar:1.7, mars:0.9 };
+  return dv_leo + (extras[destination] || 0);
+}
+
+// Heuristic: flag low-C3 departures as lunar-assist candidates (v_inf < 3.2 km/s → C3 < ~10)
+function checkLunarAssist(vinf_dep_mag) {
+  return vinf_dep_mag < 3.2;
+}
+
 // ─── Message handler ─────────────────────────────────────────────────────────
 self.onmessage = function(e) {
   const msg = e.data;
@@ -507,6 +659,155 @@ self.onmessage = function(e) {
     }
 
     self.postMessage({ type: 'porkchop', grid, nx, ny, jd_start, jd_end, tof_min, tof_max }, [grid.buffer]);
+    return;
+  }
+
+  if (msg.cmd === 'plan_mission') {
+    const { ast, jd_start, jd_end, destination, parkingAlt_km, spacecraft, stayDays: stayMsg } = msg;
+    const r_park_km = 6371 + (parkingAlt_km || 400);
+    const STAY_DEF  = { light: 14, medium: 45, heavy: 90 };
+    const stayDays  = stayMsg || STAY_DEF[spacecraft] || 45;
+
+    const STEP_DEP  = 15;
+    const TOF_STEPS = 24;
+    const TOF_MIN   = 60, TOF_MAX = 600;
+
+    const totalDeps = Math.ceil((jd_end - jd_start) / STEP_DEP);
+    let depIdx = 0;
+    const phase1 = [];
+
+    // ── Phase 1: outbound Lambert grid ──────────────────────────────────────
+    for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += STEP_DEP) {
+      depIdx++;
+      if (depIdx % 15 === 0) {
+        self.postMessage({
+          type: 'plan_progress',
+          pct: 0.5 * depIdx / totalDeps,
+          label: `Phase 1/2 — Scanning outbound windows (${depIdx}/${totalDeps} dates)...`,
+        });
+      }
+
+      let earthDep;
+      try { earthDep = propagatePlanet(2, jd_dep); } catch(_) { continue; }
+      const r1 = [earthDep.x, earthDep.y, earthDep.z];
+      const ve  = [earthDep.vx, earthDep.vy, earthDep.vz];
+
+      for (let step = 0; step <= TOF_STEPS; step++) {
+        const tof    = TOF_MIN + (TOF_MAX - TOF_MIN) * step / TOF_STEPS;
+        const jd_arr = jd_dep + tof;
+
+        let astArr;
+        try { astArr = propagateAsteroid(ast, jd_arr); } catch(_) { continue; }
+        const r2 = [astArr.x, astArr.y, astArr.z];
+        const va  = [astArr.vx, astArr.vy, astArr.vz];
+
+        let lam = izzoLambert(r1, r2, tof);
+        if (!lam) lam = lambert(r1, r2, tof);
+        if (!lam) continue;
+
+        const pc = patchedConic(ve, lam.v1, va, lam.v2, r_park_km);
+        if (!pc) continue;
+
+        phase1.push({
+          jd_dep, jd_arr, tof,
+          dv_dep: pc.dv_dep, dv_arr: pc.dv_arr,
+          dv_mcc: 0.02 * (pc.dv_dep + pc.dv_arr),
+          C3: pc.C3,
+          vinf_dep: pc.vinf_dep_mag,
+          vinf_arr: pc.vinf_arr_mag,
+          earthPos: { x: r1[0], y: r1[1], z: r1[2] },
+          astPos:   { x: r2[0], y: r2[1], z: r2[2] },
+        });
+      }
+    }
+
+    // Keep top 30 outbound by combined outbound ΔV
+    phase1.sort((a, b) => (a.dv_dep + a.dv_arr) - (b.dv_dep + b.dv_arr));
+    const candidates = phase1.slice(0, 30);
+
+    // ── Phase 2: return Lambert + destination capture ────────────────────────
+    const results = [];
+    for (let ci = 0; ci < candidates.length; ci++) {
+      const c = candidates[ci];
+      self.postMessage({
+        type: 'plan_progress',
+        pct: 0.5 + 0.5 * (ci + 1) / candidates.length,
+        label: `Phase 2/2 — Return trajectories (${ci+1}/${candidates.length})...`,
+      });
+
+      const jd_ret_dep = c.jd_arr + stayDays;
+      let bestReturn = null;
+
+      for (let rs = 0; rs <= 20; rs++) {
+        const ret_tof     = 60 + 540 * rs / 20;
+        const jd_ret_arr  = jd_ret_dep + ret_tof;
+
+        let astDep, earthArr;
+        try { astDep  = propagateAsteroid(ast, jd_ret_dep); } catch(_) { continue; }
+        try { earthArr = propagatePlanet(2, jd_ret_arr);    } catch(_) { continue; }
+
+        const rr1 = [astDep.x,   astDep.y,   astDep.z];
+        const rr2 = [earthArr.x, earthArr.y, earthArr.z];
+        const vad = [astDep.vx,  astDep.vy,  astDep.vz];
+        const ved = [earthArr.vx,earthArr.vy,earthArr.vz];
+
+        let lam = izzoLambert(rr1, rr2, ret_tof);
+        if (!lam) lam = lambert(rr1, rr2, ret_tof);
+        if (!lam) continue;
+
+        const dv_ret_dep = Math.hypot(lam.v1[0]-vad[0], lam.v1[1]-vad[1], lam.v1[2]-vad[2]);
+        const vinf_ret   = Math.hypot(lam.v2[0]-ved[0], lam.v2[1]-ved[1], lam.v2[2]-ved[2]);
+        const dv_cap     = destinationCaptureDv(vinf_ret, destination, r_park_km);
+        const total_return = dv_ret_dep + dv_cap;
+
+        if (!bestReturn || total_return < bestReturn.total_return) {
+          bestReturn = { dv_return: dv_ret_dep, dv_capture: dv_cap,
+            vinf_return: vinf_ret, tof_return: ret_tof, jd_ret_arr, total_return };
+        }
+      }
+      if (!bestReturn) continue;
+
+      const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
+      const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
+
+      results.push({
+        jd_dep:    c.jd_dep,
+        jd_arr:    c.jd_arr,
+        jd_ret_dep,
+        jd_ret_arr: bestReturn.jd_ret_arr,
+        tof:        c.tof,
+        tof_return: bestReturn.tof_return,
+        stay_days:  stayDays,
+        dv_dep:     +c.dv_dep.toFixed(3),
+        dv_arr:     +c.dv_arr.toFixed(3),
+        dv_mcc:     +mcc.toFixed(3),
+        dv_return:  +bestReturn.dv_return.toFixed(3),
+        dv_capture: +bestReturn.dv_capture.toFixed(3),
+        dv_total:   +dv_total.toFixed(3),
+        C3:         +c.C3.toFixed(3),
+        vinf_dep:   +c.vinf_dep.toFixed(3),
+        vinf_arr:   +c.vinf_arr.toFixed(3),
+        vinf_return:+bestReturn.vinf_return.toFixed(3),
+        lunarAssist: checkLunarAssist(c.vinf_dep),
+        earthPos:   c.earthPos,
+        astPos:     c.astPos,
+      });
+    }
+
+    results.sort((a, b) => a.dv_total - b.dv_total);
+    self.postMessage({ type: 'plan_result', results: results.slice(0, 10) });
+    return;
+  }
+
+  if (msg.cmd === 'query_pos') {
+    const { jd, planetIdx, reqId } = msg;
+    try {
+      const s = propagatePlanet(planetIdx, jd);
+      self.postMessage({ type: 'query_pos_result', reqId, ok: true,
+        x: s.x, y: s.y, z: s.z, vx: s.vx, vy: s.vy, vz: s.vz });
+    } catch(e) {
+      self.postMessage({ type: 'query_pos_result', reqId, ok: false });
+    }
     return;
   }
 

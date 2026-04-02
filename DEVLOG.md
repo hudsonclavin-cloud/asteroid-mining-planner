@@ -463,3 +463,176 @@ Three concurrent workstreams: NHATS reliability fix, Research panel verification
 - Custom scrollbar styling
 
 *Last updated: Phase 10 complete, 2026-03-31*
+
+---
+
+## Phase 7B — Keplerian Propagation Completion (2026-04-01)
+
+### What Was Already Implemented
+`solveKepler`, `kep2cart`, `propagateAsteroid`, the `'propagate'` worker command, `applyPositions`, and the time scrubber → JD → worker → positions pipeline were all functional from prior phases. No changes to `physics.worker.js`.
+
+### Moon
+- Added `moonMesh` (gray sphere, r=0.0015 AU, 8×8 segments) to the scene after planet creation
+- `updateMoonPosition(jd)`: simplified circular orbit, `a=0.00257 AU`, `period=27.32 days`, epoch=J2000
+- Moon position computed on the main thread (one object, cheap); called from `applyPositions()` after planet positions are set
+- **Known limitation:** Orbit is circular and in the ecliptic plane. Real Moon inclination ≈5.1° to ecliptic and ~6.7° to equator; libration, nodal regression all ignored. Sufficient for gravity-assist visualization context.
+
+### Orbital Ellipse Trail
+- Replaced time-based 90-step past/future trail (`updateTrailGeometry` / `computeFutureTrail`) with a static 100-point orbital ellipse (`updateOrbitEllipse`)
+- `buildOrbitPoints(ast, steps)`: samples true anomaly 0→2π evenly, converts to Cartesian via `orbitPlaneToEcliptic()` (3-1-3 rotation extracted from `kep2cartJS`)
+- Ellipse is time-invariant — computed once on asteroid selection, not per frame
+- `futureLine` hidden when ellipse mode active (dashed future arc no longer meaningful for full-orbit display)
+- **Bug fixed:** old trail code did `p.x / AU_m` (dividing AU by 1.496e11 = essentially zero). New code operates in AU directly, matching the scene coordinate system.
+
+### Hover Orbital Ellipse
+- `showHoverEllipse(ast)` / `hideHoverEllipse()`: lazy-creates a single `hoverEllipseLine` (`THREE.Line`, cyan `#00d4ff`, opacity 0.25)
+- Wired to `onPointerMove` hover detection: shows on hover if asteroid ≠ selected, hides on hover-out
+- Does not show when hovering the already-selected asteroid (selection ellipse via `trailLine` is already visible)
+
+### JD-Change Guard
+- Introduced `lastSentJD = null`; `'propagate'` message only sent when `currentJD !== lastSentJD`
+- Eliminates per-frame worker messages when simulation is paused (`simSpeed === 0`)
+- Scrubber `input` event continues to post directly (unchanged) for responsive scrubbing
+
+*Last updated: Phase 7B complete, 2026-04-01*
+
+---
+
+## Phase 7C — Materials Tab: Composition Model + Live Commodity Prices (2026-04-01)
+
+### Overview
+
+Added a fourth right-panel tab — **◆ MATERIALS** — between ECONOMICS and RESEARCH. The tab shows a per-element composition model for the selected asteroid, mass-based tonnage estimates, two SVG charts, a sortable breakdown table, an Earth/Space price toggle, and live commodity prices via the Cloudflare Worker.
+
+### Composition Model
+
+Four spectral group templates (`MAT_COMP`), each a mass-percentage map over 11 tracked materials:
+
+| Group | Dominant materials | Notes |
+|---|---|---|
+| C (carbonaceous) | silicates 65%, water 10%, iron 15% | water-rich; low PGM |
+| S (silicaceous) | silicates 68%, iron 22%, nickel 3% | driest; moderate metals |
+| M (metallic) | iron 88%, nickel 7% | negligible water; highest PGM |
+| X (unknown) | silicates 67%, iron 18%, water 5% | blended average |
+
+Spectral type mapping: `B/P/D → C`, `Q/A → S`, `E → M`, everything else → `X`.
+
+**Known limitation:** These are order-of-magnitude mean compositions. Individual asteroids vary enormously — Ryugu (Cg) has ~5% water by mass; some C-types may have <0.1%. Do not use for mission resource planning without independent spectral analysis.
+
+### Mass Estimation
+
+`mass = (4/3)π r³ × ρ` where `r = diameter/2` (meters) and `ρ` is the spectral-group bulk density:
+
+| Group | ρ (kg/m³) | Source |
+|---|---|---|
+| C | 1300 | Carry 2012 mean |
+| S | 2700 | Carry 2012 mean |
+| M | 5300 | Carry 2012 mean |
+| X | 2000 | blended estimate |
+
+Diameter source priority: `ast._diam_m` (set by existing enrichment code) → fallback 100 m.
+
+**Known limitation:** Bulk density is a group mean. Actual values span ±40% (macro-porosity, composition variance). Mass estimates carry ~2× uncertainty.
+
+### Commodity Prices
+
+**Static fallback prices** (hardcoded):
+- Water: $0/kg Earth, $50,000/kg space (Keck Institute in-situ estimate)
+- Iron: $0.12/kg, Nickel: $16/kg, Cobalt: $28/kg, PGMs: $31,000/kg
+- Gold: $92,000/kg, Silver: $1,050/kg, Copper: $9.50/kg
+- Carbon: $0.50/kg Earth, $10,000/kg space; Silicates: $0.01/kg Earth, $5,000/kg space
+- Rare Earth: $250/kg
+
+**Live prices:** `GET /api/prices` on the Cloudflare Worker attempts `metals-api.com` if `METALS_API_KEY` is configured. Troy oz → kg: `1 / (rate_per_oz × (1/32.1507))`. Metals-API symbols: XAU, XAG, XPT, XPD, COPPER, NICKEL, COBALT. Falls back to static if key absent or request fails.
+
+**Client caching:** `sessionStorage` key `aster_prices_v1` (session duration, no TTL — prices don't change significantly within a session). Force-refresh via ↺ button.
+
+**Space price mode:** pressing "EARTH PRICES" toggles to "SPACE PRICES" which overlays `STATIC_PRICES_SPACE` overrides (water, carbon, silicates jump dramatically). `getActivePrices()` merges the live base with the space overrides.
+
+### SVG Charts
+
+**Donut chart** (`buildDonutSVG`): Arc paths via `A` SVG command. Only shows materials with ≥0.1% mass. Legend right of ring (max 8 entries). Center label shows total mass in metric tons (T/B/M/k suffixes). Native browser `<title>` tooltips on segments show "Material: X% · Y Mt".
+
+**Horizontal bar chart** (`buildBarsSVG`): Top 10 materials by economic value, sorted descending, bar width proportional to max value in set. Shows material name, bar (colored per `MAT_COLORS_HEX`), and value label.
+
+Both charts are inline programmatic SVG — no library, no canvas, no DOM manipulation after `innerHTML` set.
+
+### Sortable Table
+
+`buildMaterialsTable` renders an HTML table with clickable `<th>` headers (`onclick="matSort('key')"`). Columns: MATERIAL, MASS%, TONNAGE, $/KG, VALUE, EXTRACT difficulty. `matSort()` toggles ascending/descending on repeated click. Current sort indicated with ▲/▼ suffix and `sorted` CSS class. TOTAL row always at bottom regardless of sort.
+
+Extraction difficulty badges (`easy/medium/hard/extreme`) use color-coded `mat-badge` spans styled in the `<style>` block.
+
+### Cloudflare Worker Changes (`worker/index.js`)
+
+- CORS: `'POST, OPTIONS'` → `'GET, POST, OPTIONS'`
+- Added `STATIC_PRICES`, `priceCache`, `priceCacheTime`, `PRICE_CACHE_TTL = 1hr` at module scope
+- Added `GET /api/prices` route before the existing route guard; in-memory 1-hour cache; optional metals-api.com live fetch; static fallback always works without any secrets
+
+**Deploy:** `cd worker && wrangler deploy` — `METALS_API_KEY` is optional; leaving it unset returns static prices.
+
+### Integration Points
+
+- `fetchPrices()` called non-blocking in `init()` (after `fetchNHATSData()`)
+- Tab switch handler includes `tab-materials` display toggle + `renderMaterialsTab(selectedId)` on activation
+- `selectAsteroid()` calls `renderMaterialsTab(id)` when materials tab is active
+- No auto-fetch on asteroid select when tab is inactive (same lazy pattern as research tab)
+
+*Last updated: Phase 7C complete, 2026-04-01*
+
+---
+
+## Phase 7D — Mission Planner Interface (2026-04-01)
+
+### Trajectory Optimizer: Vis-Viva Approximation
+
+**Method:** Grid search over departure dates (every 15 days) and transfer times-of-flight (30–600 days, 25 samples). For each (departure, TOF) pair:
+
+1. Compute Earth position at departure: `r1 = |propagatePlanet(2, jd_dep)|` (AU)
+2. Compute asteroid position at arrival: `r2 = |propagateAsteroid(ast, jd_arr)|` (AU)
+3. Minimum-energy transfer ellipse: `a_transfer = (r1 + r2) / 2`
+4. Vis-viva transfer speed at each endpoint: `v = sqrt(GM * (2/r - 1/a))`
+5. ΔV = |v_transfer − v_circular| at each endpoint
+
+Return trip estimated as symmetric (same Hohmann ΔV as outbound). Destination overhead added as fixed table value.
+
+**Known errors:**
+- Hohmann assumption ignores transfer angle geometry (ignores the fact that the actual ΔV depends on the angle between r1 and r2, not just their magnitudes). For coplanar, opposite-side transfers the error can be ±30–50%.
+- Return ΔV = outbound ΔV ignores inclination differences between return geometry.
+- Destination overhead is constant, not geometry-dependent.
+- Expected error vs full Lambert: ±0.5–3 km/s per leg for typical NEAs. Useful for ranking; not for mission design.
+
+**Impact:** Suitable for identifying top-10 candidate windows. Use porkchop (full Lambert) for detailed analysis. Full Lambert replaces vis-viva in Phase 7E.
+
+### 3D Trajectory Visualization
+
+**Method:** `THREE.QuadraticBezierCurve3` from Earth position to asteroid position, with a control point elevated 30% of the horizontal separation distance above the ecliptic midpoint. 100 sample points rendered as `THREE.Line`.
+
+**Known limitation:** Curve is a visual approximation — it does not follow the actual Keplerian transfer trajectory. Real heliocentric transfer arcs are conic sections; the Bezier is purely illustrative. Phase 7E will replace this with a propagated Keplerian arc.
+
+Departure arrow: `THREE.ArrowHelper` (green) at Earth position, pointing toward asteroid.
+Arrival arrow: `THREE.ArrowHelper` (red) at asteroid position, pointing back (retro-burn direction).
+
+### Mission Cost Model
+
+- **Launch cost:** wet_mass (dry + propellant) × $/kg for selected launch vehicle
+- **Spacecraft cost:** fixed per class (Light $50M, Medium $180M, Heavy $500M)
+- **Operations cost:** $2M/month × mission_duration_months
+- **Propellant mass:** Tsiolkovsky single-stage `m_prop = m_dry × (exp(ΔV/(g0×Isp)) − 1)` for total ΔV
+- **Known limitation:** Single-stage Tsiolkovsky for the total ΔV is conservative (overestimates propellant). Real missions stage propellant across burns. Adds ~10–40% propellant margin.
+
+### Revenue Model
+
+Revenue = payload_capacity_kg × revenue_per_kg, where revenue_per_kg is derived from the Phase 7C Materials composition model:
+
+`revenue_per_kg = Σ (comp[material] / 100) × price[material]`
+
+This uses the same `MAT_COMP[spec]` table as the MATERIALS tab. Revenue is in Earth prices by default (unless space price toggle is active in MATERIALS tab when the planner is opened).
+
+**Known limitation:** Payload capacity (200/2000/20000 kg) is treated as fully extractable ore — no efficiency loss, no minimum viable asteroid density check.
+
+### Editable Burn Table
+
+4 pre-filled burns: departure, arrival, return departure, return arrival. Each burn shows date + editable ΔV input. Total ΔV and propellant mass recalculate on each change. Mid-course corrections (MCCs) can be added. "Reset to Optimal" reverts to auto-optimizer result.
+
+*Last updated: Phase 7D complete, 2026-04-01*
