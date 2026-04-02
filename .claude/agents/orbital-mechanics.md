@@ -89,7 +89,7 @@ This agent owns all orbital physics computation. It works **exclusively in `phys
 { type: 'nhats_result', ok: false, error: string }
 
 // load_progress
-{ type: 'load_progress', source: 'sbdb'|'asterank'|'nhats', status: 'ok'|'error', count?, error? }
+{ type: 'load_progress', source: 'asterank'|'nhats', status: 'ok'|'error', count?, error? }
 
 // catalog_ready
 { type: 'catalog_ready', data: [...], nhatsRows: [...] }

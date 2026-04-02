@@ -71,7 +71,7 @@ Agent: **orbital-mechanics** only
 ### New material / resource type
 Agents: **economics** + **data-layer** + **ui-hud**
 1. `economics` — add entry to `FRACTIONS`, `DENSITIES`, `COMPOSITIONS`; update `computeScore` weighting if needed
-2. `data-layer` — if new field from an API, add to SBDB/Asterank merge in `catalog_ready`
+2. `data-layer` — if new field comes from Asterank, add to Asterank-primary merge loop in `fetch_catalog`
 3. `ui-hud` — add display row in inspector or filter chip if user-filterable
 
 ### New rendering effect (particle, shader, overlay)

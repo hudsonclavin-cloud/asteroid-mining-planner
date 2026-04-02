@@ -1,6 +1,6 @@
 ---
 name: data-layer
-description: API fetching (SBDB, NHATS, Asterank, Horizons, commodity prices), caching strategy (localStorage, IndexedDB, sessionStorage), data merging, TTL management, Cloudflare Worker proxy
+description: API fetching (Asterank, NHATS, commodity prices), caching strategy (localStorage, IndexedDB, sessionStorage), data merging, TTL management, Cloudflare Worker proxy
 ---
 
 # Data Layer Agent
@@ -10,23 +10,19 @@ This agent owns all external API communication, cache management, and data mergi
 
 ## External APIs
 
-### Asteroid Catalog (via Cloudflare proxy)
-- **URL:** `https://aster-proxy.hudsonclavin.workers.dev/asterank`
-- **Method:** GET (proxied)
-- **Source:** Asterank API (aggregated NEA data with economic estimates)
-- **Fields returned:** `full_name`, `spec_B`, `spec_T`, `diameter`, `H`, `a`, `e`, `i`, `om`, `w`, `ma`, `epoch`, `delta_v`, `price`, `profit`, `moid`
-
-### JPL Small-Body Database (SBDB)
-- **URL:** JPL SBDB API (fetched inside worker via `fetchSBDB()`)
-- **Format:** Field-format JSON with column mapping
-- **Fields:** `full_name`, `a`, `e`, `i`, `om`, `w`, `ma`, `epoch`, `H`, `diameter`, `spec_B`, `spec_T`, `moid`, `pha`
-- **Volume:** ~3500 NEAs
+### Asteroid Catalog — Asterank (primary source)
+- **URL:** `https://www.asterank.com/api/asterank?query=%7B%7D&limit=5000&sort=score`
+- **Method:** GET (direct; CORS proxy fallback via `corsproxy.io`)
+- **Fields returned:** `pdes`, `full_name`, `name`, `spec`, `spec_T`, `diameter`, `H`, `albedo`, `a`, `e`, `i`, `om`, `w`, `ma`, `epoch`, `per`, `class`, `delta_v`, `price`, `profit`, `moid`, `score`, `pha`
+- **Volume:** up to 5000 NEAs, sorted by Asterank score
+- **Note:** `epoch` is MJD (no conversion needed). `per` may be absent — use Kepler's 3rd law: `Math.sqrt(a³)`. `class` may be absent — derive from orbital elements (IEO/ATE/APO/AMO).
 
 ### NHATS (Near-Earth Asteroid Target Survey)
-- **URL:** `https://ssd-api.jpl.nasa.gov/nhats.api?dv=12&dur=450&stay=8&launch=2025-2035`
+- **URL (proxied):** `https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035`
 - **Criteria:** ΔV ≤ 12 km/s, mission duration ≤ 450 days, stay ≥ 8 days, launch 2025–2035
 - **Cache key:** `aster_nhats_v1`
 - **TTL:** 24 hours (localStorage timestamp check)
+- **Note:** NASA NHATS does not send CORS headers — always route through the Cloudflare proxy.
 
 ### Satellites (CelesTrak)
 - **Stations:** `https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=json`
@@ -64,7 +60,7 @@ This agent owns all external API communication, cache management, and data mergi
 ### IndexedDB (primary catalog store)
 - **Database:** `AsterDB` (version 1)
 - **Object store:** `catalog`
-- **Key:** `aster_catalog_v1`
+- **Key:** `aster_catalog_v2`
 - **Value:** `{ data: AsteroidObject[], timestamp: number }`
 - **Functions:**
   - `openAsterDB()` — opens or creates the database
@@ -74,7 +70,7 @@ This agent owns all external API communication, cache management, and data mergi
 ### localStorage (fallback + small data)
 | Key                    | Value                              | TTL      |
 |------------------------|------------------------------------|----------|
-| `aster_catalog_v1`     | `{ data: top2000[], timestamp }`   | 24 hours |
+| `aster_catalog_v2`     | `{ data: top2000[], timestamp }`   | 24 hours |
 | `aster_nhats_v1`       | `{ rows: NHATSRow[], timestamp }`  | 24 hours |
 | `aster_filter_presets` | `{ [name]: FilterState }`          | Permanent|
 | `aster_toured`         | `'1'`                              | Permanent|
@@ -126,15 +122,17 @@ This agent owns all external API communication, cache management, and data mergi
 ## Cloudflare Worker (`worker/index.js`)
 
 ### Endpoints
-| Method  | Path            | Action                                 |
-|---------|-----------------|----------------------------------------|
-| `POST`  | `/api/research` | Proxies to OpenAI, returns AI briefing |
-| `OPTIONS`| `/api/research`| CORS preflight (204)                   |
-| any     | other           | 404                                    |
+| Method   | Path            | Action                                          |
+|----------|-----------------|-------------------------------------------------|
+| `GET`    | `/api/nhats`    | Proxy NASA NHATS API with CORS headers (24h cache) |
+| `GET`    | `/api/prices`   | Static commodity prices; optional live metals-api.com fetch (1h cache) |
+| `POST`   | `/api/research` | Proxies to OpenAI, returns AI briefing          |
+| `OPTIONS`| any             | CORS preflight (204)                            |
+| any      | other           | 404                                             |
 
 ### CORS Configuration
 - Allowed origins: `https://hudsonclavin-cloud.github.io`, `http://localhost:8080`
-- Methods: `POST, OPTIONS`
+- Methods: `GET, POST, OPTIONS`
 - Headers: `Content-Type`
 - Max-Age: `86400` (24 hours)
 
@@ -158,7 +156,6 @@ This agent owns all external API communication, cache management, and data mergi
 ## Load Progress Tracking
 ```js
 loadSourceStatus = {
-  sbdb:     'loading' | 'ok' | 'error',
   asterank: 'loading' | 'ok' | 'error',
   nhats:    'loading' | 'ok' | 'error'
 }
@@ -168,10 +165,10 @@ Each source update triggers a `#loading-sub` text update.
 ## Data Pipeline Flow
 ```
 fetchCatalog cmd → worker
-  ├── fetchSBDB()           → ~3500 NEAs (JPL SBDB)
-  ├── fetchAsterankWorker() → economic fields (Asterank via proxy)
-  └── fetchNHATSWorker()    → accessibility targets (NASA NHATS)
-        ↓ merge by designation
+  ├── fetchAsterankWorker() → up to 5000 NEAs (primary source, orbital + economic fields)
+  └── fetchNHATSWorker()    → accessibility targets (NASA NHATS via Cloudflare proxy)
+        ↓ Asterank-primary loop: validate a/e, compute per (Kepler), derive class (orbital elements)
+        ↓ match NHATS by pdes designation
 catalog_ready → asteroidData[] → init() → buildAsteroidMesh()
                                         → applyNHATSData()
                                         → applyFilters()

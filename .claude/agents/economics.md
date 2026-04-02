@@ -70,10 +70,10 @@ Hardcoded per spectral class (e.g. C-type: "Carbonaceous — water ice, organics
 | `ast.delta_v` | Asterank  | Delta-v accessibility (km/s)         |
 | `ast._score`  | Computed  | Composite mining score 0–100         |
 | `ast._diam_m` | Computed  | Diameter in meters                   |
-| `ast.spec_B`  | SBDB      | Spectral type (Bus-DeMeo)            |
-| `ast.spec_T`  | SBDB      | Spectral type (Tholen)               |
-| `ast.H`       | SBDB      | Absolute magnitude (used for diam estimate) |
-| `ast.diameter`| SBDB      | Diameter in km (if available)        |
+| `ast.spec_B`  | Asterank  | Spectral type (Bus-DeMeo)            |
+| `ast.spec_T`  | Asterank  | Spectral type (Tholen)               |
+| `ast.H`       | Asterank  | Absolute magnitude (used for diam estimate) |
+| `ast.diameter`| Asterank  | Diameter in km (if available)        |
 
 ## Score → Color Mapping
 ```
