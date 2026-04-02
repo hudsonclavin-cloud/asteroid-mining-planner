@@ -3746,6 +3746,13 @@ function selectTrajectory(idx) {
   missionEarthReturnPos = null;
   clearTrajectoryLine();
   drawTrajectoryLine(traj.earthPos, traj.astPos);
+  // Frame camera on Earth departure position to show trajectory
+  {
+    const ep  = traj.earthPos;
+    const ap  = traj.astPos;
+    const sep = Math.hypot(ap.x - ep.x, ap.y - ep.y, ap.z - ep.z);
+    flyTarget = { x: ep.x, y: ep.y, z: ep.z, dist: Math.max(1.5, sep * 1.2), progress: 0 };
+  }
   // Request accurate Earth return position
   if (traj.jd_ret_arr) {
     worker.postMessage({ cmd:'query_pos', jd: traj.jd_ret_arr, planetIdx: 2, reqId: 'earth_return' });
