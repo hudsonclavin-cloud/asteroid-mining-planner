@@ -817,7 +817,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <option value="">— PRESET —</option>
       <optgroup label="BUILT-IN">
         <option value="easy">Easy Reach</option>
-        <option value="platinum">Platinum Hunt</option>
+        <option value="metal">High Metal Content</option>
         <option value="nearterm">Near-Term</option>
         <option value="deep">Deep Space</option>
       </optgroup>
@@ -867,12 +867,6 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       </div>
     </div>
 
-    <!-- Min score -->
-    <div class="filter-row" style="margin-top:8px">
-      <span class="flabel">MIN SCORE</span>
-      <input type="range" id="filter-score" class="filter-slider" min="0" max="100" step="1" value="0">
-      <span class="fval" id="filter-score-val">0</span>
-    </div>
   </div>
 
   <!-- Spectral type chips -->
@@ -897,18 +891,18 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   <!-- Sort -->
   <div class="panel-header" style="margin-top:12px">SORT BY</div>
   <select id="lb-sort-select" class="aster-select" style="margin-bottom:8px">
-    <option value="score">Mining Score ↓</option>
-    <option value="value">Resource Value ↓</option>
-    <option value="dv">Delta-V ↑</option>
+    <option value="dv">ΔV ↑ (most accessible)</option>
+    <option value="duration">Duration ↑</option>
+    <option value="value">Value ↓ (optimistic)</option>
     <option value="diam">Diameter ↓</option>
-    <option value="duration">NHATS Duration ↑</option>
+    <option value="name">Name A–Z</option>
   </select>
 
   <!-- Export catalog -->
   <button class="ftoggle" id="btn-export-catalog" style="margin-bottom:10px">↓ EXPORT FILTERED CATALOG</button>
 
   <!-- Leaderboard -->
-  <div class="panel-header">★ TOP TARGETS</div>
+  <div class="panel-header">◈ ACCESSIBLE TARGETS</div>
   <div id="leaderboard-list" style="max-height:360px;overflow-y:auto;margin-top:4px"></div>
 </div>
 
@@ -960,12 +954,14 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div class="data-row"><span class="label">WATER (space)</span><span class="value accent" id="ast-water-val">—</span></div>
     <div class="data-row"><span class="label">METALS</span><span class="value" id="ast-metal-val">—</span></div>
     <div class="data-row"><span class="label">TOTAL EST.</span><span class="value profit" id="ast-total-val">—</span></div>
-    <div class="data-row" style="margin-top:6px">
-      <span class="label">SCORE</span>
-      <span class="value accent" id="ast-score-display">—</span>
-    </div>
-    <div style="height:3px;background:#1a2235;margin:4px 0 10px">
-      <div id="ast-score-bar" style="height:100%;background:#00d4ff;transition:width 0.3s;width:0%"></div>
+    <div id="feasibility-card" style="display:none;margin:6px 0 10px;padding:6px 8px;
+      border:1px solid #1a2235;font-size:9px;line-height:1.8;color:#c8d6e5">
+      <div style="color:#00d4ff;font-size:8px;letter-spacing:0.1em;margin-bottom:3px">◈ FEASIBILITY</div>
+      <div id="fi-dv">ΔV: —</div>
+      <div id="fi-dur">TOF: —</div>
+      <div id="fi-access">PATHS: —</div>
+      <div id="fi-value">VALUE: —</div>
+      <div id="fi-hazard">HAZARD: —</div>
     </div>
 
     <div id="nhats-badge" style="display:none;margin:6px 0 4px;padding:5px 8px;border:1px solid #fbbf24;color:#fbbf24;font-size:10px;letter-spacing:0.12em">
@@ -1397,20 +1393,41 @@ function getAsteroidDV(ast) {
   return Math.max(3.0, Math.min(12.0, dv_au_yr * 4.740)); // AU/yr → km/s
 }
 
-function computeScore(ast) {
-  const profit_score = Math.log10(Math.max(1, Number(ast.profit) || 0)) / 12;
-  const access_score = 1 - Math.min(12, getAsteroidDV(ast)) / 12;
-  const H = Number(ast.H) || 20;
-  const diameter_m = (1329 / Math.sqrt(0.15)) * Math.pow(10, -H / 5) * 1000;
-  const size_score = Math.min(1, Math.log10(Math.max(1, diameter_m)) / 6);
-  return Math.round((profit_score * 0.40 + access_score * 0.40 + size_score * 0.20) * 100);
-}
+// Returns source-labeled feasibility metrics. No profit weighting.
+function computeFeasibilityMetrics(ast) {
+  // ΔV: prefer NHATS verified value, then Asterank field, then Aster estimate
+  let dvVal, dvUnc, dvSrc;
+  if (ast.nhats?.accessible && Number(ast.nhats.minDv) > 0) {
+    dvVal = Number(ast.nhats.minDv); dvUnc = 0.3; dvSrc = 'NHATS';
+  } else if (Number(ast.delta_v) > 0) {
+    dvVal = Number(ast.delta_v);     dvUnc = 1.5; dvSrc = 'Asterank';
+  } else {
+    dvVal = getAsteroidDV(ast);      dvUnc = 2.0; dvSrc = 'Aster est.';
+  }
 
-function scoreToColor(score) {
-  if (score >= 86) return new THREE.Color(0xfef3c7);
-  if (score >= 67) return new THREE.Color(0x4af7c4);
-  if (score >= 34) return new THREE.Color(0x92400e);
-  return new THREE.Color(0x7f1d1d);
+  // Duration: prefer NHATS, else rough estimate from ΔV
+  let durVal, durUnc, durSrc;
+  if (ast.nhats?.accessible && Number(ast.nhats.minDur) > 0) {
+    durVal = Number(ast.nhats.minDur); durUnc = 15;  durSrc = 'NHATS';
+  } else {
+    durVal = Math.round(180 + (dvVal - 3) * 20);    durUnc = 60;  durSrc = 'Aster est.';
+  }
+
+  // Value range (10%–30% extraction efficiency)
+  const rawVal = Number(ast.price) || 0;
+
+  // Hazard
+  const pha  = ast.pha === 'Y';
+  const moid = Number(ast.moid) || null;
+  const riskLevel = pha ? 'high' : (moid !== null && moid < 0.05) ? 'low' : 'none';
+
+  return {
+    deltaV:        { value: dvVal,  uncertainty: dvUnc,  source: dvSrc  },
+    duration:      { value: durVal, uncertainty: durUnc, source: durSrc },
+    accessibility: { nhatsVerified: !!(ast.nhats?.accessible), trajectoryCount: ast.nhats?.nTrajectories || 0 },
+    valueRange:    { conservative: rawVal * 0.10, optimistic: rawVal * 0.30 },
+    hazard:        { moid, pha, riskLevel },
+  };
 }
 
 // ─── Phase 10: Spectral-type based asteroid colors ────────────────────────────
@@ -2274,10 +2291,10 @@ let wasDragging = false;
 let positionCache = new Float32Array(0);
 let visibleScale = new Float32Array(0);
 let filteredIds = [];
-let lbSortMode = 'score';
+let lbSortMode = 'dv';
 let flyTarget = null;
 let leftPanelOpen = false;
-let filterScore = 0, filterDV = 15, filterDiam = 0, filterInc = 30, filterSMA = 3.5;
+let filterDV = 15, filterDiam = 0, filterInc = 30, filterSMA = 3.5;
 let filterSpec = { C:true, S:true, M:true, X:true, D:true, other:true };
 let filterNHATS = false, filterPHA = false, filterWater = false;
 // Phase 7: advanced filter state
@@ -2542,7 +2559,7 @@ function buildAsteroidMesh(data) {
   for (let i = 0; i < asteroidCount; i++) {
     const ast = asteroidData[i];
     const H = Number(ast.H) || 20;
-    ast._score = computeScore(ast);
+    ast._fi = computeFeasibilityMetrics(ast); // structured feasibility data (no score)
     const _albedo = Number(ast.albedo) || 0.15;
     const _diamKm = ast.diameter && Number(ast.diameter) > 0
       ? Math.min(35, Number(ast.diameter))
@@ -2619,7 +2636,6 @@ function updateDualRangeUI(prefix, minVal, maxVal, absMin, absMax, fmtFn) {
 
 function updateFilterBadge() {
   let count = 0;
-  if (filterScore > 0) count++;
   if (filterDvMin > 0 || filterDvMax < 15) count++;
   if (filterValMin > 0 || filterValMax < 100) count++;
   if (filterWindowStart > 2025 || filterWindowEnd < 2045) count++;
@@ -2651,7 +2667,6 @@ function applyFilters() {
     const dv = getAsteroidDV(ast);
     const sk = getSpecKey(ast);
 
-    if ((ast._score || 0) < filterScore) vis = false;
     if (dv < filterDvMin || dv > filterDvMax) vis = false;
     if ((ast._diam_m || 0) < filterDiam) vis = false;
     if ((Number(ast.i) || 0) > filterInc) vis = false;
@@ -2675,7 +2690,7 @@ function applyFilters() {
     if (vis) {
       asteroidMesh.setColorAt(i, ast.nhats?.accessible ? amber : spectralTypeColor(ast));
       matchCount++;
-      filteredIds.push({ i, score: ast._score || 0 });
+      filteredIds.push({ i, dv: getAsteroidDV(asteroidData[i]) });
     } else {
       asteroidMesh.setColorAt(i, _DIM_COLOR);
     }
@@ -2693,11 +2708,9 @@ function applyFilters() {
 // ─── Phase 7: filter utilities ────────────────────────────────────────────────
 function syncFilterDOM() {
   const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-  setVal('filter-score', filterScore);
   setVal('dv-min', filterDvMin); setVal('dv-max', filterDvMax);
   setVal('val-min', filterValMin); setVal('val-max', filterValMax);
   setVal('filter-win-start', filterWindowStart); setVal('filter-win-end', filterWindowEnd);
-  const fsv = document.getElementById('filter-score-val'); if (fsv) fsv.textContent = filterScore;
   updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, 15, v => v.toFixed(1) + ' km/s');
   updateDualRangeUI('val', filterValMin, filterValMax, 0, 100, fmtSliderVal);
   document.querySelectorAll('.spec-chip').forEach(btn => {
@@ -2712,20 +2725,20 @@ function syncFilterDOM() {
 }
 
 function resetFilters() {
-  filterScore = 0; filterDV = 15; filterDiam = 0; filterInc = 30; filterSMA = 3.5;
+  filterDV = 15; filterDiam = 0; filterInc = 30; filterSMA = 3.5;
   filterDvMin = 0; filterDvMax = 15; filterValMin = 0; filterValMax = 100;
   filterWindowStart = 2025; filterWindowEnd = 2045;
   filterNHATS = false; filterPHA = false; filterWater = false;
   filterSpec = { C:true, S:true, M:true, X:true, D:true, other:true };
-  lbSortMode = 'score';
+  lbSortMode = 'dv';
   syncFilterDOM();
   applyFilters();
   setStatus('Filters reset', true);
 }
 
 const BUILT_IN_PRESETS = {
-  easy:     { filterDvMax:6, filterNHATS:true, filterScore:50 },
-  platinum: { filterSpec:{ C:false,S:false,M:true,X:false,D:false,other:false }, filterValMin: valueToSliderPos(1e12), filterDvMax:10 },
+  easy:     { filterDvMax:6, filterNHATS:true },
+  metal:    { filterSpec:{ C:false,S:false,M:true,X:false,D:false,other:false }, filterValMin: valueToSliderPos(1e12), filterDvMax:10 },
   nearterm: { filterWindowStart:2025, filterWindowEnd:2030, filterDvMax:8 },
   deep:     { filterDvMax:15 },
 };
@@ -2739,7 +2752,6 @@ function applyPreset(key) {
   if (p.filterDvMax !== undefined) filterDvMax = p.filterDvMax;
   if (p.filterDvMin !== undefined) filterDvMin = p.filterDvMin;
   if (p.filterNHATS !== undefined) filterNHATS = p.filterNHATS;
-  if (p.filterScore !== undefined) filterScore = p.filterScore;
   if (p.filterSpec !== undefined) filterSpec = { C:true,S:true,M:true,X:true,D:true,other:true, ...p.filterSpec };
   if (p.filterValMin !== undefined) filterValMin = p.filterValMin;
   if (p.filterValMax !== undefined) filterValMax = p.filterValMax;
@@ -2753,7 +2765,7 @@ function saveUserPreset(name) {
   if (!name.trim()) return;
   const key = 'user_' + name.trim().replace(/[^a-z0-9_]/gi, '_').toLowerCase();
   const saved = JSON.parse(localStorage.getItem('aster_filter_presets') || '{}');
-  saved[key] = { filterScore, filterDvMin, filterDvMax, filterValMin, filterValMax,
+  saved[key] = { filterDvMin, filterDvMax, filterValMin, filterValMax,
     filterWindowStart, filterWindowEnd, filterNHATS, filterPHA, filterWater,
     filterSpec: { ...filterSpec }, label: name.trim() };
   try { localStorage.setItem('aster_filter_presets', JSON.stringify(saved)); } catch(_) {}
@@ -2775,7 +2787,7 @@ function populateSavedPresets() {
 
 function exportFilteredCatalog() {
   if (filteredIds.length === 0) { setStatus('No asteroids match current filters', true); return; }
-  const header = 'designation,spec_type,score,delta_v_kms,value_usd,profit_usd,diameter_km,inclination_deg,nhats_accessible,nhats_min_dv,nhats_min_dur,nhats_trajectories,nhats_occ';
+  const header = 'designation,spec_type,delta_v_kms,value_usd,profit_usd,diameter_km,inclination_deg,nhats_accessible,nhats_min_dv,nhats_min_dur,nhats_trajectories,nhats_occ';
   const rows = filteredIds.slice(0, 500).map(({ i }) => {
     const ast = asteroidData[i];
     const dv = getAsteroidDV(ast);
@@ -2783,7 +2795,6 @@ function exportFilteredCatalog() {
     return [
       `"${(ast.full_name || ast.pdes || '?').replace(/"/g,'')}"`,
       ast.spec || ast.spec_T || '?',
-      ast._score || 0,
       dv.toFixed(3),
       Number(ast.price) || 0,
       Number(ast.profit) || 0,
@@ -2810,26 +2821,38 @@ function renderLeaderboard() {
   if (!container) return;
 
   const sorted = [...filteredIds];
-  if (lbSortMode === 'value') sorted.sort((a,b) => (Number(asteroidData[b.i].price)||0)-(Number(asteroidData[a.i].price)||0));
-  else if (lbSortMode === 'dv') sorted.sort((a,b) => getAsteroidDV(asteroidData[a.i])-getAsteroidDV(asteroidData[b.i]));
-  else if (lbSortMode === 'diam') sorted.sort((a,b) => (asteroidData[b.i]._diam_m||0)-(asteroidData[a.i]._diam_m||0));
+  if      (lbSortMode === 'value')    sorted.sort((a,b) => (Number(asteroidData[b.i].price)||0)-(Number(asteroidData[a.i].price)||0));
+  else if (lbSortMode === 'diam')     sorted.sort((a,b) => (asteroidData[b.i]._diam_m||0)-(asteroidData[a.i]._diam_m||0));
   else if (lbSortMode === 'duration') sorted.sort((a,b) => (asteroidData[a.i].nhats?.minDur ?? 9999)-(asteroidData[b.i].nhats?.minDur ?? 9999));
-  else sorted.sort((a,b) => b.score - a.score);
+  else if (lbSortMode === 'name')     sorted.sort((a,b) => (asteroidData[a.i].full_name||'').localeCompare(asteroidData[b.i].full_name||''));
+  else                                sorted.sort((a,b) => getAsteroidDV(asteroidData[a.i])-getAsteroidDV(asteroidData[b.i])); // dv default
 
   const top50 = sorted.slice(0, 50);
   container.innerHTML = top50.map(({i: idx}, rank) => {
     const ast = asteroidData[idx];
     const sk = getSpecKey(ast);
     const skClass = ['C','S','M','X','D'].includes(sk) ? sk : 'O';
-    const scoreColor = ast._score >= 86 ? '#fef3c7' : ast._score >= 67 ? '#00d4ff' : ast._score >= 34 ? '#d97706' : '#7f1d1d';
-    const nhats = ast._nhats ? '<span style="color:#34d399;font-size:9px;margin-left:2px">N</span>' : '';
+    const fi     = ast._fi || computeFeasibilityMetrics(ast);
+    const dvStr  = fi.deltaV.value.toFixed(1) + (fi.deltaV.source !== 'NHATS' ? '*' : '');
+    const durStr = fi.duration.value > 0 ? Math.round(fi.duration.value) + (fi.duration.source !== 'NHATS' ? '*' : '') : '—';
+    const valStr = fi.valueRange.optimistic > 0 ? fmtUSD(fi.valueRange.optimistic) : '—';
+    const nhBadge = fi.accessibility.nhatsVerified
+      ? '<span style="color:#00d4ff;font-size:8px;margin-left:3px" title="NHATS verified">✓</span>'
+      : '';
+    const hazBadge = fi.hazard.riskLevel === 'high'
+      ? '<span style="color:#ef4444;font-size:8px;margin-left:3px" title="PHA">⚠</span>'
+      : '';
+    const name = (ast.full_name || ast.pdes || '—').substring(0, 14);
     return `<div class="lb-row ${selectedId===idx?'lb-selected':''}" data-idx="${idx}">
-      <span class="lb-rank">#${rank+1}</span>
-      <span class="lb-type lb-type-${skClass}">${skClass}</span>
-      <span class="lb-name" title="${ast.full_name||''}">${(ast.full_name||ast.pdes||'—').substring(0,16)}${nhats}</span>
-      <div class="lb-bar"><div class="lb-fill" style="width:${ast._score||0}%;background:${scoreColor}"></div></div>
-      <span class="lb-score">${ast._score||0}</span>
-      <span class="lb-dv">${getAsteroidDV(ast).toFixed(1)}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px">
+        <span style="font-size:9px;color:#c8d6e5">${name}${nhBadge}${hazBadge}</span>
+        <span class="lb-type lb-type-${skClass}" style="font-size:8px">${skClass}</span>
+      </div>
+      <div style="display:flex;gap:6px;font-size:8px;color:#6a8a9a">
+        <span title="Delta-V">ΔV <span style="color:#00d4ff">${dvStr}</span></span>
+        <span title="Mission duration">TOF <span style="color:#c8d6e5">${durStr}d</span></span>
+        <span title="Optimistic value (30% extraction)" style="margin-left:auto">${valStr}</span>
+      </div>
     </div>`;
   }).join('');
 
@@ -3097,7 +3120,7 @@ async function fetchResearch(ast) {
       designation:  ast.pdes,
       spectralType: ast.spec || ast.spec_T || '',
       orbit: { a: ast.a, e: ast.e, i: ast.i },
-      miningScore: ast._score != null ? Math.round(ast._score) : null,
+      deltaV_kms: getAsteroidDV(ast).toFixed(2),
     };
     console.log('[Research] request payload:', payload);
     const res = await fetch(endpoint, {
@@ -3361,14 +3384,6 @@ function onSatelliteSelect(idx) {
 
 // ─── Phase 3: Filter event wiring ─────────────────────────────────────────────
 (function initFilterEvents() {
-  // Min score slider
-  const scoreEl = document.getElementById('filter-score');
-  if (scoreEl) scoreEl.addEventListener('input', () => {
-    filterScore = Number(scoreEl.value);
-    const sv = document.getElementById('filter-score-val'); if (sv) sv.textContent = filterScore;
-    applyFilters();
-  });
-
   // Dual-range ΔV
   const dvMinEl = document.getElementById('dv-min');
   const dvMaxEl = document.getElementById('dv-max');
@@ -3539,7 +3554,7 @@ function exportMissionReport() {
     `  Spectral Type:     ${ast.spec || ast.spec_T || '—'}`,
     `  Diameter:          ${(D_m/1000).toFixed(3)} km`,
     `  Est. Mass:         ${mass_kg.toExponential(2)} kg`,
-    `  Mining Score:      ${ast._score || 0} / 100`,
+    `  ΔV (est.):         ${getAsteroidDV(ast).toFixed(2)} km/s`,
     `  NHATS Status:      ${ast.nhats?.accessible ? 'VERIFIED (JPL)' : ast._nhats ? 'ESTIMATED' : 'NO'}`,
     '',
     '── ORBITAL ELEMENTS ────────────────────────────────────────',
@@ -4410,8 +4425,24 @@ function selectAsteroid(id) {
   document.getElementById('ast-water-val').textContent = fmtUSD(waterVal3);
   document.getElementById('ast-metal-val').textContent = fmtUSD(metalVal3);
   document.getElementById('ast-total-val').textContent = fmtUSD(totalVal3);
-  document.getElementById('ast-score-display').textContent = `${ast._score || 0} / 100`;
-  document.getElementById('ast-score-bar').style.width = `${ast._score || 0}%`;
+  const fi = ast._fi || computeFeasibilityMetrics(ast);
+  const dvDisp  = `${fi.deltaV.value.toFixed(2)} ±${fi.deltaV.uncertainty} km/s  [${fi.deltaV.source}]`;
+  const durDisp = `${Math.round(fi.duration.value)} ±${fi.duration.uncertainty} days  [${fi.duration.source}]`;
+  const accDisp = fi.accessibility.nhatsVerified
+    ? `✓ ${fi.accessibility.trajectoryCount} NHATS trajectories`
+    : 'Not in NHATS catalog';
+  const valLo_fi = fi.valueRange.conservative, valHi_fi = fi.valueRange.optimistic;
+  const valDisp = valHi_fi > 0 ? `${fmtUSD(valLo_fi)} – ${fmtUSD(valHi_fi)}` : '—';
+  const hazDisp = fi.hazard.riskLevel === 'high' ? '⚠ PHA (high)'
+                : fi.hazard.riskLevel === 'low'  ? `Low (MOID ${fi.hazard.moid?.toFixed(3)} AU)`
+                : fi.hazard.moid !== null          ? `None (MOID ${fi.hazard.moid?.toFixed(3)} AU)`
+                : 'None';
+  document.getElementById('fi-dv').textContent     = 'ΔV:  ' + dvDisp;
+  document.getElementById('fi-dur').textContent    = 'TOF: ' + durDisp;
+  document.getElementById('fi-access').textContent = 'PATHS: ' + accDisp;
+  document.getElementById('fi-value').textContent  = 'VALUE: ' + valDisp;
+  document.getElementById('fi-hazard').textContent = 'HAZARD: ' + hazDisp;
+  document.getElementById('feasibility-card').style.display = 'block';
 
   const nhatsBadge = document.getElementById('nhats-badge');
   if (ast.nhats?.accessible) {
@@ -4481,6 +4512,7 @@ function deselectAsteroid() {
   document.getElementById('right-panel').classList.remove('panel-open');
   document.getElementById('panel-idle').style.display = 'block';
   document.getElementById('panel-data').style.display = 'none';
+  const fc = document.getElementById('feasibility-card'); if (fc) fc.style.display = 'none';
   clearTrail();
   orbitLine.visible = false;
   nhatsRing.visible = false;
@@ -4839,7 +4871,7 @@ function onPointerMove(e) {
           const ast = asteroidData[bestId];
           const name = (ast.full_name || ast.pdes || '—').substring(0, 24);
           const spec = (ast.spec || ast.spec_T || '?').trim();
-          tt.innerHTML = `<span style="color:#00d4ff">${name}</span><br>${spec}-type · Score ${ast._score || 0}<br>${fmtUSD(Number(ast.price) || 0)}`;
+          tt.innerHTML = `<span style="color:#00d4ff">${name}</span><br>${spec}-type · ΔV ${getAsteroidDV(ast).toFixed(1)} km/s<br>${fmtUSD(Number(ast.price) || 0)}`;
           tt.style.display = 'block';
           renderer.domElement.style.cursor = 'pointer';
           if (bestId !== selectedId) showHoverEllipse(ast);

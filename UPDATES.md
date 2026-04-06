@@ -4,6 +4,38 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9C — Feasibility Index (Replace Mining Score) (2026-04-06)
+
+### Summary
+Replaced the gamey "Mining Score" (profit-weighted 0–100) with a multi-dimensional "Feasibility Summary" showing independent, source-labeled metrics. No rendering, camera, Three.js scene, or right-panel changes.
+
+### Changes (`index.html` only)
+
+**Removed:**
+- `computeScore()` and `scoreToColor()` — deleted entirely
+- `filterScore` variable and all references (`updateFilterBadge`, `syncFilterDOM`, `resetFilters`, `applyFilters`, `saveUserPreset`, `applyPreset`)
+- MIN SCORE slider HTML (`#filter-score`, `#filter-score-val`)
+- `#ast-score-display` and `#ast-score-bar` inspector elements
+- `lb-bar` / `lb-fill` / `lb-score` elements from leaderboard rows
+- "Mining Score ↓" sort option; `score` sort default
+
+**Added:**
+- `computeFeasibilityMetrics(ast)` — returns `{ deltaV, duration, accessibility, valueRange, hazard }` with source labels (NHATS / Asterank / Aster est.) and uncertainty ranges
+- `#feasibility-card` inspector widget with `#fi-dv`, `#fi-dur`, `#fi-access`, `#fi-value`, `#fi-hazard` rows
+- Leaderboard now shows ΔV / TOF / optimistic value columns; NHATS ✓ and PHA ⚠ badges
+
+**Changed:**
+- `ast._score` → `ast._fi` assignment at catalog build
+- Leaderboard sort default: `'score'` → `'dv'`; new "Name A–Z" option added
+- Leaderboard title: "★ TOP TARGETS" → "◈ ACCESSIBLE TARGETS"
+- "Platinum Hunt" preset → "High Metal Content" (`platinum` key → `metal`)
+- Hover tooltip: `Score X` → `ΔV X km/s`
+- Mission report: `Mining Score: X / 100` → `ΔV (est.): X km/s`
+- CSV export: removed `score` column, header updated
+- Research API payload: `miningScore` → `deltaV_kms`
+
+---
+
 ## Phase 9B — NASA API Ground Truth Integration (2026-04-06)
 
 ### Summary
