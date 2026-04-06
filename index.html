@@ -3159,7 +3159,7 @@ function applyNHATSData(rows) {
   for (let i = 0; i < asteroidData.length; i++) {
     const ast = asteroidData[i];
     const des = (ast.pdes || '').trim();
-    const row = nhatsMap.get(des);
+    const row = nhatsMap.get(des) || nhatsMap.get(des.replace(/\s+.*/, ''));
     if (row) {
       ast.nhats = { accessible: true, minDv: row.min_dv, minDur: row.min_dur, nTrajectories: row.n_via_points, stayTime: row.min_stay, occ: row.occ };
       ast._nhats = true;

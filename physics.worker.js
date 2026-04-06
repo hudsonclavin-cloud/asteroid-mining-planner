@@ -966,7 +966,6 @@ self.onmessage = function(e) {
           profit:    Number(row.profit)  || 0,
           moid:      Number(row.moid)    || 0,
           delta_v:   Number(row.delta_v) || 0,
-          _score:    Number(row.score)   || 0,
           nhats: nhatsRow ? {
             accessible:    true,
             minDv:         nhatsRow.min_dv,
