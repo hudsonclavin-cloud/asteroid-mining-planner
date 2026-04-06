@@ -707,6 +707,7 @@ self.onmessage = function(e) {
 
         const pc = patchedConic(ve, lam.v1, va, lam.v2, r_park_km);
         if (!pc) continue;
+        if (pc.dv_dep > 15 || pc.dv_arr > 15) continue; // infeasible single-burn
 
         phase1.push({
           jd_dep, jd_arr, tof,
@@ -769,6 +770,7 @@ self.onmessage = function(e) {
 
       const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
+      if (dv_total > 20) continue; // infeasible round-trip
 
       results.push({
         jd_dep:    c.jd_dep,
@@ -795,7 +797,8 @@ self.onmessage = function(e) {
     }
 
     results.sort((a, b) => a.dv_total - b.dv_total);
-    self.postMessage({ type: 'plan_result', results: results.slice(0, 10) });
+    const top = results.slice(0, 10);
+    self.postMessage({ type: 'plan_result', results: top, noFeasibleWindow: top.length === 0 });
     return;
   }
 

@@ -4,6 +4,45 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9A — Physics Emergency Patch (2026-04-06)
+
+### Root Cause (corrected)
+The prompt described vis-viva Hohmann as the root cause, but the codebase already used Izzo 2015 Lambert + patched-conic correctly (`izzoLambert`, `lambert`, `patchedConic`, `destinationCaptureDv` in `physics.worker.js`). The actual causes of 64 km/s ΔV / $55 quintillion cost were:
+1. **No infeasibility gates** in `plan_mission` — short-TOF Lambert solutions for far/inclined asteroids produce 60+ km/s "valid" results that were never filtered.
+2. **Uncapped Tsiolkovsky** in `propellantKgNum` — at 64 km/s + Isp 320 s, mass ratio ≈ 726 million → 37 trillion kg wet mass → $55 quintillion launch cost.
+3. **No staged-vehicle fallback** — single-stage model applied regardless of mass ratio.
+
+### Changes
+
+**`physics.worker.js` — `plan_mission` infeasibility gates (lines ~708, ~771):**
+- Phase 1: after `patchedConic()`, skip if `dv_dep > 15 km/s` or `dv_arr > 15 km/s`
+- Phase 2: after computing `dv_total`, skip if `dv_total > 20 km/s`
+- Adds `noFeasibleWindow: true` to the `plan_result` message when result set is empty
+
+**`index.html` — `propellantKgNum` (~line 3641):**
+- Hard cap at 95% propellant fraction: `Math.min(raw, m_dry * 19)`
+- Prevents astronomical mass even if a high-ΔV trajectory slips through
+
+**`index.html` — `tsiolkovsky` display function (~line 1886):**
+- Same 95% cap applied; appends `(cap)` suffix when cap is active
+- Replaced `>1000 t` truncation with proper kt display
+
+**`index.html` — `computeMissionProfile` (~line 3805):**
+- 3-stage chemical model when single-stage mass ratio > 10 (stages: Isp 320/350/320 s, equal ΔV split)
+- OVERWEIGHT flag now suggests cheapest vehicle with sufficient capacity
+- Revenue replaced with conservative (10%) / optimistic (30%) extraction efficiency ranges
+- NPV at 5% annual discount added for both scenarios
+- Footer updated to `Phase 9A`
+
+**`index.html` — `onPlanResult` (~line 3727):**
+- Handles `noFeasibleWindow` flag with a red "NO FEASIBLE WINDOW FOUND" UI state and guidance text
+
+### Sanity Check Targets
+- **Bennu (101955):** NHATS min_dv ≈ 5.1 km/s one-way → expect round-trip `dv_total` ≤ 14 km/s, wet mass < 63,800 kg
+- **Ryugu (162173):** NHATS min_dv ≈ 4.7 km/s one-way → expect round-trip `dv_total` ≤ 12 km/s
+
+---
+
 ## Asterank-Only Pipeline (2026-04-01)
 
 ### Summary
