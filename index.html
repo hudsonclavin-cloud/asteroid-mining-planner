@@ -2394,7 +2394,7 @@ worker.onmessage = ({ data }) => {
     return;
   }
   if (data.type === 'plan_result') {
-    onPlanResult(data.results, data.noFeasibleWindow);
+    onPlanResult(data.results, data.noFeasibleWindow, data.dbg);
     return;
   }
   if (data.type === 'query_pos_result' && data.reqId === 'earth_return' && data.ok) {
@@ -3740,15 +3740,20 @@ function runMissionOptimizer() {
   });
 }
 
-function onPlanResult(results, noFeasibleWindow) {
+function onPlanResult(results, noFeasibleWindow, dbg) {
   document.getElementById('mp-computing').style.display = 'none';
+  if (dbg) console.log('[plan_result] diag:', dbg);
   if (noFeasibleWindow || !results || results.length === 0) {
     const el = document.getElementById('mp-results');
+    const dbgLine = dbg
+      ? `<br><span style="color:#4b5563;font-size:9px">diag: lambert_null=${dbg.lambert_null} gate_fail=${dbg.gate_fail} phase1=${dbg.phase1_count} best_dv=${dbg.best_dv ?? '—'}</span>`
+      : '';
     el.innerHTML =
       '<div style="color:#ef4444;padding:12px 4px;font-size:10px;line-height:1.6">' +
       'NO FEASIBLE WINDOW FOUND<br>' +
       '<span style="color:#6b7280">All trajectories exceed 20 km/s total ΔV or 15 km/s per burn.<br>' +
-      'Try a different asteroid, extend the search window, or select a lower-ΔV target.</span></div>';
+      'Try a different asteroid, extend the search window, or select a lower-ΔV target.</span>' +
+      dbgLine + '</div>';
     el.style.display = 'block';
     return;
   }

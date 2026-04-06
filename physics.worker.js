@@ -677,6 +677,7 @@ self.onmessage = function(e) {
     const phase1 = [];
 
     // ── Phase 1: outbound Lambert grid ──────────────────────────────────────
+    let dbg_lambert_null = 0, dbg_gate_fail = 0, dbg_best_dv = Infinity;
     for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += STEP_DEP) {
       depIdx++;
       if (depIdx % 15 === 0) {
@@ -703,11 +704,13 @@ self.onmessage = function(e) {
 
         let lam = izzoLambert(r1, r2, tof);
         if (!lam) lam = lambert(r1, r2, tof);
-        if (!lam) continue;
+        if (!lam) { dbg_lambert_null++; continue; }
 
         const pc = patchedConic(ve, lam.v1, va, lam.v2, r_park_km);
         if (!pc) continue;
-        if (pc.dv_dep > 15 || pc.dv_arr > 15) continue; // infeasible single-burn
+        const combined = pc.dv_dep + pc.dv_arr;
+        if (combined < dbg_best_dv) dbg_best_dv = combined;
+        if (pc.dv_dep > 15 || pc.dv_arr > 15) { dbg_gate_fail++; continue; } // infeasible single-burn
 
         phase1.push({
           jd_dep, jd_arr, tof,
@@ -798,7 +801,9 @@ self.onmessage = function(e) {
 
     results.sort((a, b) => a.dv_total - b.dv_total);
     const top = results.slice(0, 10);
-    self.postMessage({ type: 'plan_result', results: top, noFeasibleWindow: top.length === 0 });
+    const dbg = { lambert_null: dbg_lambert_null, gate_fail: dbg_gate_fail,
+      phase1_count: phase1.length, best_dv: dbg_best_dv === Infinity ? null : +dbg_best_dv.toFixed(2) };
+    self.postMessage({ type: 'plan_result', results: top, noFeasibleWindow: top.length === 0, dbg });
     return;
   }
 
