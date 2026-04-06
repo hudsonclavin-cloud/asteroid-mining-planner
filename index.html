@@ -3828,6 +3828,9 @@ function computeMissionProfile(traj) {
   }
   const frac = propKg / wetKg;
 
+  const dot = (label, val) => `  ${label.padEnd(22, '.')} ${val}`;
+  const sep = (label) => `\n─── ${label} ${'─'.repeat(Math.max(0, 45 - label.length))}`;
+
   // ── Launch cost & overweight check ──────────────────────────────────────────
   const launchCost = wetKg * lv.cost_per_kg;
   const fits       = wetKg <= lv.max_kg;
@@ -3861,8 +3864,6 @@ function computeMissionProfile(traj) {
   const roiHigh = totalCost > 0 ? (revHigh - totalCost) / totalCost * 100 : 0;
   const breakEvenKg = revenuePerKg > 0 ? Math.ceil(totalCost / (revenuePerKg * 0.20)) : null;
 
-  const dot = (label, val) => `  ${label.padEnd(22, '.')} ${val}`;
-  const sep = (label) => `\n─── ${label} ${'─'.repeat(Math.max(0, 45 - label.length))}`;
   const lines = [
     '═'.repeat(50),
     `  ⚡ MISSION PLAN — ${(ast.name || ast.full_name || ast.designation || '').toUpperCase().slice(0,30)}`,
