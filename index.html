@@ -1390,7 +1390,8 @@ function getAsteroidDV(ast) {
   const dv_transfer = Math.abs(v_ast - v_earth);
   const dv_inc = 2 * v_earth * Math.sin(i_rad / 2);
   const dv_au_yr = dv_transfer + dv_inc * 0.5;
-  return Math.max(3.0, Math.min(12.0, dv_au_yr * 4.740)); // AU/yr → km/s
+  const LEO_DEPART = 3.2; // km/s from LEO to C3≈0 — adds physical floor and realistic totals
+  return Math.min(15.0, dv_au_yr * 4.740 + LEO_DEPART);
 }
 
 // Returns source-labeled feasibility metrics. No profit weighting.
