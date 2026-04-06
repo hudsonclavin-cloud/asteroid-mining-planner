@@ -4,6 +4,37 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9D — Uncertainty Display (2026-04-06)
+
+### Summary
+Adds ±uncertainty to ΔV and cost displays only. All other numbers stay clean single values.
+
+### Changes (`index.html` only)
+
+**New functions:**
+- `computeMissionCost(pointCost, dvUnc)` → `{low, high, point}` — ±15% range widening to ±25% when ΔV uncertainty > 1 km/s
+- `showUncPopup(el, html)` / `hideUncPopup(delay)` — shared hover/click popup manager for ⓘ icons
+- `dvUncHtml(fi)` / `costUncHtml(cost, dvUnc, opsDays)` — popup content builders with clickable source links
+
+**Updated `computeFeasibilityMetrics`:**
+- Added `method` field to `deltaV`: `'nhats'` / `'asterank'` / `'hohmann-visviva'`
+- Corrected uncertainties: NHATS ±0.2, Asterank ±0.8, Aster est. ±3.0
+
+**ΔV format everywhere:** `"5.1 km/s (±0.3)"` — inspector `#ast-dv`, feasibility card `fi-dv`, leaderboard `dvStr`, economics tab `eco-dv`
+
+**Cost format:** `"$680M – $820M"` — economics tab total cost, mission profile COSTS section
+
+**ⓘ icons:** Added to inspector ΔV (`#ast-dv-icon`), feasibility card ΔV (`fi-dv-icon`), economics total cost (`eco-cost-icon`). Clicking opens popup with method label, uncertainty value, and linked source (NHATS, Asterank, Aster).
+
+**Mission profile:** COSTS section now shows ranges (launch ±10%, ops ±15%, total ±15/25%). New PROPAGATION METHOD section shows solver, propagator, spacecraft params, ΔV/cost uncertainty, and gravity-loss caveat.
+
+**CSS:** `.unc-icon`, `.unc-popup` classes; `#unc-popup` shared DOM element.
+
+### Not changed
+Duration, diameter, orbital elements, spectral type, names, dates, filters, 3D scene, research panel.
+
+---
+
 ## Phase 9C — Feasibility Index (Replace Mining Score) (2026-04-06)
 
 ### Summary

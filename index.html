@@ -687,6 +687,22 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 .spec-chip[data-spec="X"].active { background: rgba(204,102,255,0.15);border-color: #cc66ff; color: #cc66ff; box-shadow: none; }
 .spec-chip[data-spec="D"].active,
 .spec-chip[data-spec="other"].active { background: rgba(0,212,255,0.08); border-color: #00d4ff; color: #00d4ff; box-shadow: none; }
+/* ─── Phase 9D: Uncertainty info icons ──────────────────────────────────────── */
+.unc-icon {
+  display: inline-block; cursor: pointer; color: #4b5563; font-size: 9px;
+  margin-left: 3px; line-height: 1; vertical-align: middle;
+  position: relative;
+}
+.unc-icon:hover { color: #00d4ff; }
+.unc-popup {
+  display: none; position: fixed; z-index: 600;
+  background: #0a0a10; border: 1px solid #1a2235;
+  padding: 8px 10px; font-family: 'Space Mono', monospace; font-size: 9px;
+  color: #c8d6e5; max-width: 260px; line-height: 1.7;
+  box-shadow: 0 0 12px rgba(0,212,255,0.15);
+}
+.unc-popup a { color: #00d4ff; text-decoration: none; }
+.unc-popup a:hover { text-decoration: underline; }
 /* ─── Phase 10: Asteroid Tooltip ─────────────────────────────────────────────── */
 #asteroid-tooltip {
   position: fixed; pointer-events: none; z-index: 400;
@@ -942,7 +958,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div class="data-row"><span class="label">SMA</span><span class="value" id="ast-sma">—</span></div>
     <div class="data-row"><span class="label">ECC</span><span class="value" id="ast-ecc">—</span></div>
     <div class="data-row"><span class="label">INC</span><span class="value" id="ast-inc">—</span></div>
-    <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="ast-dv">—</span></div>
+    <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="ast-dv">—</span><span class="unc-icon" id="ast-dv-icon" style="display:none">ⓘ</span></div>
     <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
     <div class="data-row" style="margin-top:8px"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
     <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
@@ -1066,7 +1082,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <div class="data-row"><span class="label">PROPELLANT</span><span class="value" id="eco-propellant">—</span></div>
       <div class="data-row"><span class="label">LAUNCH MASS</span><span class="value" id="eco-launch-mass">—</span></div>
       <div class="data-row"><span class="label">LAUNCH COST</span><span class="value" id="eco-launch-cost">—</span></div>
-      <div class="data-row"><span class="label">TOTAL COST</span><span class="value warning" id="eco-total-cost">—</span></div>
+      <div class="data-row"><span class="label">TOTAL COST</span><span class="value warning" id="eco-total-cost">—</span><span class="unc-icon" id="eco-cost-icon" style="display:none">ⓘ</span></div>
 
       <div class="panel-header" style="margin-top:10px">RETURNS</div>
       <div class="data-row"><span class="label">WATER VALUE</span><span class="value accent" id="eco-water">—</span></div>
@@ -1274,6 +1290,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 
 <div id="asteroid-tooltip"></div>
 <div id="burn-tooltip"></div>
+<div id="unc-popup" class="unc-popup"></div>
 
 <div id="mission-timeline">
   <div id="mission-timeline-inner">
@@ -1397,13 +1414,13 @@ function getAsteroidDV(ast) {
 // Returns source-labeled feasibility metrics. No profit weighting.
 function computeFeasibilityMetrics(ast) {
   // ΔV: prefer NHATS verified value, then Asterank field, then Aster estimate
-  let dvVal, dvUnc, dvSrc;
+  let dvVal, dvUnc, dvSrc, dvMethod;
   if (ast.nhats?.accessible && Number(ast.nhats.minDv) > 0) {
-    dvVal = Number(ast.nhats.minDv); dvUnc = 0.3; dvSrc = 'NHATS';
+    dvVal = Number(ast.nhats.minDv); dvUnc = 0.2; dvSrc = 'NHATS';       dvMethod = 'nhats';
   } else if (Number(ast.delta_v) > 0) {
-    dvVal = Number(ast.delta_v);     dvUnc = 1.5; dvSrc = 'Asterank';
+    dvVal = Number(ast.delta_v);     dvUnc = 0.8; dvSrc = 'Asterank';    dvMethod = 'asterank';
   } else {
-    dvVal = getAsteroidDV(ast);      dvUnc = 2.0; dvSrc = 'Aster est.';
+    dvVal = getAsteroidDV(ast);      dvUnc = 3.0; dvSrc = 'Aster est.';  dvMethod = 'hohmann-visviva';
   }
 
   // Duration: prefer NHATS, else rough estimate from ΔV
@@ -1423,12 +1440,18 @@ function computeFeasibilityMetrics(ast) {
   const riskLevel = pha ? 'high' : (moid !== null && moid < 0.05) ? 'low' : 'none';
 
   return {
-    deltaV:        { value: dvVal,  uncertainty: dvUnc,  source: dvSrc  },
+    deltaV:        { value: dvVal,  uncertainty: dvUnc,  source: dvSrc,  method: dvMethod },
     duration:      { value: durVal, uncertainty: durUnc, source: durSrc },
     accessibility: { nhatsVerified: !!(ast.nhats?.accessible), trajectoryCount: ast.nhats?.nTrajectories || 0 },
     valueRange:    { conservative: rawVal * 0.10, optimistic: rawVal * 0.30 },
     hazard:        { moid, pha, riskLevel },
   };
+}
+
+// Returns {low, high, point} cost range. Widens to ±25% if ΔV uncertainty > 1 km/s.
+function computeMissionCost(pointCost, dvUnc) {
+  const margin = (dvUnc || 0) > 1.0 ? 0.25 : 0.15;
+  return { point: pointCost, low: pointCost * (1 - margin), high: pointCost * (1 + margin) };
 }
 
 // ─── Phase 10: Spectral-type based asteroid colors ────────────────────────────
@@ -2834,7 +2857,7 @@ function renderLeaderboard() {
     const sk = getSpecKey(ast);
     const skClass = ['C','S','M','X','D'].includes(sk) ? sk : 'O';
     const fi     = ast._fi || computeFeasibilityMetrics(ast);
-    const dvStr  = fi.deltaV.value.toFixed(1) + (fi.deltaV.source !== 'NHATS' ? '*' : '');
+    const dvStr  = `${fi.deltaV.value.toFixed(1)} (±${fi.deltaV.uncertainty})`;
     const durStr = fi.duration.value > 0 ? Math.round(fi.duration.value) + (fi.duration.source !== 'NHATS' ? '*' : '') : '—';
     const valStr = fi.valueRange.optimistic > 0 ? fmtUSD(fi.valueRange.optimistic) : '—';
     const nhBadge = fi.accessibility.nhatsVerified
@@ -2895,12 +2918,21 @@ function renderEconomicsTab(id) {
   const launchCost = launchMass * 2700;
   const totalCost = launchCost * 1.8;
 
-  document.getElementById('eco-dv').textContent = `${dv.toFixed(2)} km/s`;
+  const eco_fi  = computeFeasibilityMetrics(ast);
+  const costRng = computeMissionCost(totalCost, eco_fi.deltaV.uncertainty);
+  const opsDaysEco = Math.round(dv * 60); // rough mission duration for tooltip
+  document.getElementById('eco-dv').textContent = `${dv.toFixed(2)} (±${eco_fi.deltaV.uncertainty}) km/s`;
   document.getElementById('eco-propellant').textContent = propMass > 999
     ? `${(propMass/1000).toFixed(1)} t` : `${Math.round(propMass)} kg`;
   document.getElementById('eco-launch-mass').textContent = `${Math.round(launchMass)} kg`;
   document.getElementById('eco-launch-cost').textContent = fmtUSD(launchCost);
-  document.getElementById('eco-total-cost').textContent = fmtUSD(totalCost);
+  document.getElementById('eco-total-cost').textContent = `${fmtUSD(costRng.low)} – ${fmtUSD(costRng.high)}`;
+  const ecoCostIcon = document.getElementById('eco-cost-icon');
+  if (ecoCostIcon) {
+    ecoCostIcon.style.display = 'inline-block';
+    ecoCostIcon.onclick = e => { e.stopPropagation(); showUncPopup(ecoCostIcon, costUncHtml(costRng, eco_fi.deltaV.uncertainty, opsDaysEco)); };
+    ecoCostIcon.onmouseleave = () => hideUncPopup(300);
+  }
 
   const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
   const frac = FRACTIONS[spec] || FRACTIONS.DEFAULT;
@@ -3861,10 +3893,13 @@ function computeMissionProfile(traj) {
   const overweightLine = fits ? '' :
     dot('  SUGGEST VEHICLE', betterLV ? betterLV.name : 'none available');
 
-  // ── Mission cost ─────────────────────────────────────────────────────────────
-  const opsDays   = Math.round(traj.tof * 2 + 30);
-  const opsCost   = (opsDays / 30) * 2e6;
-  const totalCost = launchCost + sc.cost_usd + opsCost;
+  // ── Mission cost with uncertainty range ──────────────────────────────────────
+  const opsDays    = Math.round(traj.tof * 2 + 30);
+  const opsCost    = (opsDays / 30) * 2e6;
+  const totalCost  = launchCost + sc.cost_usd + opsCost;
+  // ΔV uncertainty from Lambert solver (patched-conic)
+  const dvUnc_mp   = 0.8; // Aster Lambert ±0.8 km/s
+  const costRng_mp = computeMissionCost(totalCost, dvUnc_mp);
 
   // ── Revenue (10 % conservative / 30 % optimistic extraction) ────────────────
   const prices = getActivePrices();
@@ -3921,11 +3956,11 @@ function computeMissionProfile(traj) {
     dot('MASS FRACTION', (frac*100).toFixed(1) + '%'),
     dot('LAUNCH CAPACITY', lv.max_kg.toLocaleString()+' kg '+(fits?'✓ FITS':'✗ OVERWEIGHT')),
     overweightLine,
-    sep('COSTS'),
-    dot('LAUNCH', fmtUSD(launchCost)),
+    sep('COSTS  (±15% range, launcher + ops uncertainty)'),
+    dot('LAUNCH', `${fmtUSD(launchCost * 0.90)} – ${fmtUSD(launchCost * 1.10)}`),
     dot('SPACECRAFT', fmtUSD(sc.cost_usd)),
-    dot('OPERATIONS', fmtUSD(opsCost)),
-    dot('TOTAL MISSION', fmtUSD(totalCost)),
+    dot('OPERATIONS', `${fmtUSD(opsCost * 0.85)} – ${fmtUSD(opsCost * 1.15)}`),
+    dot('TOTAL MISSION', `${fmtUSD(costRng_mp.low)} – ${fmtUSD(costRng_mp.high)}`),
     sep('REVENUE ESTIMATE'),
     dot('ORE PAYLOAD', sc.payload_kg.toLocaleString() + ' kg max'),
     dot('REVENUE / KG', '$' + revenuePerKg.toFixed(2)),
@@ -3937,9 +3972,20 @@ function computeMissionProfile(traj) {
     dot('NPV 5% (conserv.)', fmtUSD(npvLow)),
     dot('NPV 5% (optimist.)', fmtUSD(npvHigh)),
     breakEvenKg ? dot('BREAK-EVEN PAYLOAD', breakEvenKg.toLocaleString() + ' kg') : '',
+    sep('PROPAGATION METHOD'),
+    dot('TRAJECTORY SOLVER', 'Izzo 2015 Lambert + patched-conic'),
+    dot('PROPAGATOR', 'Keplerian 2-body (secular J2000 elements)'),
+    dot('DRY MASS', sc.dry_kg.toLocaleString() + ' kg'),
+    dot('ISP', sc.isp + ' s (single-stage)'),
+    dot('PAYLOAD CAPACITY', sc.payload_kg.toLocaleString() + ' kg'),
+    dot('ΔV UNCERTAINTY', '±0.8 km/s  (Aster Lambert solver)'),
+    dot('COST UNCERTAINTY', '±15% (launcher pricing + ops variance)'),
+    '',
+    '⚠  Real missions include 3–5% gravity losses and',
+    '   ±10–20% margin reserves not reflected here.',
     '',
     '═'.repeat(50),
-    '  Patched-conic model · Izzo 2015 Lambert · Phase 9A',
+    '  Patched-conic · Izzo 2015 Lambert · Phase 9D',
     '═'.repeat(50),
   ].filter(l => l !== undefined && l !== '');
   return { text: lines.join('\n'), totalCost, revLow, revHigh, roiLow, roiHigh };
@@ -4390,9 +4436,16 @@ function selectAsteroid(id) {
   document.getElementById('ast-sma').textContent = ast.a ? `${Number(ast.a).toFixed(4)} AU` : '—';
   document.getElementById('ast-ecc').textContent = ast.e ? Number(ast.e).toFixed(5) : '—';
   document.getElementById('ast-inc').textContent = ast.i ? `${Number(ast.i).toFixed(3)}°` : '—';
-  const dv_val = getAsteroidDV(ast);
-  const dv_suffix = (ast.delta_v && Number(ast.delta_v) > 0) ? '' : ' (est)';
-  document.getElementById('ast-dv').textContent = `${dv_val.toFixed(2)} km/s${dv_suffix}`;
+  const fi_early = computeFeasibilityMetrics(ast);
+  const dv_val   = fi_early.deltaV.value;
+  const dv_unc   = fi_early.deltaV.uncertainty;
+  document.getElementById('ast-dv').textContent = `${dv_val.toFixed(2)} (±${dv_unc}) km/s`;
+  const dvIcon = document.getElementById('ast-dv-icon');
+  if (dvIcon) {
+    dvIcon.style.display = 'inline-block';
+    dvIcon.onclick = e => { e.stopPropagation(); showUncPopup(dvIcon, dvUncHtml(fi_early)); };
+    dvIcon.onmouseleave = () => hideUncPopup(300);
+  }
   document.getElementById('ast-moid').textContent = ast.moid ? `${Number(ast.moid).toFixed(4)} AU` : '—';
   // Phase 3: composition + resource value + score
   const spec3 = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
@@ -4430,9 +4483,9 @@ function selectAsteroid(id) {
   document.getElementById('ast-water-val').textContent = waterVal3 > 0 ? fmtUSD(waterVal3) : '—';
   document.getElementById('ast-metal-val').textContent = metalVal3 > 0 ? fmtUSD(metalVal3) : '—';
   document.getElementById('ast-total-val').textContent = fmtUSD(totalVal3);
-  const fi = ast._fi || computeFeasibilityMetrics(ast);
-  const dvDisp  = `${fi.deltaV.value.toFixed(2)} ±${fi.deltaV.uncertainty} km/s  [${fi.deltaV.source}]`;
-  const durDisp = `${Math.round(fi.duration.value)} ±${fi.duration.uncertainty} days  [${fi.duration.source}]`;
+  const fi = fi_early; // reuse already-computed metrics
+  const dvDisp  = `${fi.deltaV.value.toFixed(2)} km/s (±${fi.deltaV.uncertainty})`;
+  const durDisp = `${Math.round(fi.duration.value)} days  [${fi.duration.source}]`;
   const accDisp = fi.accessibility.nhatsVerified
     ? `✓ ${fi.accessibility.trajectoryCount} NHATS trajectories`
     : 'Not in NHATS catalog';
@@ -4442,7 +4495,13 @@ function selectAsteroid(id) {
                 : fi.hazard.riskLevel === 'low'  ? `Low (MOID ${fi.hazard.moid?.toFixed(3)} AU)`
                 : fi.hazard.moid !== null          ? `None (MOID ${fi.hazard.moid?.toFixed(3)} AU)`
                 : 'None';
-  document.getElementById('fi-dv').textContent     = 'ΔV:  ' + dvDisp;
+  const fiDvEl = document.getElementById('fi-dv');
+  fiDvEl.innerHTML = `ΔV: ${dvDisp} [${fi.deltaV.source}] <span class="unc-icon" id="fi-dv-icon">ⓘ</span>`;
+  const fiDvIcon = document.getElementById('fi-dv-icon');
+  if (fiDvIcon) {
+    fiDvIcon.onclick = e => { e.stopPropagation(); showUncPopup(fiDvIcon, dvUncHtml(fi)); };
+    fiDvIcon.onmouseleave = () => hideUncPopup(300);
+  }
   document.getElementById('fi-dur').textContent    = 'TOF: ' + durDisp;
   document.getElementById('fi-access').textContent = 'PATHS: ' + accDisp;
   document.getElementById('fi-value').textContent  = 'VALUE: ' + valDisp;
@@ -5425,6 +5484,50 @@ document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
     setPlayState(true);
   });
 });
+
+// ─── Phase 9D: Uncertainty popup ──────────────────────────────────────────────
+const _uncPopup = document.getElementById('unc-popup');
+let _uncPopupTimer = null;
+function showUncPopup(el, html) {
+  clearTimeout(_uncPopupTimer);
+  _uncPopup.innerHTML = html;
+  _uncPopup.style.display = 'block';
+  const r = el.getBoundingClientRect();
+  let top = r.bottom + 6, left = r.left;
+  if (top + 160 > window.innerHeight) top = r.top - 10 - _uncPopup.offsetHeight;
+  if (left + 270 > window.innerWidth) left = window.innerWidth - 275;
+  _uncPopup.style.top  = top + 'px';
+  _uncPopup.style.left = left + 'px';
+}
+function hideUncPopup(delay) {
+  _uncPopupTimer = setTimeout(() => { _uncPopup.style.display = 'none'; }, delay || 0);
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.unc-icon') && !e.target.closest('#unc-popup')) hideUncPopup(0);
+});
+_uncPopup.addEventListener('mouseenter', () => clearTimeout(_uncPopupTimer));
+_uncPopup.addEventListener('mouseleave', () => hideUncPopup(200));
+
+const DV_SOURCE_LINKS = {
+  nhats:            '<a href="https://cneos.jpl.nasa.gov/nhats/" target="_blank">NHATS (JPL)</a>',
+  asterank:         '<a href="http://www.asterank.com/" target="_blank">Asterank DB</a>',
+  'hohmann-visviva':'Aster orbital estimate',
+  'jpl-mdesign':    '<a href="https://ssd-api.jpl.nasa.gov/doc/mdesign.html" target="_blank">JPL Mission Design</a>',
+};
+
+function dvUncHtml(fi) {
+  const dv = fi.deltaV;
+  const methodLabel = { nhats:'NHATS verified', asterank:'Asterank catalog', 'hohmann-visviva':'Vis-viva/Hohmann approx.', 'jpl-mdesign':'JPL mdesign API' }[dv.method] || dv.method;
+  const link = DV_SOURCE_LINKS[dv.method] || dv.source;
+  return `<div style="color:#00d4ff;margin-bottom:3px">ΔV Uncertainty</div>
+Method: ${methodLabel}<br>Uncertainty: ±${dv.uncertainty} km/s<br>Source: ${link}`;
+}
+
+function costUncHtml(cost, dvUnc, opsDays) {
+  const margin = dvUnc > 1 ? '±25%' : '±15%';
+  return `<div style="color:#00d4ff;margin-bottom:3px">Cost Range</div>
+Launch vehicle pricing variance: ±10%<br>Operations uncertainty (${opsDays}d): ±15%<br>ΔV uncertainty widens margin: ${margin}<br>Range: ${fmtUSD(cost.low)} – ${fmtUSD(cost.high)}`;
+}
 
 // ─── Status Helper ────────────────────────────────────────────────────────────
 let statusTimer = null;
