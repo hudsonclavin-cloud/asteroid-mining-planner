@@ -43,6 +43,56 @@ let priceCache = null;
 let priceCacheTime = 0;
 const PRICE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+// ── Shared cache for NASA API proxies ────────────────────────────────────────
+const apiCache = new Map(); // key: URL string, value: { data, expiry }
+
+async function cachedProxyFetch(targetUrl, ttlMs) {
+  const now    = Date.now();
+  const cached = apiCache.get(targetUrl);
+  const stale  = cached && now > cached.expiry;
+
+  if (cached && !stale) return { data: cached.data, stale: false };
+
+  try {
+    const r = await fetch(targetUrl, { cf: { cacheTtl: Math.floor(ttlMs / 1000) } });
+    if (!r.ok) throw new Error(`Upstream HTTP ${r.status}`);
+    const isJson = (r.headers.get('content-type') || '').includes('json');
+    const data   = isJson ? await r.json() : await r.text();
+    apiCache.set(targetUrl, { data, expiry: now + ttlMs });
+    return { data, stale: false };
+  } catch (err) {
+    if (cached) return { data: cached.data, stale: true }; // serve stale on upstream failure
+    throw err;
+  }
+}
+
+// ── Parse JPL Horizons VECTORS text output → [{jd, x, y, z, vx, vy, vz}] ───
+// Horizons wraps each epoch block between $$SOE / $$EOE markers:
+//   2459000.500000000 = A.D. 2020-Jun-06 ...
+//   X = -7.87E-01 Y = -5.99E-01 Z = -2.60E-01
+//   VX= 1.02E-02  VY= -1.47E-02  VZ= -6.40E-03
+function parseHorizonsVectors(text) {
+  const soe = text.indexOf('$$SOE');
+  const eoe = text.indexOf('$$EOE');
+  if (soe === -1 || eoe === -1) return [];
+  const body    = text.slice(soe + 5, eoe);
+  const records = [];
+  const blocks  = body.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+  const numRe   = /[-+]?\d+\.?\d*[eE][-+]?\d+|[-+]?\d+\.\d+/g;
+  for (const block of blocks) {
+    const lines   = block.split('\n').map(l => l.trim());
+    const jd      = parseFloat(lines[0]);
+    if (isNaN(jd)) continue;
+    const xyzLine = lines.find(l => /^X\s*=/.test(l)) || '';
+    const vLine   = lines.find(l => /^VX\s*=/.test(l)) || '';
+    const xyz     = [...xyzLine.matchAll(numRe)].map(m => parseFloat(m[0]));
+    const v       = [...vLine.matchAll(numRe)].map(m => parseFloat(m[0]));
+    if (xyz.length < 3 || v.length < 3) continue;
+    records.push({ jd, x: xyz[0], y: xyz[1], z: xyz[2], vx: v[0], vy: v[1], vz: v[2] });
+  }
+  return records;
+}
+
 function checkRateLimit(ip) {
   const now = Date.now();
   let entry = rateLimitStore.get(ip);
@@ -162,6 +212,51 @@ export default {
         });
       } catch (err) {
         return jsonResponse({ error: 'NHATS proxy failed', detail: err.message }, 502, origin);
+      }
+    }
+
+    // ── GET /api/horizons ────────────────────────────────────────────────────
+    if (url.pathname === '/api/horizons' && request.method === 'GET') {
+      const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+      if (!checkRateLimit(ip)) return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin);
+      const target = new URL('https://ssd.jpl.nasa.gov/api/horizons.api');
+      for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
+      if (!target.searchParams.has('EPHEM_TYPE')) target.searchParams.set('EPHEM_TYPE', 'VECTORS');
+      if (!target.searchParams.has('OUT_UNITS'))  target.searchParams.set('OUT_UNITS',  'AU-D');
+      try {
+        const { data, stale } = await cachedProxyFetch(target.toString(), 24 * 60 * 60 * 1000);
+        const vectors = parseHorizonsVectors(typeof data === 'string' ? data : JSON.stringify(data));
+        return jsonResponse({ vectors, stale, source: 'JPL Horizons' }, 200, origin);
+      } catch (err) {
+        return jsonResponse({ error: 'Horizons proxy failed', detail: err.message }, 502, origin);
+      }
+    }
+
+    // ── GET /api/mdesign ─────────────────────────────────────────────────────
+    if (url.pathname === '/api/mdesign' && request.method === 'GET') {
+      const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+      if (!checkRateLimit(ip)) return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin);
+      const target = new URL('https://ssd-api.jpl.nasa.gov/mdesign.api');
+      for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
+      try {
+        const { data, stale } = await cachedProxyFetch(target.toString(), 60 * 60 * 1000);
+        return jsonResponse({ ...(typeof data === 'object' ? data : { raw: data }), stale }, 200, origin);
+      } catch (err) {
+        return jsonResponse({ error: 'mdesign proxy failed', detail: err.message }, 502, origin);
+      }
+    }
+
+    // ── GET /api/cad ─────────────────────────────────────────────────────────
+    if (url.pathname === '/api/cad' && request.method === 'GET') {
+      const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+      if (!checkRateLimit(ip)) return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin);
+      const target = new URL('https://ssd-api.jpl.nasa.gov/cad.api');
+      for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
+      try {
+        const { data, stale } = await cachedProxyFetch(target.toString(), 24 * 60 * 60 * 1000);
+        return jsonResponse({ ...(typeof data === 'object' ? data : { raw: data }), stale }, 200, origin);
+      } catch (err) {
+        return jsonResponse({ error: 'CAD proxy failed', detail: err.message }, 502, origin);
       }
     }
 

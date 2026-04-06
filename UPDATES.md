@@ -4,6 +4,39 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9B — NASA API Ground Truth Integration (2026-04-06)
+
+### Summary
+Extended `worker/index.js` with three new GET proxy endpoints that give the frontend access to JPL ground-truth data for mission validation.
+
+### New Endpoints
+
+| Endpoint | Upstream | Cache TTL |
+|---|---|---|
+| `GET /api/horizons` | `ssd.jpl.nasa.gov/api/horizons.api` | 24 h |
+| `GET /api/mdesign` | `ssd-api.jpl.nasa.gov/mdesign.api` | 1 h |
+| `GET /api/cad` | `ssd-api.jpl.nasa.gov/cad.api` | 24 h |
+
+All three: CORS for `hudsonclavin-cloud.github.io`, in-memory cache, 10 req/min rate limit, structured error JSON, stale-on-failure fallback.
+
+### `/api/horizons` specifics
+- Forwards all query params. Sets `EPHEM_TYPE=VECTORS` and `OUT_UNITS=AU-D` if caller omits them.
+- Parses Horizons text between `$$SOE`/`$$EOE` markers into `{ vectors: [{jd, x, y, z, vx, vy, vz}], stale, source }`.
+- Velocities are in AU/day (frontend converts: 1 AU/day ≈ 1731.457 km/s if needed).
+- Returns `vectors: []` (not an error) if Horizons omits the markers (e.g., error response).
+
+### Shared infrastructure added
+- `apiCache: Map` — module-scope cache for all three endpoints.
+- `cachedProxyFetch(url, ttlMs)` — async helper: returns `{ data, stale }`. Serves stale cached data rather than failing when upstream is down.
+- `parseHorizonsVectors(text)` — regex parser for Horizons VECTORS output format.
+
+### No changes to
+`/api/research`, `/api/prices`, `/api/nhats`, `/api/sbdb`, `index.html`, `physics.worker.js`.
+
+**Deploy:** `cd worker && wrangler deploy`
+
+---
+
 ## Phase 9A — Physics Emergency Patch (2026-04-06)
 
 ### Root Cause (corrected)
