@@ -4,6 +4,33 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9E — Honesty Layer (2026-04-06)
+
+### Summary
+Establishes Aster as a planning aid, not ground truth. Four transparency features added without touching rendering, physics, or filters.
+
+### Changes (`index.html` only)
+
+**Dismissible banner:**
+- `#honesty-banner` — fixed below toolbar, cyan left border, monospace
+- Shows on first visit; "Got it" dismisses and sets `localStorage.aster_banner_dismissed`
+
+**Model Assumptions panel:**
+- `#mp-assumptions-wrap` / `#mp-assumptions-content` — collapsible section inside mission planner
+- Lists 8 model limitations (propagation, burn model, gravity losses, perturbations, spacecraft, margin, Oberth, low-thrust)
+- Shown after `onPlanResult()` when trajectories are found; hidden on `closeMissionPlanner()`
+
+**Verify buttons:**
+- `#mp-verify-wrap` — shown when a trajectory is selected (`selectTrajectory()`)
+- "🔍 Verify in JPL Horizons" — opens `https://ssd.jpl.nasa.gov/horizons/app.html#/?body=sb&des={pdes}`
+- "📊 Compare with JPL mdesign" — calls `/api/mdesign` proxy, shows ΔV comparison modal with difference %
+- `#mdesign-modal` — comparison modal with graceful "no data" state for non-NHATS targets
+
+**HELP modal:**
+- Added "KNOWN LIMITATIONS" section to `#shortcut-overlay` with 6 limitations and links to JPL Horizons, NASA NHATS, Asterank
+
+---
+
 ## Phase 9D — Uncertainty Display (2026-04-06)
 
 ### Summary

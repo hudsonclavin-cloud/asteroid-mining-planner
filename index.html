@@ -738,6 +738,19 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   </div>
 </div>
 
+<!-- Phase 9E: Honesty banner — shown on first visit, dismissible -->
+<div id="honesty-banner" style="display:none;position:fixed;top:36px;left:0;right:0;z-index:997;
+  background:#060a14;border-bottom:1px solid #0d1f33;border-left:3px solid #00d4ff;
+  padding:7px 16px 7px 14px;font-size:9px;font-family:'Space Mono',monospace;color:#8aa0b8;
+  align-items:center;gap:10px;line-height:1.4">
+  <span style="color:#00d4ff;flex-shrink:0">ⓘ</span>
+  <span>Aster is a mission planning aid. Results use Keplerian propagation and patched conics —
+    not validated for mission design. Verify critical parameters with
+    <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a>.</span>
+  <button id="banner-dismiss" style="margin-left:auto;flex-shrink:0;background:none;border:1px solid #1a2d44;
+    color:#6a8a9a;font-size:8px;font-family:'Space Mono',monospace;padding:2px 8px;cursor:pointer">Got it</button>
+</div>
+
 <div id="shortcut-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,5,8,0.92);z-index:200;
   font-family:'Space Mono','Courier New',monospace;align-items:center;justify-content:center;">
   <div style="border:1px solid #1a2235;padding:32px 40px;min-width:360px;max-width:480px">
@@ -755,6 +768,22 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">ESC</td><td style="color:#e5e7eb">Cancel burn / close</td></tr>
     </table>
     <div style="margin-top:20px;font-size:10px;color:#4b5563;text-align:center">PRESS ? OR ESC TO CLOSE</div>
+    <div style="margin-top:16px;border-top:1px solid #1a2235;padding-top:12px;font-size:8px;color:#6a8a9a;line-height:1.8">
+      <div style="color:#c8d6e5;letter-spacing:0.1em;margin-bottom:6px">KNOWN LIMITATIONS</div>
+      <div>· Two-body Keplerian propagation (no J₂, lunar, solar radiation pressure)</div>
+      <div>· Impulsive burns only — no low-thrust or continuous-thrust modeling</div>
+      <div>· Gravity losses not included — real missions add 3–10%</div>
+      <div>· Earth return assumes free aerocapture (no orbit insertion burn)</div>
+      <div>· Commodity prices are static estimates, not live market data</div>
+      <div>· Composition fractions are spectral-type averages, not ground truth</div>
+      <div style="margin-top:8px;color:#3a5a6a">
+        Data sources:
+        <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a> ·
+        <a href="https://cneos.jpl.nasa.gov/nhats/" target="_blank" style="color:#00d4ff">NASA NHATS</a> ·
+        <a href="http://asterank.com" target="_blank" style="color:#00d4ff">Asterank</a>
+      </div>
+      <div style="margin-top:4px;color:#2a4a5a">Built by Hudson Clavin · Data: NASA/JPL (public domain)</div>
+    </div>
   </div>
 </div>
 
@@ -1237,6 +1266,44 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <div id="mp-profile-text" style="font-family:'Space Mono',monospace;font-size:8.5px;line-height:1.8;
         color:#c8d6e5;background:#050810;border:1px solid #1a2235;padding:10px;
         white-space:pre;overflow-x:auto;border-radius:2px"></div>
+    </div>
+
+    <!-- Phase 9E: Model Assumptions collapsible -->
+    <div id="mp-assumptions-wrap" style="display:none;margin-top:6px">
+      <button id="mp-assumptions-toggle"
+        style="width:100%;text-align:left;background:none;border:1px solid #1a2d44;
+          color:#6a8a9a;font-size:8px;font-family:'Space Mono',monospace;padding:4px 8px;
+          cursor:pointer;letter-spacing:0.08em">MODEL ASSUMPTIONS ▶</button>
+      <div id="mp-assumptions-content" style="display:none;background:#060a14;border:1px solid #0d1f33;
+        border-top:none;padding:8px 10px;font-size:8px;font-family:'Space Mono',monospace;
+        color:#6a8a9a;line-height:2">
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Propagation:</span>Keplerian (two-body, no perturbations)</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Burn model:</span>Impulsive (no gravity losses)</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Gravity losses:</span>Not modeled — add 3–5% margin</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Perturbations:</span>Not modeled (J₂, lunar, planetary)</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Spacecraft:</span>Single-stage Tsiolkovsky</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Margin reserves:</span>Not included — add ±10–20%</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Oberth effect:</span>Not modeled</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Low-thrust:</span>Not modeled (chemical only)</div>
+        <div style="margin-top:6px;color:#3a5a6a;border-top:1px solid #0d1f33;padding-top:6px">
+          For high-fidelity analysis: export to GMAT or verify in
+          <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a>.
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 9E: Verify buttons -->
+    <div id="mp-verify-wrap" style="display:none;margin-top:6px;gap:6px;flex-wrap:wrap">
+      <button id="mp-verify-horizons"
+        style="flex:1;background:none;border:1px solid #1a2d44;color:#6a8a9a;
+          font-size:8px;font-family:'Space Mono',monospace;padding:4px 8px;cursor:pointer;text-align:left">
+        🔍 Verify in JPL Horizons
+      </button>
+      <button id="mp-verify-mdesign"
+        style="flex:1;background:none;border:1px solid #1a2d44;color:#6a8a9a;
+          font-size:8px;font-family:'Space Mono',monospace;padding:4px 8px;cursor:pointer;text-align:left">
+        📊 Compare with JPL mdesign
+      </button>
     </div>
 
     <div id="mp-burns" style="display:none;margin-top:14px">
@@ -3739,6 +3806,10 @@ function closeMissionPlanner() {
   document.getElementById('btn-close-panel').style.display = '';
   document.getElementById('tab-inspector').style.display = 'flex';
   document.getElementById('mission-planner').style.display = 'none';
+  document.getElementById('mp-assumptions-wrap').style.display = 'none';
+  document.getElementById('mp-assumptions-content').style.display = 'none';
+  document.getElementById('mp-assumptions-toggle').textContent = 'MODEL ASSUMPTIONS ▶';
+  document.getElementById('mp-verify-wrap').style.display = 'none';
   clearTrajectoryLine();
   missionEarthReturnPos = null;
 }
@@ -3810,7 +3881,10 @@ function onPlanResult(results, noFeasibleWindow, dbg) {
   renderTrajectoryList();
   document.getElementById('mp-results').style.display = 'block';
   document.getElementById('mp-result-count').textContent = `(${results.length} options)`;
-  if (results.length) selectTrajectory(0);
+  if (results.length) {
+    document.getElementById('mp-assumptions-wrap').style.display = 'block';
+    selectTrajectory(0);
+  }
 }
 
 function renderTrajectoryList() {
@@ -3857,6 +3931,7 @@ function selectTrajectory(idx) {
   const profile = computeMissionProfile(traj);
   document.getElementById('mp-profile-text').textContent = profile.text;
   document.getElementById('mp-profile').style.display = 'block';
+  document.getElementById('mp-verify-wrap').style.display = 'flex';
   mpBurns = [
     { label:'1 · DEPARTURE',       jd: traj.jd_dep,                       dv_kms: traj.dv_dep    },
     { label:'2 · ASTEROID ARRIVAL',jd: traj.jd_arr,                       dv_kms: traj.dv_arr    },
@@ -5720,6 +5795,78 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// ─── Phase 9E: Honesty Layer ──────────────────────────────────────────────────
+// Banner
+(function() {
+  if (localStorage.getItem('aster_banner_dismissed')) return;
+  const b = document.getElementById('honesty-banner');
+  b.style.display = 'flex';
+  document.getElementById('banner-dismiss').onclick = () => {
+    localStorage.setItem('aster_banner_dismissed', '1');
+    b.style.display = 'none';
+  };
+})();
+
+// Model assumptions toggle
+document.getElementById('mp-assumptions-toggle').onclick = function() {
+  const c = document.getElementById('mp-assumptions-content');
+  const open = c.style.display !== 'none';
+  c.style.display = open ? 'none' : 'block';
+  this.textContent = 'MODEL ASSUMPTIONS ' + (open ? '▶' : '▼');
+};
+
+// Verify in JPL Horizons
+document.getElementById('mp-verify-horizons').onclick = function() {
+  const ast = asteroidData[selectedId];
+  if (!ast) return;
+  const des = encodeURIComponent((ast.pdes || ast.full_name || '').trim());
+  window.open(`https://ssd.jpl.nasa.gov/horizons/app.html#/?body=sb&des=${des}`, '_blank');
+};
+
+// Compare with JPL mdesign
+document.getElementById('mp-verify-mdesign').onclick = async function() {
+  const ast = asteroidData[selectedId];
+  if (!ast) return;
+  const modal   = document.getElementById('mdesign-modal');
+  const content = document.getElementById('mdesign-content');
+  modal.style.display = 'flex';
+  content.innerHTML = '<span style="color:#6a8a9a">Querying JPL mdesign API...</span>';
+  try {
+    const des = encodeURIComponent((ast.pdes || '').trim());
+    const r = await fetch(`${WORKER_URL}/api/mdesign?des=${des}&dv=12`);
+    const data = await r.json();
+    if (data.error || !data.data) {
+      content.innerHTML = `<span style="color:#ef4444">No mdesign data for this target.</span><br>
+        <span style="color:#4a6a7a">JPL mdesign only covers NHATS-accessible NEOs with pre-computed trajectories.</span>`;
+      return;
+    }
+    const rows  = Array.isArray(data.data) ? data.data : [];
+    const minDv = rows.length
+      ? Math.min(...rows.map(row => Array.isArray(row) ? Number(row[4] || 99) : 99))
+      : null;
+    const asterDv = optimalTrajectory ? optimalTrajectory.dv_total : null;
+    const diff    = asterDv && minDv ? Math.abs(asterDv - minDv) : null;
+    content.innerHTML = `
+      <div style="display:grid;grid-template-columns:140px 1fr;gap:4px 12px;line-height:2">
+        <span style="color:#4a6a7a">Aster computed:</span>
+        <span style="color:#00d4ff">ΔV = ${asterDv != null ? asterDv.toFixed(2) + ' km/s' : '—'}</span>
+        <span style="color:#4a6a7a">JPL mdesign min:</span>
+        <span style="color:#c8d6e5">ΔV = ${minDv != null ? minDv.toFixed(2) + ' km/s' : '—'}</span>
+        ${diff != null ? `<span style="color:#4a6a7a">Difference:</span>
+        <span style="color:${diff < 1 ? '#22c55e' : '#f59e0b'}">
+          ±${diff.toFixed(2)} km/s (${(diff / minDv * 100).toFixed(0)}%)</span>` : ''}
+      </div>
+      <div style="margin-top:10px;color:#3a5a6a;font-size:8px">
+        mdesign trajectories available: ${rows.length} · Source: JPL CNEOS mdesign API
+      </div>`;
+  } catch(e) {
+    content.innerHTML = `<span style="color:#ef4444">Failed to reach JPL mdesign: ${e.message}</span>`;
+  }
+};
+document.getElementById('mdesign-close').onclick = () => {
+  document.getElementById('mdesign-modal').style.display = 'none';
+};
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
   // Mobile degradation
@@ -5789,5 +5936,17 @@ async function init() {
 
 init();
 </script>
+
+<!-- Phase 9E: mdesign comparison modal -->
+<div id="mdesign-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
+  z-index:2000;align-items:center;justify-content:center">
+  <div style="background:#0a0e1a;border:1px solid #1a2d44;padding:20px;min-width:320px;
+    max-width:480px;font-family:'Space Mono',monospace;font-size:9px;color:#c8d6e5;position:relative">
+    <div style="color:#00d4ff;letter-spacing:0.1em;margin-bottom:12px">◈ JPL MDESIGN COMPARISON</div>
+    <div id="mdesign-content">Loading...</div>
+    <button id="mdesign-close" style="position:absolute;top:10px;right:10px;background:none;
+      border:none;color:#6a8a9a;font-size:14px;cursor:pointer;line-height:1">✕</button>
+  </div>
+</div>
 </body>
 </html>
