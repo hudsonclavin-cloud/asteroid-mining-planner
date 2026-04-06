@@ -1103,7 +1103,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 
   <div id="tab-research" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
     <div id="research-prompt-hint" style="color:#4b5563;font-size:10px;text-align:center;padding:40px 12px;line-height:1.6">
-      Select an asteroid then click RESEARCH<br>to load an AI briefing.
+      Select an asteroid to load<br>an AI research briefing.
     </div>
     <div id="research-loading" style="display:none;text-align:center;padding:40px 12px">
       <div style="color:#00d4ff;font-size:10px;letter-spacing:0.15em">FETCHING BRIEFING…</div>
@@ -2369,8 +2369,8 @@ worker.onmessage = ({ data }) => {
     console.log('[Catalog] catalog_ready:', data.data.length, 'asteroids');
     // Cache to IndexedDB; fall back to localStorage (top 2000 only)
     const payload = { data: data.data, timestamp: Date.now() };
-    saveToIndexedDB('aster_catalog_v2', payload).catch(() => {
-      try { localStorage.setItem('aster_catalog_v2', JSON.stringify({ data: data.data.slice(0, 2000), timestamp: Date.now() })); } catch(_) {}
+    saveToIndexedDB('aster_catalog_v3', payload).catch(() => {
+      try { localStorage.setItem('aster_catalog_v3', JSON.stringify({ data: data.data.slice(0, 2000), timestamp: Date.now() })); } catch(_) {}
     });
     // Cache NHATS rows alongside
     if (data.nhatsRows && data.nhatsRows.length > 0) {
@@ -2914,10 +2914,11 @@ function renderEconomicsTab(id) {
   document.getElementById('eco-metals').textContent = fmtUSD(metalVal);
   document.getElementById('eco-asterank').textContent = fmtAstValue(ast.price);
 
-  const totalReturn = Math.max(waterVal + metalVal, Number(ast.price) || 0);
+  // ROI uses conservative 10% extraction efficiency to avoid absurd multiples
+  const totalReturn = Math.max(waterVal + metalVal, Number(ast.price) || 0) * 0.10;
   const roi = totalCost > 0 ? totalReturn / totalCost : 0;
   const roiEl = document.getElementById('eco-roi');
-  roiEl.textContent = `${roi.toFixed(0)}×`;
+  roiEl.textContent = roi > 1e6 ? '>1,000,000×' : `${roi.toFixed(0)}×`;
   roiEl.className = 'value ' + (roi > 10 ? 'profit' : roi > 1 ? 'warning' : '');
 
   const isruNote = document.getElementById('eco-isru-note');
@@ -2990,7 +2991,7 @@ function renderMaterialsTab(id) {
     svgDonut += `<span style="font-size:9px;font-family:'Space Mono',monospace;color:${col}">■ ${m} ${comp[m].toFixed(comp[m] < 0.01 ? 4 : comp[m] < 0.1 ? 3 : 1)}%</span>`;
   }
   svgDonut += `</div>`;
-  document.getElementById('mat-donut-wrap').innerHTML = svgDonut;
+  document.getElementById('mat-donut').innerHTML = svgDonut;
 
   // ── Bar chart ────────────────────────────────────────────────────────────
   const barMats = materials.filter(m => vals[m] > 0).sort((a, b) => vals[b] - vals[a]).slice(0, 8);
@@ -3005,7 +3006,7 @@ function renderMaterialsTab(id) {
     svgBars += `<text x="${72+bw+4}" y="${y+13}" font-size="8" fill="#c8d6e5" font-family="Space Mono,monospace">${fmtUSD(vals[m])}</text>`;
   });
   svgBars += `</svg>`;
-  document.getElementById('mat-bars-wrap').innerHTML = svgBars;
+  document.getElementById('mat-bars').innerHTML = svgBars;
 
   // ── Table ────────────────────────────────────────────────────────────────
   const sortedMats = [...materials].sort((a, b) => vals[b] - vals[a]);
@@ -3042,11 +3043,11 @@ function renderMaterialsTab(id) {
     <td style="text-align:right;padding:4px 2px;color:#00d4ff">${fmtUSD(totVal)}</td>
     <td></td>
   </tr></tbody></table>`;
-  document.getElementById('mat-table-wrap').innerHTML = html;
+  document.getElementById('mat-table').innerHTML = html;
 
   // ── Price footer ─────────────────────────────────────────────────────────
   const ts = priceAt ? new Date(priceAt).toLocaleTimeString() : '—';
-  document.getElementById('mat-price-source').textContent = `Prices as of ${ts} · Source: ${priceSource}`;
+  document.getElementById('mat-price-info').textContent = `Prices as of ${ts} · Source: ${priceSource}`;
 }
 
 async function fetchNHATSData() {
@@ -3497,8 +3498,7 @@ function onSatelliteSelect(idx) {
     document.getElementById('tab-research').style.display   = tab === 'research'   ? 'block' : 'none';
     if (tab === 'economics' && selectedId >= 0) renderEconomicsTab(selectedId);
     if (tab === 'materials' && selectedId >= 0) renderMaterialsTab(selectedId);
-    if (tab === 'research'  && selectedId >= 0) { const ast = asteroids[selectedId]; if (ast) fetchResearch(ast); }
-    if (tab === 'materials' && selectedId >= 0) renderMaterialsTab(selectedId);
+    if (tab === 'research'  && selectedId >= 0) { const ast = asteroidData[selectedId]; if (ast) fetchResearch(ast); }
   });
 
   ['eco-dry-mass','eco-isp'].forEach(id => {
@@ -4418,18 +4418,17 @@ function selectAsteroid(id) {
   document.getElementById('ast-price').textContent  = fmtAstValue(displayPrice);
   document.getElementById('ast-profit').textContent = fmtUSD(Math.min(displayProfit, 1e13));
 
-  const D_m = ast._diam_m || 500;
-  const r_m3 = D_m / 2;
-  const vol_m3 = (4/3) * Math.PI * r_m3 * r_m3 * r_m3;
-  const dens3b = DENSITIES[spec3] || 2000;
-  const mass_kg3 = vol_m3 * dens3b;
-  const frac3 = FRACTIONS[spec3] || FRACTIONS.DEFAULT;
-  const waterVal3 = mass_kg3 * frac3.water * 1000;
-  const metalPrice3 = spec3 === 'M' ? 30 : 0.15;
-  const metalVal3 = mass_kg3 * frac3.metals * metalPrice3;
+  // Derive water/metal sub-values from the same MAT_COMP+prices system used for totalVal3
+  let waterVal3 = 0, metalVal3 = 0;
+  if (comp3) {
+    const waterKeys = ['water'];
+    const metalKeys = ['iron','nickel','cobalt','platinum','gold','silver','copper'];
+    waterKeys.forEach(k => { waterVal3 += mass3 * (comp3[k] || 0) / 100 * (prices3[k] || 0); });
+    metalKeys.forEach(k => { metalVal3 += mass3 * (comp3[k] || 0) / 100 * (prices3[k] || 0); });
+  }
 
-  document.getElementById('ast-water-val').textContent = fmtUSD(waterVal3);
-  document.getElementById('ast-metal-val').textContent = fmtUSD(metalVal3);
+  document.getElementById('ast-water-val').textContent = waterVal3 > 0 ? fmtUSD(waterVal3) : '—';
+  document.getElementById('ast-metal-val').textContent = metalVal3 > 0 ? fmtUSD(metalVal3) : '—';
   document.getElementById('ast-total-val').textContent = fmtUSD(totalVal3);
   const fi = ast._fi || computeFeasibilityMetrics(ast);
   const dvDisp  = `${fi.deltaV.value.toFixed(2)} ±${fi.deltaV.uncertainty} km/s  [${fi.deltaV.source}]`;
@@ -4474,7 +4473,7 @@ function selectAsteroid(id) {
   document.getElementById('link-jpl').href =
     `https://ssd.jpl.nasa.gov/sbdb.cgi?sstr=${encodeURIComponent(des3)}`;
   document.getElementById('link-papers').href =
-    `https://www.semanticscholar.org/search?q=${encodeURIComponent(des3)}&sort=Relevance`;
+    `https://www.semanticscholar.org/search?q=${encodeURIComponent(ast.full_name || des3)}&sort=Relevance`;
 
   document.getElementById('panel-idle').style.display = 'none';
   document.getElementById('panel-data').style.display = 'flex';
@@ -4531,7 +4530,9 @@ function updateToolbarHUD() {
   const selEl  = document.getElementById('hud-selected');
   const filtEl = document.getElementById('hud-filter-status');
   if (dateEl) dateEl.textContent = document.getElementById('date-display')?.textContent || '—';
-  if (astEl)  astEl.textContent  = `${asteroidCount || 0} ASTEROIDS`;
+  if (astEl)  astEl.textContent  = filteredIds.length < asteroidCount
+    ? `${filteredIds.length} / ${asteroidCount || 0} ASTEROIDS`
+    : `${asteroidCount || 0} ASTEROIDS`;
   if (selEl) {
     const ast = selectedId >= 0 ? asteroidData[selectedId] : null;
     selEl.textContent = ast ? (ast.full_name || ast.pdes || 'SELECTED').substring(0, 18).toUpperCase() : 'NONE SELECTED';
@@ -5616,11 +5617,13 @@ async function init() {
 
   // ── Clear stale SBDB-merged cache (v1) ─────────────────────────────────
   try { localStorage.removeItem('aster_catalog_v1'); } catch(_) {}
+  try { localStorage.removeItem('aster_catalog_v2'); } catch(_) {}
   saveToIndexedDB('aster_catalog_v1', null).catch(() => {});
+  saveToIndexedDB('aster_catalog_v2', null).catch(() => {});
 
   // ── Check IndexedDB catalog cache ──────────────────────────────────────
   try {
-    const cached = await getFromIndexedDB('aster_catalog_v2');
+    const cached = await getFromIndexedDB('aster_catalog_v3');
     if (cached && cached.timestamp && Date.now() - cached.timestamp < 24 * 3600 * 1000 && cached.data.length > 0) {
       console.log('[Catalog] IndexedDB cache hit:', cached.data.length, 'asteroids');
       const sub = document.getElementById('loading-sub');
@@ -5638,7 +5641,7 @@ async function init() {
   } catch(_) {
     // IndexedDB unavailable — try localStorage fallback
     try {
-      const raw = localStorage.getItem('aster_catalog_v2');
+      const raw = localStorage.getItem('aster_catalog_v3');
       if (raw) {
         const { data: cachedData, timestamp } = JSON.parse(raw);
         if (Date.now() - timestamp < 24 * 3600 * 1000 && cachedData.length > 0) {
