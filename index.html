@@ -1432,7 +1432,12 @@ function computeFeasibilityMetrics(ast) {
   }
 
   // Value range (10%–30% extraction efficiency)
-  const rawVal = Number(ast.price) || 0;
+  // Prefer Asterank price; fall back to composition-based estimate so value is never $0 when we have diameter data
+  let rawVal = Number(ast.price) || 0;
+  if (rawVal === 0) {
+    const matData = computeMaterialRows(ast);
+    rawVal = matData.rows.reduce((s, r) => s + r.totalValue, 0);
+  }
 
   // Hazard
   const pha  = ast.pha === 'Y';
@@ -3187,15 +3192,23 @@ async function fetchResearch(ast) {
 function applyNHATSData(rows) {
   console.log('[NHATS] applyNHATSData called with', rows.length, 'rows');
   if (!asteroidData || asteroidData.length === 0) return;
+  // NHATS API returns array rows: [des, fullname, H, dH, min_dv, min_dur, n_via_traj, obs_start, obs_end, obs_flag]
+  const isArr = rows.length > 0 && Array.isArray(rows[0]);
   nhatsMap = new Map();
-  rows.forEach(row => nhatsMap.set((row.des || '').trim(), row));
+  rows.forEach(row => {
+    const des = (isArr ? row[0] : (row.des || '')).trim();
+    if (des) nhatsMap.set(des, row);
+  });
   let matchCount = 0;
   for (let i = 0; i < asteroidData.length; i++) {
     const ast = asteroidData[i];
     const des = (ast.pdes || '').trim();
     const row = nhatsMap.get(des) || nhatsMap.get(des.replace(/\s+.*/, ''));
     if (row) {
-      ast.nhats = { accessible: true, minDv: row.min_dv, minDur: row.min_dur, nTrajectories: row.n_via_points, stayTime: row.min_stay, occ: row.occ };
+      const minDv  = isArr ? row[4] : row.min_dv;
+      const minDur = isArr ? row[5] : row.min_dur;
+      const nTraj  = isArr ? row[6] : (row.n_via_traj || row.n_via_points || 0);
+      ast.nhats = { accessible: true, minDv, minDur, nTrajectories: nTraj, stayTime: null, occ: null };
       ast._nhats = true;
       matchCount++;
     } else {
@@ -3780,11 +3793,14 @@ function onPlanResult(results, noFeasibleWindow, dbg) {
     const dbgLine = dbg
       ? `<br><span style="color:#4b5563;font-size:9px">diag: lambert_null=${dbg.lambert_null} gate_fail=${dbg.gate_fail} phase1=${dbg.phase1_count} best_dv=${dbg.best_dv ?? '—'}</span>`
       : '';
+    const bestDv = dbg?.best_dv;
+    const hint = bestDv && bestDv < 30
+      ? `Best one-way ΔV found: ${bestDv} km/s — try extending the window past ${missionConfig.launchYearEnd || 2035} or pick a NHATS ✓ target.`
+      : 'Try a NHATS ✓ target (◈ NHATS ACCESSIBLE ONLY filter), extend the launch window, or pick a lower-ΔV asteroid.';
     el.innerHTML =
       '<div style="color:#ef4444;padding:12px 4px;font-size:10px;line-height:1.6">' +
       'NO FEASIBLE WINDOW FOUND<br>' +
-      '<span style="color:#6b7280">All trajectories exceed 20 km/s total ΔV or 15 km/s per burn.<br>' +
-      'Try a different asteroid, extend the search window, or select a lower-ΔV target.</span>' +
+      `<span style="color:#6b7280">${hint}</span>` +
       dbgLine + '</div>';
     el.style.display = 'block';
     return;
