@@ -668,6 +668,19 @@ self.onmessage = function(e) {
     const STAY_DEF  = { light: 14, medium: 45, heavy: 90 };
     const stayDays  = stayMsg || STAY_DEF[spacecraft] || 45;
 
+    // EPOCH DIAGNOSTIC — remove after debugging
+    try {
+      const epochJD  = ast.epoch + 2400000.5;
+      const astStart = propagateAsteroid(ast, jd_start);
+      const earthS   = propagatePlanet(2, jd_start);
+      const dist     = Math.hypot(astStart.x - earthS.x, astStart.y - earthS.y, astStart.z - earthS.z);
+      const earthV   = Math.hypot(earthS.vx, earthS.vy, earthS.vz);
+      const astV     = Math.hypot(astStart.vx, astStart.vy, astStart.vz);
+      console.log(`[epoch_diag] ${ast.pdes}: epoch_raw=${ast.epoch} epochJD=${epochJD.toFixed(1)} ` +
+        `dist_AU=${dist.toFixed(3)} ast_r=${Math.hypot(astStart.x,astStart.y,astStart.z).toFixed(3)} ` +
+        `|v_earth|=${earthV.toFixed(2)}km/s |v_ast|=${astV.toFixed(2)}km/s`);
+    } catch(e) { console.log('[epoch_diag] error:', e.message); }
+
     const STEP_DEP  = 15;
     const TOF_STEPS = 24;
     const TOF_MIN   = 60, TOF_MAX = 600;
