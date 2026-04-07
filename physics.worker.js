@@ -207,7 +207,7 @@ function propagateAsteroid(ast, jd) {
   const Om   = ast.om * DEG;
   const w    = ast.w * DEG;
   const M0   = ast.ma * DEG;
-  const epochJD = ast.epoch + 2400000.5; // MJD → JD
+  const epochJD = ast.epoch; // already JD
 
   return kep2cart(a, e, i, Om, w, M0, epochJD, jd);
 }
@@ -266,7 +266,7 @@ function moidApprox(el, jd_ref, nPts) {
     if (el.epoch_JD !== undefined) {
       astPts.push(kep2cart(el.a, el.e, el.i, el.Om, el.w, el.M0, el.epoch_JD, el.epoch_JD + f * T_ast));
     } else {
-      const epochJD = el.epoch + 2400000.5;
+      const epochJD = el.epoch; // already JD
       astPts.push(kep2cart(el.a, el.e, el.i*DEG, el.om*DEG, el.w*DEG, el.ma*DEG, epochJD, epochJD + f * T_ast));
     }
   }
@@ -589,7 +589,7 @@ self.onmessage = function(e) {
     const period_days = TWO_PI * Math.sqrt(Math.pow(newEl.a, 3) / GM_AU3_S2) / 86400;
     const origEl = src.epoch_JD !== undefined ? src : {
       a: src.a, e: src.e, i: src.i*DEG, Om: src.om*DEG, w: src.w*DEG, M0: src.ma*DEG,
-      epoch_JD: src.epoch + 2400000.5
+      epoch_JD: src.epoch
     };
     const origPeriod = TWO_PI * Math.sqrt(Math.pow(origEl.a !== undefined ? origEl.a : src.a, 3) / GM_AU3_S2) / 86400;
     const moid = moidApprox(newEl, msg.jd, 120);
@@ -667,19 +667,6 @@ self.onmessage = function(e) {
     const r_park_km = 6371 + (parkingAlt_km || 400);
     const STAY_DEF  = { light: 14, medium: 45, heavy: 90 };
     const stayDays  = stayMsg || STAY_DEF[spacecraft] || 45;
-
-    // EPOCH DIAGNOSTIC — remove after debugging
-    try {
-      const epochJD  = ast.epoch + 2400000.5;
-      const astStart = propagateAsteroid(ast, jd_start);
-      const earthS   = propagatePlanet(2, jd_start);
-      const dist     = Math.hypot(astStart.x - earthS.x, astStart.y - earthS.y, astStart.z - earthS.z);
-      const earthV   = Math.hypot(earthS.vx, earthS.vy, earthS.vz);
-      const astV     = Math.hypot(astStart.vx, astStart.vy, astStart.vz);
-      console.log(`[epoch_diag] ${ast.pdes}: epoch_raw=${ast.epoch} epochJD=${epochJD.toFixed(1)} ` +
-        `dist_AU=${dist.toFixed(3)} ast_r=${Math.hypot(astStart.x,astStart.y,astStart.z).toFixed(3)} ` +
-        `|v_earth|=${earthV.toFixed(2)}km/s |v_ast|=${astV.toFixed(2)}km/s`);
-    } catch(e) { console.log('[epoch_diag] error:', e.message); }
 
     const STEP_DEP  = 15;
     const TOF_STEPS = 24;
@@ -944,7 +931,7 @@ self.onmessage = function(e) {
         if (!a || a <= 0 || e < 0 || e >= 1) continue;
 
         const pdes     = String(row.pdes || row.full_name || '').trim();
-        const epoch    = Number(row.epoch) || 51544.5; // Asterank gives MJD directly
+        const epoch    = Number(row.epoch) || 2451545.0; // Asterank gives JD directly; default = J2000.0
         const diameter = Number(row.diameter) || 0;
         const specRaw  = String(row.spec || row.spec_T || '').trim();
         const per      = Number(row.per) || Math.sqrt(a * a * a); // Kepler's 3rd law: T = a^1.5 yr

@@ -1977,7 +1977,7 @@ function applyBurnJS(ast_or_el, dv_p, dv_n, dv_r, jd) {
     state = kep2cartJS(el.a, el.e, el.i, el.Om, el.w, el.M0, el.epoch_JD, jd);
   } else {
     const ast = ast_or_el;
-    state = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, jd);
+    state = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch, jd);
   }
   const rv = [state.x, state.y, state.z];
   const vv = [state.vx, state.vy, state.vz];
@@ -2375,7 +2375,7 @@ async function saveToIndexedDB(key, value) {
 }
 
 // ─── Physics Worker ───────────────────────────────────────────────────────────
-const worker = new Worker('./physics.worker.js?v=9e');
+const worker = new Worker('./physics.worker.js?v=9f');
 let asteroidData = [];
 let asteroidMesh = null;
 let asteroidCount = 0;
@@ -2596,7 +2596,7 @@ const CORS_PROXY = 'https://corsproxy.io/?';
 function keplerPosAU(ast, jd) {
   const DEG = Math.PI / 180;
   const GM = 3.964e-14; // AU³/s²
-  const epochJD = ast.epoch + 2400000.5;
+  const epochJD = ast.epoch; // already JD
   const n = Math.sqrt(GM / (ast.a * ast.a * ast.a));
   let M = (ast.ma * DEG) + n * (jd - epochJD) * 86400;
   M = M - 2 * Math.PI * Math.floor((M + Math.PI) / (2 * Math.PI));
@@ -4843,7 +4843,7 @@ function updateGizmo() {
         currentBurnElements.w, currentBurnElements.M0,
         currentBurnElements.epoch_JD, currentJD);
     } else {
-      state = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, currentJD);
+      state = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch, currentJD);
     }
   } catch(_) { return; }
 
@@ -4885,14 +4885,14 @@ function previewBurn() {
   drawOrbitEllipse(ast);
   // Copy original orbit to originalOrbitLine
   const origEl = {
-    a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch+2400000.5
+    a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch
   };
   drawOrbitFromElements(originalOrbitLine, origEl);
   drawOrbitFromElements(newOrbitLine, newEl);
   orbitLine.visible = false;
 
   // Burn marker at current asteroid position
-  const s = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, currentJD);
+  const s = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch, currentJD);
   burnMarker.position.set(s.x, s.y, s.z);
   burnMarker.visible = true;
 
@@ -4926,7 +4926,7 @@ function onBurnResult(data) {
   document.getElementById('bp-fuel').textContent = tsiolkovsky(total);
 
   // Request close approach scan
-  const origEl = { a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch+2400000.5 };
+  const origEl = { a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch };
   worker.postMessage({ cmd: 'close_approach_scan', elements: data.elements, jd_start: currentJD, years: 5 });
 
   // Update orbit delta labels
@@ -5450,7 +5450,7 @@ function recomputeAllBurnOrbits() {
   if (burns.length === 0) return;
 
   const ast = asteroidData[selectedId];
-  const origEl = { a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch+2400000.5 };
+  const origEl = { a: ast.a, e: ast.e, i: ast.i*DEG, Om: ast.om*DEG, w: ast.w*DEG, M0: ast.ma*DEG, epoch_JD: ast.epoch };
   drawOrbitFromElements(originalOrbitLine, origEl);
 
   for (let i = 0; i < burns.length; i++) {
@@ -5719,7 +5719,7 @@ function animate() {
       const tJD = currentJD + ghostTime * 730;
       const ast = asteroidData[selectedId];
       try {
-        const posOrig = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch+2400000.5, tJD);
+        const posOrig = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch, tJD);
         const posNew = kep2cartJS(currentBurnElements.a, currentBurnElements.e,
           currentBurnElements.i, currentBurnElements.Om, currentBurnElements.w,
           currentBurnElements.M0, currentBurnElements.epoch_JD, tJD);

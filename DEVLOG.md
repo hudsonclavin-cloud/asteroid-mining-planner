@@ -48,7 +48,7 @@ Three-source parallel data pipeline, all fetched in `physics.worker.js` via the 
 **Merge:** SBDB is the primary record. Asterank and NHATS rows are cross-referenced by `pdes` (designation). Asteroids not in Asterank get estimated value from spectral type + diameter composition model (M-type: 100$/kg, S-type: 10$/kg, C-type: 50$/kg water).
 
 ### Epoch format
-SBDB returns `epoch` as JD. Asterank returns `epoch` as MJD. Worker expects MJD (`ast.epoch`, internally adds 2400000.5 to get JD). SBDB epochs are converted: `epoch = epochJD - 2400000.5` before storing in merged objects.
+Both SBDB and Asterank return `epoch` as Julian Date (JD, e.g., 2458600.5 ≈ April 2019). All code uses `ast.epoch` directly as JD — no conversion needed. The default fallback epoch is 2451545.0 (J2000.0 in JD).
 
 ### LOD — Dust Cloud
 If merged catalog > 3000 asteroids, the first 3000 (sorted by value) form the interactive `InstancedMesh` propagated by the worker. Overflow asteroids get a static `THREE.Points` dust cloud with positions computed once at load time via `keplerPosAU()` (inline Kepler solver, no worker).
