@@ -856,7 +856,7 @@ self.onmessage = function(e) {
         'query=%7B%7D&limit=5000&sort=score';
 
       // ── NHATS: human-accessible targets ──────────────────────────────────
-      const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035';
+      const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
 
       async function fetchAsterankWorker() {
         try {
@@ -905,9 +905,10 @@ self.onmessage = function(e) {
         fetchAsterankWorker(), fetchNHATSWorker()
       ]);
 
+      const nhatsIsArr = nhatsRows.length > 0 && Array.isArray(nhatsRows[0]);
       const nhatsLookup = new Map();
       for (const row of nhatsRows) {
-        const key = (row.des || '').trim();
+        const key = (nhatsIsArr ? row[0] : (row.des || '')).toString().trim();
         if (key) nhatsLookup.set(key, row);
       }
 
@@ -929,6 +930,8 @@ self.onmessage = function(e) {
         const a = Number(row.a);
         const e = Number(row.e);
         if (!a || a <= 0 || e < 0 || e >= 1) continue;
+        const q = a * (1 - e);
+        if (q >= 1.3) continue; // skip main-belt and beyond — mission planner can't reach them
 
         const pdes     = String(row.pdes || row.full_name || '').trim();
         const epoch    = Number(row.epoch) || 2451545.0; // Asterank gives JD directly; default = J2000.0
@@ -973,18 +976,22 @@ self.onmessage = function(e) {
           delta_v:   Number(row.delta_v) || 0,
           nhats: nhatsRow ? {
             accessible:    true,
-            minDv:         nhatsRow.min_dv,
-            minDur:        nhatsRow.min_dur,
-            nTrajectories: nhatsRow.n_via_points,
-            stayTime:      nhatsRow.min_stay,
-            occ:           nhatsRow.occ,
+            minDv:         nhatsIsArr ? nhatsRow[4] : nhatsRow.min_dv,
+            minDur:        nhatsIsArr ? nhatsRow[5] : nhatsRow.min_dur,
+            nTrajectories: nhatsIsArr ? nhatsRow[6] : (nhatsRow.n_via_traj || nhatsRow.n_via_points),
+            stayTime:      nhatsIsArr ? nhatsRow[7] : nhatsRow.min_stay,
+            occ:           nhatsIsArr ? nhatsRow[9] : nhatsRow.occ,
           } : { accessible: false },
           _nhats: !!nhatsRow,
         });
       }
 
-      // Sort by value descending, trim to limit
-      catalog.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+      // Sort by accessibility-adjusted score (profit per km/s of ΔV) so reachable NEOs rank first
+      catalog.sort((a, b) => {
+        const scoreA = (Number(a.profit) || Number(a.price) || 0) / Math.max(Number(a.delta_v) || 10, 1);
+        const scoreB = (Number(b.profit) || Number(b.price) || 0) / Math.max(Number(b.delta_v) || 10, 1);
+        return scoreB - scoreA;
+      });
       const trimmed = catalog.slice(0, limit);
 
       console.log('[Catalog] Asterank →', catalog.length, 'valid, sending', trimmed.length, 'asteroids');
