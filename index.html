@@ -2375,7 +2375,7 @@ async function saveToIndexedDB(key, value) {
 }
 
 // ─── Physics Worker ───────────────────────────────────────────────────────────
-const worker = new Worker('./physics.worker.js');
+const worker = new Worker('./physics.worker.js?v=9e');
 let asteroidData = [];
 let asteroidMesh = null;
 let asteroidCount = 0;
@@ -3156,8 +3156,9 @@ function renderMaterialsTab(id) {
 
 async function fetchNHATSData() {
   console.log('[NHATS] fetchNHATSData called');
-  const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035';
-  const cacheKey = 'aster_nhats_v1';
+  // No launch= filter — return all NHATS targets across all windows so overlap with catalog is maximised
+  const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
+  const cacheKey = 'aster_nhats_v2'; // bumped to force fresh fetch after URL change
   const cached = localStorage.getItem(cacheKey);
   if (cached) {
     try {
@@ -3261,6 +3262,7 @@ function applyNHATSData(rows) {
   if (!asteroidData || asteroidData.length === 0) return;
   // NHATS API returns array rows: [des, fullname, H, dH, min_dv, min_dur, n_via_traj, obs_start, obs_end, obs_flag]
   const isArr = rows.length > 0 && Array.isArray(rows[0]);
+  console.log('[NHATS] format:', isArr ? 'array' : 'object', '| sample des:', isArr ? rows[0]?.[0] : rows[0]?.des, '| catalog pdes[0]:', asteroidData[0]?.pdes);
   nhatsMap = new Map();
   rows.forEach(row => {
     const des = (isArr ? row[0] : (row.des || '')).trim();
