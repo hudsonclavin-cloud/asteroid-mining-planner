@@ -2444,7 +2444,7 @@ worker.onmessage = ({ data }) => {
     }
     console.log('[NHATS] received', data.data.length, 'rows from worker');
     try {
-      localStorage.setItem('aster_nhats_v1', JSON.stringify({ data: data.data, timestamp: Date.now() }));
+      localStorage.setItem('aster_nhats_v2', JSON.stringify({ data: data.data, timestamp: Date.now() }));
     } catch(_) {}
     applyNHATSData(data.data);
     return;
@@ -2469,7 +2469,7 @@ worker.onmessage = ({ data }) => {
     });
     // Cache NHATS rows alongside
     if (data.nhatsRows && data.nhatsRows.length > 0) {
-      try { localStorage.setItem('aster_nhats_v1', JSON.stringify({ data: data.nhatsRows, timestamp: Date.now() })); } catch(_) {}
+      try { localStorage.setItem('aster_nhats_v2', JSON.stringify({ data: data.nhatsRows, timestamp: Date.now() })); } catch(_) {}
     }
     buildAsteroidMesh(data.data);
     const loading = document.getElementById('loading');
@@ -3814,6 +3814,8 @@ function closeMissionPlanner() {
   document.getElementById('mp-verify-wrap').style.display = 'none';
   clearTrajectoryLine();
   missionEarthReturnPos = null;
+  missionResults = [];
+  missionResults.source = null;
 }
 
 function clearTrajectoryLine() {
@@ -5990,9 +5992,13 @@ document.getElementById('mp-verify-mdesign').onclick = async function() {
         <span style="color:#4a6a7a">JPL mdesign only covers NHATS-accessible NEOs with pre-computed trajectories.</span>`;
       return;
     }
-    const rows  = Array.isArray(data.data) ? data.data : [];
-    const minDv = rows.length
-      ? Math.min(...rows.map(row => Array.isArray(row) ? Number(row[4] || 99) : 99))
+    const rows   = Array.isArray(data.data) ? data.data : [];
+    const fields = Array.isArray(data.fields) ? data.fields : [];
+    const iDv    = fields.indexOf('dv');
+    const minDv  = rows.length
+      ? Math.min(...rows.map(row => Array.isArray(row)
+          ? Number(iDv !== -1 ? row[iDv] : row[4]) || 99
+          : Number(row.dv) || 99))
       : null;
     const asterDv = optimalTrajectory ? optimalTrajectory.dv_total : null;
     const diff    = asterDv && minDv ? Math.abs(asterDv - minDv) : null;
