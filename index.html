@@ -2489,7 +2489,19 @@ worker.onmessage = ({ data }) => {
     return;
   }
   if (data.type === 'plan_result') {
+    if (typeof _plannerTimeoutId !== 'undefined' && _plannerTimeoutId) {
+      clearTimeout(_plannerTimeoutId);
+      _plannerTimeoutId = null;
+    }
     onPlanResult(data.results, data.noFeasibleWindow, data.dbg, 'lambert');
+    return;
+  }
+  if (data.type === 'error') {
+    if (typeof _plannerTimeoutId !== 'undefined' && _plannerTimeoutId) {
+      clearTimeout(_plannerTimeoutId);
+      _plannerTimeoutId = null;
+    }
+    showPlannerError(data.message || 'Worker error');
     return;
   }
   if (data.type === 'query_pos_result' && data.reqId === 'earth_return' && data.ok) {
@@ -3920,9 +3932,35 @@ async function fetchMdesignTrajectories(ast, config) {
   return top;
 }
 
+let _plannerTimeoutId = null;
+
+function showPlannerError(err) {
+  const msg = typeof err === 'string' ? err : (err?.message || 'Unknown error');
+  document.getElementById('mp-computing').style.display = 'none';
+  const el = document.getElementById('mp-results');
+  if (el) {
+    el.innerHTML =
+      `<div style="color:#f87171;padding:16px;border:1px solid #f87171;font-size:11px;line-height:1.6">` +
+      `<div style="font-weight:bold;margin-bottom:6px;letter-spacing:0.08em">&#9888; MISSION PLANNER ERROR</div>` +
+      `<div>${msg}</div>` +
+      `<div style="margin-top:8px;color:#4b5563">Check console for details. Try selecting a different asteroid or adjusting launch window.</div>` +
+      `</div>`;
+    el.style.display = 'block';
+  }
+  console.error('[Aster Planner]', err);
+}
+
 async function runMissionOptimizer() {
   if (selectedId < 0) return;
   const ast = asteroidData[selectedId];
+
+  // Validate asteroid orbital elements before sending to worker
+  if (!ast) return showPlannerError('No asteroid selected.');
+  const required = ['a', 'e', 'i', 'om', 'w', 'ma'];
+  const missing = required.filter(k => ast[k] === undefined || isNaN(ast[k]));
+  if (missing.length) return showPlannerError(`Asteroid missing orbital elements: ${missing.join(', ')}`);
+  if (ast.epoch === undefined || isNaN(ast.epoch)) return showPlannerError('Asteroid epoch is undefined.');
+
   const ys = parseInt(document.getElementById('mp-year-start').value) || 2026;
   const ye = parseInt(document.getElementById('mp-year-end').value)   || 2035;
   missionConfig.destination     = document.getElementById('mp-destination').value;
@@ -3945,29 +3983,40 @@ async function runMissionOptimizer() {
   document.getElementById('mp-progress-bar').style.width = '5%';
   document.getElementById('mp-progress-label').textContent = 'Checking JPL trajectory database...';
 
-  let jplResults = null;
-  try { jplResults = await fetchMdesignTrajectories(ast, missionConfig); } catch(_) {}
+  try {
+    let jplResults = null;
+    try { jplResults = await fetchMdesignTrajectories(ast, missionConfig); } catch(_) {}
 
-  if (jplResults && jplResults.length > 0) {
-    document.getElementById('mp-progress-bar').style.width = '100%';
+    if (jplResults && jplResults.length > 0) {
+      document.getElementById('mp-progress-bar').style.width = '100%';
+      document.getElementById('mp-progress-label').textContent =
+        `JPL mdesign: ${jplResults.length} verified trajectories`;
+      await new Promise(r => setTimeout(r, 400));
+      onPlanResult(jplResults, false, null, 'jpl-mdesign');
+      return;
+    }
+
+    document.getElementById('mp-progress-bar').style.width = '10%';
     document.getElementById('mp-progress-label').textContent =
-      `JPL mdesign: ${jplResults.length} verified trajectories`;
-    await new Promise(r => setTimeout(r, 400));
-    onPlanResult(jplResults, false, null, 'jpl-mdesign');
-    return;
+      'JPL database: no match — running Aster solver...';
+
+    // 30-second timeout: if worker never replies, surface an error
+    if (_plannerTimeoutId) clearTimeout(_plannerTimeoutId);
+    _plannerTimeoutId = setTimeout(() => {
+      _plannerTimeoutId = null;
+      showPlannerError('Worker timeout (>30 s). The solver may be overloaded — try a shorter launch window or a NHATS ✓ target.');
+    }, 30000);
+
+    worker.postMessage({
+      cmd: 'plan_mission', ast, jd_start, jd_end,
+      destination: missionConfig.destination,
+      parkingAlt_km: parkAlt,
+      spacecraft: sc,
+      stayDays: STAY_MAP[sc] || 45,
+    });
+  } catch(err) {
+    showPlannerError(err);
   }
-
-  document.getElementById('mp-progress-bar').style.width = '10%';
-  document.getElementById('mp-progress-label').textContent =
-    'JPL database: no match — running Aster solver...';
-
-  worker.postMessage({
-    cmd: 'plan_mission', ast, jd_start, jd_end,
-    destination: missionConfig.destination,
-    parkingAlt_km: parkAlt,
-    spacecraft: sc,
-    stayDays: STAY_MAP[sc] || 45,
-  });
 }
 
 function onPlanResult(results, noFeasibleWindow, dbg, source) {

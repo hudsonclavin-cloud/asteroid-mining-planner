@@ -710,7 +710,8 @@ self.onmessage = function(e) {
         if (!pc) continue;
         const combined = pc.dv_dep + pc.dv_arr;
         if (combined < dbg_best_dv) dbg_best_dv = combined;
-        if (pc.dv_dep > 20 || pc.dv_arr > 20) { dbg_gate_fail++; continue; } // infeasible single-burn
+        if (!isFinite(pc.dv_dep) || !isFinite(pc.dv_arr) || pc.dv_dep > 50 || pc.dv_arr > 50) { dbg_lambert_null++; continue; } // skip NaN/huge Lambert output
+        if (pc.dv_dep > 7.0) { dbg_gate_fail++; continue; } // departure ΔV gate (7 km/s)
 
         phase1.push({
           jd_dep, jd_arr, tof,
@@ -727,7 +728,7 @@ self.onmessage = function(e) {
 
     // Keep top 30 outbound by combined outbound ΔV
     phase1.sort((a, b) => (a.dv_dep + a.dv_arr) - (b.dv_dep + b.dv_arr));
-    const candidates = phase1.slice(0, 50);
+    const candidates = phase1.slice(0, 200);
 
     // ── Phase 2: return Lambert + destination capture ────────────────────────
     const results = [];
@@ -773,7 +774,7 @@ self.onmessage = function(e) {
 
       const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
-      if (dv_total > 30) continue; // infeasible round-trip
+      if (dv_total > 12.0) continue; // infeasible round-trip (12 km/s budget)
 
       results.push({
         jd_dep:    c.jd_dep,
@@ -803,7 +804,12 @@ self.onmessage = function(e) {
     const top = results.slice(0, 10);
     const dbg = { lambert_null: dbg_lambert_null, gate_fail: dbg_gate_fail,
       phase1_count: phase1.length, best_dv: dbg_best_dv === Infinity ? null : +dbg_best_dv.toFixed(2) };
-    self.postMessage({ type: 'plan_result', results: top, noFeasibleWindow: top.length === 0, dbg });
+    if (top.length === 0) {
+      self.postMessage({ type: 'plan_result', results: [], noFeasibleWindow: true,
+        dbg: Object.assign(dbg, { dv_dep_gate: 7.0, dv_total_gate: 12.0 }) });
+      return;
+    }
+    self.postMessage({ type: 'plan_result', results: top, noFeasibleWindow: false, dbg });
     return;
   }
 
