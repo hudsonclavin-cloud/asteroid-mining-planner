@@ -710,7 +710,7 @@ self.onmessage = function(e) {
         if (!pc) continue;
         const combined = pc.dv_dep + pc.dv_arr;
         if (combined < dbg_best_dv) dbg_best_dv = combined;
-        if (pc.dv_dep > 15 || pc.dv_arr > 15) { dbg_gate_fail++; continue; } // infeasible single-burn
+        if (pc.dv_dep > 20 || pc.dv_arr > 20) { dbg_gate_fail++; continue; } // infeasible single-burn
 
         phase1.push({
           jd_dep, jd_arr, tof,
@@ -727,7 +727,7 @@ self.onmessage = function(e) {
 
     // Keep top 30 outbound by combined outbound ΔV
     phase1.sort((a, b) => (a.dv_dep + a.dv_arr) - (b.dv_dep + b.dv_arr));
-    const candidates = phase1.slice(0, 30);
+    const candidates = phase1.slice(0, 50);
 
     // ── Phase 2: return Lambert + destination capture ────────────────────────
     const results = [];
@@ -773,7 +773,7 @@ self.onmessage = function(e) {
 
       const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
-      if (dv_total > 20) continue; // infeasible round-trip
+      if (dv_total > 30) continue; // infeasible round-trip
 
       results.push({
         jd_dep:    c.jd_dep,
