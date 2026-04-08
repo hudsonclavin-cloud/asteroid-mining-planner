@@ -2464,8 +2464,8 @@ worker.onmessage = ({ data }) => {
     console.log('[Catalog] catalog_ready:', data.data.length, 'asteroids');
     // Cache to IndexedDB; fall back to localStorage (top 2000 only)
     const payload = { data: data.data, timestamp: Date.now() };
-    saveToIndexedDB('aster_catalog_v4', payload).catch(() => {
-      try { localStorage.setItem('aster_catalog_v4', JSON.stringify({ data: data.data.slice(0, 2000), timestamp: Date.now() })); } catch(_) {}
+    saveToIndexedDB('aster_catalog_v5', payload).catch(() => {
+      try { localStorage.setItem('aster_catalog_v5', JSON.stringify({ data: data.data.slice(0, 2000), timestamp: Date.now() })); } catch(_) {}
     });
     // Cache NHATS rows alongside
     if (data.nhatsRows && data.nhatsRows.length > 0) {
@@ -3861,9 +3861,17 @@ async function fetchMdesignTrajectories(ast, config) {
   let data;
   try {
     const r = await fetch(url);
-    if (!r.ok) return null;
+    if (!r.ok) {
+      console.warn(`[mdesign] HTTP ${r.status} — falling back to Lambert`);
+      window._mdesignFailed = true;
+      return null;
+    }
     data = await r.json();
-  } catch(_) { return null; }
+  } catch(err) {
+    console.warn('[mdesign] network error, falling back to Lambert:', err);
+    window._mdesignFailed = true;
+    return null;
+  }
 
   if (!data || data.error || !Array.isArray(data.data) || data.data.length === 0) return null;
 
@@ -3954,6 +3962,9 @@ async function runMissionOptimizer() {
   if (selectedId < 0) return;
   const ast = asteroidData[selectedId];
 
+  // Reset mdesign failure flag for this run
+  window._mdesignFailed = false;
+
   // Validate asteroid orbital elements before sending to worker
   if (!ast) return showPlannerError('No asteroid selected.');
   const required = ['a', 'e', 'i', 'om', 'w', 'ma'];
@@ -3985,7 +3996,10 @@ async function runMissionOptimizer() {
 
   try {
     let jplResults = null;
-    try { jplResults = await fetchMdesignTrajectories(ast, missionConfig); } catch(_) {}
+    try { jplResults = await fetchMdesignTrajectories(ast, missionConfig); } catch(err) {
+      console.warn('[mdesign] 502 or error, falling back to Lambert:', err);
+      window._mdesignFailed = true;
+    }
 
     if (jplResults && jplResults.length > 0) {
       document.getElementById('mp-progress-bar').style.width = '100%';
@@ -4076,7 +4090,9 @@ function renderTrajectoryList() {
   const badge  = isJPL
     ? '<span style="color:#00d4ff;font-size:7px;border:1px solid #00d4ff;padding:1px 3px;margin-left:4px;vertical-align:middle">🛰 JPL</span>'
     : '<span style="color:#4a6a7a;font-size:7px;border:1px solid #4a6a7a;padding:1px 3px;margin-left:4px;vertical-align:middle">📐 ASTER</span>';
-  list.innerHTML = '';
+  list.innerHTML = window._mdesignFailed
+    ? '<div style="color:#aaa;font-family:\'Space Mono\',monospace;font-size:11px;padding:4px 0 8px;border-bottom:1px solid #1f2937;margin-bottom:6px">📐 Using onboard Lambert solver — JPL mdesign unavailable</div>'
+    : '';
   missionResults.forEach((t, i) => {
     const dep   = jdToDate(t.jd_dep);
     const arr   = jdToDate(t.jd_arr);
@@ -4086,7 +4102,10 @@ function renderTrajectoryList() {
     const gaBadge = t.lunarAssist
       ? '<span style="font-size:7px;color:#fbbf24;border:1px solid #fbbf24;padding:1px 4px;margin-left:5px;vertical-align:middle">LUNAR GA</span>'
       : '';
-    card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${badge}</div>
+    const hvBadge = t.highDv
+      ? '<span style="font-size:7px;color:#fb923c;border:1px solid #fb923c;padding:1px 4px;margin-left:5px;vertical-align:middle">⚠ HIGH ΔV</span>'
+      : '';
+    card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s</div>
       <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
@@ -6132,13 +6151,15 @@ async function init() {
   try { localStorage.removeItem('aster_catalog_v1'); } catch(_) {}
   try { localStorage.removeItem('aster_catalog_v2'); } catch(_) {}
   try { localStorage.removeItem('aster_catalog_v3'); } catch(_) {}
+  try { localStorage.removeItem('aster_catalog_v4'); } catch(_) {}
   saveToIndexedDB('aster_catalog_v1', null).catch(() => {});
   saveToIndexedDB('aster_catalog_v2', null).catch(() => {});
   saveToIndexedDB('aster_catalog_v3', null).catch(() => {});
+  saveToIndexedDB('aster_catalog_v4', null).catch(() => {});
 
   // ── Check IndexedDB catalog cache ──────────────────────────────────────
   try {
-    const cached = await getFromIndexedDB('aster_catalog_v4');
+    const cached = await getFromIndexedDB('aster_catalog_v5');
     if (cached && cached.timestamp && Date.now() - cached.timestamp < 24 * 3600 * 1000 && cached.data.length > 0) {
       console.log('[Catalog] IndexedDB cache hit:', cached.data.length, 'asteroids');
       const sub = document.getElementById('loading-sub');
@@ -6156,7 +6177,7 @@ async function init() {
   } catch(_) {
     // IndexedDB unavailable — try localStorage fallback
     try {
-      const raw = localStorage.getItem('aster_catalog_v4');
+      const raw = localStorage.getItem('aster_catalog_v5');
       if (raw) {
         const { data: cachedData, timestamp } = JSON.parse(raw);
         if (Date.now() - timestamp < 24 * 3600 * 1000 && cachedData.length > 0) {

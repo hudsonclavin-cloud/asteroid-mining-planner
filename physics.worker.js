@@ -711,7 +711,7 @@ self.onmessage = function(e) {
         const combined = pc.dv_dep + pc.dv_arr;
         if (combined < dbg_best_dv) dbg_best_dv = combined;
         if (!isFinite(pc.dv_dep) || !isFinite(pc.dv_arr) || pc.dv_dep > 50 || pc.dv_arr > 50) { dbg_lambert_null++; continue; } // skip NaN/huge Lambert output
-        if (pc.dv_dep > 7.0) { dbg_gate_fail++; continue; } // departure ΔV gate (7 km/s)
+        if (pc.dv_dep > 8.0) { dbg_gate_fail++; continue; } // departure ΔV gate (8 km/s)
 
         phase1.push({
           jd_dep, jd_arr, tof,
@@ -774,7 +774,7 @@ self.onmessage = function(e) {
 
       const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
-      if (dv_total > 12.0) continue; // infeasible round-trip (12 km/s budget)
+      if (dv_total > 20.0) continue; // infeasible round-trip (20 km/s hard cap)
 
       results.push({
         jd_dep:    c.jd_dep,
@@ -790,6 +790,7 @@ self.onmessage = function(e) {
         dv_return:  +bestReturn.dv_return.toFixed(3),
         dv_capture: +bestReturn.dv_capture.toFixed(3),
         dv_total:   +dv_total.toFixed(3),
+        highDv:     dv_total > 12.0,
         C3:         +c.C3.toFixed(3),
         vinf_dep:   +c.vinf_dep.toFixed(3),
         vinf_arr:   +c.vinf_arr.toFixed(3),
@@ -858,8 +859,11 @@ self.onmessage = function(e) {
       const CORS_PROXY = 'https://corsproxy.io/?';
 
       // ── Asterank: broad query, sorted by score ────────────────────────────
+      // Filter to objects with a computed delta_v (Asterank only calculates this for NEAs).
+      // Sorting by delta_v ascending gives the most accessible targets first.
+      // query={"delta_v":{"$gt":0}} encoded:
       const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
-        'query=%7B%7D&limit=5000&sort=score';
+        'query=%7B%22delta_v%22%3A%7B%22%24gt%22%3A0%7D%7D&limit=2000&sort=delta_v';
 
       // ── NHATS: human-accessible targets ──────────────────────────────────
       const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
