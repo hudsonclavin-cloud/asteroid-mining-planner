@@ -1174,6 +1174,15 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 
   <div id="mp-scroll" style="overflow-y:auto;flex:1;padding:12px 14px">
 
+    <div id="mp-type-toggle" style="display:flex;gap:6px;margin-bottom:14px">
+      <button id="btn-type-extract" class="ftoggle" data-on="true"
+        style="flex:1;text-align:center;padding:6px 8px;font-size:9px"
+        onclick="setMissionType('extract')">⚡ EXTRACT &amp; RETURN</button>
+      <button id="btn-type-redirect" class="ftoggle" data-on="false"
+        style="flex:1;text-align:center;padding:6px 8px;font-size:9px"
+        onclick="setMissionType('redirect')">↩ CAPTURE &amp; REDIRECT</button>
+    </div>
+
     <div class="panel-header">◈ MISSION CONFIGURATION</div>
 
     <div style="margin-bottom:10px">
@@ -1238,6 +1247,38 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
         <input id="mp-park-alt" type="number" min="200" max="2000" value="400"
           class="mp-input" style="width:70px">
         <span style="font-size:9px;color:#4b5563">km above Earth surface</span>
+      </div>
+    </div>
+
+    <div id="mp-redirect-config" style="display:none;margin-bottom:14px">
+      <div style="margin-bottom:10px">
+        <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">PROPULSION SYSTEM</div>
+        <select id="mp-redirect-propulsion" class="mp-select">
+          <option value="chemical_300">Chemical — Isp 300s · High thrust, heavy fuel load</option>
+          <option value="ion_3000">Ion Drive — Isp 3000s · Low thrust, very efficient</option>
+          <option value="nuclear_900">Nuclear Thermal — Isp 900s · High thrust + efficient</option>
+          <option value="solar_1500">Solar Electric — Isp 1500s · No fuel cost, slow burn</option>
+        </select>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">CAPTURE TARGET</div>
+        <select id="mp-redirect-target" class="mp-select">
+          <option value="lunar_orbit">Lunar Orbit — Stable capture, ISRU base</option>
+          <option value="el4">Earth-Luna L4 — Stable trojan, long-term storage</option>
+          <option value="el5">Earth-Luna L5 — Stable trojan, industrial hub</option>
+        </select>
+      </div>
+      <div style="margin-bottom:4px">
+        <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">MINING SPLIT — METALS vs WATER</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="mp-mining-split" type="range" min="0" max="100" value="50" style="flex:1"
+            oninput="onMiningSlider(this.value)">
+          <span id="mp-split-label" style="font-size:9px;color:#4af7c4;min-width:100px">50% metals</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:2px">
+          <span style="font-size:8px;color:#4b5563">← all water</span>
+          <span style="font-size:8px;color:#4b5563">all metals →</span>
+        </div>
       </div>
     </div>
 
@@ -1349,6 +1390,51 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
           <button class="anim-speed-btn" data-aspeed="86400">1d/s</button>
         </div>
       </div>
+    </div>
+
+    <div id="mp-redirect-results" style="display:none;margin-top:14px;padding-bottom:20px">
+
+      <div class="panel-header">◈ REDIRECT FEASIBILITY</div>
+      <div id="rr-feasibility" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:9px;color:#4b5563;letter-spacing:0.08em">MISSION SCORE</span>
+          <span id="rr-score-val" style="font-size:14px;color:#4af7c4;font-weight:bold">—/100</span>
+        </div>
+        <div style="height:6px;background:#1a2235;border:1px solid #1f2937">
+          <div id="rr-score-bar" style="height:100%;width:0%;background:#4af7c4;transition:width 0.4s"></div>
+        </div>
+      </div>
+
+      <div id="rr-intercept" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
+        <div style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">INTERCEPT TRAJECTORY</div>
+        <pre id="rr-intercept-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
+      </div>
+
+      <div id="rr-asteroid" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
+        <div style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">ASTEROID MASS + PROPELLANT</div>
+        <pre id="rr-asteroid-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
+        <div id="rr-prop-warn" style="display:none;margin-top:6px;font-size:9px;color:#fb923c;
+          border:1px solid #7c3a00;padding:4px 6px">
+          ▲ HIGH PROPELLANT LOAD — mission may be marginally feasible
+        </div>
+      </div>
+
+      <div id="rr-capture" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
+        <div style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">LUNAR CAPTURE BURN</div>
+        <pre id="rr-capture-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
+      </div>
+
+      <div id="rr-isru" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
+        <div style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">ISRU YIELD ESTIMATE</div>
+        <pre id="rr-isru-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
+      </div>
+
+      <div id="rr-infeasible-msg" style="display:none;border:1px solid #7f1d1d;padding:8px;
+        background:#1a0808;color:#f87171;font-size:9px;letter-spacing:0.05em">
+        ✗ MISSION INFEASIBLE — propellant requirement exceeds 95% of asteroid mass.<br>
+        Try ion drive propulsion or select a smaller, closer target.
+      </div>
+
     </div>
 
   </div>
@@ -2496,6 +2582,13 @@ worker.onmessage = ({ data }) => {
     onPlanResult(data.results, data.noFeasibleWindow, data.dbg, 'lambert');
     return;
   }
+  if (data.type === 'redirect_result') {
+    if (typeof _plannerTimeoutId !== 'undefined' && _plannerTimeoutId) {
+      clearTimeout(_plannerTimeoutId); _plannerTimeoutId = null;
+    }
+    onRedirectResult(data);
+    return;
+  }
   if (data.type === 'error') {
     if (typeof _plannerTimeoutId !== 'undefined' && _plannerTimeoutId) {
       clearTimeout(_plannerTimeoutId);
@@ -2551,6 +2644,9 @@ let optimalTrajectory = null;
 let trajectoryLine    = null;
 let trajectoryArrows  = [];
 let returnArcLine     = null;
+let _redirectArcLine  = null;
+let _lunarOrbitRing   = null;
+let _cargoPodArcs     = [];
 let mpBurns           = [];
 
 // ── Phase 7F: Mission Visualization ──────────────────────────────────────────
@@ -3798,9 +3894,11 @@ function openMissionPlanner(id) {
   document.getElementById('mp-results').style.display   = 'none';
   document.getElementById('mp-profile').style.display   = 'none';
   document.getElementById('mp-burns').style.display     = 'none';
-  document.getElementById('mp-actions').style.display   = 'none';
+  document.getElementById('mp-actions').style.display         = 'none';
+  document.getElementById('mp-redirect-results').style.display = 'none';
   document.getElementById('mp-progress-bar').style.width = '0%';
   missionResults = []; selectedTrajIdx = -1;
+  setMissionType('extract'); // reset to default on each open
   // Expand right panel into mission-planner mode
   const rp = document.getElementById('right-panel');
   rp.classList.add('panel-open', 'mp-mode');
@@ -3838,6 +3936,7 @@ function clearTrajectoryLine() {
   clearBurnVectors();
   stopMissionAnimation();
   hideMissionTimeline();
+  clearRedirectVisualization();
 }
 
 async function fetchMdesignTrajectories(ast, config) {
@@ -4031,6 +4130,215 @@ async function runMissionOptimizer() {
   } catch(err) {
     showPlannerError(err);
   }
+}
+
+// ── Capture & Redirect Mission Type ──────────────────────────────────────────
+
+let _activeMissionType = 'extract';
+
+function setMissionType(type) {
+  _activeMissionType = type;
+  document.getElementById('btn-type-extract').dataset.on  = (type === 'extract').toString();
+  document.getElementById('btn-type-redirect').dataset.on = (type === 'redirect').toString();
+  document.getElementById('mp-redirect-config').style.display = type === 'redirect' ? 'block' : 'none';
+  // Hide all result panels on mode switch
+  ['mp-results','mp-profile','mp-burns','mp-actions','mp-redirect-results'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  clearTrajectoryLine();
+  clearRedirectVisualization();
+}
+
+function onMiningSlider(val) {
+  document.getElementById('mp-split-label').textContent = val + '% metals';
+}
+
+const REDIRECT_PROPULSION = {
+  chemical_300: { name: 'Chemical',      isp_s: 300  },
+  ion_3000:     { name: 'Ion Drive',     isp_s: 3000 },
+  nuclear_900:  { name: 'Nuclear Thermal', isp_s: 900 },
+  solar_1500:   { name: 'Solar Electric', isp_s: 1500 },
+};
+
+function getRedirectPropulsionModule() {
+  const key = document.getElementById('mp-redirect-propulsion').value;
+  return REDIRECT_PROPULSION[key] || REDIRECT_PROPULSION.chemical_300;
+}
+
+async function runRedirectOptimizer() {
+  const ast = selectedAsteroid;
+  if (!ast) { showPlannerError('No asteroid selected — click an asteroid first.'); return; }
+  if (!isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
+    showPlannerError('Asteroid is missing orbital elements (a/e/i). Cannot plan redirect mission.');
+    return;
+  }
+  if (!isFinite(ast.epoch)) {
+    showPlannerError('Asteroid epoch is missing. Cannot propagate orbit.');
+    return;
+  }
+
+  const yearStart = parseInt(document.getElementById('mp-year-start').value) || 2026;
+  const yearEnd   = parseInt(document.getElementById('mp-year-end').value)   || 2035;
+  const jd_start  = (yearStart - 2000) * 365.25 + 2451545.0;
+  const jd_end    = (yearEnd   - 2000) * 365.25 + 2451545.0;
+
+  const propulsionModule = getRedirectPropulsionModule();
+  const miningFraction   = (parseInt(document.getElementById('mp-mining-split').value) || 50) / 100;
+
+  document.getElementById('mp-computing').style.display = 'block';
+  document.getElementById('mp-progress-bar').style.width = '5%';
+  document.getElementById('mp-progress-label').textContent = 'Scanning redirect intercepts...';
+  ['mp-results','mp-profile','mp-burns','mp-actions','mp-redirect-results'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  clearTrajectoryLine();
+  clearRedirectVisualization();
+
+  if (_plannerTimeoutId) clearTimeout(_plannerTimeoutId);
+  _plannerTimeoutId = setTimeout(() => {
+    _plannerTimeoutId = null;
+    showPlannerError('Worker timeout (>30 s). Try a shorter launch window or a closer target.');
+  }, 30000);
+
+  try {
+    worker.postMessage({ cmd: 'plan_redirect_mission', ast, jd_start, jd_end, propulsionModule, miningFraction });
+  } catch(err) {
+    showPlannerError(err);
+  }
+}
+
+function onRedirectResult(data) {
+  if (_plannerTimeoutId) { clearTimeout(_plannerTimeoutId); _plannerTimeoutId = null; }
+  document.getElementById('mp-computing').style.display = 'none';
+
+  const panel = document.getElementById('mp-redirect-results');
+  panel.style.display = 'block';
+
+  if (!data.feasible || data.error) {
+    document.getElementById('rr-infeasible-msg').style.display = 'block';
+    if (data.error) {
+      document.getElementById('rr-infeasible-msg').innerHTML =
+        `✗ INFEASIBLE — ${data.error}<br><span style="color:#9ca3af">Try ion drive or a closer/smaller target.</span>`;
+    }
+    document.getElementById('rr-score-bar').style.width = '0%';
+    document.getElementById('rr-score-val').textContent = '0/100';
+    return;
+  }
+  document.getElementById('rr-infeasible-msg').style.display = 'none';
+
+  // Feasibility score bar
+  const score = data.feasibility_score || 0;
+  const barColor = score >= 60 ? '#4af7c4' : score >= 30 ? '#fb923c' : '#f87171';
+  const scoreBar = document.getElementById('rr-score-bar');
+  scoreBar.style.width = score + '%';
+  scoreBar.style.background = barColor;
+  document.getElementById('rr-score-val').style.color = barColor;
+  document.getElementById('rr-score-val').textContent = score + '/100';
+
+  // Intercept trajectory
+  const ic = data.intercept;
+  document.getElementById('rr-intercept-text').textContent =
+    `Depart    ${jdToDate(ic.jd_dep)}\n` +
+    `Arrive    ${jdToDate(ic.jd_arr)}\n` +
+    `TOF       ${ic.tof} days\n` +
+    `ΔV dep    ${ic.dv_dep.toFixed(2)} km/s`;
+
+  // Asteroid mass + propellant
+  const ast_d = data.asteroid;
+  const rd    = data.redirect;
+  const flags = data.flags;
+  const d_km  = (ast_d.d_m / 1000).toFixed(2);
+  const mass_str = ast_d.mass_kg >= 1e12
+    ? (ast_d.mass_kg / 1e12).toFixed(2) + ' Tt'
+    : ast_d.mass_kg >= 1e9
+    ? (ast_d.mass_kg / 1e9).toFixed(2) + ' Gt'
+    : (ast_d.mass_kg / 1e6).toFixed(2) + ' Mt';
+  document.getElementById('rr-asteroid-text').textContent =
+    `Diameter  ${d_km} km\n` +
+    `Mass      ${mass_str}\n` +
+    `Spec type ${ast_d.spec_type}\n` +
+    `Redirect ΔV ${rd.dv_redirect.toFixed(2)} km/s\n` +
+    `Propulsion  ${rd.propulsion} (Isp ${rd.isp_s}s)\n` +
+    `Prop load   ${flags.prop_fraction_pct}% of asteroid mass`;
+  document.getElementById('rr-prop-warn').style.display = flags.high_prop_load ? 'block' : 'none';
+
+  // Lunar capture
+  const cap = data.capture;
+  document.getElementById('rr-capture-text').textContent =
+    `Earth arr  ${jdToDate(rd.jd_earth_arr)}\n` +
+    `Transit    ${Math.round(rd.tof_redirect)} days\n` +
+    `v∞ at Moon ${cap.v_inf_lunar.toFixed(2)} km/s\n` +
+    `Cap burn   ${cap.dv_lunar_capture.toFixed(2)} km/s\n` +
+    `Cap orbit  ${Math.round(cap.r_cap_km)} km radius`;
+
+  // ISRU yield
+  const isru = data.isru;
+  const fmtMass = m => m >= 1e9 ? (m/1e9).toFixed(2)+' Mt' : m >= 1e6 ? (m/1e6).toFixed(2)+' kt' : Math.round(m)+' kg';
+  const fmtVal  = v => v >= 1e12 ? '$'+(v/1e12).toFixed(1)+'T' : v >= 1e9 ? '$'+(v/1e9).toFixed(1)+'B' : '$'+(v/1e6).toFixed(0)+'M';
+  document.getElementById('rr-isru-text').textContent =
+    `Mineable   ${fmtMass(isru.mineable_kg)} (5% extraction)\n` +
+    `  Water    ${fmtMass(isru.water_kg)}\n` +
+    `  Metals   ${fmtMass(isru.metal_kg)}\n` +
+    `Est value  ${fmtVal(isru.value_usd)}`;
+
+  // 3D visualization
+  clearTrajectoryLine();
+  clearRedirectVisualization();
+  drawTrajectoryLine(ic.earthPos, ic.astPos);
+  drawRedirectTrajectory(ic, rd);
+  drawLunarOrbitRing();
+}
+
+function clearRedirectVisualization() {
+  if (_redirectArcLine) { scene.remove(_redirectArcLine); _redirectArcLine.geometry.dispose(); _redirectArcLine = null; }
+  if (_lunarOrbitRing)  { scene.remove(_lunarOrbitRing);  _lunarOrbitRing.geometry.dispose();  _lunarOrbitRing = null; }
+  _cargoPodArcs.forEach(a => scene.remove(a));
+  _cargoPodArcs = [];
+}
+
+function drawRedirectTrajectory(intercept, redirect) {
+  const ax = intercept.astPos.x, ay = intercept.astPos.y, az = intercept.astPos.z;
+  const ex = redirect.earthArrPos.x, ey = redirect.earthArrPos.y, ez = redirect.earthArrPos.z;
+  const dx = ex - ax, dy = ey - ay;
+  const midX = (ax + ex) / 2;
+  const midY = (ay + ey) / 2 + Math.hypot(dx, dy) * 0.35;
+  const midZ = (az + ez) / 2;
+  const curve = new THREE.QuadraticBezierCurve3(
+    new THREE.Vector3(ax, ay, az),
+    new THREE.Vector3(midX, midY, midZ),
+    new THREE.Vector3(ex, ey, ez),
+  );
+  const pts = curve.getPoints(80);
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  _redirectArcLine = new THREE.Line(geo,
+    new THREE.LineBasicMaterial({ color: 0xff8800, opacity: 0.65, transparent: true }));
+  scene.add(_redirectArcLine);
+
+  // Arrow at asteroid showing redirect direction toward Earth arrival
+  const dir = new THREE.Vector3(ex - ax, ey - ay, ez - az).normalize();
+  const arr = new THREE.ArrowHelper(dir, new THREE.Vector3(ax, ay, az), 0.12, 0xff8800, 0.05, 0.025);
+  scene.add(arr);
+  _cargoPodArcs.push(arr);
+}
+
+function drawLunarOrbitRing() {
+  if (!moonMesh) return;
+  const pts = [];
+  const r = 0.006; // AU-scale ring radius
+  for (let i = 0; i <= 64; i++) {
+    const theta = (i / 64) * Math.PI * 2;
+    pts.push(new THREE.Vector3(
+      moonMesh.position.x + r * Math.cos(theta),
+      moonMesh.position.y,
+      moonMesh.position.z + r * Math.sin(theta),
+    ));
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  _lunarOrbitRing = new THREE.Line(geo,
+    new THREE.LineBasicMaterial({ color: 0xff8800, opacity: 0.6, transparent: true }));
+  scene.add(_lunarOrbitRing);
 }
 
 function onPlanResult(results, noFeasibleWindow, dbg, source) {
@@ -5566,7 +5874,9 @@ document.getElementById('btn-plan-mission').addEventListener('click', () => {
   if (selectedId >= 0) openMissionPlanner(selectedId);
 });
 document.getElementById('btn-planner-back').addEventListener('click', closeMissionPlanner);
-document.getElementById('btn-find-route').addEventListener('click', runMissionOptimizer);
+document.getElementById('btn-find-route').addEventListener('click', () => {
+  _activeMissionType === 'redirect' ? runRedirectOptimizer() : runMissionOptimizer();
+});
 document.getElementById('btn-mp-export').addEventListener('click', exportMissionPlan);
 document.getElementById('btn-mp-share').addEventListener('click', shareMissionPlan);
 document.getElementById('btn-mp-reset-optimal').addEventListener('click', () => {

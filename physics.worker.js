@@ -9,6 +9,9 @@ const DEG = Math.PI / 180;
 const GM_AU3_S2 = GM_sun / (AU * AU * AU); // ~3.964e-14 AU³/s²
 const GM_earth  = 3.986004418e14;          // m³/s²
 const R_earth   = 6.3781e6;               // m
+const GM_moon   = 4902.0;                 // km³/s²
+const R_moon    = 1737.4;                 // km
+const R_cap     = R_moon + 5000;          // km — 5000 km altitude lunar capture orbit
 
 // Standish 1992 planet elements at J2000 + secular rates
 // Format: [a0, da, e0, de, i0, di, Om0, dOm, L0, dL, wb0, dwb]
@@ -811,6 +814,202 @@ self.onmessage = function(e) {
       return;
     }
     self.postMessage({ type: 'plan_result', results: top, noFeasibleWindow: false, dbg });
+    return;
+  }
+
+  if (msg.cmd === 'plan_redirect_mission') {
+    const { ast, jd_start, jd_end, propulsionModule, miningFraction } = msg;
+
+    // Validate orbital elements
+    if (!ast || !isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
+      self.postMessage({ type: 'redirect_result', feasible: false, error: 'Invalid asteroid orbital elements' });
+      return;
+    }
+
+    // A — Intercept scan: 30-day departure steps, 9 TOF options 120–600 days
+    const tof_options = [120, 180, 240, 300, 360, 420, 480, 540, 600];
+    let best = null;
+    let lambert_fallback = false;
+
+    for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += 30) {
+      let earthDep;
+      try { earthDep = propagatePlanet(2, jd_dep); } catch(e) { continue; }
+
+      for (const tof of tof_options) {
+        const jd_arr = jd_dep + tof;
+        let astArr;
+        try { astArr = propagateAsteroid(ast, jd_arr); } catch(e) { continue; }
+
+        const dt_s = tof * 86400;
+        let lam = null;
+        try { lam = izzoLambert(earthDep, astArr, dt_s); } catch(e) {}
+        if (!lam || !isFinite(lam.dv_dep)) {
+          try { lam = lambert(earthDep, astArr, dt_s, false); lambert_fallback = true; } catch(e) {}
+        }
+        if (!lam || !isFinite(lam.dv_dep)) continue;
+
+        const pc = patchedConic(earthDep, astArr, lam);
+        if (!isFinite(pc.dv_dep) || pc.dv_dep > 10) continue;
+
+        if (!best || pc.dv_dep < best.dv_dep) {
+          best = {
+            jd_dep, jd_arr, tof,
+            dv_dep: pc.dv_dep,
+            earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
+            astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z },
+            v_ast:    { vx: astArr.vx, vy: astArr.vy, vz: astArr.vz },
+            lam_v2:   lam.v2,
+          };
+        }
+      }
+    }
+
+    if (!best) {
+      self.postMessage({ type: 'redirect_result', feasible: false, error: 'No viable intercept found within ΔV budget (10 km/s)' });
+      return;
+    }
+
+    // B — Asteroid mass
+    let d_m;
+    if (isFinite(ast._diam_m) && ast._diam_m > 0) {
+      d_m = ast._diam_m;
+    } else if (isFinite(ast.diameter) && ast.diameter > 0) {
+      d_m = ast.diameter * 1000;
+    } else {
+      const H = isFinite(ast.H) ? ast.H : 18;
+      const albedo = isFinite(ast.albedo) ? ast.albedo : 0.15;
+      d_m = (1329 / Math.sqrt(albedo)) * Math.pow(10, -H / 5) * 1000;
+    }
+    const mass_kg = (4 / 3) * Math.PI * Math.pow(d_m / 2, 3) * 1500; // 1500 kg/m³ rubble pile
+    const spec_type = ast.spec || ast.spec_T || 'unknown';
+
+    // C — Redirect ΔV: Hohmann transfer from asteroid intercept point to Earth
+    const r_ast_AU = Math.hypot(best.astPos.x, best.astPos.y, best.astPos.z);
+    const a_transfer_AU = (r_ast_AU + 1.0) / 2;
+    // Hohmann half-period in seconds: π * sqrt(a³/GM)
+    const hohmann_s = Math.PI * Math.sqrt(Math.pow(a_transfer_AU, 3) / GM_AU3_S2);
+    const hohmann_days = hohmann_s / 86400;
+    const jd_earth_arr = best.jd_arr + hohmann_days;
+
+    let earthArrPos;
+    try { earthArrPos = propagatePlanet(2, jd_earth_arr); } catch(e) {
+      earthArrPos = { x: 1.0, y: 0.0, z: 0.0, vx: 0, vy: 29.78, vz: 0 };
+    }
+
+    let dv_redirect, v_inf_lunar, redirect_lam_fallback = false;
+    try {
+      let rLam = null;
+      try { rLam = izzoLambert(best.astPos, earthArrPos, hohmann_s); } catch(e) {}
+      if (!rLam || !isFinite(rLam.dv_dep)) {
+        try { rLam = lambert(best.astPos, earthArrPos, hohmann_s, false); redirect_lam_fallback = true; } catch(e) {}
+      }
+      if (rLam && isFinite(rLam.dv_dep)) {
+        // dv_redirect = |lam.v1 - v_ast|
+        const dv_x = rLam.v1.vx - best.v_ast.vx;
+        const dv_y = rLam.v1.vy - best.v_ast.vy;
+        const dv_z = rLam.v1.vz - best.v_ast.vz;
+        dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
+
+        // v_inf at Earth from Lambert v2 vs Earth arrival velocity
+        const dv_arr_x = rLam.v2.vx - earthArrPos.vx;
+        const dv_arr_y = rLam.v2.vy - earthArrPos.vy;
+        const dv_arr_z = rLam.v2.vz - earthArrPos.vz;
+        v_inf_lunar = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
+      } else {
+        // Fallback: vis-viva Hohmann ΔV
+        const v_circ_ast = Math.sqrt(GM_AU3_S2 / r_ast_AU) * AU / 1000; // km/s
+        const v_transfer_peri = Math.sqrt(GM_AU3_S2 * 2 / (r_ast_AU) - GM_AU3_S2 / a_transfer_AU) * AU / 1000;
+        dv_redirect = Math.abs(v_transfer_peri - v_circ_ast);
+        v_inf_lunar = 1.5; // rough estimate
+        redirect_lam_fallback = true;
+      }
+    } catch(e) {
+      dv_redirect = 2.0; // rough fallback
+      v_inf_lunar = 1.5;
+      redirect_lam_fallback = true;
+    }
+    if (!isFinite(dv_redirect)) dv_redirect = 2.0;
+    if (!isFinite(v_inf_lunar)) v_inf_lunar = 1.5;
+
+    // D — Propellant mass (Tsiolkovsky)
+    const v_e = propulsionModule.isp_s * 9.80665 / 1000; // km/s exhaust velocity
+    const mass_ratio = Math.exp(dv_redirect / v_e);
+    const m_prop = mass_kg * (mass_ratio - 1) / mass_ratio;
+    const m_prop_fraction = m_prop / mass_kg;
+
+    // E — Lunar capture ΔV (hyperbolic insertion)
+    const dv_lunar_capture = Math.sqrt(v_inf_lunar * v_inf_lunar + 2 * GM_moon / R_cap) - Math.sqrt(GM_moon / R_cap);
+
+    // F — ISRU yield (5% extraction)
+    const mineable_kg = mass_kg * 0.05;
+    const water_kg = mineable_kg * (1 - miningFraction);
+    const metal_kg = mineable_kg * miningFraction;
+
+    let value_usd;
+    if (isFinite(ast.price) && ast.price > 0) {
+      value_usd = ast.price;
+    } else {
+      // Spec-type heuristic
+      const stype = spec_type.charAt(0).toUpperCase();
+      if (stype === 'C') {
+        value_usd = water_kg * 1500 + metal_kg * 500;
+      } else if (stype === 'M') {
+        value_usd = water_kg * 500 + metal_kg * 15000;
+      } else {
+        // S-type default
+        value_usd = water_kg * 500 + metal_kg * 3000;
+      }
+    }
+    if (!isFinite(value_usd)) value_usd = 0;
+
+    // G — Feasibility score 0–100
+    const dv_total_redirect = best.dv_dep + dv_redirect;
+    const dv_score   = Math.max(0, 1 - dv_total_redirect / 15) * 50;
+    const prop_score = Math.max(0, 1 - m_prop_fraction) * 30;
+    const isru_score = Math.min(20, Math.log10(Math.max(1, value_usd)) / 12 * 20);
+    const feasibility_score = Math.round(dv_score + prop_score + isru_score);
+
+    const prop_fraction_pct = Math.round(m_prop_fraction * 100);
+
+    self.postMessage({
+      type: 'redirect_result',
+      feasible: m_prop_fraction < 0.95,
+      intercept: {
+        jd_dep:   best.jd_dep,
+        jd_arr:   best.jd_arr,
+        tof:      best.tof,
+        dv_dep:   best.dv_dep,
+        earthPos: best.earthPos,
+        astPos:   best.astPos,
+      },
+      redirect: {
+        dv_redirect,
+        tof_redirect: hohmann_days,
+        jd_earth_arr,
+        earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
+        propulsion: propulsionModule.name,
+        isp_s: propulsionModule.isp_s,
+      },
+      capture: {
+        dv_lunar_capture: isFinite(dv_lunar_capture) ? dv_lunar_capture : 0,
+        r_cap_km: R_cap,
+        v_inf_lunar,
+      },
+      asteroid: { mass_kg, d_m, spec_type },
+      isru: {
+        mineable_kg,
+        water_kg,
+        metal_kg,
+        mining_frac: miningFraction,
+        value_usd,
+      },
+      flags: {
+        prop_fraction_pct,
+        high_prop_load: m_prop_fraction > 0.5,
+        lambert_fallback: lambert_fallback || redirect_lam_fallback,
+      },
+      feasibility_score,
+    });
     return;
   }
 
