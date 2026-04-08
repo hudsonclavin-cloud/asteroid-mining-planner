@@ -4,6 +4,40 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9F — Real Mission Planner (2026-04-07)
+
+### Summary
+Mission planner now checks the JPL CNEOS mdesign database before running the Lambert solver. NHATS-accessible NEOs get JPL-verified N-body trajectories labeled with a `🛰 JPL` badge; all others fall back to the Aster Lambert solver labeled `📐 ASTER`. Source-aware uncertainty propagates throughout the UI.
+
+### Changes (`index.html` only)
+
+**`fetchMdesignTrajectories(ast, config)`** — new async function:
+- Fetches `WORKER_URL/api/mdesign?des=…&dv=12&dur=…&stay=…` before running Lambert
+- Parses response using `data.fields` array for dynamic column mapping
+- Maps each row to a full trajectory object (40/25/20/13% ΔV segment split)
+- Computes Earth/asteroid positions via `kep2cartJS` for 3D arc rendering
+- sessionStorage cache keyed by designation, sorted by `dv_total`
+
+**`runMissionOptimizer()`** — now async:
+- Shows "Checking JPL trajectory database..." status at startup
+- If mdesign returns data → calls `onPlanResult(..., 'jpl-mdesign')` and returns early
+- If no mdesign data → shows "running Aster solver..." and posts `plan_mission` to worker
+
+**`onPlanResult(..., source)`** — new `source` param:
+- Stores `missionResults.source` for downstream use
+- Refreshes `#mp-assumptions-content` innerHTML with source-specific text (cyan JPL fields vs Keplerian text)
+
+**`renderTrajectoryList()`**:
+- Source badge per card: `🛰 JPL` (cyan, ±5%) or `📐 ASTER` (gray, ±15%)
+- ΔV shown as `X.XX ± Y.YY km/s` range
+
+**`computeMissionProfile()`**:
+- COSTS header labels source: `±5%  JPL N-body` or `±15%  Lambert + ops uncertainty`
+- PROPAGATION METHOD section shows source-specific solver, propagator, ΔV/cost uncertainty
+- Footer banner switches between JPL and patched-conic attribution
+
+---
+
 ## Phase 9E — Honesty Layer (2026-04-06)
 
 ### Summary
