@@ -2427,7 +2427,7 @@ worker.onmessage = ({ data }) => {
     return;
   }
   if (data.type === 'porkchop') {
-    renderPorkchop(data);
+    renderPorkchop(data); // overlayMdesignOnPorkchop called at end of renderPorkchop
     return;
   }
   if (data.type === 'nhats_result') {
@@ -3855,14 +3855,16 @@ async function fetchMdesignTrajectories(ast, config) {
 
   if (!data || data.error || !Array.isArray(data.data) || data.data.length === 0) return null;
 
+  // Map column names → indices; fall back to observed JPL mdesign column order
+  // if no fields array or a name is absent: [yr, mo, dy, dur, dv, stay, ...]
   const fields = Array.isArray(data.fields) ? data.fields : [];
-  const iYr   = fields.indexOf('yr');
-  const iMo   = fields.indexOf('mo');
-  const iDy   = fields.indexOf('dy');
-  const iDur  = fields.indexOf('dur');
-  const iDv   = fields.indexOf('dv');
-  const iStay = fields.indexOf('stay');
-  if (iDv === -1) return null;
+  const _fi = (name, fallback) => { const i = fields.indexOf(name); return i !== -1 ? i : fallback; };
+  const iYr   = _fi('yr',   0);
+  const iMo   = _fi('mo',   1);
+  const iDy   = _fi('dy',   2);
+  const iDur  = _fi('dur',  3);
+  const iDv   = _fi('dv',   4);
+  const iStay = _fi('stay', 5);
 
   const trajectories = [];
   for (const row of data.data) {
@@ -4081,6 +4083,11 @@ function selectTrajectory(idx) {
   document.getElementById('mp-actions').style.display = 'block';
   drawBurnVectors(traj);
   buildMissionTimeline(traj);
+  // Re-render porkchop so selected dot updates (only if panel is visible)
+  if (porkchopData && missionResults.source === 'jpl-mdesign' &&
+      document.getElementById('porkchop-panel').style.display !== 'none') {
+    renderPorkchop(porkchopData); // redraws grid then calls overlayMdesignOnPorkchop
+  }
 }
 
 function computeMissionProfile(traj) {
@@ -5413,6 +5420,41 @@ function renderPorkchop(data) {
     `MIN ΔV: ${minDV.toFixed(2)} km/s  |  CLICK TO SET DEPARTURE`;
   document.getElementById('pc-tof-min').textContent = `${data.tof_min}d`;
   document.getElementById('pc-tof-max').textContent = `${data.tof_max}d`;
+
+  overlayMdesignOnPorkchop();
+}
+
+// Overlay JPL mdesign trajectory points on the porkchop canvas when available
+function overlayMdesignOnPorkchop() {
+  if (!porkchopData || !missionResults.length || missionResults.source !== 'jpl-mdesign') return;
+  const canvas = document.getElementById('porkchop-canvas');
+  const ctx    = canvas.getContext('2d');
+  const { jd_start, jd_end, tof_min, tof_max } = porkchopData;
+  const spanJD  = jd_end - jd_start;
+  const spanTOF = tof_max - tof_min;
+
+  missionResults.forEach((t, i) => {
+    const fx = (t.jd_dep - jd_start) / spanJD;
+    const fy = (t.tof    - tof_min)  / spanTOF;
+    if (fx < 0 || fx > 1 || fy < 0 || fy > 1) return;
+    const cx = fx * canvas.width;
+    const cy = fy * canvas.height;
+    const sel = (i === selectedTrajIdx);
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, sel ? 6 : 3.5, 0, TWO_PI);
+    ctx.fillStyle   = sel ? '#00d4ff' : 'rgba(0,212,255,0.55)';
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth   = 1;
+    ctx.fill();
+    ctx.stroke();
+
+    if (i === 0) {
+      ctx.fillStyle = '#00d4ff';
+      ctx.font      = '8px JetBrains Mono, monospace';
+      ctx.fillText(`🛰 ${t.dv_total.toFixed(1)}`, Math.min(cx + 7, canvas.width - 48), Math.max(cy - 5, 10));
+    }
+  });
 }
 
 document.getElementById('porkchop-canvas').addEventListener('click', (e) => {
