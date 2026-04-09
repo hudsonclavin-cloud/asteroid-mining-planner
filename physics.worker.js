@@ -718,7 +718,6 @@ self.onmessage = function(e) {
         const combined = pc.dv_dep + pc.dv_arr;
         if (combined < dbg_best_dv) dbg_best_dv = combined;
         if (!isFinite(pc.dv_dep) || !isFinite(pc.dv_arr) || pc.dv_dep > 50 || pc.dv_arr > 50) { dbg_lambert_null++; continue; } // skip NaN/huge Lambert output
-        if (!isFinite(pc.dv_dep) || pc.dv_dep === 0) continue; // skip degenerate solutions
         if (pc.dv_dep > 10.0) { dbg_gate_fail++; continue; } // departure ΔV gate (10 km/s)
 
         phase1.push({
