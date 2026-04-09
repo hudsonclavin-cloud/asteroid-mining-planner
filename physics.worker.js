@@ -680,7 +680,7 @@ self.onmessage = function(e) {
     const phase1 = [];
 
     // ── Phase 1: outbound Lambert grid ──────────────────────────────────────
-    let dbg_lambert_null = 0, dbg_gate_fail = 0, dbg_best_dv = Infinity;
+    let dbg_lambert_null = 0, dbg_gate_fail = 0, dbg_best_dv = Infinity, dbg_logged = 0;
     for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += STEP_DEP) {
       depIdx++;
       if (depIdx % 15 === 0) {
@@ -711,10 +711,15 @@ self.onmessage = function(e) {
 
         const pc = patchedConic(ve, lam.v1, va, lam.v2, r_park_km);
         if (!pc) continue;
+        if (dbg_logged < 3) {
+          console.log('[Lambert] dv_dep:', pc.dv_dep.toFixed(3), 'dv_arr:', pc.dv_arr.toFixed(3));
+          dbg_logged++;
+        }
         const combined = pc.dv_dep + pc.dv_arr;
         if (combined < dbg_best_dv) dbg_best_dv = combined;
         if (!isFinite(pc.dv_dep) || !isFinite(pc.dv_arr) || pc.dv_dep > 50 || pc.dv_arr > 50) { dbg_lambert_null++; continue; } // skip NaN/huge Lambert output
-        if (pc.dv_dep > 8.0) { dbg_gate_fail++; continue; } // departure ΔV gate (8 km/s)
+        if (!isFinite(pc.dv_dep) || pc.dv_dep === 0) continue; // skip degenerate solutions
+        if (pc.dv_dep > 10.0) { dbg_gate_fail++; continue; } // departure ΔV gate (10 km/s)
 
         phase1.push({
           jd_dep, jd_arr, tof,
@@ -777,7 +782,7 @@ self.onmessage = function(e) {
 
       const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
-      if (dv_total > 20.0) continue; // infeasible round-trip (20 km/s hard cap)
+      if (dv_total > 25.0) continue; // infeasible round-trip (25 km/s hard cap)
 
       results.push({
         jd_dep:    c.jd_dep,
@@ -1096,6 +1101,7 @@ self.onmessage = function(e) {
               continue;
             }
             console.log('[Catalog] Asterank:', rows.length, 'rows');
+            console.log('[Debug] row[0]:', JSON.stringify(rows[0]));
             self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
             return rows;
           } catch(err) {
@@ -1154,12 +1160,13 @@ self.onmessage = function(e) {
       for (const row of asterankRows) {
         const a = Number(row.a);
         const e = Number(row.e);
-        if (!a || a <= 0 || e < 0 || e >= 1) continue;
-        const q = a * (1 - e);
-        if (q >= 1.3) continue; // skip main-belt and beyond — mission planner can't reach them
+        const inc = Number(row.i);
+        if (!isFinite(a) || a <= 0) continue;
+        if (!isFinite(e) || e < 0 || e >= 1) continue;
+        if (!isFinite(inc)) continue;
 
         const pdes     = String(row.pdes || row.full_name || '').trim();
-        const epoch    = Number(row.epoch) || 2451545.0; // Asterank gives JD directly; default = J2000.0
+        const epoch    = (!row.epoch || Number(row.epoch) === 0) ? 2451545.0 : Number(row.epoch); // Asterank gives JD directly; default = J2000.0
         const diameter = Number(row.diameter) || 0;
         const specRaw  = String(row.spec || row.spec_T || '').trim();
         const per      = Number(row.per) || Math.sqrt(a * a * a); // Kepler's 3rd law: T = a^1.5 yr
