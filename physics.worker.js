@@ -1162,10 +1162,8 @@ self.onmessage = function(e) {
       for (const row of asterankRows) {
         const a = Number(row.a);
         const e = Number(row.e);
-        const inc = Number(row.i);
         if (!isFinite(a) || a <= 0) continue;
         if (!isFinite(e) || e < 0 || e >= 1) continue;
-        if (!isFinite(inc)) continue;
 
 
         const pdes     = String(row.pdes || row.full_name || '').trim();
