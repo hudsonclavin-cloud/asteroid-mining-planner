@@ -1057,39 +1057,44 @@ self.onmessage = function(e) {
       const limit = msg.limit || 5000;
       const CORS_PROXY = 'https://corsproxy.io/?';
 
-      // ── Asterank: broad query, sorted by score ────────────────────────────
-      // Filter to objects with a computed delta_v (Asterank only calculates this for NEAs).
-      // Sorting by delta_v ascending gives the most accessible targets first.
-      // query={"delta_v":{"$gt":0}} encoded:
+      // ── Asterank: sort by delta_v ascending → lowest-ΔV objects are all NEOs ──
+      // Empty query returns all objects; sorting by delta_v means the top 2000 are
+      // NEAs with computed rendezvous costs. Client-side q<1.3 filter removes any stray
+      // main-belt entries. Using an empty query avoids Asterank MongoDB operator issues.
       const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
-        'query=%7B%22delta_v%22%3A%7B%22%24gt%22%3A0%7D%7D&limit=2000&sort=delta_v';
+        'query=%7B%7D&limit=2000&sort=delta_v';
+      // Fallback URL: sort by profit if delta_v sort returns nothing useful
+      const ASTERANK_FALLBACK_URL = 'https://www.asterank.com/api/asterank?' +
+        'query=%7B%7D&limit=2000&sort=profit';
 
       // ── NHATS: human-accessible targets ──────────────────────────────────
       const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
 
       async function fetchAsterankWorker() {
-        try {
-          let r = await fetch(ASTERANK_URL);
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          const rows = await r.json();
-          console.log('[Catalog] Asterank:', rows.length, 'rows');
-          self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
-          return rows;
-        } catch(err1) {
-          console.warn('[Catalog] Asterank direct failed, trying proxy:', err1.message);
+        // Try each URL variant in order; return first non-empty result
+        const urlsToTry = [
+          ASTERANK_URL,
+          CORS_PROXY + encodeURIComponent(ASTERANK_URL),
+          CORS_PROXY + encodeURIComponent(ASTERANK_FALLBACK_URL),
+        ];
+        let lastErr = '';
+        for (const url of urlsToTry) {
           try {
-            const r = await fetch(CORS_PROXY + encodeURIComponent(ASTERANK_URL));
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const r = await fetch(url);
+            if (!r.ok) { lastErr = `HTTP ${r.status}`; continue; }
             const rows = await r.json();
-            console.log('[Catalog] Asterank (proxy):', rows.length, 'rows');
+            if (!Array.isArray(rows) || rows.length === 0) { lastErr = 'empty response'; continue; }
+            console.log('[Catalog] Asterank:', rows.length, 'rows from', url.slice(0, 60));
             self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
             return rows;
-          } catch(err2) {
-            console.warn('[Catalog] Asterank proxy also failed:', err2.message);
-            self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: err2.message });
-            return [];
+          } catch(err) {
+            lastErr = err.message;
+            console.warn('[Catalog] Asterank attempt failed:', url.slice(0, 60), err.message);
           }
         }
+        console.warn('[Catalog] All Asterank URLs failed:', lastErr);
+        self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: lastErr });
+        return [];
       }
 
       async function fetchNHATSWorker() {
