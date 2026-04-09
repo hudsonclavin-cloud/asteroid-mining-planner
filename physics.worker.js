@@ -1057,21 +1057,24 @@ self.onmessage = function(e) {
       const limit = msg.limit || 5000;
       const CORS_PROXY = 'https://corsproxy.io/?';
 
-      // ── Asterank: sort by delta_v ascending → lowest-ΔV objects are all NEOs ──
-      // Empty query returns all objects; sorting by delta_v means the top 2000 are
-      // NEAs with computed rendezvous costs. Client-side q<1.3 filter removes any stray
-      // main-belt entries. Using an empty query avoids Asterank MongoDB operator issues.
-      const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' +
-        'query=%7B%7D&limit=2000&sort=delta_v';
-      // Fallback URL: sort by profit if delta_v sort returns nothing useful
-      const ASTERANK_FALLBACK_URL = 'https://www.asterank.com/api/asterank?' +
-        'query=%7B%7D&limit=2000&sort=profit';
+      // ── Asterank: known-working query form with explicit fields ─────────────
+      const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' + new URLSearchParams({
+        query:  JSON.stringify({}),
+        limit:  '2000',
+        sort:   'delta_v',
+        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness',
+      }).toString();
+      const ASTERANK_FALLBACK_URL = 'https://www.asterank.com/api/asterank?' + new URLSearchParams({
+        query:  JSON.stringify({}),
+        limit:  '2000',
+        sort:   'profit',
+        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness',
+      }).toString();
 
       // ── NHATS: human-accessible targets ──────────────────────────────────
       const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
 
       async function fetchAsterankWorker() {
-        // Try each URL variant in order; return first non-empty result
         const urlsToTry = [
           ASTERANK_URL,
           CORS_PROXY + encodeURIComponent(ASTERANK_URL),
@@ -1081,15 +1084,23 @@ self.onmessage = function(e) {
         for (const url of urlsToTry) {
           try {
             const r = await fetch(url);
-            if (!r.ok) { lastErr = `HTTP ${r.status}`; continue; }
+            if (!r.ok) {
+              console.warn('[Catalog] Asterank HTTP', r.status, url.slice(0, 80));
+              lastErr = `HTTP ${r.status}`;
+              continue;
+            }
             const rows = await r.json();
-            if (!Array.isArray(rows) || rows.length === 0) { lastErr = 'empty response'; continue; }
-            console.log('[Catalog] Asterank:', rows.length, 'rows from', url.slice(0, 60));
+            if (!Array.isArray(rows) || rows.length === 0) {
+              console.warn('[Catalog] Asterank empty response from', url.slice(0, 80));
+              lastErr = 'empty response';
+              continue;
+            }
+            console.log('[Catalog] Asterank:', rows.length, 'rows');
             self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
             return rows;
           } catch(err) {
             lastErr = err.message;
-            console.warn('[Catalog] Asterank attempt failed:', url.slice(0, 60), err.message);
+            console.warn('[Catalog] Asterank fetch error:', err.message, url.slice(0, 80));
           }
         }
         console.warn('[Catalog] All Asterank URLs failed:', lastErr);
