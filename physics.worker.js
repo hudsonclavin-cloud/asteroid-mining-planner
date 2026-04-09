@@ -1072,7 +1072,7 @@ self.onmessage = function(e) {
         fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class',
       }).toString();
       const ASTERANK_FALLBACK_URL = 'https://www.asterank.com/api/asterank?' + new URLSearchParams({
-        query:  JSON.stringify({ neo: 'Y' }),
+        query:  JSON.stringify({}),
         limit:  '2000',
         sort:   'profit',
         fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class',
@@ -1167,14 +1167,6 @@ self.onmessage = function(e) {
         if (!isFinite(e) || e < 0 || e >= 1) continue;
         if (!isFinite(inc)) continue;
 
-        // Skip objects without a computed rendezvous ΔV — these are not
-        // mission-plannable targets (Asterank only computes delta_v for NEAs).
-        const dv = Number(row.delta_v);
-        if (!isFinite(dv) || dv <= 0) continue;
-
-        // Skip main-belt and beyond — perihelion must be < 1.3 AU (NEA definition)
-        const q = a * (1 - e);
-        if (q >= 1.3) continue;
 
         const pdes     = String(row.pdes || row.full_name || '').trim();
         const epoch    = (!row.epoch || Number(row.epoch) === 0) ? 2451545.0 : Number(row.epoch); // Asterank gives JD directly; default = J2000.0
