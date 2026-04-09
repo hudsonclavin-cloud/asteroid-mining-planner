@@ -1062,18 +1062,21 @@ self.onmessage = function(e) {
       const limit = msg.limit || 5000;
       const CORS_PROXY = 'https://corsproxy.io/?';
 
-      // ── Asterank: known-working query form with explicit fields ─────────────
+      // ── Asterank: filter to NEOs only (neo="Y") so MongoDB sort=delta_v returns
+      // actual near-Earth objects. Without neo:"Y", MongoDB puts NULL-delta_v
+      // main-belt objects first (nulls sort before numbers ascending), filling the
+      // 2000-row limit before any accessible NEOs are returned.
       const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' + new URLSearchParams({
-        query:  JSON.stringify({}),
+        query:  JSON.stringify({ neo: 'Y' }),
         limit:  '2000',
         sort:   'delta_v',
-        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness',
+        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class',
       }).toString();
       const ASTERANK_FALLBACK_URL = 'https://www.asterank.com/api/asterank?' + new URLSearchParams({
-        query:  JSON.stringify({}),
+        query:  JSON.stringify({ neo: 'Y' }),
         limit:  '2000',
         sort:   'profit',
-        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness',
+        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class',
       }).toString();
 
       // ── NHATS: human-accessible targets ──────────────────────────────────
@@ -1164,6 +1167,15 @@ self.onmessage = function(e) {
         if (!isFinite(a) || a <= 0) continue;
         if (!isFinite(e) || e < 0 || e >= 1) continue;
         if (!isFinite(inc)) continue;
+
+        // Skip objects without a computed rendezvous ΔV — these are not
+        // mission-plannable targets (Asterank only computes delta_v for NEAs).
+        const dv = Number(row.delta_v);
+        if (!isFinite(dv) || dv <= 0) continue;
+
+        // Skip main-belt and beyond — perihelion must be < 1.3 AU (NEA definition)
+        const q = a * (1 - e);
+        if (q >= 1.3) continue;
 
         const pdes     = String(row.pdes || row.full_name || '').trim();
         const epoch    = (!row.epoch || Number(row.epoch) === 0) ? 2451545.0 : Number(row.epoch); // Asterank gives JD directly; default = J2000.0
