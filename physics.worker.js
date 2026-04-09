@@ -838,22 +838,25 @@ self.onmessage = function(e) {
     for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += 30) {
       let earthDep;
       try { earthDep = propagatePlanet(2, jd_dep); } catch(e) { continue; }
+      const r1   = [earthDep.x, earthDep.y, earthDep.z];
+      const ve   = [earthDep.vx, earthDep.vy, earthDep.vz];
 
       for (const tof of tof_options) {
         const jd_arr = jd_dep + tof;
         let astArr;
         try { astArr = propagateAsteroid(ast, jd_arr); } catch(e) { continue; }
+        const r2   = [astArr.x, astArr.y, astArr.z];
+        const va   = [astArr.vx, astArr.vy, astArr.vz];
 
-        const dt_s = tof * 86400;
         let lam = null;
-        try { lam = izzoLambert(earthDep, astArr, dt_s); } catch(e) {}
-        if (!lam || !isFinite(lam.dv_dep)) {
-          try { lam = lambert(earthDep, astArr, dt_s, false); lambert_fallback = true; } catch(e) {}
+        try { lam = izzoLambert(r1, r2, tof); } catch(e) {}
+        if (!lam || !isFinite(lam.v1?.[0])) {
+          try { lam = lambert(r1, r2, tof); lambert_fallback = true; } catch(e) {}
         }
-        if (!lam || !isFinite(lam.dv_dep)) continue;
+        if (!lam || !isFinite(lam.v1?.[0])) continue;
 
-        const pc = patchedConic(earthDep, astArr, lam);
-        if (!isFinite(pc.dv_dep) || pc.dv_dep > 10) continue;
+        const pc = patchedConic(ve, lam.v1, va, lam.v2, R_earth / 1000 + 400);
+        if (!pc || !isFinite(pc.dv_dep) || pc.dv_dep > 10) continue;
 
         if (!best || pc.dv_dep < best.dv_dep) {
           best = {
@@ -862,7 +865,7 @@ self.onmessage = function(e) {
             earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
             astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z },
             v_ast:    { vx: astArr.vx, vy: astArr.vy, vz: astArr.vz },
-            lam_v2:   lam.v2,
+            ve, va,
           };
         }
       }
@@ -870,6 +873,15 @@ self.onmessage = function(e) {
 
     if (!best) {
       self.postMessage({ type: 'redirect_result', feasible: false, error: 'No viable intercept found within ΔV budget (10 km/s)' });
+      return;
+    }
+
+    // Planetary defense gate: MOID < 0.0005 AU (~75,000 km) means post-redirect
+    // trajectory would pass inside the lunar orbit — reject on safety grounds.
+    const moid = moidApprox(ast, best.jd_arr, 120);
+    if (isFinite(moid) && moid < 0.0005) {
+      self.postMessage({ type: 'redirect_result', feasible: false,
+        error: 'RESTRICTED: Post-redirect MOID < 75,000 km. Planetary defense constraint.' });
       return;
     }
 
@@ -902,22 +914,24 @@ self.onmessage = function(e) {
 
     let dv_redirect, v_inf_lunar, redirect_lam_fallback = false;
     try {
+      const astArr2 = [best.astPos.x,   best.astPos.y,   best.astPos.z  ];
+      const earArr2 = [earthArrPos.x,   earthArrPos.y,   earthArrPos.z  ];
       let rLam = null;
-      try { rLam = izzoLambert(best.astPos, earthArrPos, hohmann_s); } catch(e) {}
-      if (!rLam || !isFinite(rLam.dv_dep)) {
-        try { rLam = lambert(best.astPos, earthArrPos, hohmann_s, false); redirect_lam_fallback = true; } catch(e) {}
+      try { rLam = izzoLambert(astArr2, earArr2, hohmann_days); } catch(e) {}
+      if (!rLam || !isFinite(rLam.v1?.[0])) {
+        try { rLam = lambert(astArr2, earArr2, hohmann_days); redirect_lam_fallback = true; } catch(e) {}
       }
-      if (rLam && isFinite(rLam.dv_dep)) {
-        // dv_redirect = |lam.v1 - v_ast|
-        const dv_x = rLam.v1.vx - best.v_ast.vx;
-        const dv_y = rLam.v1.vy - best.v_ast.vy;
-        const dv_z = rLam.v1.vz - best.v_ast.vz;
+      if (rLam && isFinite(rLam.v1?.[0])) {
+        // dv_redirect = |lam.v1 - v_ast|  (v1/v2 are arrays [vx,vy,vz])
+        const dv_x = rLam.v1[0] - best.v_ast.vx;
+        const dv_y = rLam.v1[1] - best.v_ast.vy;
+        const dv_z = rLam.v1[2] - best.v_ast.vz;
         dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
 
         // v_inf at Earth from Lambert v2 vs Earth arrival velocity
-        const dv_arr_x = rLam.v2.vx - earthArrPos.vx;
-        const dv_arr_y = rLam.v2.vy - earthArrPos.vy;
-        const dv_arr_z = rLam.v2.vz - earthArrPos.vz;
+        const dv_arr_x = rLam.v2[0] - earthArrPos.vx;
+        const dv_arr_y = rLam.v2[1] - earthArrPos.vy;
+        const dv_arr_z = rLam.v2[2] - earthArrPos.vz;
         v_inf_lunar = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
       } else {
         // Fallback: vis-viva Hohmann ΔV

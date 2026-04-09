@@ -1528,10 +1528,9 @@ function fmtUSD(v) {
 function fmtAstValue(v) {
   const n = Number(v);
   if (!v || isNaN(n) || n <= 0) return '—';
-  const lo = n * 0.10; // conservative extraction
-  const hi = n * 0.30; // optimistic extraction
-  if (hi > 1e14) return 'Estimate uncertain';
-  return `${fmtUSD(lo)} – ${fmtUSD(hi)} (est.)`;
+  const lo = n * 0.05; // 5% extraction — conservative, no industrial-scale ISRU demonstrated
+  if (lo > 1e14) return 'Estimate uncertain';
+  return `${fmtUSD(lo)} (5% extraction est.)`;
 }
 
 function fmtTons(t) {
@@ -2461,7 +2460,7 @@ async function saveToIndexedDB(key, value) {
 }
 
 // ─── Physics Worker ───────────────────────────────────────────────────────────
-const worker = new Worker('./physics.worker.js?v=10g');
+const worker = new Worker('./physics.worker.js?v=10d');
 let asteroidData = [];
 let asteroidMesh = null;
 let asteroidCount = 0;
@@ -3126,8 +3125,8 @@ function renderEconomicsTab(id) {
   document.getElementById('eco-metals').textContent = fmtUSD(metalVal);
   document.getElementById('eco-asterank').textContent = fmtAstValue(ast.price);
 
-  // ROI uses conservative 10% extraction efficiency to avoid absurd multiples
-  const totalReturn = Math.max(waterVal + metalVal, Number(ast.price) || 0) * 0.10;
+  // ROI uses 5% extraction efficiency — conservative, no industrial-scale ISRU demonstrated
+  const totalReturn = Math.max(waterVal + metalVal, Number(ast.price) || 0) * 0.05;
   const roi = totalCost > 0 ? totalReturn / totalCost : 0;
   const roiEl = document.getElementById('eco-roi');
   roiEl.textContent = roi > 1e6 ? '>1,000,000×' : `${roi.toFixed(0)}×`;
@@ -4506,31 +4505,56 @@ function computeMissionProfile(traj) {
 
   // ── Mission cost with uncertainty range ──────────────────────────────────────
   const opsDays    = Math.round(traj.tof * 2 + 30);
-  const opsCost    = (opsDays / 30) * 2e6;
+  const opsCost    = (opsDays / 30) * 8e6;  // $8M/month — DSN time, staffing, contingency
   const totalCost  = launchCost + sc.cost_usd + opsCost;
   // ΔV uncertainty: JPL mdesign = 5%, Lambert = 15%
   const _src     = missionResults.source || 'lambert';
   const dvUnc_mp = traj.dv_total * (_src === 'jpl-mdesign' ? 0.05 : 0.15);
   const costRng_mp = computeMissionCost(totalCost, dvUnc_mp);
 
-  // ── Revenue (10 % conservative / 30 % optimistic extraction) ────────────────
+  // ── Revenue (5% extraction — conservative, no industrial-scale ISRU demonstrated) ──
   const prices = getActivePrices();
   const spec   = getMatSpec(ast);
   const comp   = MAT_COMP[spec];
   let revenuePerKg = 0;
   MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
-  const revLow  = sc.payload_kg * revenuePerKg * 0.10;
-  const revHigh = sc.payload_kg * revenuePerKg * 0.30;
+  const returnedKg = sc.payload_kg * 0.05;
+  const revLow  = returnedKg * revenuePerKg;
+  const revHigh = revLow; // single rate — collapse to 5%
 
-  // ── NPV at 5 % annual discount ───────────────────────────────────────────────
+  // ── Demand-adjusted realizable NPV (constant-elasticity model) ───────────────
+  const _ELASTICITY       = { platinum: -0.4, palladium: -0.5, nickel: -0.3, iron: -0.2, water: -0.8 };
+  const _ANNUAL_MARKET_KG = { platinum: 170000, palladium: 190000, nickel: 2500000000, iron: 2000000000000, water: null };
+  function realizableNPV(commodity, retKg, spotPrice, yearsToSell, discountRate) {
+    yearsToSell  = yearsToSell  || 10;
+    discountRate = discountRate || 0.08;
+    const annualMarket = _ANNUAL_MARKET_KG[commodity];
+    if (!annualMarket) return retKg * spotPrice;
+    const epsilon = _ELASTICITY[commodity] || -0.3;
+    let npv = 0;
+    const annualSale = retKg / yearsToSell;
+    for (let t = 1; t <= yearsToSell; t++) {
+      const priceRatio   = Math.pow((annualMarket + annualSale) / annualMarket, 1 / epsilon);
+      const realizedPrice = spotPrice * priceRatio;
+      npv += (annualSale * realizedPrice) / Math.pow(1 + discountRate, t);
+    }
+    return npv;
+  }
+  // Infer primary commodity from spectral type
+  const _specChar = (spec || 'C').charAt(0).toUpperCase();
+  const _commodity = _specChar === 'M' ? 'platinum' : _specChar === 'S' ? 'nickel' : 'water';
+  const paperValue   = returnedKg * revenuePerKg;
+  const npvRealized  = realizableNPV(_commodity, returnedKg, revenuePerKg);
+
+  // ── Simple time-value NPV for ROI display ───────────────────────────────────
   const missionYears = opsDays / 365.25;
   const npvFactor    = 1 / Math.pow(1.05, missionYears);
-  const npvLow  = revLow  * npvFactor - totalCost;
-  const npvHigh = revHigh * npvFactor - totalCost;
+  const npvLow  = revLow * npvFactor - totalCost;
+  const npvHigh = npvLow;
 
   const roiLow  = totalCost > 0 ? (revLow  - totalCost) / totalCost * 100 : 0;
-  const roiHigh = totalCost > 0 ? (revHigh - totalCost) / totalCost * 100 : 0;
-  const breakEvenKg = revenuePerKg > 0 ? Math.ceil(totalCost / (revenuePerKg * 0.20)) : null;
+  const roiHigh = roiLow;
+  const breakEvenKg = revenuePerKg > 0 ? Math.ceil(totalCost / (revenuePerKg * 0.05)) : null;
 
   const lines = [
     '═'.repeat(50),
@@ -4573,16 +4597,21 @@ function computeMissionProfile(traj) {
     dot('SPACECRAFT', fmtUSD(sc.cost_usd)),
     dot('OPERATIONS', `${fmtUSD(opsCost * 0.85)} – ${fmtUSD(opsCost * 1.15)}`),
     dot('TOTAL MISSION', `${fmtUSD(costRng_mp.low)} – ${fmtUSD(costRng_mp.high)}`),
+    sep('REFERENCE MISSION COSTS'),
+    dot('DART (kinetic impactor)',      '$324M'),
+    dot('OSIRIS-REx (sample return)',   '$1.16B'),
+    dot('KISS asteroid capture study',  '$2.6B'),
+    dot('Psyche (metal asteroid orb.)', '~$1.0B'),
+    dot('First-of-kind mining est.',    '$2B – $10B+'),
     sep('REVENUE ESTIMATE'),
     dot('ORE PAYLOAD', sc.payload_kg.toLocaleString() + ' kg max'),
+    dot('EXTRACTED (5%)', returnedKg.toLocaleString() + ' kg  (conservative — no ISRU at scale demonstrated)'),
     dot('REVENUE / KG', '$' + revenuePerKg.toFixed(2)),
-    dot('CONSERVATIVE (10%)', fmtUSD(revLow)),
-    dot('OPTIMISTIC (30%)', fmtUSD(revHigh)),
+    dot('PAPER VALUE', fmtUSD(paperValue) + '  (spot price, no market impact)'),
+    dot('REALIZABLE NPV', fmtUSD(npvRealized) + '  (demand-adj. 10yr sell, 8% discount)'),
     sep('RETURNS'),
-    dot('ROI (conservative)', roiLow.toFixed(0) + '%'),
-    dot('ROI (optimistic)', roiHigh.toFixed(0) + '%'),
-    dot('NPV 5% (conserv.)', fmtUSD(npvLow)),
-    dot('NPV 5% (optimist.)', fmtUSD(npvHigh)),
+    dot('ROI', roiLow.toFixed(0) + '%'),
+    dot('NPV 5%', fmtUSD(npvLow)),
     breakEvenKg ? dot('BREAK-EVEN PAYLOAD', breakEvenKg.toLocaleString() + ' kg') : '',
     sep('PROPAGATION METHOD'),
     dot('TRAJECTORY SOURCE', _src === 'jpl-mdesign'
