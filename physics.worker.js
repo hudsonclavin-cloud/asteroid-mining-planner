@@ -1206,7 +1206,7 @@ self.onmessage = function(e) {
           price:     Number(row.price)   || estimateValue(specRaw, diameter, 0.15),
           profit:    Number(row.profit)  || 0,
           moid:      Number(row.moid)    || 0,
-          delta_v:   Number(row.delta_v) || 0,
+          delta_v:   Number(row.delta_v) || Number(row.dv) || 0,
           nhats: nhatsRow ? {
             accessible:    true,
             minDv:         nhatsIsArr ? nhatsRow[4] : nhatsRow.min_dv,
