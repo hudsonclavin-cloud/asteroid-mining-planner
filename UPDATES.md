@@ -4,6 +4,20 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9G — Mission Planner Stability Fix (2026-04-10)
+
+### Summary
+Fixed mission planner UI stability and selection persistence so extract/return and capture/redirect modes handle errors without breaking the results panel.
+
+### Changes (`index.html` only)
+
+- Preserved `#mp-trajectory-list` markup by moving error messages into a dedicated `#mp-results-error` panel.
+- Added stable asteroid selection via `selectedAsteroidKey`; the planner now resolves the selected target by `pdes`/`full_name` even if the catalog reloads or reindexes.
+- Added redirect-mode error rendering via `#mp-redirect-error` and cleared previous planner errors on mode switch/open.
+- Switched `btn-find-route` to use `addEventListener('click', ...)` for safer click wiring.
+
+---
+
 ## Phase 9F — Real Mission Planner (2026-04-07)
 
 ### Summary
