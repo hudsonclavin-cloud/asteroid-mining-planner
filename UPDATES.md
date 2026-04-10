@@ -4,6 +4,20 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9I — Time Slider Fix (2026-04-10)
+
+### Summary
+Fixed the broken time slider by normalizing its range to a 0-based integer scale instead of using raw Julian dates, ensuring smooth scrubbing and playback.
+
+### Changes (`index.html` only)
+
+- Added `jdToScrubberPos()` and `scrubberPosToJD()` helper functions to map between Julian dates and slider positions.
+- Updated the HTML `<input>` to use `min="0"`, `max="1"`, `step="1"`, and `value="0"`, with JS overriding `max` to the actual range.
+- Replaced all direct `scrubber.value = JD` assignments with `scrubber.value = jdToScrubberPos(JD)` for consistent scaling.
+- Updated keyboard arrow keys, timeline clicks, porkchop clicks, scenario loading, and animation loop to use the normalized positions.
+
+---
+
 ## Phase 9H — UI Metrics Normalization (2026-04-10)
 
 ### Summary
