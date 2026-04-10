@@ -2460,7 +2460,7 @@ async function saveToIndexedDB(key, value) {
 }
 
 // ─── Physics Worker ───────────────────────────────────────────────────────────
-const worker = new Worker('./physics.worker.js?v=10g');
+const worker = new Worker('./physics.worker.js?v=10h');
 let asteroidData = [];
 let asteroidMesh = null;
 let asteroidCount = 0;
@@ -2553,7 +2553,12 @@ worker.onmessage = ({ data }) => {
     if (data.nhatsRows && data.nhatsRows.length > 0) {
       try { localStorage.setItem('aster_nhats_v2', JSON.stringify({ data: data.nhatsRows, timestamp: Date.now() })); } catch(_) {}
     }
+    const prevPdes = selectedId >= 0 ? String(asteroidData[selectedId]?.pdes || '') : '';
     buildAsteroidMesh(data.data);
+    if (prevPdes) {
+      const newIdx = asteroidData.findIndex(a => String(a.pdes) === prevPdes);
+      if (newIdx >= 0) selectedId = newIdx;
+    }
     const loading = document.getElementById('loading');
     loading.style.transition = 'opacity 0.6s';
     loading.style.opacity = '0';
@@ -3961,6 +3966,7 @@ function showPlannerError(err) {
 async function runMissionOptimizer() {
   if (selectedId < 0) return;
   const ast = asteroidData[selectedId];
+  console.log('[Plan] using asteroid:', ast?.full_name, 'pdes:', ast?.pdes, 'selectedId:', selectedId);
 
   // Validate asteroid orbital elements before sending to worker
   if (!ast) return showPlannerError('No asteroid selected.');
@@ -4047,7 +4053,7 @@ function getRedirectPropulsionModule() {
 }
 
 async function runRedirectOptimizer() {
-  const ast = selectedAsteroid;
+  const ast = asteroidData[selectedId];
   if (!ast) { showPlannerError('No asteroid selected — click an asteroid first.'); return; }
   if (!isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
     showPlannerError('Asteroid is missing orbital elements (a/e/i). Cannot plan redirect mission.');
@@ -4269,6 +4275,7 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
 
 function renderTrajectoryList() {
   const list   = document.getElementById('mp-trajectory-list');
+  if (!list) { console.error('[renderTrajectoryList] mp-trajectory-list not found'); return; }
   const uncPct = 0.15;
   const badge  = '<span style="color:#4a6a7a;font-size:7px;border:1px solid #4a6a7a;padding:1px 3px;margin-left:4px;vertical-align:middle">📐 ASTER</span>';
   list.innerHTML = '';
@@ -4331,7 +4338,7 @@ function selectTrajectory(idx) {
   drawBurnVectors(traj);
   buildMissionTimeline(traj);
   // Re-render porkchop so selected dot updates (only if panel is visible)
-  if (porkchopData && missionResults.source === 'jpl-mdesign' &&
+  if (porkchopData &&
       document.getElementById('porkchop-panel').style.display !== 'none') {
     renderPorkchop(porkchopData); // redraws grid then calls overlayMdesignOnPorkchop
   }
@@ -4379,9 +4386,8 @@ function computeMissionProfile(traj) {
   const opsDays    = Math.round(traj.tof * 2 + 30);
   const opsCost    = (opsDays / 30) * 8e6;  // $8M/month — DSN time, staffing, contingency
   const totalCost  = launchCost + sc.cost_usd + opsCost;
-  // ΔV uncertainty: JPL mdesign = 5%, Lambert = 15%
   const _src     = missionResults.source || 'lambert';
-  const dvUnc_mp = traj.dv_total * (_src === 'jpl-mdesign' ? 0.05 : 0.15);
+  const dvUnc_mp = traj.dv_total * 0.15;
   const costRng_mp = computeMissionCost(totalCost, dvUnc_mp);
 
   // ── Revenue (5% extraction — conservative, no industrial-scale ISRU demonstrated) ──
@@ -4948,6 +4954,7 @@ let selectedId = -1;
 
 function selectAsteroid(id) {
   selectedId = id;
+  console.log('[Select] asteroid set to:', asteroidData[id]?.full_name, 'pdes:', asteroidData[id]?.pdes);
   clearTrail();
   const ast = asteroidData[id];
   if (!ast) return;
@@ -5703,7 +5710,7 @@ function renderPorkchop(data) {
 
 // Overlay JPL mdesign trajectory points on the porkchop canvas when available
 function overlayMdesignOnPorkchop() {
-  if (!porkchopData || !missionResults.length || missionResults.source !== 'jpl-mdesign') return;
+  if (!porkchopData || !missionResults.length) return;
   const canvas = document.getElementById('porkchop-canvas');
   const ctx    = canvas.getContext('2d');
   const { jd_start, jd_end, tof_min, tof_max } = porkchopData;
@@ -5775,9 +5782,9 @@ document.getElementById('btn-plan-mission').addEventListener('click', () => {
   if (selectedId >= 0) openMissionPlanner(selectedId);
 });
 document.getElementById('btn-planner-back').addEventListener('click', closeMissionPlanner);
-document.getElementById('btn-find-route').addEventListener('click', () => {
+document.getElementById('btn-find-route').onclick = () => {
   _activeMissionType === 'redirect' ? runRedirectOptimizer() : runMissionOptimizer();
-});
+};
 document.getElementById('btn-mp-export').addEventListener('click', exportMissionPlan);
 document.getElementById('btn-mp-share').addEventListener('click', shareMissionPlan);
 document.getElementById('btn-mp-reset-optimal').addEventListener('click', () => {
@@ -6296,50 +6303,6 @@ document.getElementById('mp-verify-horizons').onclick = function() {
   window.open(`https://ssd.jpl.nasa.gov/horizons/app.html#/?body=sb&des=${des}`, '_blank');
 };
 
-// Compare with JPL mdesign
-document.getElementById('mp-verify-mdesign').onclick = async function() {
-  const ast = asteroidData[selectedId];
-  if (!ast) return;
-  const modal   = document.getElementById('mdesign-modal');
-  const content = document.getElementById('mdesign-content');
-  modal.style.display = 'flex';
-  content.innerHTML = '<span style="color:#6a8a9a">Querying JPL mdesign API...</span>';
-  try {
-    const des = encodeURIComponent((ast.pdes || '').trim());
-    const r = await fetch(`${WORKER_URL}/api/mdesign?des=${des}&dv=12`);
-    const data = await r.json();
-    if (data.error || !data.data) {
-      content.innerHTML = `<span style="color:#ef4444">No mdesign data for this target.</span><br>
-        <span style="color:#4a6a7a">JPL mdesign only covers NHATS-accessible NEOs with pre-computed trajectories.</span>`;
-      return;
-    }
-    const rows   = Array.isArray(data.data) ? data.data : [];
-    const fields = Array.isArray(data.fields) ? data.fields : [];
-    const iDv    = fields.indexOf('dv');
-    const minDv  = rows.length
-      ? Math.min(...rows.map(row => Array.isArray(row)
-          ? Number(iDv !== -1 ? row[iDv] : row[4]) || 99
-          : Number(row.dv) || 99))
-      : null;
-    const asterDv = optimalTrajectory ? optimalTrajectory.dv_total : null;
-    const diff    = asterDv && minDv ? Math.abs(asterDv - minDv) : null;
-    content.innerHTML = `
-      <div style="display:grid;grid-template-columns:140px 1fr;gap:4px 12px;line-height:2">
-        <span style="color:#4a6a7a">Aster computed:</span>
-        <span style="color:#00d4ff">ΔV = ${asterDv != null ? asterDv.toFixed(2) + ' km/s' : '—'}</span>
-        <span style="color:#4a6a7a">JPL mdesign min:</span>
-        <span style="color:#c8d6e5">ΔV = ${minDv != null ? minDv.toFixed(2) + ' km/s' : '—'}</span>
-        ${diff != null ? `<span style="color:#4a6a7a">Difference:</span>
-        <span style="color:${diff < 1 ? '#22c55e' : '#f59e0b'}">
-          ±${diff.toFixed(2)} km/s (${(diff / minDv * 100).toFixed(0)}%)</span>` : ''}
-      </div>
-      <div style="margin-top:10px;color:#3a5a6a;font-size:8px">
-        mdesign trajectories available: ${rows.length} · Source: JPL CNEOS mdesign API
-      </div>`;
-  } catch(e) {
-    content.innerHTML = `<span style="color:#ef4444">Failed to reach JPL mdesign: ${e.message}</span>`;
-  }
-};
 document.getElementById('mdesign-close').onclick = () => {
   document.getElementById('mdesign-modal').style.display = 'none';
 };
