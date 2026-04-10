@@ -5867,7 +5867,7 @@ document.getElementById('porkchop-canvas').addEventListener('click', (e) => {
   const ix = Math.floor((e.clientX - rect.left) / rect.width * porkchopData.nx);
   const jd = porkchopData.jd_start + ix / (porkchopData.nx - 1) * (porkchopData.jd_end - porkchopData.jd_start);
   currentJD = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, jd));
-  scrubber.value = currentJD;
+  scrubber.value = jdToScrubberPos(currentJD);
 });
 
 document.getElementById('porkchop-canvas').addEventListener('mousemove', (e) => {
@@ -6105,7 +6105,7 @@ document.getElementById('btn-load-scenario').addEventListener('click', () => {
   try {
     const saved = JSON.parse(raw);
     burns = saved.burns || [];
-    if (saved.jd) { currentJD = saved.jd; scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD)); }
+    if (saved.jd) { currentJD = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, saved.jd)); scrubber.value = jdToScrubberPos(currentJD); }
     const idx = asteroidData.findIndex(a => (a.full_name || a.pdes || a.name) === saved.asteroidName);
     if (idx >= 0) {
       selectAsteroid(idx);
@@ -6284,7 +6284,7 @@ function animate() {
 
   if (!isScrubbing && simSpeed !== 0) {
     currentJD += (simSpeed / 86400) * dt;
-    scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
+    scrubber.value = jdToScrubberPos(currentJD);
   }
 
   if (!isScrubbing && currentJD !== lastPropJD) {
