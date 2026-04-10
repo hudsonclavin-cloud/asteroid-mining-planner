@@ -18,6 +18,30 @@ Fixed the broken time slider by normalizing its range to a 0-based integer scale
 
 ---
 
+## Phase 9I — Timeline Controls + Redirect Orbit Comparison (2026-04-10)
+
+### Summary
+Fixed the bottom time controls so scrub, play, timeline jumps, porkchop clicks, and scenario loads all drive the same JD update path. Redirect mission visualization now shows the original asteroid orbit as a dotted line and the redirected orbit as a solid line when the redirect solution is available.
+
+### Changes (`index.html`, `physics.worker.js`)
+
+**Bottom timeline controls (`index.html`):**
+- Added centralized JD helpers: `clampJD()`, `syncTimeDisplays()`, `setCurrentJD()`
+- Routed scrubber input, arrow-key stepping, porkchop selection, mission timeline clicks, shared-state load, and scenario load through the same JD setter
+- Added explicit scrub start/end handlers so playback resumes reliably even if the pointer is released off the slider
+- Clamped playback at the scrubber bounds and stop playback cleanly at the date limits instead of drifting past them
+
+**Redirect mission output (`index.html`, `physics.worker.js`):**
+- Removed fake hardcoded redirect fallback numbers from UI display paths; unknown redirect speed/value fields now render as `unknown` instead of synthetic defaults
+- Added redirect formatting helpers for value, speed, and propellant load text
+- Worker now returns `redirect.orbit_el` when the redirect Lambert leg solves, so the frontend can render the adjusted orbit explicitly
+
+**Redirect visualization (`index.html`):**
+- Added dedicated redirect comparison orbit lines:
+  - dotted original orbit baseline
+  - solid redirected orbit
+- Restored the normal selected orbit view when closing the mission planner
+
 ## Phase 9H — UI Metrics Normalization (2026-04-10)
 
 ### Summary

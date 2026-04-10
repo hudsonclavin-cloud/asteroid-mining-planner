@@ -937,7 +937,7 @@ self.onmessage = function(e) {
       earthArrPos = { x: 1.0, y: 0.0, z: 0.0, vx: 0, vy: 29.78, vz: 0 };
     }
 
-    let dv_redirect, v_inf_lunar, redirect_lam_fallback = false;
+    let dv_redirect = null, v_inf_lunar = null, redirect_lam_fallback = false, redirect_orbit_el = null;
     try {
       const astArr2 = [best.astPos.x,   best.astPos.y,   best.astPos.z  ];
       const earArr2 = [earthArrPos.x,   earthArrPos.y,   earthArrPos.z  ];
@@ -952,6 +952,7 @@ self.onmessage = function(e) {
         const dv_y = rLam.v1[1] - best.v_ast.vy;
         const dv_z = rLam.v1[2] - best.v_ast.vz;
         dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
+        redirect_orbit_el = cart2kep(best.astPos.x, best.astPos.y, best.astPos.z, rLam.v1[0], rLam.v1[1], rLam.v1[2], best.jd_arr);
 
         // v_inf at Earth from Lambert v2 vs Earth arrival velocity
         const dv_arr_x = rLam.v2[0] - earthArrPos.vx;
@@ -963,25 +964,24 @@ self.onmessage = function(e) {
         const v_circ_ast = Math.sqrt(GM_AU3_S2 / r_ast_AU) * AU / 1000; // km/s
         const v_transfer_peri = Math.sqrt(GM_AU3_S2 * 2 / (r_ast_AU) - GM_AU3_S2 / a_transfer_AU) * AU / 1000;
         dv_redirect = Math.abs(v_transfer_peri - v_circ_ast);
-        v_inf_lunar = 1.5; // rough estimate
         redirect_lam_fallback = true;
       }
     } catch(e) {
-      dv_redirect = 2.0; // rough fallback
-      v_inf_lunar = 1.5;
       redirect_lam_fallback = true;
     }
-    if (!isFinite(dv_redirect)) dv_redirect = 2.0;
-    if (!isFinite(v_inf_lunar)) v_inf_lunar = 1.5;
+    if (!isFinite(dv_redirect)) dv_redirect = null;
+    if (!isFinite(v_inf_lunar)) v_inf_lunar = null;
 
     // D — Propellant mass (Tsiolkovsky)
     const v_e = propulsionModule.isp_s * 9.80665 / 1000; // km/s exhaust velocity
-    const mass_ratio = Math.exp(dv_redirect / v_e);
-    const m_prop = mass_kg * (mass_ratio - 1) / mass_ratio;
-    const m_prop_fraction = m_prop / mass_kg;
+    const mass_ratio = isFinite(dv_redirect) ? Math.exp(dv_redirect / v_e) : null;
+    const m_prop = isFinite(mass_ratio) ? mass_kg * (mass_ratio - 1) / mass_ratio : null;
+    const m_prop_fraction = isFinite(m_prop) ? m_prop / mass_kg : null;
 
     // E — Lunar capture ΔV (hyperbolic insertion)
-    const dv_lunar_capture = Math.sqrt(v_inf_lunar * v_inf_lunar + 2 * GM_moon / R_cap) - Math.sqrt(GM_moon / R_cap);
+    const dv_lunar_capture = isFinite(v_inf_lunar)
+      ? Math.sqrt(v_inf_lunar * v_inf_lunar + 2 * GM_moon / R_cap) - Math.sqrt(GM_moon / R_cap)
+      : null;
 
     // F — ISRU yield (5% extraction)
     const mineable_kg = mass_kg * 0.05;
@@ -1003,20 +1003,20 @@ self.onmessage = function(e) {
         value_usd = water_kg * 500 + metal_kg * 3000;
       }
     }
-    if (!isFinite(value_usd)) value_usd = 0;
+    if (!isFinite(value_usd) || value_usd <= 0) value_usd = null;
 
     // G — Feasibility score 0–100
-    const dv_total_redirect = best.dv_dep + dv_redirect;
-    const dv_score   = Math.max(0, 1 - dv_total_redirect / 15) * 50;
-    const prop_score = Math.max(0, 1 - m_prop_fraction) * 30;
-    const isru_score = Math.min(20, Math.log10(Math.max(1, value_usd)) / 12 * 20);
-    const feasibility_score = Math.round(dv_score + prop_score + isru_score);
+    const dv_total_redirect = isFinite(dv_redirect) ? best.dv_dep + dv_redirect : null;
+    const dv_score   = isFinite(dv_total_redirect) ? Math.max(0, 1 - dv_total_redirect / 15) * 50 : 0;
+    const prop_score = isFinite(m_prop_fraction) ? Math.max(0, 1 - m_prop_fraction) * 30 : 0;
+    const isru_score = isFinite(value_usd) ? Math.min(20, Math.log10(Math.max(1, value_usd)) / 12 * 20) : 0;
+    const feasibility_score = Math.round((isFinite(dv_score) ? dv_score : 0) + prop_score + isru_score);
 
-    const prop_fraction_pct = Math.round(m_prop_fraction * 100);
+    const prop_fraction_pct = isFinite(m_prop_fraction) ? Math.round(m_prop_fraction * 100) : null;
 
     self.postMessage({
       type: 'redirect_result',
-      feasible: m_prop_fraction < 0.95,
+      feasible: isFinite(m_prop_fraction) ? m_prop_fraction < 0.95 : false,
       intercept: {
         jd_dep:   best.jd_dep,
         jd_arr:   best.jd_arr,
@@ -1032,9 +1032,10 @@ self.onmessage = function(e) {
         earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
         propulsion: propulsionModule.name,
         isp_s: propulsionModule.isp_s,
+        orbit_el: redirect_orbit_el,
       },
       capture: {
-        dv_lunar_capture: isFinite(dv_lunar_capture) ? dv_lunar_capture : 0,
+        dv_lunar_capture,
         r_cap_km: R_cap,
         v_inf_lunar,
       },
@@ -1048,7 +1049,7 @@ self.onmessage = function(e) {
       },
       flags: {
         prop_fraction_pct,
-        high_prop_load: m_prop_fraction > 0.5,
+        high_prop_load: isFinite(m_prop_fraction) ? m_prop_fraction > 0.5 : false,
         lambert_fallback: lambert_fallback || redirect_lam_fallback,
       },
       feasibility_score,

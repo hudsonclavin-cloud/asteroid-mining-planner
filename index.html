@@ -2184,10 +2184,16 @@ scene.add(nhatsRing);
 // Burn mode orbit lines
 const originalOrbitLine = makeOrbitLine(0xffffff, true, 0.5);  // white dashed = pre-burn
 const newOrbitLine = makeOrbitLine(0xff7700, false, 0.85);       // orange = post-burn
+const redirectOriginalOrbitLine = makeOrbitLine(0x94a3b8, true, 0.5); // dotted baseline orbit
+const redirectAdjustedOrbitLine = makeOrbitLine(0xff8800, false, 0.9); // redirected orbit
 
 // Up to 5 multi-burn orbit lines
 const BURN_COLORS = [0x4af7c4, 0xff7700, 0xffcc00, 0xff69b4, 0xff3344];
 const burnOrbitLines = BURN_COLORS.map(c => makeOrbitLine(c, false, 0.8));
+
+function asteroidToOrbitElements(ast) {
+  return { a: ast.a, e: ast.e, i: ast.i * DEG, Om: ast.om * DEG, w: ast.w * DEG, M0: ast.ma * DEG, epoch_JD: ast.epoch };
+}
 
 // Draw orbit from elements stored as {a,e,i,Om,w,M0,epoch_JD} (radians)
 function drawOrbitFromElements(line, el) {
@@ -2677,6 +2683,28 @@ let wasPlayingBeforeScrub = false;
 let lastRealTime = performance.now();
 let isScrubbing = false;
 let lastSentJD = null;
+
+function clampJD(jd) {
+  return Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, Number(jd)));
+}
+
+function syncTimeDisplays() {
+  const dateStr = jdToDate(currentJD);
+  document.getElementById('calendar-date').textContent = dateStr;
+  document.getElementById('jd-value').textContent = `JD ${currentJD.toFixed(1)}`;
+  document.getElementById('date-display').textContent = dateStr;
+}
+
+function setCurrentJD(jd, options = {}) {
+  const { propagate = true, syncScrubber = true } = options;
+  currentJD = clampJD(jd);
+  if (syncScrubber) scrubber.value = jdToScrubberPos(currentJD);
+  syncTimeDisplays();
+  if (propagate && currentJD !== lastPropJD) {
+    worker.postMessage({ cmd: 'propagate', jd: currentJD });
+    lastPropJD = currentJD;
+  }
+}
 
 // ─── Burn Mode State ──────────────────────────────────────────────────────────
 let burnModeActive = false;
@@ -3927,7 +3955,7 @@ function loadStateFromURL() {
     );
     if (idx < 0) { setTimeout(() => tryApply(attempt + 1), 100); return; }
     selectAsteroid(idx);
-    if (state.jd) currentJD = state.jd;
+    if (state.jd) setCurrentJD(state.jd, { propagate: false });
     if (state.cam) camera.position.set(state.cam.x, state.cam.y, state.cam.z);
     if (state.burns && state.burns.length) {
       burns.length = 0;
@@ -3995,6 +4023,8 @@ function closeMissionPlanner() {
   document.getElementById('mp-assumptions-toggle').textContent = 'MODEL ASSUMPTIONS ▶';
   document.getElementById('mp-verify-wrap').style.display = 'none';
   clearTrajectoryLine();
+  const selectedAst = getSelectedAsteroid();
+  if (selectedAst && !burnModeActive) drawOrbitEllipse(selectedAst);
   missionEarthReturnPos = null;
   missionResults = [];
   missionResults.source = null;
@@ -4139,6 +4169,22 @@ function getRedirectPropulsionModule() {
   return REDIRECT_PROPULSION[key] || REDIRECT_PROPULSION.chemical_300;
 }
 
+function fmtRedirectValue(v) {
+  if (!(Number.isFinite(v) && v > 0)) return 'unknown';
+  if (v >= 1e12) return `$${(v/1e12).toFixed(1)}T`;
+  if (v >= 1e9) return `$${(v/1e9).toFixed(1)}B`;
+  if (v >= 1e6) return `$${(v/1e6).toFixed(0)}M`;
+  return fmtUSD(v);
+}
+
+function fmtRedirectSpeed(v) {
+  return Number.isFinite(v) && v >= 0 ? `${v.toFixed(2)} km/s` : 'unknown';
+}
+
+function fmtRedirectPercent(v) {
+  return Number.isFinite(v) ? `${Math.round(v)}%` : 'unknown';
+}
+
 async function runRedirectOptimizer() {
   clearPlannerError();
   const ast = getSelectedAsteroid();
@@ -4234,9 +4280,9 @@ function onRedirectResult(data) {
     `Diameter  ${d_km} km\n` +
     `Mass      ${mass_str}\n` +
     `Spec type ${ast_d.spec_type}\n` +
-    `Redirect ΔV ${rd.dv_redirect.toFixed(2)} km/s\n` +
+    `Redirect ΔV ${fmtRedirectSpeed(rd.dv_redirect)}\n` +
     `Propulsion  ${rd.propulsion} (Isp ${rd.isp_s}s)\n` +
-    `Prop load   ${flags.prop_fraction_pct}% of asteroid mass`;
+    `Prop load   ${fmtRedirectPercent(flags.prop_fraction_pct)} of asteroid mass`;
   document.getElementById('rr-prop-warn').style.display = flags.high_prop_load ? 'block' : 'none';
 
   // Lunar capture
@@ -4244,25 +4290,24 @@ function onRedirectResult(data) {
   document.getElementById('rr-capture-text').textContent =
     `Earth arr  ${jdToDate(rd.jd_earth_arr)}\n` +
     `Transit    ${Math.round(rd.tof_redirect)} days\n` +
-    `v∞ at Moon ${cap.v_inf_lunar.toFixed(2)} km/s\n` +
-    `Cap burn   ${cap.dv_lunar_capture.toFixed(2)} km/s\n` +
+    `v∞ at Moon ${fmtRedirectSpeed(cap.v_inf_lunar)}\n` +
+    `Cap burn   ${fmtRedirectSpeed(cap.dv_lunar_capture)}\n` +
     `Cap orbit  ${Math.round(cap.r_cap_km)} km radius`;
 
   // ISRU yield
   const isru = data.isru;
   const fmtMass = m => m >= 1e9 ? (m/1e9).toFixed(2)+' Mt' : m >= 1e6 ? (m/1e6).toFixed(2)+' kt' : Math.round(m)+' kg';
-  const fmtVal  = v => v >= 1e12 ? '$'+(v/1e12).toFixed(1)+'T' : v >= 1e9 ? '$'+(v/1e9).toFixed(1)+'B' : '$'+(v/1e6).toFixed(0)+'M';
   document.getElementById('rr-isru-text').textContent =
     `Mineable   ${fmtMass(isru.mineable_kg)} (5% extraction)\n` +
     `  Water    ${fmtMass(isru.water_kg)}\n` +
     `  Metals   ${fmtMass(isru.metal_kg)}\n` +
-    `Est value  ${fmtVal(isru.value_usd)}`;
+    `Est value  ${fmtRedirectValue(isru.value_usd)}`;
 
   // 3D visualization
   clearTrajectoryLine();
   clearRedirectVisualization();
   drawTrajectoryLine(ic.earthPos, ic.astPos);
-  drawRedirectTrajectory(ic, rd);
+  drawRedirectTrajectory(getSelectedAsteroid(), ic, rd);
   drawLunarOrbitRing();
 }
 
@@ -4271,9 +4316,15 @@ function clearRedirectVisualization() {
   if (_lunarOrbitRing)  { scene.remove(_lunarOrbitRing);  _lunarOrbitRing.geometry.dispose();  _lunarOrbitRing = null; }
   _cargoPodArcs.forEach(a => scene.remove(a));
   _cargoPodArcs = [];
+  redirectOriginalOrbitLine.visible = false;
+  redirectAdjustedOrbitLine.visible = false;
 }
 
-function drawRedirectTrajectory(intercept, redirect) {
+function drawRedirectTrajectory(ast, intercept, redirect) {
+  orbitLine.visible = false;
+  if (ast) drawOrbitFromElements(redirectOriginalOrbitLine, asteroidToOrbitElements(ast));
+  if (redirect.orbit_el) drawOrbitFromElements(redirectAdjustedOrbitLine, redirect.orbit_el);
+
   const ax = intercept.astPos.x, ay = intercept.astPos.y, az = intercept.astPos.z;
   const ex = redirect.earthArrPos.x, ey = redirect.earthArrPos.y, ez = redirect.earthArrPos.z;
   const dx = ex - ax, dy = ey - ay;
@@ -4790,9 +4841,7 @@ function buildMissionTimeline(traj) {
       <span class="mt-segment-date">${jdToDate(p.start).slice(0,7)}</span>`;
     seg.title = `${p.label}: ${Math.round(p.end-p.start)} days`;
     seg.addEventListener('click', () => {
-      currentJD = p.start;
-      document.getElementById('time-scrubber').value = jdToScrubberPos(currentJD);
-      worker.postMessage({ cmd:'propagate', jd:currentJD });
+      setCurrentJD(p.start);
     });
     inner.appendChild(seg);
   });
@@ -4803,9 +4852,7 @@ function buildMissionTimeline(traj) {
     marker.style.cssText = `position:absolute;left:${left.toFixed(2)}%;top:0;bottom:0;width:3px;background:${b.color};z-index:1;opacity:0.85;cursor:pointer`;
     marker.title = `${b.label}: ${jdToDate(b.jd)}`;
     marker.addEventListener('click', () => {
-      currentJD = b.jd;
-      document.getElementById('time-scrubber').value = jdToScrubberPos(currentJD);
-      worker.postMessage({ cmd:'propagate', jd:currentJD });
+      setCurrentJD(b.jd);
     });
     inner.appendChild(marker);
   });
@@ -5700,14 +5747,12 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.key === 'ArrowLeft') {
     e.preventDefault();
-    currentJD = Math.max(SCRUBBER_MIN, currentJD - 1);
-    scrubber.value = jdToScrubberPos(currentJD);
+    setCurrentJD(currentJD - 1);
     return;
   }
   if (e.key === 'ArrowRight') {
     e.preventDefault();
-    currentJD = Math.min(SCRUBBER_MAX, currentJD + 1);
-    scrubber.value = jdToScrubberPos(currentJD);
+    setCurrentJD(currentJD + 1);
     return;
   }
   if (e.key === '1') {
@@ -5866,8 +5911,7 @@ document.getElementById('porkchop-canvas').addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect();
   const ix = Math.floor((e.clientX - rect.left) / rect.width * porkchopData.nx);
   const jd = porkchopData.jd_start + ix / (porkchopData.nx - 1) * (porkchopData.jd_end - porkchopData.jd_start);
-  currentJD = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, jd));
-  scrubber.value = jdToScrubberPos(currentJD);
+  setCurrentJD(jd);
 });
 
 document.getElementById('porkchop-canvas').addEventListener('mousemove', (e) => {
@@ -6105,7 +6149,7 @@ document.getElementById('btn-load-scenario').addEventListener('click', () => {
   try {
     const saved = JSON.parse(raw);
     burns = saved.burns || [];
-    if (saved.jd) { currentJD = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, saved.jd)); scrubber.value = jdToScrubberPos(currentJD); }
+    if (saved.jd) setCurrentJD(saved.jd);
     const idx = asteroidData.findIndex(a => (a.full_name || a.pdes || a.name) === saved.asteroidName);
     if (idx >= 0) {
       selectAsteroid(idx);
@@ -6127,29 +6171,27 @@ scrubber.max = SCRUBBER_MAX - SCRUBBER_MIN;
 scrubber.step = 1;
 scrubber.value = jdToScrubberPos(TODAY_JD);
 
-scrubber.addEventListener('mousedown', () => {
+function beginScrub() {
   isScrubbing = true;
   wasPlayingBeforeScrub = isPlaying;
   if (isPlaying) setPlayState(false);
-});
-scrubber.addEventListener('touchstart', () => {
-  isScrubbing = true;
-  wasPlayingBeforeScrub = isPlaying;
-  if (isPlaying) setPlayState(false);
-}, { passive: true });
+}
+
+function endScrub() {
+  if (!isScrubbing) return;
+  isScrubbing = false;
+  if (wasPlayingBeforeScrub) setPlayState(true);
+}
+
+scrubber.addEventListener('mousedown', beginScrub);
+scrubber.addEventListener('touchstart', beginScrub, { passive: true });
 scrubber.addEventListener('input', () => {
-  currentJD = scrubberPosToJD(scrubber.value);
-  worker.postMessage({ cmd: 'propagate', jd: currentJD });
-  lastPropJD = currentJD; // prevent duplicate send from animate loop
+  setCurrentJD(scrubberPosToJD(scrubber.value), { syncScrubber: false });
 });
-scrubber.addEventListener('mouseup', () => {
-  isScrubbing = false;
-  if (wasPlayingBeforeScrub) setPlayState(true);
-});
-scrubber.addEventListener('touchend', () => {
-  isScrubbing = false;
-  if (wasPlayingBeforeScrub) setPlayState(true);
-});
+scrubber.addEventListener('change', () => endScrub());
+window.addEventListener('mouseup', endScrub);
+window.addEventListener('touchend', endScrub, { passive: true });
+window.addEventListener('touchcancel', endScrub, { passive: true });
 
 function syncSpeedButtons() {
   document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
@@ -6283,13 +6325,14 @@ function animate() {
   }
 
   if (!isScrubbing && simSpeed !== 0) {
-    currentJD += (simSpeed / 86400) * dt;
-    scrubber.value = jdToScrubberPos(currentJD);
-  }
-
-  if (!isScrubbing && currentJD !== lastPropJD) {
-    worker.postMessage({ cmd: 'propagate', jd: currentJD });
-    lastPropJD = currentJD;
+    const nextJD = clampJD(currentJD + (simSpeed / 86400) * dt);
+    if (nextJD === currentJD) {
+      setPlayState(false);
+    } else {
+      setCurrentJD(nextJD);
+    }
+  } else if (!isScrubbing && currentJD !== lastPropJD) {
+    setCurrentJD(currentJD, { syncScrubber: true });
   }
 
   if (pendingPositions) {
@@ -6332,10 +6375,7 @@ function animate() {
     }
   }
 
-  const dateStr = jdToDate(currentJD);
-  document.getElementById('calendar-date').textContent = dateStr;
-  document.getElementById('jd-value').textContent = `JD ${currentJD.toFixed(1)}`;
-  document.getElementById('date-display').textContent = dateStr;
+  syncTimeDisplays();
 
   // Fly-to animation
   if (flyTarget) {
