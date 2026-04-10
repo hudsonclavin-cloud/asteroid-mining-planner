@@ -6381,6 +6381,16 @@ async function init() {
 }
 
 init();
+
+// Expose functions used by inline onclick/oninput handlers to global scope.
+// Required because this script runs as type="module" (needed for Three.js imports),
+// which scopes all declarations to the module rather than window.
+window.toggleLeftPanel = toggleLeftPanel;
+window.setMissionType  = setMissionType;
+window.matSort         = matSort;
+window.removeMpBurn    = removeMpBurn;
+window.onMiningSlider  = onMiningSlider;
+window.onMpBurnChange  = onMpBurnChange;
 </script>
 
 <!-- Phase 9E: mdesign comparison modal -->
