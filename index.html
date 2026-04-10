@@ -1395,6 +1395,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div id="mp-redirect-results" style="display:none;margin-top:14px;padding-bottom:20px">
 
       <div class="panel-header">◈ REDIRECT FEASIBILITY</div>
+      <div id="mp-redirect-error" style="display:none;margin-top:10px"></div>
       <div id="rr-feasibility" style="margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <span style="font-size:9px;color:#4b5563;letter-spacing:0.08em">MISSION SCORE</span>
@@ -2553,11 +2554,16 @@ worker.onmessage = ({ data }) => {
     if (data.nhatsRows && data.nhatsRows.length > 0) {
       try { localStorage.setItem('aster_nhats_v2', JSON.stringify({ data: data.nhatsRows, timestamp: Date.now() })); } catch(_) {}
     }
-    const prevPdes = selectedId >= 0 ? String(asteroidData[selectedId]?.pdes || '') : '';
+    const prevAsteroidKey = selectedAsteroidKey ||
+      (selectedId >= 0 ? ((asteroidData[selectedId]?.pdes || asteroidData[selectedId]?.full_name || '').trim()) : null);
     buildAsteroidMesh(data.data);
-    if (prevPdes) {
-      const newIdx = asteroidData.findIndex(a => String(a.pdes) === prevPdes);
-      if (newIdx >= 0) selectedId = newIdx;
+    if (prevAsteroidKey) {
+      const newIdx = asteroidData.findIndex(a =>
+        (a.pdes || '').trim() === prevAsteroidKey ||
+        (a.full_name || '').trim() === prevAsteroidKey
+      );
+      selectedAsteroidKey = prevAsteroidKey;
+      selectedId = newIdx >= 0 ? newIdx : -1;
     }
     const loading = document.getElementById('loading');
     loading.style.transition = 'opacity 0.6s';
@@ -3950,11 +3956,13 @@ function clearTrajectoryLine() {
 let _plannerTimeoutId = null;
 
 function clearPlannerError() {
-  const errEl = document.getElementById('mp-results-error');
-  if (errEl) {
-    errEl.style.display = 'none';
-    errEl.innerHTML = '';
-  }
+  ['mp-results-error', 'mp-redirect-error'].forEach(id => {
+    const errEl = document.getElementById(id);
+    if (errEl) {
+      errEl.style.display = 'none';
+      errEl.innerHTML = '';
+    }
+  });
 }
 
 function showPlannerError(err) {
@@ -3966,7 +3974,9 @@ function showPlannerError(err) {
   document.getElementById('mp-actions').style.display = 'none';
   document.getElementById('mp-redirect-results').style.display = 'none';
 
-  const errEl = document.getElementById('mp-results-error');
+  const isRedirect = _activeMissionType === 'redirect';
+  const errEl = document.getElementById(isRedirect ? 'mp-redirect-error' : 'mp-results-error');
+  const panel = document.getElementById(isRedirect ? 'mp-redirect-results' : 'mp-results');
   if (errEl) {
     errEl.innerHTML =
       `<div style="color:#f87171;padding:16px;border:1px solid #f87171;font-size:11px;line-height:1.6">` +
@@ -3975,7 +3985,7 @@ function showPlannerError(err) {
       `<div style="margin-top:8px;color:#4b5563">Check console for details. Try selecting a different asteroid or adjusting launch window.</div>` +
       `</div>`;
     errEl.style.display = 'block';
-    document.getElementById('mp-results').style.display = 'block';
+    if (panel) panel.style.display = 'block';
   }
   console.error('[Aster Planner]', err);
 }
@@ -4117,6 +4127,7 @@ async function runRedirectOptimizer() {
 
 function onRedirectResult(data) {
   if (_plannerTimeoutId) { clearTimeout(_plannerTimeoutId); _plannerTimeoutId = null; }
+  clearPlannerError();
   document.getElementById('mp-computing').style.display = 'none';
 
   const panel = document.getElementById('mp-redirect-results');
