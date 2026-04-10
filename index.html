@@ -1298,6 +1298,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
         ◈ TRAJECTORY OPTIONS
         <span id="mp-result-count" style="color:#6a8a9a;font-size:9px;font-weight:normal"></span>
       </div>
+      <div id="mp-results-error" style="display:none;margin-top:10px"></div>
       <div id="mp-trajectory-list" style="display:flex;flex-direction:column;gap:4px"></div>
     </div>
 
@@ -3904,6 +3905,7 @@ function openMissionPlanner(id) {
   document.getElementById('mp-redirect-results').style.display = 'none';
   document.getElementById('mp-progress-bar').style.width = '0%';
   missionResults = []; selectedTrajIdx = -1;
+  clearPlannerError();
   setMissionType('extract'); // reset to default on each open
   // Expand right panel into mission-planner mode
   const rp = document.getElementById('right-panel');
@@ -3947,25 +3949,41 @@ function clearTrajectoryLine() {
 
 let _plannerTimeoutId = null;
 
+function clearPlannerError() {
+  const errEl = document.getElementById('mp-results-error');
+  if (errEl) {
+    errEl.style.display = 'none';
+    errEl.innerHTML = '';
+  }
+}
+
 function showPlannerError(err) {
   const msg = typeof err === 'string' ? err : (err?.message || 'Unknown error');
   document.getElementById('mp-computing').style.display = 'none';
-  const el = document.getElementById('mp-results');
-  if (el) {
-    el.innerHTML =
+  document.getElementById('mp-results').style.display = 'none';
+  document.getElementById('mp-profile').style.display = 'none';
+  document.getElementById('mp-burns').style.display = 'none';
+  document.getElementById('mp-actions').style.display = 'none';
+  document.getElementById('mp-redirect-results').style.display = 'none';
+
+  const errEl = document.getElementById('mp-results-error');
+  if (errEl) {
+    errEl.innerHTML =
       `<div style="color:#f87171;padding:16px;border:1px solid #f87171;font-size:11px;line-height:1.6">` +
       `<div style="font-weight:bold;margin-bottom:6px;letter-spacing:0.08em">&#9888; MISSION PLANNER ERROR</div>` +
       `<div>${msg}</div>` +
       `<div style="margin-top:8px;color:#4b5563">Check console for details. Try selecting a different asteroid or adjusting launch window.</div>` +
       `</div>`;
-    el.style.display = 'block';
+    errEl.style.display = 'block';
+    document.getElementById('mp-results').style.display = 'block';
   }
   console.error('[Aster Planner]', err);
 }
 
 async function runMissionOptimizer() {
-  if (selectedId < 0) return;
-  const ast = asteroidData[selectedId];
+  clearPlannerError();
+  const ast = getSelectedAsteroid();
+  if (!ast) return showPlannerError('No asteroid selected — click an asteroid first.');
   console.log('[Plan] using asteroid:', ast?.full_name, 'pdes:', ast?.pdes, 'selectedId:', selectedId);
 
   // Validate asteroid orbital elements before sending to worker
@@ -4032,6 +4050,7 @@ function setMissionType(type) {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
+  clearPlannerError();
   clearTrajectoryLine();
   clearRedirectVisualization();
 }
@@ -4053,7 +4072,8 @@ function getRedirectPropulsionModule() {
 }
 
 async function runRedirectOptimizer() {
-  const ast = asteroidData[selectedId];
+  clearPlannerError();
+  const ast = getSelectedAsteroid();
   if (!ast) { showPlannerError('No asteroid selected — click an asteroid first.'); return; }
   if (!isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
     showPlannerError('Asteroid is missing orbital elements (a/e/i). Cannot plan redirect mission.');
@@ -4231,7 +4251,8 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
   document.getElementById('mp-computing').style.display = 'none';
   if (dbg) console.log('[plan_result] diag:', dbg);
   if (noFeasibleWindow || !results || results.length === 0) {
-    const el = document.getElementById('mp-results');
+    const resultPanel = document.getElementById('mp-results');
+    const errorPanel = document.getElementById('mp-results-error');
     const dbgLine = dbg
       ? `<br><span style="color:#4b5563;font-size:9px">diag: lambert_null=${dbg.lambert_null} gate_fail=${dbg.gate_fail} phase1=${dbg.phase1_count} best_dv=${dbg.best_dv ?? '—'}</span>`
       : '';
@@ -4239,12 +4260,19 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
     const hint = bestDv && bestDv < 30
       ? `Best one-way ΔV found: ${bestDv} km/s — try extending the window past ${missionConfig.launchYearEnd || 2035} or pick a NHATS ✓ target.`
       : 'Try a NHATS ✓ target (◈ NHATS ACCESSIBLE ONLY filter), extend the launch window, or pick a lower-ΔV asteroid.';
-    el.innerHTML =
-      '<div style="color:#ef4444;padding:12px 4px;font-size:10px;line-height:1.6">' +
-      'NO FEASIBLE WINDOW FOUND<br>' +
-      `<span style="color:#6b7280">${hint}</span>` +
-      dbgLine + '</div>';
-    el.style.display = 'block';
+    if (errorPanel) {
+      errorPanel.innerHTML =
+        '<div style="color:#ef4444;padding:12px 4px;font-size:10px;line-height:1.6">' +
+        'NO FEASIBLE WINDOW FOUND<br>' +
+        `<span style="color:#6b7280">${hint}</span>` +
+        dbgLine + '</div>';
+      errorPanel.style.display = 'block';
+    }
+    if (resultPanel) {
+      const list = document.getElementById('mp-trajectory-list');
+      if (list) list.innerHTML = '';
+      resultPanel.style.display = 'block';
+    }
     return;
   }
   missionResults = results;
@@ -4274,6 +4302,8 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
 }
 
 function renderTrajectoryList() {
+  const errorEl = document.getElementById('mp-results-error');
+  if (errorEl) errorEl.style.display = 'none';
   const list   = document.getElementById('mp-trajectory-list');
   if (!list) { console.error('[renderTrajectoryList] mp-trajectory-list not found'); return; }
   const uncPct = 0.15;
@@ -4951,12 +4981,31 @@ document.getElementById('btn-tour-skip').addEventListener('click', () => {
 const raycaster = new THREE.Raycaster();
 raycaster.params.Points = { threshold: 0.05 };
 let selectedId = -1;
+let selectedAsteroidKey = null;
+
+function getSelectedAsteroid() {
+  if (selectedId >= 0 && asteroidData[selectedId]) {
+    const currentKey = ((asteroidData[selectedId].pdes || asteroidData[selectedId].full_name || '').trim());
+    if (currentKey === selectedAsteroidKey) return asteroidData[selectedId];
+  }
+  if (!selectedAsteroidKey) return null;
+  const found = asteroidData.find(a =>
+    (a.pdes || '').trim() === selectedAsteroidKey ||
+    (a.full_name || '').trim() === selectedAsteroidKey
+  );
+  if (found) {
+    selectedId = asteroidData.indexOf(found);
+    return found;
+  }
+  return null;
+}
 
 function selectAsteroid(id) {
   selectedId = id;
-  console.log('[Select] asteroid set to:', asteroidData[id]?.full_name, 'pdes:', asteroidData[id]?.pdes);
-  clearTrail();
   const ast = asteroidData[id];
+  selectedAsteroidKey = ast ? ((ast.pdes || ast.full_name || '').trim() || null) : null;
+  console.log('[Select] asteroid set to:', ast?.full_name, 'pdes:', ast?.pdes, 'key:', selectedAsteroidKey);
+  clearTrail();
   if (!ast) return;
 
   const name = ast.full_name || ast.pdes || ast.name || '—';
@@ -5107,6 +5156,7 @@ function selectAsteroid(id) {
 
 function deselectAsteroid() {
   selectedId = -1;
+  selectedAsteroidKey = null;
   document.getElementById('right-panel').classList.remove('panel-open');
   document.getElementById('panel-idle').style.display = 'block';
   document.getElementById('panel-data').style.display = 'none';
@@ -5782,9 +5832,9 @@ document.getElementById('btn-plan-mission').addEventListener('click', () => {
   if (selectedId >= 0) openMissionPlanner(selectedId);
 });
 document.getElementById('btn-planner-back').addEventListener('click', closeMissionPlanner);
-document.getElementById('btn-find-route').onclick = () => {
+document.getElementById('btn-find-route').addEventListener('click', () => {
   _activeMissionType === 'redirect' ? runRedirectOptimizer() : runMissionOptimizer();
-};
+});
 document.getElementById('btn-mp-export').addEventListener('click', exportMissionPlan);
 document.getElementById('btn-mp-share').addEventListener('click', shareMissionPlan);
 document.getElementById('btn-mp-reset-optimal').addEventListener('click', () => {
