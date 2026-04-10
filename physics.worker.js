@@ -1104,7 +1104,7 @@ self.onmessage = function(e) {
         query:  JSON.stringify({ neo: 'Y' }),
         limit:  '2000',
         sort:   'delta_v',
-        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class',
+        fields: 'pdes,full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class,diameter,albedo,moid,last_obs,condition_code',
       }).toString();
       // ── NHATS: human-accessible targets ──────────────────────────────────
       const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
@@ -1149,9 +1149,42 @@ self.onmessage = function(e) {
 
       const nhatsIsArr = nhatsRows.length > 0 && Array.isArray(nhatsRows[0]);
       const nhatsLookup = new Map();
+      function normalizeDesignation(raw) {
+        return String(raw || '')
+          .replace(/[()]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toUpperCase();
+      }
+      function nhatsMetricValue(value, key) {
+        if (value && typeof value === 'object') {
+          const nested = Number(value[key]);
+          if (isFinite(nested) && nested > 0) return nested;
+          const firstFinite = Object.values(value).map(Number).find(v => isFinite(v) && v > 0);
+          return firstFinite || 0;
+        }
+        const n = Number(value);
+        return isFinite(n) ? n : 0;
+      }
+      function normalizeNhatsRow(row) {
+        if (!row) return null;
+        const key = normalizeDesignation(nhatsIsArr ? row[0] : row.des);
+        const altKey = normalizeDesignation(nhatsIsArr ? row[1] : row.fullname);
+        return {
+          key,
+          altKey,
+          minDv: nhatsMetricValue(nhatsIsArr ? row[4] : row.min_dv, 'dv'),
+          minDur: nhatsMetricValue(nhatsIsArr ? row[5] : row.min_dur, 'dur'),
+          nTrajectories: Number(nhatsIsArr ? row[6] : (row.n_via_traj || row.n_via_points)) || 0,
+          stayTime: nhatsMetricValue(nhatsIsArr ? row[7] : row.min_stay, 'dur'),
+          occ: nhatsIsArr ? (row[9] ?? null) : (row.occ ?? row.obs_flag ?? null),
+        };
+      }
       for (const row of nhatsRows) {
-        const key = (nhatsIsArr ? row[0] : (row.des || '')).toString().trim();
-        if (key) nhatsLookup.set(key, row);
+        const normalized = normalizeNhatsRow(row);
+        if (!normalized?.key) continue;
+        nhatsLookup.set(normalized.key, normalized);
+        if (normalized.altKey) nhatsLookup.set(normalized.altKey, normalized);
       }
 
       // ── Estimate value for asteroids not in Asterank ──────────────────────
@@ -1176,8 +1209,18 @@ self.onmessage = function(e) {
 
 
         const pdes     = String(row.pdes || row.full_name || '').trim();
+        const pdesKey  = normalizeDesignation(pdes);
         const epoch    = (!row.epoch || Number(row.epoch) === 0) ? 2451545.0 : Number(row.epoch); // Asterank gives JD directly; default = J2000.0
-        const diameter = Number(row.diameter) || 0;
+        const albedoRaw = Number(row.albedo);
+        const albedoVal = isFinite(albedoRaw) && albedoRaw > 0 ? albedoRaw : null;
+        let diameter = Number(row.diameter) || 0;
+        if (!(diameter > 0)) {
+          const hVal = Number(row.H);
+          const albedoForEstimate = albedoVal || 0.15;
+          if (isFinite(hVal) && hVal > 0) {
+            diameter = (1329 / Math.sqrt(albedoForEstimate)) * Math.pow(10, -hVal / 5);
+          }
+        }
         const specRaw  = String(row.spec || row.spec_T || '').trim();
         const per      = Number(row.per) || Math.sqrt(a * a * a); // Kepler's 3rd law: T = a^1.5 yr
 
@@ -1192,8 +1235,9 @@ self.onmessage = function(e) {
           else                astClass = 'AMO';
         }
 
-        const nhatsRow = nhatsLookup.get(pdes) ||
-                         nhatsLookup.get(pdes.replace(/\s+.*/, ''));
+        const nhatsRow = nhatsLookup.get(pdesKey) ||
+                         nhatsLookup.get(normalizeDesignation(row.full_name || row.name || ''));
+        const moidRaw = Number(row.moid);
 
         catalog.push({
           a, e,
@@ -1209,20 +1253,20 @@ self.onmessage = function(e) {
           pha:       row.pha  || 'N',
           H:         Number(row.H)       || 20,
           diameter,
-          albedo:    Number(row.albedo)  || 0.15,
+          albedo:    albedoVal,
           spec:      specRaw || 'C',
           spec_T:    String(row.spec_T   || specRaw || '').trim(),
-          price:     Number(row.price)   || estimateValue(specRaw, diameter, 0.15),
+          price:     Number(row.price)   || estimateValue(specRaw, diameter, albedoVal || 0.15),
           profit:    Number(row.profit)  || 0,
-          moid:      Number(row.moid)    || 0,
+          moid:      isFinite(moidRaw) ? moidRaw : null,
           delta_v:   Number(row.delta_v) || Number(row.dv) || 0,
           nhats: nhatsRow ? {
             accessible:    true,
-            minDv:         nhatsIsArr ? nhatsRow[4] : nhatsRow.min_dv,
-            minDur:        nhatsIsArr ? nhatsRow[5] : nhatsRow.min_dur,
-            nTrajectories: nhatsIsArr ? nhatsRow[6] : (nhatsRow.n_via_traj || nhatsRow.n_via_points),
-            stayTime:      nhatsIsArr ? nhatsRow[7] : nhatsRow.min_stay,
-            occ:           nhatsIsArr ? nhatsRow[9] : nhatsRow.occ,
+            minDv:         nhatsRow.minDv,
+            minDur:        nhatsRow.minDur,
+            nTrajectories: nhatsRow.nTrajectories,
+            stayTime:      nhatsRow.stayTime,
+            occ:           nhatsRow.occ,
           } : { accessible: false },
           _nhats: !!nhatsRow,
         });

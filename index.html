@@ -1568,29 +1568,71 @@ function getAsteroidDV(ast) {
 function computeFeasibilityMetrics(ast) {
   // ΔV: prefer NHATS verified value, then Asterank field, then Aster estimate
   let dvVal, dvUnc, dvSrc, dvMethod;
-  if (ast.nhats?.accessible && Number(ast.nhats.minDv) > 0) {
-    dvVal = Number(ast.nhats.minDv); dvUnc = 0.2; dvSrc = 'NHATS';       dvMethod = 'nhats';
+  const nhatsDv = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDv, 'dv') : 0;
+  if (nhatsDv > 0) {
+    dvVal = nhatsDv;                 dvUnc = 0.2; dvSrc = 'NHATS';       dvMethod = 'nhats';
   } else if (Number(ast.delta_v) > 0) {
     dvVal = Number(ast.delta_v);     dvUnc = 0.8; dvSrc = 'Asterank';    dvMethod = 'asterank';
+function getNhatsMetricValue(value, key) {
+  if (value && typeof value === 'object') {
+    const nested = Number(value[key]);
+    if (isFinite(nested) && nested > 0) return nested;
+    const firstFinite = Object.values(value).map(Number).find(v => isFinite(v) && v > 0);
+    return firstFinite || 0;
+  }
+  const n = Number(value);
+  return isFinite(n) ? n : 0;
+}
+
+function getDisplayDeltaV(ast) {
+  const nhatsDv = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDv, 'dv') : 0;
+  if (nhatsDv > 0) return nhatsDv;
+  if (Number(ast.delta_v) > 0) return Number(ast.delta_v);
+  return getAsteroidDV(ast);
+}
+
+function getDisplayDuration(ast) {
+  const nhatsDur = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDur, 'dur') : 0;
+  if (nhatsDur > 0) return nhatsDur;
+  return Math.round(180 + (getDisplayDeltaV(ast) - 3) * 20);
+}
+
+function getDisplayValueUsd(ast) {
+  const rawVal = Number(ast.price) || 0;
+  if (rawVal > 0) return rawVal;
+  const matData = computeMaterialRows(ast);
+  return matData.rows.reduce((sum, row) => sum + row.totalValue, 0);
+}
+
+function getDisplayProfitUsd(ast) {
+  const rawProfit = Number(ast.profit) || 0;
+  if (rawProfit > 0) return rawProfit;
+  const fallbackValue = getDisplayValueUsd(ast);
+  return fallbackValue > 0 ? fallbackValue * 0.1 : 0;
+}
+
+function formatNhatsMetric(value, key, digits = 0) {
+  const n = getNhatsMetricValue(value, key);
+  if (!(n > 0)) return '—';
+  return digits > 0 ? n.toFixed(digits) : Math.round(n).toString();
+}
+
   } else {
     dvVal = getAsteroidDV(ast);      dvUnc = 3.0; dvSrc = 'Aster est.';  dvMethod = 'hohmann-visviva';
   }
 
   // Duration: prefer NHATS, else rough estimate from ΔV
   let durVal, durUnc, durSrc;
-  if (ast.nhats?.accessible && Number(ast.nhats.minDur) > 0) {
-    durVal = Number(ast.nhats.minDur); durUnc = 15;  durSrc = 'NHATS';
+  const nhatsDur = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDur, 'dur') : 0;
+  if (nhatsDur > 0) {
+    durVal = nhatsDur;               durUnc = 15;  durSrc = 'NHATS';
   } else {
     durVal = Math.round(180 + (dvVal - 3) * 20);    durUnc = 60;  durSrc = 'Aster est.';
   }
 
   // Value range (10%–30% extraction efficiency)
   // Prefer Asterank price; fall back to composition-based estimate so value is never $0 when we have diameter data
-  let rawVal = Number(ast.price) || 0;
-  if (rawVal === 0) {
-    const matData = computeMaterialRows(ast);
-    rawVal = matData.rows.reduce((s, r) => s + r.totalValue, 0);
-  }
+  const rawVal = getDisplayValueUsd(ast);
 
   // Hazard
   const pha  = ast.pha === 'Y';
@@ -2771,7 +2813,6 @@ function buildAsteroidMesh(data) {
   for (let i = 0; i < asteroidCount; i++) {
     const ast = asteroidData[i];
     const H = Number(ast.H) || 20;
-    ast._fi = computeFeasibilityMetrics(ast); // structured feasibility data (no score)
     const _albedo = Number(ast.albedo) || 0.15;
     const _diamKm = ast.diameter && Number(ast.diameter) > 0
       ? Math.min(35, Number(ast.diameter))
@@ -2792,7 +2833,7 @@ function buildAsteroidMesh(data) {
     const ast = asteroidData[i];
     asteroidMesh.setColorAt(i, spectralTypeColor(ast));
     dummy.position.set(0, 0, 0);
-    const price = Number(ast.price) || 0;
+    const price = getDisplayValueUsd(ast);
     const logScale = price > 0 ? Math.min(2.0, 0.6 + (Math.log10(Math.max(1, price)) / 14) * 1.4) : 0.6;
     dummy.scale.setScalar(logScale);
     dummy.updateMatrix();
@@ -2876,7 +2917,7 @@ function applyFilters() {
   for (let i = 0; i < asteroidCount; i++) {
     const ast = asteroidData[i];
     let vis = true;
-    const dv = getAsteroidDV(ast);
+    const dv = getDisplayDeltaV(ast);
     const sk = getSpecKey(ast);
 
     if (dv < filterDvMin || dv > filterDvMax) vis = false;
@@ -2884,12 +2925,12 @@ function applyFilters() {
     if ((Number(ast.i) || 0) > filterInc) vis = false;
     if ((Number(ast.a) || 1) > filterSMA) vis = false;
     if (!filterSpec[sk]) vis = false;
-    if (filterNHATS && !ast._nhats) vis = false;
+    if (filterNHATS && !ast.nhats?.accessible) vis = false;
     if (filterPHA && ast.pha !== 'Y') vis = false;
     if (filterWater && !['C','D'].includes(sk)) vis = false;
 
     // Resource value (log scale)
-    const price = Number(ast.price) || 0;
+    const price = getDisplayValueUsd(ast);
     if (filterValMax < 100 && price > valHi) vis = false;
     if (filterValMin > 0 && price < valLo) vis = false;
 
@@ -3002,19 +3043,19 @@ function exportFilteredCatalog() {
   const header = 'designation,spec_type,delta_v_kms,value_usd,profit_usd,diameter_km,inclination_deg,nhats_accessible,nhats_min_dv,nhats_min_dur,nhats_trajectories,nhats_occ';
   const rows = filteredIds.slice(0, 500).map(({ i }) => {
     const ast = asteroidData[i];
-    const dv = getAsteroidDV(ast);
+    const dv = getDisplayDeltaV(ast);
     const nh = ast.nhats?.accessible;
     return [
       `"${(ast.full_name || ast.pdes || '?').replace(/"/g,'')}"`,
       ast.spec || ast.spec_T || '?',
       dv.toFixed(3),
-      Number(ast.price) || 0,
-      Number(ast.profit) || 0,
+      getDisplayValueUsd(ast).toFixed(0),
+      getDisplayProfitUsd(ast).toFixed(0),
       ((ast._diam_m || 0) / 1000).toFixed(3),
       Number(ast.i).toFixed(3),
       nh ? 'YES' : 'NO',
-      nh ? ast.nhats.minDv : '',
-      nh ? ast.nhats.minDur : '',
+      nh ? formatNhatsMetric(ast.nhats.minDv, 'dv', 3) : '',
+      nh ? formatNhatsMetric(ast.nhats.minDur, 'dur', 0) : '',
       nh ? ast.nhats.nTrajectories : '',
       nh ? ast.nhats.occ : '',
     ].join(',');
@@ -3033,18 +3074,18 @@ function renderLeaderboard() {
   if (!container) return;
 
   const sorted = [...filteredIds];
-  if      (lbSortMode === 'value')    sorted.sort((a,b) => (Number(asteroidData[b.i].price)||0)-(Number(asteroidData[a.i].price)||0));
+  if      (lbSortMode === 'value')    sorted.sort((a,b) => getDisplayValueUsd(asteroidData[b.i]) - getDisplayValueUsd(asteroidData[a.i]));
   else if (lbSortMode === 'diam')     sorted.sort((a,b) => (asteroidData[b.i]._diam_m||0)-(asteroidData[a.i]._diam_m||0));
-  else if (lbSortMode === 'duration') sorted.sort((a,b) => (asteroidData[a.i].nhats?.minDur ?? 9999)-(asteroidData[b.i].nhats?.minDur ?? 9999));
+  else if (lbSortMode === 'duration') sorted.sort((a,b) => getDisplayDuration(asteroidData[a.i]) - getDisplayDuration(asteroidData[b.i]));
   else if (lbSortMode === 'name')     sorted.sort((a,b) => (asteroidData[a.i].full_name||'').localeCompare(asteroidData[b.i].full_name||''));
-  else                                sorted.sort((a,b) => getAsteroidDV(asteroidData[a.i])-getAsteroidDV(asteroidData[b.i])); // dv default
+  else                                sorted.sort((a,b) => getDisplayDeltaV(asteroidData[a.i]) - getDisplayDeltaV(asteroidData[b.i])); // dv default
 
   const top50 = sorted.slice(0, 50);
   container.innerHTML = top50.map(({i: idx}, rank) => {
     const ast = asteroidData[idx];
     const sk = getSpecKey(ast);
     const skClass = ['C','S','M','X','D'].includes(sk) ? sk : 'O';
-    const fi     = ast._fi || computeFeasibilityMetrics(ast);
+    const fi     = computeFeasibilityMetrics(ast);
     const dvStr  = `${fi.deltaV.value.toFixed(1)} (±${fi.deltaV.uncertainty})`;
     const durStr = fi.duration.value > 0 ? Math.round(fi.duration.value) + (fi.duration.source !== 'NHATS' ? '*' : '') : '—';
     const valStr = fi.valueRange.optimistic > 0 ? fmtUSD(fi.valueRange.optimistic) : '—';
@@ -3097,7 +3138,8 @@ function renderEconomicsTab(id) {
   document.getElementById('econ-no-selection').style.display = 'none';
   document.getElementById('econ-content').style.display = 'block';
 
-  const dv = getAsteroidDV(ast);
+  const eco_fi  = computeFeasibilityMetrics(ast);
+  const dv = eco_fi.deltaV.value;
   const dryMass = Number(document.getElementById('eco-dry-mass').value) || 1000;
   const isp = Number(document.getElementById('eco-isp').value) || 450;
   const g0 = 9.80665;
@@ -3106,7 +3148,6 @@ function renderEconomicsTab(id) {
   const launchCost = launchMass * 2700;
   const totalCost = launchCost * 1.8;
 
-  const eco_fi  = computeFeasibilityMetrics(ast);
   const costRng = computeMissionCost(totalCost, eco_fi.deltaV.uncertainty);
   const opsDaysEco = Math.round(dv * 60); // rough mission duration for tooltip
   document.getElementById('eco-dv').textContent = `${dv.toFixed(2)} (±${eco_fi.deltaV.uncertainty}) km/s`;
@@ -3135,7 +3176,7 @@ function renderEconomicsTab(id) {
   document.getElementById('eco-asterank').textContent = fmtAstValue(ast.price);
 
   // ROI uses 5% extraction efficiency — conservative, no industrial-scale ISRU demonstrated
-  const totalReturn = Math.max(waterVal + metalVal, Number(ast.price) || 0) * 0.05;
+  const totalReturn = Math.max(waterVal + metalVal, getDisplayValueUsd(ast)) * 0.05;
   const roi = totalCost > 0 ? totalReturn / totalCost : 0;
   const roiEl = document.getElementById('eco-roi');
   roiEl.textContent = roi > 1e6 ? '>1,000,000×' : `${roi.toFixed(0)}×`;
@@ -3343,7 +3384,7 @@ async function fetchResearch(ast) {
       designation:  ast.pdes,
       spectralType: ast.spec || ast.spec_T || '',
       orbit: { a: ast.a, e: ast.e, i: ast.i },
-      deltaV_kms: getAsteroidDV(ast).toFixed(2),
+      deltaV_kms: getDisplayDeltaV(ast).toFixed(2),
     };
     console.log('[Research] request payload:', payload);
     const res = await fetch(endpoint, {
@@ -3386,19 +3427,26 @@ function applyNHATSData(rows) {
   console.log('[NHATS] format:', isArr ? 'array' : 'object', '| sample des:', isArr ? rows[0]?.[0] : rows[0]?.des, '| catalog pdes[0]:', asteroidData[0]?.pdes);
   nhatsMap = new Map();
   rows.forEach(row => {
-    const des = (isArr ? row[0] : (row.des || '')).trim();
-    if (des) nhatsMap.set(des, row);
+    const normalized = normalizeRow(row);
+    if (normalized.des) nhatsMap.set(normalized.des, normalized);
+    if (normalized.fullname) nhatsMap.set(normalized.fullname, normalized);
   });
   let matchCount = 0;
   for (let i = 0; i < asteroidData.length; i++) {
+  const normalizeDesignation = raw => String(raw || '').replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim().toUpperCase();
+  const normalizeRow = row => ({
+    des: normalizeDesignation(isArr ? row[0] : row.des),
+    fullname: normalizeDesignation(isArr ? row[1] : row.fullname),
+    minDv: getNhatsMetricValue(isArr ? row[4] : row.min_dv, 'dv'),
+    minDur: getNhatsMetricValue(isArr ? row[5] : row.min_dur, 'dur'),
+    nTrajectories: Number(isArr ? row[6] : (row.n_via_traj || row.n_via_points || 0)) || 0,
+    occ: isArr ? (row[9] ?? null) : (row.occ ?? row.obs_flag ?? null),
+  });
     const ast = asteroidData[i];
-    const des = (ast.pdes || '').trim();
-    const row = nhatsMap.get(des) || nhatsMap.get(des.replace(/\s+.*/, ''));
+    const des = normalizeDesignation(ast.pdes || '');
+    const row = nhatsMap.get(des) || nhatsMap.get(normalizeDesignation(ast.full_name || ast.name || ''));
     if (row) {
-      const minDv  = isArr ? row[4] : row.min_dv;
-      const minDur = isArr ? row[5] : row.min_dur;
-      const nTraj  = isArr ? row[6] : (row.n_via_traj || row.n_via_points || 0);
-      ast.nhats = { accessible: true, minDv, minDur, nTrajectories: nTraj, stayTime: null, occ: null };
+      ast.nhats = { accessible: true, minDv: row.minDv, minDur: row.minDur, nTrajectories: row.nTrajectories, stayTime: null, occ: row.occ };
       ast._nhats = true;
       matchCount++;
     } else {
@@ -3420,6 +3468,7 @@ function updateNHATSColors() {
   for (let i = 0; i < asteroidData.length; i++) {
     const ast = asteroidData[i];
     asteroidMesh.setColorAt(i, ast.nhats?.accessible ? amber : spectralTypeColor(ast));
+  if (selectedId >= 0) selectAsteroid(selectedId);
   }
   asteroidMesh.instanceColor.needsUpdate = true;
 }
@@ -3765,8 +3814,9 @@ function exportMissionReport() {
   if (selectedId < 0) { setStatus('Select an asteroid first', true); return; }
   const ast = asteroidData[selectedId];
   const name = ast.full_name || ast.pdes || 'unknown';
-  const dv = getAsteroidDV(ast);
-  const dvSuffix = (ast.delta_v && Number(ast.delta_v) > 0) ? '' : ' (estimated)';
+  const fi = computeFeasibilityMetrics(ast);
+  const dv = fi.deltaV.value;
+  const dvSuffix = fi.deltaV.source === 'NHATS' ? ' (NHATS)' : fi.deltaV.source === 'Asterank' ? '' : ' (estimated)';
   const D_m = ast._diam_m || 500;
   const spec3 = (ast.spec || ast.spec_T || '?').trim().charAt(0).toUpperCase();
   const vol_m3 = (4/3) * Math.PI * Math.pow(D_m/2, 3);
@@ -3790,7 +3840,7 @@ function exportMissionReport() {
     `  Spectral Type:     ${ast.spec || ast.spec_T || '—'}`,
     `  Diameter:          ${(D_m/1000).toFixed(3)} km`,
     `  Est. Mass:         ${mass_kg.toExponential(2)} kg`,
-    `  ΔV (est.):         ${getAsteroidDV(ast).toFixed(2)} km/s`,
+    `  ΔV:                ${dv.toFixed(2)} km/s [${fi.deltaV.source}]`,
     `  NHATS Status:      ${ast.nhats?.accessible ? 'VERIFIED (JPL)' : ast._nhats ? 'ESTIMATED' : 'NO'}`,
     '',
     '── ORBITAL ELEMENTS ────────────────────────────────────────',
@@ -3808,8 +3858,8 @@ function exportMissionReport() {
     ...(burns.length > 0 ? ['', '  Planned Burns:', ...burnLines] : []),
     '',
     '── ECONOMICS ───────────────────────────────────────────────',
-    `  Asterank Value:    ${fmtUSD(ast.price)}`,
-    `  Asterank Profit:   ${fmtUSD(ast.profit)}`,
+    `  Est. Value:        ${fmtUSD(getDisplayValueUsd(ast))}`,
+    `  Est. Profit:       ${fmtUSD(getDisplayProfitUsd(ast))}`,
     `  Est. Launch Cost:  ${fmtUSD(launchCost)} (Falcon 9 rate × 1.8 overhead)`,
     '',
     '── CAVEATS ─────────────────────────────────────────────────',
@@ -5048,7 +5098,6 @@ function selectAsteroid(id) {
     || ((ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy) ? 'Composition model not available' : 'No composition data');
   document.getElementById('ast-composition').textContent = compText;
 
-  // Compute MAT_COMP-based total for consistent price display
   const prices3 = getActivePrices();
   const spec3g   = getMatSpec(ast);
   const comp3    = MAT_COMP[spec3g] || MAT_COMP['other'];
@@ -5060,8 +5109,8 @@ function selectAsteroid(id) {
   const mass3    = (4/3) * Math.PI * r3 * r3 * r3 * dens3;
   const totalVal3 = mass3 * revPerKg3;
 
-  const displayPrice  = (Number(ast.price)  > 0) ? ast.price  : totalVal3;
-  const displayProfit = (Number(ast.profit) > 0) ? ast.profit : totalVal3 * 0.1;
+  const displayPrice  = getDisplayValueUsd(ast);
+  const displayProfit = getDisplayProfitUsd(ast);
   document.getElementById('ast-price').textContent  = fmtAstValue(displayPrice);
   document.getElementById('ast-profit').textContent = fmtUSD(Math.min(displayProfit, 1e13));
 
@@ -5105,13 +5154,14 @@ function selectAsteroid(id) {
   const nhatsBadge = document.getElementById('nhats-badge');
   if (ast.nhats?.accessible) {
     document.getElementById('nhats-details').textContent =
-      `Min ΔV: ${ast.nhats.minDv} km/s  ·  Duration: ${ast.nhats.minDur}d  ·  Trajectories: ${ast.nhats.nTrajectories}  ·  OCC: ${ast.nhats.occ}`;
+      `Min ΔV: ${formatNhatsMetric(ast.nhats.minDv, 'dv', 2)} km/s  ·  Duration: ${formatNhatsMetric(ast.nhats.minDur, 'dur', 0)}d  ·  Trajectories: ${ast.nhats.nTrajectories}${occText}`;
     nhatsBadge.style.display = 'block';
   } else {
     nhatsBadge.style.display = 'none';
   }
 
   // Reset research tab — clear stale content from previous selection
+    const occText = ast.nhats.occ ? `  ·  OCC: ${ast.nhats.occ}` : '';
   document.getElementById('research-content').style.display = 'none';
   document.getElementById('research-meta').style.display    = 'none';
   document.getElementById('research-error').style.display   = 'none';
@@ -5532,7 +5582,7 @@ function onPointerMove(e) {
           const ast = asteroidData[bestId];
           const name = (ast.full_name || ast.pdes || '—').substring(0, 24);
           const spec = (ast.spec || ast.spec_T || '?').trim();
-          tt.innerHTML = `<span style="color:#00d4ff">${name}</span><br>${spec}-type · ΔV ${getAsteroidDV(ast).toFixed(1)} km/s<br>${fmtUSD(Number(ast.price) || 0)}`;
+          tt.innerHTML = `<span style="color:#00d4ff">${name}</span><br>${spec}-type · ΔV ${getDisplayDeltaV(ast).toFixed(1)} km/s<br>${fmtUSD(getDisplayValueUsd(ast))}`;
           tt.style.display = 'block';
           renderer.domElement.style.cursor = 'pointer';
           if (bestId !== selectedId) showHoverEllipse(ast);
