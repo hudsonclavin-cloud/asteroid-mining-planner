@@ -806,7 +806,7 @@ self.onmessage = function(e) {
           'total:', dv_total.toFixed(3), 'vs 25.0 cap');
         _p2logged++;
       }
-      if (dv_total > 25.0) continue; // infeasible round-trip (25 km/s hard cap)
+      if (dv_total > 27.0) continue; // infeasible round-trip (27 km/s hard cap)
 
       results.push({
         jd_dep:    c.jd_dep,
