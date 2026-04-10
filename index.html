@@ -1454,7 +1454,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 
 <div id="bottom-bar">
   <div id="date-display">2026-MAR-27</div>
-  <input type="range" id="time-scrubber" min="0" max="1" step="0.0001" value="0.5">
+  <input type="range" id="time-scrubber" min="0" max="1" step="1" value="0">
   <button id="btn-play-pause" class="speed-btn" title="Play / Pause (Space)">▶</button>
   <div id="speed-controls">
     <button class="speed-btn" data-speed="1">1×</button>
@@ -1511,6 +1511,14 @@ function jdToDate(jd) {
   return `${year}-${MONTHS[month - 1]}-${String(day).padStart(2, '0')}`;
 }
 
+function jdToScrubberPos(jd) {
+  return Math.round(Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, jd)) - SCRUBBER_MIN);
+}
+
+function scrubberPosToJD(pos) {
+  return SCRUBBER_MIN + Number(pos);
+}
+
 function fmtUSD(v) {
   if (!v && v !== 0) return '—';
   const n = Number(v);
@@ -1564,15 +1572,6 @@ function getAsteroidDV(ast) {
   return Math.min(15.0, dv_au_yr * 4.740 + LEO_DEPART);
 }
 
-// Returns source-labeled feasibility metrics. No profit weighting.
-function computeFeasibilityMetrics(ast) {
-  // ΔV: prefer NHATS verified value, then Asterank field, then Aster estimate
-  let dvVal, dvUnc, dvSrc, dvMethod;
-  const nhatsDv = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDv, 'dv') : 0;
-  if (nhatsDv > 0) {
-    dvVal = nhatsDv;                 dvUnc = 0.2; dvSrc = 'NHATS';       dvMethod = 'nhats';
-  } else if (Number(ast.delta_v) > 0) {
-    dvVal = Number(ast.delta_v);     dvUnc = 0.8; dvSrc = 'Asterank';    dvMethod = 'asterank';
 function getNhatsMetricValue(value, key) {
   if (value && typeof value === 'object') {
     const nested = Number(value[key]);
@@ -1617,6 +1616,15 @@ function formatNhatsMetric(value, key, digits = 0) {
   return digits > 0 ? n.toFixed(digits) : Math.round(n).toString();
 }
 
+// Returns source-labeled feasibility metrics. No profit weighting.
+function computeFeasibilityMetrics(ast) {
+  // ΔV: prefer NHATS verified value, then Asterank field, then Aster estimate
+  let dvVal, dvUnc, dvSrc, dvMethod;
+  const nhatsDv = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDv, 'dv') : 0;
+  if (nhatsDv > 0) {
+    dvVal = nhatsDv;                 dvUnc = 0.2; dvSrc = 'NHATS';       dvMethod = 'nhats';
+  } else if (Number(ast.delta_v) > 0) {
+    dvVal = Number(ast.delta_v);     dvUnc = 0.8; dvSrc = 'Asterank';    dvMethod = 'asterank';
   } else {
     dvVal = getAsteroidDV(ast);      dvUnc = 3.0; dvSrc = 'Aster est.';  dvMethod = 'hohmann-visviva';
   }
@@ -3424,15 +3432,6 @@ function applyNHATSData(rows) {
   if (!asteroidData || asteroidData.length === 0) return;
   // NHATS API returns array rows: [des, fullname, H, dH, min_dv, min_dur, n_via_traj, obs_start, obs_end, obs_flag]
   const isArr = rows.length > 0 && Array.isArray(rows[0]);
-  console.log('[NHATS] format:', isArr ? 'array' : 'object', '| sample des:', isArr ? rows[0]?.[0] : rows[0]?.des, '| catalog pdes[0]:', asteroidData[0]?.pdes);
-  nhatsMap = new Map();
-  rows.forEach(row => {
-    const normalized = normalizeRow(row);
-    if (normalized.des) nhatsMap.set(normalized.des, normalized);
-    if (normalized.fullname) nhatsMap.set(normalized.fullname, normalized);
-  });
-  let matchCount = 0;
-  for (let i = 0; i < asteroidData.length; i++) {
   const normalizeDesignation = raw => String(raw || '').replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim().toUpperCase();
   const normalizeRow = row => ({
     des: normalizeDesignation(isArr ? row[0] : row.des),
@@ -3442,6 +3441,15 @@ function applyNHATSData(rows) {
     nTrajectories: Number(isArr ? row[6] : (row.n_via_traj || row.n_via_points || 0)) || 0,
     occ: isArr ? (row[9] ?? null) : (row.occ ?? row.obs_flag ?? null),
   });
+  console.log('[NHATS] format:', isArr ? 'array' : 'object', '| sample des:', isArr ? rows[0]?.[0] : rows[0]?.des, '| catalog pdes[0]:', asteroidData[0]?.pdes);
+  nhatsMap = new Map();
+  rows.forEach(row => {
+    const normalized = normalizeRow(row);
+    if (normalized.des) nhatsMap.set(normalized.des, normalized);
+    if (normalized.fullname) nhatsMap.set(normalized.fullname, normalized);
+  });
+  let matchCount = 0;
+  for (let i = 0; i < asteroidData.length; i++) {
     const ast = asteroidData[i];
     const des = normalizeDesignation(ast.pdes || '');
     const row = nhatsMap.get(des) || nhatsMap.get(normalizeDesignation(ast.full_name || ast.name || ''));
@@ -3460,6 +3468,7 @@ function applyNHATSData(rows) {
   console.log(`[NHATS] real data merged: ${matchCount} matches`);
   const nEl = document.getElementById('hud-nhats');
   if (nEl) nEl.textContent = `NHATS: ${matchCount} TARGETS`;
+  if (selectedId >= 0) selectAsteroid(selectedId);
 }
 
 function updateNHATSColors() {
@@ -3468,7 +3477,6 @@ function updateNHATSColors() {
   for (let i = 0; i < asteroidData.length; i++) {
     const ast = asteroidData[i];
     asteroidMesh.setColorAt(i, ast.nhats?.accessible ? amber : spectralTypeColor(ast));
-  if (selectedId >= 0) selectAsteroid(selectedId);
   }
   asteroidMesh.instanceColor.needsUpdate = true;
 }
@@ -4783,7 +4791,7 @@ function buildMissionTimeline(traj) {
     seg.title = `${p.label}: ${Math.round(p.end-p.start)} days`;
     seg.addEventListener('click', () => {
       currentJD = p.start;
-      document.getElementById('time-scrubber').value = currentJD;
+      document.getElementById('time-scrubber').value = jdToScrubberPos(currentJD);
       worker.postMessage({ cmd:'propagate', jd:currentJD });
     });
     inner.appendChild(seg);
@@ -4796,7 +4804,7 @@ function buildMissionTimeline(traj) {
     marker.title = `${b.label}: ${jdToDate(b.jd)}`;
     marker.addEventListener('click', () => {
       currentJD = b.jd;
-      document.getElementById('time-scrubber').value = currentJD;
+      document.getElementById('time-scrubber').value = jdToScrubberPos(currentJD);
       worker.postMessage({ cmd:'propagate', jd:currentJD });
     });
     inner.appendChild(marker);
@@ -5153,6 +5161,7 @@ function selectAsteroid(id) {
 
   const nhatsBadge = document.getElementById('nhats-badge');
   if (ast.nhats?.accessible) {
+    const occText = ast.nhats.occ ? `  ·  OCC: ${ast.nhats.occ}` : '';
     document.getElementById('nhats-details').textContent =
       `Min ΔV: ${formatNhatsMetric(ast.nhats.minDv, 'dv', 2)} km/s  ·  Duration: ${formatNhatsMetric(ast.nhats.minDur, 'dur', 0)}d  ·  Trajectories: ${ast.nhats.nTrajectories}${occText}`;
     nhatsBadge.style.display = 'block';
@@ -5161,7 +5170,6 @@ function selectAsteroid(id) {
   }
 
   // Reset research tab — clear stale content from previous selection
-    const occText = ast.nhats.occ ? `  ·  OCC: ${ast.nhats.occ}` : '';
   document.getElementById('research-content').style.display = 'none';
   document.getElementById('research-meta').style.display    = 'none';
   document.getElementById('research-error').style.display   = 'none';
@@ -5692,14 +5700,14 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.key === 'ArrowLeft') {
     e.preventDefault();
-    currentJD -= 1;
-    scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
+    currentJD = Math.max(SCRUBBER_MIN, currentJD - 1);
+    scrubber.value = jdToScrubberPos(currentJD);
     return;
   }
   if (e.key === 'ArrowRight') {
     e.preventDefault();
-    currentJD += 1;
-    scrubber.value = Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, currentJD));
+    currentJD = Math.min(SCRUBBER_MAX, currentJD + 1);
+    scrubber.value = jdToScrubberPos(currentJD);
     return;
   }
   if (e.key === '1') {
@@ -6114,9 +6122,10 @@ document.getElementById('btn-load-scenario').addEventListener('click', () => {
 
 // ─── UI Controls ─────────────────────────────────────────────────────────────
 const scrubber = document.getElementById('time-scrubber');
-scrubber.min = SCRUBBER_MIN;
-scrubber.max = SCRUBBER_MAX;
-scrubber.value = TODAY_JD;
+scrubber.min = 0;
+scrubber.max = SCRUBBER_MAX - SCRUBBER_MIN;
+scrubber.step = 1;
+scrubber.value = jdToScrubberPos(TODAY_JD);
 
 scrubber.addEventListener('mousedown', () => {
   isScrubbing = true;
@@ -6129,7 +6138,7 @@ scrubber.addEventListener('touchstart', () => {
   if (isPlaying) setPlayState(false);
 }, { passive: true });
 scrubber.addEventListener('input', () => {
-  currentJD = parseFloat(scrubber.value);
+  currentJD = scrubberPosToJD(scrubber.value);
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
   lastPropJD = currentJD; // prevent duplicate send from animate loop
 });

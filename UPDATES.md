@@ -4,6 +4,33 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9H — UI Metrics Normalization (2026-04-10)
+
+### Summary
+Fixed a cluster of UI consistency bugs where NHATS-verified targets could still show stale or misleading ΔV, duration, and value data across the leaderboard, inspector, tooltip, economics tab, and exports.
+
+### Changes (`index.html`, `physics.worker.js`)
+
+**Shared UI metrics helpers (`index.html`):**
+- Added `getNhatsMetricValue()`, `getDisplayDeltaV()`, `getDisplayDuration()`, `getDisplayValueUsd()`, `getDisplayProfitUsd()`, and `formatNhatsMetric()`
+- Standardized visible UI surfaces on the same fallback logic for ΔV and value instead of mixing raw `ast.price` / `getAsteroidDV()` / cached feasibility data
+
+**NHATS normalization (`index.html` + `physics.worker.js`):**
+- Updated NHATS parsing to handle the live nested object shape for `min_dv` / `min_dur`
+- Normalized designation matching so NHATS overlays bind more reliably to catalog rows
+- Refreshed the selected asteroid inspector after NHATS data merges
+- Suppressed the `OCC: null` badge case in the inspector
+
+**Filter / leaderboard / export fixes (`index.html`):**
+- `NHATS ACCESSIBLE ONLY` now filters on verified NHATS membership instead of the `_nhats` heuristic
+- Leaderboard sorting and filter thresholds now use the same display metrics the user sees
+- CSV export now emits normalized NHATS ΔV/duration and normalized value/profit fields
+
+**Catalog data fixes (`physics.worker.js`):**
+- Expanded Asterank fields to request `pdes`, `diameter`, `albedo`, `moid`, `last_obs`, and `condition_code`
+- Re-enabled fallback valuation by ensuring diameter/albedo inputs exist for price estimation when Asterank returns zero
+- Preserved `moid` as `null` when missing instead of silently forcing `0`
+
 ## Phase 9G — Mission Planner Stability Fix (2026-04-10)
 
 ### Summary
