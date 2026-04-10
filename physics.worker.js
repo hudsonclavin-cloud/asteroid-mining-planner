@@ -739,6 +739,12 @@ self.onmessage = function(e) {
 
     // ── Phase 2: return Lambert + destination capture ────────────────────────
     const results = [];
+    if (candidates.length === 0) {
+      console.log('[Phase2] skipped — phase1 empty');
+    } else {
+      console.log('[Phase2] running with', candidates.length, 'candidates');
+    }
+    let _p2logged = 0;
     for (let ci = 0; ci < candidates.length; ci++) {
       const c = candidates[ci];
       self.postMessage({
@@ -765,6 +771,13 @@ self.onmessage = function(e) {
 
         let lam = izzoLambert(rr1, rr2, ret_tof);
         if (!lam) lam = lambert(rr1, rr2, ret_tof);
+        if (ci === 0) {
+          const _r1m = Math.hypot(rr1[0], rr1[1], rr1[2]);
+          const _r2m = Math.hypot(rr2[0], rr2[1], rr2[2]);
+          console.log('[Phase2] ci=0 rs='+rs+' tof='+ret_tof.toFixed(0)+'d',
+            'rr1:', _r1m.toFixed(4)+'AU', 'rr2:', _r2m.toFixed(4)+'AU',
+            'lam:', lam ? 'OK v1='+lam.v1[0].toFixed(3) : 'NULL');
+        }
         if (!lam) continue;
 
         const dv_ret_dep = Math.hypot(lam.v1[0]-vad[0], lam.v1[1]-vad[1], lam.v1[2]-vad[2]);
@@ -777,10 +790,22 @@ self.onmessage = function(e) {
             vinf_return: vinf_ret, tof_return: ret_tof, jd_ret_arr, total_return };
         }
       }
-      if (!bestReturn) continue;
+      if (!bestReturn) {
+        if (_p2logged < 3) console.log('[Phase2] cand', ci, '— bestReturn=null (Lambert null all 21 TOFs)');
+        continue;
+      }
 
       const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
+      if (_p2logged < 3) {
+        console.log('[Phase2] cand', ci,
+          'dv_dep:', c.dv_dep.toFixed(3),
+          'dv_arr:', c.dv_arr.toFixed(3),
+          'ret:', bestReturn.dv_return.toFixed(3),
+          'cap:', bestReturn.dv_capture.toFixed(3),
+          'total:', dv_total.toFixed(3), 'vs 25.0 cap');
+        _p2logged++;
+      }
       if (dv_total > 25.0) continue; // infeasible round-trip (25 km/s hard cap)
 
       results.push({
@@ -1073,61 +1098,31 @@ self.onmessage = function(e) {
   if (msg.cmd === 'fetch_catalog') {
     (async function() {
       const limit = msg.limit || 5000;
-      const CORS_PROXY = 'https://corsproxy.io/?';
-
-      // ── Asterank: filter to NEOs only (neo="Y") so MongoDB sort=delta_v returns
-      // actual near-Earth objects. Without neo:"Y", MongoDB puts NULL-delta_v
-      // main-belt objects first (nulls sort before numbers ascending), filling the
-      // 2000-row limit before any accessible NEOs are returned.
-      const ASTERANK_URL = 'https://www.asterank.com/api/asterank?' + new URLSearchParams({
+      // ── Asterank: routed through own Cloudflare proxy (avoids CORS, 6hr cache)
+      // Filter to NEOs only so MongoDB sort=delta_v returns accessible targets.
+      const ASTERANK_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/asterank?' + new URLSearchParams({
         query:  JSON.stringify({ neo: 'Y' }),
         limit:  '2000',
         sort:   'delta_v',
         fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class',
       }).toString();
-      const ASTERANK_FALLBACK_URL = 'https://www.asterank.com/api/asterank?' + new URLSearchParams({
-        query:  JSON.stringify({}),
-        limit:  '2000',
-        sort:   'profit',
-        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class',
-      }).toString();
-
       // ── NHATS: human-accessible targets ──────────────────────────────────
       const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
 
       async function fetchAsterankWorker() {
-        const urlsToTry = [
-          ASTERANK_URL,
-          CORS_PROXY + encodeURIComponent(ASTERANK_URL),
-          CORS_PROXY + encodeURIComponent(ASTERANK_FALLBACK_URL),
-        ];
-        let lastErr = '';
-        for (const url of urlsToTry) {
-          try {
-            const r = await fetch(url);
-            if (!r.ok) {
-              console.warn('[Catalog] Asterank HTTP', r.status, url.slice(0, 80));
-              lastErr = `HTTP ${r.status}`;
-              continue;
-            }
-            const rows = await r.json();
-            if (!Array.isArray(rows) || rows.length === 0) {
-              console.warn('[Catalog] Asterank empty response from', url.slice(0, 80));
-              lastErr = 'empty response';
-              continue;
-            }
-            console.log('[Catalog] Asterank:', rows.length, 'rows');
-            console.log('[Debug] row[0]:', JSON.stringify(rows[0]));
-            self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
-            return rows;
-          } catch(err) {
-            lastErr = err.message;
-            console.warn('[Catalog] Asterank fetch error:', err.message, url.slice(0, 80));
-          }
+        try {
+          const r = await fetch(ASTERANK_URL);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const rows = await r.json();
+          if (!Array.isArray(rows) || rows.length === 0) throw new Error('empty response');
+          console.log('[Catalog] Asterank:', rows.length, 'rows');
+          self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
+          return rows;
+        } catch(err) {
+          console.warn('[Catalog] Asterank fetch failed:', err.message);
+          self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: err.message });
+          return [];
         }
-        console.warn('[Catalog] All Asterank URLs failed:', lastErr);
-        self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: lastErr });
-        return [];
       }
 
       async function fetchNHATSWorker() {

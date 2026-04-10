@@ -2460,7 +2460,7 @@ async function saveToIndexedDB(key, value) {
 }
 
 // ─── Physics Worker ───────────────────────────────────────────────────────────
-const worker = new Worker('./physics.worker.js?v=10d');
+const worker = new Worker('./physics.worker.js?v=10g');
 let asteroidData = [];
 let asteroidMesh = null;
 let asteroidCount = 0;
@@ -2517,14 +2517,11 @@ worker.onmessage = ({ data }) => {
   }
   if (data.type === 'nhats_result') {
     if (!data.ok) {
-      console.error('[NHATS] worker returned error:', data.error);
-      setStatus('NHATS: offline', false);
+      console.warn('[NHATS] failed:', data.error);
       const nEl = document.getElementById('hud-nhats');
-      if (nEl) nEl.textContent = 'NHATS: OFFLINE';
-      setTimeout(() => {
-        console.log('[NHATS] retrying after 30s...');
-        worker.postMessage({ cmd: 'fetch_nhats', url: 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035' });
-      }, 30000);
+      if (nEl) nEl.textContent = `NHATS: ${data.error || 'JPL API unavailable'}`;
+      // Single retry after 60s — do not loop indefinitely
+      setTimeout(() => worker.postMessage({ cmd: 'fetch_nhats' }), 60000);
       return;
     }
     console.log('[NHATS] received', data.data.length, 'rows from worker');
@@ -3357,7 +3354,12 @@ async function fetchResearch(ast) {
     metaEl.style.display    = 'block';
   } catch (err) {
     console.error('[Research] fetch error:', err);
-    errorEl.textContent   = `Research unavailable: ${err.message}`;
+    errorEl.innerHTML = `<div>AI research unavailable (${err.message}).</div>
+  <div style="margin-top:8px">Look up this asteroid manually on JPL SBDB:<br>
+  <a href="https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html"
+     target="_blank" style="color:#00d4ff">
+    ssd.jpl.nasa.gov/tools/sbdb_lookup.html
+  </a></div>`;
     errorEl.style.display = 'block';
   } finally {
     loadingEl.style.display = 'none';
@@ -3938,106 +3940,6 @@ function clearTrajectoryLine() {
   clearRedirectVisualization();
 }
 
-async function fetchMdesignTrajectories(ast, config) {
-  const des = (ast.pdes || ast.full_name || '').trim();
-  if (!des) return null;
-
-  const cacheKey = `mdesign_${des}`;
-  try {
-    const cached = sessionStorage.getItem(cacheKey);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed && parsed.length > 0) return parsed;
-    }
-  } catch(_) {}
-
-  const STAY_MAP = { light: 14, medium: 45, heavy: 90 };
-  const stay = STAY_MAP[config.spacecraft] || 45;
-  const dur  = Math.max(180, ((config.launchYearEnd || 2035) - (config.launchYearStart || 2026)) * 365 + 450);
-  const url  = `${WORKER_URL}/api/mdesign?des=${encodeURIComponent(des)}&dv=12&dur=${dur}&stay=${stay}`;
-
-  let data;
-  try {
-    const r = await fetch(url);
-    if (!r.ok) {
-      console.warn(`[mdesign] HTTP ${r.status} — falling back to Lambert`);
-      window._mdesignFailed = true;
-      return null;
-    }
-    data = await r.json();
-  } catch(err) {
-    console.warn('[mdesign] network error, falling back to Lambert:', err);
-    window._mdesignFailed = true;
-    return null;
-  }
-
-  if (!data || data.error || !Array.isArray(data.data) || data.data.length === 0) return null;
-
-  // Map column names → indices; fall back to observed JPL mdesign column order
-  // if no fields array or a name is absent: [yr, mo, dy, dur, dv, stay, ...]
-  const fields = Array.isArray(data.fields) ? data.fields : [];
-  const _fi = (name, fallback) => { const i = fields.indexOf(name); return i !== -1 ? i : fallback; };
-  const iYr   = _fi('yr',   0);
-  const iMo   = _fi('mo',   1);
-  const iDy   = _fi('dy',   2);
-  const iDur  = _fi('dur',  3);
-  const iDv   = _fi('dv',   4);
-  const iStay = _fi('stay', 5);
-
-  const trajectories = [];
-  for (const row of data.data) {
-    const dv_total = Number(row[iDv]);
-    if (!isFinite(dv_total) || dv_total <= 0) continue;
-
-    const yr       = iYr   !== -1 ? Number(row[iYr])  : (config.launchYearStart || 2026);
-    const mo       = iMo   !== -1 ? Number(row[iMo])  : 1;
-    const dy       = iDy   !== -1 ? Number(row[iDy])  : 1;
-    const duration = iDur  !== -1 ? Number(row[iDur]) : 300;
-    const stayRow  = iStay !== -1 ? Number(row[iStay]): stay;
-
-    const jd_dep     = dateToJD(yr, mo, dy);
-    const tof        = duration * 0.45;
-    const jd_arr     = jd_dep + tof;
-    const jd_ret_dep = jd_arr + stayRow;
-    const tof_return = duration * 0.45;
-    const jd_ret_arr = jd_ret_dep + tof_return;
-
-    const dv_dep     = +(dv_total * 0.40).toFixed(3);
-    const dv_arr     = +(dv_total * 0.25).toFixed(3);
-    const dv_mcc     = +(dv_total * 0.02).toFixed(3);
-    const dv_return  = +(dv_total * 0.20).toFixed(3);
-    const dv_capture = +(dv_total * 0.13).toFixed(3);
-
-    let earthPos = { x: 1, y: 0, z: 0 };
-    let astPos   = { x: ast.a || 1.5, y: 0, z: 0 };
-    try {
-      const eSt = kep2cartJS(1.0, 0.0167, 0.00005*DEG, 175.0*DEG, 102.9*DEG, 357.5*DEG, J2000, jd_dep);
-      earthPos = { x: eSt.x, y: eSt.y, z: eSt.z };
-    } catch(_) {}
-    try {
-      const aSt = kep2cartJS(ast.a, ast.e, ast.i*DEG, ast.om*DEG, ast.w*DEG, ast.ma*DEG, ast.epoch, jd_arr);
-      astPos = { x: aSt.x, y: aSt.y, z: aSt.z };
-    } catch(_) {}
-
-    trajectories.push({
-      jd_dep, jd_arr, jd_ret_dep, jd_ret_arr,
-      tof, tof_return, stay_days: stayRow,
-      dv_dep, dv_arr, dv_mcc, dv_return, dv_capture,
-      dv_total: +dv_total.toFixed(3),
-      C3: +(dv_dep * dv_dep).toFixed(3),
-      vinf_dep: +dv_dep.toFixed(3), vinf_arr: +dv_arr.toFixed(3), vinf_return: +dv_return.toFixed(3),
-      lunarAssist: false, earthPos, astPos,
-      _source: 'jpl-mdesign',
-    });
-  }
-
-  if (trajectories.length === 0) return null;
-  trajectories.sort((a, b) => a.dv_total - b.dv_total);
-  const top = trajectories.slice(0, 10);
-  try { sessionStorage.setItem(cacheKey, JSON.stringify(top)); } catch(_) {}
-  return top;
-}
-
 let _plannerTimeoutId = null;
 
 function showPlannerError(err) {
@@ -4059,9 +3961,6 @@ function showPlannerError(err) {
 async function runMissionOptimizer() {
   if (selectedId < 0) return;
   const ast = asteroidData[selectedId];
-
-  // Reset mdesign failure flag for this run
-  window._mdesignFailed = false;
 
   // Validate asteroid orbital elements before sending to worker
   if (!ast) return showPlannerError('No asteroid selected.');
@@ -4090,27 +3989,9 @@ async function runMissionOptimizer() {
   document.getElementById('mp-burns').style.display     = 'none';
   document.getElementById('mp-actions').style.display   = 'none';
   document.getElementById('mp-progress-bar').style.width = '5%';
-  document.getElementById('mp-progress-label').textContent = 'Checking JPL trajectory database...';
+  document.getElementById('mp-progress-label').textContent = 'Running Aster Lambert solver...';
 
   try {
-    let jplResults = null;
-    try { jplResults = await fetchMdesignTrajectories(ast, missionConfig); } catch(err) {
-      console.warn('[mdesign] 502 or error, falling back to Lambert:', err);
-      window._mdesignFailed = true;
-    }
-
-    if (jplResults && jplResults.length > 0) {
-      document.getElementById('mp-progress-bar').style.width = '100%';
-      document.getElementById('mp-progress-label').textContent =
-        `JPL mdesign: ${jplResults.length} verified trajectories`;
-      await new Promise(r => setTimeout(r, 400));
-      onPlanResult(jplResults, false, null, 'jpl-mdesign');
-      return;
-    }
-
-    document.getElementById('mp-progress-bar').style.width = '10%';
-    document.getElementById('mp-progress-label').textContent =
-      'JPL database: no match — running Aster solver...';
 
     // 30-second timeout: if worker never replies, surface an error
     if (_plannerTimeoutId) clearTimeout(_plannerTimeoutId);
@@ -4370,36 +4251,27 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
     document.getElementById('mp-assumptions-wrap').style.display = 'block';
     selectTrajectory(0);
   }
-  // Refresh model assumptions panel to reflect data source
+  // Refresh model assumptions panel
   const _ac = document.getElementById('mp-assumptions-content');
   if (_ac) {
-    const _jpl = (source === 'jpl-mdesign');
     _ac.innerHTML = `
-      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Propagation:</span>${_jpl ? '<span style="color:#00d4ff">JPL mdesign (N-body verified)</span>' : 'Keplerian (two-body, no perturbations)'}</div>
-      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Burn model:</span>${_jpl ? '<span style="color:#00d4ff">Pre-computed (CNEOS)</span>' : 'Impulsive (no gravity losses)'}</div>
-      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Gravity losses:</span>${_jpl ? 'Included in N-body solution' : 'Not modeled — add 3–5% margin'}</div>
-      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Perturbations:</span>${_jpl ? '<span style="color:#00d4ff">N-body (all planets)</span>' : 'Not modeled (J₂, lunar, planetary)'}</div>
+      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Propagation:</span>Keplerian (two-body, no perturbations)</div>
+      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Burn model:</span>Impulsive (no gravity losses)</div>
+      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Gravity losses:</span>Not modeled — add 3–5% margin</div>
+      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Perturbations:</span>Not modeled (J₂, lunar, planetary)</div>
       <div><span style="color:#4a6a7a;display:inline-block;width:130px">Spacecraft:</span>Single-stage Tsiolkovsky</div>
       <div><span style="color:#4a6a7a;display:inline-block;width:130px">Margin reserves:</span>Not included — add ±10–20%</div>
-      <div><span style="color:#4a6a7a;display:inline-block;width:130px">ΔV uncertainty:</span>${_jpl ? '<span style="color:#00d4ff">±5% (JPL N-body)</span>' : '±15% (Lambert patched-conic)'}</div>
-      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Segment split:</span>${_jpl ? 'Estimated 40/25/20/13%' : 'Lambert-computed per segment'}</div>
-      <div style="margin-top:6px;color:#3a5a6a;border-top:1px solid #0d1f33;padding-top:6px">${_jpl
-        ? 'Source: <a href="https://ssd.jpl.nasa.gov/tools/mission_design.html" target="_blank" style="color:#00d4ff">JPL CNEOS mdesign API</a> — N-body pre-computed.'
-        : 'For high-fidelity analysis: <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a>.'}</div>`;
+      <div><span style="color:#4a6a7a;display:inline-block;width:130px">ΔV uncertainty:</span>±15% (Lambert patched-conic)</div>
+      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Segment split:</span>Lambert-computed per segment</div>
+      <div style="margin-top:6px;color:#3a5a6a;border-top:1px solid #0d1f33;padding-top:6px">For high-fidelity analysis: <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a>.</div>`;
   }
 }
 
 function renderTrajectoryList() {
   const list   = document.getElementById('mp-trajectory-list');
-  const source = missionResults.source || 'lambert';
-  const isJPL  = source === 'jpl-mdesign';
-  const uncPct = isJPL ? 0.05 : 0.15;
-  const badge  = isJPL
-    ? '<span style="color:#00d4ff;font-size:7px;border:1px solid #00d4ff;padding:1px 3px;margin-left:4px;vertical-align:middle">🛰 JPL</span>'
-    : '<span style="color:#4a6a7a;font-size:7px;border:1px solid #4a6a7a;padding:1px 3px;margin-left:4px;vertical-align:middle">📐 ASTER</span>';
-  list.innerHTML = window._mdesignFailed
-    ? '<div style="color:#aaa;font-family:\'Space Mono\',monospace;font-size:11px;padding:4px 0 8px;border-bottom:1px solid #1f2937;margin-bottom:6px">📐 Using onboard Lambert solver — JPL mdesign unavailable</div>'
-    : '';
+  const uncPct = 0.15;
+  const badge  = '<span style="color:#4a6a7a;font-size:7px;border:1px solid #4a6a7a;padding:1px 3px;margin-left:4px;vertical-align:middle">📐 ASTER</span>';
+  list.innerHTML = '';
   missionResults.forEach((t, i) => {
     const dep   = jdToDate(t.jd_dep);
     const arr   = jdToDate(t.jd_arr);

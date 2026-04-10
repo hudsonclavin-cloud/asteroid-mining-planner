@@ -232,17 +232,15 @@ export default {
       }
     }
 
-    // ── GET /api/mdesign ─────────────────────────────────────────────────────
-    if (url.pathname === '/api/mdesign' && request.method === 'GET') {
-      const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
-      if (!checkRateLimit(ip)) return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin);
-      const target = new URL('https://ssd-api.jpl.nasa.gov/mdesign.api');
-      for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
+    // ── GET /api/asterank ────────────────────────────────────────────────────
+    if (url.pathname === '/api/asterank' && request.method === 'GET') {
+      const upUrl = new URL('https://www.asterank.com/api/asterank');
+      for (const [k, v] of url.searchParams) upUrl.searchParams.set(k, v);
       try {
-        const { data, stale } = await cachedProxyFetch(target.toString(), 60 * 60 * 1000);
-        return jsonResponse({ ...(typeof data === 'object' ? data : { raw: data }), stale }, 200, origin);
+        const { data } = await cachedProxyFetch(upUrl.toString(), 6 * 60 * 60 * 1000); // 6-hour cache
+        return jsonResponse(data, 200, origin);
       } catch (err) {
-        return jsonResponse({ error: 'mdesign proxy failed', detail: err.message }, 502, origin);
+        return jsonResponse({ error: 'Asterank proxy failed', detail: err.message }, 502, origin);
       }
     }
 
