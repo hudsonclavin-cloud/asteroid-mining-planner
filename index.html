@@ -718,7 +718,6 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 <div id="toolbar">
   <div id="toolbar-left"><span id="toolbar-logo">◈ ASTER</span></div>
   <div id="toolbar-center">
-    <button class="tool-btn" id="btn-filters-toolbar">⬡ FILTERS <span id="filter-badge-toolbar"></span></button>
     <button class="tool-btn" id="btn-export-toolbar">↓ EXPORT</button>
     <button class="tool-btn" id="btn-share-toolbar">⬡ SHARE</button>
     <button class="tool-btn" id="btn-shortcuts-toolbar">? HELP</button>
@@ -2563,6 +2562,7 @@ worker.onmessage = ({ data }) => {
     loading.style.transition = 'opacity 0.6s';
     loading.style.opacity = '0';
     setTimeout(() => loading.style.display = 'none', 700);
+    fetchNHATSData(); // apply NHATS data after catalog is built
     loadStateFromURL();
     if (!localStorage.getItem('aster_toured')) showTour();
     return;
@@ -3880,7 +3880,7 @@ document.getElementById('btn-shortcut-hint').addEventListener('click', () => {
 });
 
 // Toolbar button wiring
-document.getElementById('btn-filters-toolbar').addEventListener('click', toggleLeftPanel);
+// btn-filters-toolbar removed — use the fixed #btn-toggle-filters tab instead
 document.getElementById('btn-export-toolbar').addEventListener('click', exportFilteredCatalog);
 // ─── Phase 7D: Mission Planner ────────────────────────────────────────────────
 
