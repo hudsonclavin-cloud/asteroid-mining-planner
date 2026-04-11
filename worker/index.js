@@ -202,14 +202,14 @@ export default {
     // ── GET /api/nhats ───────────────────────────────────────────────────────
     if (url.pathname === '/api/nhats' && request.method === 'GET') {
       const nasaUrl = new URL('https://ssd-api.jpl.nasa.gov/nhats.api');
+      if (!url.searchParams.has('dv')) nasaUrl.searchParams.set('dv', '12');
+      if (!url.searchParams.has('dur')) nasaUrl.searchParams.set('dur', '450');
+      if (!url.searchParams.has('stay')) nasaUrl.searchParams.set('stay', '8');
       for (const [k, v] of url.searchParams) nasaUrl.searchParams.set(k, v);
       try {
-        const r = await fetch(nasaUrl.toString(), { cf: { cacheTtl: 86400 } });
-        if (!r.ok) throw new Error(`NASA HTTP ${r.status}`);
-        return new Response(r.body, {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
-        });
+        const { data, stale } = await cachedProxyFetch(nasaUrl.toString(), 24 * 60 * 60 * 1000);
+        const body = typeof data === 'object' && data !== null ? { ...data, stale } : { raw: data, stale };
+        return jsonResponse(body, 200, origin);
       } catch (err) {
         return jsonResponse({ error: 'NHATS proxy failed', detail: err.message }, 502, origin);
       }

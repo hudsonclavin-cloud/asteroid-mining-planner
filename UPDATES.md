@@ -390,3 +390,35 @@ Planner closes before burn mode cancel and asteroid deselect in the Escape key p
 - Replace vis-viva with real Lambert in `plan_mission` worker command
 - Drag-to-adjust burn arrows in 3D scene
 - Porkchop plot overlay showing solution space with top-10 trajectories highlighted
+
+---
+
+## Phase 9I — Five-Agent Trust Pass (2026-04-10)
+
+**Agents:** orbital-mechanics / data-layer / renderer / ui-hud / economics
+
+### Summary
+Ran a full five-domain audit and implemented the highest-risk fixes across worker, UI, renderer, and proxy. This pass focused on trust: no silent catalog failure, fewer fabricated economics defaults, clearer redirect outputs, cleaner cache behavior, and planner visuals that stay synchronized with live scene time.
+
+### Key fixes
+- `physics.worker.js`
+  - Added canonical row normalizers for Asterank/NHATS and preserved `null` for unknown values instead of coercing them to zero.
+  - Requested and passed through missing provenance fields including `diameter`, `last_obs`, and `condition_code`.
+  - Added a real fallback NEA catalog when live Asterank fetch fails.
+  - Normalized screening economics into separate fields: whole-body catalog price, extractable heuristic value, and raw profit.
+  - Tightened Lambert result validation and aligned mission planner gate diagnostics with the actual configured limits.
+  - Redirect planner now rejects non-elliptic redirected orbits, checks safety on the redirected orbit, and labels Earth-arrival `v∞` honestly instead of pretending lunar capture was solved.
+- `worker/index.js`
+  - Hardened `/api/nhats` with default query params, cached proxy fetches, and explicit stale metadata.
+- `index.html`
+  - Removed remaining dead `mdesign` UI references and made the planner fully Lambert-framed.
+  - Fixed the cache-clearing regression that deleted `aster_catalog_v7` before startup could use it.
+  - Reworked value rendering so unknown size/spec/value inputs show as `unknown` instead of fabricated numbers.
+  - Replaced the old materials tab pipeline with the shared composition/value helpers, including explicit unknown-state messaging for missing diameter or spectral type.
+  - Added share-state normalization so mission share links restore planner configuration, not just the raw asteroid selection.
+  - Synced mission path overlays with live propagated Earth/asteroid positions so scrub/play state no longer drifts away from the visual route.
+  - Added explicit fallback/error handling for catalog and NHATS ingestion paths.
+
+### Residual limits
+- Redirect capture into lunar orbit is still not a high-fidelity Earth-Moon patch solution; the UI now marks that capture term as unknown instead of implying it is solved.
+- Mission-share links restore planner setup, but they do not embed solved Lambert results; re-running the planner is still required to regenerate a shared trajectory choice.

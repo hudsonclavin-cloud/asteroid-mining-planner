@@ -988,6 +988,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div class="data-row"><span class="label">INC</span><span class="value" id="ast-inc">—</span></div>
     <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="ast-dv">—</span><span class="unc-icon" id="ast-dv-icon" style="display:none">ⓘ</span></div>
     <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
+    <div class="data-row"><span class="label">LAST OBS</span><span class="value" id="ast-last-obs">—</span></div>
+    <div class="data-row"><span class="label">COND CODE</span><span class="value" id="ast-cond-code">—</span></div>
     <div class="data-row" style="margin-top:8px"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
     <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
 
@@ -1333,17 +1335,11 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       </div>
     </div>
 
-    <!-- Phase 9E: Verify buttons -->
     <div id="mp-verify-wrap" style="display:none;margin-top:6px;gap:6px;flex-wrap:wrap">
       <button id="mp-verify-horizons"
         style="flex:1;background:none;border:1px solid #1a2d44;color:#6a8a9a;
           font-size:8px;font-family:'Space Mono',monospace;padding:4px 8px;cursor:pointer;text-align:left">
         🔍 Verify in JPL Horizons
-      </button>
-      <button id="mp-verify-mdesign"
-        style="flex:1;background:none;border:1px solid #1a2d44;color:#6a8a9a;
-          font-size:8px;font-family:'Space Mono',monospace;padding:4px 8px;cursor:pointer;text-align:left">
-        📊 Compare with JPL mdesign
       </button>
     </div>
 
@@ -1532,14 +1528,11 @@ function fmtUSD(v) {
   return `$${n.toFixed(0)}`;
 }
 
-// Asteroid resource value display — applies 10%–30% extraction efficiency range.
-// Values above $100T are flagged as uncertain (Asterank raw estimates are theoretical maxima).
-function fmtAstValue(v) {
-  const n = Number(v);
-  if (!v || isNaN(n) || n <= 0) return '—';
-  const lo = n * 0.05; // 5% extraction — conservative, no industrial-scale ISRU demonstrated
-  if (lo > 1e14) return 'Estimate uncertain';
-  return `${fmtUSD(lo)} (5% extraction est.)`;
+function formatValueDisplay(value, options = {}) {
+  const { unknownLabel = 'unknown', extractionLabel = false } = options;
+  if (!(Number.isFinite(value) && value > 0)) return unknownLabel;
+  const base = fmtUSD(value);
+  return extractionLabel ? `${base} (5% extraction est.)` : base;
 }
 
 function fmtTons(t) {
@@ -1596,18 +1589,59 @@ function getDisplayDuration(ast) {
   return Math.round(180 + (getDisplayDeltaV(ast) - 3) * 20);
 }
 
+function getAsteroidDiameterMeters(ast) {
+  const direct = Number(ast?._diam_m);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const diamKm = Number(ast?.diameter);
+  if (Number.isFinite(diamKm) && diamKm > 0) return diamKm * 1000;
+  const hVal = Number(ast?.H);
+  if (!(Number.isFinite(hVal) && hVal > 0)) return null;
+  const albedo = Number(ast?.albedo);
+  const safeAlbedo = Number.isFinite(albedo) && albedo > 0 ? albedo : 0.15;
+  return (1329 / Math.sqrt(safeAlbedo)) * Math.pow(10, -hVal / 5) * 1000;
+}
+
+function resolveAsteroidMassModel(ast) {
+  const diameterM = getAsteroidDiameterMeters(ast);
+  if (!(Number.isFinite(diameterM) && diameterM > 0)) return null;
+  const spec = getMatSpec(ast);
+  const densityKgM3 = MAT_DENSITY_KGM3[spec] || 2000;
+  const radiusM = diameterM / 2;
+  const massKg = (4 / 3) * Math.PI * radiusM * radiusM * radiusM * densityKgM3;
+  return { diameterM, radiusM, densityKgM3, massKg, spec };
+}
+
+function resolveAsteroidEconomics(ast) {
+  const massModel = resolveAsteroidMassModel(ast);
+  const wholeBodyPriceUsd = Number.isFinite(ast?.price) && ast.price > 0 ? ast.price : null;
+  const rawProfitUsd = Number.isFinite(ast?.profit) && ast.profit > 0 ? ast.profit : null;
+  let extractableValueUsd = Number.isFinite(ast?.value_extractable_est) && ast.value_extractable_est > 0
+    ? ast.value_extractable_est
+    : null;
+  if (extractableValueUsd === null) {
+    const matData = computeMaterialRows(ast);
+    if (matData?.rows?.length) {
+      extractableValueUsd = matData.rows.reduce((sum, row) => sum + row.totalValue, 0);
+    }
+  }
+  return {
+    diameterKm: massModel ? massModel.diameterM / 1000 : null,
+    diameterSource: ast?.diameter_source || (massModel ? 'estimated' : 'unknown'),
+    wholeBodyPriceUsd,
+    rawProfitUsd,
+    extractableValueUsd,
+    extractableValueSource: extractableValueUsd !== null ? (ast?.value_extractable_source || 'heuristic') : 'unknown',
+    hasKnownSize: !!massModel,
+    massModel,
+  };
+}
+
 function getDisplayValueUsd(ast) {
-  const rawVal = Number(ast.price) || 0;
-  if (rawVal > 0) return rawVal;
-  const matData = computeMaterialRows(ast);
-  return matData.rows.reduce((sum, row) => sum + row.totalValue, 0);
+  return resolveAsteroidEconomics(ast).extractableValueUsd;
 }
 
 function getDisplayProfitUsd(ast) {
-  const rawProfit = Number(ast.profit) || 0;
-  if (rawProfit > 0) return rawProfit;
-  const fallbackValue = getDisplayValueUsd(ast);
-  return fallbackValue > 0 ? fallbackValue * 0.1 : 0;
+  return resolveAsteroidEconomics(ast).rawProfitUsd;
 }
 
 function formatNhatsMetric(value, key, digits = 0) {
@@ -1644,14 +1678,14 @@ function computeFeasibilityMetrics(ast) {
 
   // Hazard
   const pha  = ast.pha === 'Y';
-  const moid = Number(ast.moid) || null;
-  const riskLevel = pha ? 'high' : (moid !== null && moid < 0.05) ? 'low' : 'none';
+  const moid = Number.isFinite(Number(ast.moid)) ? Number(ast.moid) : null;
+  const riskLevel = pha ? 'high' : moid !== null ? ((moid < 0.05) ? 'low' : 'none') : 'unknown';
 
   return {
     deltaV:        { value: dvVal,  uncertainty: dvUnc,  source: dvSrc,  method: dvMethod },
     duration:      { value: durVal, uncertainty: durUnc, source: durSrc },
     accessibility: { nhatsVerified: !!(ast.nhats?.accessible), trajectoryCount: ast.nhats?.nTrajectories || 0 },
-    valueRange:    { conservative: rawVal * 0.10, optimistic: rawVal * 0.30 },
+    valueRange:    { conservative: rawVal !== null ? rawVal * 0.10 : null, optimistic: rawVal !== null ? rawVal * 0.30 : null },
     hazard:        { moid, pha, riskLevel },
   };
 }
@@ -1799,16 +1833,16 @@ function getMatSpec(ast) {
   if ('CBP D'.includes(s) && s) return 'C';
   if ('SQA'.includes(s) && s) return 'S';
   if ('ME'.includes(s) && s) return 'M';
-  return 'X';
+  if ('XKLVT'.includes(s) && s) return 'X';
+  return null;
 }
 
 function computeMaterialRows(ast) {
-  const spec = getMatSpec(ast);
+  const massModel = resolveAsteroidMassModel(ast);
+  if (!massModel || !massModel.spec) return null;
+  const spec = massModel.spec;
   const comp = MAT_COMP[spec];
-  const dens = MAT_DENSITY_KGM3[spec];
-  const D_m  = ast._diam_m || 100;
-  const r    = D_m / 2;
-  const massKg = (4/3) * Math.PI * r * r * r * dens;
+  const massKg = massModel.massKg;
   const prices = getActivePrices();
   const rows = MAT_KEYS.map(k => {
     const pct = comp[k] || 0;
@@ -1816,7 +1850,7 @@ function computeMaterialRows(ast) {
     const priceKg = prices[k] || 0;
     return { key:k, name:MAT_NAMES[k], pct, kg, priceKg, totalValue: kg * priceKg, difficulty: MAT_DIFFICULTY[k] };
   });
-  return { rows, massKg, spec };
+  return { rows, massKg, spec, massModel };
 }
 
 function buildDonutSVG(rows, massKg) {
@@ -2517,7 +2551,7 @@ async function saveToIndexedDB(key, value) {
 }
 
 // ─── Physics Worker ───────────────────────────────────────────────────────────
-const worker = new Worker('./physics.worker.js?v=10i');
+const worker = new Worker('./physics.worker.js?v=10k');
 let asteroidData = [];
 let asteroidMesh = null;
 let asteroidCount = 0;
@@ -2556,6 +2590,7 @@ let loadSourceStatus = {}; // tracks per-source load progress for loading overla
 
 worker.onmessage = ({ data }) => {
   if (data.type === 'positions') {
+    if (data.jd !== lastPropJD) return;
     pendingPositions = data.buffer;
     return;
   }
@@ -2569,7 +2604,7 @@ worker.onmessage = ({ data }) => {
     return;
   }
   if (data.type === 'porkchop') {
-    renderPorkchop(data); // overlayMdesignOnPorkchop called at end of renderPorkchop
+    renderPorkchop(data); // mission-result overlay is drawn at end of renderPorkchop
     return;
   }
   if (data.type === 'nhats_result') {
@@ -2590,25 +2625,45 @@ worker.onmessage = ({ data }) => {
   }
 
   if (data.type === 'load_progress') {
-    const icon = data.status === 'ok' ? '✓' : '✗';
+    const icon = data.status === 'ok' ? '✓' : data.status === 'fallback' ? '⚠' : '✗';
     const label = data.source.toUpperCase();
-    const detail = data.status === 'ok' ? `${data.count}` : 'offline';
+    const detail = data.status === 'ok' || data.status === 'fallback' ? `${data.count}` : 'offline';
     loadSourceStatus[data.source] = `${label} ${icon} ${detail}`;
     const sub = document.getElementById('loading-sub');
     if (sub) sub.textContent = Object.values(loadSourceStatus).join('  ·  ');
     return;
   }
 
+  if (data.type === 'catalog_error') {
+    const loading = document.getElementById('loading');
+    const sub = document.getElementById('loading-sub');
+    if (sub) sub.textContent = data.error || 'Catalog unavailable';
+    if (loading) loading.style.opacity = '1';
+    return;
+  }
+
   if (data.type === 'catalog_ready') {
     console.log('[Catalog] catalog_ready:', data.data.length, 'asteroids');
     // Cache to IndexedDB; fall back to localStorage (top 2000 only)
-    const payload = { data: data.data, timestamp: Date.now() };
-    saveToIndexedDB('aster_catalog_v7', payload).catch(() => {
-      try { localStorage.setItem('aster_catalog_v7', JSON.stringify({ data: data.data.slice(0, 2000), timestamp: Date.now() })); } catch(_) {}
-    });
+    const payload = {
+      data: data.data,
+      timestamp: Date.now(),
+      meta: {
+        source: data.source || 'asterank',
+        fallback: !!data.fallback,
+        stale: !!data.stale,
+        requestedLimit: data.requestedLimit || data.data.length,
+        returnedCount: data.returnedCount || data.data.length,
+      },
+    };
+    if (Array.isArray(data.data) && data.data.length > 0) {
+      saveToIndexedDB('aster_catalog_v7', payload).catch(() => {
+        try { localStorage.setItem('aster_catalog_v7', JSON.stringify({ ...payload, data: data.data.slice(0, 2000) })); } catch(_) {}
+      });
+    }
     // Cache NHATS rows alongside
     if (data.nhatsRows && data.nhatsRows.length > 0) {
-      try { localStorage.setItem('aster_nhats_v2', JSON.stringify({ data: data.nhatsRows, timestamp: Date.now() })); } catch(_) {}
+      try { localStorage.setItem('aster_nhats_v2', JSON.stringify({ data: data.nhatsRows, timestamp: Date.now(), meta: { stale: !!data.stale, source: 'nhats' } })); } catch(_) {}
     }
     const prevAsteroidKey = selectedAsteroidKey ||
       (selectedId >= 0 ? ((asteroidData[selectedId]?.pdes || asteroidData[selectedId]?.full_name || '').trim()) : null);
@@ -2664,8 +2719,7 @@ worker.onmessage = ({ data }) => {
   if (data.type === 'query_pos_result' && data.reqId === 'earth_return' && data.ok) {
     missionEarthReturnPos = { x: data.x, y: data.y, z: data.z };
     if (optimalTrajectory) {
-      drawBurnVectors(optimalTrajectory);
-      _redrawReturnArc(optimalTrajectory);
+      syncActiveMissionVisuals();
     }
     return;
   }
@@ -2848,12 +2902,12 @@ function buildAsteroidMesh(data) {
   // Compute scores + derived fields
   for (let i = 0; i < asteroidCount; i++) {
     const ast = asteroidData[i];
-    const H = Number(ast.H) || 20;
+    const H = Number(ast.H);
     const _albedo = Number(ast.albedo) || 0.15;
-    const _diamKm = ast.diameter && Number(ast.diameter) > 0
+    const _diamKm = Number(ast.diameter) > 0
       ? Math.min(35, Number(ast.diameter))
-      : (H ? Math.min(35, (1329 / Math.sqrt(_albedo)) * Math.pow(10, -H / 5)) : 0.05);
-    ast._diam_m = _diamKm * 1000;
+      : (Number.isFinite(H) && H > 0 ? Math.min(35, (1329 / Math.sqrt(_albedo)) * Math.pow(10, -H / 5)) : null);
+    ast._diam_m = _diamKm ? _diamKm * 1000 : null;
     ast._nhats = getAsteroidDV(ast) <= 12;
   }
 
@@ -2968,7 +3022,7 @@ function applyFilters() {
     // Resource value (log scale)
     const price = getDisplayValueUsd(ast);
     if (filterValMax < 100 && price > valHi) vis = false;
-    if (filterValMin > 0 && price < valLo) vis = false;
+    if (filterValMin > 0 && (price === null || price < valLo)) vis = false;
 
     // Mission window — only gates NHATS-accessible targets (2025–2035 is the NHATS query range)
     if (ast.nhats?.accessible) {
@@ -3076,18 +3130,20 @@ function populateSavedPresets() {
 
 function exportFilteredCatalog() {
   if (filteredIds.length === 0) { setStatus('No asteroids match current filters', true); return; }
-  const header = 'designation,spec_type,delta_v_kms,value_usd,profit_usd,diameter_km,inclination_deg,nhats_accessible,nhats_min_dv,nhats_min_dur,nhats_trajectories,nhats_occ';
+  const header = 'designation,spec_type,delta_v_kms,extractable_value_usd,whole_body_price_usd,profit_usd,diameter_km,inclination_deg,nhats_accessible,nhats_min_dv,nhats_min_dur,nhats_trajectories,nhats_occ';
   const rows = filteredIds.slice(0, 500).map(({ i }) => {
     const ast = asteroidData[i];
     const dv = getDisplayDeltaV(ast);
     const nh = ast.nhats?.accessible;
+    const econ = resolveAsteroidEconomics(ast);
     return [
       `"${(ast.full_name || ast.pdes || '?').replace(/"/g,'')}"`,
       ast.spec || ast.spec_T || '?',
       dv.toFixed(3),
-      getDisplayValueUsd(ast).toFixed(0),
-      getDisplayProfitUsd(ast).toFixed(0),
-      ((ast._diam_m || 0) / 1000).toFixed(3),
+      econ.extractableValueUsd !== null ? econ.extractableValueUsd.toFixed(0) : '',
+      econ.wholeBodyPriceUsd !== null ? econ.wholeBodyPriceUsd.toFixed(0) : '',
+      econ.rawProfitUsd !== null ? econ.rawProfitUsd.toFixed(0) : '',
+      econ.diameterKm !== null ? econ.diameterKm.toFixed(3) : '',
       Number(ast.i).toFixed(3),
       nh ? 'YES' : 'NO',
       nh ? formatNhatsMetric(ast.nhats.minDv, 'dv', 3) : '',
@@ -3110,7 +3166,7 @@ function renderLeaderboard() {
   if (!container) return;
 
   const sorted = [...filteredIds];
-  if      (lbSortMode === 'value')    sorted.sort((a,b) => getDisplayValueUsd(asteroidData[b.i]) - getDisplayValueUsd(asteroidData[a.i]));
+  if      (lbSortMode === 'value')    sorted.sort((a,b) => (getDisplayValueUsd(asteroidData[b.i]) ?? -Infinity) - (getDisplayValueUsd(asteroidData[a.i]) ?? -Infinity));
   else if (lbSortMode === 'diam')     sorted.sort((a,b) => (asteroidData[b.i]._diam_m||0)-(asteroidData[a.i]._diam_m||0));
   else if (lbSortMode === 'duration') sorted.sort((a,b) => getDisplayDuration(asteroidData[a.i]) - getDisplayDuration(asteroidData[b.i]));
   else if (lbSortMode === 'name')     sorted.sort((a,b) => (asteroidData[a.i].full_name||'').localeCompare(asteroidData[b.i].full_name||''));
@@ -3124,7 +3180,7 @@ function renderLeaderboard() {
     const fi     = computeFeasibilityMetrics(ast);
     const dvStr  = `${fi.deltaV.value.toFixed(1)} (±${fi.deltaV.uncertainty})`;
     const durStr = fi.duration.value > 0 ? Math.round(fi.duration.value) + (fi.duration.source !== 'NHATS' ? '*' : '') : '—';
-    const valStr = fi.valueRange.optimistic > 0 ? fmtUSD(fi.valueRange.optimistic) : '—';
+    const valStr = fi.valueRange.optimistic !== null ? fmtUSD(fi.valueRange.optimistic) : 'unknown';
     const nhBadge = fi.accessibility.nhatsVerified
       ? '<span style="color:#00d4ff;font-size:8px;margin-left:3px" title="NHATS verified">✓</span>'
       : '';
@@ -3186,6 +3242,8 @@ function renderEconomicsTab(id) {
 
   const costRng = computeMissionCost(totalCost, eco_fi.deltaV.uncertainty);
   const opsDaysEco = Math.round(dv * 60); // rough mission duration for tooltip
+  const econ = resolveAsteroidEconomics(ast);
+  const massModel = econ.massModel;
   document.getElementById('eco-dv').textContent = `${dv.toFixed(2)} (±${eco_fi.deltaV.uncertainty}) km/s`;
   document.getElementById('eco-propellant').textContent = propMass > 999
     ? `${(propMass/1000).toFixed(1)} t` : `${Math.round(propMass)} kg`;
@@ -3199,31 +3257,34 @@ function renderEconomicsTab(id) {
     ecoCostIcon.onmouseleave = () => hideUncPopup(300);
   }
 
-  const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
-  const frac = FRACTIONS[spec] || FRACTIONS.DEFAULT;
-  const dens = DENSITIES[spec] || 2000;
-  const r_m = (ast._diam_m || 500) / 2;
-  const mass_kg = (4/3) * Math.PI * r_m * r_m * r_m * dens;
-  const waterVal = mass_kg * frac.water * 1000;
-  const metalPrice = spec === 'M' ? 30 : 0.15;
-  const metalVal = mass_kg * frac.metals * metalPrice;
-  document.getElementById('eco-water').textContent = fmtUSD(waterVal);
-  document.getElementById('eco-metals').textContent = fmtUSD(metalVal);
-  document.getElementById('eco-asterank').textContent = fmtAstValue(ast.price);
+  const spec = getMatSpec(ast);
+  const frac = spec ? FRACTIONS[spec] : null;
+  const waterVal = massModel && frac ? massModel.massKg * frac.water * 1000 : null;
+  const metalPrice = spec === 'M' ? 30 : spec ? 0.15 : null;
+  const metalVal = massModel && frac && metalPrice !== null ? massModel.massKg * frac.metals * metalPrice : null;
+  document.getElementById('eco-water').textContent = formatValueDisplay(waterVal);
+  document.getElementById('eco-metals').textContent = formatValueDisplay(metalVal);
+  document.getElementById('eco-asterank').textContent = formatValueDisplay(econ.wholeBodyPriceUsd);
 
   // ROI uses 5% extraction efficiency — conservative, no industrial-scale ISRU demonstrated
-  const totalReturn = Math.max(waterVal + metalVal, getDisplayValueUsd(ast)) * 0.05;
-  const roi = totalCost > 0 ? totalReturn / totalCost : 0;
+  const totalReturn = econ.extractableValueUsd !== null ? econ.extractableValueUsd * 0.05 : null;
+  const roi = totalCost > 0 && totalReturn !== null ? totalReturn / totalCost : null;
   const roiEl = document.getElementById('eco-roi');
-  roiEl.textContent = roi > 1e6 ? '>1,000,000×' : `${roi.toFixed(0)}×`;
-  roiEl.className = 'value ' + (roi > 10 ? 'profit' : roi > 1 ? 'warning' : '');
+  roiEl.textContent = roi === null ? 'unknown' : (roi > 1e6 ? '>1,000,000×' : `${roi.toFixed(0)}×`);
+  roiEl.className = 'value ' + (roi !== null && roi > 10 ? 'profit' : roi !== null && roi > 1 ? 'warning' : '');
 
   const isruNote = document.getElementById('eco-isru-note');
-  if (['C','B','D'].includes(spec) && waterVal > 0) {
-    const waterTons = mass_kg * frac.water / 1000;
+  if (massModel && spec === 'C' && waterVal > 0) {
+    const waterTons = massModel.massKg * frac.water / 1000;
     const missions = Math.round(waterTons / 5);
     isruNote.style.display = 'block';
     isruNote.textContent = `◈ WATER POSITIVE — Contains ~${(waterTons/1000).toFixed(0)}k tons of water. Sufficient to refuel ~${missions} additional missions via in-situ propellant production (ISRU).`;
+  } else if (!massModel) {
+    isruNote.style.display = 'block';
+    isruNote.textContent = '◈ UNKNOWN SIZE — Cannot estimate extractable water, metals, or ROI without a measured or H-derived diameter.';
+  } else if (!frac) {
+    isruNote.style.display = 'block';
+    isruNote.textContent = '◈ UNKNOWN SPECTRAL TYPE — Cannot estimate extractable water, metals, or ROI without a composition model.';
   } else {
     isruNote.style.display = 'none';
   }
@@ -3235,122 +3296,34 @@ function renderMaterialsTab(id) {
   document.getElementById('mat-no-selection').style.display = 'none';
   document.getElementById('mat-content').style.display = 'block';
 
-  // ── Mass estimation ──────────────────────────────────────────────────────
-  const spec = (ast.spec || ast.spec_T || '').trim().charAt(0).toUpperCase();
-  const comp = COMPOSITION[spec] || COMPOSITION.DEFAULT;
-  const dens = COMP_DENSITY[spec] || 2000;
-  const diam_km = ast.diameter
-    ? Number(ast.diameter)
-    : (ast.H
-        ? (1329 / Math.sqrt(Number(ast.albedo) || 0.15)) * Math.pow(10, -(Number(ast.H)) / 5) / 1000
-        : 0.1);
-  const r_m = (diam_km * 1000) / 2;
-  const mass_kg = (4 / 3) * Math.PI * r_m * r_m * r_m * dens;
-  const mass_t = mass_kg / 1000;
-
-  // ── Per-material tonnage ─────────────────────────────────────────────────
-  const materials = Object.keys(comp).filter(k => comp[k] > 0);
-  const tons = {};
-  for (const m of materials) tons[m] = mass_t * (comp[m] / 100);
-
-  // ── Active prices ────────────────────────────────────────────────────────
-  const earth = commodityPrices || {};
-  const prices = spacePriceMode ? { ...earth, ...SPACE_PRICES } : earth;
-
-  // ── Values per material ──────────────────────────────────────────────────
-  const vals = {};
-  for (const m of materials) vals[m] = (tons[m] || 0) * (prices[m] || 0);
-
-  // ── Donut chart ──────────────────────────────────────────────────────────
-  const visible = materials.filter(m => comp[m] >= 0.1).sort((a, b) => comp[b] - comp[a]);
-  const cx = 80, cy = 80, R = 62, innerR = 40;
-  let svgDonut = `<svg width="160" height="160" viewBox="0 0 160 160" style="display:block;margin:0 auto">`;
-  let angle = -Math.PI / 2;
-  const total_pct = visible.reduce((s, m) => s + comp[m], 0);
-  for (const m of visible) {
-    const pct = comp[m] / total_pct;
-    const a1 = angle, a2 = angle + pct * 2 * Math.PI;
-    const x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
-    const x2 = cx + R * Math.cos(a2), y2 = cy + R * Math.sin(a2);
-    const xi1 = cx + innerR * Math.cos(a1), yi1 = cy + innerR * Math.sin(a1);
-    const xi2 = cx + innerR * Math.cos(a2), yi2 = cy + innerR * Math.sin(a2);
-    const large = pct > 0.5 ? 1 : 0;
-    const col = MAT_COLORS[m] || '#4a5568';
-    svgDonut += `<path d="M${xi1},${yi1} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${innerR},${innerR} 0 ${large},0 ${xi1},${yi1} Z" fill="${col}" opacity="0.85"><title>${m}: ${comp[m].toFixed(3)}% — ${fmtTons(tons[m])}</title></path>`;
-    angle = a2;
+  const massModel = resolveAsteroidMassModel(ast);
+  if (!massModel) {
+    document.getElementById('mat-donut').innerHTML = '<div style="color:#6a8a9a;font-size:10px;padding:8px 0;text-align:center">unknown size, cannot estimate materials</div>';
+    document.getElementById('mat-bars').innerHTML = '';
+    document.getElementById('mat-table').innerHTML = '';
+    document.getElementById('mat-price-info').textContent = 'Source: unknown diameter — materials estimate unavailable';
+    return;
   }
-  svgDonut += `<text x="80" y="76" text-anchor="middle" font-size="10" font-family="Space Mono,monospace" fill="#c8d6e5">${fmtTons(mass_t)}</text>`;
-  svgDonut += `<text x="80" y="90" text-anchor="middle" font-size="8" font-family="Space Mono,monospace" fill="#4a5568">TOTAL MASS</text>`;
-  svgDonut += `</svg>`;
-  svgDonut += `<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:6px">`;
-  for (const m of visible.slice(0, 8)) {
-    const col = MAT_COLORS[m] || '#4a5568';
-    svgDonut += `<span style="font-size:9px;font-family:'Space Mono',monospace;color:${col}">■ ${m} ${comp[m].toFixed(comp[m] < 0.01 ? 4 : comp[m] < 0.1 ? 3 : 1)}%</span>`;
+  const matData = computeMaterialRows(ast);
+  if (!matData) {
+    document.getElementById('mat-donut').innerHTML = '<div style="color:#6a8a9a;font-size:10px;padding:8px 0;text-align:center">unknown spectral type, cannot estimate materials</div>';
+    document.getElementById('mat-bars').innerHTML = '';
+    document.getElementById('mat-table').innerHTML = '';
+    document.getElementById('mat-price-info').textContent = 'Source: unknown spectral type — materials estimate unavailable';
+    return;
   }
-  svgDonut += `</div>`;
-  document.getElementById('mat-donut').innerHTML = svgDonut;
 
-  // ── Bar chart ────────────────────────────────────────────────────────────
-  const barMats = materials.filter(m => vals[m] > 0).sort((a, b) => vals[b] - vals[a]).slice(0, 8);
-  const maxVal = barMats.length > 0 ? vals[barMats[0]] : 1;
-  let svgBars = `<svg width="100%" viewBox="0 0 260 ${barMats.length * 22 + 4}" style="display:block;font-family:'Space Mono',monospace">`;
-  barMats.forEach((m, idx) => {
-    const y = idx * 22 + 2;
-    const bw = Math.max(2, (vals[m] / maxVal) * 160);
-    const col = MAT_COLORS[m] || '#4a5568';
-    svgBars += `<text x="0" y="${y+13}" font-size="8" fill="#9ca3af" font-family="Space Mono,monospace">${m.padEnd(9).substring(0,9)}</text>`;
-    svgBars += `<rect x="72" y="${y+2}" width="${bw}" height="14" fill="${col}" opacity="0.7"/>`;
-    svgBars += `<text x="${72+bw+4}" y="${y+13}" font-size="8" fill="#c8d6e5" font-family="Space Mono,monospace">${fmtUSD(vals[m])}</text>`;
-  });
-  svgBars += `</svg>`;
-  document.getElementById('mat-bars').innerHTML = svgBars;
+  document.getElementById('mat-donut').innerHTML = buildDonutSVG(matData.rows, matData.massKg);
+  document.getElementById('mat-bars').innerHTML = buildBarsSVG(matData.rows);
+  document.getElementById('mat-table').innerHTML = buildMaterialsTable(matData.rows);
 
-  // ── Table ────────────────────────────────────────────────────────────────
-  const sortedMats = [...materials].sort((a, b) => vals[b] - vals[a]);
-  let html = `<table style="width:100%;border-collapse:collapse;font-size:9px;font-family:'Space Mono',monospace;color:#9ca3af">
-    <thead><tr style="border-bottom:1px solid #1a2235;color:#4a5568">
-      <th style="text-align:left;padding:3px 2px">MATERIAL</th>
-      <th style="text-align:right;padding:3px 2px">MASS%</th>
-      <th style="text-align:right;padding:3px 2px">TONS</th>
-      <th style="text-align:right;padding:3px 2px">$/KG</th>
-      <th style="text-align:right;padding:3px 2px">VALUE</th>
-      <th style="text-align:center;padding:3px 2px">DIFF</th>
-    </tr></thead><tbody>`;
-  let totTons = 0, totVal = 0;
-  for (const m of sortedMats) {
-    const diff = MAT_DIFFICULTY[m] || 'MED';
-    const dc = DIFF_COLOR[diff];
-    const priceKg = prices[m] || 0;
-    totTons += tons[m] || 0;
-    totVal += vals[m] || 0;
-    html += `<tr style="border-bottom:1px solid #0d1120">
-      <td style="padding:3px 2px;color:${MAT_COLORS[m] || '#9ca3af'}">${m}</td>
-      <td style="text-align:right;padding:3px 2px">${comp[m].toFixed(comp[m] < 0.01 ? 4 : 1)}%</td>
-      <td style="text-align:right;padding:3px 2px">${fmtTons(tons[m])}</td>
-      <td style="text-align:right;padding:3px 2px">${priceKg > 0 ? fmtUSD(priceKg) : '—'}</td>
-      <td style="text-align:right;padding:3px 2px;color:#c8d6e5">${vals[m] > 0 ? fmtUSD(vals[m]) : '—'}</td>
-      <td style="text-align:center;padding:3px 2px"><span style="color:${dc};font-size:8px">${diff}</span></td>
-    </tr>`;
-  }
-  html += `<tr style="border-top:1px solid #1a2235;color:#c8d6e5">
-    <td style="padding:4px 2px">TOTAL</td>
-    <td style="text-align:right;padding:4px 2px">100%</td>
-    <td style="text-align:right;padding:4px 2px">${fmtTons(totTons)}</td>
-    <td></td>
-    <td style="text-align:right;padding:4px 2px;color:#00d4ff">${fmtUSD(totVal)}</td>
-    <td></td>
-  </tr></tbody></table>`;
-  document.getElementById('mat-table').innerHTML = html;
-
-  // ── Price footer ─────────────────────────────────────────────────────────
   const ts = priceAt ? new Date(priceAt).toLocaleTimeString() : '—';
-  document.getElementById('mat-price-info').textContent = `Prices as of ${ts} · Source: ${priceSource}`;
+  document.getElementById('mat-price-info').textContent =
+    matPriceMode === 'space' ? 'Prices: in-space premium model' : `Prices as of ${ts} · Source: ${priceSource}`;
 }
 
 async function fetchNHATSData() {
   console.log('[NHATS] fetchNHATSData called');
-  // No launch= filter — return all NHATS targets across all windows so overlap with catalog is maximised
-  const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
   const cacheKey = 'aster_nhats_v2'; // bumped to force fresh fetch after URL change
   const cached = localStorage.getItem(cacheKey);
   if (cached) {
@@ -3365,7 +3338,7 @@ async function fetchNHATSData() {
     } catch(_) {}
   }
   console.log('[NHATS] posting fetch_nhats to worker');
-  worker.postMessage({ cmd: 'fetch_nhats', url: NHATS_URL });
+  worker.postMessage({ cmd: 'fetch_nhats' });
 }
 
 // ─── Phase 9: Research Tab ─────────────────────────────────────────────────────
@@ -3462,11 +3435,11 @@ function applyNHATSData(rows) {
   const isArr = rows.length > 0 && Array.isArray(rows[0]);
   const normalizeDesignation = raw => String(raw || '').replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim().toUpperCase();
   const normalizeRow = row => ({
-    des: normalizeDesignation(isArr ? row[0] : row.des),
-    fullname: normalizeDesignation(isArr ? row[1] : row.fullname),
-    minDv: getNhatsMetricValue(isArr ? row[4] : row.min_dv, 'dv'),
-    minDur: getNhatsMetricValue(isArr ? row[5] : row.min_dur, 'dur'),
-    nTrajectories: Number(isArr ? row[6] : (row.n_via_traj || row.n_via_points || 0)) || 0,
+    des: normalizeDesignation(isArr ? row[0] : (row.des ?? row.pdes)),
+    fullname: normalizeDesignation(isArr ? row[1] : (row.fullname ?? row.full_name)),
+    minDv: getNhatsMetricValue(isArr ? row[4] : (row.min_dv ?? row.minDv), 'dv'),
+    minDur: getNhatsMetricValue(isArr ? row[5] : (row.min_dur ?? row.minDur), 'dur'),
+    nTrajectories: Number(isArr ? row[6] : (row.n_via_traj || row.n_via_points || row.nTrajectories || 0)) || 0,
     occ: isArr ? (row[9] ?? null) : (row.occ ?? row.obs_flag ?? null),
   });
   console.log('[NHATS] format:', isArr ? 'array' : 'object', '| sample des:', isArr ? rows[0]?.[0] : rows[0]?.des, '| catalog pdes[0]:', asteroidData[0]?.pdes);
@@ -3588,7 +3561,7 @@ async function fetchSatellites() {
 function buildSatelliteMesh(data) {
   satelliteData = data.filter(s => s.MEAN_MOTION && s.INCLINATION !== undefined);
   const count = Math.min(satelliteData.length, window.SAT_LIMIT || 8000);
-  if (satelliteMesh) { scene.remove(satelliteMesh); satelliteMesh = null; }
+  if (satelliteMesh) { disposeObject3D(satelliteMesh); satelliteMesh = null; }
   const leoColor   = new THREE.Color(0x3b82f6);
   const meoColor   = new THREE.Color(0x10b981);
   const geoColor   = new THREE.Color(0xfbbf24);
@@ -3625,6 +3598,7 @@ function findISS() {
   );
   if (issIndex >= 0) {
     console.log('[ISS] index', issIndex);
+    if (issOrbitLine) disposeObject3D(issOrbitLine);
     issOrbitLine = new THREE.Line(
       new THREE.BufferGeometry(),
       new THREE.LineBasicMaterial({ color: 0x4af7c4, transparent: true, opacity: 0.6 })
@@ -3650,6 +3624,24 @@ function drawISSOrbit() {
     issOrbitLine.geometry.setFromPoints(pts);
     issOrbitLine.visible = earthLayerActive;
   }
+}
+
+function disposeMaterial(material) {
+  if (!material) return;
+  if (Array.isArray(material)) {
+    material.forEach(disposeMaterial);
+    return;
+  }
+  if (typeof material.dispose === 'function') material.dispose();
+}
+
+function disposeObject3D(obj) {
+  if (!obj) return;
+  obj.traverse(node => {
+    if (node.geometry && typeof node.geometry.dispose === 'function') node.geometry.dispose();
+    disposeMaterial(node.material);
+  });
+  if (obj.parent) obj.parent.remove(obj);
 }
 
 function activateEarthLayer() {
@@ -3853,11 +3845,11 @@ function exportMissionReport() {
   const fi = computeFeasibilityMetrics(ast);
   const dv = fi.deltaV.value;
   const dvSuffix = fi.deltaV.source === 'NHATS' ? ' (NHATS)' : fi.deltaV.source === 'Asterank' ? '' : ' (estimated)';
-  const D_m = ast._diam_m || 500;
+  const massModel = resolveAsteroidMassModel(ast);
+  const econ = resolveAsteroidEconomics(ast);
+  const D_m = massModel ? massModel.diameterM : null;
   const spec3 = (ast.spec || ast.spec_T || '?').trim().charAt(0).toUpperCase();
-  const vol_m3 = (4/3) * Math.PI * Math.pow(D_m/2, 3);
-  const dens = { C:1400, S:2700, M:5300, D:1200 }[spec3] || 2000;
-  const mass_kg = vol_m3 * dens;
+  const mass_kg = massModel ? massModel.massKg : null;
   const g0 = 0.00980665;
   const m_prop = 1000 * (Math.exp(dv / (g0 * 450)) - 1);
   const launchCost = (1000 + m_prop) * 2700 * 1.8;
@@ -3874,8 +3866,8 @@ function exportMissionReport() {
     '',
     '── TARGET PROFILE ──────────────────────────────────────────',
     `  Spectral Type:     ${ast.spec || ast.spec_T || '—'}`,
-    `  Diameter:          ${(D_m/1000).toFixed(3)} km`,
-    `  Est. Mass:         ${mass_kg.toExponential(2)} kg`,
+    `  Diameter:          ${D_m !== null ? (D_m/1000).toFixed(3) + ' km' : 'unknown'}`,
+    `  Est. Mass:         ${mass_kg !== null ? mass_kg.toExponential(2) + ' kg' : 'unknown'}`,
     `  ΔV:                ${dv.toFixed(2)} km/s [${fi.deltaV.source}]`,
     `  NHATS Status:      ${ast.nhats?.accessible ? 'VERIFIED (JPL)' : ast._nhats ? 'ESTIMATED' : 'NO'}`,
     '',
@@ -3886,7 +3878,7 @@ function exportMissionReport() {
     `  RAAN (Ω):          ${Number(ast.om).toFixed(4)}°`,
     `  Arg. of Periapsis: ${Number(ast.w).toFixed(4)}°`,
     `  Mean Anomaly:      ${Number(ast.ma).toFixed(4)}°`,
-    `  MOID (Earth):      ${ast.moid ? Number(ast.moid).toFixed(6) + ' AU' : '—'}`,
+    `  MOID (Earth):      ${Number.isFinite(Number(ast.moid)) ? Number(ast.moid).toFixed(6) + ' AU' : 'unknown'}`,
     '',
     '── MISSION ΔV BUDGET ───────────────────────────────────────',
     `  Min. Rendezvous ΔV: ${dv.toFixed(3)} km/s${dvSuffix}`,
@@ -3894,8 +3886,9 @@ function exportMissionReport() {
     ...(burns.length > 0 ? ['', '  Planned Burns:', ...burnLines] : []),
     '',
     '── ECONOMICS ───────────────────────────────────────────────',
-    `  Est. Value:        ${fmtUSD(getDisplayValueUsd(ast))}`,
-    `  Est. Profit:       ${fmtUSD(getDisplayProfitUsd(ast))}`,
+    `  Extractable Value: ${formatValueDisplay(econ.extractableValueUsd)}`,
+    `  Whole-body Price:  ${formatValueDisplay(econ.wholeBodyPriceUsd)}`,
+    `  Raw Profit:        ${formatValueDisplay(econ.rawProfitUsd)}`,
     `  Est. Launch Cost:  ${fmtUSD(launchCost)} (Falcon 9 rate × 1.8 overhead)`,
     '',
     '── CAVEATS ─────────────────────────────────────────────────',
@@ -3917,8 +3910,9 @@ function exportMissionReport() {
 }
 
 // ─── Phase 5: Shareable URL ───────────────────────────────────────────────────
-function encodeStateToURL() {
-  if (selectedId < 0) { setStatus('Select an asteroid first', true); return; }
+function buildShareState(options = {}) {
+  const { includeMissionPlanner = false } = options;
+  if (selectedId < 0) return null;
   const ast = asteroidData[selectedId];
   const state = {
     des: ast.pdes || ast.full_name,
@@ -3930,6 +3924,22 @@ function encodeStateToURL() {
     },
     burns: burns.map(b => ({ p: +b.dv_p.toFixed(4), r: +b.dv_r.toFixed(4), n: +b.dv_n.toFixed(4), jd: b.jd })),
   };
+  if (includeMissionPlanner) {
+    state.mp = {
+      type: _activeMissionType,
+      dest: missionConfig.destination,
+      sc: missionConfig.spacecraft,
+      lv: missionConfig.launchVehicle,
+      ys: missionConfig.launchYearStart,
+      ye: missionConfig.launchYearEnd,
+      ti: selectedTrajIdx,
+    };
+  }
+  return state;
+}
+
+function encodeStateToURL(state = buildShareState()) {
+  if (!state) { setStatus('Select an asteroid first', true); return; }
   try {
     window.location.hash = btoa(JSON.stringify(state));
     navigator.clipboard.writeText(window.location.href).then(
@@ -3948,6 +3958,31 @@ function loadStateFromURL() {
   let state;
   try { state = JSON.parse(atob(hash)); } catch(_) { return; }
   if (!state || !state.des) return;
+  const applyMissionPlannerState = (idx) => {
+    if (!state.mp) return;
+    const yearStart = Number.isFinite(Number(state.mp.ys)) ? Number(state.mp.ys) : missionConfig.launchYearStart;
+    const yearEnd = Number.isFinite(Number(state.mp.ye)) ? Number(state.mp.ye) : missionConfig.launchYearEnd;
+    missionConfig.destination = state.mp.dest || missionConfig.destination;
+    missionConfig.spacecraft = state.mp.sc || missionConfig.spacecraft;
+    missionConfig.launchVehicle = state.mp.lv || missionConfig.launchVehicle;
+    missionConfig.launchYearStart = yearStart;
+    missionConfig.launchYearEnd = yearEnd;
+    openMissionPlanner(idx);
+    setMissionType(state.mp.type === 'redirect' ? 'redirect' : 'extract');
+    document.getElementById('mp-destination').value = missionConfig.destination;
+    document.getElementById('mp-launch-vehicle').value = missionConfig.launchVehicle;
+    document.getElementById('mp-year-start').value = yearStart;
+    document.getElementById('mp-year-end').value = yearEnd;
+    const craftInput = document.querySelector(`input[name="mp-craft"][value="${missionConfig.spacecraft}"]`);
+    if (craftInput) {
+      craftInput.checked = true;
+      document.querySelectorAll('.mp-craft-card').forEach(card =>
+        card.classList.toggle('mp-craft-selected', card.querySelector('input[type=radio]') === craftInput));
+    }
+    if (Number.isInteger(state.mp.ti) && state.mp.ti >= 0) {
+      setStatus(`Loaded mission setup for ${state.des}. Re-run planner to restore trajectory #${state.mp.ti + 1}.`, true);
+    }
+  };
   function tryApply(attempt) {
     if (attempt > 30) return;
     const idx = asteroidData.findIndex(a =>
@@ -3962,6 +3997,7 @@ function loadStateFromURL() {
       state.burns.forEach(b => burns.push({ dv_p: b.p, dv_r: b.r, dv_n: b.n, jd: b.jd || currentJD }));
       activeBurnIdx = 0;
     }
+    applyMissionPlannerState(idx);
     setStatus(`✓ Loaded shared state: ${state.des}`);
   }
   setTimeout(() => tryApply(0), 200);
@@ -4031,14 +4067,18 @@ function closeMissionPlanner() {
 }
 
 function clearTrajectoryLine() {
-  if (trajectoryLine) { scene.remove(trajectoryLine); trajectoryLine.geometry.dispose(); trajectoryLine = null; }
-  trajectoryArrows.forEach(a => scene.remove(a));
-  trajectoryArrows = [];
-  if (returnArcLine) { scene.remove(returnArcLine); returnArcLine = null; }
+  clearMissionPathVisuals();
   clearBurnVectors();
   stopMissionAnimation();
   hideMissionTimeline();
   clearRedirectVisualization();
+}
+
+function clearMissionPathVisuals() {
+  if (trajectoryLine) { disposeObject3D(trajectoryLine); trajectoryLine = null; }
+  trajectoryArrows.forEach(disposeObject3D);
+  trajectoryArrows = [];
+  if (returnArcLine) { disposeObject3D(returnArcLine); returnArcLine = null; }
 }
 
 let _plannerTimeoutId = null;
@@ -4290,9 +4330,9 @@ function onRedirectResult(data) {
   document.getElementById('rr-capture-text').textContent =
     `Earth arr  ${jdToDate(rd.jd_earth_arr)}\n` +
     `Transit    ${Math.round(rd.tof_redirect)} days\n` +
-    `v∞ at Moon ${fmtRedirectSpeed(cap.v_inf_lunar)}\n` +
-    `Cap burn   ${fmtRedirectSpeed(cap.dv_lunar_capture)}\n` +
-    `Cap orbit  ${Math.round(cap.r_cap_km)} km radius`;
+    `Earth-arr v∞ ${fmtRedirectSpeed(cap.v_inf_earth_arrival)}\n` +
+    `Capture model ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) : 'unknown'}\n` +
+    `Target orbit  ${Math.round(cap.r_cap_km)} km radius`;
 
   // ISRU yield
   const isru = data.isru;
@@ -4301,7 +4341,8 @@ function onRedirectResult(data) {
     `Mineable   ${fmtMass(isru.mineable_kg)} (5% extraction)\n` +
     `  Water    ${fmtMass(isru.water_kg)}\n` +
     `  Metals   ${fmtMass(isru.metal_kg)}\n` +
-    `Est value  ${fmtRedirectValue(isru.value_usd)}`;
+    `Extractable ${fmtRedirectValue(isru.extractable_value_usd)}\n` +
+    `Catalog body ${fmtRedirectValue(isru.whole_body_price_usd)}`;
 
   // 3D visualization
   clearTrajectoryLine();
@@ -4312,9 +4353,9 @@ function onRedirectResult(data) {
 }
 
 function clearRedirectVisualization() {
-  if (_redirectArcLine) { scene.remove(_redirectArcLine); _redirectArcLine.geometry.dispose(); _redirectArcLine = null; }
-  if (_lunarOrbitRing)  { scene.remove(_lunarOrbitRing);  _lunarOrbitRing.geometry.dispose();  _lunarOrbitRing = null; }
-  _cargoPodArcs.forEach(a => scene.remove(a));
+  if (_redirectArcLine) { disposeObject3D(_redirectArcLine); _redirectArcLine = null; }
+  if (_lunarOrbitRing)  { disposeObject3D(_lunarOrbitRing);  _lunarOrbitRing = null; }
+  _cargoPodArcs.forEach(disposeObject3D);
   _cargoPodArcs = [];
   redirectOriginalOrbitLine.visible = false;
   redirectAdjustedOrbitLine.visible = false;
@@ -4455,15 +4496,17 @@ function selectTrajectory(idx) {
   selectedTrajIdx = idx;
   const traj = missionResults[idx];
   if (!traj) return;
+  optimalTrajectory = traj;
   document.querySelectorAll('.mp-traj-card').forEach((c, i) =>
     c.classList.toggle('mp-traj-selected', i === idx));
   missionEarthReturnPos = null;
   clearTrajectoryLine();
-  drawTrajectoryLine(traj.earthPos, traj.astPos);
+  const live = getLiveMissionPositions(traj);
+  drawTrajectoryLine(live?.earthPos || traj.earthPos, live?.astPos || traj.astPos, { returnEarthPos: live?.returnEarthPos });
   // Frame camera on Earth departure position to show trajectory
   {
-    const ep  = traj.earthPos;
-    const ap  = traj.astPos;
+    const ep  = live?.earthPos || traj.earthPos;
+    const ap  = live?.astPos || traj.astPos;
     const sep = Math.hypot(ap.x - ep.x, ap.y - ep.y, ap.z - ep.z);
     flyTarget = { x: ep.x, y: ep.y, z: ep.z, dist: Math.max(1.5, sep * 1.2), progress: 0 };
   }
@@ -4485,12 +4528,12 @@ function selectTrajectory(idx) {
   renderBurnEditTable();
   document.getElementById('mp-burns').style.display   = 'block';
   document.getElementById('mp-actions').style.display = 'block';
-  drawBurnVectors(traj);
+  drawBurnVectors({ ...traj, earthPos: live?.earthPos || traj.earthPos, astPos: live?.astPos || traj.astPos });
   buildMissionTimeline(traj);
   // Re-render porkchop so selected dot updates (only if panel is visible)
   if (porkchopData &&
       document.getElementById('porkchop-panel').style.display !== 'none') {
-    renderPorkchop(porkchopData); // redraws grid then calls overlayMdesignOnPorkchop
+    renderPorkchop(porkchopData); // redraws grid then overlays current mission results
   }
 }
 
@@ -4543,11 +4586,14 @@ function computeMissionProfile(traj) {
   // ── Revenue (5% extraction — conservative, no industrial-scale ISRU demonstrated) ──
   const prices = getActivePrices();
   const spec   = getMatSpec(ast);
-  const comp   = MAT_COMP[spec];
-  let revenuePerKg = 0;
-  MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
+  const comp   = spec ? MAT_COMP[spec] : null;
+  let revenuePerKg = null;
+  if (comp) {
+    revenuePerKg = 0;
+    MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
+  }
   const returnedKg = sc.payload_kg * 0.05;
-  const revLow  = returnedKg * revenuePerKg;
+  const revLow  = Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
   const revHigh = revLow; // single rate — collapse to 5%
 
   // ── Demand-adjusted realizable NPV (constant-elasticity model) ───────────────
@@ -4569,20 +4615,22 @@ function computeMissionProfile(traj) {
     return npv;
   }
   // Infer primary commodity from spectral type
-  const _specChar = (spec || 'C').charAt(0).toUpperCase();
-  const _commodity = _specChar === 'M' ? 'platinum' : _specChar === 'S' ? 'nickel' : 'water';
-  const paperValue   = returnedKg * revenuePerKg;
-  const npvRealized  = realizableNPV(_commodity, returnedKg, revenuePerKg);
+  const _specChar = spec ? spec.charAt(0).toUpperCase() : '?';
+  const _commodity = _specChar === 'M' ? 'platinum' : _specChar === 'S' ? 'nickel' : _specChar === 'C' ? 'water' : null;
+  const paperValue   = Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
+  const npvRealized  = _commodity && Number.isFinite(revenuePerKg) ? realizableNPV(_commodity, returnedKg, revenuePerKg) : null;
 
   // ── Simple time-value NPV for ROI display ───────────────────────────────────
   const missionYears = opsDays / 365.25;
   const npvFactor    = 1 / Math.pow(1.05, missionYears);
-  const npvLow  = revLow * npvFactor - totalCost;
+  const npvLow  = Number.isFinite(revLow) ? revLow * npvFactor - totalCost : null;
   const npvHigh = npvLow;
 
-  const roiLow  = totalCost > 0 ? (revLow  - totalCost) / totalCost * 100 : 0;
+  const roiLow  = Number.isFinite(revLow) && totalCost > 0 ? (revLow  - totalCost) / totalCost * 100 : null;
   const roiHigh = roiLow;
-  const breakEvenKg = revenuePerKg > 0 ? Math.ceil(totalCost / (revenuePerKg * 0.05)) : null;
+  const breakEvenKg = Number.isFinite(revenuePerKg) && revenuePerKg > 0 ? Math.ceil(totalCost / (revenuePerKg * 0.05)) : null;
+  const fmtMaybeUSD = v => Number.isFinite(v) ? fmtUSD(v) : 'unknown';
+  const fmtMaybePct = v => Number.isFinite(v) ? `${v.toFixed(0)}%` : 'unknown';
 
   const lines = [
     '═'.repeat(50),
@@ -4620,7 +4668,7 @@ function computeMissionProfile(traj) {
     dot('MASS FRACTION', (frac*100).toFixed(1) + '%'),
     dot('LAUNCH CAPACITY', lv.max_kg.toLocaleString()+' kg '+(fits?'✓ FITS':'✗ OVERWEIGHT')),
     overweightLine,
-    sep(`COSTS  (±${_src === 'jpl-mdesign' ? '5%  JPL N-body' : '15%  Lambert + ops uncertainty'})`),
+    sep('COSTS  (±15%  Lambert + ops uncertainty)'),
     dot('LAUNCH', `${fmtUSD(launchCost * 0.90)} – ${fmtUSD(launchCost * 1.10)}`),
     dot('SPACECRAFT', fmtUSD(sc.cost_usd)),
     dot('OPERATIONS', `${fmtUSD(opsCost * 0.85)} – ${fmtUSD(opsCost * 1.15)}`),
@@ -4634,47 +4682,33 @@ function computeMissionProfile(traj) {
     sep('REVENUE ESTIMATE'),
     dot('ORE PAYLOAD', sc.payload_kg.toLocaleString() + ' kg max'),
     dot('EXTRACTED (5%)', returnedKg.toLocaleString() + ' kg  (conservative — no ISRU at scale demonstrated)'),
-    dot('REVENUE / KG', '$' + revenuePerKg.toFixed(2)),
-    dot('PAPER VALUE', fmtUSD(paperValue) + '  (spot price, no market impact)'),
-    dot('REALIZABLE NPV', fmtUSD(npvRealized) + '  (demand-adj. 10yr sell, 8% discount)'),
+    dot('REVENUE / KG', Number.isFinite(revenuePerKg) ? '$' + revenuePerKg.toFixed(2) : 'unknown'),
+    dot('PAPER VALUE', fmtMaybeUSD(paperValue) + '  (spot price, no market impact)'),
+    dot('REALIZABLE NPV', fmtMaybeUSD(npvRealized) + '  (demand-adj. 10yr sell, 8% discount)'),
     sep('RETURNS'),
-    dot('ROI', roiLow.toFixed(0) + '%'),
-    dot('NPV 5%', fmtUSD(npvLow)),
+    dot('ROI', fmtMaybePct(roiLow)),
+    dot('NPV 5%', fmtMaybeUSD(npvLow)),
     breakEvenKg ? dot('BREAK-EVEN PAYLOAD', breakEvenKg.toLocaleString() + ' kg') : '',
     sep('PROPAGATION METHOD'),
-    dot('TRAJECTORY SOURCE', _src === 'jpl-mdesign'
-      ? 'JPL mdesign (CNEOS N-body)'
-      : 'Izzo 2015 Lambert + patched-conic'),
-    dot('PROPAGATOR', _src === 'jpl-mdesign'
-      ? 'N-body pre-computed (all planets)'
-      : 'Keplerian 2-body (secular J2000 elements)'),
+    dot('TRAJECTORY SOURCE', 'Izzo 2015 Lambert + patched-conic'),
+    dot('PROPAGATOR', 'Keplerian 2-body (secular J2000 elements)'),
     dot('DRY MASS', sc.dry_kg.toLocaleString() + ' kg'),
     dot('ISP', sc.isp + ' s (single-stage)'),
     dot('PAYLOAD CAPACITY', sc.payload_kg.toLocaleString() + ' kg'),
-    dot('ΔV UNCERTAINTY', _src === 'jpl-mdesign'
-      ? `±${(traj.dv_total * 0.05).toFixed(2)} km/s  (±5% JPL N-body)`
-      : `±${(traj.dv_total * 0.15).toFixed(2)} km/s  (±15% Aster Lambert)`),
-    dot('COST UNCERTAINTY', _src === 'jpl-mdesign'
-      ? '±5% (JPL verified ΔV)'
-      : '±15% (launcher pricing + ops variance)'),
+    dot('ΔV UNCERTAINTY', `±${(traj.dv_total * 0.15).toFixed(2)} km/s  (±15% Aster Lambert)`),
+    dot('COST UNCERTAINTY', '±15% (launcher pricing + ops variance)'),
     '',
-    _src === 'jpl-mdesign'
-      ? '🛰  JPL CNEOS mdesign — N-body pre-computed trajectories.'
-      : '⚠  Real missions include 3–5% gravity losses and',
-    _src === 'jpl-mdesign'
-      ? '   Segment splits are estimated (40/25/20/13%).'
-      : '   ±10–20% margin reserves not reflected here.',
+    '⚠  Real missions include 3–5% gravity losses and',
+    '   ±10–20% margin reserves not reflected here.',
     '',
     '═'.repeat(50),
-    _src === 'jpl-mdesign'
-      ? '  JPL mdesign · CNEOS N-body · Phase 9F'
-      : '  Patched-conic · Izzo 2015 Lambert · Phase 9F',
+    '  Patched-conic · Izzo 2015 Lambert · Phase 9F',
     '═'.repeat(50),
   ].filter(l => l !== undefined && l !== '');
   return { text: lines.join('\n'), totalCost, revLow, revHigh, roiLow, roiHigh };
 }
 
-function drawTrajectoryLine(earthPos, astPos) {
+function drawTrajectoryLine(earthPos, astPos, options = {}) {
   const ex = earthPos.x, ey = earthPos.y, ez = earthPos.z;
   const ax = astPos.x,   ay = astPos.y,   az = astPos.z;
   const dx = ax - ex, dy = ay - ey;
@@ -4699,13 +4733,14 @@ function drawTrajectoryLine(earthPos, astPos) {
   const arr2 = new THREE.ArrowHelper(dir.clone().negate(), new THREE.Vector3(ax, ay, az), 0.12, 0xff4444, 0.05, 0.025);
   scene.add(arr2); trajectoryArrows.push(arr2);
   // Return arc (dashed) — drawn once Earth return pos is known
-  if (optimalTrajectory) _redrawReturnArc(optimalTrajectory);
+  if (optimalTrajectory) _redrawReturnArc(optimalTrajectory, { astPos, returnEarthPos: options.returnEarthPos });
 }
 
-function _redrawReturnArc(traj) {
-  if (returnArcLine) { scene.remove(returnArcLine); returnArcLine = null; }
-  const ep = missionEarthReturnPos || traj.earthPos;
-  const ax = traj.astPos.x, ay = traj.astPos.y, az = traj.astPos.z;
+function _redrawReturnArc(traj, options = {}) {
+  if (returnArcLine) { disposeObject3D(returnArcLine); returnArcLine = null; }
+  const ep = options.returnEarthPos || missionEarthReturnPos || traj.earthPos;
+  const origin = options.astPos || traj.astPos;
+  const ax = origin.x, ay = origin.y, az = origin.z;
   const dx2 = ep.x - ax, dy2 = ep.y - ay;
   const mid2X = (ax + ep.x) / 2;
   const mid2Y = (ay + ep.y) / 2 + Math.hypot(dx2, dy2) * 0.25;
@@ -4722,6 +4757,37 @@ function _redrawReturnArc(traj) {
   retLine.computeLineDistances();
   scene.add(retLine);
   returnArcLine = retLine;
+}
+
+function getCurrentAsteroidPosition(id = selectedId) {
+  if (!(id >= 0) || positionCache.length <= id * 3 + 2) return null;
+  return { x: positionCache[id*3], y: positionCache[id*3+1], z: positionCache[id*3+2] };
+}
+
+function getLiveMissionPositions(traj) {
+  if (!traj || !planets[2]) return null;
+  const astPos = getCurrentAsteroidPosition(selectedId);
+  if (!astPos) return null;
+  return {
+    earthPos: { x: planets[2].position.x, y: planets[2].position.y, z: planets[2].position.z },
+    astPos,
+    returnEarthPos: missionEarthReturnPos || traj.earthPos,
+  };
+}
+
+function syncActiveMissionVisuals() {
+  const traj = missionResults[selectedTrajIdx] || optimalTrajectory;
+  if (!traj) return;
+  const live = getLiveMissionPositions(traj);
+  if (!live) return;
+  if (trajectoryLine || returnArcLine || trajectoryArrows.length) {
+    clearMissionPathVisuals();
+    drawTrajectoryLine(live.earthPos, live.astPos, { returnEarthPos: live.returnEarthPos });
+  }
+  if (burnVectorArrows.length) {
+    clearBurnVectors();
+    drawBurnVectors({ ...traj, earthPos: live.earthPos, astPos: live.astPos });
+  }
 }
 
 function renderBurnEditTable() {
@@ -4803,7 +4869,7 @@ function drawBurnVectors(traj) {
 }
 
 function clearBurnVectors() {
-  burnVectorArrows.forEach(a => scene.remove(a));
+  burnVectorArrows.forEach(disposeObject3D);
   burnVectorArrows = [];
 }
 
@@ -4880,6 +4946,8 @@ function updateTimelineIndicator() {
 
 function startMissionAnimation(traj) {
   stopMissionAnimation();
+  setPlayState(false);
+  setCurrentJD(traj.jd_dep);
   const dx   = traj.astPos.x - traj.earthPos.x, dy = traj.astPos.y - traj.earthPos.y;
   const midX = (traj.earthPos.x + traj.astPos.x) / 2;
   const midY = (traj.earthPos.y + traj.astPos.y) / 2 + Math.hypot(dx, dy) * 0.3;
@@ -4927,8 +4995,8 @@ function startMissionAnimation(traj) {
 }
 
 function stopMissionAnimation() {
-  if (missionAnim.spacecraft) { scene.remove(missionAnim.spacecraft); missionAnim.spacecraft = null; }
-  if (missionAnim.trailLine)  { scene.remove(missionAnim.trailLine);  missionAnim.trailLine  = null; }
+  if (missionAnim.spacecraft) { disposeObject3D(missionAnim.spacecraft); missionAnim.spacecraft = null; }
+  if (missionAnim.trailLine)  { disposeObject3D(missionAnim.trailLine);  missionAnim.trailLine  = null; }
   missionAnim.active = false;
   missionAnim.playing = false;
   missionAnim.phase  = 'idle';
@@ -4945,9 +5013,15 @@ function updateMissionAnimation(dt) {
   if (!missionAnim.active || !optimalTrajectory) return;
   const traj = optimalTrajectory;
 
-  if (missionAnim.playing) missionAnim.animJD += (missionAnim.speed / 86400) * dt;
+  if (missionAnim.playing) {
+    const nextJD = clampJD(missionAnim.animJD + (missionAnim.speed / 86400) * dt);
+    missionAnim.animJD = nextJD;
+    setCurrentJD(nextJD);
+  } else {
+    missionAnim.animJD = currentJD;
+  }
 
-  const jd = missionAnim.animJD;
+  const jd = currentJD;
   let pos   = null;
   const jd_ret_arr = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
 
@@ -5029,18 +5103,8 @@ function exportMissionPlan() {
 
 function shareMissionPlan() {
   if (selectedTrajIdx < 0) return;
-  const ast = asteroidData[selectedId];
-  const state = {
-    des: ast?.designation || ast?.full_name,
-    mp:  {
-      dest: missionConfig.destination,
-      sc:   missionConfig.spacecraft,
-      lv:   missionConfig.launchVehicle,
-      ys:   missionConfig.launchYearStart,
-      ye:   missionConfig.launchYearEnd,
-      ti:   selectedTrajIdx,
-    },
-  };
+  const state = buildShareState({ includeMissionPlanner: true });
+  if (!state) return;
   try {
     window.location.hash = btoa(JSON.stringify(state));
     navigator.clipboard?.writeText(window.location.href);
@@ -5132,9 +5196,9 @@ function selectAsteroid(id) {
   document.getElementById('ast-name').textContent = name;
   document.getElementById('ast-type').textContent = spec;
   document.getElementById('ast-diam').textContent = diam;
-  document.getElementById('ast-sma').textContent = ast.a ? `${Number(ast.a).toFixed(4)} AU` : '—';
-  document.getElementById('ast-ecc').textContent = ast.e ? Number(ast.e).toFixed(5) : '—';
-  document.getElementById('ast-inc').textContent = ast.i ? `${Number(ast.i).toFixed(3)}°` : '—';
+  document.getElementById('ast-sma').textContent = Number.isFinite(Number(ast.a)) ? `${Number(ast.a).toFixed(4)} AU` : '—';
+  document.getElementById('ast-ecc').textContent = Number.isFinite(Number(ast.e)) ? Number(ast.e).toFixed(5) : '—';
+  document.getElementById('ast-inc').textContent = Number.isFinite(Number(ast.i)) ? `${Number(ast.i).toFixed(3)}°` : '—';
   const fi_early = computeFeasibilityMetrics(ast);
   const dv_val   = fi_early.deltaV.value;
   const dv_unc   = fi_early.deltaV.uncertainty;
@@ -5145,42 +5209,46 @@ function selectAsteroid(id) {
     dvIcon.onclick = e => { e.stopPropagation(); showUncPopup(dvIcon, dvUncHtml(fi_early)); };
     dvIcon.onmouseleave = () => hideUncPopup(300);
   }
-  document.getElementById('ast-moid').textContent = ast.moid ? `${Number(ast.moid).toFixed(4)} AU` : '—';
+  document.getElementById('ast-moid').textContent = Number.isFinite(Number(ast.moid)) ? `${Number(ast.moid).toFixed(4)} AU` : '—';
+  document.getElementById('ast-last-obs').textContent = ast.last_obs || 'unknown';
+  document.getElementById('ast-cond-code').textContent = ast.condition_code !== null && ast.condition_code !== undefined ? String(ast.condition_code) : 'unknown';
   // Phase 3: composition + resource value + score
   const spec3 = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
+  const mappedSpec = getMatSpec(ast);
   const compText = COMPOSITIONS[spec3]
-    || COMPOSITIONS[getMatSpec(ast)]
+    || (mappedSpec ? COMPOSITIONS[mappedSpec] : null)
     || ((ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy) ? 'Composition model not available' : 'No composition data');
   document.getElementById('ast-composition').textContent = compText;
 
   const prices3 = getActivePrices();
-  const spec3g   = getMatSpec(ast);
-  const comp3    = MAT_COMP[spec3g] || MAT_COMP['other'];
+  const econ3 = resolveAsteroidEconomics(ast);
+  const massModel3 = econ3.massModel;
+  const spec3g   = mappedSpec;
+  const comp3    = spec3g ? MAT_COMP[spec3g] : null;
   let revPerKg3  = 0;
   if (comp3) MAT_KEYS.forEach(k => { revPerKg3 += (comp3[k] / 100) * (prices3[k] || 0); });
-  const diam3m   = ast._diam_m || 500;
-  const r3       = diam3m / 2;
-  const dens3    = MAT_DENSITY_KGM3[spec3g] || 2000;
-  const mass3    = (4/3) * Math.PI * r3 * r3 * r3 * dens3;
-  const totalVal3 = mass3 * revPerKg3;
+  const mass3    = massModel3 && comp3 ? massModel3.massKg : null;
+  const totalVal3 = mass3 !== null ? mass3 * revPerKg3 : null;
 
-  const displayPrice  = getDisplayValueUsd(ast);
-  const displayProfit = getDisplayProfitUsd(ast);
-  document.getElementById('ast-price').textContent  = fmtAstValue(displayPrice);
-  document.getElementById('ast-profit').textContent = fmtUSD(Math.min(displayProfit, 1e13));
+  const displayPrice  = econ3.extractableValueUsd;
+  const displayProfit = econ3.rawProfitUsd;
+  document.getElementById('ast-price').textContent  = formatValueDisplay(displayPrice, { extractionLabel: true });
+  document.getElementById('ast-profit').textContent = formatValueDisplay(displayProfit);
 
   // Derive water/metal sub-values from the same MAT_COMP+prices system used for totalVal3
-  let waterVal3 = 0, metalVal3 = 0;
-  if (comp3) {
+  let waterVal3 = null, metalVal3 = null;
+  if (comp3 && mass3 !== null) {
+    waterVal3 = 0;
+    metalVal3 = 0;
     const waterKeys = ['water'];
     const metalKeys = ['iron','nickel','cobalt','platinum','gold','silver','copper'];
     waterKeys.forEach(k => { waterVal3 += mass3 * (comp3[k] || 0) / 100 * (prices3[k] || 0); });
     metalKeys.forEach(k => { metalVal3 += mass3 * (comp3[k] || 0) / 100 * (prices3[k] || 0); });
   }
 
-  document.getElementById('ast-water-val').textContent = waterVal3 > 0 ? fmtUSD(waterVal3) : '—';
-  document.getElementById('ast-metal-val').textContent = metalVal3 > 0 ? fmtUSD(metalVal3) : '—';
-  document.getElementById('ast-total-val').textContent = fmtUSD(totalVal3);
+  document.getElementById('ast-water-val').textContent = formatValueDisplay(waterVal3);
+  document.getElementById('ast-metal-val').textContent = formatValueDisplay(metalVal3);
+  document.getElementById('ast-total-val').textContent = formatValueDisplay(totalVal3);
   const fi = fi_early; // reuse already-computed metrics
   const dvDisp  = `${fi.deltaV.value.toFixed(2)} km/s (±${fi.deltaV.uncertainty})`;
   const durDisp = `${Math.round(fi.duration.value)} days  [${fi.duration.source}]`;
@@ -5188,9 +5256,10 @@ function selectAsteroid(id) {
     ? `✓ ${fi.accessibility.trajectoryCount} NHATS trajectories`
     : 'Not in NHATS catalog';
   const valLo_fi = fi.valueRange.conservative, valHi_fi = fi.valueRange.optimistic;
-  const valDisp = valHi_fi > 0 ? `${fmtUSD(valLo_fi)} – ${fmtUSD(valHi_fi)}` : '—';
+  const valDisp = valHi_fi !== null ? `${fmtUSD(valLo_fi)} – ${fmtUSD(valHi_fi)}` : 'unknown';
   const hazDisp = fi.hazard.riskLevel === 'high' ? '⚠ PHA (high)'
                 : fi.hazard.riskLevel === 'low'  ? `Low (MOID ${fi.hazard.moid?.toFixed(3)} AU)`
+                : fi.hazard.riskLevel === 'unknown' ? 'unknown'
                 : fi.hazard.moid !== null          ? `None (MOID ${fi.hazard.moid?.toFixed(3)} AU)`
                 : 'None';
   const fiDvEl = document.getElementById('fi-dv');
@@ -5229,7 +5298,7 @@ function selectAsteroid(id) {
 
   const des3 = ast.pdes || ast.full_name || '';
   document.getElementById('link-jpl').href =
-    `https://ssd.jpl.nasa.gov/sbdb.cgi?sstr=${encodeURIComponent(des3)}`;
+    `https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=${encodeURIComponent(des3)}`;
   document.getElementById('link-papers').href =
     `https://www.semanticscholar.org/search?q=${encodeURIComponent(ast.full_name || des3)}&sort=Relevance`;
 
@@ -5280,6 +5349,9 @@ function deselectAsteroid() {
   clearTrail();
   orbitLine.visible = false;
   nhatsRing.visible = false;
+  hideHoverEllipse();
+  const tt = document.getElementById('asteroid-tooltip');
+  if (tt) tt.style.display = 'none';
   updateToolbarHUD();
 }
 
@@ -5637,7 +5709,7 @@ function onPointerMove(e) {
           const ast = asteroidData[bestId];
           const name = (ast.full_name || ast.pdes || '—').substring(0, 24);
           const spec = (ast.spec || ast.spec_T || '?').trim();
-          tt.innerHTML = `<span style="color:#00d4ff">${name}</span><br>${spec}-type · ΔV ${getDisplayDeltaV(ast).toFixed(1)} km/s<br>${fmtUSD(getDisplayValueUsd(ast))}`;
+          tt.innerHTML = `<span style="color:#00d4ff">${name}</span><br>${spec}-type · ΔV ${getDisplayDeltaV(ast).toFixed(1)} km/s<br>${formatValueDisplay(getDisplayValueUsd(ast))}`;
           tt.style.display = 'block';
           renderer.domElement.style.cursor = 'pointer';
           if (bestId !== selectedId) showHoverEllipse(ast);
@@ -5869,11 +5941,11 @@ function renderPorkchop(data) {
   document.getElementById('pc-tof-min').textContent = `${data.tof_min}d`;
   document.getElementById('pc-tof-max').textContent = `${data.tof_max}d`;
 
-  overlayMdesignOnPorkchop();
+  overlayMissionResultsOnPorkchop();
 }
 
-// Overlay JPL mdesign trajectory points on the porkchop canvas when available
-function overlayMdesignOnPorkchop() {
+// Overlay computed mission trajectory points on the porkchop canvas when available
+function overlayMissionResultsOnPorkchop() {
   if (!porkchopData || !missionResults.length) return;
   const canvas = document.getElementById('porkchop-canvas');
   const ctx    = canvas.getContext('2d');
@@ -6245,12 +6317,12 @@ const DV_SOURCE_LINKS = {
   nhats:            '<a href="https://cneos.jpl.nasa.gov/nhats/" target="_blank">NHATS (JPL)</a>',
   asterank:         '<a href="http://www.asterank.com/" target="_blank">Asterank DB</a>',
   'hohmann-visviva':'Aster orbital estimate',
-  'jpl-mdesign':    '<a href="https://ssd-api.jpl.nasa.gov/doc/mdesign.html" target="_blank">JPL Mission Design</a>',
+  lambert:          'Aster Lambert planner',
 };
 
 function dvUncHtml(fi) {
   const dv = fi.deltaV;
-  const methodLabel = { nhats:'NHATS verified', asterank:'Asterank catalog', 'hohmann-visviva':'Vis-viva/Hohmann approx.', 'jpl-mdesign':'JPL mdesign API' }[dv.method] || dv.method;
+  const methodLabel = { nhats:'NHATS verified', asterank:'Asterank catalog', 'hohmann-visviva':'Vis-viva/Hohmann approx.', lambert:'Aster Lambert planner' }[dv.method] || dv.method;
   const link = DV_SOURCE_LINKS[dv.method] || dv.source;
   return `<div style="color:#00d4ff;margin-bottom:3px">ΔV Uncertainty</div>
 Method: ${methodLabel}<br>Uncertainty: ±${dv.uncertainty} km/s<br>Source: ${link}`;
@@ -6298,6 +6370,7 @@ function applyPositions(buf) {
     }
     asteroidMesh.instanceMatrix.needsUpdate = true;
   }
+  syncActiveMissionVisuals();
 }
 
 function animate() {
@@ -6374,8 +6447,6 @@ function animate() {
       ghostNew.visible = false;
     }
   }
-
-  syncTimeDisplays();
 
   // Fly-to animation
   if (flyTarget) {
@@ -6455,16 +6526,11 @@ document.getElementById('mp-assumptions-toggle').onclick = function() {
   this.textContent = 'MODEL ASSUMPTIONS ' + (open ? '▶' : '▼');
 };
 
-// Verify in JPL Horizons
 document.getElementById('mp-verify-horizons').onclick = function() {
   const ast = asteroidData[selectedId];
   if (!ast) return;
   const des = encodeURIComponent((ast.pdes || ast.full_name || '').trim());
   window.open(`https://ssd.jpl.nasa.gov/horizons/app.html#/?body=sb&des=${des}`, '_blank');
-};
-
-document.getElementById('mdesign-close').onclick = () => {
-  document.getElementById('mdesign-modal').style.display = 'none';
 };
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -6486,12 +6552,10 @@ async function init() {
   try { localStorage.removeItem('aster_catalog_v2'); } catch(_) {}
   try { localStorage.removeItem('aster_catalog_v3'); } catch(_) {}
   try { localStorage.removeItem('aster_catalog_v4'); } catch(_) {}
-  try { localStorage.removeItem('aster_catalog_v7'); } catch(_) {}
   saveToIndexedDB('aster_catalog_v1', null).catch(() => {});
   saveToIndexedDB('aster_catalog_v2', null).catch(() => {});
   saveToIndexedDB('aster_catalog_v3', null).catch(() => {});
   saveToIndexedDB('aster_catalog_v4', null).catch(() => {});
-  saveToIndexedDB('aster_catalog_v7', null).catch(() => {});
 
   // ── Check IndexedDB catalog cache ──────────────────────────────────────
   try {
@@ -6552,17 +6616,5 @@ window.removeMpBurn    = removeMpBurn;
 window.onMiningSlider  = onMiningSlider;
 window.onMpBurnChange  = onMpBurnChange;
 </script>
-
-<!-- Phase 9E: mdesign comparison modal -->
-<div id="mdesign-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
-  z-index:2000;align-items:center;justify-content:center">
-  <div style="background:#0a0e1a;border:1px solid #1a2d44;padding:20px;min-width:320px;
-    max-width:480px;font-family:'Space Mono',monospace;font-size:9px;color:#c8d6e5;position:relative">
-    <div style="color:#00d4ff;letter-spacing:0.1em;margin-bottom:12px">◈ JPL MDESIGN COMPARISON</div>
-    <div id="mdesign-content">Loading...</div>
-    <button id="mdesign-close" style="position:absolute;top:10px;right:10px;background:none;
-      border:none;color:#6a8a9a;font-size:14px;cursor:pointer;line-height:1">✕</button>
-  </div>
-</div>
 </body>
 </html>
