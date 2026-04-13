@@ -455,7 +455,7 @@ Fixed the two remaining high-visibility control problems: redirect planning now 
 ### Key fixes
 - `physics.worker.js`
   - Replaced the single guessed redirect TOF with a redirect TOF search around the Hohmann estimate plus a broader screening grid.
-  - Redirect results now return solved segment bounds (`segment_jd_start`, `segment_jd_end`) alongside the redirected orbit.
+  - Redirect results now return solved segment bounds (`segment_jd_start`, `segment_jd_end`) alongside the redirected orbit and a simple schema version for UI/worker contract safety.
   - Redirect ranking now prefers the best full redirect solution for the chosen propulsion mode rather than a single low-departure candidate.
 - `index.html`
   - Removed the fake Bezier fallback for redirect paths; if no solved orbital segment exists, Aster now leaves the path unavailable instead of drawing incorrect geometry.

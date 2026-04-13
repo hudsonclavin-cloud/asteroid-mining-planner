@@ -4322,6 +4322,11 @@ function onRedirectResult(data) {
   clearPlannerError();
   document.getElementById('mp-computing').style.display = 'none';
 
+  if (data.schema_version !== 1) {
+    showPlannerError('Redirect result schema mismatch. Refresh required before planning redirect missions.');
+    return;
+  }
+
   const panel = document.getElementById('mp-redirect-results');
   panel.style.display = 'block';
 

@@ -1192,6 +1192,7 @@ self.onmessage = function(e) {
 
         const result = {
           type: 'redirect_result',
+          schema_version: 1,
           feasible: redirectFeasible,
           intercept: {
             jd_dep: best.jd_dep,
@@ -1296,7 +1297,7 @@ self.onmessage = function(e) {
 
     const finalResult = bestResult || bestFallback;
     if (!finalResult) {
-      self.postMessage({ type: 'redirect_result', feasible: false, error: 'No redirect solution could be evaluated for this target and propulsion mode.' });
+      self.postMessage({ type: 'redirect_result', schema_version: 1, feasible: false, error: 'No redirect solution could be evaluated for this target and propulsion mode.' });
       return;
     }
     if (!finalResult.feasible && !finalResult.error && Number.isFinite(finalResult.flags?.prop_fraction_pct)) {
