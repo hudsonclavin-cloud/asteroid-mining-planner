@@ -1258,7 +1258,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
           <option value="chemical_300">Chemical — Isp 300s · High thrust, heavy fuel load</option>
           <option value="ion_3000">Ion Drive — Isp 3000s · Low thrust, very efficient</option>
           <option value="nuclear_900">Nuclear Thermal — Isp 900s · High thrust + efficient</option>
-          <option value="solar_1500">Solar Electric — Isp 1500s · No fuel cost, slow burn</option>
+          <option value="solar_1500">Solar Electric — Isp 2500s · efficient, very low thrust</option>
         </select>
       </div>
       <div style="margin-bottom:10px">
@@ -2263,6 +2263,17 @@ function drawOrbitFromElements(line, el) {
   line.visible = true;
 }
 
+function buildOrbitSegmentPoints(el, jdStart, jdEnd, steps = 96) {
+  if (!el || !Number.isFinite(jdStart) || !Number.isFinite(jdEnd) || jdEnd <= jdStart) return [];
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const jd = jdStart + (jdEnd - jdStart) * (i / steps);
+    const state = kep2cartJS(el.a, el.e, el.i, el.Om, el.w, el.M0, el.epoch_JD, jd);
+    pts.push(new THREE.Vector3(state.x, state.y, state.z));
+  }
+  return pts;
+}
+
 // Draw orbit from Asterank asteroid (degrees, MJD epoch)
 function drawOrbitEllipse(ast) {
   const e = ast.e, a = ast.a;
@@ -2799,6 +2810,29 @@ const missionAnim = {
   spacecraft: null, engineLight: null,
   trailLine: null, trailPts: [],
 };
+
+function syncMissionPlaybackButtons() {
+  const playing = !!missionAnim.active && !!missionAnim.playing;
+  const plannerBtn = document.getElementById('btn-mp-play');
+  const miniBtn = document.getElementById('btn-anim-playpause');
+  if (plannerBtn) plannerBtn.textContent = playing ? '⏸ PAUSE MISSION' : '▶ PLAY MISSION';
+  if (miniBtn) miniBtn.textContent = playing ? '⏸' : '▶';
+}
+
+function setMissionAnimationPlaying(playing) {
+  if (!missionAnim.active) return;
+  missionAnim.playing = playing;
+  if (playing) lastRealTime = performance.now();
+  syncMissionPlaybackButtons();
+}
+
+function togglePrimaryPlayback() {
+  if (missionAnim.active) {
+    setMissionAnimationPlaying(!missionAnim.playing);
+  } else {
+    setPlayState(!isPlaying);
+  }
+}
 
 // ─── Cloudflare Worker (Perplexity research proxy) ────────────────────────────
 const WORKER_URL = 'https://aster-proxy.hudsonclavin.workers.dev';
@@ -4201,7 +4235,7 @@ const REDIRECT_PROPULSION = {
   chemical_300: { name: 'Chemical',      isp_s: 300  },
   ion_3000:     { name: 'Ion Drive',     isp_s: 3000 },
   nuclear_900:  { name: 'Nuclear Thermal', isp_s: 900 },
-  solar_1500:   { name: 'Solar Electric', isp_s: 1500 },
+  solar_1500:   { name: 'Solar Electric', isp_s: 2500 },
 };
 
 function getRedirectPropulsionModule() {
@@ -4279,10 +4313,11 @@ function onRedirectResult(data) {
 
   if (!data.feasible || data.error) {
     document.getElementById('rr-infeasible-msg').style.display = 'block';
-    if (data.error) {
-      document.getElementById('rr-infeasible-msg').innerHTML =
-        `✗ INFEASIBLE — ${data.error}<br><span style="color:#9ca3af">Try ion drive or a closer/smaller target.</span>`;
-    }
+    const propLoad = Number.isFinite(data.flags?.prop_fraction_pct) ? `${data.flags.prop_fraction_pct}% of asteroid mass` : 'an unsupported propellant load';
+    const propulsion = data.redirect?.propulsion || 'this propulsion mode';
+    const detail = data.error || `${propulsion} requires ${propLoad} for the best candidate found.`;
+    document.getElementById('rr-infeasible-msg').innerHTML =
+      `✗ INFEASIBLE — ${detail}<br><span style="color:#9ca3af">Try a smaller/closer target, a different launch window, or a higher-Isp propulsion mode.</span>`;
     document.getElementById('rr-score-bar').style.width = '0%';
     document.getElementById('rr-score-val').textContent = '0/100';
     return;
@@ -4366,28 +4401,36 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   if (ast) drawOrbitFromElements(redirectOriginalOrbitLine, asteroidToOrbitElements(ast));
   if (redirect.orbit_el) drawOrbitFromElements(redirectAdjustedOrbitLine, redirect.orbit_el);
 
-  const ax = intercept.astPos.x, ay = intercept.astPos.y, az = intercept.astPos.z;
-  const ex = redirect.earthArrPos.x, ey = redirect.earthArrPos.y, ez = redirect.earthArrPos.z;
-  const dx = ex - ax, dy = ey - ay;
-  const midX = (ax + ex) / 2;
-  const midY = (ay + ey) / 2 + Math.hypot(dx, dy) * 0.35;
-  const midZ = (az + ez) / 2;
-  const curve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(ax, ay, az),
-    new THREE.Vector3(midX, midY, midZ),
-    new THREE.Vector3(ex, ey, ez),
-  );
-  const pts = curve.getPoints(80);
+  let pts = [];
+  if (redirect.orbit_el && Number.isFinite(intercept.jd_arr) && Number.isFinite(redirect.jd_earth_arr)) {
+    pts = buildOrbitSegmentPoints(redirect.orbit_el, intercept.jd_arr, redirect.jd_earth_arr, 112);
+  }
+  if (pts.length < 2) {
+    const ax = intercept.astPos.x, ay = intercept.astPos.y, az = intercept.astPos.z;
+    const ex = redirect.earthArrPos.x, ey = redirect.earthArrPos.y, ez = redirect.earthArrPos.z;
+    const dx = ex - ax, dy = ey - ay;
+    const midX = (ax + ex) / 2;
+    const midY = (ay + ey) / 2 + Math.hypot(dx, dy) * 0.35;
+    const midZ = (az + ez) / 2;
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(ax, ay, az),
+      new THREE.Vector3(midX, midY, midZ),
+      new THREE.Vector3(ex, ey, ez),
+    );
+    pts = curve.getPoints(80);
+  }
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   _redirectArcLine = new THREE.Line(geo,
     new THREE.LineBasicMaterial({ color: 0xff8800, opacity: 0.65, transparent: true }));
   scene.add(_redirectArcLine);
 
   // Arrow at asteroid showing redirect direction toward Earth arrival
-  const dir = new THREE.Vector3(ex - ax, ey - ay, ez - az).normalize();
-  const arr = new THREE.ArrowHelper(dir, new THREE.Vector3(ax, ay, az), 0.12, 0xff8800, 0.05, 0.025);
-  scene.add(arr);
-  _cargoPodArcs.push(arr);
+  if (pts.length >= 2) {
+    const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
+    const arr = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, 0xff8800, 0.05, 0.025);
+    scene.add(arr);
+    _cargoPodArcs.push(arr);
+  }
 }
 
 function drawLunarOrbitRing() {
@@ -4991,7 +5034,7 @@ function startMissionAnimation(traj) {
   missionAnim.phase   = 'outbound';
 
   document.getElementById('mp-anim-controls').style.display = 'block';
-  document.getElementById('btn-mp-play').textContent = '⏸ PAUSE MISSION';
+  syncMissionPlaybackButtons();
 }
 
 function stopMissionAnimation() {
@@ -5005,8 +5048,7 @@ function stopMissionAnimation() {
   missionAnim.returnPts   = [];
   const ctrl = document.getElementById('mp-anim-controls');
   if (ctrl) ctrl.style.display = 'none';
-  const playBtn = document.getElementById('btn-mp-play');
-  if (playBtn) playBtn.textContent = '▶ PLAY MISSION';
+  syncMissionPlaybackButtons();
 }
 
 function updateMissionAnimation(dt) {
@@ -5048,8 +5090,7 @@ function updateMissionAnimation(dt) {
     missionAnim.phase   = 'done';
     missionAnim.playing = false;
     pos = missionAnim.returnPts[missionAnim.returnPts.length - 1].clone();
-    const ppBtn = document.getElementById('btn-anim-playpause');
-    if (ppBtn) ppBtn.textContent = '▶';
+    syncMissionPlaybackButtons();
   }
 
   if (!pos || !missionAnim.spacecraft) return;
@@ -5780,7 +5821,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'b' || e.key === 'B') { if (selectedId >= 0) toggleBurnMode(); return; }
   if (e.key === ' ') {
     e.preventDefault();
-    setPlayState(!isPlaying);
+    togglePrimaryPlayback();
     return;
   }
   if (e.key === '[') {
@@ -6035,19 +6076,14 @@ document.getElementById('btn-mp-play').addEventListener('click', () => {
   if (!missionAnim.active) {
     if (!optimalTrajectory) return;
     startMissionAnimation(optimalTrajectory);
-    missionAnim.playing = true;
-    document.getElementById('btn-anim-playpause').textContent = '⏸';
-    document.getElementById('btn-mp-play').textContent = '⏸ PAUSE MISSION';
+    setMissionAnimationPlaying(true);
   } else {
-    missionAnim.playing = !missionAnim.playing;
-    const pp = missionAnim.playing;
-    document.getElementById('btn-anim-playpause').textContent = pp ? '⏸' : '▶';
-    document.getElementById('btn-mp-play').textContent = pp ? '⏸ PAUSE MISSION' : '▶ PLAY MISSION';
+    setMissionAnimationPlaying(!missionAnim.playing);
   }
 });
 document.getElementById('btn-anim-playpause').addEventListener('click', () => {
-  missionAnim.playing = !missionAnim.playing;
-  document.getElementById('btn-anim-playpause').textContent = missionAnim.playing ? '⏸' : '▶';
+  if (!missionAnim.active && optimalTrajectory) startMissionAnimation(optimalTrajectory);
+  setMissionAnimationPlaying(!missionAnim.playing);
 });
 document.getElementById('btn-anim-stop').addEventListener('click', stopMissionAnimation);
 document.querySelectorAll('.anim-speed-btn').forEach(btn => {
@@ -6280,7 +6316,7 @@ function setPlayState(playing) {
 }
 
 document.getElementById('btn-play-pause').addEventListener('click', () => {
-  setPlayState(!isPlaying);
+  togglePrimaryPlayback();
 });
 
 document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {

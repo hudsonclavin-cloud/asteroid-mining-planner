@@ -1035,9 +1035,9 @@ self.onmessage = function(e) {
       return;
     }
 
-    // A — Intercept scan: 30-day departure steps, 9 TOF options 120–600 days
+    // A — Intercept scan: keep a pool of low-departure candidates, then score redirect feasibility per propulsion mode.
     const tof_options = [120, 180, 240, 300, 360, 420, 480, 540, 600];
-    let best = null;
+    const interceptCandidates = [];
     let lambert_fallback = false;
 
     for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += 30) {
@@ -1063,23 +1063,24 @@ self.onmessage = function(e) {
         const pc = patchedConic(ve, lam.v1, va, lam.v2, R_earth / 1000 + 400);
         if (!pc || !isFinite(pc.dv_dep) || pc.dv_dep > MISSION_GATE_DEP_KMS) continue;
 
-        if (!best || pc.dv_dep < best.dv_dep) {
-          best = {
-            jd_dep, jd_arr, tof,
-            dv_dep: pc.dv_dep,
-            earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
-            astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z },
-            v_ast:    { vx: astArr.vx, vy: astArr.vy, vz: astArr.vz },
-            ve, va,
-          };
-        }
+        interceptCandidates.push({
+          jd_dep, jd_arr, tof,
+          dv_dep: pc.dv_dep,
+          earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
+          astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z },
+          v_ast:    { vx: astArr.vx, vy: astArr.vy, vz: astArr.vz },
+          ve, va,
+        });
       }
     }
 
-    if (!best) {
+    if (!interceptCandidates.length) {
       self.postMessage({ type: 'redirect_result', feasible: false, error: `No viable intercept found within ΔV budget (${MISSION_GATE_DEP_KMS.toFixed(0)} km/s)` });
       return;
     }
+
+    interceptCandidates.sort((a, b) => a.dv_dep - b.dv_dep);
+    const candidatePool = interceptCandidates.slice(0, 60);
 
     // B — Asteroid mass
     let d_m;
@@ -1095,149 +1096,174 @@ self.onmessage = function(e) {
     const mass_kg = (4 / 3) * Math.PI * Math.pow(d_m / 2, 3) * 1500; // 1500 kg/m³ rubble pile
     const spec_type = ast.spec || ast.spec_T || 'unknown';
 
-    // C — Redirect ΔV: Hohmann transfer from asteroid intercept point to Earth
-    const r_ast_AU = Math.hypot(best.astPos.x, best.astPos.y, best.astPos.z);
-    const a_transfer_AU = (r_ast_AU + 1.0) / 2;
-    // Hohmann half-period in seconds: π * sqrt(a³/GM)
-    const hohmann_s = Math.PI * Math.sqrt(Math.pow(a_transfer_AU, 3) / GM_AU3_S2);
-    const hohmann_days = hohmann_s / 86400;
-    const jd_earth_arr = best.jd_arr + hohmann_days;
-
-    let earthArrPos;
-    try { earthArrPos = propagatePlanet(2, jd_earth_arr); } catch(e) {
-      earthArrPos = { x: 1.0, y: 0.0, z: 0.0, vx: 0, vy: 29.78, vz: 0 };
-    }
-
-    let dv_redirect = null, earth_arrival_vinf = null, redirect_lam_fallback = false, redirect_orbit_el = null;
-    try {
-      const astArr2 = [best.astPos.x,   best.astPos.y,   best.astPos.z  ];
-      const earArr2 = [earthArrPos.x,   earthArrPos.y,   earthArrPos.z  ];
-      let rLam = null;
-      try { rLam = izzoLambert(astArr2, earArr2, hohmann_days); } catch(e) {}
-      if (!rLam || !isFinite(rLam.v1?.[0])) {
-        try { rLam = lambert(astArr2, earArr2, hohmann_days); redirect_lam_fallback = true; } catch(e) {}
-      }
-      if (rLam && isFinite(rLam.v1?.[0])) {
-        // dv_redirect = |lam.v1 - v_ast|  (v1/v2 are arrays [vx,vy,vz])
-        const dv_x = rLam.v1[0] - best.v_ast.vx;
-        const dv_y = rLam.v1[1] - best.v_ast.vy;
-        const dv_z = rLam.v1[2] - best.v_ast.vz;
-        dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
-        redirect_orbit_el = cart2kep(best.astPos.x, best.astPos.y, best.astPos.z, rLam.v1[0], rLam.v1[1], rLam.v1[2], best.jd_arr);
-
-        // v_inf at Earth from Lambert v2 vs Earth arrival velocity
-        const dv_arr_x = rLam.v2[0] - earthArrPos.vx;
-        const dv_arr_y = rLam.v2[1] - earthArrPos.vy;
-        const dv_arr_z = rLam.v2[2] - earthArrPos.vz;
-        earth_arrival_vinf = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
-      } else {
-        // Fallback: vis-viva Hohmann ΔV
-        const v_circ_ast = Math.sqrt(GM_AU3_S2 / r_ast_AU) * AU / 1000; // km/s
-        const v_transfer_peri = Math.sqrt(GM_AU3_S2 * 2 / (r_ast_AU) - GM_AU3_S2 / a_transfer_AU) * AU / 1000;
-        dv_redirect = Math.abs(v_transfer_peri - v_circ_ast);
-        redirect_lam_fallback = true;
-      }
-    } catch(e) {
-      redirect_lam_fallback = true;
-    }
-    if (!isFinite(dv_redirect)) dv_redirect = null;
-    if (!isFinite(earth_arrival_vinf)) earth_arrival_vinf = null;
-    if (!redirect_orbit_el) {
-      self.postMessage({ type: 'redirect_result', feasible: false, error: 'Redirect leg did not yield a bounded elliptic orbit. Hyperbolic/non-elliptic redirects are not supported yet.' });
-      return;
-    }
-
-    const redirectSafetyMoid = moidApprox(redirect_orbit_el, best.jd_arr, 120);
-    if (isFinite(redirectSafetyMoid) && redirectSafetyMoid < 0.0005) {
-      self.postMessage({ type: 'redirect_result', feasible: false,
-        error: 'RESTRICTED: Redirected orbit MOID < 75,000 km. Planetary defense constraint.' });
-      return;
-    }
-
-    // D — Propellant mass (Tsiolkovsky)
-    const v_e = propulsionModule.isp_s * 9.80665 / 1000; // km/s exhaust velocity
-    const mass_ratio = isFinite(dv_redirect) ? Math.exp(dv_redirect / v_e) : null;
-    const m_prop = isFinite(mass_ratio) ? mass_kg * (mass_ratio - 1) / mass_ratio : null;
-    const m_prop_fraction = isFinite(m_prop) ? m_prop / mass_kg : null;
-
-    // E — Lunar capture is not modeled honestly here because Moon-relative states are unavailable.
-    const dv_lunar_capture = null;
-
-    // F — ISRU yield (5% extraction)
     const mineable_kg = mass_kg * 0.05;
     const water_kg = mineable_kg * (1 - miningFraction);
     const metal_kg = mineable_kg * miningFraction;
-
-    let extractable_value_usd = null;
     const whole_body_price_usd = isFinite(ast.price) && ast.price > 0 ? ast.price : null;
     const stype = spec_type.charAt(0).toUpperCase();
-    if (stype === 'C') {
-      extractable_value_usd = water_kg * 1500 + metal_kg * 500;
-    } else if (stype === 'M') {
-      extractable_value_usd = water_kg * 500 + metal_kg * 15000;
-    } else {
-      extractable_value_usd = water_kg * 500 + metal_kg * 3000;
-    }
+    let extractable_value_usd = null;
+    if (stype === 'C') extractable_value_usd = water_kg * 1500 + metal_kg * 500;
+    else if (stype === 'M') extractable_value_usd = water_kg * 500 + metal_kg * 15000;
+    else extractable_value_usd = water_kg * 500 + metal_kg * 3000;
     if (!isFinite(extractable_value_usd) || extractable_value_usd <= 0) extractable_value_usd = null;
 
-    // G — Feasibility score 0–100
-    const dv_total_redirect = isFinite(dv_redirect) ? best.dv_dep + dv_redirect : null;
-    const dv_score   = isFinite(dv_total_redirect) ? Math.max(0, 1 - dv_total_redirect / 15) * 50 : 0;
-    const prop_score = isFinite(m_prop_fraction) ? Math.max(0, 1 - m_prop_fraction) * 30 : 0;
-    const isru_score = isFinite(extractable_value_usd) ? Math.min(20, Math.log10(Math.max(1, extractable_value_usd)) / 12 * 20) : 0;
-    const feasibility_score = Math.round((isFinite(dv_score) ? dv_score : 0) + prop_score + isru_score);
+    function evaluateRedirectCandidate(best) {
+      const r_ast_AU = Math.hypot(best.astPos.x, best.astPos.y, best.astPos.z);
+      const a_transfer_AU = (r_ast_AU + 1.0) / 2;
+      const hohmann_s = Math.PI * Math.sqrt(Math.pow(a_transfer_AU, 3) / GM_AU3_S2);
+      const hohmann_days = hohmann_s / 86400;
+      const jd_earth_arr = best.jd_arr + hohmann_days;
 
-    const prop_fraction_pct = isFinite(m_prop_fraction) ? Math.round(m_prop_fraction * 100) : null;
-    const redirectFeasible = Number.isFinite(best.dv_dep) &&
-      Number.isFinite(dv_redirect) &&
-      Number.isFinite(m_prop_fraction) &&
-      m_prop_fraction < 0.95 &&
-      !!redirect_orbit_el;
+      let earthArrPos;
+      try { earthArrPos = propagatePlanet(2, jd_earth_arr); } catch(e) {
+        earthArrPos = { x: 1.0, y: 0.0, z: 0.0, vx: 0, vy: 29.78, vz: 0 };
+      }
 
-    self.postMessage({
-      type: 'redirect_result',
-      feasible: redirectFeasible,
-      intercept: {
-        jd_dep:   best.jd_dep,
-        jd_arr:   best.jd_arr,
-        tof:      best.tof,
-        dv_dep:   best.dv_dep,
-        earthPos: best.earthPos,
-        astPos:   best.astPos,
-      },
-      redirect: {
-        dv_redirect,
-        tof_redirect: hohmann_days,
-        jd_earth_arr,
-        earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
-        propulsion: propulsionModule.name,
-        isp_s: propulsionModule.isp_s,
-        orbit_el: redirect_orbit_el,
-      },
-      capture: {
-        dv_lunar_capture,
-        r_cap_km: R_cap,
-        v_inf_earth_arrival: earth_arrival_vinf,
-        capture_modeled: false,
-      },
-      asteroid: { mass_kg, d_m, spec_type },
-      isru: {
-        mineable_kg,
-        water_kg,
-        metal_kg,
-        mining_frac: miningFraction,
-        whole_body_price_usd,
-        extractable_value_usd,
-        extractable_value_basis: '5% extraction heuristic',
-      },
-      flags: {
-        prop_fraction_pct,
-        high_prop_load: isFinite(m_prop_fraction) ? m_prop_fraction > 0.5 : false,
-        lambert_fallback: lambert_fallback || redirect_lam_fallback,
-        safety_moid_au: Number.isFinite(redirectSafetyMoid) ? redirectSafetyMoid : null,
-      },
-      feasibility_score,
-    });
+      let dv_redirect = null, earth_arrival_vinf = null, redirect_lam_fallback = false, redirect_orbit_el = null;
+      try {
+        const astArr2 = [best.astPos.x, best.astPos.y, best.astPos.z];
+        const earArr2 = [earthArrPos.x, earthArrPos.y, earthArrPos.z];
+        let rLam = null;
+        try { rLam = izzoLambert(astArr2, earArr2, hohmann_days); } catch(e) {}
+        if (!rLam || !isFinite(rLam.v1?.[0])) {
+          try { rLam = lambert(astArr2, earArr2, hohmann_days); redirect_lam_fallback = true; } catch(e) {}
+        }
+        if (rLam && isFinite(rLam.v1?.[0])) {
+          const dv_x = rLam.v1[0] - best.v_ast.vx;
+          const dv_y = rLam.v1[1] - best.v_ast.vy;
+          const dv_z = rLam.v1[2] - best.v_ast.vz;
+          dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
+          redirect_orbit_el = cart2kep(best.astPos.x, best.astPos.y, best.astPos.z, rLam.v1[0], rLam.v1[1], rLam.v1[2], best.jd_arr);
+
+          const dv_arr_x = rLam.v2[0] - earthArrPos.vx;
+          const dv_arr_y = rLam.v2[1] - earthArrPos.vy;
+          const dv_arr_z = rLam.v2[2] - earthArrPos.vz;
+          earth_arrival_vinf = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
+        } else {
+          const v_circ_ast = Math.sqrt(GM_AU3_S2 / r_ast_AU) * AU / 1000;
+          const v_transfer_peri = Math.sqrt(GM_AU3_S2 * 2 / r_ast_AU - GM_AU3_S2 / a_transfer_AU) * AU / 1000;
+          dv_redirect = Math.abs(v_transfer_peri - v_circ_ast);
+          redirect_lam_fallback = true;
+        }
+      } catch(e) {
+        redirect_lam_fallback = true;
+      }
+      if (!isFinite(dv_redirect)) dv_redirect = null;
+      if (!isFinite(earth_arrival_vinf)) earth_arrival_vinf = null;
+      if (!redirect_orbit_el) return {
+        feasible: false,
+        error: 'Redirect leg did not yield a bounded elliptic orbit. Hyperbolic/non-elliptic redirects are not supported yet.',
+      };
+
+      const redirectSafetyMoid = moidApprox(redirect_orbit_el, best.jd_arr, 120);
+      if (isFinite(redirectSafetyMoid) && redirectSafetyMoid < 0.0005) {
+        return {
+          feasible: false,
+          error: 'RESTRICTED: Redirected orbit MOID < 75,000 km. Planetary defense constraint.',
+        };
+      }
+
+      const v_e = propulsionModule.isp_s * 9.80665 / 1000;
+      const mass_ratio = isFinite(dv_redirect) ? Math.exp(dv_redirect / v_e) : null;
+      const m_prop = isFinite(mass_ratio) ? mass_kg * (mass_ratio - 1) / mass_ratio : null;
+      const m_prop_fraction = isFinite(m_prop) ? m_prop / mass_kg : null;
+
+      const dv_total_redirect = isFinite(dv_redirect) ? best.dv_dep + dv_redirect : null;
+      const dv_score   = isFinite(dv_total_redirect) ? Math.max(0, 1 - dv_total_redirect / 15) * 50 : 0;
+      const prop_score = isFinite(m_prop_fraction) ? Math.max(0, 1 - m_prop_fraction) * 30 : 0;
+      const isru_score = isFinite(extractable_value_usd) ? Math.min(20, Math.log10(Math.max(1, extractable_value_usd)) / 12 * 20) : 0;
+      const feasibility_score = Math.round((isFinite(dv_score) ? dv_score : 0) + prop_score + isru_score);
+      const prop_fraction_pct = isFinite(m_prop_fraction) ? Math.round(m_prop_fraction * 100) : null;
+      const redirectFeasible = Number.isFinite(best.dv_dep) &&
+        Number.isFinite(dv_redirect) &&
+        Number.isFinite(m_prop_fraction) &&
+        m_prop_fraction < 0.95 &&
+        !!redirect_orbit_el;
+
+      return {
+        type: 'redirect_result',
+        feasible: redirectFeasible,
+        intercept: {
+          jd_dep: best.jd_dep,
+          jd_arr: best.jd_arr,
+          tof: best.tof,
+          dv_dep: best.dv_dep,
+          earthPos: best.earthPos,
+          astPos: best.astPos,
+        },
+        redirect: {
+          dv_redirect,
+          tof_redirect: hohmann_days,
+          jd_earth_arr,
+          earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
+          propulsion: propulsionModule.name,
+          isp_s: propulsionModule.isp_s,
+          orbit_el: redirect_orbit_el,
+        },
+        capture: {
+          dv_lunar_capture: null,
+          r_cap_km: R_cap,
+          v_inf_earth_arrival: earth_arrival_vinf,
+          capture_modeled: false,
+        },
+        asteroid: { mass_kg, d_m, spec_type },
+        isru: {
+          mineable_kg,
+          water_kg,
+          metal_kg,
+          mining_frac: miningFraction,
+          whole_body_price_usd,
+          extractable_value_usd,
+          extractable_value_basis: '5% extraction heuristic',
+        },
+        flags: {
+          prop_fraction_pct,
+          high_prop_load: isFinite(m_prop_fraction) ? m_prop_fraction > 0.5 : false,
+          lambert_fallback: lambert_fallback || redirect_lam_fallback,
+          safety_moid_au: Number.isFinite(redirectSafetyMoid) ? redirectSafetyMoid : null,
+        },
+        feasibility_score,
+        _rank_dv_total: dv_total_redirect,
+        _rank_prop_fraction: m_prop_fraction,
+      };
+    }
+
+    let bestResult = null;
+    let bestFallback = null;
+    for (const candidate of candidatePool) {
+      const result = evaluateRedirectCandidate(candidate);
+      if (!result) continue;
+      if (!bestFallback) bestFallback = result;
+      else {
+        const currProp = Number.isFinite(result._rank_prop_fraction) ? result._rank_prop_fraction : Infinity;
+        const bestProp = Number.isFinite(bestFallback._rank_prop_fraction) ? bestFallback._rank_prop_fraction : Infinity;
+        const currDv = Number.isFinite(result._rank_dv_total) ? result._rank_dv_total : Infinity;
+        const bestDv = Number.isFinite(bestFallback._rank_dv_total) ? bestFallback._rank_dv_total : Infinity;
+        if (currProp < bestProp || (currProp === bestProp && currDv < bestDv)) bestFallback = result;
+      }
+      if (!result.feasible) continue;
+      if (!bestResult) {
+        bestResult = result;
+        continue;
+      }
+      const betterScore = result.feasibility_score > bestResult.feasibility_score;
+      const tieBreakDv = result.feasibility_score === bestResult.feasibility_score &&
+        (Number.isFinite(result._rank_dv_total) ? result._rank_dv_total : Infinity) <
+        (Number.isFinite(bestResult._rank_dv_total) ? bestResult._rank_dv_total : Infinity);
+      if (betterScore || tieBreakDv) bestResult = result;
+    }
+
+    const finalResult = bestResult || bestFallback;
+    if (!finalResult) {
+      self.postMessage({ type: 'redirect_result', feasible: false, error: 'No redirect solution could be evaluated for this target and propulsion mode.' });
+      return;
+    }
+    if (!finalResult.feasible && !finalResult.error && Number.isFinite(finalResult.flags?.prop_fraction_pct)) {
+      finalResult.error = `Propellant requirement exceeds ${finalResult.flags.prop_fraction_pct}% of asteroid mass for ${propulsionModule.name}`;
+    }
+    delete finalResult._rank_dv_total;
+    delete finalResult._rank_prop_fraction;
+    self.postMessage(finalResult);
     return;
   }
 

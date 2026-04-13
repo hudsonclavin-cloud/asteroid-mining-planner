@@ -422,3 +422,25 @@ Ran a full five-domain audit and implemented the highest-risk fixes across worke
 ### Residual limits
 - Redirect capture into lunar orbit is still not a high-fidelity Earth-Moon patch solution; the UI now marks that capture term as unknown instead of implying it is solved.
 - Mission-share links restore planner setup, but they do not embed solved Lambert results; re-running the planner is still required to regenerate a shared trajectory choice.
+
+---
+
+## Phase 9J — Redirect + Playback Corrections (2026-04-11)
+
+### Summary
+Fixed three regressions in the mission-planning UI: redirect candidate selection was overfitting on departure ΔV instead of actual redirect feasibility, the capture/redirect path overlay was being drawn as a loose Bezier instead of following the solved redirected orbit, and the play controls still had split behavior between mission playback and the bottom timeline controls.
+
+### Key fixes
+- `physics.worker.js`
+  - Redirect planning now keeps a pool of intercept candidates and evaluates full redirect feasibility per propulsion mode before choosing the best result.
+  - Infeasible redirect results now return clearer propellant-load errors instead of silently using the lowest-departure intercept.
+- `index.html`
+  - Solar electric redirect option updated to a more realistic high-Isp screening value and less misleading label text.
+  - Redirect transfer arc now samples the solved redirected orbit from intercept date to Earth-arrival date, so the orange path aligns with the solid redirected orbit line.
+  - Added one shared playback toggle path so the bottom play button and spacebar control mission playback when a mission animation is active instead of fighting the global timeline state.
+  - Mission playback button labels now stay synchronized across the planner and mini transport controls.
+  - Redirect infeasible messaging now includes propulsion/load context when the blocker is excessive propellant mass.
+
+### CSS status
+- Layout CSS is functional, but the UI is still mixed between reusable rules and inline panel styling.
+- The next cleanup pass should extract mission-planner, redirect-results, and bottom-bar inline styles into named classes so visual changes stop requiring structural HTML edits.
