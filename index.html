@@ -2744,7 +2744,6 @@ let lastPropJD = -Infinity; // JD of last propagate message sent; avoids floodin
 let simSpeed = 0;
 let isPlaying = false;
 let lastSpeed = 1000;              // speed to resume when ▶ is pressed
-let wasPlayingBeforeScrub = false;
 let lastRealTime = performance.now();
 let isScrubbing = false;
 let lastSentJD = null;
@@ -2798,6 +2797,7 @@ let returnArcLine     = null;
 let _redirectArcLine  = null;
 let _lunarOrbitRing   = null;
 let _cargoPodArcs     = [];
+let activeRedirectVisual = null;
 let mpBurns           = [];
 
 // ── Phase 7F: Mission Visualization ──────────────────────────────────────────
@@ -2810,6 +2810,14 @@ const missionAnim = {
   spacecraft: null, engineLight: null,
   trailLine: null, trailPts: [],
 };
+let playbackModeBeforeScrub = 'none';
+
+function syncPrimaryPlaybackButton() {
+  const bottomBtn = document.getElementById('btn-play-pause');
+  if (!bottomBtn) return;
+  const primaryPlaying = missionAnim.active ? missionAnim.playing : isPlaying;
+  bottomBtn.textContent = primaryPlaying ? '❚❚' : '▶';
+}
 
 function syncMissionPlaybackButtons() {
   const playing = !!missionAnim.active && !!missionAnim.playing;
@@ -2817,12 +2825,18 @@ function syncMissionPlaybackButtons() {
   const miniBtn = document.getElementById('btn-anim-playpause');
   if (plannerBtn) plannerBtn.textContent = playing ? '⏸ PAUSE MISSION' : '▶ PLAY MISSION';
   if (miniBtn) miniBtn.textContent = playing ? '⏸' : '▶';
+  syncPrimaryPlaybackButton();
 }
 
 function setMissionAnimationPlaying(playing) {
   if (!missionAnim.active) return;
   missionAnim.playing = playing;
+  if (playing) {
+    isPlaying = false;
+    simSpeed = 0;
+  }
   if (playing) lastRealTime = performance.now();
+  syncSpeedButtons();
   syncMissionPlaybackButtons();
 }
 
@@ -4382,18 +4396,23 @@ function onRedirectResult(data) {
   // 3D visualization
   clearTrajectoryLine();
   clearRedirectVisualization();
+  activeRedirectVisual = { asteroidId: selectedId, intercept: ic, redirect: rd };
   drawTrajectoryLine(ic.earthPos, ic.astPos);
-  drawRedirectTrajectory(getSelectedAsteroid(), ic, rd);
+  if (!drawRedirectTrajectory(getSelectedAsteroid(), ic, rd)) {
+    setStatus('Redirect path unavailable for current solution window', true);
+  }
   drawLunarOrbitRing();
 }
 
-function clearRedirectVisualization() {
+function clearRedirectVisualization(options = {}) {
+  const { preserveState = false } = options;
   if (_redirectArcLine) { disposeObject3D(_redirectArcLine); _redirectArcLine = null; }
   if (_lunarOrbitRing)  { disposeObject3D(_lunarOrbitRing);  _lunarOrbitRing = null; }
   _cargoPodArcs.forEach(disposeObject3D);
   _cargoPodArcs = [];
   redirectOriginalOrbitLine.visible = false;
   redirectAdjustedOrbitLine.visible = false;
+  if (!preserveState) activeRedirectVisual = null;
 }
 
 function drawRedirectTrajectory(ast, intercept, redirect) {
@@ -4401,24 +4420,12 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   if (ast) drawOrbitFromElements(redirectOriginalOrbitLine, asteroidToOrbitElements(ast));
   if (redirect.orbit_el) drawOrbitFromElements(redirectAdjustedOrbitLine, redirect.orbit_el);
 
-  let pts = [];
-  if (redirect.orbit_el && Number.isFinite(intercept.jd_arr) && Number.isFinite(redirect.jd_earth_arr)) {
-    pts = buildOrbitSegmentPoints(redirect.orbit_el, intercept.jd_arr, redirect.jd_earth_arr, 112);
-  }
-  if (pts.length < 2) {
-    const ax = intercept.astPos.x, ay = intercept.astPos.y, az = intercept.astPos.z;
-    const ex = redirect.earthArrPos.x, ey = redirect.earthArrPos.y, ez = redirect.earthArrPos.z;
-    const dx = ex - ax, dy = ey - ay;
-    const midX = (ax + ex) / 2;
-    const midY = (ay + ey) / 2 + Math.hypot(dx, dy) * 0.35;
-    const midZ = (az + ez) / 2;
-    const curve = new THREE.QuadraticBezierCurve3(
-      new THREE.Vector3(ax, ay, az),
-      new THREE.Vector3(midX, midY, midZ),
-      new THREE.Vector3(ex, ey, ez),
-    );
-    pts = curve.getPoints(80);
-  }
+  const segStart = Number.isFinite(redirect.segment_jd_start) ? redirect.segment_jd_start : intercept.jd_arr;
+  const segEnd = Number.isFinite(redirect.segment_jd_end) ? redirect.segment_jd_end : redirect.jd_earth_arr;
+  const pts = redirect.orbit_el && Number.isFinite(segStart) && Number.isFinite(segEnd)
+    ? buildOrbitSegmentPoints(redirect.orbit_el, segStart, segEnd, 112)
+    : [];
+  if (pts.length < 2) return false;
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   _redirectArcLine = new THREE.Line(geo,
     new THREE.LineBasicMaterial({ color: 0xff8800, opacity: 0.65, transparent: true }));
@@ -4431,6 +4438,18 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
     scene.add(arr);
     _cargoPodArcs.push(arr);
   }
+  return true;
+}
+
+function syncActiveRedirectVisuals() {
+  if (!activeRedirectVisual) return;
+  const ast = asteroidData[activeRedirectVisual.asteroidId] || getSelectedAsteroid();
+  if (!ast) return;
+  clearRedirectVisualization({ preserveState: true });
+  if (!drawRedirectTrajectory(ast, activeRedirectVisual.intercept, activeRedirectVisual.redirect)) {
+    setStatus('Redirect path unavailable for current solution window', true);
+  }
+  drawLunarOrbitRing();
 }
 
 function drawLunarOrbitRing() {
@@ -4820,7 +4839,10 @@ function getLiveMissionPositions(traj) {
 
 function syncActiveMissionVisuals() {
   const traj = missionResults[selectedTrajIdx] || optimalTrajectory;
-  if (!traj) return;
+  if (!traj) {
+    syncActiveRedirectVisuals();
+    return;
+  }
   const live = getLiveMissionPositions(traj);
   if (!live) return;
   if (trajectoryLine || returnArcLine || trajectoryArrows.length) {
@@ -5826,13 +5848,26 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.key === '[') {
     const idx = SPEED_STEPS.indexOf(lastSpeed);
-    if (idx > 0) { lastSpeed = SPEED_STEPS[idx - 1]; if (isPlaying) simSpeed = lastSpeed; syncSpeedButtons(); }
-    else setPlayState(false);
+    if (idx > 0) {
+      lastSpeed = SPEED_STEPS[idx - 1];
+      if (missionAnim.active) missionAnim.speed = lastSpeed;
+      else if (isPlaying) simSpeed = lastSpeed;
+      syncSpeedButtons();
+    } else if (missionAnim.active) {
+      setMissionAnimationPlaying(false);
+    } else {
+      setPlayState(false);
+    }
     return;
   }
   if (e.key === ']') {
     const idx = SPEED_STEPS.indexOf(lastSpeed);
-    if (idx < SPEED_STEPS.length - 1) { lastSpeed = SPEED_STEPS[idx + 1]; if (isPlaying) simSpeed = lastSpeed; syncSpeedButtons(); }
+    if (idx < SPEED_STEPS.length - 1) {
+      lastSpeed = SPEED_STEPS[idx + 1];
+      if (missionAnim.active) missionAnim.speed = lastSpeed;
+      else if (isPlaying) simSpeed = lastSpeed;
+      syncSpeedButtons();
+    }
     return;
   }
   if (e.key === 'f' || e.key === 'F') { if (selectedId >= 0) flyTo(selectedId); return; }
@@ -6089,8 +6124,10 @@ document.getElementById('btn-anim-stop').addEventListener('click', stopMissionAn
 document.querySelectorAll('.anim-speed-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     missionAnim.speed = parseInt(btn.dataset.aspeed);
+    lastSpeed = missionAnim.speed;
     document.querySelectorAll('.anim-speed-btn').forEach(b => b.classList.remove('anim-speed-active'));
     btn.classList.add('anim-speed-active');
+    syncSpeedButtons();
   });
 });
 
@@ -6281,14 +6318,21 @@ scrubber.value = jdToScrubberPos(TODAY_JD);
 
 function beginScrub() {
   isScrubbing = true;
-  wasPlayingBeforeScrub = isPlaying;
-  if (isPlaying) setPlayState(false);
+  playbackModeBeforeScrub = missionAnim.active && missionAnim.playing
+    ? 'mission'
+    : isPlaying
+      ? 'timeline'
+      : 'none';
+  if (playbackModeBeforeScrub === 'mission') setMissionAnimationPlaying(false);
+  if (playbackModeBeforeScrub === 'timeline') setPlayState(false);
 }
 
 function endScrub() {
   if (!isScrubbing) return;
   isScrubbing = false;
-  if (wasPlayingBeforeScrub) setPlayState(true);
+  if (playbackModeBeforeScrub === 'mission') setMissionAnimationPlaying(true);
+  if (playbackModeBeforeScrub === 'timeline') setPlayState(true);
+  playbackModeBeforeScrub = 'none';
 }
 
 scrubber.addEventListener('mousedown', beginScrub);
@@ -6308,11 +6352,14 @@ function syncSpeedButtons() {
 }
 
 function setPlayState(playing) {
+  if (playing && missionAnim.active) {
+    missionAnim.playing = false;
+  }
   isPlaying = playing;
   simSpeed = playing ? lastSpeed : 0;
-  document.getElementById('btn-play-pause').textContent = playing ? '❚❚' : '▶';
   if (playing) lastRealTime = performance.now();
   syncSpeedButtons();
+  syncMissionPlaybackButtons();
 }
 
 document.getElementById('btn-play-pause').addEventListener('click', () => {
@@ -6322,7 +6369,12 @@ document.getElementById('btn-play-pause').addEventListener('click', () => {
 document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
   btn.addEventListener('click', () => {
     lastSpeed = parseInt(btn.dataset.speed, 10);
-    setPlayState(true);
+    if (missionAnim.active) {
+      missionAnim.speed = lastSpeed;
+      setMissionAnimationPlaying(true);
+    } else {
+      setPlayState(true);
+    }
   });
 });
 
@@ -6433,14 +6485,14 @@ function animate() {
     fpsLast = now;
   }
 
-  if (!isScrubbing && simSpeed !== 0) {
+  if (!missionAnim.active && !isScrubbing && simSpeed !== 0) {
     const nextJD = clampJD(currentJD + (simSpeed / 86400) * dt);
     if (nextJD === currentJD) {
       setPlayState(false);
     } else {
       setCurrentJD(nextJD);
     }
-  } else if (!isScrubbing && currentJD !== lastPropJD) {
+  } else if (!missionAnim.active && !isScrubbing && currentJD !== lastPropJD) {
     setCurrentJD(currentJD, { syncScrubber: true });
   }
 

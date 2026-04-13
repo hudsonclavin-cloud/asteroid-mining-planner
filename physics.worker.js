@@ -1112,23 +1112,41 @@ self.onmessage = function(e) {
       const a_transfer_AU = (r_ast_AU + 1.0) / 2;
       const hohmann_s = Math.PI * Math.sqrt(Math.pow(a_transfer_AU, 3) / GM_AU3_S2);
       const hohmann_days = hohmann_s / 86400;
-      const jd_earth_arr = best.jd_arr + hohmann_days;
+      const hohmann_center = Math.max(90, Math.min(960, Math.round(hohmann_days / 30) * 30));
+      const redirectTofCandidates = Array.from(new Set(
+        [120, 180, 240, 300, 360, 420, 480, 540, 600, 720, 840, 960]
+          .concat([-180, -120, -60, 0, 60, 120, 180].map(offset => hohmann_center + offset))
+          .filter(days => Number.isFinite(days) && days >= 90 && days <= 1080)
+      )).sort((a, b) => a - b);
 
-      let earthArrPos;
-      try { earthArrPos = propagatePlanet(2, jd_earth_arr); } catch(e) {
-        earthArrPos = { x: 1.0, y: 0.0, z: 0.0, vx: 0, vy: 29.78, vz: 0 };
-      }
+      let bestRedirectResult = null;
+      let bestRedirectFallback = null;
+      let bestError = 'No redirect transfer solved for this intercept.';
 
-      let dv_redirect = null, earth_arrival_vinf = null, redirect_lam_fallback = false, redirect_orbit_el = null;
-      try {
-        const astArr2 = [best.astPos.x, best.astPos.y, best.astPos.z];
-        const earArr2 = [earthArrPos.x, earthArrPos.y, earthArrPos.z];
-        let rLam = null;
-        try { rLam = izzoLambert(astArr2, earArr2, hohmann_days); } catch(e) {}
-        if (!rLam || !isFinite(rLam.v1?.[0])) {
-          try { rLam = lambert(astArr2, earArr2, hohmann_days); redirect_lam_fallback = true; } catch(e) {}
-        }
-        if (rLam && isFinite(rLam.v1?.[0])) {
+      for (const redirectTofDays of redirectTofCandidates) {
+        const jd_earth_arr = best.jd_arr + redirectTofDays;
+
+        let earthArrPos;
+        try { earthArrPos = propagatePlanet(2, jd_earth_arr); } catch(e) { continue; }
+
+        let dv_redirect = null;
+        let earth_arrival_vinf = null;
+        let redirect_lam_fallback = false;
+        let redirect_orbit_el = null;
+
+        try {
+          const astArr2 = [best.astPos.x, best.astPos.y, best.astPos.z];
+          const earArr2 = [earthArrPos.x, earthArrPos.y, earthArrPos.z];
+          let rLam = null;
+          try { rLam = izzoLambert(astArr2, earArr2, redirectTofDays); } catch(e) {}
+          if (!rLam || !isFinite(rLam.v1?.[0])) {
+            try { rLam = lambert(astArr2, earArr2, redirectTofDays); redirect_lam_fallback = true; } catch(e) {}
+          }
+          if (!rLam || !isFinite(rLam.v1?.[0]) || !isFinite(rLam.v2?.[0])) {
+            bestError = 'Redirect Lambert solve failed for all tested return windows.';
+            continue;
+          }
+
           const dv_x = rLam.v1[0] - best.v_ast.vx;
           const dv_y = rLam.v1[1] - best.v_ast.vy;
           const dv_z = rLam.v1[2] - best.v_ast.vz;
@@ -1139,93 +1157,116 @@ self.onmessage = function(e) {
           const dv_arr_y = rLam.v2[1] - earthArrPos.vy;
           const dv_arr_z = rLam.v2[2] - earthArrPos.vz;
           earth_arrival_vinf = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
-        } else {
-          const v_circ_ast = Math.sqrt(GM_AU3_S2 / r_ast_AU) * AU / 1000;
-          const v_transfer_peri = Math.sqrt(GM_AU3_S2 * 2 / r_ast_AU - GM_AU3_S2 / a_transfer_AU) * AU / 1000;
-          dv_redirect = Math.abs(v_transfer_peri - v_circ_ast);
-          redirect_lam_fallback = true;
+        } catch(e) {
+          bestError = 'Redirect transfer evaluation failed during state conversion.';
+          continue;
         }
-      } catch(e) {
-        redirect_lam_fallback = true;
-      }
-      if (!isFinite(dv_redirect)) dv_redirect = null;
-      if (!isFinite(earth_arrival_vinf)) earth_arrival_vinf = null;
-      if (!redirect_orbit_el) return {
-        feasible: false,
-        error: 'Redirect leg did not yield a bounded elliptic orbit. Hyperbolic/non-elliptic redirects are not supported yet.',
-      };
 
-      const redirectSafetyMoid = moidApprox(redirect_orbit_el, best.jd_arr, 120);
-      if (isFinite(redirectSafetyMoid) && redirectSafetyMoid < 0.0005) {
-        return {
-          feasible: false,
-          error: 'RESTRICTED: Redirected orbit MOID < 75,000 km. Planetary defense constraint.',
+        if (!isFinite(dv_redirect) || !redirect_orbit_el) {
+          bestError = 'Redirect leg did not yield a bounded elliptic orbit. Hyperbolic/non-elliptic redirects are not supported yet.';
+          continue;
+        }
+
+        const redirectSafetyMoid = moidApprox(redirect_orbit_el, best.jd_arr, 120);
+        if (isFinite(redirectSafetyMoid) && redirectSafetyMoid < 0.0005) {
+          bestError = 'RESTRICTED: Redirected orbit MOID < 75,000 km. Planetary defense constraint.';
+          continue;
+        }
+
+        const v_e = propulsionModule.isp_s * 9.80665 / 1000;
+        const mass_ratio = isFinite(dv_redirect) ? Math.exp(dv_redirect / v_e) : null;
+        const m_prop = isFinite(mass_ratio) ? mass_kg * (mass_ratio - 1) / mass_ratio : null;
+        const m_prop_fraction = isFinite(m_prop) ? m_prop / mass_kg : null;
+
+        const dv_total_redirect = isFinite(dv_redirect) ? best.dv_dep + dv_redirect : null;
+        const dv_score   = isFinite(dv_total_redirect) ? Math.max(0, 1 - dv_total_redirect / 15) * 50 : 0;
+        const prop_score = isFinite(m_prop_fraction) ? Math.max(0, 1 - m_prop_fraction) * 30 : 0;
+        const isru_score = isFinite(extractable_value_usd) ? Math.min(20, Math.log10(Math.max(1, extractable_value_usd)) / 12 * 20) : 0;
+        const feasibility_score = Math.round((isFinite(dv_score) ? dv_score : 0) + prop_score + isru_score);
+        const prop_fraction_pct = isFinite(m_prop_fraction) ? Math.round(m_prop_fraction * 100) : null;
+        const redirectFeasible = Number.isFinite(best.dv_dep) &&
+          Number.isFinite(dv_redirect) &&
+          Number.isFinite(m_prop_fraction) &&
+          m_prop_fraction < 0.95 &&
+          !!redirect_orbit_el;
+
+        const result = {
+          type: 'redirect_result',
+          feasible: redirectFeasible,
+          intercept: {
+            jd_dep: best.jd_dep,
+            jd_arr: best.jd_arr,
+            tof: best.tof,
+            dv_dep: best.dv_dep,
+            earthPos: best.earthPos,
+            astPos: best.astPos,
+          },
+          redirect: {
+            dv_redirect,
+            tof_redirect: redirectTofDays,
+            jd_earth_arr,
+            earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
+            propulsion: propulsionModule.name,
+            isp_s: propulsionModule.isp_s,
+            orbit_el: redirect_orbit_el,
+            segment_jd_start: best.jd_arr,
+            segment_jd_end: jd_earth_arr,
+          },
+          capture: {
+            dv_lunar_capture: null,
+            r_cap_km: R_cap,
+            v_inf_earth_arrival: isFinite(earth_arrival_vinf) ? earth_arrival_vinf : null,
+            capture_modeled: false,
+          },
+          asteroid: { mass_kg, d_m, spec_type },
+          isru: {
+            mineable_kg,
+            water_kg,
+            metal_kg,
+            mining_frac: miningFraction,
+            whole_body_price_usd,
+            extractable_value_usd,
+            extractable_value_basis: '5% extraction heuristic',
+          },
+          flags: {
+            prop_fraction_pct,
+            high_prop_load: isFinite(m_prop_fraction) ? m_prop_fraction > 0.5 : false,
+            lambert_fallback: lambert_fallback || redirect_lam_fallback,
+            safety_moid_au: Number.isFinite(redirectSafetyMoid) ? redirectSafetyMoid : null,
+          },
+          feasibility_score,
+          _rank_dv_total: dv_total_redirect,
+          _rank_prop_fraction: m_prop_fraction,
         };
+
+        if (!bestRedirectFallback) {
+          bestRedirectFallback = result;
+        } else {
+          const currProp = Number.isFinite(result._rank_prop_fraction) ? result._rank_prop_fraction : Infinity;
+          const bestProp = Number.isFinite(bestRedirectFallback._rank_prop_fraction) ? bestRedirectFallback._rank_prop_fraction : Infinity;
+          const currDv = Number.isFinite(result._rank_dv_total) ? result._rank_dv_total : Infinity;
+          const bestDv = Number.isFinite(bestRedirectFallback._rank_dv_total) ? bestRedirectFallback._rank_dv_total : Infinity;
+          if (currProp < bestProp || (currProp === bestProp && currDv < bestDv)) bestRedirectFallback = result;
+        }
+
+        if (!redirectFeasible) continue;
+        if (!bestRedirectResult) {
+          bestRedirectResult = result;
+          continue;
+        }
+        const betterScore = result.feasibility_score > bestRedirectResult.feasibility_score;
+        const tieBreakDv = result.feasibility_score === bestRedirectResult.feasibility_score &&
+          (Number.isFinite(result._rank_dv_total) ? result._rank_dv_total : Infinity) <
+          (Number.isFinite(bestRedirectResult._rank_dv_total) ? bestRedirectResult._rank_dv_total : Infinity);
+        if (betterScore || tieBreakDv) bestRedirectResult = result;
       }
 
-      const v_e = propulsionModule.isp_s * 9.80665 / 1000;
-      const mass_ratio = isFinite(dv_redirect) ? Math.exp(dv_redirect / v_e) : null;
-      const m_prop = isFinite(mass_ratio) ? mass_kg * (mass_ratio - 1) / mass_ratio : null;
-      const m_prop_fraction = isFinite(m_prop) ? m_prop / mass_kg : null;
-
-      const dv_total_redirect = isFinite(dv_redirect) ? best.dv_dep + dv_redirect : null;
-      const dv_score   = isFinite(dv_total_redirect) ? Math.max(0, 1 - dv_total_redirect / 15) * 50 : 0;
-      const prop_score = isFinite(m_prop_fraction) ? Math.max(0, 1 - m_prop_fraction) * 30 : 0;
-      const isru_score = isFinite(extractable_value_usd) ? Math.min(20, Math.log10(Math.max(1, extractable_value_usd)) / 12 * 20) : 0;
-      const feasibility_score = Math.round((isFinite(dv_score) ? dv_score : 0) + prop_score + isru_score);
-      const prop_fraction_pct = isFinite(m_prop_fraction) ? Math.round(m_prop_fraction * 100) : null;
-      const redirectFeasible = Number.isFinite(best.dv_dep) &&
-        Number.isFinite(dv_redirect) &&
-        Number.isFinite(m_prop_fraction) &&
-        m_prop_fraction < 0.95 &&
-        !!redirect_orbit_el;
-
-      return {
-        type: 'redirect_result',
-        feasible: redirectFeasible,
-        intercept: {
-          jd_dep: best.jd_dep,
-          jd_arr: best.jd_arr,
-          tof: best.tof,
-          dv_dep: best.dv_dep,
-          earthPos: best.earthPos,
-          astPos: best.astPos,
-        },
-        redirect: {
-          dv_redirect,
-          tof_redirect: hohmann_days,
-          jd_earth_arr,
-          earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
-          propulsion: propulsionModule.name,
-          isp_s: propulsionModule.isp_s,
-          orbit_el: redirect_orbit_el,
-        },
-        capture: {
-          dv_lunar_capture: null,
-          r_cap_km: R_cap,
-          v_inf_earth_arrival: earth_arrival_vinf,
-          capture_modeled: false,
-        },
-        asteroid: { mass_kg, d_m, spec_type },
-        isru: {
-          mineable_kg,
-          water_kg,
-          metal_kg,
-          mining_frac: miningFraction,
-          whole_body_price_usd,
-          extractable_value_usd,
-          extractable_value_basis: '5% extraction heuristic',
-        },
-        flags: {
-          prop_fraction_pct,
-          high_prop_load: isFinite(m_prop_fraction) ? m_prop_fraction > 0.5 : false,
-          lambert_fallback: lambert_fallback || redirect_lam_fallback,
-          safety_moid_au: Number.isFinite(redirectSafetyMoid) ? redirectSafetyMoid : null,
-        },
-        feasibility_score,
-        _rank_dv_total: dv_total_redirect,
-        _rank_prop_fraction: m_prop_fraction,
-      };
+      const chosen = bestRedirectResult || bestRedirectFallback;
+      if (!chosen) return { feasible: false, error: bestError };
+      if (!chosen.feasible && !chosen.error && Number.isFinite(chosen.flags?.prop_fraction_pct)) {
+        chosen.error = `Propellant requirement exceeds ${chosen.flags.prop_fraction_pct}% of asteroid mass for ${propulsionModule.name}`;
+      }
+      return chosen;
     }
 
     let bestResult = null;

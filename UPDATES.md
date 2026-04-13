@@ -444,3 +444,26 @@ Fixed three regressions in the mission-planning UI: redirect candidate selection
 ### CSS status
 - Layout CSS is functional, but the UI is still mixed between reusable rules and inline panel styling.
 - The next cleanup pass should extract mission-planner, redirect-results, and bottom-bar inline styles into named classes so visual changes stop requiring structural HTML edits.
+
+---
+
+## Phase 9K — Solved Redirect Window + Unified Playback (2026-04-12)
+
+### Summary
+Fixed the two remaining high-visibility control problems: redirect planning now searches a real set of return windows instead of forcing a single Hohmann-style guess, and the bottom transport controls now respect mission playback as the active time owner instead of fighting the global timeline.
+
+### Key fixes
+- `physics.worker.js`
+  - Replaced the single guessed redirect TOF with a redirect TOF search around the Hohmann estimate plus a broader screening grid.
+  - Redirect results now return solved segment bounds (`segment_jd_start`, `segment_jd_end`) alongside the redirected orbit.
+  - Redirect ranking now prefers the best full redirect solution for the chosen propulsion mode rather than a single low-departure candidate.
+- `index.html`
+  - Removed the fake Bezier fallback for redirect paths; if no solved orbital segment exists, Aster now leaves the path unavailable instead of drawing incorrect geometry.
+  - Added persistent redirect visual state so solved redirect arcs can be redrawn from the worker result instead of one-shot snapshot geometry.
+  - Unified the bottom play button, keyboard toggle, scrub pause/resume, and speed buttons so mission playback and timeline playback do not run at the same time.
+  - Bottom speed controls now target mission playback speed when a mission animation is active.
+
+### Result
+- The orange redirect path now follows a solved redirect segment rather than a guessed curve.
+- The solid redirected orbit is derived from the selected redirect solution, not a one-off radial estimate.
+- The bottom play button now controls the active playback mode consistently.
