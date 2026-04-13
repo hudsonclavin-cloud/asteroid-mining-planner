@@ -467,3 +467,32 @@ Fixed the two remaining high-visibility control problems: redirect planning now 
 - The orange redirect path now follows a solved redirect segment rather than a guessed curve.
 - The solid redirected orbit is derived from the selected redirect solution, not a one-off radial estimate.
 - The bottom play button now controls the active playback mode consistently.
+
+---
+
+## Phase 9L — Planner Integrity Pass (2026-04-12)
+
+### Summary
+Addressed the biggest trust and wiring gaps in the planner UI: redirect configuration now materially affects the returned result, economics now expose the founding doc’s required value views, and several misleading or dead UI states were cleaned up.
+
+### Key fixes
+- `physics.worker.js`
+  - Redirect planning now accepts and uses capture target, delivery destination, spacecraft class, and launch vehicle data instead of ignoring most of the redirect configuration.
+  - Redirect feasibility now includes launch-stack mass, launch-vehicle capacity checks, and support mission cost fields in the returned payload.
+  - Capture results now carry dynamic labels, target orbit radius, delivery-node context, and screening-grade capture/delivery ΔV terms instead of a hardcoded lunar-only block.
+  - Early redirect error responses now include the same schema version as successful responses so UI contract checks fail cleanly.
+- `index.html`
+  - Added launch-window validation to block past-year mission searches.
+  - Mission planner now auto-closes the left filter panel when opening, and the mission panel width is hardened to avoid the severe clipping case.
+  - Extract planner result cards are now re-ranked with configuration-aware operational metrics so spacecraft and launch vehicle choices affect score, cost, and overweight status.
+  - Economics tab now shows `Paper Value`, `Realizable NPV`, and a low-cost sanity warning for sub-$500M totals; ROI no longer claims a numeric multiple when the underlying realized return is unknown.
+  - Materials price mode now behaves like an actual toggle with visible mode feedback.
+  - Research markdown now renders `####` headings and horizontal rules instead of leaking raw markdown.
+  - Filter preset selection now stays visible after applying a preset, while manual filter edits clear the preset selection.
+  - ΔV filter range is now aligned to the 10 km/s planner gate, and NHATS/planner mismatches are surfaced in the leaderboard and inspector.
+  - Mission-plan export now gives user feedback when it succeeds.
+
+### Result
+- Redirect planning is no longer mostly decorative: the selected redirect target, delivery destination, spacecraft, and launcher now change the mission feasibility output.
+- The economics panel is materially closer to the founding document and less likely to show contradictory value language.
+- Several UI bugs that weakened trust now either behave correctly or fail more honestly.

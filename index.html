@@ -537,7 +537,15 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 #mat-table tr.total-row td { border-top:1px solid #1a2235; color:#00d4ff; }
 #mat-table td.value-col { text-align:right; }
 /* ─── Phase 7D: Mission Planner (panel-integrated) ──────────────────────────── */
-#right-panel.mp-mode { width: 500px; overflow-x: hidden; overflow-y: hidden; padding: 0; transition: right 0.3s ease; }
+#right-panel.mp-mode {
+  width: min(500px, calc(100vw - 24px));
+  min-width: 400px;
+  max-width: 500px;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  padding: 0;
+  transition: right 0.3s ease;
+}
 .mp-select {
   width:100%; background:#0d1627; border:1px solid #1a2235; color:#c8d6e5;
   font-family:'Space Mono',monospace; font-size:9px; padding:5px 8px;
@@ -751,8 +759,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 </div>
 
 <div id="shortcut-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,5,8,0.92);z-index:200;
-  font-family:'Space Mono','Courier New',monospace;align-items:center;justify-content:center;">
-  <div style="border:1px solid #1a2235;padding:32px 40px;min-width:360px;max-width:480px">
+  font-family:'Space Mono','Courier New',monospace;align-items:center;justify-content:center;padding:20px;">
+  <div style="border:1px solid #1a2235;padding:32px 40px;width:min(560px,calc(100vw - 40px));max-height:calc(100vh - 40px);overflow-y:auto">
     <div style="color:#00d4ff;font-size:13px;letter-spacing:0.2em;margin-bottom:20px">⌨ KEYBOARD SHORTCUTS</div>
     <table style="border-collapse:collapse;width:100%;font-size:12px">
       <tr><td style="color:#60a5fa;padding:4px 16px 4px 0;width:80px">?</td><td style="color:#e5e7eb">Toggle this panel</td></tr>
@@ -880,12 +888,12 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   <div class="filter-group">
     <div class="filter-row">
       <span class="flabel">ΔV km/s</span>
-      <span class="fval" id="dv-range-display" style="min-width:80px;text-align:right;flex:1">0.0 – 15.0</span>
+      <span class="fval" id="dv-range-display" style="min-width:80px;text-align:right;flex:1">0.0 – 10.0</span>
     </div>
     <div class="dual-range">
       <div class="dual-range-track"><div class="dual-range-fill" id="dv-fill"></div></div>
-      <input type="range" id="dv-min" min="0" max="15" step="0.5" value="0">
-      <input type="range" id="dv-max" min="0" max="15" step="0.5" value="15">
+      <input type="range" id="dv-min" min="0" max="10" step="0.5" value="0">
+      <input type="range" id="dv-max" min="0" max="10" step="0.5" value="10">
     </div>
 
     <!-- Resource value log-scale dual range -->
@@ -1118,10 +1126,14 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <div class="data-row"><span class="label">WATER VALUE</span><span class="value accent" id="eco-water">—</span></div>
       <div class="data-row"><span class="label">METAL VALUE</span><span class="value" id="eco-metals">—</span></div>
       <div class="data-row"><span class="label">ASTERANK VALUE</span><span class="value accent" id="eco-asterank">—</span></div>
+      <div class="data-row"><span class="label">PAPER VALUE</span><span class="value accent" id="eco-paper-value">—</span></div>
+      <div class="data-row"><span class="label">REALIZABLE NPV</span><span class="value accent" id="eco-npv">—</span></div>
       <div class="data-row" style="margin-top:6px"><span class="label">ROI MULTIPLE</span><span class="value profit" id="eco-roi">—</span></div>
 
       <div id="eco-isru-note" style="display:none;border:1px solid #00d4ff;padding:8px;
         color:#00d4ff;font-size:10px;line-height:1.6;margin-top:10px"></div>
+      <div id="eco-cost-warning" style="display:none;border:1px solid #7c3a00;padding:8px;
+        color:#fbbf24;font-size:10px;line-height:1.6;margin-top:10px"></div>
 
       <button class="action-btn" id="btn-export-report" style="margin-top:10px">↓ EXPORT MISSION REPORT</button>
       <button class="action-btn" id="btn-share" style="margin-top:4px">⬡ SHARE MISSION URL</button>
@@ -1417,7 +1429,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       </div>
 
       <div id="rr-capture" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
-        <div style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">LUNAR CAPTURE BURN</div>
+        <div id="rr-capture-header" style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">DESTINATION CAPTURE</div>
         <pre id="rr-capture-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
       </div>
 
@@ -1636,6 +1648,78 @@ function resolveAsteroidEconomics(ast) {
   };
 }
 
+function primaryCommodityForSpec(spec) {
+  const s = (spec || '').charAt(0).toUpperCase();
+  if (s === 'M') return 'platinum';
+  if (s === 'S') return 'nickel';
+  if (s === 'C') return 'water';
+  return null;
+}
+
+function computeRealizableNPV(commodity, returnedKg, spotPricePerKg, yearsToSell = 10, discountRate = 0.08) {
+  const elasticity = { platinum: -0.4, palladium: -0.5, nickel: -0.3, iron: -0.2, water: -0.8 };
+  const annualMarketKg = { platinum: 170000, palladium: 190000, nickel: 2500000000, iron: 2000000000000, water: null };
+  if (!(Number.isFinite(returnedKg) && returnedKg > 0 && Number.isFinite(spotPricePerKg) && spotPricePerKg > 0)) return null;
+  const annualMarket = annualMarketKg[commodity];
+  if (!annualMarket) return returnedKg * spotPricePerKg;
+  const epsilon = elasticity[commodity] || -0.3;
+  const annualSale = returnedKg / yearsToSell;
+  let npv = 0;
+  for (let year = 1; year <= yearsToSell; year++) {
+    const priceRatio = Math.pow((annualMarket + annualSale) / annualMarket, 1 / epsilon);
+    const realizedPrice = spotPricePerKg * priceRatio;
+    npv += (annualSale * realizedPrice) / Math.pow(1 + discountRate, year);
+  }
+  return npv;
+}
+
+function computeEconomicsSummary(ast, options = {}) {
+  const dryMass = Number.isFinite(options.dryMass) ? options.dryMass : 1000;
+  const isp = Number.isFinite(options.isp) ? options.isp : 450;
+  const dv = Number.isFinite(options.dv) ? options.dv : getDisplayDeltaV(ast);
+  const launchCostPerKg = Number.isFinite(options.launchCostPerKg) ? options.launchCostPerKg : 2700;
+  const totalCostMultiplier = Number.isFinite(options.totalCostMultiplier) ? options.totalCostMultiplier : 1.8;
+  const payloadKg = Number.isFinite(options.payloadKg) ? options.payloadKg : dryMass * 0.05;
+  const extractionFraction = Number.isFinite(options.extractionFraction) ? options.extractionFraction : 0.05;
+  const g0 = 9.80665;
+
+  const propellantKg = Number.isFinite(dv) && Number.isFinite(isp) && isp > 0
+    ? dryMass * (Math.exp(dv * 1000 / (g0 * isp)) - 1)
+    : null;
+  const launchMassKg = Number.isFinite(propellantKg) ? dryMass + propellantKg : null;
+  const launchCostUsd = Number.isFinite(launchMassKg) ? launchMassKg * launchCostPerKg : null;
+  const totalCostUsd = Number.isFinite(launchCostUsd) ? launchCostUsd * totalCostMultiplier : null;
+
+  const spec = getMatSpec(ast);
+  const prices = getActivePrices();
+  const comp = spec ? MAT_COMP[spec] : null;
+  let revenuePerKg = null;
+  if (comp) {
+    revenuePerKg = 0;
+    MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
+  }
+
+  const returnedKg = Number.isFinite(payloadKg) ? payloadKg * extractionFraction : null;
+  const paperValueUsd = Number.isFinite(returnedKg) && Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
+  const npvUsd = computeRealizableNPV(primaryCommodityForSpec(spec), returnedKg, revenuePerKg);
+  const roiMultiple = Number.isFinite(totalCostUsd) && totalCostUsd > 0 && Number.isFinite(npvUsd)
+    ? npvUsd / totalCostUsd
+    : null;
+
+  return {
+    spec,
+    revenuePerKg,
+    propellantKg,
+    launchMassKg,
+    launchCostUsd,
+    totalCostUsd,
+    returnedKg,
+    paperValueUsd,
+    realizableNpvUsd: npvUsd,
+    roiMultiple,
+  };
+}
+
 function getDisplayValueUsd(ast) {
   return resolveAsteroidEconomics(ast).extractableValueUsd;
 }
@@ -1648,6 +1732,11 @@ function formatNhatsMetric(value, key, digits = 0) {
   const n = getNhatsMetricValue(value, key);
   if (!(n > 0)) return '—';
   return digits > 0 ? n.toFixed(digits) : Math.round(n).toString();
+}
+
+function hasNhatsPlannerMismatch(ast) {
+  if (!ast?.nhats?.accessible) return false;
+  return getNhatsMetricValue(ast.nhats.minDv, 'dv') > MISSION_DV_FILTER_MAX;
 }
 
 // Returns source-labeled feasibility metrics. No profit weighting.
@@ -1692,6 +1781,7 @@ function computeFeasibilityMetrics(ast) {
 
 // Returns {low, high, point} cost range. Widens to ±25% if ΔV uncertainty > 1 km/s.
 function computeMissionCost(pointCost, dvUnc) {
+  if (!(Number.isFinite(pointCost) && pointCost >= 0)) return { point: null, low: null, high: null };
   const margin = (dvUnc || 0) > 1.0 ? 0.25 : 0.15;
   return { point: pointCost, low: pointCost * (1 - margin), high: pointCost * (1 + margin) };
 }
@@ -1798,11 +1888,26 @@ const DEST_LABELS = {
   leo:'LEO (400 km)', geo:'GEO (35,786 km)', l1:'Earth-Moon L1',
   l2:'Earth-Moon L2', lunar:'Lunar Surface', mars:'Mars Orbit',
 };
+const DELIVERY_DESTINATIONS = {
+  leo:   { key:'leo',   label:'Low Earth Orbit (LEO)', captureExtraDv:0.0, deliveryExtraDv:0.0, marketMultiplier:1.00 },
+  geo:   { key:'geo',   label:'High Earth Orbit (GEO)', captureExtraDv:1.5, deliveryExtraDv:0.6, marketMultiplier:1.08 },
+  l1:    { key:'l1',    label:'Earth-Moon L1',         captureExtraDv:0.5, deliveryExtraDv:0.4, marketMultiplier:1.12 },
+  l2:    { key:'l2',    label:'Earth-Moon L2',         captureExtraDv:0.5, deliveryExtraDv:0.4, marketMultiplier:1.12 },
+  lunar: { key:'lunar', label:'Lunar Surface',         captureExtraDv:1.7, deliveryExtraDv:1.6, marketMultiplier:1.20 },
+  mars:  { key:'mars',  label:'Mars Orbit',            captureExtraDv:0.9, deliveryExtraDv:3.5, marketMultiplier:1.35 },
+};
+const REDIRECT_CAPTURE_TARGETS = {
+  lunar_orbit: { key:'lunar_orbit', label:'Lunar Orbit', orbitRadiusKm: 6737, captureExtraDv: 1.7 },
+  el4:         { key:'el4',         label:'Earth-Moon L4', orbitRadiusKm: 384400, captureExtraDv: 0.8 },
+  el5:         { key:'el5',         label:'Earth-Moon L5', orbitRadiusKm: 384400, captureExtraDv: 0.8 },
+};
+const MISSION_DV_FILTER_MAX = 10;
 
 let cachedPriceData = null;
 let matPriceMode = 'earth';
 let matSortKey = 'totalValue';
 let matSortAsc = false;
+let activePresetKey = '';
 
 async function fetchPrices(forceRefresh = false) {
   const CACHE_KEY = 'aster_prices_v1';
@@ -1909,7 +2014,8 @@ function buildMaterialsTable(rows) {
     const arrow = matSortKey === key ? (matSortAsc ? ' ▲' : ' ▼') : '';
     return `<th onclick="matSort('${key}')"${matSortKey===key?' class="sorted"':''}>${label}${arrow}</th>`;
   };
-  const diffBadge = d => `<span class="mat-badge ${d}">${d.toUpperCase()}</span>`;
+  const diffClass = d => ({ EASY:'easy', MED:'medium', HARD:'hard', EXTR:'extreme' }[String(d).toUpperCase()] || 'medium');
+  const diffBadge = d => `<span class="mat-badge ${diffClass(d)}">${String(d).toUpperCase()}</span>`;
   const trs = sorted.map(m => `<tr>
     <td>${m.name}</td>
     <td class="value-col">${m.pct >= 0.001 ? m.pct.toFixed(3)+'%' : '<0.001%'}</td>
@@ -2581,7 +2687,7 @@ let filterDV = 15, filterDiam = 0, filterInc = 30, filterSMA = 3.5;
 let filterSpec = { C:true, S:true, M:true, X:true, D:true, other:true };
 let filterNHATS = false, filterPHA = false, filterWater = false;
 // Phase 7: advanced filter state
-let filterDvMin = 0, filterDvMax = 15;
+let filterDvMin = 0, filterDvMax = MISSION_DV_FILTER_MAX;
 let filterValMin = 0, filterValMax = 100; // slider positions 0-100 → log $ scale
 let filterWindowStart = 2025, filterWindowEnd = 2045;
 let nhatsMap = null; // Map<string, nhats_row> keyed by des.trim() — null until loaded
@@ -2787,7 +2893,8 @@ let activeBurnIdx = -1;  // -1 = no saved burns yet
 
 // ─── Mission Planner State ────────────────────────────────────────────────────
 let missionConfig = { destination:'leo', launchYearStart:2026, launchYearEnd:2035,
-                      spacecraft:'medium', launchVehicle:'f9' };
+                      spacecraft:'medium', launchVehicle:'f9',
+                      redirectPropulsion:'chemical_300', redirectTarget:'lunar_orbit' };
 let missionResults    = [];
 let selectedTrajIdx   = -1;
 let optimalTrajectory = null;
@@ -3027,7 +3134,7 @@ function updateDualRangeUI(prefix, minVal, maxVal, absMin, absMax, fmtFn) {
 
 function updateFilterBadge() {
   let count = 0;
-  if (filterDvMin > 0 || filterDvMax < 15) count++;
+  if (filterDvMin > 0 || filterDvMax < MISSION_DV_FILTER_MAX) count++;
   if (filterValMin > 0 || filterValMax < 100) count++;
   if (filterWindowStart > 2025 || filterWindowEnd < 2045) count++;
   if (!filterSpec.C || !filterSpec.S || !filterSpec.M || !filterSpec.X || !filterSpec.D || !filterSpec.other) count++;
@@ -3102,7 +3209,7 @@ function syncFilterDOM() {
   setVal('dv-min', filterDvMin); setVal('dv-max', filterDvMax);
   setVal('val-min', filterValMin); setVal('val-max', filterValMax);
   setVal('filter-win-start', filterWindowStart); setVal('filter-win-end', filterWindowEnd);
-  updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, 15, v => v.toFixed(1) + ' km/s');
+  updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, MISSION_DV_FILTER_MAX, v => v.toFixed(1) + ' km/s');
   updateDualRangeUI('val', filterValMin, filterValMax, 0, 100, fmtSliderVal);
   document.querySelectorAll('.spec-chip').forEach(btn => {
     const k = btn.dataset.spec; btn.classList.toggle('active', filterSpec[k] !== false);
@@ -3112,16 +3219,24 @@ function syncFilterDOM() {
     const el = document.getElementById('filter-' + k); if (el) el.dataset.on = String(on);
   });
   const ss = document.getElementById('lb-sort-select'); if (ss) ss.value = lbSortMode;
-  const ps = document.getElementById('filter-preset-select'); if (ps) ps.value = '';
+  const ps = document.getElementById('filter-preset-select'); if (ps) ps.value = activePresetKey || '';
+}
+
+function clearActivePresetSelection() {
+  if (!activePresetKey) return;
+  activePresetKey = '';
+  const ps = document.getElementById('filter-preset-select');
+  if (ps) ps.value = '';
 }
 
 function resetFilters() {
   filterDV = 15; filterDiam = 0; filterInc = 30; filterSMA = 3.5;
-  filterDvMin = 0; filterDvMax = 15; filterValMin = 0; filterValMax = 100;
+  filterDvMin = 0; filterDvMax = MISSION_DV_FILTER_MAX; filterValMin = 0; filterValMax = 100;
   filterWindowStart = 2025; filterWindowEnd = 2045;
   filterNHATS = false; filterPHA = false; filterWater = false;
   filterSpec = { C:true, S:true, M:true, X:true, D:true, other:true };
   lbSortMode = 'dv';
+  activePresetKey = '';
   syncFilterDOM();
   applyFilters();
   setStatus('Filters reset', true);
@@ -3131,7 +3246,7 @@ const BUILT_IN_PRESETS = {
   easy:     { filterDvMax:6, filterNHATS:true },
   metal:    { filterSpec:{ C:false,S:false,M:true,X:false,D:false,other:false }, filterValMin: valueToSliderPos(1e12), filterDvMax:10 },
   nearterm: { filterWindowStart:2025, filterWindowEnd:2030, filterDvMax:8 },
-  deep:     { filterDvMax:15 },
+  deep:     { filterDvMax:MISSION_DV_FILTER_MAX },
 };
 
 function applyPreset(key) {
@@ -3148,8 +3263,10 @@ function applyPreset(key) {
   if (p.filterValMax !== undefined) filterValMax = p.filterValMax;
   if (p.filterWindowStart !== undefined) filterWindowStart = p.filterWindowStart;
   if (p.filterWindowEnd !== undefined) filterWindowEnd = p.filterWindowEnd;
+  activePresetKey = key;
   syncFilterDOM();
   applyFilters();
+  setStatus(`Preset applied: ${key.startsWith('user_') ? (p.label || key) : (document.querySelector(`#filter-preset-select option[value="${key}"]`)?.textContent || key)}`, true);
 }
 
 function saveUserPreset(name) {
@@ -3161,6 +3278,8 @@ function saveUserPreset(name) {
     filterSpec: { ...filterSpec }, label: name.trim() };
   try { localStorage.setItem('aster_filter_presets', JSON.stringify(saved)); } catch(_) {}
   populateSavedPresets();
+  activePresetKey = key;
+  syncFilterDOM();
   setStatus(`✓ Preset "${name.trim()}" saved`, true);
 }
 
@@ -3235,10 +3354,13 @@ function renderLeaderboard() {
     const hazBadge = fi.hazard.riskLevel === 'high'
       ? '<span style="color:#ef4444;font-size:8px;margin-left:3px" title="PHA">⚠</span>'
       : '';
+    const gateBadge = hasNhatsPlannerMismatch(ast)
+      ? '<span style="color:#fbbf24;font-size:8px;margin-left:3px" title="NHATS uses a different accessibility model than the 10 km/s planner departure gate">ΔV!</span>'
+      : '';
     const name = (ast.full_name || ast.pdes || '—').substring(0, 14);
     return `<div class="lb-row ${selectedId===idx?'lb-selected':''}" data-idx="${idx}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px">
-        <span style="font-size:9px;color:#c8d6e5">${name}${nhBadge}${hazBadge}</span>
+        <span style="font-size:9px;color:#c8d6e5">${name}${nhBadge}${hazBadge}${gateBadge}</span>
         <span class="lb-type lb-type-${skClass}" style="font-size:8px">${skClass}</span>
       </div>
       <div style="display:flex;gap:6px;font-size:8px;color:#6a8a9a">
@@ -3282,22 +3404,25 @@ function renderEconomicsTab(id) {
   const dv = eco_fi.deltaV.value;
   const dryMass = Number(document.getElementById('eco-dry-mass').value) || 1000;
   const isp = Number(document.getElementById('eco-isp').value) || 450;
-  const g0 = 9.80665;
-  const propMass = dryMass * (Math.exp(dv * 1000 / (g0 * isp)) - 1);
-  const launchMass = dryMass + propMass;
-  const launchCost = launchMass * 2700;
-  const totalCost = launchCost * 1.8;
+  const econSummary = computeEconomicsSummary(ast, { dryMass, isp, dv, launchCostPerKg: 2700, totalCostMultiplier: 1.8, payloadKg: dryMass });
+  const propMass = econSummary.propellantKg;
+  const launchMass = econSummary.launchMassKg;
+  const launchCost = econSummary.launchCostUsd;
+  const totalCost = econSummary.totalCostUsd;
 
   const costRng = computeMissionCost(totalCost, eco_fi.deltaV.uncertainty);
   const opsDaysEco = Math.round(dv * 60); // rough mission duration for tooltip
   const econ = resolveAsteroidEconomics(ast);
   const massModel = econ.massModel;
   document.getElementById('eco-dv').textContent = `${dv.toFixed(2)} (±${eco_fi.deltaV.uncertainty}) km/s`;
-  document.getElementById('eco-propellant').textContent = propMass > 999
-    ? `${(propMass/1000).toFixed(1)} t` : `${Math.round(propMass)} kg`;
-  document.getElementById('eco-launch-mass').textContent = `${Math.round(launchMass)} kg`;
+  document.getElementById('eco-propellant').textContent = Number.isFinite(propMass)
+    ? (propMass > 999 ? `${(propMass/1000).toFixed(1)} t` : `${Math.round(propMass)} kg`)
+    : 'unknown';
+  document.getElementById('eco-launch-mass').textContent = Number.isFinite(launchMass) ? `${Math.round(launchMass)} kg` : 'unknown';
   document.getElementById('eco-launch-cost').textContent = fmtUSD(launchCost);
-  document.getElementById('eco-total-cost').textContent = `${fmtUSD(costRng.low)} – ${fmtUSD(costRng.high)}`;
+  document.getElementById('eco-total-cost').textContent = Number.isFinite(costRng.low) && Number.isFinite(costRng.high)
+    ? `${fmtUSD(costRng.low)} – ${fmtUSD(costRng.high)}`
+    : 'unknown';
   const ecoCostIcon = document.getElementById('eco-cost-icon');
   if (ecoCostIcon) {
     ecoCostIcon.style.display = 'inline-block';
@@ -3313,13 +3438,24 @@ function renderEconomicsTab(id) {
   document.getElementById('eco-water').textContent = formatValueDisplay(waterVal);
   document.getElementById('eco-metals').textContent = formatValueDisplay(metalVal);
   document.getElementById('eco-asterank').textContent = formatValueDisplay(econ.wholeBodyPriceUsd);
+  document.getElementById('eco-paper-value').textContent = formatValueDisplay(econSummary.paperValueUsd);
+  document.getElementById('eco-npv').textContent = formatValueDisplay(econSummary.realizableNpvUsd);
 
-  // ROI uses 5% extraction efficiency — conservative, no industrial-scale ISRU demonstrated
-  const totalReturn = econ.extractableValueUsd !== null ? econ.extractableValueUsd * 0.05 : null;
-  const roi = totalCost > 0 && totalReturn !== null ? totalReturn / totalCost : null;
+  const roi = econSummary.roiMultiple;
   const roiEl = document.getElementById('eco-roi');
   roiEl.textContent = roi === null ? 'unknown' : (roi > 1e6 ? '>1,000,000×' : `${roi.toFixed(0)}×`);
   roiEl.className = 'value ' + (roi !== null && roi > 10 ? 'profit' : roi !== null && roi > 1 ? 'warning' : '');
+
+  const costWarningEl = document.getElementById('eco-cost-warning');
+  if (costWarningEl) {
+    if (Number.isFinite(totalCost) && totalCost < 500e6) {
+      costWarningEl.style.display = 'block';
+      costWarningEl.textContent = 'First-of-a-kind mining missions historically cost $2B–$10B+. Treat sub-$500M totals as screening-grade only.';
+    } else {
+      costWarningEl.style.display = 'none';
+      costWarningEl.textContent = '';
+    }
+  }
 
   const isruNote = document.getElementById('eco-isru-note');
   if (massModel && spec === 'C' && waterVal > 0) {
@@ -3343,6 +3479,11 @@ function renderMaterialsTab(id) {
   if (!ast) return;
   document.getElementById('mat-no-selection').style.display = 'none';
   document.getElementById('mat-content').style.display = 'block';
+  const toggleBtn = document.getElementById('mat-price-toggle');
+  if (toggleBtn) {
+    toggleBtn.textContent = matPriceMode === 'space' ? 'IN-SPACE PRICES' : 'EARTH PRICES';
+    toggleBtn.dataset.on = String(matPriceMode === 'space');
+  }
 
   const massModel = resolveAsteroidMassModel(ast);
   if (!massModel) {
@@ -3394,8 +3535,10 @@ async function fetchNHATSData() {
 function markdownToHtml(text) {
   return text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^---+$/gm, '<hr>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/^\* (.+)$/gm, '<li>$1</li>')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
@@ -3752,14 +3895,16 @@ function onSatelliteSelect(idx) {
   if (dvMinEl && dvMaxEl) {
     dvMinEl.addEventListener('input', () => {
       if (+dvMinEl.value > +dvMaxEl.value) dvMinEl.value = dvMaxEl.value;
+      clearActivePresetSelection();
       filterDvMin = +dvMinEl.value;
-      updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, 15, v => v.toFixed(1) + ' km/s');
+      updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, MISSION_DV_FILTER_MAX, v => v.toFixed(1) + ' km/s');
       applyFilters();
     });
     dvMaxEl.addEventListener('input', () => {
       if (+dvMaxEl.value < +dvMinEl.value) dvMaxEl.value = dvMinEl.value;
+      clearActivePresetSelection();
       filterDvMax = +dvMaxEl.value;
-      updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, 15, v => v.toFixed(1) + ' km/s');
+      updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, MISSION_DV_FILTER_MAX, v => v.toFixed(1) + ' km/s');
       applyFilters();
     });
   }
@@ -3770,12 +3915,14 @@ function onSatelliteSelect(idx) {
   if (valMinEl && valMaxEl) {
     valMinEl.addEventListener('input', () => {
       if (+valMinEl.value > +valMaxEl.value) valMinEl.value = valMaxEl.value;
+      clearActivePresetSelection();
       filterValMin = +valMinEl.value;
       updateDualRangeUI('val', filterValMin, filterValMax, 0, 100, fmtSliderVal);
       applyFilters();
     });
     valMaxEl.addEventListener('input', () => {
       if (+valMaxEl.value < +valMinEl.value) valMaxEl.value = valMinEl.value;
+      clearActivePresetSelection();
       filterValMax = +valMaxEl.value;
       updateDualRangeUI('val', filterValMin, filterValMax, 0, 100, fmtSliderVal);
       applyFilters();
@@ -3786,10 +3933,12 @@ function onSatelliteSelect(idx) {
   const winStartEl = document.getElementById('filter-win-start');
   const winEndEl   = document.getElementById('filter-win-end');
   if (winStartEl) winStartEl.addEventListener('input', () => {
+    clearActivePresetSelection();
     filterWindowStart = Math.min(+winStartEl.value, filterWindowEnd);
     applyFilters();
   });
   if (winEndEl) winEndEl.addEventListener('input', () => {
+    clearActivePresetSelection();
     filterWindowEnd = Math.max(+winEndEl.value, filterWindowStart);
     applyFilters();
   });
@@ -3797,6 +3946,7 @@ function onSatelliteSelect(idx) {
   // Spectral type chips
   document.querySelectorAll('.spec-chip').forEach(btn => {
     btn.addEventListener('click', () => {
+      clearActivePresetSelection();
       const k = btn.dataset.spec;
       filterSpec[k] = !filterSpec[k];
       btn.classList.toggle('active', filterSpec[k]);
@@ -3809,6 +3959,7 @@ function onSatelliteSelect(idx) {
     const el = document.getElementById('filter-' + key);
     if (!el) return;
     el.addEventListener('click', () => {
+      clearActivePresetSelection();
       const on = el.dataset.on === 'true';
       el.dataset.on = String(!on);
       if (key === 'nhats') filterNHATS = !on;
@@ -3835,6 +3986,7 @@ function onSatelliteSelect(idx) {
   if (saveBtn) saveBtn.addEventListener('click', () => {
     const name = prompt('Preset name:');
     if (name) saveUserPreset(name);
+    else setStatus('Preset save canceled', true);
   });
 
   // Reset all button
@@ -3872,6 +4024,7 @@ function onSatelliteSelect(idx) {
   document.getElementById('mat-price-toggle').addEventListener('click', () => {
     matPriceMode = matPriceMode === 'earth' ? 'space' : 'earth';
     if (selectedId >= 0) renderMaterialsTab(selectedId);
+    setStatus(matPriceMode === 'space' ? 'Materials view: in-space prices' : 'Materials view: Earth prices', true);
   });
   document.getElementById('mat-price-refresh').addEventListener('click', async () => {
     await fetchPrices(true);
@@ -3881,7 +4034,7 @@ function onSatelliteSelect(idx) {
   // Load saved presets on init
   populateSavedPresets();
   // Initialize dual-range fill UI
-  updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, 15, v => v.toFixed(1) + ' km/s');
+  updateDualRangeUI('dv', filterDvMin, filterDvMax, 0, MISSION_DV_FILTER_MAX, v => v.toFixed(1) + ' km/s');
   updateDualRangeUI('val', filterValMin, filterValMax, 0, 100, fmtSliderVal);
 })();
 
@@ -3895,6 +4048,7 @@ function exportMissionReport() {
   const dvSuffix = fi.deltaV.source === 'NHATS' ? ' (NHATS)' : fi.deltaV.source === 'Asterank' ? '' : ' (estimated)';
   const massModel = resolveAsteroidMassModel(ast);
   const econ = resolveAsteroidEconomics(ast);
+  const econSummary = computeEconomicsSummary(ast, { dryMass: 1000, isp: 450, dv, launchCostPerKg: 2700, totalCostMultiplier: 1.8, payloadKg: 1000 });
   const D_m = massModel ? massModel.diameterM : null;
   const spec3 = (ast.spec || ast.spec_T || '?').trim().charAt(0).toUpperCase();
   const mass_kg = massModel ? massModel.massKg : null;
@@ -3937,6 +4091,8 @@ function exportMissionReport() {
     `  Extractable Value: ${formatValueDisplay(econ.extractableValueUsd)}`,
     `  Whole-body Price:  ${formatValueDisplay(econ.wholeBodyPriceUsd)}`,
     `  Raw Profit:        ${formatValueDisplay(econ.rawProfitUsd)}`,
+    `  Paper Value:       ${formatValueDisplay(econSummary.paperValueUsd)}`,
+    `  Realizable NPV:    ${formatValueDisplay(econSummary.realizableNpvUsd)}`,
     `  Est. Launch Cost:  ${fmtUSD(launchCost)} (Falcon 9 rate × 1.8 overhead)`,
     '',
     '── CAVEATS ─────────────────────────────────────────────────',
@@ -3978,6 +4134,8 @@ function buildShareState(options = {}) {
       dest: missionConfig.destination,
       sc: missionConfig.spacecraft,
       lv: missionConfig.launchVehicle,
+      rt: missionConfig.redirectTarget,
+      rp: missionConfig.redirectPropulsion,
       ys: missionConfig.launchYearStart,
       ye: missionConfig.launchYearEnd,
       ti: selectedTrajIdx,
@@ -4013,12 +4171,16 @@ function loadStateFromURL() {
     missionConfig.destination = state.mp.dest || missionConfig.destination;
     missionConfig.spacecraft = state.mp.sc || missionConfig.spacecraft;
     missionConfig.launchVehicle = state.mp.lv || missionConfig.launchVehicle;
+    missionConfig.redirectTarget = state.mp.rt || missionConfig.redirectTarget;
+    missionConfig.redirectPropulsion = state.mp.rp || missionConfig.redirectPropulsion;
     missionConfig.launchYearStart = yearStart;
     missionConfig.launchYearEnd = yearEnd;
     openMissionPlanner(idx);
     setMissionType(state.mp.type === 'redirect' ? 'redirect' : 'extract');
     document.getElementById('mp-destination').value = missionConfig.destination;
     document.getElementById('mp-launch-vehicle').value = missionConfig.launchVehicle;
+    document.getElementById('mp-redirect-target').value = missionConfig.redirectTarget;
+    document.getElementById('mp-redirect-propulsion').value = missionConfig.redirectPropulsion;
     document.getElementById('mp-year-start').value = yearStart;
     document.getElementById('mp-year-end').value = yearEnd;
     const craftInput = document.querySelector(`input[name="mp-craft"][value="${missionConfig.spacecraft}"]`);
@@ -4083,6 +4245,7 @@ function openMissionPlanner(id) {
   missionResults = []; selectedTrajIdx = -1;
   clearPlannerError();
   setMissionType('extract'); // reset to default on each open
+  if (leftPanelOpen) toggleLeftPanel();
   // Expand right panel into mission-planner mode
   const rp = document.getElementById('right-panel');
   rp.classList.add('panel-open', 'mp-mode');
@@ -4181,6 +4344,9 @@ async function runMissionOptimizer() {
 
   const ys = parseInt(document.getElementById('mp-year-start').value) || 2026;
   const ye = parseInt(document.getElementById('mp-year-end').value)   || 2035;
+  const currentYear = new Date().getFullYear();
+  if (ys < currentYear || ye < currentYear) return showPlannerError(`Launch window must be ${currentYear} or later. Past years are blocked.`);
+  if (ye < ys) return showPlannerError('Launch window end year must be greater than or equal to the start year.');
   missionConfig.destination     = document.getElementById('mp-destination').value;
   missionConfig.spacecraft      = document.querySelector('input[name="mp-craft"]:checked')?.value || 'medium';
   missionConfig.launchVehicle   = document.getElementById('mp-launch-vehicle').value;
@@ -4288,11 +4454,33 @@ async function runRedirectOptimizer() {
 
   const yearStart = parseInt(document.getElementById('mp-year-start').value) || 2026;
   const yearEnd   = parseInt(document.getElementById('mp-year-end').value)   || 2035;
+  const currentYear = new Date().getFullYear();
+  if (yearStart < currentYear || yearEnd < currentYear) {
+    showPlannerError(`Launch window must be ${currentYear} or later. Past years are blocked.`);
+    return;
+  }
+  if (yearEnd < yearStart) {
+    showPlannerError('Launch window end year must be greater than or equal to the start year.');
+    return;
+  }
   const jd_start  = (yearStart - 2000) * 365.25 + 2451545.0;
   const jd_end    = (yearEnd   - 2000) * 365.25 + 2451545.0;
 
   const propulsionModule = getRedirectPropulsionModule();
   const miningFraction   = (parseInt(document.getElementById('mp-mining-split').value) || 50) / 100;
+  const captureTarget = REDIRECT_CAPTURE_TARGETS[document.getElementById('mp-redirect-target').value] || REDIRECT_CAPTURE_TARGETS.lunar_orbit;
+  const deliveryDestination = DELIVERY_DESTINATIONS[document.getElementById('mp-destination').value] || DELIVERY_DESTINATIONS.leo;
+  const spacecraftKey = document.querySelector('input[name="mp-craft"]:checked')?.value || 'medium';
+  const spacecraft = SPACECRAFT[spacecraftKey] || SPACECRAFT.medium;
+  const launchVehicleKey = document.getElementById('mp-launch-vehicle').value;
+  const launchVehicle = LAUNCH_VEHICLES[launchVehicleKey] || LAUNCH_VEHICLES.f9;
+  missionConfig.destination = deliveryDestination.key;
+  missionConfig.spacecraft = spacecraftKey;
+  missionConfig.launchVehicle = launchVehicleKey;
+  missionConfig.launchYearStart = yearStart;
+  missionConfig.launchYearEnd = yearEnd;
+  missionConfig.redirectPropulsion = document.getElementById('mp-redirect-propulsion').value;
+  missionConfig.redirectTarget = captureTarget.key;
 
   document.getElementById('mp-computing').style.display = 'block';
   document.getElementById('mp-progress-bar').style.width = '5%';
@@ -4311,7 +4499,18 @@ async function runRedirectOptimizer() {
   }, 30000);
 
   try {
-    worker.postMessage({ cmd: 'plan_redirect_mission', ast, jd_start, jd_end, propulsionModule, miningFraction });
+    worker.postMessage({
+      cmd: 'plan_redirect_mission',
+      ast,
+      jd_start,
+      jd_end,
+      propulsionModule,
+      miningFraction,
+      captureTarget,
+      deliveryDestination,
+      spacecraft,
+      launchVehicle,
+    });
   } catch(err) {
     showPlannerError(err);
   }
@@ -4364,6 +4563,7 @@ function onRedirectResult(data) {
   const ast_d = data.asteroid;
   const rd    = data.redirect;
   const flags = data.flags;
+  const logistics = data.logistics || {};
   const d_km  = (ast_d.d_m / 1000).toFixed(2);
   const mass_str = ast_d.mass_kg >= 1e12
     ? (ast_d.mass_kg / 1e12).toFixed(2) + ' Tt'
@@ -4376,17 +4576,24 @@ function onRedirectResult(data) {
     `Spec type ${ast_d.spec_type}\n` +
     `Redirect ΔV ${fmtRedirectSpeed(rd.dv_redirect)}\n` +
     `Propulsion  ${rd.propulsion} (Isp ${rd.isp_s}s)\n` +
-    `Prop load   ${fmtRedirectPercent(flags.prop_fraction_pct)} of asteroid mass`;
+    `Prop load   ${fmtRedirectPercent(flags.prop_fraction_pct)} of asteroid mass\n` +
+    `Spacecraft  ${logistics.spacecraft_name || 'unknown'}\n` +
+    `Launch stack ${Number.isFinite(logistics.tug_launch_mass_kg) ? Math.round(logistics.tug_launch_mass_kg).toLocaleString() + ' kg' : 'unknown'} via ${logistics.launch_vehicle_name || 'unknown'}`;
   document.getElementById('rr-prop-warn').style.display = flags.high_prop_load ? 'block' : 'none';
 
-  // Lunar capture
+  // Redirect capture / delivery
   const cap = data.capture;
+  const captureHeader = document.getElementById('rr-capture-header');
+  if (captureHeader) captureHeader.textContent = `${(cap.label || 'Destination').toUpperCase()} CAPTURE`;
   document.getElementById('rr-capture-text').textContent =
     `Earth arr  ${jdToDate(rd.jd_earth_arr)}\n` +
     `Transit    ${Math.round(rd.tof_redirect)} days\n` +
     `Earth-arr v∞ ${fmtRedirectSpeed(cap.v_inf_earth_arrival)}\n` +
-    `Capture model ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) : 'unknown'}\n` +
-    `Target orbit  ${Math.round(cap.r_cap_km)} km radius`;
+    `Capture ΔV ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) : 'unknown'}\n` +
+    `Delivery ΔV ${fmtRedirectSpeed(cap.dv_delivery)}\n` +
+    `Target orbit  ${Number.isFinite(cap.r_cap_km) ? Math.round(cap.r_cap_km).toLocaleString() + ' km radius' : 'unknown'}\n` +
+    `Delivery node ${cap.delivery_label || 'unknown'}\n` +
+    `Model basis  ${cap.capture_basis || 'unknown'}`;
 
   // ISRU yield
   const isru = data.isru;
@@ -4475,6 +4682,34 @@ function drawLunarOrbitRing() {
   scene.add(_lunarOrbitRing);
 }
 
+function summarizeTrajectoryOperationalMetrics(traj) {
+  const ast = asteroidData[selectedId];
+  if (!ast || !traj) return null;
+  const sc = SPACECRAFT[missionConfig.spacecraft] || SPACECRAFT.medium;
+  const lv = LAUNCH_VEHICLES[missionConfig.launchVehicle] || LAUNCH_VEHICLES.f9;
+  const g0 = 0.00980665;
+  const propKg = sc.dry_kg * (Math.exp(traj.dv_total / (g0 * sc.isp)) - 1);
+  const wetKg = sc.dry_kg + propKg;
+  const fitsLaunchVehicle = wetKg <= lv.max_kg;
+  const opsDays = Math.round(traj.tof + (traj.tof_return || 0) + (traj.stay_days || 0));
+  const launchCost = wetKg * lv.cost_per_kg;
+  const totalCost = launchCost + sc.cost_usd + (opsDays / 30) * 8e6;
+  const econSummary = computeEconomicsSummary(ast, {
+    dryMass: sc.dry_kg,
+    isp: sc.isp,
+    dv: traj.dv_total,
+    launchCostPerKg: lv.cost_per_kg,
+    totalCostMultiplier: 1,
+    payloadKg: sc.payload_kg,
+  });
+  const realizedNpv = econSummary.realizableNpvUsd;
+  const roi = Number.isFinite(realizedNpv) && totalCost > 0 ? realizedNpv / totalCost : null;
+  const score = Math.round(
+    Math.max(0, 100 - traj.dv_total * 3 - (fitsLaunchVehicle ? 0 : 40) + (Number.isFinite(roi) ? Math.max(-15, Math.min(20, Math.log10(Math.max(1e-6, roi + 1)) * 10)) : 0))
+  );
+  return { wetKg, fitsLaunchVehicle, launchCost, totalCost, realizedNpv, roi, score };
+}
+
 function onPlanResult(results, noFeasibleWindow, dbg, source) {
   document.getElementById('mp-computing').style.display = 'none';
   if (dbg) console.log('[plan_result] diag:', dbg);
@@ -4503,9 +4738,16 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
     }
     return;
   }
-  missionResults = results;
+  missionResults = [...results].sort((a, b) => {
+    const sa = summarizeTrajectoryOperationalMetrics(a);
+    const sb = summarizeTrajectoryOperationalMetrics(b);
+    const scoreA = Number.isFinite(sa?.score) ? sa.score : -Infinity;
+    const scoreB = Number.isFinite(sb?.score) ? sb.score : -Infinity;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return a.dv_total - b.dv_total;
+  });
   missionResults.source = source || 'lambert';
-  optimalTrajectory = results[0] || null;
+  optimalTrajectory = missionResults[0] || null;
   renderTrajectoryList();
   document.getElementById('mp-results').style.display = 'block';
   document.getElementById('mp-result-count').textContent = `(${results.length} options)`;
@@ -4541,6 +4783,7 @@ function renderTrajectoryList() {
     const dep   = jdToDate(t.jd_dep);
     const arr   = jdToDate(t.jd_arr);
     const dvUnc = +(t.dv_total * uncPct).toFixed(2);
+    const ops = summarizeTrajectoryOperationalMetrics(t);
     const card  = document.createElement('div');
     card.className = 'mp-traj-card' + (i === selectedTrajIdx ? ' mp-traj-selected' : '');
     const gaBadge = t.lunarAssist
@@ -4549,11 +4792,15 @@ function renderTrajectoryList() {
     const hvBadge = t.highDv
       ? '<span style="font-size:7px;color:#fb923c;border:1px solid #fb923c;padding:1px 4px;margin-left:5px;vertical-align:middle">⚠ HIGH ΔV</span>'
       : '';
+    const lvBadge = ops?.fitsLaunchVehicle === false
+      ? '<span style="font-size:7px;color:#f87171;border:1px solid #f87171;padding:1px 4px;margin-left:5px;vertical-align:middle">OVERWEIGHT</span>'
+      : '';
     card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s</div>
       <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
-      <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>`;
+      <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
+      <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; NPV ${fmtUSD(ops?.realizedNpv)}</div>`;
     card.addEventListener('click', () => selectTrajectory(i));
     list.appendChild(card);
   });
@@ -4740,6 +4987,7 @@ function computeMissionProfile(traj) {
     dot('SPACECRAFT', fmtUSD(sc.cost_usd)),
     dot('OPERATIONS', `${fmtUSD(opsCost * 0.85)} – ${fmtUSD(opsCost * 1.15)}`),
     dot('TOTAL MISSION', `${fmtUSD(costRng_mp.low)} – ${fmtUSD(costRng_mp.high)}`),
+    totalCost < 500e6 ? dot('SANITY WARNING', 'Historical mining missions are typically $2B – $10B+') : '',
     sep('REFERENCE MISSION COSTS'),
     dot('DART (kinetic impactor)',      '$324M'),
     dot('OSIRIS-REx (sample return)',   '$1.16B'),
@@ -5167,6 +5415,7 @@ function exportMissionPlan() {
   a.download = `aster-mission-${(ast.designation || ast.full_name || 'asteroid').replace(/[\s/]/g,'-')}.txt`;
   a.click();
   URL.revokeObjectURL(url);
+  setStatus(`Mission plan exported: ${ast.full_name || ast.pdes || 'asteroid'}`, true);
 }
 
 function shareMissionPlan() {
@@ -5321,7 +5570,7 @@ function selectAsteroid(id) {
   const dvDisp  = `${fi.deltaV.value.toFixed(2)} km/s (±${fi.deltaV.uncertainty})`;
   const durDisp = `${Math.round(fi.duration.value)} days  [${fi.duration.source}]`;
   const accDisp = fi.accessibility.nhatsVerified
-    ? `✓ ${fi.accessibility.trajectoryCount} NHATS trajectories`
+    ? `✓ ${fi.accessibility.trajectoryCount} NHATS trajectories${hasNhatsPlannerMismatch(ast) ? ' · exceeds 10 km/s planner gate' : ''}`
     : 'Not in NHATS catalog';
   const valLo_fi = fi.valueRange.conservative, valHi_fi = fi.valueRange.optimistic;
   const valDisp = valHi_fi !== null ? `${fmtUSD(valLo_fi)} – ${fmtUSD(valHi_fi)}` : 'unknown';

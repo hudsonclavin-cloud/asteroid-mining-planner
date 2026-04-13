@@ -58,6 +58,10 @@ const MISSION_GATE_DEP_KMS = 10.0;
 const MISSION_GATE_TOTAL_KMS = 25.0;
 const MISSION_HIGH_DV_KMS = 12.0;
 const NHATS_DEFAULTS = { dv: '12', dur: '450', stay: '8' };
+const DEFAULT_REDIRECT_CAPTURE = { key: 'lunar_orbit', label: 'Lunar Orbit', orbitRadiusKm: 6737, captureExtraDv: 1.7 };
+const DEFAULT_REDIRECT_DELIVERY = { key: 'leo', label: 'Low Earth Orbit (LEO)', captureExtraDv: 0.0, deliveryExtraDv: 0.0, marketMultiplier: 1.0 };
+const DEFAULT_REDIRECT_SPACECRAFT = { name: 'Medium Miner', dry_kg: 5000, payload_kg: 2000, isp: 320, cost_usd: 180e6 };
+const DEFAULT_REDIRECT_LAUNCH = { name: 'Falcon 9', cost_per_kg: 2700, max_kg: 22800, label: 'Falcon 9' };
 
 const FALLBACK_CATALOG = [
   { pdes: 433, full_name: '433 Eros (1898 DQ)', a: 1.45811225801466, e: 0.222735687791413, i: 10.82857013630658, om: 304.3062534664844, w: 178.8213653588039, ma: 47.23946575496196, epoch: 2458600.5, H: 11.16, spec: 'S', profit: 1.0779165041005357e-42, delta_v: 6.112354, price: 6.688146261052001e-42, pha: 'N', class: 'AMO', diameter: 16.84, albedo: 0.25, moid: 0.149341, last_obs: '2018-10-27', condition_code: 0 },
@@ -1027,11 +1031,33 @@ self.onmessage = function(e) {
   }
 
   if (msg.cmd === 'plan_redirect_mission') {
-    const { ast, jd_start, jd_end, propulsionModule, miningFraction } = msg;
+    const {
+      ast,
+      jd_start,
+      jd_end,
+      propulsionModule,
+      miningFraction,
+      captureTarget,
+      deliveryDestination,
+      spacecraft,
+      launchVehicle,
+    } = msg;
+    const captureProfile = captureTarget && Number.isFinite(captureTarget.orbitRadiusKm)
+      ? captureTarget
+      : DEFAULT_REDIRECT_CAPTURE;
+    const deliveryProfile = deliveryDestination && Number.isFinite(deliveryDestination.marketMultiplier)
+      ? deliveryDestination
+      : DEFAULT_REDIRECT_DELIVERY;
+    const spacecraftProfile = spacecraft && Number.isFinite(spacecraft.dry_kg)
+      ? spacecraft
+      : DEFAULT_REDIRECT_SPACECRAFT;
+    const launchProfile = launchVehicle && Number.isFinite(launchVehicle.max_kg)
+      ? launchVehicle
+      : DEFAULT_REDIRECT_LAUNCH;
 
     // Validate orbital elements
     if (!ast || !isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
-      self.postMessage({ type: 'redirect_result', feasible: false, error: 'Invalid asteroid orbital elements' });
+      self.postMessage({ type: 'redirect_result', schema_version: 1, feasible: false, error: 'Invalid asteroid orbital elements' });
       return;
     }
 
@@ -1075,7 +1101,7 @@ self.onmessage = function(e) {
     }
 
     if (!interceptCandidates.length) {
-      self.postMessage({ type: 'redirect_result', feasible: false, error: `No viable intercept found within ΔV budget (${MISSION_GATE_DEP_KMS.toFixed(0)} km/s)` });
+      self.postMessage({ type: 'redirect_result', schema_version: 1, feasible: false, error: `No viable intercept found within ΔV budget (${MISSION_GATE_DEP_KMS.toFixed(0)} km/s)` });
       return;
     }
 
@@ -1178,15 +1204,39 @@ self.onmessage = function(e) {
         const m_prop = isFinite(mass_ratio) ? mass_kg * (mass_ratio - 1) / mass_ratio : null;
         const m_prop_fraction = isFinite(m_prop) ? m_prop / mass_kg : null;
 
-        const dv_total_redirect = isFinite(dv_redirect) ? best.dv_dep + dv_redirect : null;
-        const dv_score   = isFinite(dv_total_redirect) ? Math.max(0, 1 - dv_total_redirect / 15) * 50 : 0;
+        const tugDryKg = spacecraftProfile.dry_kg + spacecraftProfile.payload_kg;
+        const outboundMassRatio = Number.isFinite(best.dv_dep) ? Math.exp(best.dv_dep / v_e) : null;
+        const outboundPropKg = Number.isFinite(outboundMassRatio) ? tugDryKg * (outboundMassRatio - 1) : null;
+        const tugLaunchMassKg = Number.isFinite(outboundPropKg) ? tugDryKg + outboundPropKg : null;
+        const fitsLaunchVehicle = Number.isFinite(tugLaunchMassKg) ? tugLaunchMassKg <= launchProfile.max_kg : false;
+        const launchCostUsd = Number.isFinite(tugLaunchMassKg) ? tugLaunchMassKg * launchProfile.cost_per_kg : null;
+        const supportMissionCostUsd = Number.isFinite(launchCostUsd) ? launchCostUsd + (spacecraftProfile.cost_usd || 0) : null;
+
+        const captureBaseDv = Number.isFinite(earth_arrival_vinf)
+          ? Math.max(0.25, earth_arrival_vinf * 0.35)
+          : null;
+        const dv_capture_target = Number.isFinite(captureBaseDv)
+          ? captureBaseDv + (captureProfile.captureExtraDv || 0)
+          : null;
+        const dv_delivery = Number.isFinite(dv_capture_target)
+          ? (deliveryProfile.deliveryExtraDv || 0)
+          : null;
+        const dv_total_redirect = Number.isFinite(dv_redirect) && Number.isFinite(dv_capture_target) && Number.isFinite(dv_delivery)
+          ? best.dv_dep + dv_redirect + dv_capture_target + dv_delivery
+          : null;
+        const adjustedExtractableValueUsd = Number.isFinite(extractable_value_usd)
+          ? extractable_value_usd * (deliveryProfile.marketMultiplier || 1)
+          : null;
+        const dv_score   = isFinite(dv_total_redirect) ? Math.max(0, 1 - dv_total_redirect / 18) * 45 : 0;
         const prop_score = isFinite(m_prop_fraction) ? Math.max(0, 1 - m_prop_fraction) * 30 : 0;
-        const isru_score = isFinite(extractable_value_usd) ? Math.min(20, Math.log10(Math.max(1, extractable_value_usd)) / 12 * 20) : 0;
-        const feasibility_score = Math.round((isFinite(dv_score) ? dv_score : 0) + prop_score + isru_score);
+        const isru_score = isFinite(adjustedExtractableValueUsd) ? Math.min(20, Math.log10(Math.max(1, adjustedExtractableValueUsd)) / 12 * 20) : 0;
+        const launch_score = fitsLaunchVehicle ? 5 : -20;
+        const feasibility_score = Math.round((isFinite(dv_score) ? dv_score : 0) + prop_score + isru_score + launch_score);
         const prop_fraction_pct = isFinite(m_prop_fraction) ? Math.round(m_prop_fraction * 100) : null;
         const redirectFeasible = Number.isFinite(best.dv_dep) &&
           Number.isFinite(dv_redirect) &&
           Number.isFinite(m_prop_fraction) &&
+          fitsLaunchVehicle &&
           m_prop_fraction < 0.95 &&
           !!redirect_orbit_el;
 
@@ -1214,10 +1264,14 @@ self.onmessage = function(e) {
             segment_jd_end: jd_earth_arr,
           },
           capture: {
-            dv_lunar_capture: null,
-            r_cap_km: R_cap,
+            label: captureProfile.label,
+            delivery_label: deliveryProfile.label,
+            dv_lunar_capture: dv_capture_target,
+            dv_delivery,
+            r_cap_km: captureProfile.orbitRadiusKm,
             v_inf_earth_arrival: isFinite(earth_arrival_vinf) ? earth_arrival_vinf : null,
-            capture_modeled: false,
+            capture_modeled: Number.isFinite(dv_capture_target),
+            capture_basis: 'screening-grade Earth-arrival insertion + target adders',
           },
           asteroid: { mass_kg, d_m, spec_type },
           isru: {
@@ -1226,14 +1280,27 @@ self.onmessage = function(e) {
             metal_kg,
             mining_frac: miningFraction,
             whole_body_price_usd,
-            extractable_value_usd,
+            extractable_value_usd: adjustedExtractableValueUsd,
             extractable_value_basis: '5% extraction heuristic',
+          },
+          logistics: {
+            spacecraft_name: spacecraftProfile.name,
+            launch_vehicle_name: launchProfile.name,
+            tug_dry_kg: tugDryKg,
+            outbound_propellant_kg: Number.isFinite(outboundPropKg) ? outboundPropKg : null,
+            tug_launch_mass_kg: Number.isFinite(tugLaunchMassKg) ? tugLaunchMassKg : null,
+            launch_vehicle_max_kg: launchProfile.max_kg,
+            fits_launch_vehicle: fitsLaunchVehicle,
+            launch_cost_usd: launchCostUsd,
+            spacecraft_cost_usd: spacecraftProfile.cost_usd || null,
+            support_mission_cost_usd: supportMissionCostUsd,
           },
           flags: {
             prop_fraction_pct,
             high_prop_load: isFinite(m_prop_fraction) ? m_prop_fraction > 0.5 : false,
             lambert_fallback: lambert_fallback || redirect_lam_fallback,
             safety_moid_au: Number.isFinite(redirectSafetyMoid) ? redirectSafetyMoid : null,
+            launch_capacity_ok: fitsLaunchVehicle,
           },
           feasibility_score,
           _rank_dv_total: dv_total_redirect,
@@ -1264,8 +1331,12 @@ self.onmessage = function(e) {
 
       const chosen = bestRedirectResult || bestRedirectFallback;
       if (!chosen) return { feasible: false, error: bestError };
-      if (!chosen.feasible && !chosen.error && Number.isFinite(chosen.flags?.prop_fraction_pct)) {
-        chosen.error = `Propellant requirement exceeds ${chosen.flags.prop_fraction_pct}% of asteroid mass for ${propulsionModule.name}`;
+      if (!chosen.feasible && !chosen.error) {
+        if (chosen.flags?.launch_capacity_ok === false) {
+          chosen.error = `${launchProfile.name} cannot launch the ${spacecraftProfile.name} redirect stack within capacity.`;
+        } else if (Number.isFinite(chosen.flags?.prop_fraction_pct)) {
+          chosen.error = `Propellant requirement exceeds ${chosen.flags.prop_fraction_pct}% of asteroid mass for ${propulsionModule.name}`;
+        }
       }
       return chosen;
     }
@@ -1300,8 +1371,12 @@ self.onmessage = function(e) {
       self.postMessage({ type: 'redirect_result', schema_version: 1, feasible: false, error: 'No redirect solution could be evaluated for this target and propulsion mode.' });
       return;
     }
-    if (!finalResult.feasible && !finalResult.error && Number.isFinite(finalResult.flags?.prop_fraction_pct)) {
-      finalResult.error = `Propellant requirement exceeds ${finalResult.flags.prop_fraction_pct}% of asteroid mass for ${propulsionModule.name}`;
+    if (!finalResult.feasible && !finalResult.error) {
+      if (finalResult.flags?.launch_capacity_ok === false) {
+        finalResult.error = `${launchProfile.name} cannot launch the ${spacecraftProfile.name} redirect stack within capacity.`;
+      } else if (Number.isFinite(finalResult.flags?.prop_fraction_pct)) {
+        finalResult.error = `Propellant requirement exceeds ${finalResult.flags.prop_fraction_pct}% of asteroid mass for ${propulsionModule.name}`;
+      }
     }
     delete finalResult._rank_dv_total;
     delete finalResult._rank_prop_fraction;
