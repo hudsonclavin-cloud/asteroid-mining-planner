@@ -496,3 +496,23 @@ Addressed the biggest trust and wiring gaps in the planner UI: redirect configur
 - Redirect planning is no longer mostly decorative: the selected redirect target, delivery destination, spacecraft, and launcher now change the mission feasibility output.
 - The economics panel is materially closer to the founding document and less likely to show contradictory value language.
 - Several UI bugs that weakened trust now either behave correctly or fail more honestly.
+
+---
+
+## Phase 9M — Redirect Playback + Path Clarity (2026-04-12)
+
+### Summary
+Fixed the two follow-on usability failures in capture-and-redirect mode: the redirect visual no longer presents a full post-burn orbit as if it were the mission path, and the play controls can now start and visibly run a redirect mission preview.
+
+### Key fixes
+- `index.html`
+  - Stopped rendering the full adjusted redirect orbit as the primary orange visual; the redirect view now emphasizes the solved transfer segment instead of a misleading “expanded orbit.”
+  - Added a dedicated redirect mission animation path using the intercept leg plus the solved redirect segment.
+  - Updated the bottom play button and mission play buttons so they can start redirect playback when a redirect solution is the active mission context.
+  - Added a redirect-specific mission timeline (`INTERCEPT` / `REDIRECT`) with clickable markers.
+  - Raised the default mission playback speed to a visible rate (`1d/s`) and synced the mission speed button state to the active animation speed.
+  - Expanded scrubber bounds dynamically to the active mission span so long mission previews no longer stall at the fixed global date window.
+
+### Result
+- Capture-and-redirect visuals read more like a mission preview and less like a larger copy of the asteroid orbit.
+- Pressing play can now actually animate a redirect mission instead of only toggling the global solar-system timeline.

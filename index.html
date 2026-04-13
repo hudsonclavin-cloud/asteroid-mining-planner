@@ -1392,10 +1392,10 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
         </div>
         <div style="display:flex;gap:3px">
           <button class="anim-speed-btn" data-aspeed="10">10×</button>
-          <button class="anim-speed-btn anim-speed-active" data-aspeed="100">100×</button>
+          <button class="anim-speed-btn" data-aspeed="100">100×</button>
           <button class="anim-speed-btn" data-aspeed="1000">1K×</button>
           <button class="anim-speed-btn" data-aspeed="10000">10K×</button>
-          <button class="anim-speed-btn" data-aspeed="86400">1d/s</button>
+          <button class="anim-speed-btn anim-speed-active" data-aspeed="86400">1d/s</button>
         </div>
       </div>
     </div>
@@ -1504,6 +1504,20 @@ const TODAY_JD = dateToJD(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUT
 const SCRUBBER_MIN = TODAY_JD - 365 * 3;
 const SCRUBBER_MAX = TODAY_JD + 365 * 5;
 
+function getTimelineBounds() {
+  if (typeof missionAnim !== 'undefined' &&
+      missionAnim.active &&
+      Number.isFinite(missionAnim.jdStart) &&
+      Number.isFinite(missionAnim.jdEnd) &&
+      missionAnim.jdEnd > missionAnim.jdStart) {
+    return {
+      min: Math.min(SCRUBBER_MIN, Math.floor(missionAnim.jdStart)),
+      max: Math.max(SCRUBBER_MAX, Math.ceil(missionAnim.jdEnd)),
+    };
+  }
+  return { min: SCRUBBER_MIN, max: SCRUBBER_MAX };
+}
+
 function jdToDate(jd) {
   const l = Math.floor(jd + 0.5) + 68569;
   const n = Math.floor((4 * l) / 146097);
@@ -1520,11 +1534,13 @@ function jdToDate(jd) {
 }
 
 function jdToScrubberPos(jd) {
-  return Math.round(Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, jd)) - SCRUBBER_MIN);
+  const { min, max } = getTimelineBounds();
+  return Math.round(Math.max(min, Math.min(max, jd)) - min);
 }
 
 function scrubberPosToJD(pos) {
-  return SCRUBBER_MIN + Number(pos);
+  const { min } = getTimelineBounds();
+  return min + Number(pos);
 }
 
 function fmtUSD(v) {
@@ -2855,7 +2871,14 @@ let isScrubbing = false;
 let lastSentJD = null;
 
 function clampJD(jd) {
-  return Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, Number(jd)));
+  const { min, max } = getTimelineBounds();
+  return Math.max(min, Math.min(max, Number(jd)));
+}
+
+function syncScrubberBounds() {
+  const { min, max } = getTimelineBounds();
+  scrubber.min = 0;
+  scrubber.max = Math.max(1, Math.round(max - min));
 }
 
 function syncTimeDisplays() {
@@ -2867,6 +2890,7 @@ function syncTimeDisplays() {
 
 function setCurrentJD(jd, options = {}) {
   const { propagate = true, syncScrubber = true } = options;
+  syncScrubberBounds();
   currentJD = clampJD(jd);
   if (syncScrubber) scrubber.value = jdToScrubberPos(currentJD);
   syncTimeDisplays();
@@ -2911,13 +2935,29 @@ let mpBurns           = [];
 let burnVectorArrows       = [];
 let missionEarthReturnPos  = null;
 const missionAnim = {
-  active: false, playing: false, speed: 100,
+  active: false, playing: false, speed: 86400,
   animJD: 0, phase: 'idle',
   outboundPts: [], returnPts: [],
+  mode: 'extract',
+  jdStart: 0, jdEnd: 0,
+  redirectVisual: null,
   spacecraft: null, engineLight: null,
   trailLine: null, trailPts: [],
 };
 let playbackModeBeforeScrub = 'none';
+
+function getActiveExtractTrajectory() {
+  return missionResults[selectedTrajIdx] || optimalTrajectory || null;
+}
+
+function getPlayableMissionContext() {
+  if (_activeMissionType === 'redirect' && activeRedirectVisual) {
+    return { type: 'redirect', visual: activeRedirectVisual };
+  }
+  const traj = getActiveExtractTrajectory();
+  if (traj) return { type: 'extract', traj };
+  return null;
+}
 
 function syncPrimaryPlaybackButton() {
   const bottomBtn = document.getElementById('btn-play-pause');
@@ -2935,6 +2975,12 @@ function syncMissionPlaybackButtons() {
   syncPrimaryPlaybackButton();
 }
 
+function syncMissionSpeedButtons() {
+  document.querySelectorAll('.anim-speed-btn').forEach(btn => {
+    btn.classList.toggle('anim-speed-active', Number(btn.dataset.aspeed) === missionAnim.speed);
+  });
+}
+
 function setMissionAnimationPlaying(playing) {
   if (!missionAnim.active) return;
   missionAnim.playing = playing;
@@ -2944,6 +2990,7 @@ function setMissionAnimationPlaying(playing) {
   }
   if (playing) lastRealTime = performance.now();
   syncSpeedButtons();
+  syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
 }
 
@@ -2951,7 +2998,16 @@ function togglePrimaryPlayback() {
   if (missionAnim.active) {
     setMissionAnimationPlaying(!missionAnim.playing);
   } else {
-    setPlayState(!isPlaying);
+    const playable = getPlayableMissionContext();
+    if (playable?.type === 'redirect') {
+      startRedirectAnimation(playable.visual);
+      setMissionAnimationPlaying(true);
+    } else if (playable?.type === 'extract') {
+      startMissionAnimation(playable.traj);
+      setMissionAnimationPlaying(true);
+    } else {
+      setPlayState(!isPlaying);
+    }
   }
 }
 
@@ -4630,7 +4686,7 @@ function clearRedirectVisualization(options = {}) {
 function drawRedirectTrajectory(ast, intercept, redirect) {
   orbitLine.visible = false;
   if (ast) drawOrbitFromElements(redirectOriginalOrbitLine, asteroidToOrbitElements(ast));
-  if (redirect.orbit_el) drawOrbitFromElements(redirectAdjustedOrbitLine, redirect.orbit_el);
+  redirectAdjustedOrbitLine.visible = false;
 
   const segStart = Number.isFinite(redirect.segment_jd_start) ? redirect.segment_jd_start : intercept.jd_arr;
   const segEnd = Number.isFinite(redirect.segment_jd_end) ? redirect.segment_jd_end : redirect.jd_earth_arr;
@@ -5245,19 +5301,70 @@ function buildMissionTimeline(traj) {
   document.getElementById('bottom-bar').style.bottom = '36px';
 }
 
+function buildRedirectTimeline(visual) {
+  const el = document.getElementById('mission-timeline');
+  const inner = document.getElementById('mission-timeline-inner');
+  const jd0 = visual?.intercept?.jd_dep;
+  const jd1 = visual?.intercept?.jd_arr;
+  const jd2 = visual?.redirect?.jd_earth_arr;
+  const span = jd2 - jd0;
+  if (!(Number.isFinite(jd0) && Number.isFinite(jd1) && Number.isFinite(jd2) && span > 0)) return;
+
+  inner.innerHTML = '<div id="mt-cursor" style="position:absolute;top:0;bottom:0;width:1px;background:#fff;opacity:0.6;pointer-events:none;z-index:2"></div>';
+
+  const phases = [
+    { label:'INTERCEPT', start:jd0, end:jd1, color:'#0d1d2e' },
+    { label:'REDIRECT',  start:jd1, end:jd2, color:'#2a1e00' },
+  ];
+  const markers = [
+    { label:'DEP', jd:jd0, color:'#00d4ff' },
+    { label:'RENDEZVOUS', jd:jd1, color:'#ff4444' },
+    { label:'CAPTURE', jd:jd2, color:'#ff8800' },
+  ];
+
+  phases.forEach(p => {
+    const pct = (p.end - p.start) / span * 100;
+    const left = (p.start - jd0) / span * 100;
+    const seg = document.createElement('div');
+    seg.className = 'mt-segment';
+    seg.style.cssText = `left:${left.toFixed(2)}%;width:${pct.toFixed(2)}%;background:${p.color}`;
+    seg.innerHTML = `<span class="mt-segment-label">${p.label}</span><span class="mt-segment-date">${jdToDate(p.start).slice(0,7)}</span>`;
+    seg.title = `${p.label}: ${Math.round(p.end - p.start)} days`;
+    seg.addEventListener('click', () => setCurrentJD(p.start));
+    inner.appendChild(seg);
+  });
+
+  markers.forEach(m => {
+    const left = (m.jd - jd0) / span * 100;
+    const marker = document.createElement('div');
+    marker.style.cssText = `position:absolute;left:${left.toFixed(2)}%;top:0;bottom:0;width:3px;background:${m.color};z-index:1;opacity:0.85;cursor:pointer`;
+    marker.title = `${m.label}: ${jdToDate(m.jd)}`;
+    marker.addEventListener('click', () => setCurrentJD(m.jd));
+    inner.appendChild(marker);
+  });
+
+  el.style.display = 'block';
+  document.getElementById('bottom-bar').style.bottom = '36px';
+}
+
 function hideMissionTimeline() {
   document.getElementById('mission-timeline').style.display = 'none';
   document.getElementById('bottom-bar').style.bottom = '0px';
 }
 
 function updateTimelineIndicator() {
-  if (!optimalTrajectory) return;
-  const traj = optimalTrajectory;
-  const jd0  = traj.jd_dep;
-  const jd3  = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return||traj.tof));
-  const span = jd3 - jd0;
+  let jd0 = null, jd1 = null;
+  if (missionAnim.active && missionAnim.mode === 'redirect') {
+    jd0 = missionAnim.jdStart;
+    jd1 = missionAnim.jdEnd;
+  } else if (optimalTrajectory) {
+    const traj = optimalTrajectory;
+    jd0 = traj.jd_dep;
+    jd1 = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
+  }
+  const span = jd1 - jd0;
   if (span <= 0) return;
-  const pct    = Math.max(0, Math.min(100, (currentJD - jd0) / span * 100));
+  const pct = Math.max(0, Math.min(100, (currentJD - jd0) / span * 100));
   const cursor = document.getElementById('mt-cursor');
   if (cursor) cursor.style.left = pct.toFixed(2) + '%';
 }
@@ -5305,10 +5412,68 @@ function startMissionAnimation(traj) {
 
   missionAnim.active  = true;
   missionAnim.playing = false;
+  missionAnim.mode    = 'extract';
   missionAnim.animJD  = traj.jd_dep;
   missionAnim.phase   = 'outbound';
+  missionAnim.jdStart = traj.jd_dep;
+  missionAnim.jdEnd   = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
+  missionAnim.redirectVisual = null;
 
   document.getElementById('mp-anim-controls').style.display = 'block';
+  buildMissionTimeline(traj);
+  syncMissionSpeedButtons();
+  syncMissionPlaybackButtons();
+}
+
+function startRedirectAnimation(visual) {
+  if (!visual?.intercept || !visual?.redirect) return;
+  stopMissionAnimation();
+  setPlayState(false);
+
+  const ic = visual.intercept;
+  const rd = visual.redirect;
+  const segStart = Number.isFinite(rd.segment_jd_start) ? rd.segment_jd_start : ic.jd_arr;
+  const segEnd = Number.isFinite(rd.segment_jd_end) ? rd.segment_jd_end : rd.jd_earth_arr;
+  const redirectPts = rd.orbit_el ? buildOrbitSegmentPoints(rd.orbit_el, segStart, segEnd, 220) : [];
+  if (redirectPts.length < 2) return;
+
+  setCurrentJD(ic.jd_dep);
+  const dep = new THREE.Vector3(ic.earthPos.x, ic.earthPos.y, ic.earthPos.z);
+  const arr = new THREE.Vector3(ic.astPos.x, ic.astPos.y, ic.astPos.z);
+  const mid = dep.clone().lerp(arr, 0.5);
+  mid.y += dep.distanceTo(arr) * 0.3;
+  const outCurve = new THREE.QuadraticBezierCurve3(dep, mid, arr);
+  missionAnim.outboundPts = outCurve.getPoints(180);
+  missionAnim.returnPts = redirectPts;
+
+  const scGeo = new THREE.ConeGeometry(0.008, 0.025, 8);
+  scGeo.rotateX(Math.PI / 2);
+  const scMat = new THREE.MeshStandardMaterial({ color:0xd0e8ff, emissive:0x203060, roughness:0.4 });
+  missionAnim.spacecraft = new THREE.Mesh(scGeo, scMat);
+  missionAnim.spacecraft.position.copy(missionAnim.outboundPts[0]);
+  scene.add(missionAnim.spacecraft);
+
+  missionAnim.engineLight = new THREE.PointLight(0x00aaff, 2.0, 0.25);
+  missionAnim.spacecraft.add(missionAnim.engineLight);
+
+  const trailGeo = new THREE.BufferGeometry();
+  const trailMat = new THREE.LineBasicMaterial({ color:0x4488aa, opacity:0.5, transparent:true });
+  missionAnim.trailLine = new THREE.Line(trailGeo, trailMat);
+  scene.add(missionAnim.trailLine);
+  missionAnim.trailPts = [];
+
+  missionAnim.active = true;
+  missionAnim.playing = false;
+  missionAnim.mode = 'redirect';
+  missionAnim.animJD = ic.jd_dep;
+  missionAnim.phase = 'outbound';
+  missionAnim.jdStart = ic.jd_dep;
+  missionAnim.jdEnd = rd.jd_earth_arr;
+  missionAnim.redirectVisual = visual;
+
+  document.getElementById('mp-anim-controls').style.display = 'block';
+  buildRedirectTimeline(visual);
+  syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
 }
 
@@ -5318,20 +5483,28 @@ function stopMissionAnimation() {
   missionAnim.active = false;
   missionAnim.playing = false;
   missionAnim.phase  = 'idle';
+  missionAnim.mode = 'extract';
+  missionAnim.jdStart = 0;
+  missionAnim.jdEnd = 0;
+  missionAnim.redirectVisual = null;
   missionAnim.trailPts = [];
   missionAnim.outboundPts = [];
   missionAnim.returnPts   = [];
   const ctrl = document.getElementById('mp-anim-controls');
   if (ctrl) ctrl.style.display = 'none';
+  syncScrubberBounds();
+  scrubber.value = jdToScrubberPos(currentJD);
+  syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
 }
 
 function updateMissionAnimation(dt) {
-  if (!missionAnim.active || !optimalTrajectory) return;
-  const traj = optimalTrajectory;
+  if (!missionAnim.active) return;
+  const traj = missionAnim.mode === 'extract' ? getActiveExtractTrajectory() : null;
 
   if (missionAnim.playing) {
-    const nextJD = clampJD(missionAnim.animJD + (missionAnim.speed / 86400) * dt);
+    const hardEnd = missionAnim.jdEnd || SCRUBBER_MAX;
+    const nextJD = Math.min(hardEnd, clampJD(missionAnim.animJD + (missionAnim.speed / 86400) * dt));
     missionAnim.animJD = nextJD;
     setCurrentJD(nextJD);
   } else {
@@ -5340,32 +5513,69 @@ function updateMissionAnimation(dt) {
 
   const jd = currentJD;
   let pos   = null;
-  const jd_ret_arr = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
+  let pathPts = missionAnim.outboundPts;
+  let pathStart = missionAnim.jdStart;
+  let pathSpan = 0;
 
-  if (jd <= traj.jd_arr) {
-    missionAnim.phase = 'outbound';
-    const t = Math.max(0, Math.min(1, (jd - traj.jd_dep) / traj.tof));
-    pos = missionAnim.outboundPts[Math.floor(t * (missionAnim.outboundPts.length - 1))].clone();
-    if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t < 0.06 || t > 0.94) ? 3.0 : 0.4;
-  } else if (jd <= traj.jd_ret_dep) {
-    missionAnim.phase = 'mining';
-    const wobble = (jd - traj.jd_arr) * 0.3;
-    pos = new THREE.Vector3(
-      traj.astPos.x + 0.01 * Math.sin(wobble),
-      traj.astPos.y + 0.01 * Math.cos(wobble),
-      traj.astPos.z);
-    if (missionAnim.engineLight) missionAnim.engineLight.intensity = 0.1;
-  } else if (jd <= jd_ret_arr) {
-    missionAnim.phase = 'return';
-    const retTof = traj.tof_return || traj.tof;
-    const t = Math.max(0, Math.min(1, (jd - traj.jd_ret_dep) / retTof));
-    pos = missionAnim.returnPts[Math.floor(t * (missionAnim.returnPts.length - 1))].clone();
-    if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t > 0.92) ? 3.0 : 0.4;
+  if (missionAnim.mode === 'redirect') {
+    const visual = missionAnim.redirectVisual;
+    if (!visual) return;
+    if (jd <= visual.intercept.jd_arr) {
+      missionAnim.phase = 'outbound';
+      pathPts = missionAnim.outboundPts;
+      pathStart = visual.intercept.jd_dep;
+      pathSpan = visual.intercept.jd_arr - visual.intercept.jd_dep;
+      const t = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
+      pos = pathPts[Math.floor(t * (pathPts.length - 1))].clone();
+      if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t < 0.06 || t > 0.94) ? 3.0 : 0.4;
+    } else if (jd <= visual.redirect.jd_earth_arr) {
+      missionAnim.phase = 'redirect';
+      pathPts = missionAnim.returnPts;
+      pathStart = visual.intercept.jd_arr;
+      pathSpan = visual.redirect.jd_earth_arr - visual.intercept.jd_arr;
+      const t = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
+      pos = pathPts[Math.floor(t * (pathPts.length - 1))].clone();
+      if (missionAnim.engineLight) missionAnim.engineLight.intensity = 0.7;
+    } else {
+      missionAnim.phase = 'done';
+      missionAnim.playing = false;
+      pos = missionAnim.returnPts[missionAnim.returnPts.length - 1].clone();
+      syncMissionPlaybackButtons();
+    }
   } else {
-    missionAnim.phase   = 'done';
-    missionAnim.playing = false;
-    pos = missionAnim.returnPts[missionAnim.returnPts.length - 1].clone();
-    syncMissionPlaybackButtons();
+    if (!traj) return;
+    const jd_ret_arr = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
+
+    if (jd <= traj.jd_arr) {
+      missionAnim.phase = 'outbound';
+      pathPts = missionAnim.outboundPts;
+      pathStart = traj.jd_dep;
+      pathSpan = traj.tof;
+      const t = Math.max(0, Math.min(1, (jd - traj.jd_dep) / traj.tof));
+      pos = missionAnim.outboundPts[Math.floor(t * (missionAnim.outboundPts.length - 1))].clone();
+      if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t < 0.06 || t > 0.94) ? 3.0 : 0.4;
+    } else if (jd <= traj.jd_ret_dep) {
+      missionAnim.phase = 'mining';
+      const wobble = (jd - traj.jd_arr) * 0.3;
+      pos = new THREE.Vector3(
+        traj.astPos.x + 0.01 * Math.sin(wobble),
+        traj.astPos.y + 0.01 * Math.cos(wobble),
+        traj.astPos.z);
+      if (missionAnim.engineLight) missionAnim.engineLight.intensity = 0.1;
+    } else if (jd <= jd_ret_arr) {
+      missionAnim.phase = 'return';
+      pathPts = missionAnim.returnPts;
+      pathStart = traj.jd_ret_dep;
+      pathSpan = traj.tof_return || traj.tof;
+      const t = Math.max(0, Math.min(1, (jd - traj.jd_ret_dep) / (traj.tof_return || traj.tof)));
+      pos = missionAnim.returnPts[Math.floor(t * (missionAnim.returnPts.length - 1))].clone();
+      if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t > 0.92) ? 3.0 : 0.4;
+    } else {
+      missionAnim.phase   = 'done';
+      missionAnim.playing = false;
+      pos = missionAnim.returnPts[missionAnim.returnPts.length - 1].clone();
+      syncMissionPlaybackButtons();
+    }
   }
 
   if (!pos || !missionAnim.spacecraft) return;
@@ -5373,13 +5583,10 @@ function updateMissionAnimation(dt) {
   missionAnim.spacecraft.position.copy(pos);
 
   // Orient nose along travel direction
-  const pts  = missionAnim.phase === 'return' ? missionAnim.returnPts : missionAnim.outboundPts;
-  const jd0b = missionAnim.phase === 'return' ? traj.jd_ret_dep : traj.jd_dep;
-  const tofb = missionAnim.phase === 'return' ? (traj.tof_return||traj.tof) : traj.tof;
-  if (pts.length > 1 && tofb > 0) {
-    const t   = Math.max(0, Math.min(0.999, (jd - jd0b) / tofb));
-    const i   = Math.floor(t * (pts.length - 1));
-    const nxt = pts[Math.min(i + 1, pts.length - 1)];
+  if (pathPts.length > 1 && pathSpan > 0) {
+    const t = Math.max(0, Math.min(0.999, (jd - pathStart) / pathSpan));
+    const i = Math.floor(t * (pathPts.length - 1));
+    const nxt = pathPts[Math.min(i + 1, pathPts.length - 1)];
     const vel = new THREE.Vector3().subVectors(nxt, pos);
     if (vel.length() > 1e-6) {
       missionAnim.spacecraft.quaternion.setFromUnitVectors(
@@ -6363,15 +6570,22 @@ document.getElementById('btn-mp-add-burn').addEventListener('click', () => {
 // ── Phase 7F: Animation + burn vector event wiring ───────────────────────────
 document.getElementById('btn-mp-play').addEventListener('click', () => {
   if (!missionAnim.active) {
-    if (!optimalTrajectory) return;
-    startMissionAnimation(optimalTrajectory);
+    const playable = getPlayableMissionContext();
+    if (!playable) return;
+    if (playable.type === 'redirect') startRedirectAnimation(playable.visual);
+    else startMissionAnimation(playable.traj);
     setMissionAnimationPlaying(true);
   } else {
     setMissionAnimationPlaying(!missionAnim.playing);
   }
 });
 document.getElementById('btn-anim-playpause').addEventListener('click', () => {
-  if (!missionAnim.active && optimalTrajectory) startMissionAnimation(optimalTrajectory);
+  if (!missionAnim.active) {
+    const playable = getPlayableMissionContext();
+    if (!playable) return;
+    if (playable.type === 'redirect') startRedirectAnimation(playable.visual);
+    else startMissionAnimation(playable.traj);
+  }
   setMissionAnimationPlaying(!missionAnim.playing);
 });
 document.getElementById('btn-anim-stop').addEventListener('click', stopMissionAnimation);
@@ -6379,8 +6593,7 @@ document.querySelectorAll('.anim-speed-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     missionAnim.speed = parseInt(btn.dataset.aspeed);
     lastSpeed = missionAnim.speed;
-    document.querySelectorAll('.anim-speed-btn').forEach(b => b.classList.remove('anim-speed-active'));
-    btn.classList.add('anim-speed-active');
+    syncMissionSpeedButtons();
     syncSpeedButtons();
   });
 });
@@ -6569,6 +6782,7 @@ scrubber.min = 0;
 scrubber.max = SCRUBBER_MAX - SCRUBBER_MIN;
 scrubber.step = 1;
 scrubber.value = jdToScrubberPos(TODAY_JD);
+syncScrubberBounds();
 
 function beginScrub() {
   isScrubbing = true;
