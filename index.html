@@ -1276,7 +1276,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
           <option value="chemical_300">Chemical — Isp 300s · High thrust, heavy fuel load</option>
           <option value="ion_3000">Ion Drive — Isp 3000s · Low thrust, very efficient</option>
           <option value="nuclear_900">Nuclear Thermal — Isp 900s · High thrust + efficient</option>
-          <option value="solar_1500">Solar Electric — Isp 2500s · efficient, very low thrust</option>
+          <option value="sep_2500">Solar Electric — Isp 2500s · efficient, very low thrust</option>
         </select>
       </div>
       <div style="margin-bottom:10px">
@@ -2962,6 +2962,9 @@ worker.onmessage = ({ data }) => {
     return;
   }
   if (data.type === 'redirect_result') {
+    if (Number.isFinite(data.reqId) && Number.isFinite(_activeRedirectRequestId) && data.reqId !== _activeRedirectRequestId) {
+      return;
+    }
     if (typeof _plannerTimeoutId !== 'undefined' && _plannerTimeoutId) {
       clearTimeout(_plannerTimeoutId); _plannerTimeoutId = null;
     }
@@ -3066,6 +3069,8 @@ let _redirectArcLine  = null;
 let _lunarOrbitRing   = null;
 let _cargoPodArcs     = [];
 let activeRedirectVisual = null;
+let _redirectRequestSeq = 0;
+let _activeRedirectRequestId = 0;
 let mpBurns           = [];
 
 // ── Phase 7F: Mission Visualization ──────────────────────────────────────────
@@ -3092,6 +3097,8 @@ const missionAnim = {
   plumeDirection: new THREE.Vector3(0, 0, -1),
 };
 let playbackModeBeforeScrub = 'none';
+let playbackMissionRefBeforeScrub = null;
+let playbackMissionModeBeforeScrub = null;
 
 const SPACECRAFT_SHARED = {
   bodyGeo: new THREE.BoxGeometry(0.04, 0.025, 0.025),
@@ -3242,12 +3249,25 @@ function getActiveExtractTrajectory() {
 }
 
 function getPlayableMissionContext() {
-  if (_activeMissionType === 'redirect' && activeRedirectVisual) {
-    return { type: 'redirect', visual: activeRedirectVisual };
+  if (_activeMissionType === 'redirect') {
+    return activeRedirectVisual ? { type: 'redirect', visual: activeRedirectVisual } : null;
   }
   const traj = getActiveExtractTrajectory();
   if (traj) return { type: 'extract', traj };
   return null;
+}
+
+function missionContextMatches(playable) {
+  if (!missionAnim.active || !playable) return false;
+  if (playable.type !== missionAnim.mode) return false;
+  if (playable.type === 'redirect') return missionAnim.redirectVisual === playable.visual;
+  return getActiveExtractTrajectory() === playable.traj;
+}
+
+function activatePlayableMission(playable) {
+  if (!playable) return false;
+  if (playable.type === 'redirect') return !!startRedirectAnimation(playable.visual);
+  return !!startMissionAnimation(playable.traj);
 }
 
 function syncPrimaryPlaybackButton() {
@@ -3290,15 +3310,12 @@ function setMissionAnimationPlaying(playing) {
 }
 
 function togglePrimaryPlayback() {
-  if (missionAnim.active) {
+  const playable = getPlayableMissionContext();
+  if (missionAnim.active && missionContextMatches(playable)) {
     setMissionAnimationPlaying(!missionAnim.playing);
   } else {
-    const playable = getPlayableMissionContext();
-    if (playable?.type === 'redirect') {
-      startRedirectAnimation(playable.visual);
-      setMissionAnimationPlaying(true);
-    } else if (playable?.type === 'extract') {
-      startMissionAnimation(playable.traj);
+    if (missionAnim.active) stopMissionAnimation();
+    if (activatePlayableMission(playable)) {
       setMissionAnimationPlaying(true);
     } else {
       setPlayState(!isPlaying);
@@ -4537,7 +4554,7 @@ function openMissionPlanner(id) {
   document.getElementById('mp-progress-bar').style.width = '0%';
   missionResults = []; selectedTrajIdx = -1;
   clearPlannerError();
-  setMissionType('extract'); // reset to default on each open
+  setMissionType(_activeMissionType || 'extract', { resetVisuals: false });
   if (leftPanelOpen) toggleLeftPanel();
   // Expand right panel into mission-planner mode
   const rp = document.getElementById('right-panel');
@@ -4684,19 +4701,27 @@ async function runMissionOptimizer() {
 
 let _activeMissionType = 'extract';
 
-function setMissionType(type) {
+function setMissionType(type, options = {}) {
+  const { resetVisuals = true } = options;
   _activeMissionType = type;
   document.getElementById('btn-type-extract').dataset.on  = (type === 'extract').toString();
   document.getElementById('btn-type-redirect').dataset.on = (type === 'redirect').toString();
   document.getElementById('mp-redirect-config').style.display = type === 'redirect' ? 'block' : 'none';
+  if (type === 'redirect') {
+    optimalTrajectory = null;
+    selectedTrajIdx = -1;
+    missionEarthReturnPos = null;
+  }
   // Hide all result panels on mode switch
   ['mp-results','mp-profile','mp-burns','mp-actions','mp-redirect-results'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
   clearPlannerError();
-  clearTrajectoryLine();
-  clearRedirectVisualization();
+  if (resetVisuals) {
+    clearTrajectoryLine();
+    clearRedirectVisualization();
+  }
 }
 
 function onMiningSlider(val) {
@@ -4707,7 +4732,7 @@ const REDIRECT_PROPULSION = {
   chemical_300: { name: 'Chemical',      isp_s: 300  },
   ion_3000:     { name: 'Ion Drive',     isp_s: 3000 },
   nuclear_900:  { name: 'Nuclear Thermal', isp_s: 900 },
-  solar_1500:   { name: 'Solar Electric', isp_s: 2500 },
+  sep_2500:   { name: 'Solar Electric', isp_s: 2500 },
 };
 
 function getRedirectPropulsionModule() {
@@ -4737,6 +4762,11 @@ async function runRedirectOptimizer() {
   if (!ast) { showPlannerError('No asteroid selected — click an asteroid first.'); return; }
   if (!isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
     showPlannerError('Asteroid is missing orbital elements (a/e/i). Cannot plan redirect mission.');
+    return;
+  }
+  // Founding Doc §6.2: redirect planning is blocked for any asteroid with a non-zero Sentry impact probability
+  if (ast.Sentry && Number.isFinite(ast.Sentry.impact_probability) && ast.Sentry.impact_probability > 0) {
+    showPlannerError('RESTRICTED: This asteroid has a non-zero Sentry impact probability. Redirect planning is blocked for potentially hazardous objects.');
     return;
   }
   if (!isFinite(ast.epoch)) {
@@ -4781,11 +4811,17 @@ async function runRedirectOptimizer() {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-  clearTrajectoryLine();
-  clearRedirectVisualization();
+  stopMissionAnimation();
+  hideMissionTimeline();
+  clearMissionPathVisuals();
+  clearBurnVectors();
 
   if (_plannerTimeoutId) clearTimeout(_plannerTimeoutId);
+  const reqId = ++_redirectRequestSeq;
+  _activeRedirectRequestId = reqId;
   _plannerTimeoutId = setTimeout(() => {
+    if (_activeRedirectRequestId !== reqId) return;
+    _activeRedirectRequestId = 0;
     _plannerTimeoutId = null;
     showPlannerError('Worker timeout (>30 s). Try a shorter launch window or a closer target.');
   }, 30000);
@@ -4793,6 +4829,7 @@ async function runRedirectOptimizer() {
   try {
     worker.postMessage({
       cmd: 'plan_redirect_mission',
+      reqId,
       ast,
       jd_start,
       jd_end,
@@ -4804,11 +4841,14 @@ async function runRedirectOptimizer() {
       launchVehicle,
     });
   } catch(err) {
+    if (_activeRedirectRequestId === reqId) _activeRedirectRequestId = 0;
     showPlannerError(err);
   }
 }
 
 function onRedirectResult(data) {
+  if (Number.isFinite(data.reqId) && data.reqId !== _activeRedirectRequestId) return;
+  _activeRedirectRequestId = 0;
   if (_plannerTimeoutId) { clearTimeout(_plannerTimeoutId); _plannerTimeoutId = null; }
   clearPlannerError();
   document.getElementById('mp-computing').style.display = 'none';
@@ -4845,6 +4885,7 @@ function onRedirectResult(data) {
 
   // Intercept trajectory
   const ic = data.intercept;
+  if (!ic) { showPlannerError('Redirect result missing intercept data (internal error).'); return; }
   document.getElementById('rr-intercept-text').textContent =
     `Depart    ${jdToDate(ic.jd_dep)}\n` +
     `Arrive    ${jdToDate(ic.jd_arr)}\n` +
@@ -4855,6 +4896,7 @@ function onRedirectResult(data) {
   const ast_d = data.asteroid;
   const rd    = data.redirect;
   const flags = data.flags;
+  if (!ast_d || !rd || !flags) { showPlannerError('Redirect result is incomplete (internal error).'); return; }
   const logistics = data.logistics || {};
   const d_km  = (ast_d.d_m / 1000).toFixed(2);
   const mass_str = ast_d.mass_kg >= 1e12
@@ -4875,6 +4917,7 @@ function onRedirectResult(data) {
 
   // Redirect capture / delivery
   const cap = data.capture;
+  if (!cap) { showPlannerError('Redirect capture data missing (internal error).'); return; }
   const captureHeader = document.getElementById('rr-capture-header');
   if (captureHeader) captureHeader.textContent = `${(cap.label || 'Destination').toUpperCase()} CAPTURE`;
   document.getElementById('rr-capture-text').textContent =
@@ -4889,6 +4932,7 @@ function onRedirectResult(data) {
 
   // ISRU yield
   const isru = data.isru;
+  if (!isru) { showPlannerError('Redirect ISRU data missing (internal error).'); return; }
   const fmtMass = m => m >= 1e9 ? (m/1e9).toFixed(2)+' Mt' : m >= 1e6 ? (m/1e6).toFixed(2)+' kt' : Math.round(m)+' kg';
   document.getElementById('rr-isru-text').textContent =
     `Mineable   ${fmtMass(isru.mineable_kg)} (5% extraction)\n` +
@@ -4898,14 +4942,21 @@ function onRedirectResult(data) {
     `Catalog body ${fmtRedirectValue(isru.whole_body_price_usd)}`;
 
   // 3D visualization
-  clearTrajectoryLine();
+  clearMissionPathVisuals();
+  clearBurnVectors();
+  stopMissionAnimation();
+  hideMissionTimeline();
   clearRedirectVisualization();
-  activeRedirectVisual = { asteroidId: selectedId, intercept: ic, redirect: rd };
-  drawTrajectoryLine(ic.earthPos, ic.astPos);
+  optimalTrajectory = null;
+  selectedTrajIdx = -1;
+  activeRedirectVisual = { asteroidId: selectedId, intercept: ic, redirect: rd, capture: cap };
+  if (!drawRedirectInterceptTrajectory(ic)) {
+    setStatus('Redirect intercept path unavailable for current solution window', true);
+  }
   if (!drawRedirectTrajectory(getSelectedAsteroid(), ic, rd)) {
     setStatus('Redirect path unavailable for current solution window', true);
   }
-  drawLunarOrbitRing();
+  drawRedirectCaptureMarker(cap);
 }
 
 function clearRedirectVisualization(options = {}) {
@@ -4924,7 +4975,7 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   if (ast) drawOrbitFromElements(redirectOriginalOrbitLine, asteroidToOrbitElements(ast));
   if (redirect.orbit_el) {
     drawOrbitFromElements(redirectAdjustedOrbitLine, redirect.orbit_el);
-    setGlowLineColor(redirectAdjustedOrbitLine, ORBIT_NEON.redirect, 0.54, 0.12);
+    setGlowLineColor(redirectAdjustedOrbitLine, ORBIT_NEON.redirect, 0.22, 0.05);
   } else {
     redirectAdjustedOrbitLine.visible = false;
   }
@@ -4949,15 +5000,43 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   return true;
 }
 
+function drawRedirectInterceptTrajectory(intercept) {
+  if (!intercept) return false;
+  const segStart = Number.isFinite(intercept.segment_jd_start) ? intercept.segment_jd_start : intercept.jd_dep;
+  const segEnd = Number.isFinite(intercept.segment_jd_end) ? intercept.segment_jd_end : intercept.jd_arr;
+  const pts = intercept.orbit_el && Number.isFinite(segStart) && Number.isFinite(segEnd)
+    ? buildOrbitSegmentPoints(intercept.orbit_el, segStart, segEnd, 96)
+    : [];
+  if (pts.length >= 2) {
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
+    scene.add(trajectoryLine);
+    const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
+    const arr1 = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
+    scene.add(arr1);
+    trajectoryArrows.push(arr1);
+    const arr2 = new THREE.ArrowHelper(dir.clone().negate(), pts[pts.length - 1].clone(), 0.12, 0xffcf66, 0.05, 0.025);
+    scene.add(arr2);
+    trajectoryArrows.push(arr2);
+    return true;
+  }
+  drawTrajectoryLine(intercept.earthPos, intercept.astPos, { skipReturn: true });
+  return true;
+}
+
 function syncActiveRedirectVisuals() {
   if (!activeRedirectVisual) return;
   const ast = asteroidData[activeRedirectVisual.asteroidId] || getSelectedAsteroid();
   if (!ast) return;
+  clearMissionPathVisuals();
   clearRedirectVisualization({ preserveState: true });
+  if (!drawRedirectInterceptTrajectory(activeRedirectVisual.intercept)) {
+    setStatus('Redirect intercept path unavailable for current solution window', true);
+  }
   if (!drawRedirectTrajectory(ast, activeRedirectVisual.intercept, activeRedirectVisual.redirect)) {
     setStatus('Redirect path unavailable for current solution window', true);
   }
-  drawLunarOrbitRing();
+  drawRedirectCaptureMarker(activeRedirectVisual.capture);
 }
 
 function drawLunarOrbitRing() {
@@ -4975,6 +5054,33 @@ function drawLunarOrbitRing() {
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   _lunarOrbitRing = makeGlowLine(geo, ORBIT_NEON.redirect, 0.68, { haloOpacity: 0.16 });
   scene.add(_lunarOrbitRing);
+}
+
+function drawEarthCenteredRing(radiusKm, color = ORBIT_NEON.redirect) {
+  if (!planets[2] || !Number.isFinite(radiusKm) || radiusKm <= 0) return;
+  const radiusAU = (radiusKm * 1000) / AU_m;
+  const earthPos = planets[2].position;
+  const pts = [];
+  for (let i = 0; i <= 96; i++) {
+    const theta = (i / 96) * Math.PI * 2;
+    pts.push(new THREE.Vector3(
+      earthPos.x + radiusAU * Math.cos(theta),
+      earthPos.y,
+      earthPos.z + radiusAU * Math.sin(theta),
+    ));
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  _lunarOrbitRing = makeGlowLine(geo, color, 0.52, { haloOpacity: 0.12 });
+  scene.add(_lunarOrbitRing);
+}
+
+function drawRedirectCaptureMarker(capture) {
+  if (!capture) return;
+  if (capture.target_key === 'lunar_orbit') {
+    drawLunarOrbitRing();
+    return;
+  }
+  if (Number.isFinite(capture.r_cap_km)) drawEarthCenteredRing(capture.r_cap_km, ORBIT_NEON.redirect);
 }
 
 function summarizeTrajectoryOperationalMetrics(traj) {
@@ -5339,7 +5445,7 @@ function drawTrajectoryLine(earthPos, astPos, options = {}) {
   const arr2 = new THREE.ArrowHelper(dir.clone().negate(), new THREE.Vector3(ax, ay, az), 0.12, 0xffcf66, 0.05, 0.025);
   scene.add(arr2); trajectoryArrows.push(arr2);
   // Return arc (dashed) — drawn once Earth return pos is known
-  if (optimalTrajectory) _redrawReturnArc(optimalTrajectory, { astPos, returnEarthPos: options.returnEarthPos });
+  if (optimalTrajectory && !options.skipReturn) _redrawReturnArc(optimalTrajectory, { astPos, returnEarthPos: options.returnEarthPos });
 }
 
 function _redrawReturnArc(traj, options = {}) {
@@ -5379,6 +5485,10 @@ function getLiveMissionPositions(traj) {
 }
 
 function syncActiveMissionVisuals() {
+  if ((_activeMissionType === 'redirect' || missionAnim.mode === 'redirect') && activeRedirectVisual) {
+    syncActiveRedirectVisuals();
+    return;
+  }
   const traj = missionResults[selectedTrajIdx] || optimalTrajectory;
   if (!traj) {
     syncActiveRedirectVisuals();
@@ -5602,6 +5712,7 @@ function updateTimelineIndicator() {
 }
 
 function startMissionAnimation(traj) {
+  if (!traj) return false;
   stopMissionAnimation();
   setPlayState(false);
   setCurrentJD(traj.jd_dep);
@@ -5625,7 +5736,7 @@ function startMissionAnimation(traj) {
     new THREE.Vector3(midX2, midY2, midZ2),
     new THREE.Vector3(ep.x, ep.y, ep.z));
   missionAnim.returnPts = retCurve.getPoints(200);
-  if (!missionAnim.outboundPts.length || !missionAnim.returnPts.length) return;
+  if (!missionAnim.outboundPts.length || !missionAnim.returnPts.length) return false;
 
   missionAnim.spacecraft = createSpacecraft();
   missionAnim.spacecraft.position.copy(missionAnim.outboundPts[0]);
@@ -5656,27 +5767,36 @@ function startMissionAnimation(traj) {
   buildMissionTimeline(traj);
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
+  return true;
 }
 
 function startRedirectAnimation(visual) {
-  if (!visual?.intercept || !visual?.redirect) return;
+  if (!visual?.intercept || !visual?.redirect) return false;
   stopMissionAnimation();
   setPlayState(false);
 
   const ic = visual.intercept;
   const rd = visual.redirect;
+  const interceptStart = Number.isFinite(ic.segment_jd_start) ? ic.segment_jd_start : ic.jd_dep;
+  const interceptEnd = Number.isFinite(ic.segment_jd_end) ? ic.segment_jd_end : ic.jd_arr;
+  let interceptPts = ic.orbit_el ? buildOrbitSegmentPoints(ic.orbit_el, interceptStart, interceptEnd, 180) : [];
   const segStart = Number.isFinite(rd.segment_jd_start) ? rd.segment_jd_start : ic.jd_arr;
   const segEnd = Number.isFinite(rd.segment_jd_end) ? rd.segment_jd_end : rd.jd_earth_arr;
   const redirectPts = rd.orbit_el ? buildOrbitSegmentPoints(rd.orbit_el, segStart, segEnd, 220) : [];
-  if (redirectPts.length < 2) return;
+  if (interceptPts.length < 2) {
+    const dep = new THREE.Vector3(ic.earthPos.x, ic.earthPos.y, ic.earthPos.z);
+    const arr = new THREE.Vector3(ic.astPos.x, ic.astPos.y, ic.astPos.z);
+    const mid = dep.clone().lerp(arr, 0.5);
+    mid.y += dep.distanceTo(arr) * 0.3;
+    interceptPts = new THREE.QuadraticBezierCurve3(dep, mid, arr).getPoints(180);
+  }
+  if (redirectPts.length < 2) {
+    setStatus('Redirect animation unavailable for current solution window', true);
+    return false;
+  }
 
   setCurrentJD(ic.jd_dep);
-  const dep = new THREE.Vector3(ic.earthPos.x, ic.earthPos.y, ic.earthPos.z);
-  const arr = new THREE.Vector3(ic.astPos.x, ic.astPos.y, ic.astPos.z);
-  const mid = dep.clone().lerp(arr, 0.5);
-  mid.y += dep.distanceTo(arr) * 0.3;
-  const outCurve = new THREE.QuadraticBezierCurve3(dep, mid, arr);
-  missionAnim.outboundPts = outCurve.getPoints(180);
+  missionAnim.outboundPts = interceptPts;
   missionAnim.returnPts = redirectPts;
 
   missionAnim.spacecraft = createSpacecraft();
@@ -5708,6 +5828,7 @@ function startRedirectAnimation(visual) {
   buildRedirectTimeline(visual);
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
+  return true;
 }
 
 function stopMissionAnimation() {
@@ -6829,22 +6950,22 @@ document.getElementById('btn-mp-add-burn').addEventListener('click', () => {
 });
 // ── Phase 7F: Animation + burn vector event wiring ───────────────────────────
 document.getElementById('btn-mp-play').addEventListener('click', () => {
-  if (!missionAnim.active) {
-    const playable = getPlayableMissionContext();
-    if (!playable) return;
-    if (playable.type === 'redirect') startRedirectAnimation(playable.visual);
-    else startMissionAnimation(playable.traj);
+  const playable = getPlayableMissionContext();
+  if (!missionAnim.active || !missionContextMatches(playable)) {
+    if (missionAnim.active) stopMissionAnimation();
+    if (!activatePlayableMission(playable)) return;
     setMissionAnimationPlaying(true);
   } else {
     setMissionAnimationPlaying(!missionAnim.playing);
   }
 });
 document.getElementById('btn-anim-playpause').addEventListener('click', () => {
-  if (!missionAnim.active) {
-    const playable = getPlayableMissionContext();
-    if (!playable) return;
-    if (playable.type === 'redirect') startRedirectAnimation(playable.visual);
-    else startMissionAnimation(playable.traj);
+  const playable = getPlayableMissionContext();
+  if (!missionAnim.active || !missionContextMatches(playable)) {
+    if (missionAnim.active) stopMissionAnimation();
+    if (!activatePlayableMission(playable)) return;
+    setMissionAnimationPlaying(true);
+    return;
   }
   setMissionAnimationPlaying(!missionAnim.playing);
 });
@@ -7046,6 +7167,10 @@ syncScrubberBounds();
 
 function beginScrub() {
   isScrubbing = true;
+  playbackMissionModeBeforeScrub = missionAnim.mode;
+  playbackMissionRefBeforeScrub = missionAnim.mode === 'redirect'
+    ? missionAnim.redirectVisual
+    : getActiveExtractTrajectory();
   playbackModeBeforeScrub = missionAnim.active && missionAnim.playing
     ? 'mission'
     : isPlaying
@@ -7058,9 +7183,20 @@ function beginScrub() {
 function endScrub() {
   if (!isScrubbing) return;
   isScrubbing = false;
-  if (playbackModeBeforeScrub === 'mission') setMissionAnimationPlaying(true);
+  if (playbackModeBeforeScrub === 'mission') {
+    const sameMission =
+      missionAnim.active &&
+      missionAnim.mode === playbackMissionModeBeforeScrub &&
+      (
+        (missionAnim.mode === 'redirect' && missionAnim.redirectVisual === playbackMissionRefBeforeScrub) ||
+        (missionAnim.mode === 'extract' && getActiveExtractTrajectory() === playbackMissionRefBeforeScrub)
+      );
+    if (sameMission) setMissionAnimationPlaying(true);
+  }
   if (playbackModeBeforeScrub === 'timeline') setPlayState(true);
   playbackModeBeforeScrub = 'none';
+  playbackMissionModeBeforeScrub = null;
+  playbackMissionRefBeforeScrub = null;
 }
 
 scrubber.addEventListener('mousedown', beginScrub);
@@ -7081,7 +7217,7 @@ function syncSpeedButtons() {
 
 function setPlayState(playing) {
   if (playing && missionAnim.active) {
-    missionAnim.playing = false;
+    stopMissionAnimation();
   }
   isPlaying = playing;
   simSpeed = playing ? lastSpeed : 0;

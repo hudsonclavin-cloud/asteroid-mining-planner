@@ -1034,6 +1034,11 @@ self.onmessage = function(e) {
       self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: 'Invalid asteroid orbital elements' });
       return;
     }
+    // Founding Doc §6.2: block redirect for any asteroid with a non-zero Sentry impact probability
+    if (ast.Sentry && Number.isFinite(ast.Sentry.impact_probability) && ast.Sentry.impact_probability > 0) {
+      self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: 'RESTRICTED: Asteroid has non-zero Sentry impact probability. Redirect planning blocked for hazardous objects.' });
+      return;
+    }
 
     // A — Intercept scan: keep a pool of low-departure candidates, then score redirect feasibility per propulsion mode.
     const tof_options = [120, 180, 240, 300, 360, 420, 480, 540, 600];
