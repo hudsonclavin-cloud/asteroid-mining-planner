@@ -633,14 +633,14 @@ function izzoLambert(r1v, r2v, tof_days, direction) {
   const r1hat = r1.map(v => v / r1n);
   const r2hat = r2.map(v => v / r2n);
   const th1 = _unitVec([
-    r1hat[1]*cross[2] - r1hat[2]*cross[1],
-    r1hat[2]*cross[0] - r1hat[0]*cross[2],
-    r1hat[0]*cross[1] - r1hat[1]*cross[0],
+    r1hat[1]*crossVec[2] - r1hat[2]*crossVec[1],
+    r1hat[2]*crossVec[0] - r1hat[0]*crossVec[2],
+    r1hat[0]*crossVec[1] - r1hat[1]*crossVec[0],
   ]);
   const th2 = _unitVec([
-    r2hat[1]*cross[2] - r2hat[2]*cross[1],
-    r2hat[2]*cross[0] - r2hat[0]*cross[2],
-    r2hat[0]*cross[1] - r2hat[1]*cross[0],
+    r2hat[1]*crossVec[2] - r2hat[2]*crossVec[1],
+    r2hat[2]*crossVec[0] - r2hat[0]*crossVec[2],
+    r2hat[0]*crossVec[1] - r2hat[1]*crossVec[0],
   ]);
 
   const f = 1 / 1000; // m/s → km/s
@@ -1008,6 +1008,7 @@ self.onmessage = function(e) {
       ast,
       jd_start,
       jd_end,
+      reqId,
       propulsionModule,
       miningFraction,
       captureTarget,
@@ -1030,7 +1031,7 @@ self.onmessage = function(e) {
 
     // Validate orbital elements
     if (!ast || !isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
-      self.postMessage({ type: 'redirect_result', schema_version: 1, feasible: false, error: 'Invalid asteroid orbital elements' });
+      self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: 'Invalid asteroid orbital elements' });
       return;
     }
 
@@ -1062,19 +1063,25 @@ self.onmessage = function(e) {
         const pc = patchedConic(ve, lam.v1, va, lam.v2, R_earth / 1000 + 400);
         if (!pc || !isFinite(pc.dv_dep) || pc.dv_dep > MISSION_GATE_DEP_KMS) continue;
 
+        let interceptOrbitEl = null;
+        try {
+          interceptOrbitEl = cart2kep(earthDep.x, earthDep.y, earthDep.z, lam.v1[0], lam.v1[1], lam.v1[2], jd_dep);
+        } catch (e) {}
+
         interceptCandidates.push({
           jd_dep, jd_arr, tof,
           dv_dep: pc.dv_dep,
           earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
           astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z },
           v_ast:    { vx: astArr.vx, vy: astArr.vy, vz: astArr.vz },
+          orbit_el: interceptOrbitEl,
           ve, va,
         });
       }
     }
 
     if (!interceptCandidates.length) {
-      self.postMessage({ type: 'redirect_result', schema_version: 1, feasible: false, error: `No viable intercept found within ΔV budget (${MISSION_GATE_DEP_KMS.toFixed(0)} km/s)` });
+      self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: `No viable intercept found within ΔV budget (${MISSION_GATE_DEP_KMS.toFixed(0)} km/s)` });
       return;
     }
 
@@ -1216,6 +1223,7 @@ self.onmessage = function(e) {
         const result = {
           type: 'redirect_result',
           schema_version: 1,
+          reqId,
           feasible: redirectFeasible,
           intercept: {
             jd_dep: best.jd_dep,
@@ -1224,6 +1232,9 @@ self.onmessage = function(e) {
             dv_dep: best.dv_dep,
             earthPos: best.earthPos,
             astPos: best.astPos,
+            orbit_el: best.orbit_el || null,
+            segment_jd_start: best.jd_dep,
+            segment_jd_end: best.jd_arr,
           },
           redirect: {
             dv_redirect,
@@ -1237,7 +1248,9 @@ self.onmessage = function(e) {
             segment_jd_end: jd_earth_arr,
           },
           capture: {
+            target_key: captureProfile.key || null,
             label: captureProfile.label,
+            delivery_key: deliveryProfile.key || null,
             delivery_label: deliveryProfile.label,
             dv_lunar_capture: dv_capture_target,
             dv_delivery,
@@ -1303,7 +1316,15 @@ self.onmessage = function(e) {
       }
 
       const chosen = bestRedirectResult || bestRedirectFallback;
-      if (!chosen) return { feasible: false, error: bestError };
+      if (!chosen) {
+        return {
+          type: 'redirect_result',
+          schema_version: 1,
+          reqId,
+          feasible: false,
+          error: bestError,
+        };
+      }
       if (!chosen.feasible && !chosen.error) {
         if (chosen.flags?.launch_capacity_ok === false) {
           chosen.error = `${launchProfile.name} cannot launch the ${spacecraftProfile.name} redirect stack within capacity.`;
@@ -1341,7 +1362,7 @@ self.onmessage = function(e) {
 
     const finalResult = bestResult || bestFallback;
     if (!finalResult) {
-      self.postMessage({ type: 'redirect_result', schema_version: 1, feasible: false, error: 'No redirect solution could be evaluated for this target and propulsion mode.' });
+      self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: 'No redirect solution could be evaluated for this target and propulsion mode.' });
       return;
     }
     if (!finalResult.feasible && !finalResult.error) {
