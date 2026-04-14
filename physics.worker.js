@@ -54,6 +54,185 @@ const PLANETS = [
 
 let asteroids = [];
 
+const MISSION_GATE_DEP_KMS = 10.0;
+const MISSION_GATE_TOTAL_KMS = 25.0;
+const MISSION_HIGH_DV_KMS = 12.0;
+const NHATS_DEFAULTS = { dv: '12', dur: '450', stay: '8' };
+const DEFAULT_REDIRECT_CAPTURE = { key: 'lunar_orbit', label: 'Lunar Orbit', orbitRadiusKm: 6737, captureExtraDv: 1.7 };
+const DEFAULT_REDIRECT_DELIVERY = { key: 'leo', label: 'Low Earth Orbit (LEO)', captureExtraDv: 0.0, deliveryExtraDv: 0.0, marketMultiplier: 1.0 };
+const DEFAULT_REDIRECT_SPACECRAFT = { name: 'Medium Miner', dry_kg: 5000, payload_kg: 2000, isp: 320, cost_usd: 180e6 };
+const DEFAULT_REDIRECT_LAUNCH = { name: 'Falcon 9', cost_per_kg: 2700, max_kg: 22800, label: 'Falcon 9' };
+
+const FALLBACK_CATALOG = [
+  { pdes: 433, full_name: '433 Eros (1898 DQ)', a: 1.45811225801466, e: 0.222735687791413, i: 10.82857013630658, om: 304.3062534664844, w: 178.8213653588039, ma: 47.23946575496196, epoch: 2458600.5, H: 11.16, spec: 'S', profit: 1.0779165041005357e-42, delta_v: 6.112354, price: 6.688146261052001e-42, pha: 'N', class: 'AMO', diameter: 16.84, albedo: 0.25, moid: 0.149341, last_obs: '2018-10-27', condition_code: 0 },
+  { pdes: 719, full_name: '719 Albert (1911 MT)', a: 2.638780196295172, e: 0.5463009415651705, i: 11.5648447748565, om: 183.8872861432646, w: 156.1636682123583, ma: 48.31725263057137, epoch: 2458600.5, H: 15.4, spec: 'S', profit: 4.285173583378436e-43, delta_v: 7.724768, price: 4.123974587503586e-42, pha: 'N', class: 'AMO', diameter: null, albedo: null, moid: 0.203359, last_obs: '2018-11-03', condition_code: 0 },
+  { pdes: 887, full_name: '887 Alinda (1918 DB)', a: 2.476487671729959, e: 0.5691156473282417, i: 9.384537356044309, om: 110.4284814357001, w: 350.4143214209113, ma: 193.4143465783937, epoch: 2458600.5, H: 13.4, spec: '?', profit: null, delta_v: 7.06642, price: null, pha: 'N', class: 'AMO', diameter: 4.2, albedo: 0.31, moid: 0.0865707, last_obs: '2018-07-12', condition_code: 0 },
+  { pdes: 1036, full_name: '1036 Ganymed (1924 TD)', a: 2.664145334052341, e: 0.5332347372100545, i: 26.68761212144486, om: 215.5575038401243, w: 132.3963557605626, ma: 274.1561973977862, epoch: 2458600.5, H: 9.45, spec: 'S', profit: 7.107686773724316e-40, delta_v: 10.368777, price: 9.485008166604466e-39, pha: 'N', class: 'AMO', diameter: 37.675, albedo: 0.238, moid: 0.343497, last_obs: '2018-07-03', condition_code: 0 },
+  { pdes: 1221, full_name: '1221 Amor (1932 EA1)', a: 1.91941566321919, e: 0.4353210351202446, i: 11.87652956555689, om: 171.3372302802219, w: 26.6748196824311, ma: 250.2803094387659, epoch: 2458600.5, H: 17.7, spec: '?', profit: null, delta_v: 6.687817, price: null, pha: 'N', class: 'AMO', diameter: 1, albedo: null, moid: 0.107716, last_obs: '2018-10-15', condition_code: 0 },
+  { pdes: 1566, full_name: '1566 Icarus (1949 MA)', a: 1.077933978069936, e: 0.826810028209165, i: 22.85233700526169, om: 88.08176571328511, w: 31.29738216487599, ma: 33.0245871930141, epoch: 2453505.5, H: 16.9, spec: '?', profit: null, delta_v: 15.298098, price: null, pha: 'Y', class: 'APO', diameter: 1, albedo: 0.51, moid: 0.0350617, last_obs: '2018-07-26', condition_code: 0 },
+  { pdes: 1580, full_name: '1580 Betulia (1950 KA)', a: 2.196729768306549, e: 0.4875957095290629, i: 52.098230224, om: 62.29224456812244, w: 159.5055235075437, ma: 74.0179593176497, epoch: 2458600.5, H: 14.7, spec: 'C', profit: 6934989326903.471, delta_v: 17.059994, price: 151930944581743.22, pha: 'N', class: 'AMO', diameter: 5.8, albedo: 0.08, moid: 0.135315, last_obs: '2018-07-17', condition_code: 0 },
+  { pdes: 1620, full_name: '1620 Geographos (1951 RA)', a: 1.24530233955045, e: 0.3354404981112329, i: 13.33734833973119, om: 337.1953965589663, w: 276.9150418598405, ma: 311.5329572322354, epoch: 2458600.5, H: 15.6, spec: 'S', profit: 3.87743609006322e-43, delta_v: 6.747039, price: 2.97575945469195e-42, pha: 'Y', class: 'APO', diameter: 2.56, albedo: 0.29, moid: 0.0298285, last_obs: '2018-11-03', condition_code: 0 },
+  { pdes: 1627, full_name: '1627 Ivar (1929 SH)', a: 1.863481492935208, e: 0.3966132591577319, i: 8.450368630107375, om: 133.1221704068903, w: 167.7698144036891, ma: 101.5580082429805, epoch: 2458600.5, H: 13.2, spec: 'S', profit: 1.993467397835755e-41, delta_v: 6.320181, price: 1.3454341325506982e-40, pha: 'N', class: 'AMO', diameter: 9.12, albedo: 0.15, moid: 0.11161, last_obs: '2018-11-02', condition_code: 0 },
+  { pdes: 1685, full_name: '1685 Toro (1948 OA)', a: 1.367307961319918, e: 0.4358338371649736, i: 9.380085642650519, om: 274.3374253845515, w: 127.0621738468082, ma: 293.4107248356075, epoch: 2454917.5, H: 14.23, spec: 'S', profit: 9.273765410517366e-43, delta_v: 6.669782, price: 6.971314526034139e-42, pha: 'N', class: 'APO', diameter: 3.4, albedo: 0.31, moid: 0.0507715, last_obs: '2018-08-08', condition_code: 0 },
+  { pdes: 1862, full_name: '1862 Apollo (1932 HA)', a: 1.470162312389734, e: 0.5597614018825802, i: 6.353445562610878, om: 35.73168803474559, w: 285.8593797344928, ma: 206.6290803122197, epoch: 2455958.5, H: 16.25, spec: 'Q', profit: 88356037.90588945, delta_v: 7.484202, price: 805034046.4611495, pha: 'Y', class: 'APO', diameter: 1.5, albedo: 0.25, moid: 0.025757, last_obs: '2017-05-17', condition_code: 0 },
+];
+
+function normalizeDesignation(raw) {
+  return String(raw || '').replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function parseFiniteOrNull(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parsePositiveOrNull(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function parseEpochJD(value) {
+  if (value === '' || value === null || value === undefined) return J2000;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (n === 0) return J2000;
+  return n > 2400000 ? n : null;
+}
+
+function buildNhatsUrl(overrides) {
+  return 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?' + new URLSearchParams({
+    ...NHATS_DEFAULTS,
+    ...(overrides || {}),
+  }).toString();
+}
+
+function buildAsterankUrl(limit) {
+  return 'https://aster-proxy.hudsonclavin.workers.dev/api/asterank?' + new URLSearchParams({
+    query: JSON.stringify({ neo: 'Y' }),
+    limit: String(limit),
+    sort: 'delta_v',
+    fields: 'pdes,full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class,diameter,albedo,moid,last_obs,condition_code',
+  }).toString();
+}
+
+function getNhatsMetricValue(value, key) {
+  if (value && typeof value === 'object') {
+    const nested = parsePositiveOrNull(value[key]);
+    if (nested !== null) return nested;
+    for (const candidate of Object.values(value)) {
+      const parsed = parsePositiveOrNull(candidate);
+      if (parsed !== null) return parsed;
+    }
+    return null;
+  }
+  return parseFiniteOrNull(value);
+}
+
+function normalizeNhatsRow(row) {
+  if (!row) return null;
+  const isArr = Array.isArray(row);
+  const des = normalizeDesignation(isArr ? row[0] : (row.des ?? row.pdes));
+  const fullname = normalizeDesignation(isArr ? row[1] : (row.fullname ?? row.full_name));
+  const minDv = getNhatsMetricValue(isArr ? row[4] : (row.min_dv ?? row.minDv), 'dv');
+  const minDur = getNhatsMetricValue(isArr ? row[5] : (row.min_dur ?? row.minDur), 'dur');
+  const stayTime = getNhatsMetricValue(isArr ? row[7] : (row.min_stay ?? row.stayTime), 'dur');
+  const nTrajectories = parseFiniteOrNull(isArr ? row[6] : (row.n_via_traj ?? row.n_via_points ?? row.nTrajectories));
+  const occRaw = isArr ? row[9] : (row.occ ?? row.obs_flag);
+  return {
+    des,
+    fullname,
+    minDv,
+    minDur,
+    stayTime,
+    nTrajectories: nTrajectories === null ? null : Math.max(0, Math.round(nTrajectories)),
+    occ: occRaw === null || occRaw === undefined || occRaw === '' ? null : occRaw,
+  };
+}
+
+function resolveDiameterKm(row) {
+  const direct = parsePositiveOrNull(row.diameter);
+  if (direct !== null) return { value: direct, source: 'catalog' };
+  const hVal = parsePositiveOrNull(row.H);
+  if (hVal === null) return { value: null, source: 'unknown' };
+  const albedo = parsePositiveOrNull(row.albedo) || 0.15;
+  return {
+    value: (1329 / Math.sqrt(albedo)) * Math.pow(10, -hVal / 5),
+    source: 'estimated',
+  };
+}
+
+function resolveWholeBodyCatalogValueUsd(row) {
+  return parsePositiveOrNull(row.price);
+}
+
+function estimateExtractableValueUsd({ spec, diameterKm }) {
+  const d = parsePositiveOrNull(diameterKm);
+  if (d === null) return null;
+  const dM = d * 1000;
+  const volume = (4 / 3) * Math.PI * Math.pow(dM / 2, 3);
+  const s = String(spec || '').trim().charAt(0).toUpperCase();
+  const density = (s === 'M' || s === 'E') ? 5000 : (s === 'S' || s === 'Q') ? 2700 : 1700;
+  const valuePerKg = (s === 'M' || s === 'E') ? 100 : (s === 'S' || s === 'Q') ? 10 : 50;
+  const wholeBodyValue = volume * density * valuePerKg;
+  const extractableValue = wholeBodyValue * 0.05;
+  return Number.isFinite(extractableValue) && extractableValue > 0 ? extractableValue : null;
+}
+
+function normalizeAsterankRow(row) {
+  const a = parsePositiveOrNull(row.a);
+  const e = parseFiniteOrNull(row.e);
+  const epoch = parseEpochJD(row.epoch);
+  if (a === null || e === null || e < 0 || e >= 1 || epoch === null) return null;
+  const diameterInfo = resolveDiameterKm(row);
+  const specRaw = String(row.spec || row.spec_T || '').trim();
+  const rawPrice = resolveWholeBodyCatalogValueUsd(row);
+  const rawProfit = parsePositiveOrNull(row.profit);
+  const rawDv = parsePositiveOrNull(row.delta_v ?? row.dv);
+  const extractableValue = estimateExtractableValueUsd({ spec: specRaw, diameterKm: diameterInfo.value });
+  let astClass = String(row.class || '').trim();
+  if (!astClass) {
+    const q = a * (1 - e);
+    const Q = a * (1 + e);
+    if (Q < 0.983) astClass = 'IEO';
+    else if (a < 1.0) astClass = 'ATE';
+    else if (q < 1.017) astClass = 'APO';
+    else astClass = 'AMO';
+  }
+  const moid = parseFiniteOrNull(row.moid);
+  const conditionCode = parseFiniteOrNull(row.condition_code);
+  return {
+    a,
+    e,
+    i: parseFiniteOrNull(row.i) || 0,
+    om: parseFiniteOrNull(row.om) || 0,
+    w: parseFiniteOrNull(row.w) || 0,
+    ma: parseFiniteOrNull(row.ma) || 0,
+    epoch,
+    per: parsePositiveOrNull(row.per) || Math.sqrt(a * a * a),
+    pdes: String(row.pdes || row.full_name || '').trim(),
+    full_name: String(row.full_name || row.name || row.pdes || '').trim(),
+    name: String(row.name || '').trim(),
+    class: astClass,
+    pha: row.pha || 'N',
+    H: parsePositiveOrNull(row.H),
+    diameter: diameterInfo.value,
+    diameter_source: diameterInfo.source,
+    albedo: parsePositiveOrNull(row.albedo),
+    spec: specRaw || '?',
+    spec_T: String(row.spec_T || specRaw || '').trim(),
+    price: rawPrice,
+    profit: rawProfit,
+    value_extractable_est: extractableValue,
+    value_extractable_source: extractableValue !== null ? 'heuristic' : 'unknown',
+    economics_source: rawPrice !== null || rawProfit !== null ? 'asterank' : (extractableValue !== null ? 'heuristic' : 'unknown'),
+    moid,
+    delta_v: rawDv,
+    last_obs: row.last_obs || null,
+    condition_code: conditionCode === null ? null : conditionCode,
+    data_source: row.data_source || 'asterank',
+  };
+}
+
 // ─── Vector helpers ──────────────────────────────────────────────────────────
 function mag(v) { return Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]); }
 function dot(a,b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
@@ -152,6 +331,7 @@ function cart2kep(x, y, z, vx_kms, vy_kms, vz_kms, t_JD) {
 
   // Semi-major axis (vis-viva)
   const a = 1 / (2/r - v2/mu);
+  if (!Number.isFinite(a) || a <= 0 || !Number.isFinite(e) || e >= 1) return null;
 
   // Inclination
   const inc = Math.acos(Math.max(-1, Math.min(1, h_vec[2] / h)));
@@ -180,6 +360,7 @@ function cart2kep(x, y, z, vx_kms, vy_kms, vz_kms, t_JD) {
   // Mean anomaly via eccentric anomaly
   const E_anom = 2 * Math.atan2(Math.sqrt(1-e)*Math.sin(nu_anom/2), Math.sqrt(1+e)*Math.cos(nu_anom/2));
   const M0 = E_anom - e * Math.sin(E_anom);
+  if (![a, e, inc, Om, w, M0].every(Number.isFinite)) return null;
 
   return { a, e, i: inc, Om, w, M0, epoch_JD: t_JD, nu: nu_anom };
 }
@@ -402,12 +583,12 @@ function izzoLambert(r1v, r2v, tof_days, direction) {
   if (s < 1e3 || c < 1e3) return null;
 
   // Cross product for transfer direction
-  const cross = [
+  const crossVec = [
     r1[1]*r2[2] - r1[2]*r2[1],
     r1[2]*r2[0] - r1[0]*r2[2],
     r1[0]*r2[1] - r1[1]*r2[0],
   ];
-  const thetaGt180 = (direction === 1) ? (cross[2] < 0) : (cross[2] >= 0);
+  const thetaGt180 = (direction === 1) ? (crossVec[2] < 0) : (crossVec[2] >= 0);
 
   const lambda2 = 1 - c / s;
   let lambda = Math.sqrt(Math.max(0, lambda2));
@@ -452,14 +633,14 @@ function izzoLambert(r1v, r2v, tof_days, direction) {
   const r1hat = r1.map(v => v / r1n);
   const r2hat = r2.map(v => v / r2n);
   const th1 = _unitVec([
-    r1hat[1]*cross[2] - r1hat[2]*cross[1],
-    r1hat[2]*cross[0] - r1hat[0]*cross[2],
-    r1hat[0]*cross[1] - r1hat[1]*cross[0],
+    r1hat[1]*crossVec[2] - r1hat[2]*crossVec[1],
+    r1hat[2]*crossVec[0] - r1hat[0]*crossVec[2],
+    r1hat[0]*crossVec[1] - r1hat[1]*crossVec[0],
   ]);
   const th2 = _unitVec([
-    r2hat[1]*cross[2] - r2hat[2]*cross[1],
-    r2hat[2]*cross[0] - r2hat[0]*cross[2],
-    r2hat[0]*cross[1] - r2hat[1]*cross[0],
+    r2hat[1]*crossVec[2] - r2hat[2]*crossVec[1],
+    r2hat[2]*crossVec[0] - r2hat[0]*crossVec[2],
+    r2hat[0]*crossVec[1] - r2hat[1]*crossVec[0],
   ]);
 
   const f = 1 / 1000; // m/s → km/s
@@ -524,7 +705,7 @@ function destinationCaptureDv(v_inf_mag, destination, r_park_km) {
   const v_circ = Math.sqrt(mu_e / rp);
   const v_hyp  = Math.sqrt(v_inf_mag * v_inf_mag + 2 * mu_e / rp);
   const dv_leo = v_hyp - v_circ;
-  const extras = { leo:0, geo:1.5, l1:0.5, l2:0.5, lunar:1.7, mars:0.9 };
+  const extras = { leo:0, geo:1.5, l1:0.5, l2:0.5, lunar:1.7, mars:0.9 }; // screening-only adders
   return dv_leo + (extras[destination] || 0);
 }
 
@@ -538,7 +719,9 @@ self.onmessage = function(e) {
   const msg = e.data;
 
   if (msg.cmd === 'init') {
-    asteroids = msg.asteroids || [];
+    asteroids = Array.isArray(msg.asteroids) ? msg.asteroids.filter(ast =>
+      ast && Number.isFinite(ast.a) && Number.isFinite(ast.e) && Number.isFinite(ast.epoch)
+    ) : [];
     return;
   }
 
@@ -569,7 +752,7 @@ self.onmessage = function(e) {
       }
     }
 
-    self.postMessage({ type: 'positions', buffer: buf }, [buf.buffer]);
+    self.postMessage({ type: 'positions', jd, buffer: buf }, [buf.buffer]);
     return;
   }
 
@@ -595,7 +778,8 @@ self.onmessage = function(e) {
       epoch_JD: src.epoch
     };
     const origPeriod = TWO_PI * Math.sqrt(Math.pow(origEl.a !== undefined ? origEl.a : src.a, 3) / GM_AU3_S2) / 86400;
-    const moid = moidApprox(newEl, msg.jd, 120);
+    // Skip MOID during live drag (preview=true) — computed once on pointer-up
+    const moid = msg.preview ? null : moidApprox(newEl, msg.jd, 120);
 
     self.postMessage({
       type: 'burn_result',
@@ -641,7 +825,8 @@ self.onmessage = function(e) {
           const r2 = [earth2.x, earth2.y, earth2.z];
           const v_earth2 = [earth2.vx, earth2.vy, earth2.vz];
 
-          const lam = lambert(r1, r2, tof);
+          let lam = izzoLambert(r1, r2, tof);
+          if (!lam) lam = lambert(r1, r2, tof);
           if (!lam) { grid[i*ny+j] = 20; continue; }
 
           const dv_dep = Math.sqrt(
@@ -680,7 +865,7 @@ self.onmessage = function(e) {
     const phase1 = [];
 
     // ── Phase 1: outbound Lambert grid ──────────────────────────────────────
-    let dbg_lambert_null = 0, dbg_gate_fail = 0, dbg_best_dv = Infinity, dbg_logged = 0;
+    let dbg_lambert_null = 0, dbg_gate_fail = 0, dbg_best_dv = Infinity;
     for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += STEP_DEP) {
       depIdx++;
       if (depIdx % 15 === 0) {
@@ -711,14 +896,10 @@ self.onmessage = function(e) {
 
         const pc = patchedConic(ve, lam.v1, va, lam.v2, r_park_km);
         if (!pc) continue;
-        if (dbg_logged < 3) {
-          console.log('[Lambert] dv_dep:', pc.dv_dep.toFixed(3), 'dv_arr:', pc.dv_arr.toFixed(3));
-          dbg_logged++;
-        }
         const combined = pc.dv_dep + pc.dv_arr;
         if (combined < dbg_best_dv) dbg_best_dv = combined;
         if (!isFinite(pc.dv_dep) || !isFinite(pc.dv_arr) || pc.dv_dep > 50 || pc.dv_arr > 50) { dbg_lambert_null++; continue; } // skip NaN/huge Lambert output
-        if (pc.dv_dep > 10.0) { dbg_gate_fail++; continue; } // departure ΔV gate (10 km/s)
+        if (pc.dv_dep > MISSION_GATE_DEP_KMS) { dbg_gate_fail++; continue; }
 
         phase1.push({
           jd_dep, jd_arr, tof,
@@ -739,12 +920,6 @@ self.onmessage = function(e) {
 
     // ── Phase 2: return Lambert + destination capture ────────────────────────
     const results = [];
-    if (candidates.length === 0) {
-      console.log('[Phase2] skipped — phase1 empty');
-    } else {
-      console.log('[Phase2] running with', candidates.length, 'candidates');
-    }
-    let _p2logged = 0;
     for (let ci = 0; ci < candidates.length; ci++) {
       const c = candidates[ci];
       self.postMessage({
@@ -771,42 +946,24 @@ self.onmessage = function(e) {
 
         let lam = izzoLambert(rr1, rr2, ret_tof);
         if (!lam) lam = lambert(rr1, rr2, ret_tof);
-        if (ci === 0) {
-          const _r1m = Math.hypot(rr1[0], rr1[1], rr1[2]);
-          const _r2m = Math.hypot(rr2[0], rr2[1], rr2[2]);
-          console.log('[Phase2] ci=0 rs='+rs+' tof='+ret_tof.toFixed(0)+'d',
-            'rr1:', _r1m.toFixed(4)+'AU', 'rr2:', _r2m.toFixed(4)+'AU',
-            'lam:', lam ? 'OK v1='+lam.v1[0].toFixed(3) : 'NULL');
-        }
-        if (!lam) continue;
+        if (!lam || !lam.v1 || !lam.v2 || !lam.v1.every(Number.isFinite) || !lam.v2.every(Number.isFinite)) continue;
 
         const dv_ret_dep = Math.hypot(lam.v1[0]-vad[0], lam.v1[1]-vad[1], lam.v1[2]-vad[2]);
         const vinf_ret   = Math.hypot(lam.v2[0]-ved[0], lam.v2[1]-ved[1], lam.v2[2]-ved[2]);
         const dv_cap     = destinationCaptureDv(vinf_ret, destination, r_park_km);
         const total_return = dv_ret_dep + dv_cap;
+        if (![dv_ret_dep, vinf_ret, dv_cap, total_return].every(Number.isFinite)) continue;
 
         if (!bestReturn || total_return < bestReturn.total_return) {
           bestReturn = { dv_return: dv_ret_dep, dv_capture: dv_cap,
             vinf_return: vinf_ret, tof_return: ret_tof, jd_ret_arr, total_return };
         }
       }
-      if (!bestReturn) {
-        if (_p2logged < 3) console.log('[Phase2] cand', ci, '— bestReturn=null (Lambert null all 21 TOFs)');
-        continue;
-      }
+      if (!bestReturn) continue;
 
       const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
-      if (_p2logged < 3) {
-        console.log('[Phase2] cand', ci,
-          'dv_dep:', c.dv_dep.toFixed(3),
-          'dv_arr:', c.dv_arr.toFixed(3),
-          'ret:', bestReturn.dv_return.toFixed(3),
-          'cap:', bestReturn.dv_capture.toFixed(3),
-          'total:', dv_total.toFixed(3), 'vs 25.0 cap');
-        _p2logged++;
-      }
-      if (dv_total > 27.0) continue; // infeasible round-trip (27 km/s hard cap)
+      if (!Number.isFinite(dv_total) || dv_total > MISSION_GATE_TOTAL_KMS) continue;
 
       results.push({
         jd_dep:    c.jd_dep,
@@ -822,7 +979,7 @@ self.onmessage = function(e) {
         dv_return:  +bestReturn.dv_return.toFixed(3),
         dv_capture: +bestReturn.dv_capture.toFixed(3),
         dv_total:   +dv_total.toFixed(3),
-        highDv:     dv_total > 12.0,
+        highDv:     dv_total > MISSION_HIGH_DV_KMS,
         C3:         +c.C3.toFixed(3),
         vinf_dep:   +c.vinf_dep.toFixed(3),
         vinf_arr:   +c.vinf_arr.toFixed(3),
@@ -839,7 +996,7 @@ self.onmessage = function(e) {
       phase1_count: phase1.length, best_dv: dbg_best_dv === Infinity ? null : +dbg_best_dv.toFixed(2) };
     if (top.length === 0) {
       self.postMessage({ type: 'plan_result', results: [], noFeasibleWindow: true,
-        dbg: Object.assign(dbg, { dv_dep_gate: 7.0, dv_total_gate: 12.0 }) });
+        dbg: Object.assign(dbg, { dv_dep_gate: MISSION_GATE_DEP_KMS, dv_total_gate: MISSION_GATE_TOTAL_KMS, high_dv_badge_gate: MISSION_HIGH_DV_KMS }) });
       return;
     }
     self.postMessage({ type: 'plan_result', results: top, noFeasibleWindow: false, dbg });
@@ -847,17 +1004,45 @@ self.onmessage = function(e) {
   }
 
   if (msg.cmd === 'plan_redirect_mission') {
-    const { ast, jd_start, jd_end, propulsionModule, miningFraction } = msg;
+    const {
+      ast,
+      jd_start,
+      jd_end,
+      reqId,
+      propulsionModule,
+      miningFraction,
+      captureTarget,
+      deliveryDestination,
+      spacecraft,
+      launchVehicle,
+    } = msg;
+    const captureProfile = captureTarget && Number.isFinite(captureTarget.orbitRadiusKm)
+      ? captureTarget
+      : DEFAULT_REDIRECT_CAPTURE;
+    const deliveryProfile = deliveryDestination && Number.isFinite(deliveryDestination.marketMultiplier)
+      ? deliveryDestination
+      : DEFAULT_REDIRECT_DELIVERY;
+    const spacecraftProfile = spacecraft && Number.isFinite(spacecraft.dry_kg)
+      ? spacecraft
+      : DEFAULT_REDIRECT_SPACECRAFT;
+    const launchProfile = launchVehicle && Number.isFinite(launchVehicle.max_kg)
+      ? launchVehicle
+      : DEFAULT_REDIRECT_LAUNCH;
 
     // Validate orbital elements
     if (!ast || !isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
-      self.postMessage({ type: 'redirect_result', feasible: false, error: 'Invalid asteroid orbital elements' });
+      self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: 'Invalid asteroid orbital elements' });
+      return;
+    }
+    // Founding Doc §6.2: block redirect for any asteroid with a non-zero Sentry impact probability
+    if (ast.Sentry && Number.isFinite(ast.Sentry.impact_probability) && ast.Sentry.impact_probability > 0) {
+      self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: 'RESTRICTED: Asteroid has non-zero Sentry impact probability. Redirect planning blocked for hazardous objects.' });
       return;
     }
 
-    // A — Intercept scan: 30-day departure steps, 9 TOF options 120–600 days
+    // A — Intercept scan: keep a pool of low-departure candidates, then score redirect feasibility per propulsion mode.
     const tof_options = [120, 180, 240, 300, 360, 420, 480, 540, 600];
-    let best = null;
+    const interceptCandidates = [];
     let lambert_fallback = false;
 
     for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += 30) {
@@ -878,37 +1063,35 @@ self.onmessage = function(e) {
         if (!lam || !isFinite(lam.v1?.[0])) {
           try { lam = lambert(r1, r2, tof); lambert_fallback = true; } catch(e) {}
         }
-        if (!lam || !isFinite(lam.v1?.[0])) continue;
+        if (!lam || !lam.v1 || !lam.v2 || !lam.v1.every(Number.isFinite) || !lam.v2.every(Number.isFinite)) continue;
 
         const pc = patchedConic(ve, lam.v1, va, lam.v2, R_earth / 1000 + 400);
-        if (!pc || !isFinite(pc.dv_dep) || pc.dv_dep > 10) continue;
+        if (!pc || !isFinite(pc.dv_dep) || pc.dv_dep > MISSION_GATE_DEP_KMS) continue;
 
-        if (!best || pc.dv_dep < best.dv_dep) {
-          best = {
-            jd_dep, jd_arr, tof,
-            dv_dep: pc.dv_dep,
-            earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
-            astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z },
-            v_ast:    { vx: astArr.vx, vy: astArr.vy, vz: astArr.vz },
-            ve, va,
-          };
-        }
+        let interceptOrbitEl = null;
+        try {
+          interceptOrbitEl = cart2kep(earthDep.x, earthDep.y, earthDep.z, lam.v1[0], lam.v1[1], lam.v1[2], jd_dep);
+        } catch (e) {}
+
+        interceptCandidates.push({
+          jd_dep, jd_arr, tof,
+          dv_dep: pc.dv_dep,
+          earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
+          astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z },
+          v_ast:    { vx: astArr.vx, vy: astArr.vy, vz: astArr.vz },
+          orbit_el: interceptOrbitEl,
+          ve, va,
+        });
       }
     }
 
-    if (!best) {
-      self.postMessage({ type: 'redirect_result', feasible: false, error: 'No viable intercept found within ΔV budget (10 km/s)' });
+    if (!interceptCandidates.length) {
+      self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: `No viable intercept found within ΔV budget (${MISSION_GATE_DEP_KMS.toFixed(0)} km/s)` });
       return;
     }
 
-    // Planetary defense gate: MOID < 0.0005 AU (~75,000 km) means post-redirect
-    // trajectory would pass inside the lunar orbit — reject on safety grounds.
-    const moid = moidApprox(ast, best.jd_arr, 120);
-    if (isFinite(moid) && moid < 0.0005) {
-      self.postMessage({ type: 'redirect_result', feasible: false,
-        error: 'RESTRICTED: Post-redirect MOID < 75,000 km. Planetary defense constraint.' });
-      return;
-    }
+    interceptCandidates.sort((a, b) => a.dv_dep - b.dv_dep);
+    const candidatePool = interceptCandidates.slice(0, 60);
 
     // B — Asteroid mass
     let d_m;
@@ -924,135 +1107,279 @@ self.onmessage = function(e) {
     const mass_kg = (4 / 3) * Math.PI * Math.pow(d_m / 2, 3) * 1500; // 1500 kg/m³ rubble pile
     const spec_type = ast.spec || ast.spec_T || 'unknown';
 
-    // C — Redirect ΔV: Hohmann transfer from asteroid intercept point to Earth
-    const r_ast_AU = Math.hypot(best.astPos.x, best.astPos.y, best.astPos.z);
-    const a_transfer_AU = (r_ast_AU + 1.0) / 2;
-    // Hohmann half-period in seconds: π * sqrt(a³/GM)
-    const hohmann_s = Math.PI * Math.sqrt(Math.pow(a_transfer_AU, 3) / GM_AU3_S2);
-    const hohmann_days = hohmann_s / 86400;
-    const jd_earth_arr = best.jd_arr + hohmann_days;
-
-    let earthArrPos;
-    try { earthArrPos = propagatePlanet(2, jd_earth_arr); } catch(e) {
-      earthArrPos = { x: 1.0, y: 0.0, z: 0.0, vx: 0, vy: 29.78, vz: 0 };
-    }
-
-    let dv_redirect, v_inf_lunar, redirect_lam_fallback = false;
-    try {
-      const astArr2 = [best.astPos.x,   best.astPos.y,   best.astPos.z  ];
-      const earArr2 = [earthArrPos.x,   earthArrPos.y,   earthArrPos.z  ];
-      let rLam = null;
-      try { rLam = izzoLambert(astArr2, earArr2, hohmann_days); } catch(e) {}
-      if (!rLam || !isFinite(rLam.v1?.[0])) {
-        try { rLam = lambert(astArr2, earArr2, hohmann_days); redirect_lam_fallback = true; } catch(e) {}
-      }
-      if (rLam && isFinite(rLam.v1?.[0])) {
-        // dv_redirect = |lam.v1 - v_ast|  (v1/v2 are arrays [vx,vy,vz])
-        const dv_x = rLam.v1[0] - best.v_ast.vx;
-        const dv_y = rLam.v1[1] - best.v_ast.vy;
-        const dv_z = rLam.v1[2] - best.v_ast.vz;
-        dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
-
-        // v_inf at Earth from Lambert v2 vs Earth arrival velocity
-        const dv_arr_x = rLam.v2[0] - earthArrPos.vx;
-        const dv_arr_y = rLam.v2[1] - earthArrPos.vy;
-        const dv_arr_z = rLam.v2[2] - earthArrPos.vz;
-        v_inf_lunar = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
-      } else {
-        // Fallback: vis-viva Hohmann ΔV
-        const v_circ_ast = Math.sqrt(GM_AU3_S2 / r_ast_AU) * AU / 1000; // km/s
-        const v_transfer_peri = Math.sqrt(GM_AU3_S2 * 2 / (r_ast_AU) - GM_AU3_S2 / a_transfer_AU) * AU / 1000;
-        dv_redirect = Math.abs(v_transfer_peri - v_circ_ast);
-        v_inf_lunar = 1.5; // rough estimate
-        redirect_lam_fallback = true;
-      }
-    } catch(e) {
-      dv_redirect = 2.0; // rough fallback
-      v_inf_lunar = 1.5;
-      redirect_lam_fallback = true;
-    }
-    if (!isFinite(dv_redirect)) dv_redirect = 2.0;
-    if (!isFinite(v_inf_lunar)) v_inf_lunar = 1.5;
-
-    // D — Propellant mass (Tsiolkovsky)
-    const v_e = propulsionModule.isp_s * 9.80665 / 1000; // km/s exhaust velocity
-    const mass_ratio = Math.exp(dv_redirect / v_e);
-    const m_prop = mass_kg * (mass_ratio - 1) / mass_ratio;
-    const m_prop_fraction = m_prop / mass_kg;
-
-    // E — Lunar capture ΔV (hyperbolic insertion)
-    const dv_lunar_capture = Math.sqrt(v_inf_lunar * v_inf_lunar + 2 * GM_moon / R_cap) - Math.sqrt(GM_moon / R_cap);
-
-    // F — ISRU yield (5% extraction)
     const mineable_kg = mass_kg * 0.05;
     const water_kg = mineable_kg * (1 - miningFraction);
     const metal_kg = mineable_kg * miningFraction;
+    const whole_body_price_usd = isFinite(ast.price) && ast.price > 0 ? ast.price : null;
+    const stype = spec_type.charAt(0).toUpperCase();
+    let extractable_value_usd = null;
+    if (stype === 'C') extractable_value_usd = water_kg * 1500 + metal_kg * 500;
+    else if (stype === 'M') extractable_value_usd = water_kg * 500 + metal_kg * 15000;
+    else extractable_value_usd = water_kg * 500 + metal_kg * 3000;
+    if (!isFinite(extractable_value_usd) || extractable_value_usd <= 0) extractable_value_usd = null;
 
-    let value_usd;
-    if (isFinite(ast.price) && ast.price > 0) {
-      value_usd = ast.price;
-    } else {
-      // Spec-type heuristic
-      const stype = spec_type.charAt(0).toUpperCase();
-      if (stype === 'C') {
-        value_usd = water_kg * 1500 + metal_kg * 500;
-      } else if (stype === 'M') {
-        value_usd = water_kg * 500 + metal_kg * 15000;
-      } else {
-        // S-type default
-        value_usd = water_kg * 500 + metal_kg * 3000;
+    function evaluateRedirectCandidate(best) {
+      const r_ast_AU = Math.hypot(best.astPos.x, best.astPos.y, best.astPos.z);
+      const a_transfer_AU = (r_ast_AU + 1.0) / 2;
+      const hohmann_s = Math.PI * Math.sqrt(Math.pow(a_transfer_AU, 3) / GM_AU3_S2);
+      const hohmann_days = hohmann_s / 86400;
+      const hohmann_center = Math.max(90, Math.min(960, Math.round(hohmann_days / 30) * 30));
+      const redirectTofCandidates = Array.from(new Set(
+        [120, 180, 240, 300, 360, 420, 480, 540, 600, 720, 840, 960]
+          .concat([-180, -120, -60, 0, 60, 120, 180].map(offset => hohmann_center + offset))
+          .filter(days => Number.isFinite(days) && days >= 90 && days <= 1080)
+      )).sort((a, b) => a - b);
+
+      let bestRedirectResult = null;
+      let bestRedirectFallback = null;
+      let bestError = 'No redirect transfer solved for this intercept.';
+
+      for (const redirectTofDays of redirectTofCandidates) {
+        const jd_earth_arr = best.jd_arr + redirectTofDays;
+
+        let earthArrPos;
+        try { earthArrPos = propagatePlanet(2, jd_earth_arr); } catch(e) { continue; }
+
+        let dv_redirect = null;
+        let earth_arrival_vinf = null;
+        let redirect_lam_fallback = false;
+        let redirect_orbit_el = null;
+
+        try {
+          const astArr2 = [best.astPos.x, best.astPos.y, best.astPos.z];
+          const earArr2 = [earthArrPos.x, earthArrPos.y, earthArrPos.z];
+          let rLam = null;
+          try { rLam = izzoLambert(astArr2, earArr2, redirectTofDays); } catch(e) {}
+          if (!rLam || !isFinite(rLam.v1?.[0])) {
+            try { rLam = lambert(astArr2, earArr2, redirectTofDays); redirect_lam_fallback = true; } catch(e) {}
+          }
+          if (!rLam || !isFinite(rLam.v1?.[0]) || !isFinite(rLam.v2?.[0])) {
+            bestError = 'Redirect Lambert solve failed for all tested return windows.';
+            continue;
+          }
+
+          const dv_x = rLam.v1[0] - best.v_ast.vx;
+          const dv_y = rLam.v1[1] - best.v_ast.vy;
+          const dv_z = rLam.v1[2] - best.v_ast.vz;
+          dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
+          redirect_orbit_el = cart2kep(best.astPos.x, best.astPos.y, best.astPos.z, rLam.v1[0], rLam.v1[1], rLam.v1[2], best.jd_arr);
+
+          const dv_arr_x = rLam.v2[0] - earthArrPos.vx;
+          const dv_arr_y = rLam.v2[1] - earthArrPos.vy;
+          const dv_arr_z = rLam.v2[2] - earthArrPos.vz;
+          earth_arrival_vinf = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
+        } catch(e) {
+          bestError = 'Redirect transfer evaluation failed during state conversion.';
+          continue;
+        }
+
+        if (!isFinite(dv_redirect) || !redirect_orbit_el) {
+          bestError = 'Redirect leg did not yield a bounded elliptic orbit. Hyperbolic/non-elliptic redirects are not supported yet.';
+          continue;
+        }
+
+        const redirectSafetyMoid = moidApprox(redirect_orbit_el, best.jd_arr, 120);
+        if (isFinite(redirectSafetyMoid) && redirectSafetyMoid < 0.0005) {
+          bestError = 'RESTRICTED: Redirected orbit MOID < 75,000 km. Planetary defense constraint.';
+          continue;
+        }
+
+        const v_e = propulsionModule.isp_s * 9.80665 / 1000;
+        const mass_ratio = isFinite(dv_redirect) ? Math.exp(dv_redirect / v_e) : null;
+        const m_prop = isFinite(mass_ratio) ? mass_kg * (mass_ratio - 1) / mass_ratio : null;
+        const m_prop_fraction = isFinite(m_prop) ? m_prop / mass_kg : null;
+
+        const tugDryKg = spacecraftProfile.dry_kg + spacecraftProfile.payload_kg;
+        const outboundMassRatio = Number.isFinite(best.dv_dep) ? Math.exp(best.dv_dep / v_e) : null;
+        const outboundPropKg = Number.isFinite(outboundMassRatio) ? tugDryKg * (outboundMassRatio - 1) : null;
+        const tugLaunchMassKg = Number.isFinite(outboundPropKg) ? tugDryKg + outboundPropKg : null;
+        const fitsLaunchVehicle = Number.isFinite(tugLaunchMassKg) ? tugLaunchMassKg <= launchProfile.max_kg : false;
+        const launchCostUsd = Number.isFinite(tugLaunchMassKg) ? tugLaunchMassKg * launchProfile.cost_per_kg : null;
+        const supportMissionCostUsd = Number.isFinite(launchCostUsd) ? launchCostUsd + (spacecraftProfile.cost_usd || 0) : null;
+
+        const captureBaseDv = Number.isFinite(earth_arrival_vinf)
+          ? Math.max(0.25, earth_arrival_vinf * 0.35)
+          : null;
+        const dv_capture_target = Number.isFinite(captureBaseDv)
+          ? captureBaseDv + (captureProfile.captureExtraDv || 0)
+          : null;
+        const dv_delivery = Number.isFinite(dv_capture_target)
+          ? (deliveryProfile.deliveryExtraDv || 0)
+          : null;
+        const dv_total_redirect = Number.isFinite(dv_redirect) && Number.isFinite(dv_capture_target) && Number.isFinite(dv_delivery)
+          ? best.dv_dep + dv_redirect + dv_capture_target + dv_delivery
+          : null;
+        const adjustedExtractableValueUsd = Number.isFinite(extractable_value_usd)
+          ? extractable_value_usd * (deliveryProfile.marketMultiplier || 1)
+          : null;
+        const dv_score   = isFinite(dv_total_redirect) ? Math.max(0, 1 - dv_total_redirect / 18) * 45 : 0;
+        const prop_score = isFinite(m_prop_fraction) ? Math.max(0, 1 - m_prop_fraction) * 30 : 0;
+        const isru_score = isFinite(adjustedExtractableValueUsd) ? Math.min(20, Math.log10(Math.max(1, adjustedExtractableValueUsd)) / 12 * 20) : 0;
+        const launch_score = fitsLaunchVehicle ? 5 : -20;
+        const feasibility_score = Math.round((isFinite(dv_score) ? dv_score : 0) + prop_score + isru_score + launch_score);
+        const prop_fraction_pct = isFinite(m_prop_fraction) ? Math.round(m_prop_fraction * 100) : null;
+        const redirectFeasible = Number.isFinite(best.dv_dep) &&
+          Number.isFinite(dv_redirect) &&
+          Number.isFinite(m_prop_fraction) &&
+          fitsLaunchVehicle &&
+          m_prop_fraction < 0.95 &&
+          !!redirect_orbit_el;
+
+        const result = {
+          type: 'redirect_result',
+          schema_version: 1,
+          reqId,
+          feasible: redirectFeasible,
+          intercept: {
+            jd_dep: best.jd_dep,
+            jd_arr: best.jd_arr,
+            tof: best.tof,
+            dv_dep: best.dv_dep,
+            earthPos: best.earthPos,
+            astPos: best.astPos,
+            orbit_el: best.orbit_el || null,
+            segment_jd_start: best.jd_dep,
+            segment_jd_end: best.jd_arr,
+          },
+          redirect: {
+            dv_redirect,
+            tof_redirect: redirectTofDays,
+            jd_earth_arr,
+            earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
+            propulsion: propulsionModule.name,
+            isp_s: propulsionModule.isp_s,
+            orbit_el: redirect_orbit_el,
+            segment_jd_start: best.jd_arr,
+            segment_jd_end: jd_earth_arr,
+          },
+          capture: {
+            target_key: captureProfile.key || null,
+            label: captureProfile.label,
+            delivery_key: deliveryProfile.key || null,
+            delivery_label: deliveryProfile.label,
+            dv_lunar_capture: dv_capture_target,
+            dv_delivery,
+            r_cap_km: captureProfile.orbitRadiusKm,
+            v_inf_earth_arrival: isFinite(earth_arrival_vinf) ? earth_arrival_vinf : null,
+            capture_modeled: Number.isFinite(dv_capture_target),
+            capture_basis: 'screening-grade Earth-arrival insertion + target adders',
+          },
+          asteroid: { mass_kg, d_m, spec_type },
+          isru: {
+            mineable_kg,
+            water_kg,
+            metal_kg,
+            mining_frac: miningFraction,
+            whole_body_price_usd,
+            extractable_value_usd: adjustedExtractableValueUsd,
+            extractable_value_basis: '5% extraction heuristic',
+          },
+          logistics: {
+            spacecraft_name: spacecraftProfile.name,
+            launch_vehicle_name: launchProfile.name,
+            tug_dry_kg: tugDryKg,
+            outbound_propellant_kg: Number.isFinite(outboundPropKg) ? outboundPropKg : null,
+            tug_launch_mass_kg: Number.isFinite(tugLaunchMassKg) ? tugLaunchMassKg : null,
+            launch_vehicle_max_kg: launchProfile.max_kg,
+            fits_launch_vehicle: fitsLaunchVehicle,
+            launch_cost_usd: launchCostUsd,
+            spacecraft_cost_usd: spacecraftProfile.cost_usd || null,
+            support_mission_cost_usd: supportMissionCostUsd,
+          },
+          flags: {
+            prop_fraction_pct,
+            high_prop_load: isFinite(m_prop_fraction) ? m_prop_fraction > 0.5 : false,
+            lambert_fallback: lambert_fallback || redirect_lam_fallback,
+            safety_moid_au: Number.isFinite(redirectSafetyMoid) ? redirectSafetyMoid : null,
+            launch_capacity_ok: fitsLaunchVehicle,
+          },
+          feasibility_score,
+          _rank_dv_total: dv_total_redirect,
+          _rank_prop_fraction: m_prop_fraction,
+        };
+
+        if (!bestRedirectFallback) {
+          bestRedirectFallback = result;
+        } else {
+          const currProp = Number.isFinite(result._rank_prop_fraction) ? result._rank_prop_fraction : Infinity;
+          const bestProp = Number.isFinite(bestRedirectFallback._rank_prop_fraction) ? bestRedirectFallback._rank_prop_fraction : Infinity;
+          const currDv = Number.isFinite(result._rank_dv_total) ? result._rank_dv_total : Infinity;
+          const bestDv = Number.isFinite(bestRedirectFallback._rank_dv_total) ? bestRedirectFallback._rank_dv_total : Infinity;
+          if (currProp < bestProp || (currProp === bestProp && currDv < bestDv)) bestRedirectFallback = result;
+        }
+
+        if (!redirectFeasible) continue;
+        if (!bestRedirectResult) {
+          bestRedirectResult = result;
+          continue;
+        }
+        const betterScore = result.feasibility_score > bestRedirectResult.feasibility_score;
+        const tieBreakDv = result.feasibility_score === bestRedirectResult.feasibility_score &&
+          (Number.isFinite(result._rank_dv_total) ? result._rank_dv_total : Infinity) <
+          (Number.isFinite(bestRedirectResult._rank_dv_total) ? bestRedirectResult._rank_dv_total : Infinity);
+        if (betterScore || tieBreakDv) bestRedirectResult = result;
+      }
+
+      const chosen = bestRedirectResult || bestRedirectFallback;
+      if (!chosen) {
+        return {
+          type: 'redirect_result',
+          schema_version: 1,
+          reqId,
+          feasible: false,
+          error: bestError,
+        };
+      }
+      if (!chosen.feasible && !chosen.error) {
+        if (chosen.flags?.launch_capacity_ok === false) {
+          chosen.error = `${launchProfile.name} cannot launch the ${spacecraftProfile.name} redirect stack within capacity.`;
+        } else if (Number.isFinite(chosen.flags?.prop_fraction_pct)) {
+          chosen.error = `Propellant requirement exceeds ${chosen.flags.prop_fraction_pct}% of asteroid mass for ${propulsionModule.name}`;
+        }
+      }
+      return chosen;
+    }
+
+    let bestResult = null;
+    let bestFallback = null;
+    for (const candidate of candidatePool) {
+      const result = evaluateRedirectCandidate(candidate);
+      if (!result) continue;
+      if (!bestFallback) bestFallback = result;
+      else {
+        const currProp = Number.isFinite(result._rank_prop_fraction) ? result._rank_prop_fraction : Infinity;
+        const bestProp = Number.isFinite(bestFallback._rank_prop_fraction) ? bestFallback._rank_prop_fraction : Infinity;
+        const currDv = Number.isFinite(result._rank_dv_total) ? result._rank_dv_total : Infinity;
+        const bestDv = Number.isFinite(bestFallback._rank_dv_total) ? bestFallback._rank_dv_total : Infinity;
+        if (currProp < bestProp || (currProp === bestProp && currDv < bestDv)) bestFallback = result;
+      }
+      if (!result.feasible) continue;
+      if (!bestResult) {
+        bestResult = result;
+        continue;
+      }
+      const betterScore = result.feasibility_score > bestResult.feasibility_score;
+      const tieBreakDv = result.feasibility_score === bestResult.feasibility_score &&
+        (Number.isFinite(result._rank_dv_total) ? result._rank_dv_total : Infinity) <
+        (Number.isFinite(bestResult._rank_dv_total) ? bestResult._rank_dv_total : Infinity);
+      if (betterScore || tieBreakDv) bestResult = result;
+    }
+
+    const finalResult = bestResult || bestFallback;
+    if (!finalResult) {
+      self.postMessage({ type: 'redirect_result', schema_version: 1, reqId, feasible: false, error: 'No redirect solution could be evaluated for this target and propulsion mode.' });
+      return;
+    }
+    if (!finalResult.feasible && !finalResult.error) {
+      if (finalResult.flags?.launch_capacity_ok === false) {
+        finalResult.error = `${launchProfile.name} cannot launch the ${spacecraftProfile.name} redirect stack within capacity.`;
+      } else if (Number.isFinite(finalResult.flags?.prop_fraction_pct)) {
+        finalResult.error = `Propellant requirement exceeds ${finalResult.flags.prop_fraction_pct}% of asteroid mass for ${propulsionModule.name}`;
       }
     }
-    if (!isFinite(value_usd)) value_usd = 0;
-
-    // G — Feasibility score 0–100
-    const dv_total_redirect = best.dv_dep + dv_redirect;
-    const dv_score   = Math.max(0, 1 - dv_total_redirect / 15) * 50;
-    const prop_score = Math.max(0, 1 - m_prop_fraction) * 30;
-    const isru_score = Math.min(20, Math.log10(Math.max(1, value_usd)) / 12 * 20);
-    const feasibility_score = Math.round(dv_score + prop_score + isru_score);
-
-    const prop_fraction_pct = Math.round(m_prop_fraction * 100);
-
-    self.postMessage({
-      type: 'redirect_result',
-      feasible: m_prop_fraction < 0.95,
-      intercept: {
-        jd_dep:   best.jd_dep,
-        jd_arr:   best.jd_arr,
-        tof:      best.tof,
-        dv_dep:   best.dv_dep,
-        earthPos: best.earthPos,
-        astPos:   best.astPos,
-      },
-      redirect: {
-        dv_redirect,
-        tof_redirect: hohmann_days,
-        jd_earth_arr,
-        earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
-        propulsion: propulsionModule.name,
-        isp_s: propulsionModule.isp_s,
-      },
-      capture: {
-        dv_lunar_capture: isFinite(dv_lunar_capture) ? dv_lunar_capture : 0,
-        r_cap_km: R_cap,
-        v_inf_lunar,
-      },
-      asteroid: { mass_kg, d_m, spec_type },
-      isru: {
-        mineable_kg,
-        water_kg,
-        metal_kg,
-        mining_frac: miningFraction,
-        value_usd,
-      },
-      flags: {
-        prop_fraction_pct,
-        high_prop_load: m_prop_fraction > 0.5,
-        lambert_fallback: lambert_fallback || redirect_lam_fallback,
-      },
-      feasibility_score,
-    });
+    delete finalResult._rank_dv_total;
+    delete finalResult._rank_prop_fraction;
+    self.postMessage(finalResult);
     return;
   }
 
@@ -1070,25 +1397,18 @@ self.onmessage = function(e) {
 
   if (msg.cmd === 'fetch_nhats') {
     (async function() {
-      const urls = [
-        'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8&launch=2025-2035',
-        'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8',
-      ];
-      for (const url of urls) {
-        try {
-          console.log('[NHATS worker] fetching:', url);
-          const r = await fetch(url);
-          console.log('[NHATS worker] status:', r.status, r.ok);
-          if (!r.ok) { console.warn('[NHATS worker] HTTP error:', r.status); continue; }
-          const json = await r.json();
-          console.log('[NHATS worker] raw keys:', Object.keys(json));
-          const rows = json.data || json.nhats || [];
-          console.log('[NHATS worker] parsed', rows.length, 'rows');
-          self.postMessage({ type: 'nhats_result', ok: true, data: rows });
-          return;
-        } catch(err) {
-          console.warn('[NHATS worker] fetch error:', err.message);
-        }
+      const url = buildNhatsUrl();
+      try {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const json = await r.json();
+        const rows = (json.data || json.nhats || [])
+          .map(normalizeNhatsRow)
+          .filter(row => row && row.des);
+        self.postMessage({ type: 'nhats_result', ok: true, data: rows, source: 'nhats', stale: !!json.stale });
+        return;
+      } catch(err) {
+        console.warn('[NHATS worker] fetch error:', err.message);
       }
       self.postMessage({ type: 'nhats_result', ok: false, error: 'All NHATS URLs failed' });
     })();
@@ -1097,17 +1417,10 @@ self.onmessage = function(e) {
 
   if (msg.cmd === 'fetch_catalog') {
     (async function() {
-      const limit = msg.limit || 5000;
-      // ── Asterank: routed through own Cloudflare proxy (avoids CORS, 6hr cache)
-      // Filter to NEOs only so MongoDB sort=delta_v returns accessible targets.
-      const ASTERANK_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/asterank?' + new URLSearchParams({
-        query:  JSON.stringify({ neo: 'Y' }),
-        limit:  '2000',
-        sort:   'delta_v',
-        fields: 'full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class',
-      }).toString();
-      // ── NHATS: human-accessible targets ──────────────────────────────────
-      const NHATS_URL = 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8';
+      const requestedLimit = Math.max(10, Math.min(Number(msg.limit) || 5000, 5000));
+      const fetchLimit = Math.max(250, Math.min(requestedLimit, 2000));
+      const ASTERANK_URL = buildAsterankUrl(fetchLimit);
+      const NHATS_URL = buildNhatsUrl();
 
       async function fetchAsterankWorker() {
         try {
@@ -1117,127 +1430,102 @@ self.onmessage = function(e) {
           if (!Array.isArray(rows) || rows.length === 0) throw new Error('empty response');
           console.log('[Catalog] Asterank:', rows.length, 'rows');
           self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
-          return rows;
+          return { rows, source: 'asterank', fallback: false, stale: false };
         } catch(err) {
           console.warn('[Catalog] Asterank fetch failed:', err.message);
+          const rows = FALLBACK_CATALOG.slice();
+          if (rows.length > 0) {
+            self.postMessage({ type: 'load_progress', source: 'asterank', status: 'fallback', count: rows.length });
+            return { rows, source: 'fallback-static', fallback: true, stale: true };
+          }
           self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: err.message });
-          return [];
+          return { rows: [], source: 'asterank', fallback: false, stale: false };
         }
       }
 
       async function fetchNHATSWorker() {
-        const urls = [NHATS_URL, 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?dv=12&dur=450&stay=8'];
-        for (const url of urls) {
-          try {
-            const r = await fetch(url);
-            if (!r.ok) continue;
-            const json = await r.json();
-            const rows = json.data || json.nhats || [];
-            console.log('[Catalog] NHATS:', rows.length, 'rows');
-            self.postMessage({ type: 'load_progress', source: 'nhats', status: 'ok', count: rows.length });
-            return rows;
-          } catch(_) {}
+        try {
+          const r = await fetch(NHATS_URL);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const json = await r.json();
+          const rows = (json.data || json.nhats || [])
+            .map(normalizeNhatsRow)
+            .filter(row => row && row.des);
+          console.log('[Catalog] NHATS:', rows.length, 'rows');
+          self.postMessage({ type: 'load_progress', source: 'nhats', status: 'ok', count: rows.length });
+          return { rows, source: 'nhats', stale: !!json.stale };
+        } catch(err) {
+          self.postMessage({ type: 'load_progress', source: 'nhats', status: 'error', error: 'offline' });
+          return { rows: [], source: 'nhats', stale: true };
         }
-        self.postMessage({ type: 'load_progress', source: 'nhats', status: 'error', error: 'offline' });
-        return [];
       }
 
       // Fetch in parallel
-      const [asterankRows, nhatsRows] = await Promise.all([
+      const [asterankPayload, nhatsPayload] = await Promise.all([
         fetchAsterankWorker(), fetchNHATSWorker()
       ]);
-
-      const nhatsIsArr = nhatsRows.length > 0 && Array.isArray(nhatsRows[0]);
-      const nhatsLookup = new Map();
-      for (const row of nhatsRows) {
-        const key = (nhatsIsArr ? row[0] : (row.des || '')).toString().trim();
-        if (key) nhatsLookup.set(key, row);
+      const asterankRows = asterankPayload.rows || [];
+      const nhatsRows = nhatsPayload.rows || [];
+      if (asterankRows.length === 0) {
+        self.postMessage({ type: 'catalog_error', error: 'Catalog unavailable. Live Asterank fetch failed and no fallback catalog is available.' });
+        return;
       }
 
-      // ── Estimate value for asteroids not in Asterank ──────────────────────
-      function estimateValue(specStr, diamKm, albedoStr) {
-        const d = Number(diamKm) || 0;
-        if (d <= 0) return 0;
-        const dM = d * 1000;
-        const vol = (4 / 3) * Math.PI * Math.pow(dM / 2, 3);
-        const s = (specStr || '').trim().charAt(0).toUpperCase();
-        const density = (s === 'M' || s === 'E') ? 5000 : (s === 'S' || s === 'Q') ? 2700 : 1700;
-        const valuePerKg = (s === 'M' || s === 'E') ? 100 : (s === 'S' || s === 'Q') ? 10 : 50;
-        return vol * density * valuePerKg;
+      const nhatsLookup = new Map();
+      for (const row of nhatsRows) {
+        if (!row?.des) continue;
+        nhatsLookup.set(row.des, row);
+        if (row.fullname) nhatsLookup.set(row.fullname, row);
       }
 
       // ── Build catalog from Asterank (primary source) ─────────────────────
       const catalog = [];
       for (const row of asterankRows) {
-        const a = Number(row.a);
-        const e = Number(row.e);
-        if (!isFinite(a) || a <= 0) continue;
-        if (!isFinite(e) || e < 0 || e >= 1) continue;
-
-
-        const pdes     = String(row.pdes || row.full_name || '').trim();
-        const epoch    = (!row.epoch || Number(row.epoch) === 0) ? 2451545.0 : Number(row.epoch); // Asterank gives JD directly; default = J2000.0
-        const diameter = Number(row.diameter) || 0;
-        const specRaw  = String(row.spec || row.spec_T || '').trim();
-        const per      = Number(row.per) || Math.sqrt(a * a * a); // Kepler's 3rd law: T = a^1.5 yr
-
-        // Derive NEA class from orbital elements when Asterank omits it
-        let astClass = String(row.class || '').trim();
-        if (!astClass) {
-          const q = a * (1 - e); // perihelion AU
-          const Q = a * (1 + e); // aphelion  AU
-          if (Q < 0.983)      astClass = 'IEO';
-          else if (a < 1.0)   astClass = 'ATE';
-          else if (q < 1.017) astClass = 'APO';
-          else                astClass = 'AMO';
-        }
-
-        const nhatsRow = nhatsLookup.get(pdes) ||
-                         nhatsLookup.get(pdes.replace(/\s+.*/, ''));
-
-        catalog.push({
-          a, e,
-          i:         Number(row.i)       || 0,
-          om:        Number(row.om)      || 0,
-          w:         Number(row.w)       || 0,
-          ma:        Number(row.ma)      || 0,
-          epoch, per,
-          pdes,
-          full_name: String(row.full_name || row.name || pdes).trim(),
-          name:      String(row.name     || '').trim(),
-          class:     astClass,
-          pha:       row.pha  || 'N',
-          H:         Number(row.H)       || 20,
-          diameter,
-          albedo:    Number(row.albedo)  || 0.15,
-          spec:      specRaw || 'C',
-          spec_T:    String(row.spec_T   || specRaw || '').trim(),
-          price:     Number(row.price)   || estimateValue(specRaw, diameter, 0.15),
-          profit:    Number(row.profit)  || 0,
-          moid:      Number(row.moid)    || 0,
-          delta_v:   Number(row.delta_v) || Number(row.dv) || 0,
-          nhats: nhatsRow ? {
-            accessible:    true,
-            minDv:         nhatsIsArr ? nhatsRow[4] : nhatsRow.min_dv,
-            minDur:        nhatsIsArr ? nhatsRow[5] : nhatsRow.min_dur,
-            nTrajectories: nhatsIsArr ? nhatsRow[6] : (nhatsRow.n_via_traj || nhatsRow.n_via_points),
-            stayTime:      nhatsIsArr ? nhatsRow[7] : nhatsRow.min_stay,
-            occ:           nhatsIsArr ? nhatsRow[9] : nhatsRow.occ,
-          } : { accessible: false },
-          _nhats: !!nhatsRow,
+        const normalized = normalizeAsterankRow({
+          ...row,
+          data_source: asterankPayload.fallback ? 'fallback-static' : 'asterank',
         });
+        if (!normalized) continue;
+        const pdesKey = normalizeDesignation(normalized.pdes);
+        const nhatsRow = nhatsLookup.get(pdesKey) ||
+          nhatsLookup.get(normalizeDesignation(normalized.full_name || normalized.name || ''));
+        const rankingValue = normalized.profit !== null
+          ? normalized.profit
+          : normalized.value_extractable_est !== null
+            ? normalized.value_extractable_est * (normalized.diameter_source === 'catalog' ? 0.15 : 0.05)
+            : null;
+        normalized.screening_value_rank = rankingValue;
+        normalized.nhats = nhatsRow ? {
+          accessible: true,
+          minDv: nhatsRow.minDv,
+          minDur: nhatsRow.minDur,
+          nTrajectories: nhatsRow.nTrajectories,
+          stayTime: nhatsRow.stayTime,
+          occ: nhatsRow.occ,
+        } : { accessible: false, minDv: null, minDur: null, nTrajectories: null, stayTime: null, occ: null };
+        normalized._nhats = !!nhatsRow;
+        catalog.push(normalized);
       }
 
       // Sort by accessibility-adjusted score (profit per km/s of ΔV) so reachable NEOs rank first
       catalog.sort((a, b) => {
-        const scoreA = (Number(a.profit) || Number(a.price) || 0) / Math.max(Number(a.delta_v) || 10, 1);
-        const scoreB = (Number(b.profit) || Number(b.price) || 0) / Math.max(Number(b.delta_v) || 10, 1);
+        const scoreA = (a.screening_value_rank || 0) / Math.max(a.delta_v || 12, 1);
+        const scoreB = (b.screening_value_rank || 0) / Math.max(b.delta_v || 12, 1);
         return scoreB - scoreA;
       });
-      const trimmed = catalog.slice(0, limit);
+      const trimmed = catalog.slice(0, requestedLimit);
 
       console.log('[Catalog] Asterank →', catalog.length, 'valid, sending', trimmed.length, 'asteroids');
-      self.postMessage({ type: 'catalog_ready', data: trimmed, nhatsRows });
+      self.postMessage({
+        type: 'catalog_ready',
+        data: trimmed,
+        nhatsRows,
+        source: asterankPayload.source,
+        fallback: !!asterankPayload.fallback,
+        stale: !!asterankPayload.stale || !!nhatsPayload.stale,
+        requestedLimit,
+        returnedCount: trimmed.length,
+      });
     })();
     return;
   }

@@ -4,6 +4,71 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9I — Time Slider Fix (2026-04-10)
+
+### Summary
+Fixed the broken time slider by normalizing its range to a 0-based integer scale instead of using raw Julian dates, ensuring smooth scrubbing and playback.
+
+### Changes (`index.html` only)
+
+- Added `jdToScrubberPos()` and `scrubberPosToJD()` helper functions to map between Julian dates and slider positions.
+- Updated the HTML `<input>` to use `min="0"`, `max="1"`, `step="1"`, and `value="0"`, with JS overriding `max` to the actual range.
+- Replaced all direct `scrubber.value = JD` assignments with `scrubber.value = jdToScrubberPos(JD)` for consistent scaling.
+- Updated keyboard arrow keys, timeline clicks, porkchop clicks, scenario loading, and animation loop to use the normalized positions.
+
+---
+
+## Phase 9I — Timeline Controls + Redirect Orbit Comparison (2026-04-10)
+
+### Summary
+Fixed the bottom time controls so scrub, play, timeline jumps, porkchop clicks, and scenario loads all drive the same JD update path. Redirect mission visualization now shows the original asteroid orbit as a dotted line and the redirected orbit as a solid line when the redirect solution is available.
+
+### Changes (`index.html`, `physics.worker.js`)
+
+**Bottom timeline controls (`index.html`):**
+- Added centralized JD helpers: `clampJD()`, `syncTimeDisplays()`, `setCurrentJD()`
+- Routed scrubber input, arrow-key stepping, porkchop selection, mission timeline clicks, shared-state load, and scenario load through the same JD setter
+- Added explicit scrub start/end handlers so playback resumes reliably even if the pointer is released off the slider
+- Clamped playback at the scrubber bounds and stop playback cleanly at the date limits instead of drifting past them
+
+**Redirect mission output (`index.html`, `physics.worker.js`):**
+- Removed fake hardcoded redirect fallback numbers from UI display paths; unknown redirect speed/value fields now render as `unknown` instead of synthetic defaults
+- Added redirect formatting helpers for value, speed, and propellant load text
+- Worker now returns `redirect.orbit_el` when the redirect Lambert leg solves, so the frontend can render the adjusted orbit explicitly
+
+**Redirect visualization (`index.html`):**
+- Added dedicated redirect comparison orbit lines:
+  - dotted original orbit baseline
+  - solid redirected orbit
+- Restored the normal selected orbit view when closing the mission planner
+
+## Phase 9H — UI Metrics Normalization (2026-04-10)
+
+### Summary
+Fixed a cluster of UI consistency bugs where NHATS-verified targets could still show stale or misleading ΔV, duration, and value data across the leaderboard, inspector, tooltip, economics tab, and exports.
+
+### Changes (`index.html`, `physics.worker.js`)
+
+**Shared UI metrics helpers (`index.html`):**
+- Added `getNhatsMetricValue()`, `getDisplayDeltaV()`, `getDisplayDuration()`, `getDisplayValueUsd()`, `getDisplayProfitUsd()`, and `formatNhatsMetric()`
+- Standardized visible UI surfaces on the same fallback logic for ΔV and value instead of mixing raw `ast.price` / `getAsteroidDV()` / cached feasibility data
+
+**NHATS normalization (`index.html` + `physics.worker.js`):**
+- Updated NHATS parsing to handle the live nested object shape for `min_dv` / `min_dur`
+- Normalized designation matching so NHATS overlays bind more reliably to catalog rows
+- Refreshed the selected asteroid inspector after NHATS data merges
+- Suppressed the `OCC: null` badge case in the inspector
+
+**Filter / leaderboard / export fixes (`index.html`):**
+- `NHATS ACCESSIBLE ONLY` now filters on verified NHATS membership instead of the `_nhats` heuristic
+- Leaderboard sorting and filter thresholds now use the same display metrics the user sees
+- CSV export now emits normalized NHATS ΔV/duration and normalized value/profit fields
+
+**Catalog data fixes (`physics.worker.js`):**
+- Expanded Asterank fields to request `pdes`, `diameter`, `albedo`, `moid`, `last_obs`, and `condition_code`
+- Re-enabled fallback valuation by ensuring diameter/albedo inputs exist for price estimation when Asterank returns zero
+- Preserved `moid` as `null` when missing instead of silently forcing `0`
+
 ## Phase 9G — Mission Planner Stability Fix (2026-04-10)
 
 ### Summary
@@ -325,3 +390,212 @@ Planner closes before burn mode cancel and asteroid deselect in the Escape key p
 - Replace vis-viva with real Lambert in `plan_mission` worker command
 - Drag-to-adjust burn arrows in 3D scene
 - Porkchop plot overlay showing solution space with top-10 trajectories highlighted
+
+---
+
+## Phase 9I — Five-Agent Trust Pass (2026-04-10)
+
+**Agents:** orbital-mechanics / data-layer / renderer / ui-hud / economics
+
+### Summary
+Ran a full five-domain audit and implemented the highest-risk fixes across worker, UI, renderer, and proxy. This pass focused on trust: no silent catalog failure, fewer fabricated economics defaults, clearer redirect outputs, cleaner cache behavior, and planner visuals that stay synchronized with live scene time.
+
+### Key fixes
+- `physics.worker.js`
+  - Added canonical row normalizers for Asterank/NHATS and preserved `null` for unknown values instead of coercing them to zero.
+  - Requested and passed through missing provenance fields including `diameter`, `last_obs`, and `condition_code`.
+  - Added a real fallback NEA catalog when live Asterank fetch fails.
+  - Normalized screening economics into separate fields: whole-body catalog price, extractable heuristic value, and raw profit.
+  - Tightened Lambert result validation and aligned mission planner gate diagnostics with the actual configured limits.
+  - Redirect planner now rejects non-elliptic redirected orbits, checks safety on the redirected orbit, and labels Earth-arrival `v∞` honestly instead of pretending lunar capture was solved.
+- `worker/index.js`
+  - Hardened `/api/nhats` with default query params, cached proxy fetches, and explicit stale metadata.
+- `index.html`
+  - Removed remaining dead `mdesign` UI references and made the planner fully Lambert-framed.
+  - Fixed the cache-clearing regression that deleted `aster_catalog_v7` before startup could use it.
+  - Reworked value rendering so unknown size/spec/value inputs show as `unknown` instead of fabricated numbers.
+  - Replaced the old materials tab pipeline with the shared composition/value helpers, including explicit unknown-state messaging for missing diameter or spectral type.
+  - Added share-state normalization so mission share links restore planner configuration, not just the raw asteroid selection.
+  - Synced mission path overlays with live propagated Earth/asteroid positions so scrub/play state no longer drifts away from the visual route.
+  - Added explicit fallback/error handling for catalog and NHATS ingestion paths.
+
+### Residual limits
+- Redirect capture into lunar orbit is still not a high-fidelity Earth-Moon patch solution; the UI now marks that capture term as unknown instead of implying it is solved.
+- Mission-share links restore planner setup, but they do not embed solved Lambert results; re-running the planner is still required to regenerate a shared trajectory choice.
+
+---
+
+## Phase 9J — Redirect + Playback Corrections (2026-04-11)
+
+### Summary
+Fixed three regressions in the mission-planning UI: redirect candidate selection was overfitting on departure ΔV instead of actual redirect feasibility, the capture/redirect path overlay was being drawn as a loose Bezier instead of following the solved redirected orbit, and the play controls still had split behavior between mission playback and the bottom timeline controls.
+
+### Key fixes
+- `physics.worker.js`
+  - Redirect planning now keeps a pool of intercept candidates and evaluates full redirect feasibility per propulsion mode before choosing the best result.
+  - Infeasible redirect results now return clearer propellant-load errors instead of silently using the lowest-departure intercept.
+- `index.html`
+  - Solar electric redirect option updated to a more realistic high-Isp screening value and less misleading label text.
+  - Redirect transfer arc now samples the solved redirected orbit from intercept date to Earth-arrival date, so the orange path aligns with the solid redirected orbit line.
+  - Added one shared playback toggle path so the bottom play button and spacebar control mission playback when a mission animation is active instead of fighting the global timeline state.
+  - Mission playback button labels now stay synchronized across the planner and mini transport controls.
+  - Redirect infeasible messaging now includes propulsion/load context when the blocker is excessive propellant mass.
+
+### CSS status
+- Layout CSS is functional, but the UI is still mixed between reusable rules and inline panel styling.
+- The next cleanup pass should extract mission-planner, redirect-results, and bottom-bar inline styles into named classes so visual changes stop requiring structural HTML edits.
+
+---
+
+## Phase 9K — Solved Redirect Window + Unified Playback (2026-04-12)
+
+### Summary
+Fixed the two remaining high-visibility control problems: redirect planning now searches a real set of return windows instead of forcing a single Hohmann-style guess, and the bottom transport controls now respect mission playback as the active time owner instead of fighting the global timeline.
+
+### Key fixes
+- `physics.worker.js`
+  - Replaced the single guessed redirect TOF with a redirect TOF search around the Hohmann estimate plus a broader screening grid.
+  - Redirect results now return solved segment bounds (`segment_jd_start`, `segment_jd_end`) alongside the redirected orbit and a simple schema version for UI/worker contract safety.
+  - Redirect ranking now prefers the best full redirect solution for the chosen propulsion mode rather than a single low-departure candidate.
+- `index.html`
+  - Removed the fake Bezier fallback for redirect paths; if no solved orbital segment exists, Aster now leaves the path unavailable instead of drawing incorrect geometry.
+  - Added persistent redirect visual state so solved redirect arcs can be redrawn from the worker result instead of one-shot snapshot geometry.
+  - Unified the bottom play button, keyboard toggle, scrub pause/resume, and speed buttons so mission playback and timeline playback do not run at the same time.
+  - Bottom speed controls now target mission playback speed when a mission animation is active.
+
+### Result
+- The orange redirect path now follows a solved redirect segment rather than a guessed curve.
+- The solid redirected orbit is derived from the selected redirect solution, not a one-off radial estimate.
+- The bottom play button now controls the active playback mode consistently.
+
+---
+
+## Phase 9L — Planner Integrity Pass (2026-04-12)
+
+### Summary
+Addressed the biggest trust and wiring gaps in the planner UI: redirect configuration now materially affects the returned result, economics now expose the founding doc’s required value views, and several misleading or dead UI states were cleaned up.
+
+### Key fixes
+- `physics.worker.js`
+  - Redirect planning now accepts and uses capture target, delivery destination, spacecraft class, and launch vehicle data instead of ignoring most of the redirect configuration.
+  - Redirect feasibility now includes launch-stack mass, launch-vehicle capacity checks, and support mission cost fields in the returned payload.
+  - Capture results now carry dynamic labels, target orbit radius, delivery-node context, and screening-grade capture/delivery ΔV terms instead of a hardcoded lunar-only block.
+  - Early redirect error responses now include the same schema version as successful responses so UI contract checks fail cleanly.
+- `index.html`
+  - Added launch-window validation to block past-year mission searches.
+  - Mission planner now auto-closes the left filter panel when opening, and the mission panel width is hardened to avoid the severe clipping case.
+  - Extract planner result cards are now re-ranked with configuration-aware operational metrics so spacecraft and launch vehicle choices affect score, cost, and overweight status.
+  - Economics tab now shows `Paper Value`, `Realizable NPV`, and a low-cost sanity warning for sub-$500M totals; ROI no longer claims a numeric multiple when the underlying realized return is unknown.
+  - Materials price mode now behaves like an actual toggle with visible mode feedback.
+  - Research markdown now renders `####` headings and horizontal rules instead of leaking raw markdown.
+  - Filter preset selection now stays visible after applying a preset, while manual filter edits clear the preset selection.
+  - ΔV filter range is now aligned to the 10 km/s planner gate, and NHATS/planner mismatches are surfaced in the leaderboard and inspector.
+  - Mission-plan export now gives user feedback when it succeeds.
+
+### Result
+- Redirect planning is no longer mostly decorative: the selected redirect target, delivery destination, spacecraft, and launcher now change the mission feasibility output.
+- The economics panel is materially closer to the founding document and less likely to show contradictory value language.
+- Several UI bugs that weakened trust now either behave correctly or fail more honestly.
+
+---
+
+## Phase 9M — Redirect Playback + Path Clarity (2026-04-12)
+
+### Summary
+Fixed the two follow-on usability failures in capture-and-redirect mode: the redirect visual no longer presents a full post-burn orbit as if it were the mission path, and the play controls can now start and visibly run a redirect mission preview.
+
+### Key fixes
+- `index.html`
+  - Stopped rendering the full adjusted redirect orbit as the primary orange visual; the redirect view now emphasizes the solved transfer segment instead of a misleading “expanded orbit.”
+  - Added a dedicated redirect mission animation path using the intercept leg plus the solved redirect segment.
+  - Updated the bottom play button and mission play buttons so they can start redirect playback when a redirect solution is the active mission context.
+  - Added a redirect-specific mission timeline (`INTERCEPT` / `REDIRECT`) with clickable markers.
+  - Raised the default mission playback speed to a visible rate (`1d/s`) and synced the mission speed button state to the active animation speed.
+  - Expanded scrubber bounds dynamically to the active mission span so long mission previews no longer stall at the fixed global date window.
+
+### Result
+- Capture-and-redirect visuals read more like a mission preview and less like a larger copy of the asteroid orbit.
+- Pressing play can now actually animate a redirect mission instead of only toggling the global solar-system timeline.
+
+---
+
+## Phase 9N — Audit Cleanup Pass (2026-04-13)
+
+### Summary
+Addressed the concrete issues from the audit that were low-risk to fix directly: price-source state drift, NHATS offline labeling, porkchop solver inconsistency, hot-loop worker waste, duplicate economics logic, and mission-planner spec gaps around value display and on-screen warnings.
+
+### Key fixes
+- `index.html`
+  - Removed the duplicate commodity-price fetch path and made the app use `fetchPrices()` as the single source of truth for Materials-tab pricing state.
+  - Fixed Materials price timestamp handling by standardizing on the proxy `timestamp` field.
+  - Updated init to load prices through the unified path instead of the removed duplicate function.
+  - Added explicit `NHATS offline` HUD state when NHATS loading fails during `load_progress`.
+  - Mission planner result cards now show both `Paper Value` and `NPV`, include an on-screen sub-$500M sanity warning, and label ΔV as a planning-level estimate.
+  - Removed the duplicate local NPV implementation inside `computeMissionProfile()` and reused the shared demand-adjusted `computeRealizableNPV()` helper.
+  - Burn-preview requests now tell the worker they are preview-only so live dragging can use cheaper MOID work.
+- `physics.worker.js`
+  - Porkchop scans now use Izzo first and BMW fallback second, matching the founding-document solver order used by the mission planner.
+  - Burn preview MOID sampling is reduced during live drag to lower worker contention.
+  - Removed debug logging from the inner Lambert planning loops.
+  - Renamed the local `cross` array in `izzoLambert()` to avoid shadowing the module vector helper.
+- `worker/index.js`
+  - Removed dead in-memory price-cache code.
+  - Hardened CORS origin resolution so alternate GitHub Pages deployments and localhost variants do not silently fail due to a mismatched `Access-Control-Allow-Origin`.
+
+### Result
+- Materials pricing, mission cards, and NHATS HUD state are more internally consistent with the founding document.
+- Porkchop behavior now matches the planner’s solver priority instead of silently using the fallback solver only.
+- The worker does less unnecessary work while dragging burn controls, and the proxy is less brittle in production.
+
+---
+
+## Phase 9O — Neon Orbit / Arc Visual Overhaul (2026-04-13)
+
+### Summary
+Restyled the scene’s orbit and mission-path rendering around a thin neon glow aesthetic without touching panel layout, planner wiring, physics, or data-fetch behavior.
+
+### Key fixes
+- `index.html`
+  - Added reusable glow-line renderer helpers for solid and dashed orbit/trajectory lines using additive blending and a two-pass core/halo treatment.
+  - Reworked the main orbit visuals:
+    - Earth orbit ring now glows cyan
+    - selected and hover asteroid orbits now use violet by default and brighter cyan for NHATS-verified targets
+    - burn preview orbits now use a cooler dashed baseline and warmer orange post-burn path
+    - redirect baseline orbit now renders as a subdued dashed violet/blue line
+    - redirected orbit/path family now renders in green
+    - ISS orbit and lunar capture ring now use the same glow language
+  - Extract mission outbound and return arcs now render as gold/orange dashed neon paths.
+  - Redirect mission path now renders as a solid green glow arc, while the solved redirected orbit is shown separately in the same color family.
+  - Mission animation trails now match the mission family color instead of the older flat blue styling.
+
+### Result
+- The 3D scene now reads much more like a stylized mission-planning graphic instead of a collection of flat utility lines.
+- Orbit hierarchy is clearer at a glance, and NHATS-accessible targets visually stand out when their orbits are previewed.
+- Mission arcs, redirect paths, and orbit overlays now share one renderer abstraction and are easier to maintain without leaking duplicate visuals.
+
+---
+
+## Phase 9P — Spacecraft + Planet Animation Pass (2026-04-13)
+
+### Summary
+Built out the renderer-side animation system so Aster now has meaningful mission playback, timeline-driven live orbit motion, pulsing burn vectors, procedural thruster plumes, and upgraded planetary visuals without changing the right-side panel or planner layout.
+
+### Key fixes
+- `index.html`
+  - Added a renderer-level animation clock and made the bottom play button drive the main scene through `currentJD` at a `TIME_WARP` default of one day per second.
+  - Capped worker propagation cadence during continuous playback so the live asteroid/planet scene updates smoothly without flooding the worker every frame.
+  - Replaced the old cone placeholder with a low-poly spacecraft assembled from Three.js primitives via `createSpacecraft()`.
+  - Mission playback now samples arc points with segment interpolation instead of snapping to coarse point indices, and the spacecraft orients toward its heading while the engine light pulses or boosts during burn windows.
+  - Added a reusable thruster plume pool and animated burn-vector pulsing in the render loop without allocating new meshes per frame.
+  - Added a bottom-bar `⊙ Follow Spacecraft` control and OrbitControls-based manual follow override.
+  - Upgraded the planet renderer to `MeshPhongMaterial` visuals with distinct colors, atmosphere shells, slow spin, and a procedural Earth land overlay; the close-up Earth layer now matches the upgraded main Earth look.
+
+### Result
+- Mission playback is now visually legible: the spacecraft moves, points in the right direction, emits thrust, and can be camera-followed.
+- The main solar-system view now feels alive when the bottom play control is running instead of looking static between scrubs.
+- Earth and the other planets read more clearly as stylized bodies rather than placeholder spheres.
+
+### Follow-up fix
+- `index.html`
+  - Guarded dashed glow-line initialization so `computeLineDistances()` only runs after a geometry actually has a populated `position` attribute, fixing the startup crash introduced by placeholder dashed glow groups.
+  - Removed eager dashed distance computation from glow-line construction entirely and made the runtime geometry update helpers validate the `position` buffer before calling `computeLineDistances()`, covering empty `setFromPoints()` cases too.

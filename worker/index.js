@@ -16,9 +16,6 @@ const ALLOWED_ORIGINS = new Set([
 const RATE_LIMIT = 10;         // max requests per window per IP
 const RATE_WINDOW_MS = 60_000; // 1 minute
 
-const pricesCache = { data: null, at: 0 };
-const PRICE_CACHE_MS = 60 * 60 * 1000; // 1 hour
-
 const FALLBACK_PRICES = {
   gold: 92000, silver: 1050, platinum: 31000, palladium: 32000,
   iridium: 52000, copper: 9.5, nickel: 16, cobalt: 28,
@@ -104,8 +101,21 @@ function checkRateLimit(ip) {
   return entry.count <= RATE_LIMIT;
 }
 
+function resolveAllowedOrigin(origin) {
+  if (!origin) return 'https://hudsonclavin-cloud.github.io';
+  if (ALLOWED_ORIGINS.has(origin)) return origin;
+  try {
+    const url = new URL(origin);
+    const isGithubPages = url.protocol === 'https:' && url.hostname.endsWith('.github.io');
+    const isLocalDev = (url.protocol === 'http:' || url.protocol === 'https:')
+      && /^(localhost|127\.0\.0\.1)$/.test(url.hostname);
+    if (isGithubPages || isLocalDev) return origin;
+  } catch (_) {}
+  return 'https://hudsonclavin-cloud.github.io';
+}
+
 function corsHeaders(origin) {
-  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://hudsonclavin-cloud.github.io';
+  const allowed = resolveAllowedOrigin(origin);
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -202,14 +212,14 @@ export default {
     // ── GET /api/nhats ───────────────────────────────────────────────────────
     if (url.pathname === '/api/nhats' && request.method === 'GET') {
       const nasaUrl = new URL('https://ssd-api.jpl.nasa.gov/nhats.api');
+      if (!url.searchParams.has('dv')) nasaUrl.searchParams.set('dv', '12');
+      if (!url.searchParams.has('dur')) nasaUrl.searchParams.set('dur', '450');
+      if (!url.searchParams.has('stay')) nasaUrl.searchParams.set('stay', '8');
       for (const [k, v] of url.searchParams) nasaUrl.searchParams.set(k, v);
       try {
-        const r = await fetch(nasaUrl.toString(), { cf: { cacheTtl: 86400 } });
-        if (!r.ok) throw new Error(`NASA HTTP ${r.status}`);
-        return new Response(r.body, {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) },
-        });
+        const { data, stale } = await cachedProxyFetch(nasaUrl.toString(), 24 * 60 * 60 * 1000);
+        const body = typeof data === 'object' && data !== null ? { ...data, stale } : { raw: data, stale };
+        return jsonResponse(body, 200, origin);
       } catch (err) {
         return jsonResponse({ error: 'NHATS proxy failed', detail: err.message }, 502, origin);
       }
