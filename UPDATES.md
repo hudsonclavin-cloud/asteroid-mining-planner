@@ -598,3 +598,4 @@ Built out the renderer-side animation system so Aster now has meaningful mission
 ### Follow-up fix
 - `index.html`
   - Guarded dashed glow-line initialization so `computeLineDistances()` only runs after a geometry actually has a populated `position` attribute, fixing the startup crash introduced by placeholder dashed glow groups.
+  - Removed eager dashed distance computation from glow-line construction entirely and made the runtime geometry update helpers validate the `position` buffer before calling `computeLineDistances()`, covering empty `setFromPoints()` cases too.

@@ -2427,12 +2427,6 @@ function makeGlowLine(geometry, color, opacity, options = {}) {
   group.add(core, halo);
   group.visible = false;
   group.userData.glow = { core, halo, dashed, dashSize, gapSize, color };
-  if (dashed) {
-    const corePos = core.geometry.getAttribute('position');
-    const haloPos = halo.geometry.getAttribute('position');
-    if (corePos && corePos.count > 1) core.computeLineDistances();
-    if (haloPos && haloPos.count > 1) halo.computeLineDistances();
-  }
   return group;
 }
 
@@ -2458,7 +2452,10 @@ function setGlowLinePoints(target, points) {
   if (!glow) return;
   [glow.core, glow.halo].forEach(line => {
     line.geometry.setFromPoints(points);
-    if (glow.dashed) line.computeLineDistances();
+    if (glow.dashed) {
+      const pos = line.geometry.getAttribute('position');
+      if (pos && pos.count > 1) line.computeLineDistances();
+    }
   });
 }
 
@@ -2467,7 +2464,10 @@ function setGlowLinePositions(target, positions) {
   if (!glow) return;
   [glow.core, glow.halo].forEach(line => {
     line.geometry.setAttribute('position', new THREE.BufferAttribute(positions.slice(), 3));
-    if (glow.dashed) line.computeLineDistances();
+    if (glow.dashed) {
+      const pos = line.geometry.getAttribute('position');
+      if (pos && pos.count > 1) line.computeLineDistances();
+    }
   });
 }
 
