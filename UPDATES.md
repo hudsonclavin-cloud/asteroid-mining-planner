@@ -572,3 +572,25 @@ Restyled the scene’s orbit and mission-path rendering around a thin neon glow 
 - The 3D scene now reads much more like a stylized mission-planning graphic instead of a collection of flat utility lines.
 - Orbit hierarchy is clearer at a glance, and NHATS-accessible targets visually stand out when their orbits are previewed.
 - Mission arcs, redirect paths, and orbit overlays now share one renderer abstraction and are easier to maintain without leaking duplicate visuals.
+
+---
+
+## Phase 9P — Spacecraft + Planet Animation Pass (2026-04-13)
+
+### Summary
+Built out the renderer-side animation system so Aster now has meaningful mission playback, timeline-driven live orbit motion, pulsing burn vectors, procedural thruster plumes, and upgraded planetary visuals without changing the right-side panel or planner layout.
+
+### Key fixes
+- `index.html`
+  - Added a renderer-level animation clock and made the bottom play button drive the main scene through `currentJD` at a `TIME_WARP` default of one day per second.
+  - Capped worker propagation cadence during continuous playback so the live asteroid/planet scene updates smoothly without flooding the worker every frame.
+  - Replaced the old cone placeholder with a low-poly spacecraft assembled from Three.js primitives via `createSpacecraft()`.
+  - Mission playback now samples arc points with segment interpolation instead of snapping to coarse point indices, and the spacecraft orients toward its heading while the engine light pulses or boosts during burn windows.
+  - Added a reusable thruster plume pool and animated burn-vector pulsing in the render loop without allocating new meshes per frame.
+  - Added a bottom-bar `⊙ Follow Spacecraft` control and OrbitControls-based manual follow override.
+  - Upgraded the planet renderer to `MeshPhongMaterial` visuals with distinct colors, atmosphere shells, slow spin, and a procedural Earth land overlay; the close-up Earth layer now matches the upgraded main Earth look.
+
+### Result
+- Mission playback is now visually legible: the spacecraft moves, points in the right direction, emits thrust, and can be camera-followed.
+- The main solar-system view now feels alive when the bottom play control is running instead of looking static between scrubs.
+- Earth and the other planets read more clearly as stylized bodies rather than placeholder spheres.

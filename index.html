@@ -368,6 +368,12 @@ canvas { display: block; }
 
 #speed-controls { display: flex; gap: 4px; flex-shrink: 0; }
 #btn-play-pause { min-width: 28px; margin-right: 4px; }
+#btn-follow-spacecraft { display: none; white-space: nowrap; flex-shrink: 0; }
+#btn-follow-spacecraft.follow-active {
+  border-color: #00ffcc;
+  color: #00ffcc;
+  box-shadow: 0 0 6px #00ffcc66;
+}
 
 button.speed-btn {
   background: transparent;
@@ -1471,6 +1477,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <button class="speed-btn active" data-speed="1000">1K×</button>
     <button class="speed-btn" data-speed="10000">10K×</button>
   </div>
+  <button id="btn-follow-spacecraft" class="speed-btn" title="Re-enable camera follow">⊙ Follow Spacecraft</button>
   <div id="asteroid-count">▲ 0 ASTEROIDS</div>
   <div id="bottom-hints" style="font-size:9px;color:#4b5563;letter-spacing:0.08em;display:flex;gap:16px;align-items:center">
     <span style="cursor:pointer" id="btn-shortcut-hint">? SHORTCUTS</span>
@@ -1490,6 +1497,8 @@ const TWO_PI = 2 * Math.PI;
 const GM = 1.327124400e20;  // m³/s²
 const AU_m = 1.496e11;       // m per AU
 const GM_AU3_S2 = GM / (AU_m * AU_m * AU_m);
+const TIME_WARP = 86400;
+const PROPAGATE_INTERVAL_MS = 75;
 
 function dateToJD(year, month, day) {
   const A = Math.floor((14 - month) / 12);
@@ -2061,6 +2070,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.minDistance = 0.1;
 controls.maxDistance = 500;
+const clock = new THREE.Clock();
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.08));
 const sunLight = new THREE.PointLight(0xfff4e0, 2.5, 0);
@@ -2097,24 +2107,93 @@ scene.add(new THREE.Mesh(
 const PLANET_CONFIGS = [
   { name: 'Mercury', color: 0xb5b5b5, r: 0.018 },
   { name: 'Venus',   color: 0xe8cda0, r: 0.022 },
-  { name: 'Earth',   color: 0x4488ff, r: 0.022 },
-  { name: 'Mars',    color: 0xcc4400, r: 0.020 },
+  { name: 'Earth',   color: 0x1a6b9e, r: 0.022 },
+  { name: 'Mars',    color: 0xc1440e, r: 0.020 },
   { name: 'Jupiter', color: 0xc88b3a, r: 0.040 },
   { name: 'Saturn',  color: 0xe4d191, r: 0.035 },
   { name: 'Uranus',  color: 0x7de8e8, r: 0.030 },
   { name: 'Neptune', color: 0x5b6fcd, r: 0.028 },
 ];
 
+const PLANET_VISUALS = {
+  Mercury: { color: 0x9a9a95, specular: 0x555555, shininess: 12, glow: 0xa0a4ab, glowOpacity: 0.05, rotation: 0.00045 },
+  Venus:   { color: 0xe8cda0, specular: 0xf3dfb6, shininess: 18, glow: 0xf0d7a8, glowOpacity: 0.08, rotation: 0.00045 },
+  Earth:   { color: 0x1a6b9e, specular: 0x4488bb, shininess: 40, glow: 0x4488ff, glowOpacity: 0.12, rotation: 0.00100 },
+  Mars:    { color: 0xc1440e, specular: 0xe77a3c, shininess: 16, glow: 0xf08b55, glowOpacity: 0.08, rotation: 0.00055 },
+  Jupiter: { color: 0xc88b3a, specular: 0xe7bc7d, shininess: 18, glow: 0xf0c98b, glowOpacity: 0.06, rotation: 0.00045 },
+  Saturn:  { color: 0xe4d191, specular: 0xf7e8b6, shininess: 16, glow: 0xf5df9f, glowOpacity: 0.06, rotation: 0.00040 },
+  Uranus:  { color: 0x7de8e8, specular: 0xaef5f5, shininess: 20, glow: 0x96f3ff, glowOpacity: 0.06, rotation: 0.00042 },
+  Neptune: { color: 0x5b6fcd, specular: 0x90a4ff, shininess: 20, glow: 0x7da1ff, glowOpacity: 0.06, rotation: 0.00042 },
+};
+
+function createPlanetAtmosphere(radius, color, opacity, scale = 1.01) {
+  return new THREE.Mesh(
+    new THREE.SphereGeometry(radius * scale, 24, 24),
+    new THREE.MeshPhongMaterial({
+      color,
+      transparent: true,
+      opacity,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+  );
+}
+
+function createProceduralLandOverlay(radius, detail = 18, opacity = 0.75) {
+  const geo = new THREE.SphereGeometry(radius, detail, detail);
+  const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  const color = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const lat = Math.atan2(y, Math.sqrt(x*x + z*z));
+    const lon = Math.atan2(z, x);
+    const noise = Math.sin(lon * 3.2) * 0.55 + Math.cos(lat * 5.1) * 0.3 + Math.sin((lon + lat) * 7.5) * 0.2;
+    const land = noise > 0.18;
+    color.setHex(land ? 0x2d7a3a : 0x15351f);
+    colors[i*3] = color.r;
+    colors[i*3+1] = color.g;
+    colors[i*3+2] = color.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  return new THREE.Mesh(
+    geo,
+    new THREE.MeshPhongMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity,
+      shininess: 8,
+      depthWrite: false,
+    })
+  );
+}
+
 const planets = PLANET_CONFIGS.map((cfg, idx) => {
   const geo = new THREE.SphereGeometry(cfg.r, 12, 12);
-  const mat = new THREE.MeshStandardMaterial({ color: cfg.color, roughness: 0.8, metalness: 0.1 });
+  const visual = PLANET_VISUALS[cfg.name] || PLANET_VISUALS.Mercury;
+  const mat = new THREE.MeshPhongMaterial({
+    color: visual.color,
+    specular: visual.specular,
+    shininess: visual.shininess,
+    flatShading: false,
+  });
   const mesh = new THREE.Mesh(geo, mat);
-  mesh.userData = { name: cfg.name, planetIdx: idx };
+  mesh.userData = { name: cfg.name, planetIdx: idx, rotationSpeed: visual.rotation };
+  const atmosphere = createPlanetAtmosphere(cfg.r, visual.glow, visual.glowOpacity, cfg.name === 'Earth' ? 1.015 : 1.01);
+  mesh.add(atmosphere);
+  if (cfg.name === 'Earth') {
+    const land = createProceduralLandOverlay(cfg.r * 1.001, 20, 0.72);
+    mesh.add(land);
+    mesh.userData.landOverlay = land;
+  }
   scene.add(mesh);
   if (cfg.name === 'Saturn') {
     const ring = new THREE.Mesh(
       new THREE.TorusGeometry(0.07, 0.018, 2, 64),
-      new THREE.MeshBasicMaterial({ color: 0xd4c47a, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+      new THREE.MeshPhongMaterial({ color: 0xd4c47a, transparent: true, opacity: 0.6, side: THREE.DoubleSide, shininess: 8 })
     );
     ring.rotation.x = Math.PI / 2.5;
     mesh.add(ring);
@@ -2542,13 +2621,16 @@ earthDetailGroup.visible = false;
 
 const earthDetailMesh = new THREE.Mesh(
   new THREE.SphereGeometry(0.0425, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0x1a4a7a })
+  new THREE.MeshPhongMaterial({ color: 0x1a6b9e, specular: 0x4488bb, shininess: 40 })
 );
 earthDetailGroup.add(earthDetailMesh);
 
+const earthDetailLand = createProceduralLandOverlay(0.0425 * 1.001, 26, 0.7);
+earthDetailGroup.add(earthDetailLand);
+
 const atmMesh = new THREE.Mesh(
   new THREE.SphereGeometry(0.045, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.12, side: THREE.BackSide })
+  new THREE.MeshPhongMaterial({ color: 0x4488ff, transparent: true, opacity: 0.12, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false })
 );
 earthDetailGroup.add(atmMesh);
 
@@ -2908,8 +2990,8 @@ let currentJD = TODAY_JD;
 let lastPropJD = -Infinity; // JD of last propagate message sent; avoids flooding worker when paused
 let simSpeed = 0;
 let isPlaying = false;
-let lastSpeed = 1000;              // speed to resume when ▶ is pressed
-let lastRealTime = performance.now();
+let lastSpeed = TIME_WARP;         // speed to resume when ▶ is pressed
+let lastPropagateRequestMs = 0;
 let isScrubbing = false;
 let lastSentJD = null;
 
@@ -2938,9 +3020,19 @@ function setCurrentJD(jd, options = {}) {
   if (syncScrubber) scrubber.value = jdToScrubberPos(currentJD);
   syncTimeDisplays();
   if (propagate && currentJD !== lastPropJD) {
+    lastPropagateRequestMs = performance.now();
     worker.postMessage({ cmd: 'propagate', jd: currentJD });
     lastPropJD = currentJD;
   }
+}
+
+function maybePropagateCurrentJD(force = false) {
+  if (currentJD === lastPropJD) return;
+  const now = performance.now();
+  if (!force && (now - lastPropagateRequestMs) < PROPAGATE_INTERVAL_MS) return;
+  worker.postMessage({ cmd: 'propagate', jd: currentJD });
+  lastPropJD = currentJD;
+  lastPropagateRequestMs = now;
 }
 
 // ─── Burn Mode State ──────────────────────────────────────────────────────────
@@ -2986,8 +3078,162 @@ const missionAnim = {
   redirectVisual: null,
   spacecraft: null, engineLight: null,
   trailLine: null, trailPts: [],
+  thrusterPlumes: [],
+  autoFollow: false,
+  manualOverride: false,
+  spacecraftVisible: false,
+  spacecraftDirection: new THREE.Vector3(0, 0, 1),
+  sampledPosition: new THREE.Vector3(),
+  sampledNext: new THREE.Vector3(),
+  followOffset: new THREE.Vector3(0.3, 0.15, 0.3),
+  followTarget: new THREE.Vector3(),
+  plumeDirection: new THREE.Vector3(0, 0, -1),
 };
 let playbackModeBeforeScrub = 'none';
+
+const SPACECRAFT_SHARED = {
+  bodyGeo: new THREE.BoxGeometry(0.04, 0.025, 0.025),
+  panelGeo: new THREE.BoxGeometry(0.06, 0.003, 0.02),
+  engineGeo: (() => {
+    const geo = new THREE.ConeGeometry(0.008, 0.02, 6);
+    geo.rotateX(-Math.PI / 2);
+    return geo;
+  })(),
+  plumeGeo: new THREE.SphereGeometry(0.003, 6, 6),
+  bodyMat: new THREE.MeshPhongMaterial({ color: 0xc0c0cc, shininess: 24, specular: 0xe6e6ee }),
+  panelMat: new THREE.MeshPhongMaterial({ color: 0x2a1a6e, shininess: 10, specular: 0x4550aa }),
+  engineMat: new THREE.MeshPhongMaterial({ color: 0x3d4047, shininess: 10, specular: 0x6b7280 }),
+};
+[SPACECRAFT_SHARED.bodyGeo, SPACECRAFT_SHARED.panelGeo, SPACECRAFT_SHARED.engineGeo, SPACECRAFT_SHARED.plumeGeo].forEach(geo => {
+  geo.userData.sharedAsset = true;
+});
+[SPACECRAFT_SHARED.bodyMat, SPACECRAFT_SHARED.panelMat, SPACECRAFT_SHARED.engineMat].forEach(mat => {
+  mat.userData.sharedAsset = true;
+});
+
+function createSpacecraft() {
+  const group = new THREE.Group();
+
+  const body = new THREE.Mesh(SPACECRAFT_SHARED.bodyGeo, SPACECRAFT_SHARED.bodyMat);
+  const panelLeft = new THREE.Mesh(SPACECRAFT_SHARED.panelGeo, SPACECRAFT_SHARED.panelMat);
+  const panelRight = new THREE.Mesh(SPACECRAFT_SHARED.panelGeo, SPACECRAFT_SHARED.panelMat);
+  panelLeft.position.x = -0.045;
+  panelRight.position.x = 0.045;
+
+  const engine = new THREE.Mesh(SPACECRAFT_SHARED.engineGeo, SPACECRAFT_SHARED.engineMat);
+  engine.position.z = -0.022;
+
+  const engineLight = new THREE.PointLight(0xff6600, 0.4, 0.15);
+  engineLight.position.set(0, 0, -0.026);
+
+  group.add(body, panelLeft, panelRight, engine, engineLight);
+  group.scale.setScalar(0.25);
+  group.visible = false;
+  group.userData.engineLight = engineLight;
+  return group;
+}
+
+function initThrusterPlumePool(parent, count = 10) {
+  const plumePool = [];
+  for (let i = 0; i < count; i++) {
+    const mesh = new THREE.Mesh(
+      SPACECRAFT_SHARED.plumeGeo,
+      new THREE.MeshBasicMaterial({
+        color: i % 3 === 0 ? 0xffffff : 0xff8800,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      })
+    );
+    mesh.visible = false;
+    mesh.userData.phase = i / count;
+    parent.add(mesh);
+    plumePool.push(mesh);
+  }
+  return plumePool;
+}
+
+function samplePathPosition(pathPts, t, outPos, outNext) {
+  if (!pathPts || pathPts.length === 0) return false;
+  if (pathPts.length === 1) {
+    outPos.copy(pathPts[0]);
+    outNext.copy(pathPts[0]);
+    return true;
+  }
+  const clamped = Math.max(0, Math.min(0.999999, t));
+  const scaled = clamped * (pathPts.length - 1);
+  const idx = Math.floor(scaled);
+  const frac = scaled - idx;
+  const p0 = pathPts[idx];
+  const p1 = pathPts[Math.min(idx + 1, pathPts.length - 1)];
+  outPos.lerpVectors(p0, p1, frac);
+  outNext.copy(p1);
+  return true;
+}
+
+function syncFollowButton() {
+  const btn = document.getElementById('btn-follow-spacecraft');
+  if (!btn) return;
+  btn.style.display = missionAnim.active ? 'inline-flex' : 'none';
+  btn.classList.toggle('follow-active', !!missionAnim.autoFollow && !missionAnim.manualOverride);
+}
+
+function updateSpacecraftFollow() {
+  if (!(missionAnim.active && missionAnim.playing && missionAnim.autoFollow && !missionAnim.manualOverride && missionAnim.spacecraft?.visible)) return;
+  missionAnim.followTarget.copy(missionAnim.spacecraft.position).add(missionAnim.followOffset);
+  camera.position.lerp(missionAnim.followTarget, 0.03);
+  controls.target.lerp(missionAnim.spacecraft.position, 0.05);
+}
+
+function updateBurnVectorPulse(elapsedTime) {
+  if (!burnVectorArrows.length) return;
+  const pulse = 1.0 + 0.15 * Math.abs(Math.sin(elapsedTime * 2));
+  burnVectorArrows.forEach(arrow => arrow.scale.setScalar(pulse));
+}
+
+function updateThrusterPlumes(elapsedTime, burning) {
+  if (!missionAnim.thrusterPlumes?.length) return;
+  for (let i = 0; i < missionAnim.thrusterPlumes.length; i++) {
+    const plume = missionAnim.thrusterPlumes[i];
+    if (!burning || !missionAnim.spacecraft?.visible) {
+      plume.visible = false;
+      plume.material.opacity = 0;
+      continue;
+    }
+    const phase = (elapsedTime + plume.userData.phase * 0.3) % 0.3;
+    const life = phase / 0.3;
+    const angle = plume.userData.phase * TWO_PI;
+    const radius = 0.004 + life * 0.01;
+    plume.position.set(
+      Math.cos(angle) * radius,
+      Math.sin(angle) * radius * 0.55,
+      -0.03 - life * 0.045
+    );
+    plume.scale.setScalar(1.0 - life * 0.5);
+    plume.material.opacity = 0.75 * (1 - life);
+    plume.visible = true;
+  }
+}
+
+function updatePlanetSpin(dt) {
+  const scale = dt * 60;
+  planets.forEach(planet => {
+    planet.rotation.y += (planet.userData.rotationSpeed || 0.0005) * scale;
+  });
+  earthDetailMesh.rotation.y += PLANET_VISUALS.Earth.rotation * scale;
+  earthDetailLand.rotation.y += PLANET_VISUALS.Earth.rotation * 1.08 * scale;
+  atmMesh.rotation.y += PLANET_VISUALS.Earth.rotation * 0.4 * scale;
+}
+
+function markMissionFollowOverride() {
+  if (!missionAnim.active) return;
+  missionAnim.autoFollow = false;
+  missionAnim.manualOverride = true;
+  syncFollowButton();
+}
+
+controls.addEventListener('start', markMissionFollowOverride);
 
 function getActiveExtractTrajectory() {
   return missionResults[selectedTrajIdx] || optimalTrajectory || null;
@@ -3016,6 +3262,7 @@ function syncMissionPlaybackButtons() {
   if (plannerBtn) plannerBtn.textContent = playing ? '⏸ PAUSE MISSION' : '▶ PLAY MISSION';
   if (miniBtn) miniBtn.textContent = playing ? '⏸' : '▶';
   syncPrimaryPlaybackButton();
+  syncFollowButton();
 }
 
 function syncMissionSpeedButtons() {
@@ -3027,11 +3274,14 @@ function syncMissionSpeedButtons() {
 function setMissionAnimationPlaying(playing) {
   if (!missionAnim.active) return;
   missionAnim.playing = playing;
+  missionAnim.spacecraftVisible = playing;
+  if (missionAnim.spacecraft) missionAnim.spacecraft.visible = playing;
   if (playing) {
     isPlaying = false;
     simSpeed = 0;
+    missionAnim.autoFollow = true;
+    missionAnim.manualOverride = false;
   }
-  if (playing) lastRealTime = performance.now();
   syncSpeedButtons();
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
@@ -3863,13 +4113,14 @@ function disposeMaterial(material) {
     material.forEach(disposeMaterial);
     return;
   }
+  if (material.userData?.sharedAsset) return;
   if (typeof material.dispose === 'function') material.dispose();
 }
 
 function disposeObject3D(obj) {
   if (!obj) return;
   obj.traverse(node => {
-    if (node.geometry && typeof node.geometry.dispose === 'function') node.geometry.dispose();
+    if (node.geometry && !node.geometry.userData?.sharedAsset && typeof node.geometry.dispose === 'function') node.geometry.dispose();
     disposeMaterial(node.material);
   });
   if (obj.parent) obj.parent.remove(obj);
@@ -5372,16 +5623,14 @@ function startMissionAnimation(traj) {
     new THREE.Vector3(midX2, midY2, midZ2),
     new THREE.Vector3(ep.x, ep.y, ep.z));
   missionAnim.returnPts = retCurve.getPoints(200);
+  if (!missionAnim.outboundPts.length || !missionAnim.returnPts.length) return;
 
-  const scGeo = new THREE.ConeGeometry(0.008, 0.025, 8);
-  scGeo.rotateX(Math.PI / 2);
-  const scMat = new THREE.MeshStandardMaterial({ color:0xd0e8ff, emissive:0x203060, roughness:0.4 });
-  missionAnim.spacecraft = new THREE.Mesh(scGeo, scMat);
+  missionAnim.spacecraft = createSpacecraft();
   missionAnim.spacecraft.position.copy(missionAnim.outboundPts[0]);
+  missionAnim.spacecraft.visible = false;
+  missionAnim.engineLight = missionAnim.spacecraft.userData.engineLight;
+  missionAnim.thrusterPlumes = initThrusterPlumePool(missionAnim.spacecraft, 10);
   scene.add(missionAnim.spacecraft);
-
-  missionAnim.engineLight = new THREE.PointLight(0x00aaff, 2.0, 0.25);
-  missionAnim.spacecraft.add(missionAnim.engineLight);
 
   const trailGeo = new THREE.BufferGeometry();
   const trailMat = new THREE.LineBasicMaterial({ color:ORBIT_NEON.transfer, opacity:0.45, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -5397,6 +5646,9 @@ function startMissionAnimation(traj) {
   missionAnim.jdStart = traj.jd_dep;
   missionAnim.jdEnd   = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
   missionAnim.redirectVisual = null;
+  missionAnim.autoFollow = true;
+  missionAnim.manualOverride = false;
+  missionAnim.spacecraftVisible = false;
 
   document.getElementById('mp-anim-controls').style.display = 'block';
   buildMissionTimeline(traj);
@@ -5425,15 +5677,12 @@ function startRedirectAnimation(visual) {
   missionAnim.outboundPts = outCurve.getPoints(180);
   missionAnim.returnPts = redirectPts;
 
-  const scGeo = new THREE.ConeGeometry(0.008, 0.025, 8);
-  scGeo.rotateX(Math.PI / 2);
-  const scMat = new THREE.MeshStandardMaterial({ color:0xd0e8ff, emissive:0x203060, roughness:0.4 });
-  missionAnim.spacecraft = new THREE.Mesh(scGeo, scMat);
+  missionAnim.spacecraft = createSpacecraft();
   missionAnim.spacecraft.position.copy(missionAnim.outboundPts[0]);
+  missionAnim.spacecraft.visible = false;
+  missionAnim.engineLight = missionAnim.spacecraft.userData.engineLight;
+  missionAnim.thrusterPlumes = initThrusterPlumePool(missionAnim.spacecraft, 10);
   scene.add(missionAnim.spacecraft);
-
-  missionAnim.engineLight = new THREE.PointLight(0x00aaff, 2.0, 0.25);
-  missionAnim.spacecraft.add(missionAnim.engineLight);
 
   const trailGeo = new THREE.BufferGeometry();
   const trailMat = new THREE.LineBasicMaterial({ color:ORBIT_NEON.redirect, opacity:0.45, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -5449,6 +5698,9 @@ function startRedirectAnimation(visual) {
   missionAnim.jdStart = ic.jd_dep;
   missionAnim.jdEnd = rd.jd_earth_arr;
   missionAnim.redirectVisual = visual;
+  missionAnim.autoFollow = true;
+  missionAnim.manualOverride = false;
+  missionAnim.spacecraftVisible = false;
 
   document.getElementById('mp-anim-controls').style.display = 'block';
   buildRedirectTimeline(visual);
@@ -5469,6 +5721,11 @@ function stopMissionAnimation() {
   missionAnim.trailPts = [];
   missionAnim.outboundPts = [];
   missionAnim.returnPts   = [];
+  missionAnim.thrusterPlumes = [];
+  missionAnim.autoFollow = false;
+  missionAnim.manualOverride = false;
+  missionAnim.spacecraftVisible = false;
+  missionAnim.engineLight = null;
   const ctrl = document.getElementById('mp-anim-controls');
   if (ctrl) ctrl.style.display = 'none';
   syncScrubberBounds();
@@ -5485,16 +5742,17 @@ function updateMissionAnimation(dt) {
     const hardEnd = missionAnim.jdEnd || SCRUBBER_MAX;
     const nextJD = Math.min(hardEnd, clampJD(missionAnim.animJD + (missionAnim.speed / 86400) * dt));
     missionAnim.animJD = nextJD;
-    setCurrentJD(nextJD);
+    setCurrentJD(nextJD, { propagate: false });
   } else {
     missionAnim.animJD = currentJD;
   }
 
   const jd = currentJD;
-  let pos   = null;
   let pathPts = missionAnim.outboundPts;
   let pathStart = missionAnim.jdStart;
   let pathSpan = 0;
+  let normalizedT = 0;
+  let burning = false;
 
   if (missionAnim.mode === 'redirect') {
     const visual = missionAnim.redirectVisual;
@@ -5504,22 +5762,24 @@ function updateMissionAnimation(dt) {
       pathPts = missionAnim.outboundPts;
       pathStart = visual.intercept.jd_dep;
       pathSpan = visual.intercept.jd_arr - visual.intercept.jd_dep;
-      const t = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
-      pos = pathPts[Math.floor(t * (pathPts.length - 1))].clone();
-      if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t < 0.06 || t > 0.94) ? 3.0 : 0.4;
+      normalizedT = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
+      burning = normalizedT < 0.05 || normalizedT > 0.95;
     } else if (jd <= visual.redirect.jd_earth_arr) {
       missionAnim.phase = 'redirect';
       pathPts = missionAnim.returnPts;
       pathStart = visual.intercept.jd_arr;
       pathSpan = visual.redirect.jd_earth_arr - visual.intercept.jd_arr;
-      const t = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
-      pos = pathPts[Math.floor(t * (pathPts.length - 1))].clone();
-      if (missionAnim.engineLight) missionAnim.engineLight.intensity = 0.7;
+      normalizedT = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
+      burning = normalizedT < 0.05 || normalizedT > 0.95;
     } else {
       missionAnim.phase = 'done';
       missionAnim.playing = false;
-      pos = missionAnim.returnPts[missionAnim.returnPts.length - 1].clone();
+      missionAnim.spacecraftVisible = false;
+      if (missionAnim.spacecraft) missionAnim.spacecraft.visible = false;
+      updateThrusterPlumes(clock.elapsedTime, false);
       syncMissionPlaybackButtons();
+      syncFollowButton();
+      return;
     }
   } else {
     if (!traj) return;
@@ -5530,64 +5790,76 @@ function updateMissionAnimation(dt) {
       pathPts = missionAnim.outboundPts;
       pathStart = traj.jd_dep;
       pathSpan = traj.tof;
-      const t = Math.max(0, Math.min(1, (jd - traj.jd_dep) / traj.tof));
-      pos = missionAnim.outboundPts[Math.floor(t * (missionAnim.outboundPts.length - 1))].clone();
-      if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t < 0.06 || t > 0.94) ? 3.0 : 0.4;
+      normalizedT = Math.max(0, Math.min(1, (jd - traj.jd_dep) / traj.tof));
+      burning = normalizedT < 0.05 || normalizedT > 0.95;
     } else if (jd <= traj.jd_ret_dep) {
       missionAnim.phase = 'mining';
-      const wobble = (jd - traj.jd_arr) * 0.3;
-      pos = new THREE.Vector3(
-        traj.astPos.x + 0.01 * Math.sin(wobble),
-        traj.astPos.y + 0.01 * Math.cos(wobble),
-        traj.astPos.z);
-      if (missionAnim.engineLight) missionAnim.engineLight.intensity = 0.1;
+      missionAnim.sampledPosition.set(
+        traj.astPos.x + 0.01 * Math.sin((jd - traj.jd_arr) * 0.3),
+        traj.astPos.y + 0.01 * Math.cos((jd - traj.jd_arr) * 0.3),
+        traj.astPos.z
+      );
+      missionAnim.sampledNext.set(traj.astPos.x, traj.astPos.y, traj.astPos.z + 0.01);
+      burning = false;
     } else if (jd <= jd_ret_arr) {
       missionAnim.phase = 'return';
       pathPts = missionAnim.returnPts;
       pathStart = traj.jd_ret_dep;
       pathSpan = traj.tof_return || traj.tof;
-      const t = Math.max(0, Math.min(1, (jd - traj.jd_ret_dep) / (traj.tof_return || traj.tof)));
-      pos = missionAnim.returnPts[Math.floor(t * (missionAnim.returnPts.length - 1))].clone();
-      if (missionAnim.engineLight) missionAnim.engineLight.intensity = (t > 0.92) ? 3.0 : 0.4;
+      normalizedT = Math.max(0, Math.min(1, (jd - traj.jd_ret_dep) / (traj.tof_return || traj.tof)));
+      burning = normalizedT < 0.05 || normalizedT > 0.95;
     } else {
       missionAnim.phase   = 'done';
       missionAnim.playing = false;
-      pos = missionAnim.returnPts[missionAnim.returnPts.length - 1].clone();
+      missionAnim.spacecraftVisible = false;
+      if (missionAnim.spacecraft) missionAnim.spacecraft.visible = false;
+      updateThrusterPlumes(clock.elapsedTime, false);
       syncMissionPlaybackButtons();
+      syncFollowButton();
+      return;
     }
   }
 
-  if (!pos || !missionAnim.spacecraft) return;
+  if (!missionAnim.spacecraft) return;
 
-  missionAnim.spacecraft.position.copy(pos);
-
-  // Orient nose along travel direction
-  if (pathPts.length > 1 && pathSpan > 0) {
-    const t = Math.max(0, Math.min(0.999, (jd - pathStart) / pathSpan));
-    const i = Math.floor(t * (pathPts.length - 1));
-    const nxt = pathPts[Math.min(i + 1, pathPts.length - 1)];
-    const vel = new THREE.Vector3().subVectors(nxt, pos);
-    if (vel.length() > 1e-6) {
-      missionAnim.spacecraft.quaternion.setFromUnitVectors(
-        new THREE.Vector3(0, 0, 1), vel.normalize());
+  if (missionAnim.phase === 'mining') {
+    missionAnim.spacecraft.position.copy(missionAnim.sampledPosition);
+    missionAnim.spacecraft.visible = missionAnim.playing;
+    missionAnim.spacecraftVisible = missionAnim.playing;
+  } else {
+    const sampled = samplePathPosition(pathPts, normalizedT, missionAnim.sampledPosition, missionAnim.sampledNext);
+    if (!sampled) {
+      missionAnim.spacecraft.visible = false;
+      missionAnim.spacecraftVisible = false;
+      updateThrusterPlumes(clock.elapsedTime, false);
+      return;
     }
+    missionAnim.spacecraft.position.copy(missionAnim.sampledPosition);
+    missionAnim.spacecraft.visible = missionAnim.playing;
+    missionAnim.spacecraftVisible = missionAnim.playing;
+    missionAnim.spacecraft.lookAt(missionAnim.sampledNext);
   }
+
+  if (missionAnim.engineLight) {
+    missionAnim.engineLight.intensity = burning
+      ? 0.8
+      : missionAnim.phase === 'mining'
+        ? 0.12
+        : (0.3 + 0.1 * Math.sin(clock.elapsedTime * 3));
+  }
+  updateThrusterPlumes(clock.elapsedTime, burning && missionAnim.playing);
 
   // Trail
-  missionAnim.trailPts.push(pos.x, pos.y, pos.z);
+  if (missionAnim.playing) {
+    missionAnim.trailPts.push(missionAnim.spacecraft.position.x, missionAnim.spacecraft.position.y, missionAnim.spacecraft.position.z);
+  }
   if (missionAnim.trailPts.length > 900) missionAnim.trailPts.splice(0, 3);
   if (missionAnim.trailPts.length >= 6) {
     const buf = new Float32Array(missionAnim.trailPts);
     missionAnim.trailLine.geometry.setAttribute('position', new THREE.BufferAttribute(buf, 3));
     missionAnim.trailLine.geometry.computeBoundingSphere();
   }
-
-  // Chase camera
-  if (missionAnim.playing) {
-    const offset = new THREE.Vector3(0.2, 0.15, 0.2);
-    camera.position.lerp(pos.clone().add(offset), 0.025);
-    camera.lookAt(pos);
-  }
+  syncFollowButton();
 }
 
 function exportMissionPlan() {
@@ -6811,13 +7083,22 @@ function setPlayState(playing) {
   }
   isPlaying = playing;
   simSpeed = playing ? lastSpeed : 0;
-  if (playing) lastRealTime = performance.now();
   syncSpeedButtons();
   syncMissionPlaybackButtons();
 }
 
 document.getElementById('btn-play-pause').addEventListener('click', () => {
   togglePrimaryPlayback();
+});
+document.getElementById('btn-follow-spacecraft').addEventListener('click', () => {
+  missionAnim.autoFollow = true;
+  missionAnim.manualOverride = false;
+  if (missionAnim.spacecraft) {
+    missionAnim.followTarget.copy(missionAnim.spacecraft.position).add(missionAnim.followOffset);
+    camera.position.copy(missionAnim.followTarget);
+    controls.target.copy(missionAnim.spacecraft.position);
+  }
+  syncFollowButton();
 });
 
 document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
@@ -6920,10 +7201,12 @@ function animate() {
 
   frameCount++;
   const now = performance.now();
-  const dt = Math.min((now - lastRealTime) / 1000, 0.1);
-  lastRealTime = now;
+  const dt = Math.min(clock.getDelta(), 0.1);
 
   updateMissionAnimation(dt);
+  updateSpacecraftFollow();
+  updateBurnVectorPulse(clock.elapsedTime);
+  updatePlanetSpin(dt);
   if (optimalTrajectory && document.getElementById('mission-timeline').style.display !== 'none') {
     updateTimelineIndicator();
   }
@@ -6944,10 +7227,14 @@ function animate() {
     if (nextJD === currentJD) {
       setPlayState(false);
     } else {
-      setCurrentJD(nextJD);
+      setCurrentJD(nextJD, { propagate: false });
     }
-  } else if (!missionAnim.active && !isScrubbing && currentJD !== lastPropJD) {
-    setCurrentJD(currentJD, { syncScrubber: true });
+  }
+
+  if ((isPlaying || missionAnim.playing) && currentJD !== lastPropJD) {
+    maybePropagateCurrentJD(false);
+  } else if (!isScrubbing && currentJD !== lastPropJD) {
+    maybePropagateCurrentJD(true);
   }
 
   if (pendingPositions) {
