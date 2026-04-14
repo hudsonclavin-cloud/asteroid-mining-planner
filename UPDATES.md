@@ -594,3 +594,7 @@ Built out the renderer-side animation system so Aster now has meaningful mission
 - Mission playback is now visually legible: the spacecraft moves, points in the right direction, emits thrust, and can be camera-followed.
 - The main solar-system view now feels alive when the bottom play control is running instead of looking static between scrubs.
 - Earth and the other planets read more clearly as stylized bodies rather than placeholder spheres.
+
+### Follow-up fix
+- `index.html`
+  - Guarded dashed glow-line initialization so `computeLineDistances()` only runs after a geometry actually has a populated `position` attribute, fixing the startup crash introduced by placeholder dashed glow groups.

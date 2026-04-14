@@ -2428,8 +2428,10 @@ function makeGlowLine(geometry, color, opacity, options = {}) {
   group.visible = false;
   group.userData.glow = { core, halo, dashed, dashSize, gapSize, color };
   if (dashed) {
-    core.computeLineDistances();
-    halo.computeLineDistances();
+    const corePos = core.geometry.getAttribute('position');
+    const haloPos = halo.geometry.getAttribute('position');
+    if (corePos && corePos.count > 1) core.computeLineDistances();
+    if (haloPos && haloPos.count > 1) halo.computeLineDistances();
   }
   return group;
 }
