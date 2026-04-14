@@ -2745,6 +2745,39 @@ function hideHoverEllipse() {
   }
 })();
 
+// ─── Arc / ring contextual labels ────────────────────────────────────────────
+const ARC_LABEL_DEFS = [
+  { key: 'nhatsRing',        text: 'NHATS ACCESSIBLE' },
+  { key: 'departure',        text: '' },   // text set dynamically
+  { key: 'arrival',          text: '' },
+  { key: 'returnArc',        text: '' },
+  { key: 'redirectIntercept',text: 'REDIRECT INTERCEPT' },
+  { key: 'redirectArc',      text: '' },
+  { key: 'lunarOrbit',       text: 'NRHO TARGET ORBIT' },
+];
+const _arcLabelEls = {};
+(function initArcLabels() {
+  for (const def of ARC_LABEL_DEFS) {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;pointer-events:none;font-family:"JetBrains Mono","Courier New",monospace;' +
+      'font-size:9px;color:#00d4ff;letter-spacing:0.06em;white-space:nowrap;display:none;opacity:0.75;' +
+      'text-shadow:0 0 6px rgba(0,0,80,0.9)';
+    document.body.appendChild(el);
+    _arcLabelEls[def.key] = el;
+  }
+})();
+
+const _arcAnchors = {};   // key → { pos: THREE.Vector3, text: string } | null
+for (const def of ARC_LABEL_DEFS) _arcAnchors[def.key] = null;
+
+function _setArcAnchor(key, glowGroup, text, frac = 0.5) {
+  const pos = glowGroup?.userData?.glow?.core?.geometry?.attributes?.position?.array;
+  if (!pos || pos.length < 6) { _arcAnchors[key] = null; return; }
+  const nPts = pos.length / 3;
+  const idx  = Math.max(0, Math.min(nPts - 1, Math.round(frac * (nPts - 1))));
+  _arcAnchors[key] = { pos: new THREE.Vector3(pos[idx*3], pos[idx*3+1], pos[idx*3+2]), text };
+}
+
 const _labelVec = new THREE.Vector3();
 function placeLabels() {
   for (const lbl of labelPool) { lbl.el.style.display = 'none'; lbl.active = false; }
@@ -2784,6 +2817,32 @@ function placeLabels() {
     const x = positionCache[id*3], y = positionCache[id*3+1], z = positionCache[id*3+2];
     const name = (asteroidData[id]?.full_name || asteroidData[id]?.pdes || '?').trim().split(' ')[0];
     project3D(x, y, z, name, '#92400e');
+  }
+
+  // Arc / ring contextual labels
+  for (const def of ARC_LABEL_DEFS) {
+    const el = _arcLabelEls[def.key];
+    if (!el) continue;
+    // Special case: NHATS ring reads position from nhatsRing mesh directly
+    let anchor = _arcAnchors[def.key];
+    if (def.key === 'nhatsRing') {
+      if (nhatsRing?.visible) {
+        anchor = { pos: nhatsRing.position.clone().add(new THREE.Vector3(0, 0.015, 0)), text: def.text };
+      } else {
+        anchor = null;
+      }
+    }
+    if (!anchor || !anchor.pos) { el.style.display = 'none'; continue; }
+    _labelVec.copy(anchor.pos);
+    const p = _labelVec.clone().project(camera);
+    if (p.z > 1 || p.z < -1) { el.style.display = 'none'; continue; }
+    const sx = (p.x * 0.5 + 0.5) * W;
+    const sy = (-p.y * 0.5 + 0.5) * H;
+    if (sx < 0 || sx > W || sy < 0 || sy > H) { el.style.display = 'none'; continue; }
+    el.style.left = (sx + 8) + 'px';
+    el.style.top  = (sy - 8) + 'px';
+    el.textContent = anchor.text || def.text;
+    el.style.display = 'block';
   }
 }
 
@@ -2849,6 +2908,7 @@ let issIndex = -1;
 let issOrbitLine = null;
 let frameCount = 0;
 let hoveredId = -1;
+let missionPlanningActive = false;
 let dustMesh = null;    // THREE.Points for overflow asteroids beyond interactive limit
 let dustCount = 0;
 let loadSourceStatus = {}; // tracks per-source load progress for loading overlay
@@ -4590,6 +4650,7 @@ function closeMissionPlanner() {
   document.getElementById('mp-assumptions-content').style.display = 'none';
   document.getElementById('mp-assumptions-toggle').textContent = 'MODEL ASSUMPTIONS ▶';
   document.getElementById('mp-verify-wrap').style.display = 'none';
+  missionPlanningActive = false;
   clearTrajectoryLine();
   const selectedAst = getSelectedAsteroid();
   if (selectedAst && !burnModeActive) drawOrbitEllipse(selectedAst);
@@ -4611,6 +4672,9 @@ function clearMissionPathVisuals() {
   trajectoryArrows.forEach(disposeObject3D);
   trajectoryArrows = [];
   if (returnArcLine) { disposeObject3D(returnArcLine); returnArcLine = null; }
+  _arcAnchors.departure = null;
+  _arcAnchors.arrival   = null;
+  _arcAnchors.returnArc = null;
 }
 
 let _plannerTimeoutId = null;
@@ -4960,6 +5024,7 @@ function onRedirectResult(data) {
   clearRedirectVisualization();
   optimalTrajectory = null;
   selectedTrajIdx = -1;
+  missionPlanningActive = true;
   activeRedirectVisual = { asteroidId: selectedId, intercept: ic, redirect: rd, capture: cap };
   if (!drawRedirectInterceptTrajectory(ic)) {
     setStatus('Redirect intercept path unavailable for current solution window', true);
@@ -4979,6 +5044,9 @@ function clearRedirectVisualization(options = {}) {
   redirectOriginalOrbitLine.visible = false;
   redirectAdjustedOrbitLine.visible = false;
   if (!preserveState) activeRedirectVisual = null;
+  _arcAnchors.redirectIntercept = null;
+  _arcAnchors.redirectArc       = null;
+  _arcAnchors.lunarOrbit        = null;
 }
 
 function drawRedirectTrajectory(ast, intercept, redirect) {
@@ -5001,6 +5069,13 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   _redirectArcLine = makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 });
   scene.add(_redirectArcLine);
   showGlowLine(_redirectArcLine);
+  // Label anchor — dv_redirect comes from the redirect object argument
+  {
+    const dvText = redirect && Number.isFinite(redirect.dv_redirect)
+      ? `REDIRECT  ΔV: ${redirect.dv_redirect.toFixed(3)} km/s`
+      : 'REDIRECT ARC';
+    _setArcAnchor('redirectArc', _redirectArcLine, dvText);
+  }
 
   // Arrow at asteroid showing redirect direction toward Earth arrival
   if (pts.length >= 2) {
@@ -5024,6 +5099,7 @@ function drawRedirectInterceptTrajectory(intercept) {
     trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
     scene.add(trajectoryLine);
     showGlowLine(trajectoryLine);
+    _setArcAnchor('redirectIntercept', trajectoryLine, 'REDIRECT INTERCEPT');
     const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
     const arr1 = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
     scene.add(arr1);
@@ -5068,6 +5144,8 @@ function drawLunarOrbitRing() {
   _lunarOrbitRing = makeGlowLine(geo, ORBIT_NEON.redirect, 0.68, { haloOpacity: 0.16 });
   scene.add(_lunarOrbitRing);
   showGlowLine(_lunarOrbitRing);
+  // Label anchor: top of ring (quarter-point in the pts array ≈ 90° position)
+  _setArcAnchor('lunarOrbit', _lunarOrbitRing, 'NRHO TARGET ORBIT', 0.25);
 }
 
 function drawEarthCenteredRing(radiusKm, color = ORBIT_NEON.redirect) {
@@ -5153,6 +5231,7 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
     }
     return;
   }
+  missionPlanningActive = true;
   missionResults = [...results].sort((a, b) => {
     const sa = summarizeTrajectoryOperationalMetrics(a);
     const sb = summarizeTrajectoryOperationalMetrics(b);
@@ -5453,6 +5532,14 @@ function drawTrajectoryLine(earthPos, astPos, options = {}) {
   trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
   scene.add(trajectoryLine);
   showGlowLine(trajectoryLine);
+  // Arc phase labels (set after geometry is in place)
+  {
+    const t = optimalTrajectory;
+    const depText = t && Number.isFinite(t.dv_dep) ? `DEPARTURE  ΔV: ${t.dv_dep.toFixed(2)} km/s` : 'DEPARTURE';
+    const arrText = t && Number.isFinite(t.dv_arr) ? `ARRIVAL  ΔV: ${t.dv_arr.toFixed(2)} km/s`   : 'ARRIVAL';
+    _setArcAnchor('departure', trajectoryLine, depText, 0.25);
+    _setArcAnchor('arrival',   trajectoryLine, arrText, 0.75);
+  }
   // Departure arrow (green, pointing toward asteroid)
   const dir = new THREE.Vector3(ax - ex, ay - ey, az - ez).normalize();
   const arr1 = new THREE.ArrowHelper(dir, new THREE.Vector3(ex, ey, ez), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
@@ -5483,6 +5570,11 @@ function _redrawReturnArc(traj, options = {}) {
   scene.add(retLine);
   showGlowLine(retLine);
   returnArcLine = retLine;
+  {
+    const t = optimalTrajectory;
+    const retText = t && Number.isFinite(t.dv_return) ? `RETURN  ΔV: ${t.dv_return.toFixed(2)} km/s` : 'RETURN';
+    _setArcAnchor('returnArc', returnArcLine, retText);
+  }
 }
 
 function getCurrentAsteroidPosition(id = selectedId) {
@@ -6254,6 +6346,7 @@ function selectAsteroid(id) {
 }
 
 function deselectAsteroid() {
+  missionPlanningActive = false;
   selectedId = -1;
   selectedAsteroidKey = null;
   document.getElementById('right-panel').classList.remove('panel-open');
@@ -6602,6 +6695,15 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   if (!dragAxis) {
+    // Suppress hover highlights while mission results are displayed
+    if (missionPlanningActive) {
+      renderer.domElement.style.cursor = 'default';
+      const tt = document.getElementById('asteroid-tooltip');
+      if (tt) tt.style.display = 'none';
+      hideHoverEllipse();
+      hoveredId = -1;
+      return;
+    }
     // Asteroid hover detection
     if (asteroidMesh && asteroidCount > 0 && !burnModeActive && !earthLayerActive) {
       const rect = renderer.domElement.getBoundingClientRect();
