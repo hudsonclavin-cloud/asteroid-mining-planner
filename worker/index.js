@@ -16,9 +16,6 @@ const ALLOWED_ORIGINS = new Set([
 const RATE_LIMIT = 10;         // max requests per window per IP
 const RATE_WINDOW_MS = 60_000; // 1 minute
 
-const pricesCache = { data: null, at: 0 };
-const PRICE_CACHE_MS = 60 * 60 * 1000; // 1 hour
-
 const FALLBACK_PRICES = {
   gold: 92000, silver: 1050, platinum: 31000, palladium: 32000,
   iridium: 52000, copper: 9.5, nickel: 16, cobalt: 28,
@@ -104,8 +101,21 @@ function checkRateLimit(ip) {
   return entry.count <= RATE_LIMIT;
 }
 
+function resolveAllowedOrigin(origin) {
+  if (!origin) return 'https://hudsonclavin-cloud.github.io';
+  if (ALLOWED_ORIGINS.has(origin)) return origin;
+  try {
+    const url = new URL(origin);
+    const isGithubPages = url.protocol === 'https:' && url.hostname.endsWith('.github.io');
+    const isLocalDev = (url.protocol === 'http:' || url.protocol === 'https:')
+      && /^(localhost|127\.0\.0\.1)$/.test(url.hostname);
+    if (isGithubPages || isLocalDev) return origin;
+  } catch (_) {}
+  return 'https://hudsonclavin-cloud.github.io';
+}
+
 function corsHeaders(origin) {
-  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://hudsonclavin-cloud.github.io';
+  const allowed = resolveAllowedOrigin(origin);
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',

@@ -516,3 +516,33 @@ Fixed the two follow-on usability failures in capture-and-redirect mode: the red
 ### Result
 - Capture-and-redirect visuals read more like a mission preview and less like a larger copy of the asteroid orbit.
 - Pressing play can now actually animate a redirect mission instead of only toggling the global solar-system timeline.
+
+---
+
+## Phase 9N — Audit Cleanup Pass (2026-04-13)
+
+### Summary
+Addressed the concrete issues from the audit that were low-risk to fix directly: price-source state drift, NHATS offline labeling, porkchop solver inconsistency, hot-loop worker waste, duplicate economics logic, and mission-planner spec gaps around value display and on-screen warnings.
+
+### Key fixes
+- `index.html`
+  - Removed the duplicate commodity-price fetch path and made the app use `fetchPrices()` as the single source of truth for Materials-tab pricing state.
+  - Fixed Materials price timestamp handling by standardizing on the proxy `timestamp` field.
+  - Updated init to load prices through the unified path instead of the removed duplicate function.
+  - Added explicit `NHATS offline` HUD state when NHATS loading fails during `load_progress`.
+  - Mission planner result cards now show both `Paper Value` and `NPV`, include an on-screen sub-$500M sanity warning, and label ΔV as a planning-level estimate.
+  - Removed the duplicate local NPV implementation inside `computeMissionProfile()` and reused the shared demand-adjusted `computeRealizableNPV()` helper.
+  - Burn-preview requests now tell the worker they are preview-only so live dragging can use cheaper MOID work.
+- `physics.worker.js`
+  - Porkchop scans now use Izzo first and BMW fallback second, matching the founding-document solver order used by the mission planner.
+  - Burn preview MOID sampling is reduced during live drag to lower worker contention.
+  - Removed debug logging from the inner Lambert planning loops.
+  - Renamed the local `cross` array in `izzoLambert()` to avoid shadowing the module vector helper.
+- `worker/index.js`
+  - Removed dead in-memory price-cache code.
+  - Hardened CORS origin resolution so alternate GitHub Pages deployments and localhost variants do not silently fail due to a mismatched `Access-Control-Allow-Origin`.
+
+### Result
+- Materials pricing, mission cards, and NHATS HUD state are more internally consistent with the founding document.
+- Porkchop behavior now matches the planner’s solver priority instead of silently using the fallback solver only.
+- The worker does less unnecessary work while dragging burn controls, and the proxy is less brittle in production.

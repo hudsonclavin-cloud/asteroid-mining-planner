@@ -1924,24 +1924,35 @@ let matPriceMode = 'earth';
 let matSortKey = 'totalValue';
 let matSortAsc = false;
 let activePresetKey = '';
+let priceSource = 'loading';
+let priceAt = 0;
 
 async function fetchPrices(forceRefresh = false) {
   const CACHE_KEY = 'aster_prices_v1';
   if (!forceRefresh) {
     try {
       const raw = sessionStorage.getItem(CACHE_KEY);
-      if (raw) { cachedPriceData = JSON.parse(raw); return; }
+      if (raw) {
+        cachedPriceData = JSON.parse(raw);
+        priceSource = cachedPriceData?.source || 'cached';
+        priceAt = cachedPriceData?.timestamp || 0;
+        return;
+      }
     } catch(_) {}
   }
   try {
     const res = await fetch('https://aster-proxy.hudsonclavin.workers.dev/api/prices');
     if (res.ok) {
       cachedPriceData = await res.json();
+      priceSource = cachedPriceData?.source || 'live';
+      priceAt = cachedPriceData?.timestamp || 0;
       sessionStorage.setItem(CACHE_KEY, JSON.stringify(cachedPriceData));
       return;
     }
   } catch(_) {}
   cachedPriceData = { prices: STATIC_PRICES_EARTH, source: 'static', timestamp: Date.now() };
+  priceSource = cachedPriceData.source;
+  priceAt = cachedPriceData.timestamp;
 }
 
 function getActivePrices() {
@@ -2762,6 +2773,14 @@ worker.onmessage = ({ data }) => {
     const label = data.source.toUpperCase();
     const detail = data.status === 'ok' || data.status === 'fallback' ? `${data.count}` : 'offline';
     loadSourceStatus[data.source] = `${label} ${icon} ${detail}`;
+    if (data.source === 'nhats') {
+      const nEl = document.getElementById('hud-nhats');
+      if (nEl) {
+        nEl.textContent = (data.status === 'ok' || data.status === 'fallback')
+          ? `NHATS: ${data.count} TARGETS`
+          : 'NHATS offline';
+      }
+    }
     const sub = document.getElementById('loading-sub');
     if (sub) sub.textContent = Object.values(loadSourceStatus).join('  ·  ');
     return;
@@ -3013,43 +3032,6 @@ function togglePrimaryPlayback() {
 
 // ─── Cloudflare Worker (Perplexity research proxy) ────────────────────────────
 const WORKER_URL = 'https://aster-proxy.hudsonclavin.workers.dev';
-
-// ─── Commodity price state ────────────────────────────────────────────────────
-let commodityPrices = null;
-let priceSource = 'loading';
-let priceAt = 0;
-let spacePriceMode = false;
-
-async function fetchCommodityPrices() {
-  const cacheKey = 'aster_prices_v1';
-  try {
-    const raw = sessionStorage.getItem(cacheKey);
-    if (raw) {
-      const { prices, source, at } = JSON.parse(raw);
-      if (Date.now() - at < 60 * 60 * 1000) {
-        commodityPrices = prices; priceSource = source; priceAt = at; return;
-      }
-    }
-  } catch(_) {}
-  try {
-    const r = await fetch(`${WORKER_URL}/api/prices`);
-    if (r.ok) {
-      const json = await r.json();
-      commodityPrices = json.prices; priceSource = json.source; priceAt = json.at;
-      try { sessionStorage.setItem(cacheKey, JSON.stringify({ prices: commodityPrices, source: priceSource, at: priceAt })); } catch(_) {}
-      return;
-    }
-  } catch(_) {}
-  commodityPrices = {
-    gold:92000, silver:1050, platinum:31000, palladium:32000,
-    iridium:52000, copper:9.5, nickel:16, cobalt:28,
-    iron:0.12, rareEarth:250, water:0, carbon:0.5, silicates:0.01,
-  };
-  priceSource = 'fallback'; priceAt = Date.now();
-}
-
-// ─── Legacy single-source Asterank fetch (kept for manual fallback only) ──────
-const CORS_PROXY = 'https://corsproxy.io/?';
 
 // Lightweight Kepler position for static dust cloud (no worker needed)
 function keplerPosAU(ast, jd) {
@@ -4836,6 +4818,7 @@ function renderTrajectoryList() {
   const badge  = '<span style="color:#4a6a7a;font-size:7px;border:1px solid #4a6a7a;padding:1px 3px;margin-left:4px;vertical-align:middle">📐 ASTER</span>';
   list.innerHTML = '';
   missionResults.forEach((t, i) => {
+    const profile = t._profile || (t._profile = computeMissionProfile(t));
     const dep   = jdToDate(t.jd_dep);
     const arr   = jdToDate(t.jd_arr);
     const dvUnc = +(t.dv_total * uncPct).toFixed(2);
@@ -4851,12 +4834,17 @@ function renderTrajectoryList() {
     const lvBadge = ops?.fitsLaunchVehicle === false
       ? '<span style="font-size:7px;color:#f87171;border:1px solid #f87171;padding:1px 4px;margin-left:5px;vertical-align:middle">OVERWEIGHT</span>'
       : '';
+    const costWarning = profile.totalCost < 500e6
+      ? '<div class="mp-traj-meta" style="color:#fbbf24">Historical first-of-a-kind mining missions are typically $2B-$10B+</div>'
+      : '';
     card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
-      <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s</div>
+      <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s <span style="font-size:7px;color:#94a3b8;border:1px solid #334155;padding:1px 4px;vertical-align:middle">planning-level estimate</span></div>
       <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
       <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
-      <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; NPV ${fmtUSD(ops?.realizedNpv)}</div>`;
+      <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
+      <div class="mp-traj-meta" style="color:#64748b">Source: Asterank + screening-grade economics</div>
+      ${costWarning}`;
     card.addEventListener('click', () => selectTrajectory(i));
     list.appendChild(card);
   });
@@ -4967,28 +4955,11 @@ function computeMissionProfile(traj) {
   const revHigh = revLow; // single rate — collapse to 5%
 
   // ── Demand-adjusted realizable NPV (constant-elasticity model) ───────────────
-  const _ELASTICITY       = { platinum: -0.4, palladium: -0.5, nickel: -0.3, iron: -0.2, water: -0.8 };
-  const _ANNUAL_MARKET_KG = { platinum: 170000, palladium: 190000, nickel: 2500000000, iron: 2000000000000, water: null };
-  function realizableNPV(commodity, retKg, spotPrice, yearsToSell, discountRate) {
-    yearsToSell  = yearsToSell  || 10;
-    discountRate = discountRate || 0.08;
-    const annualMarket = _ANNUAL_MARKET_KG[commodity];
-    if (!annualMarket) return retKg * spotPrice;
-    const epsilon = _ELASTICITY[commodity] || -0.3;
-    let npv = 0;
-    const annualSale = retKg / yearsToSell;
-    for (let t = 1; t <= yearsToSell; t++) {
-      const priceRatio   = Math.pow((annualMarket + annualSale) / annualMarket, 1 / epsilon);
-      const realizedPrice = spotPrice * priceRatio;
-      npv += (annualSale * realizedPrice) / Math.pow(1 + discountRate, t);
-    }
-    return npv;
-  }
   // Infer primary commodity from spectral type
   const _specChar = spec ? spec.charAt(0).toUpperCase() : '?';
   const _commodity = _specChar === 'M' ? 'platinum' : _specChar === 'S' ? 'nickel' : _specChar === 'C' ? 'water' : null;
   const paperValue   = Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
-  const npvRealized  = _commodity && Number.isFinite(revenuePerKg) ? realizableNPV(_commodity, returnedKg, revenuePerKg) : null;
+  const npvRealized  = _commodity && Number.isFinite(revenuePerKg) ? computeRealizableNPV(_commodity, returnedKg, revenuePerKg) : null;
 
   // ── Simple time-value NPV for ROI display ───────────────────────────────────
   const missionYears = opsDays / 365.25;
@@ -5076,7 +5047,16 @@ function computeMissionProfile(traj) {
     '  Patched-conic · Izzo 2015 Lambert · Phase 9F',
     '═'.repeat(50),
   ].filter(l => l !== undefined && l !== '');
-  return { text: lines.join('\n'), totalCost, revLow, revHigh, roiLow, roiHigh };
+  return {
+    text: lines.join('\n'),
+    totalCost,
+    revLow,
+    revHigh,
+    roiLow,
+    roiHigh,
+    paperValue,
+    realizedNpv: npvRealized,
+  };
 }
 
 function drawTrajectoryLine(earthPos, astPos, options = {}) {
@@ -6100,7 +6080,7 @@ function previewBurn() {
   burnMarker.visible = true;
 
   // Request worker to compute MOID and period changes
-  worker.postMessage({ cmd: 'apply_burn', elements: origEl, jd: currentJD, dv_p: burnDV.p, dv_n: burnDV.n, dv_r: burnDV.r });
+  worker.postMessage({ cmd: 'apply_burn', elements: origEl, jd: currentJD, dv_p: burnDV.p, dv_n: burnDV.n, dv_r: burnDV.r, preview: true });
 }
 
 function onBurnResult(data) {
@@ -7101,7 +7081,7 @@ async function init() {
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
   await new Promise(r => setTimeout(r, 400));
   animate();
-  fetchCommodityPrices(); // non-blocking — populates commodityPrices for Materials tab
+  fetchPrices(); // non-blocking — populates Materials tab pricing state
 
   // ── Clear stale SBDB-merged cache (v1) ─────────────────────────────────
   try { localStorage.removeItem('aster_catalog_v1'); } catch(_) {}

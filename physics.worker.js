@@ -583,12 +583,12 @@ function izzoLambert(r1v, r2v, tof_days, direction) {
   if (s < 1e3 || c < 1e3) return null;
 
   // Cross product for transfer direction
-  const cross = [
+  const crossVec = [
     r1[1]*r2[2] - r1[2]*r2[1],
     r1[2]*r2[0] - r1[0]*r2[2],
     r1[0]*r2[1] - r1[1]*r2[0],
   ];
-  const thetaGt180 = (direction === 1) ? (cross[2] < 0) : (cross[2] >= 0);
+  const thetaGt180 = (direction === 1) ? (crossVec[2] < 0) : (crossVec[2] >= 0);
 
   const lambda2 = 1 - c / s;
   let lambda = Math.sqrt(Math.max(0, lambda2));
@@ -778,7 +778,8 @@ self.onmessage = function(e) {
       epoch_JD: src.epoch
     };
     const origPeriod = TWO_PI * Math.sqrt(Math.pow(origEl.a !== undefined ? origEl.a : src.a, 3) / GM_AU3_S2) / 86400;
-    const moid = moidApprox(newEl, msg.jd, 120);
+    const moidSamples = msg.preview ? 60 : 120;
+    const moid = moidApprox(newEl, msg.jd, moidSamples);
 
     self.postMessage({
       type: 'burn_result',
@@ -824,7 +825,8 @@ self.onmessage = function(e) {
           const r2 = [earth2.x, earth2.y, earth2.z];
           const v_earth2 = [earth2.vx, earth2.vy, earth2.vz];
 
-          const lam = lambert(r1, r2, tof);
+          let lam = izzoLambert(r1, r2, tof);
+          if (!lam) lam = lambert(r1, r2, tof);
           if (!lam) { grid[i*ny+j] = 20; continue; }
 
           const dv_dep = Math.sqrt(
@@ -863,7 +865,7 @@ self.onmessage = function(e) {
     const phase1 = [];
 
     // ── Phase 1: outbound Lambert grid ──────────────────────────────────────
-    let dbg_lambert_null = 0, dbg_gate_fail = 0, dbg_best_dv = Infinity, dbg_logged = 0;
+    let dbg_lambert_null = 0, dbg_gate_fail = 0, dbg_best_dv = Infinity;
     for (let jd_dep = jd_start; jd_dep <= jd_end; jd_dep += STEP_DEP) {
       depIdx++;
       if (depIdx % 15 === 0) {
@@ -894,10 +896,6 @@ self.onmessage = function(e) {
 
         const pc = patchedConic(ve, lam.v1, va, lam.v2, r_park_km);
         if (!pc) continue;
-        if (dbg_logged < 3) {
-          console.log('[Lambert] dv_dep:', pc.dv_dep.toFixed(3), 'dv_arr:', pc.dv_arr.toFixed(3));
-          dbg_logged++;
-        }
         const combined = pc.dv_dep + pc.dv_arr;
         if (combined < dbg_best_dv) dbg_best_dv = combined;
         if (!isFinite(pc.dv_dep) || !isFinite(pc.dv_arr) || pc.dv_dep > 50 || pc.dv_arr > 50) { dbg_lambert_null++; continue; } // skip NaN/huge Lambert output
@@ -922,12 +920,6 @@ self.onmessage = function(e) {
 
     // ── Phase 2: return Lambert + destination capture ────────────────────────
     const results = [];
-    if (candidates.length === 0) {
-      console.log('[Phase2] skipped — phase1 empty');
-    } else {
-      console.log('[Phase2] running with', candidates.length, 'candidates');
-    }
-    let _p2logged = 0;
     for (let ci = 0; ci < candidates.length; ci++) {
       const c = candidates[ci];
       self.postMessage({
@@ -954,13 +946,6 @@ self.onmessage = function(e) {
 
         let lam = izzoLambert(rr1, rr2, ret_tof);
         if (!lam) lam = lambert(rr1, rr2, ret_tof);
-        if (ci === 0) {
-          const _r1m = Math.hypot(rr1[0], rr1[1], rr1[2]);
-          const _r2m = Math.hypot(rr2[0], rr2[1], rr2[2]);
-          console.log('[Phase2] ci=0 rs='+rs+' tof='+ret_tof.toFixed(0)+'d',
-            'rr1:', _r1m.toFixed(4)+'AU', 'rr2:', _r2m.toFixed(4)+'AU',
-            'lam:', lam ? 'OK v1='+lam.v1[0].toFixed(3) : 'NULL');
-        }
         if (!lam || !lam.v1 || !lam.v2 || !lam.v1.every(Number.isFinite) || !lam.v2.every(Number.isFinite)) continue;
 
         const dv_ret_dep = Math.hypot(lam.v1[0]-vad[0], lam.v1[1]-vad[1], lam.v1[2]-vad[2]);
@@ -974,22 +959,10 @@ self.onmessage = function(e) {
             vinf_return: vinf_ret, tof_return: ret_tof, jd_ret_arr, total_return };
         }
       }
-      if (!bestReturn) {
-        if (_p2logged < 3) console.log('[Phase2] cand', ci, '— bestReturn=null (Lambert null all 21 TOFs)');
-        continue;
-      }
+      if (!bestReturn) continue;
 
       const mcc = c.dv_mcc + 0.02 * bestReturn.dv_return;
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
-      if (_p2logged < 3) {
-        console.log('[Phase2] cand', ci,
-          'dv_dep:', c.dv_dep.toFixed(3),
-          'dv_arr:', c.dv_arr.toFixed(3),
-          'ret:', bestReturn.dv_return.toFixed(3),
-          'cap:', bestReturn.dv_capture.toFixed(3),
-          'total:', dv_total.toFixed(3), 'vs 25.0 cap');
-        _p2logged++;
-      }
       if (!Number.isFinite(dv_total) || dv_total > MISSION_GATE_TOTAL_KMS) continue;
 
       results.push({
