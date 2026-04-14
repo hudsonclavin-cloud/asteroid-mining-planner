@@ -2434,6 +2434,17 @@ function makeDashedGlowLine(geometry, color, opacity, dashSize = 0.03, gapSize =
   return makeGlowLine(geometry, color, opacity, { ...options, dashed: true, dashSize, gapSize });
 }
 
+/** Show a freshly-created glow line and call computeLineDistances for dashed materials. */
+function showGlowLine(group) {
+  if (!group) return;
+  group.visible = true;
+  const g = group.userData?.glow;
+  if (g?.dashed) {
+    if (g.core) g.core.computeLineDistances();
+    if (g.halo) g.halo.computeLineDistances();
+  }
+}
+
 function setGlowLineColor(target, color, opacity, haloOpacity = null) {
   const glow = target?.userData?.glow;
   if (!glow) return;
@@ -4989,6 +5000,7 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   _redirectArcLine = makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 });
   scene.add(_redirectArcLine);
+  showGlowLine(_redirectArcLine);
 
   // Arrow at asteroid showing redirect direction toward Earth arrival
   if (pts.length >= 2) {
@@ -5011,6 +5023,7 @@ function drawRedirectInterceptTrajectory(intercept) {
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
     scene.add(trajectoryLine);
+    showGlowLine(trajectoryLine);
     const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
     const arr1 = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
     scene.add(arr1);
@@ -5054,6 +5067,7 @@ function drawLunarOrbitRing() {
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   _lunarOrbitRing = makeGlowLine(geo, ORBIT_NEON.redirect, 0.68, { haloOpacity: 0.16 });
   scene.add(_lunarOrbitRing);
+  showGlowLine(_lunarOrbitRing);
 }
 
 function drawEarthCenteredRing(radiusKm, color = ORBIT_NEON.redirect) {
@@ -5072,6 +5086,7 @@ function drawEarthCenteredRing(radiusKm, color = ORBIT_NEON.redirect) {
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   _lunarOrbitRing = makeGlowLine(geo, color, 0.52, { haloOpacity: 0.12 });
   scene.add(_lunarOrbitRing);
+  showGlowLine(_lunarOrbitRing);
 }
 
 function drawRedirectCaptureMarker(capture) {
@@ -5437,6 +5452,7 @@ function drawTrajectoryLine(earthPos, astPos, options = {}) {
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
   scene.add(trajectoryLine);
+  showGlowLine(trajectoryLine);
   // Departure arrow (green, pointing toward asteroid)
   const dir = new THREE.Vector3(ax - ex, ay - ey, az - ez).normalize();
   const arr1 = new THREE.ArrowHelper(dir, new THREE.Vector3(ex, ey, ez), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
@@ -5465,6 +5481,7 @@ function _redrawReturnArc(traj, options = {}) {
   const retGeo = new THREE.BufferGeometry().setFromPoints(retPts);
   const retLine = makeDashedGlowLine(retGeo, ORBIT_NEON.transfer, 0.64, 0.03, 0.02, { haloOpacity: 0.14 });
   scene.add(retLine);
+  showGlowLine(retLine);
   returnArcLine = retLine;
 }
 
