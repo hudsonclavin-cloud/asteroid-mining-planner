@@ -546,3 +546,29 @@ Addressed the concrete issues from the audit that were low-risk to fix directly:
 - Materials pricing, mission cards, and NHATS HUD state are more internally consistent with the founding document.
 - Porkchop behavior now matches the planner’s solver priority instead of silently using the fallback solver only.
 - The worker does less unnecessary work while dragging burn controls, and the proxy is less brittle in production.
+
+---
+
+## Phase 9O — Neon Orbit / Arc Visual Overhaul (2026-04-13)
+
+### Summary
+Restyled the scene’s orbit and mission-path rendering around a thin neon glow aesthetic without touching panel layout, planner wiring, physics, or data-fetch behavior.
+
+### Key fixes
+- `index.html`
+  - Added reusable glow-line renderer helpers for solid and dashed orbit/trajectory lines using additive blending and a two-pass core/halo treatment.
+  - Reworked the main orbit visuals:
+    - Earth orbit ring now glows cyan
+    - selected and hover asteroid orbits now use violet by default and brighter cyan for NHATS-verified targets
+    - burn preview orbits now use a cooler dashed baseline and warmer orange post-burn path
+    - redirect baseline orbit now renders as a subdued dashed violet/blue line
+    - redirected orbit/path family now renders in green
+    - ISS orbit and lunar capture ring now use the same glow language
+  - Extract mission outbound and return arcs now render as gold/orange dashed neon paths.
+  - Redirect mission path now renders as a solid green glow arc, while the solved redirected orbit is shown separately in the same color family.
+  - Mission animation trails now match the mission family color instead of the older flat blue styling.
+
+### Result
+- The 3D scene now reads much more like a stylized mission-planning graphic instead of a collection of flat utility lines.
+- Orbit hierarchy is clearer at a glance, and NHATS-accessible targets visually stand out when their orbits are previewed.
+- Mission arcs, redirect paths, and orbit overlays now share one renderer abstraction and are easier to maintain without leaking duplicate visuals.

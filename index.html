@@ -2131,14 +2131,16 @@ scene.add(moonMesh);
 
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
 const planetOrbitGroup = new THREE.Group();
-PLANET_SMA.forEach(sma => {
+PLANET_SMA.forEach((sma, idx) => {
   const pts = [];
   for (let j = 0; j <= 128; j++) {
     const a = (j / 128) * TWO_PI;
     pts.push(new THREE.Vector3(Math.cos(a) * sma, 0, Math.sin(a) * sma));
   }
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  planetOrbitGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x1f2937, transparent: true, opacity: 0.15 })));
+  const color = idx === 2 ? 0x00d4ff : 0x5a4fb3;
+  const opacity = idx === 2 ? 0.82 : 0.24;
+  planetOrbitGroup.add(makeGlowLine(geo, color, opacity, { haloOpacity: idx === 2 ? 0.22 : 0.08 }));
 });
 scene.add(planetOrbitGroup);
 
@@ -2293,34 +2295,118 @@ function tsiolkovsky(dv_kms, isp, m_dry) {
 }
 
 // ─── Orbit Lines ──────────────────────────────────────────────────────────────
-function makeOrbitLine(color, dashed, opacity) {
-  const mat = dashed
-    ? new THREE.LineDashedMaterial({ color, dashSize: 0.06, gapSize: 0.04, transparent: true, opacity: opacity || 0.6 })
-    : new THREE.LineBasicMaterial({ color, transparent: true, opacity: opacity || 0.85 });
-  const line = new THREE.Line(new THREE.BufferGeometry(), mat);
-  line.visible = false;
+const ORBIT_NEON = {
+  earth: 0x00d4ff,
+  asteroid: 0x9b59ff,
+  nhats: 0x00ffcc,
+  transfer: 0xffaa00,
+  redirect: 0x00ff88,
+  burnBaseline: 0xdbeafe,
+  burnNew: 0xff8c42,
+  redirectBaseline: 0x6e74d8,
+  iss: 0x00d4ff,
+};
+
+function makeGlowMaterial(color, opacity, options = {}) {
+  const {
+    dashed = false,
+    dashSize = 0.03,
+    gapSize = 0.02,
+    depthWrite = false,
+  } = options;
+  const common = {
+    color,
+    transparent: true,
+    opacity,
+    blending: THREE.AdditiveBlending,
+    depthWrite,
+  };
+  return dashed
+    ? new THREE.LineDashedMaterial({ ...common, dashSize, gapSize })
+    : new THREE.LineBasicMaterial(common);
+}
+
+function makeGlowLine(geometry, color, opacity, options = {}) {
+  const {
+    dashed = false,
+    haloScale = 1.003,
+    haloOpacity = Math.max(0.08, (opacity || 0.8) * 0.18),
+    dashSize = 0.03,
+    gapSize = 0.02,
+  } = options;
+  const core = new THREE.Line(
+    geometry ? geometry.clone() : new THREE.BufferGeometry(),
+    makeGlowMaterial(color, opacity ?? 0.85, { dashed, dashSize, gapSize })
+  );
+  const halo = new THREE.Line(
+    geometry ? geometry.clone() : new THREE.BufferGeometry(),
+    makeGlowMaterial(color, haloOpacity, { dashed, dashSize, gapSize })
+  );
+  halo.scale.setScalar(haloScale);
+  halo.renderOrder = 1;
+  const group = new THREE.Group();
+  group.add(core, halo);
+  group.visible = false;
+  group.userData.glow = { core, halo, dashed, dashSize, gapSize, color };
+  if (dashed) {
+    core.computeLineDistances();
+    halo.computeLineDistances();
+  }
+  return group;
+}
+
+function makeDashedGlowLine(geometry, color, opacity, dashSize = 0.03, gapSize = 0.02, options = {}) {
+  return makeGlowLine(geometry, color, opacity, { ...options, dashed: true, dashSize, gapSize });
+}
+
+function setGlowLineColor(target, color, opacity, haloOpacity = null) {
+  const glow = target?.userData?.glow;
+  if (!glow) return;
+  const nextHaloOpacity = haloOpacity ?? Math.max(0.08, (opacity ?? 0.8) * 0.18);
+  glow.color = color;
+  [glow.core, glow.halo].forEach((line, idx) => {
+    if (!line?.material) return;
+    line.material.color.setHex(color);
+    line.material.opacity = idx === 0 ? (opacity ?? line.material.opacity) : nextHaloOpacity;
+    line.material.needsUpdate = true;
+  });
+}
+
+function setGlowLinePoints(target, points) {
+  const glow = target?.userData?.glow;
+  if (!glow) return;
+  [glow.core, glow.halo].forEach(line => {
+    line.geometry.setFromPoints(points);
+    if (glow.dashed) line.computeLineDistances();
+  });
+}
+
+function setGlowLinePositions(target, positions) {
+  const glow = target?.userData?.glow;
+  if (!glow) return;
+  [glow.core, glow.halo].forEach(line => {
+    line.geometry.setAttribute('position', new THREE.BufferAttribute(positions.slice(), 3));
+    if (glow.dashed) line.computeLineDistances();
+  });
+}
+
+function getOrbitGlowColor(ast) {
+  return ast?.nhats?.accessible ? ORBIT_NEON.nhats : ORBIT_NEON.asteroid;
+}
+
+function makeOrbitLine(color, dashed, opacity, options = {}) {
+  const line = dashed
+    ? makeDashedGlowLine(null, color, opacity, options.dashSize || 0.03, options.gapSize || 0.02, options)
+    : makeGlowLine(null, color, opacity, options);
   scene.add(line);
   return line;
 }
 
-// Selected orbit (cyan, non-burn-mode)
-const orbitPts = new Float32Array(257 * 3);
-const orbitGeo = new THREE.BufferGeometry();
-orbitGeo.setAttribute('position', new THREE.BufferAttribute(orbitPts, 3));
-const orbitLine = new THREE.Line(orbitGeo, new THREE.LineBasicMaterial({ color: 0x4af7c4, transparent: true, opacity: 0.7 }));
-orbitLine.visible = false;
-scene.add(orbitLine);
+// Selected orbit
+const orbitLine = makeOrbitLine(ORBIT_NEON.asteroid, false, 0.88, { haloOpacity: 0.18 });
 
 // Hover orbit preview — faint ellipse shown when hovering before clicking
-const hoverOrbitPts = new Float32Array(257 * 3);
-const hoverOrbitGeo = new THREE.BufferGeometry();
-hoverOrbitGeo.setAttribute('position', new THREE.BufferAttribute(hoverOrbitPts, 3));
-const hoverOrbitLine = new THREE.Line(
-  hoverOrbitGeo,
-  new THREE.LineBasicMaterial({ color: 0x4a5568, transparent: true, opacity: 0.35 })
-);
-hoverOrbitLine.visible = false;
-scene.add(hoverOrbitLine);
+const hoverOrbitLine = makeOrbitLine(ORBIT_NEON.asteroid, false, 0.52, { haloOpacity: 0.12 });
 
 // NHATS pulsing ring — shown on selected NHATS-verified asteroid
 const nhatsRingGeo = new THREE.RingGeometry(0.008, 0.012, 32);
@@ -2330,10 +2416,10 @@ nhatsRing.visible = false;
 scene.add(nhatsRing);
 
 // Burn mode orbit lines
-const originalOrbitLine = makeOrbitLine(0xffffff, true, 0.5);  // white dashed = pre-burn
-const newOrbitLine = makeOrbitLine(0xff7700, false, 0.85);       // orange = post-burn
-const redirectOriginalOrbitLine = makeOrbitLine(0x94a3b8, true, 0.5); // dotted baseline orbit
-const redirectAdjustedOrbitLine = makeOrbitLine(0xff8800, false, 0.9); // redirected orbit
+const originalOrbitLine = makeOrbitLine(ORBIT_NEON.burnBaseline, true, 0.58, { haloOpacity: 0.12 });  // dashed = pre-burn
+const newOrbitLine = makeOrbitLine(ORBIT_NEON.burnNew, false, 0.9, { haloOpacity: 0.18 });             // orange = post-burn
+const redirectOriginalOrbitLine = makeOrbitLine(ORBIT_NEON.redirectBaseline, true, 0.52, { haloOpacity: 0.1 }); // dotted baseline orbit
+const redirectAdjustedOrbitLine = makeOrbitLine(ORBIT_NEON.redirect, false, 0.86, { haloOpacity: 0.18 }); // redirected orbit
 
 // Up to 5 multi-burn orbit lines
 const BURN_COLORS = [0x4af7c4, 0xff7700, 0xffcc00, 0xff69b4, 0xff3344];
@@ -2343,11 +2429,8 @@ function asteroidToOrbitElements(ast) {
   return { a: ast.a, e: ast.e, i: ast.i * DEG, Om: ast.om * DEG, w: ast.w * DEG, M0: ast.ma * DEG, epoch_JD: ast.epoch };
 }
 
-// Draw orbit from elements stored as {a,e,i,Om,w,M0,epoch_JD} (radians)
-function drawOrbitFromElements(line, el) {
-  const pts = line.geometry.attributes.position
-    ? line.geometry.attributes.position.array
-    : new Float32Array(257 * 3);
+function buildOrbitPointsFromElements(el, steps = 256) {
+  const pts = [];
   const { a, e, i, Om, w } = el;
   const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
   const cosI  = Math.cos(i),  sinI  = Math.sin(i);
@@ -2358,22 +2441,24 @@ function drawOrbitFromElements(line, el) {
   const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
   const Rzx = sinW*sinI;
   const Rzy = cosW*sinI;
-  for (let k = 0; k <= 256; k++) {
-    const M_step = (k / 256) * TWO_PI - Math.PI;
+  for (let k = 0; k <= steps; k++) {
+    const M_step = (k / steps) * TWO_PI - Math.PI;
     const E_step = solveKepler(M_step, e);
     const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E_step/2), Math.sqrt(1-e)*Math.cos(E_step/2));
     const r = a * (1 - e * Math.cos(E_step));
     const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
-    pts[k*3]   = xo*Rxx + yo*Rxy;
-    pts[k*3+1] = xo*Ryx + yo*Ryy;
-    pts[k*3+2] = xo*Rzx + yo*Rzy;
+    pts.push(new THREE.Vector3(
+      xo*Rxx + yo*Rxy,
+      xo*Ryx + yo*Ryy,
+      xo*Rzx + yo*Rzy,
+    ));
   }
-  if (!line.geometry.attributes.position) {
-    line.geometry.setAttribute('position', new THREE.BufferAttribute(pts, 3));
-  } else {
-    line.geometry.attributes.position.needsUpdate = true;
-  }
-  if (line.material.isLineDashedMaterial) line.computeLineDistances();
+  return pts;
+}
+
+// Draw orbit from elements stored as {a,e,i,Om,w,M0,epoch_JD} (radians)
+function drawOrbitFromElements(line, el) {
+  setGlowLinePoints(line, buildOrbitPointsFromElements(el, 256));
   line.visible = true;
 }
 
@@ -2390,55 +2475,15 @@ function buildOrbitSegmentPoints(el, jdStart, jdEnd, steps = 96) {
 
 // Draw orbit from Asterank asteroid (degrees, MJD epoch)
 function drawOrbitEllipse(ast) {
-  const e = ast.e, a = ast.a;
-  const i = ast.i * DEG, Om = ast.om * DEG, w = ast.w * DEG;
-  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
-  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
-  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
-  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
-  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
-  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
-  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
-  const Rzx = sinW*sinI;
-  const Rzy = cosW*sinI;
-  for (let k = 0; k <= 256; k++) {
-    const M_step = (k / 256) * TWO_PI - Math.PI;
-    const E_step = solveKepler(M_step, e);
-    const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E_step/2), Math.sqrt(1-e)*Math.cos(E_step/2));
-    const r = a * (1 - e * Math.cos(E_step));
-    const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
-    orbitPts[k*3]   = xo*Rxx + yo*Rxy;
-    orbitPts[k*3+1] = xo*Ryx + yo*Ryy;
-    orbitPts[k*3+2] = xo*Rzx + yo*Rzy;
-  }
-  orbitGeo.attributes.position.needsUpdate = true;
+  setGlowLineColor(orbitLine, getOrbitGlowColor(ast), ast?.nhats?.accessible ? 0.9 : 0.86);
+  setGlowLinePoints(orbitLine, buildOrbitPoints(ast, 256));
   orbitLine.visible = true;
 }
 
 function drawHoverOrbit(ast) {
   if (!ast) { hoverOrbitLine.visible = false; return; }
-  const e = ast.e, a = ast.a;
-  const i = ast.i * DEG, Om = ast.om * DEG, w = ast.w * DEG;
-  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
-  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
-  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
-  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
-  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
-  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
-  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
-  const Rzx = sinW*sinI;
-  const Rzy = cosW*sinI;
-  for (let k = 0; k <= 256; k++) {
-    const M_step = (k / 256) * TWO_PI - Math.PI;
-    const E_step = solveKepler(M_step, e);
-    const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E_step/2), Math.sqrt(1-e)*Math.cos(E_step/2));
-    const r = a * (1 - e * Math.cos(E_step));
-    const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
-    hoverOrbitPts[k*3]   = xo*Rxx + yo*Rxy;
-    hoverOrbitPts[k*3+1] = xo*Ryx + yo*Ryy;
-    hoverOrbitPts[k*3+2] = xo*Rzx + yo*Rzy;
-  }
-  hoverOrbitGeo.attributes.position.needsUpdate = true;
+  setGlowLineColor(hoverOrbitLine, getOrbitGlowColor(ast), ast?.nhats?.accessible ? 0.6 : 0.52, ast?.nhats?.accessible ? 0.16 : 0.12);
+  setGlowLinePoints(hoverOrbitLine, buildOrbitPoints(ast, 256));
   hoverOrbitLine.visible = true;
 }
 
@@ -3789,11 +3834,7 @@ function findISS() {
   );
   if (issIndex >= 0) {
     if (issOrbitLine) disposeObject3D(issOrbitLine);
-    issOrbitLine = new THREE.Line(
-      new THREE.BufferGeometry(),
-      new THREE.LineBasicMaterial({ color: 0x4af7c4, transparent: true, opacity: 0.6 })
-    );
-    scene.add(issOrbitLine);
+    issOrbitLine = makeOrbitLine(ORBIT_NEON.iss, false, 0.78, { haloOpacity: 0.16 });
     drawISSOrbit();
   }
 }
@@ -3811,7 +3852,7 @@ function drawISSOrbit() {
     } catch(_) {}
   }
   if (pts.length > 0) {
-    issOrbitLine.geometry.setFromPoints(pts);
+    setGlowLinePoints(issOrbitLine, pts);
     issOrbitLine.visible = earthLayerActive;
   }
 }
@@ -4628,7 +4669,12 @@ function clearRedirectVisualization(options = {}) {
 function drawRedirectTrajectory(ast, intercept, redirect) {
   orbitLine.visible = false;
   if (ast) drawOrbitFromElements(redirectOriginalOrbitLine, asteroidToOrbitElements(ast));
-  redirectAdjustedOrbitLine.visible = false;
+  if (redirect.orbit_el) {
+    drawOrbitFromElements(redirectAdjustedOrbitLine, redirect.orbit_el);
+    setGlowLineColor(redirectAdjustedOrbitLine, ORBIT_NEON.redirect, 0.54, 0.12);
+  } else {
+    redirectAdjustedOrbitLine.visible = false;
+  }
 
   const segStart = Number.isFinite(redirect.segment_jd_start) ? redirect.segment_jd_start : intercept.jd_arr;
   const segEnd = Number.isFinite(redirect.segment_jd_end) ? redirect.segment_jd_end : redirect.jd_earth_arr;
@@ -4637,14 +4683,13 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
     : [];
   if (pts.length < 2) return false;
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  _redirectArcLine = new THREE.Line(geo,
-    new THREE.LineBasicMaterial({ color: 0xff8800, opacity: 0.65, transparent: true }));
+  _redirectArcLine = makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 });
   scene.add(_redirectArcLine);
 
   // Arrow at asteroid showing redirect direction toward Earth arrival
   if (pts.length >= 2) {
     const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
-    const arr = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, 0xff8800, 0.05, 0.025);
+    const arr = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, ORBIT_NEON.redirect, 0.05, 0.025);
     scene.add(arr);
     _cargoPodArcs.push(arr);
   }
@@ -4675,8 +4720,7 @@ function drawLunarOrbitRing() {
     ));
   }
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  _lunarOrbitRing = new THREE.Line(geo,
-    new THREE.LineBasicMaterial({ color: 0xff8800, opacity: 0.6, transparent: true }));
+  _lunarOrbitRing = makeGlowLine(geo, ORBIT_NEON.redirect, 0.68, { haloOpacity: 0.16 });
   scene.add(_lunarOrbitRing);
 }
 
@@ -5032,15 +5076,14 @@ function drawTrajectoryLine(earthPos, astPos, options = {}) {
   );
   const pts = curve.getPoints(100);
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  trajectoryLine = new THREE.Line(geo,
-    new THREE.LineBasicMaterial({ color:0x00d4ff, opacity:0.7, transparent:true }));
+  trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
   scene.add(trajectoryLine);
   // Departure arrow (green, pointing toward asteroid)
   const dir = new THREE.Vector3(ax - ex, ay - ey, az - ez).normalize();
-  const arr1 = new THREE.ArrowHelper(dir, new THREE.Vector3(ex, ey, ez), 0.12, 0x00ff88, 0.05, 0.025);
+  const arr1 = new THREE.ArrowHelper(dir, new THREE.Vector3(ex, ey, ez), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
   scene.add(arr1); trajectoryArrows.push(arr1);
   // Arrival arrow (red, retro-burn)
-  const arr2 = new THREE.ArrowHelper(dir.clone().negate(), new THREE.Vector3(ax, ay, az), 0.12, 0xff4444, 0.05, 0.025);
+  const arr2 = new THREE.ArrowHelper(dir.clone().negate(), new THREE.Vector3(ax, ay, az), 0.12, 0xffcf66, 0.05, 0.025);
   scene.add(arr2); trajectoryArrows.push(arr2);
   // Return arc (dashed) — drawn once Earth return pos is known
   if (optimalTrajectory) _redrawReturnArc(optimalTrajectory, { astPos, returnEarthPos: options.returnEarthPos });
@@ -5061,10 +5104,7 @@ function _redrawReturnArc(traj, options = {}) {
     new THREE.Vector3(ep.x, ep.y, ep.z));
   const retPts = retCurve.getPoints(80);
   const retGeo = new THREE.BufferGeometry().setFromPoints(retPts);
-  const retLine = new THREE.Line(retGeo,
-    new THREE.LineDashedMaterial({ color: 0x00d4ff, opacity: 0.35, transparent: true,
-      dashSize: 0.05, gapSize: 0.04 }));
-  retLine.computeLineDistances();
+  const retLine = makeDashedGlowLine(retGeo, ORBIT_NEON.transfer, 0.64, 0.03, 0.02, { haloOpacity: 0.14 });
   scene.add(retLine);
   returnArcLine = retLine;
 }
@@ -5344,7 +5384,7 @@ function startMissionAnimation(traj) {
   missionAnim.spacecraft.add(missionAnim.engineLight);
 
   const trailGeo = new THREE.BufferGeometry();
-  const trailMat = new THREE.LineBasicMaterial({ color:0x4488aa, opacity:0.5, transparent:true });
+  const trailMat = new THREE.LineBasicMaterial({ color:ORBIT_NEON.transfer, opacity:0.45, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
   missionAnim.trailLine = new THREE.Line(trailGeo, trailMat);
   scene.add(missionAnim.trailLine);
   missionAnim.trailPts = [];
@@ -5396,7 +5436,7 @@ function startRedirectAnimation(visual) {
   missionAnim.spacecraft.add(missionAnim.engineLight);
 
   const trailGeo = new THREE.BufferGeometry();
-  const trailMat = new THREE.LineBasicMaterial({ color:0x4488aa, opacity:0.5, transparent:true });
+  const trailMat = new THREE.LineBasicMaterial({ color:ORBIT_NEON.redirect, opacity:0.45, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
   missionAnim.trailLine = new THREE.Line(trailGeo, trailMat);
   scene.add(missionAnim.trailLine);
   missionAnim.trailPts = [];
