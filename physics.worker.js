@@ -778,8 +778,8 @@ self.onmessage = function(e) {
       epoch_JD: src.epoch
     };
     const origPeriod = TWO_PI * Math.sqrt(Math.pow(origEl.a !== undefined ? origEl.a : src.a, 3) / GM_AU3_S2) / 86400;
-    const moidSamples = msg.preview ? 60 : 120;
-    const moid = moidApprox(newEl, msg.jd, moidSamples);
+    // Skip MOID during live drag (preview=true) — computed once on pointer-up
+    const moid = msg.preview ? null : moidApprox(newEl, msg.jd, 120);
 
     self.postMessage({
       type: 'burn_result',
