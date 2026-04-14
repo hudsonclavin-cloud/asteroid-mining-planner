@@ -4,6 +4,27 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 9J — Hover Suppression + Arc/Ring Labels (2026-04-13)
+
+### Summary
+Two UX improvements: (1) asteroid hover highlights are suppressed while mission results are displayed so the 3D view isn't noisy during planning review; (2) contextual text labels appear on trajectory arcs and orbital rings to identify each mission phase and Δv cost.
+
+### Changes (`index.html` only)
+
+**Hover suppression:**
+- Added `missionPlanningActive` flag (cleared on planner close / asteroid deselect)
+- `onPointerMove` returns early when flag is set — no hover ellipse, no tooltip, cursor stays default
+- Flag is set `true` in `onPlanResult` (extract results) and `onRedirectResult` (redirect results), only when a feasible result is rendered
+
+**Arc / ring labels:**
+- Added `ARC_LABEL_DEFS`, `_arcLabelEls`, `_arcAnchors`, and `_setArcAnchor()` helper
+- Seven dedicated DOM divs (cyan, 9px, non-interactive) positioned via camera projection each frame in `placeLabels()`
+- Labels: `NHATS ACCESSIBLE` (ring), `DEPARTURE ΔV`, `ARRIVAL ΔV`, `RETURN ΔV`, `REDIRECT INTERCEPT`, `REDIRECT ΔV`, `NRHO TARGET ORBIT`
+- Anchors set after arc geometry is created in: `drawTrajectoryLine`, `_redrawReturnArc`, `drawRedirectInterceptTrajectory`, `drawRedirectTrajectory`, `drawLunarOrbitRing`
+- Anchors cleared in `clearMissionPathVisuals` and `clearRedirectVisualization`
+
+---
+
 ## Phase 9I — Time Slider Fix (2026-04-10)
 
 ### Summary
@@ -599,3 +620,29 @@ Built out the renderer-side animation system so Aster now has meaningful mission
 - `index.html`
   - Guarded dashed glow-line initialization so `computeLineDistances()` only runs after a geometry actually has a populated `position` attribute, fixing the startup crash introduced by placeholder dashed glow groups.
   - Removed eager dashed distance computation from glow-line construction entirely and made the runtime geometry update helpers validate the `position` buffer before calling `computeLineDistances()`, covering empty `setFromPoints()` cases too.
+
+---
+
+## Phase 9Q — Redirect Planner Reliability Fixes (2026-04-13)
+
+### Summary
+Stabilized Capture & Redirect after the recent animation/visual passes by fixing request/result races, preserving redirect mode across planner opens, replacing the fake outbound redirect leg with a solved sampled intercept segment when available, and decoupling redirect playback from stale mission state.
+
+### Key fixes
+- `physics.worker.js`
+  - Added redirect request IDs to all redirect planner responses so the UI can ignore stale worker replies.
+  - Added sampled intercept-orbit metadata to redirect results, allowing the renderer to draw and animate the outbound intercept leg from solved orbital elements instead of a decorative Bezier.
+  - Hardened redirect failure payloads so every redirect planner outcome returns a valid `redirect_result` shape with schema/version fields.
+  - Passed capture and delivery keys through the redirect payload so destination markers can reflect the actual redirect target.
+- `index.html`
+  - Stopped `openMissionPlanner()` from silently resetting the planner back to Extract mode every time it opens.
+  - Redirect planning now preserves the last valid redirect visual while a new solve is running instead of clearing everything up front.
+  - Redirect results are now request-scoped, so an older worker reply can no longer overwrite a newer redirect solve.
+  - Redirect intercept visuals now use the solved outbound segment when available, and redirect playback uses that same sampled segment instead of the older fake outbound curve.
+  - Bottom-bar play, planner play, and mini playback now restart into the currently selected mission context if a stale mission animation is active.
+  - Redirect playback now fails explicitly with a status message when the sampled redirect segment is unavailable instead of silently doing nothing.
+  - Replaced the always-lunar redirect marker behavior with a capture marker that reflects the actual redirect target, using the lunar ring only for lunar-orbit capture.
+
+### Result
+- Capture & Redirect is materially more reliable under repeated reruns, mode switches, and playback restarts.
+- Redirect visuals and playback now reflect the solved planner output more closely instead of mixing stale state, fake outbound geometry, and hardcoded lunar cues.
