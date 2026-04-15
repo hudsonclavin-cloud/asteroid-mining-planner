@@ -856,6 +856,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <button class="tool-btn" id="btn-export-toolbar">↓ EXPORT</button>
     <button class="tool-btn" id="btn-share-toolbar">⬡ SHARE</button>
     <button class="tool-btn" id="btn-shortcuts-toolbar">? HELP</button>
+    <button class="tool-btn" id="btn-scale-mode">◉ SCALE: VISUAL</button>
   </div>
   <div id="toolbar-right">
     <span class="hud-item" id="hud-date">—</span>
@@ -2792,6 +2793,35 @@ const moonOrbitLine = new THREE.Line(
 );
 scene.add(moonOrbitLine);
 
+// ─── Scale Mode ───────────────────────────────────────────────────────────────
+// VISUAL: artistic sizes (planets proportional but enlarged for visibility)
+// TRUE:   real physical radii in AU (everything will be tiny dots at solar-system scale)
+const AU_KM = 149597870.7;
+const PLANET_VISUAL_R = [0.0084, 0.0209, 0.022, 0.0117, 0.2468, 0.2081, 0.0882, 0.0856];
+const PLANET_TRUE_R   = [2440, 6052, 6371, 3390, 71492, 60268, 25559, 24764].map(km => km / AU_KM);
+const SUN_VISUAL_R    = 0.06;
+const SUN_TRUE_R      = 696000 / AU_KM;
+const MOON_VISUAL_R   = 0.006;
+const MOON_TRUE_R     = 1737 / AU_KM;
+const MOON_VISUAL_A   = 0.11;
+const MOON_TRUE_A     = 384400 / AU_KM;
+let scaleMode = 'visual'; // 'visual' | 'true'
+
+function applyScaleMode(mode) {
+  scaleMode = mode;
+  const btn = document.getElementById('btn-scale-mode');
+  if (btn) btn.textContent = mode === 'true' ? '◉ SCALE: TRUE' : '◉ SCALE: VISUAL';
+
+  planets.forEach((mesh, i) => {
+    mesh.scale.setScalar((mode === 'true' ? PLANET_TRUE_R[i] : PLANET_VISUAL_R[i]) / PLANET_VISUAL_R[i]);
+  });
+
+  if (sunMesh) sunMesh.scale.setScalar(mode === 'true' ? SUN_TRUE_R / SUN_VISUAL_R : 1.0);
+  if (moonMesh) moonMesh.scale.setScalar(mode === 'true' ? MOON_TRUE_R / MOON_VISUAL_R : 1.0);
+  if (moonOrbitLine) moonOrbitLine.scale.setScalar(mode === 'true' ? MOON_TRUE_A / MOON_VISUAL_A : 1.0);
+  if (asteroidMesh) asteroidMesh.scale.setScalar(mode === 'true' ? 0.002 : 1.0);
+}
+
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
 const planetOrbitGroup = new THREE.Group();
 PLANET_SMA.forEach((sma, idx) => {
@@ -4335,7 +4365,7 @@ function buildAsteroidMesh(data) {
   positionCache = new Float32Array(asteroidCount * 3);
   visibleScale  = new Float32Array(asteroidCount).fill(1.0);
 
-  const geo = new THREE.SphereGeometry(0.003, 4, 4);
+  const geo = new THREE.SphereGeometry(0.001, 4, 4);
   const mat = new THREE.MeshBasicMaterial({ vertexColors: true });
   asteroidMesh = new THREE.InstancedMesh(geo, mat, asteroidCount);
   asteroidMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -4344,9 +4374,10 @@ function buildAsteroidMesh(data) {
     const ast = asteroidData[i];
     asteroidMesh.setColorAt(i, spectralTypeColor(ast));
     dummy.position.set(0, 0, 0);
-    const price = getDisplayValueUsd(ast);
-    const logScale = price > 0 ? Math.min(2.0, 0.6 + (Math.log10(Math.max(1, price)) / 14) * 1.4) : 0.6;
-    dummy.scale.setScalar(logScale);
+    // Size by diameter relative to Earth (6371 km), boosted for visibility, clamped 0.5–4.0
+    const diamKm = ast._diam_m ? ast._diam_m / 1000 : (ast.diameter > 0 ? ast.diameter : 5);
+    const diamScale = Math.max(0.5, Math.min(4.0, Math.sqrt(diamKm / 6371) * 60));
+    dummy.scale.setScalar(diamScale);
     dummy.updateMatrix();
     asteroidMesh.setMatrixAt(i, dummy.matrix);
   }
@@ -7330,6 +7361,9 @@ document.getElementById('btn-share-toolbar').addEventListener('click', encodeSta
 document.getElementById('btn-shortcuts-toolbar').addEventListener('click', () => {
   document.getElementById('shortcut-overlay').style.display = 'flex';
 });
+document.getElementById('btn-scale-mode')?.addEventListener('click', () => {
+  applyScaleMode(scaleMode === 'visual' ? 'true' : 'visual');
+});
 document.getElementById('btn-close-panel').addEventListener('click', deselectAsteroid);
 
 // ─── Phase 13: Shortlist / pin wiring ────────────────────────────────────────
@@ -8686,11 +8720,11 @@ function setStatus(msg, autoFade) {
 
 // ─── Animation Loop ───────────────────────────────────────────────────────────
 function updateMoonPosition(jd) {
-  const MOON_VISUAL_A = 0.11;   // visual orbit radius (scene units) — ~5× Earth visual radius
+  const orbitA = scaleMode === 'true' ? MOON_TRUE_A : MOON_VISUAL_A;
   const MOON_PERIOD = 27.32;    // days
   const angle = (TWO_PI / MOON_PERIOD) * (jd - J2000);
   const ep = planets[2].position;
-  moonMesh.position.set(ep.x + MOON_VISUAL_A * Math.cos(angle), ep.y, ep.z + MOON_VISUAL_A * Math.sin(angle));
+  moonMesh.position.set(ep.x + orbitA * Math.cos(angle), ep.y, ep.z + orbitA * Math.sin(angle));
 }
 
 function applyPositions(buf) {
