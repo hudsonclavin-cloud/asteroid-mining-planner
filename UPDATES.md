@@ -4,6 +4,45 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 10 — JPL-First Catalog + Dossier Provenance Foundation (2026-04-14)
+
+### Summary
+Aster’s catalog pipeline now starts from NASA/JPL SBDB Query instead of Asterank. The app still preserves the existing flat asteroid fields for compatibility, but each asteroid now carries a canonical `dossier` object with source/status metadata so later UI and scoring work can stop guessing where values came from.
+
+### Changes
+**`worker/index.js`** — new proxy routes and proxy metadata:
+- Added `GET /api/sbdb-query`
+- Added `GET /api/sbdb`
+- Added `GET /api/sentry`
+- Added `GET /api/horizons-lookup`
+- Extended JPL proxy responses with `ok`, `source`, `signatureVersion`, `stale`, and `cachedAt`
+
+**`physics.worker.js`** — JPL-first catalog loading:
+- Added `buildSbdbQueryUrl()` and switched `fetch_catalog` to use SBDB Query as the primary startup catalog
+- Kept NHATS as a parallel accessibility overlay
+- Kept Asterank as enrichment for economics and screening ΔV instead of primary orbit truth
+- Preserved legacy flat asteroid fields so the current UI, filters, and mission planner continue to work
+
+**`physics.worker.js`** — canonical dossier layer:
+- Added SBDB Query row normalization
+- Added canonical object-key matching across SBDB, NHATS, and Asterank
+- Added `dossier.version = 1` objects on each asteroid with:
+  - `id`
+  - `orbit`
+  - `physical`
+  - `accessibility`
+  - `hazard`
+  - `economics`
+  - `provenance`
+- Added `data_confidence`, `primary_source`, and `provenance_status` compatibility fields
+
+**`index.html`** — first provenance surfacing:
+- Bumped catalog cache to `aster_catalog_v8` to avoid mixing old and dossier-backed payloads
+- Added `SOURCE` and `STATUS` lines to the target inspector
+- Selected-target inspector now shows where the current target data came from and whether it is source-backed or still screening-grade
+
+---
+
 ## Fix — Mission Playback Speed + Redirect Assembly Visualization (2026-04-14)
 
 ### Summary

@@ -1069,6 +1069,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
     <div class="data-row"><span class="label">LAST OBS</span><span class="value" id="ast-last-obs">—</span></div>
     <div class="data-row"><span class="label">COND CODE</span><span class="value" id="ast-cond-code">—</span></div>
+    <div class="data-row"><span class="label">SOURCE</span><span class="value" id="ast-source">—</span></div>
+    <div class="data-row"><span class="label">STATUS</span><span class="value" id="ast-status">—</span></div>
     <div class="data-row" style="margin-top:8px"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
     <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
 
@@ -3064,7 +3066,7 @@ worker.onmessage = ({ data }) => {
       data: data.data,
       timestamp: Date.now(),
       meta: {
-        source: data.source || 'asterank',
+        source: data.source || 'sbdb-query',
         fallback: !!data.fallback,
         stale: !!data.stale,
         requestedLimit: data.requestedLimit || data.data.length,
@@ -3072,8 +3074,8 @@ worker.onmessage = ({ data }) => {
       },
     };
     if (Array.isArray(data.data) && data.data.length > 0) {
-      saveToIndexedDB('aster_catalog_v7', payload).catch(() => {
-        try { localStorage.setItem('aster_catalog_v7', JSON.stringify({ ...payload, data: data.data.slice(0, 2000) })); } catch(_) {}
+      saveToIndexedDB('aster_catalog_v8', payload).catch(() => {
+        try { localStorage.setItem('aster_catalog_v8', JSON.stringify({ ...payload, data: data.data.slice(0, 2000) })); } catch(_) {}
       });
     }
     // Cache NHATS rows alongside
@@ -6610,6 +6612,27 @@ function getSelectedAsteroid() {
   return null;
 }
 
+function getAsteroidProvenanceSummary(ast) {
+  const dossier = ast?.dossier;
+  if (!dossier?.provenance) {
+    return {
+      source: ast?.primary_source || ast?.data_source || 'legacy catalog',
+      status: ast?.provenance_status || 'screening-grade',
+    };
+  }
+  const sourceMap = dossier.provenance.sourceMap || {};
+  const parts = [
+    dossier.provenance.primarySource,
+    sourceMap.accessibility && sourceMap.accessibility !== dossier.provenance.primarySource ? sourceMap.accessibility : null,
+    sourceMap.economics && sourceMap.economics !== dossier.provenance.primarySource ? sourceMap.economics : null,
+  ].filter(Boolean);
+  const confidence = Number.isFinite(ast?.data_confidence) ? `conf ${Math.round(ast.data_confidence)}/100` : null;
+  return {
+    source: [...new Set(parts)].join(' + ') || dossier.provenance.primarySource || 'source-backed',
+    status: [dossier.provenance.summaryStatus || 'screening-grade', confidence].filter(Boolean).join(' · '),
+  };
+}
+
 function selectAsteroid(id) {
   selectedId = id;
   const ast = asteroidData[id];
@@ -6641,6 +6664,9 @@ function selectAsteroid(id) {
   document.getElementById('ast-moid').textContent = Number.isFinite(Number(ast.moid)) ? `${Number(ast.moid).toFixed(4)} AU` : '—';
   document.getElementById('ast-last-obs').textContent = ast.last_obs || 'unknown';
   document.getElementById('ast-cond-code').textContent = ast.condition_code !== null && ast.condition_code !== undefined ? String(ast.condition_code) : 'unknown';
+  const provenance = getAsteroidProvenanceSummary(ast);
+  document.getElementById('ast-source').textContent = provenance.source || '—';
+  document.getElementById('ast-status').textContent = provenance.status || '—';
   // Phase 3: composition + resource value + score
   const spec3 = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
   const mappedSpec = getMatSpec(ast);
@@ -8075,14 +8101,16 @@ async function init() {
   try { localStorage.removeItem('aster_catalog_v2'); } catch(_) {}
   try { localStorage.removeItem('aster_catalog_v3'); } catch(_) {}
   try { localStorage.removeItem('aster_catalog_v4'); } catch(_) {}
+  try { localStorage.removeItem('aster_catalog_v7'); } catch(_) {}
   saveToIndexedDB('aster_catalog_v1', null).catch(() => {});
   saveToIndexedDB('aster_catalog_v2', null).catch(() => {});
   saveToIndexedDB('aster_catalog_v3', null).catch(() => {});
   saveToIndexedDB('aster_catalog_v4', null).catch(() => {});
+  saveToIndexedDB('aster_catalog_v7', null).catch(() => {});
 
   // ── Check IndexedDB catalog cache ──────────────────────────────────────
   try {
-    const cached = await getFromIndexedDB('aster_catalog_v7');
+    const cached = await getFromIndexedDB('aster_catalog_v8');
     if (cached && cached.timestamp && Date.now() - cached.timestamp < 24 * 3600 * 1000 && cached.data.length > 0) {
       const sub = document.getElementById('loading-sub');
       if (sub) sub.textContent = `Cache: ${cached.data.length} asteroids`;
@@ -8099,7 +8127,7 @@ async function init() {
   } catch(_) {
     // IndexedDB unavailable — try localStorage fallback
     try {
-      const raw = localStorage.getItem('aster_catalog_v7');
+      const raw = localStorage.getItem('aster_catalog_v8');
       if (raw) {
         const { data: cachedData, timestamp } = JSON.parse(raw);
         if (Date.now() - timestamp < 24 * 3600 * 1000 && cachedData.length > 0) {

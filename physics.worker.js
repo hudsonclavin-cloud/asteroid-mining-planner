@@ -106,11 +106,21 @@ function buildNhatsUrl(overrides) {
   }).toString();
 }
 
-function buildAsterankUrl(limit) {
+function buildSbdbQueryUrl(limit) {
+  return 'https://aster-proxy.hudsonclavin.workers.dev/api/sbdb-query?' + new URLSearchParams({
+    'sb-group': 'neo',
+    'sb-kind': 'a',
+    limit: String(limit),
+    sort: 'moid',
+    fields: 'spkid,full_name,pdes,name,class,neo,pha,moid,epoch,e,a,i,om,w,ma,per,last_obs,condition_code,H,diameter,albedo,spec_B,spec_T,source,data_arc,n_obs_used',
+  }).toString();
+}
+
+function buildAsterankUrl(limit, sort = 'moid') {
   return 'https://aster-proxy.hudsonclavin.workers.dev/api/asterank?' + new URLSearchParams({
     query: JSON.stringify({ neo: 'Y' }),
     limit: String(limit),
-    sort: 'delta_v',
+    sort,
     fields: 'pdes,full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class,diameter,albedo,moid,last_obs,condition_code',
   }).toString();
 }
@@ -201,6 +211,7 @@ function normalizeAsterankRow(row) {
   const moid = parseFiniteOrNull(row.moid);
   const conditionCode = parseFiniteOrNull(row.condition_code);
   return {
+    spkid: row.spkid ? String(row.spkid).trim() : null,
     a,
     e,
     i: parseFiniteOrNull(row.i) || 0,
@@ -229,8 +240,123 @@ function normalizeAsterankRow(row) {
     delta_v: rawDv,
     last_obs: row.last_obs || null,
     condition_code: conditionCode === null ? null : conditionCode,
+    data_arc_days: parsePositiveOrNull(row.data_arc),
+    n_obs_used: parsePositiveOrNull(row.n_obs_used),
     data_source: row.data_source || 'asterank',
   };
+}
+
+function normalizeSbdbQueryResponse(json) {
+  const fields = Array.isArray(json?.fields) ? json.fields : [];
+  const rows = Array.isArray(json?.data) ? json.data : [];
+  if (fields.length === 0 || rows.length === 0) return [];
+  return rows.map(row => {
+    if (!Array.isArray(row)) return null;
+    const mapped = {};
+    for (let i = 0; i < fields.length; i++) mapped[fields[i]] = row[i];
+    return mapped;
+  }).filter(Boolean);
+}
+
+function makeCanonicalObjectKey(row) {
+  const pdes = normalizeDesignation(row?.pdes);
+  if (pdes) return `pdes:${pdes}`;
+  const spkid = String(row?.spkid || '').trim();
+  if (spkid) return `spkid:${spkid}`;
+  const name = normalizeDesignation(row?.full_name || row?.name);
+  return name ? `name:${name}` : '';
+}
+
+function buildProvenanceField(value, source, status, updatedAt, assumptions) {
+  return { value: value ?? null, source, status, updatedAt: updatedAt || null, assumptions: assumptions || null };
+}
+
+function buildCanonicalDossier(base, enrichment, nhatsRow, meta) {
+  const updatedAt = meta?.updatedAt || null;
+  const economicsSource = enrichment && (enrichment.price !== null || enrichment.profit !== null || enrichment.value_extractable_est !== null)
+    ? 'asterank'
+    : (base.value_extractable_est !== null ? 'heuristic' : 'unavailable');
+  const deltaVSource = enrichment?.delta_v !== null && enrichment?.delta_v !== undefined
+    ? 'asterank'
+    : nhatsRow?.minDv !== null && nhatsRow?.minDv !== undefined
+      ? 'nhats'
+      : 'unavailable';
+  const primarySource = meta?.primarySource || 'sbdb-query';
+  return {
+    version: 1,
+    id: {
+      pdes: base.pdes || null,
+      fullName: base.full_name || null,
+      name: base.name || null,
+      spkid: base.spkid || null,
+      normalizedKey: makeCanonicalObjectKey(base),
+    },
+    orbit: {
+      a: buildProvenanceField(base.a, primarySource, Number.isFinite(base.a) ? 'known' : 'unavailable', updatedAt),
+      e: buildProvenanceField(base.e, primarySource, Number.isFinite(base.e) ? 'known' : 'unavailable', updatedAt),
+      i: buildProvenanceField(base.i, primarySource, Number.isFinite(base.i) ? 'known' : 'unavailable', updatedAt),
+      om: buildProvenanceField(base.om, primarySource, Number.isFinite(base.om) ? 'known' : 'unavailable', updatedAt),
+      w: buildProvenanceField(base.w, primarySource, Number.isFinite(base.w) ? 'known' : 'unavailable', updatedAt),
+      ma: buildProvenanceField(base.ma, primarySource, Number.isFinite(base.ma) ? 'known' : 'unavailable', updatedAt),
+      epoch: buildProvenanceField(base.epoch, primarySource, Number.isFinite(base.epoch) ? 'known' : 'unavailable', updatedAt),
+      moid: buildProvenanceField(base.moid, primarySource, Number.isFinite(base.moid) ? 'known' : 'unavailable', updatedAt),
+      class: buildProvenanceField(base.class, primarySource, base.class ? 'known' : 'unavailable', updatedAt),
+      pha: buildProvenanceField(base.pha, primarySource, base.pha ? 'known' : 'unavailable', updatedAt),
+      dataArcDays: buildProvenanceField(base.data_arc_days, primarySource, Number.isFinite(base.data_arc_days) ? 'known' : 'unavailable', updatedAt),
+      observations: buildProvenanceField(base.n_obs_used, primarySource, Number.isFinite(base.n_obs_used) ? 'known' : 'unavailable', updatedAt),
+    },
+    physical: {
+      H: buildProvenanceField(base.H, primarySource, Number.isFinite(base.H) ? 'known' : 'unavailable', updatedAt),
+      diameterKm: buildProvenanceField(base.diameter, primarySource, base.diameter_source === 'estimated' ? 'derived' : Number.isFinite(base.diameter) ? 'known' : 'unavailable', updatedAt, base.diameter_source === 'estimated' ? 'estimated from H with assumed albedo' : null),
+      albedo: buildProvenanceField(base.albedo, primarySource, Number.isFinite(base.albedo) ? 'known' : 'unavailable', updatedAt),
+      spectralType: buildProvenanceField(base.spec === '?' ? null : base.spec, (base.spec_source || primarySource), base.spec === '?' ? 'unavailable' : (base.spec_source === 'asterank' ? 'derived' : 'known'), updatedAt),
+      lastObs: buildProvenanceField(base.last_obs, primarySource, base.last_obs ? 'known' : 'unavailable', updatedAt),
+      conditionCode: buildProvenanceField(base.condition_code, primarySource, base.condition_code !== null && base.condition_code !== undefined ? 'known' : 'unavailable', updatedAt),
+    },
+    accessibility: {
+      plannerDeltaV: buildProvenanceField(base.delta_v, deltaVSource, Number.isFinite(base.delta_v) ? 'derived' : 'unavailable', updatedAt, deltaVSource === 'asterank' ? 'Asterank screening delta-v' : null),
+      nhatsAccessible: buildProvenanceField(!!nhatsRow, 'nhats', nhatsRow ? 'known' : 'unavailable', updatedAt),
+      nhatsMinDv: buildProvenanceField(nhatsRow?.minDv, 'nhats', Number.isFinite(nhatsRow?.minDv) ? 'known' : 'unavailable', updatedAt),
+      nhatsMinDur: buildProvenanceField(nhatsRow?.minDur, 'nhats', Number.isFinite(nhatsRow?.minDur) ? 'known' : 'unavailable', updatedAt),
+      nhatsStayTime: buildProvenanceField(nhatsRow?.stayTime, 'nhats', Number.isFinite(nhatsRow?.stayTime) ? 'known' : 'unavailable', updatedAt),
+      nhatsTrajectories: buildProvenanceField(nhatsRow?.nTrajectories, 'nhats', Number.isFinite(nhatsRow?.nTrajectories) ? 'known' : 'unavailable', updatedAt),
+    },
+    hazard: {
+      sentryRestricted: buildProvenanceField(null, 'sentry', 'unavailable', updatedAt),
+      impactProbability: buildProvenanceField(null, 'sentry', 'unavailable', updatedAt),
+    },
+    economics: {
+      asterankPriceUsd: buildProvenanceField(base.price, 'asterank', Number.isFinite(base.price) ? 'heuristic' : 'unavailable', updatedAt),
+      asterankProfitUsd: buildProvenanceField(base.profit, 'asterank', Number.isFinite(base.profit) ? 'heuristic' : 'unavailable', updatedAt),
+      heuristicExtractableValueUsd: buildProvenanceField(base.value_extractable_est, economicsSource, Number.isFinite(base.value_extractable_est) ? 'heuristic' : 'unavailable', updatedAt),
+      screeningValueRank: buildProvenanceField(base.screening_value_rank, economicsSource, Number.isFinite(base.screening_value_rank) ? 'heuristic' : 'unavailable', updatedAt),
+    },
+    provenance: {
+      primarySource,
+      sourceMap: {
+        orbit: primarySource,
+        physical: primarySource,
+        accessibility: nhatsRow ? 'nhats + asterank' : (deltaVSource === 'asterank' ? 'asterank' : primarySource),
+        economics: economicsSource,
+      },
+      updatedAt,
+      stale: !!meta?.stale,
+      summaryStatus: meta?.summaryStatus || 'screening-grade',
+    },
+  };
+}
+
+function computeDataConfidence(dossier) {
+  if (!dossier) return 0;
+  let score = 30;
+  if (dossier.orbit.a.status === 'known' && dossier.orbit.e.status === 'known') score += 20;
+  if (dossier.orbit.observations.status === 'known') score += 10;
+  if (dossier.orbit.dataArcDays.status === 'known') score += 10;
+  if (dossier.physical.diameterKm.status !== 'unavailable') score += dossier.physical.diameterKm.status === 'known' ? 15 : 8;
+  if (dossier.physical.spectralType.status !== 'unavailable') score += 5;
+  if (dossier.accessibility.nhatsAccessible.value) score += 5;
+  if (dossier.economics.asterankPriceUsd.status !== 'unavailable' || dossier.economics.heuristicExtractableValueUsd.status !== 'unavailable') score += 5;
+  return Math.max(0, Math.min(100, score));
 }
 
 // ─── Vector helpers ──────────────────────────────────────────────────────────
@@ -1470,27 +1596,44 @@ self.onmessage = function(e) {
     (async function() {
       const requestedLimit = Math.max(10, Math.min(Number(msg.limit) || 5000, 5000));
       const fetchLimit = Math.max(250, Math.min(requestedLimit, 2000));
-      const ASTERANK_URL = buildAsterankUrl(fetchLimit);
+      const SBDB_URL = buildSbdbQueryUrl(fetchLimit);
+      const ASTERANK_URL = buildAsterankUrl(fetchLimit, 'moid');
       const NHATS_URL = buildNhatsUrl();
 
-      async function fetchAsterankWorker() {
+      async function fetchSbdbWorker() {
+        try {
+          const r = await fetch(SBDB_URL);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const json = await r.json();
+          const rows = normalizeSbdbQueryResponse(json);
+          if (!rows.length) throw new Error('empty response');
+          self.postMessage({ type: 'load_progress', source: 'sbdb', status: 'ok', count: rows.length });
+          return { rows, source: 'sbdb-query', fallback: false, stale: !!json.stale, updatedAt: json.cachedAt || Date.now() };
+        } catch (err) {
+          console.warn('[Catalog] SBDB query failed:', err.message);
+          self.postMessage({ type: 'load_progress', source: 'sbdb', status: 'error', error: err.message });
+          return { rows: [], source: 'sbdb-query', fallback: false, stale: true, updatedAt: Date.now() };
+        }
+      }
+
+      async function fetchAsterankWorker(allowFallback) {
         try {
           const r = await fetch(ASTERANK_URL);
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          const rows = await r.json();
+          const json = await r.json();
+          const rows = Array.isArray(json) ? json : (Array.isArray(json?.data) ? json.data : []);
           if (!Array.isArray(rows) || rows.length === 0) throw new Error('empty response');
-          console.log('[Catalog] Asterank:', rows.length, 'rows');
           self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
-          return { rows, source: 'asterank', fallback: false, stale: false };
+          return { rows, source: 'asterank', fallback: false, stale: !!json?.stale, updatedAt: json?.cachedAt || Date.now() };
         } catch(err) {
           console.warn('[Catalog] Asterank fetch failed:', err.message);
-          const rows = FALLBACK_CATALOG.slice();
-          if (rows.length > 0) {
+          const rows = allowFallback ? FALLBACK_CATALOG.slice() : [];
+          if (allowFallback && rows.length > 0) {
             self.postMessage({ type: 'load_progress', source: 'asterank', status: 'fallback', count: rows.length });
-            return { rows, source: 'fallback-static', fallback: true, stale: true };
+            return { rows, source: 'fallback-static', fallback: true, stale: true, updatedAt: Date.now() };
           }
           self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: err.message });
-          return { rows: [], source: 'asterank', fallback: false, stale: false };
+          return { rows: [], source: 'asterank', fallback: false, stale: true, updatedAt: Date.now() };
         }
       }
 
@@ -1502,7 +1645,6 @@ self.onmessage = function(e) {
           const rows = (json.data || json.nhats || [])
             .map(normalizeNhatsRow)
             .filter(row => row && row.des);
-          console.log('[Catalog] NHATS:', rows.length, 'rows');
           self.postMessage({ type: 'load_progress', source: 'nhats', status: 'ok', count: rows.length });
           return { rows, source: 'nhats', stale: !!json.stale };
         } catch(err) {
@@ -1512,13 +1654,28 @@ self.onmessage = function(e) {
       }
 
       // Fetch in parallel
-      const [asterankPayload, nhatsPayload] = await Promise.all([
-        fetchAsterankWorker(), fetchNHATSWorker()
+      const [sbdbPayload, nhatsPayload, initialAsterankPayload] = await Promise.all([
+        fetchSbdbWorker(), fetchNHATSWorker(), fetchAsterankWorker(false)
       ]);
-      const asterankRows = asterankPayload.rows || [];
+      let asterankPayload = initialAsterankPayload;
+      let asterankRows = asterankPayload.rows || [];
+      let sbdbRows = sbdbPayload.rows || [];
       const nhatsRows = nhatsPayload.rows || [];
-      if (asterankRows.length === 0) {
-        self.postMessage({ type: 'catalog_error', error: 'Catalog unavailable. Live Asterank fetch failed and no fallback catalog is available.' });
+      let primarySource = sbdbPayload.source;
+      let catalogFallback = false;
+      if (sbdbRows.length === 0) {
+        const fallbackAsterankPayload = await fetchAsterankWorker(true);
+        asterankPayload = fallbackAsterankPayload;
+        asterankRows = fallbackAsterankPayload.rows || [];
+        primarySource = fallbackAsterankPayload.source;
+        catalogFallback = !!fallbackAsterankPayload.fallback;
+        if (asterankRows.length === 0) {
+          self.postMessage({ type: 'catalog_error', error: 'Catalog unavailable. Live JPL SBDB query failed and no fallback catalog is available.' });
+          return;
+        }
+      }
+      if (sbdbRows.length === 0 && asterankRows.length === 0) {
+        self.postMessage({ type: 'catalog_error', error: 'Catalog unavailable. No JPL or fallback catalog rows returned.' });
         return;
       }
 
@@ -1529,14 +1686,49 @@ self.onmessage = function(e) {
         if (row.fullname) nhatsLookup.set(row.fullname, row);
       }
 
-      // ── Build catalog from Asterank (primary source) ─────────────────────
-      const catalog = [];
+      const asterankLookup = new Map();
       for (const row of asterankRows) {
         const normalized = normalizeAsterankRow({
           ...row,
-          data_source: asterankPayload.fallback ? 'fallback-static' : 'asterank',
+          data_source: catalogFallback ? 'fallback-static' : 'asterank',
         });
         if (!normalized) continue;
+        const key = makeCanonicalObjectKey(normalized);
+        if (key) asterankLookup.set(key, normalized);
+      }
+
+      const catalog = [];
+      const primaryRows = sbdbRows.length ? sbdbRows : asterankRows;
+      for (const row of primaryRows) {
+        const normalized = normalizeAsterankRow({
+          ...row,
+          data_source: sbdbRows.length ? 'sbdb-query' : (catalogFallback ? 'fallback-static' : 'asterank'),
+        });
+        if (!normalized) continue;
+        const enrichment = asterankLookup.get(makeCanonicalObjectKey(normalized));
+        if (enrichment) {
+          if (!normalized.name && enrichment.name) normalized.name = enrichment.name;
+          if ((normalized.spec === '?' || !normalized.spec) && enrichment.spec && enrichment.spec !== '?') {
+            normalized.spec = enrichment.spec;
+            normalized.spec_T = enrichment.spec_T || enrichment.spec;
+            normalized.spec_source = 'asterank';
+          } else {
+            normalized.spec_source = normalized.data_source;
+          }
+          if ((!Number.isFinite(normalized.diameter) || normalized.diameter === null) && Number.isFinite(enrichment.diameter)) {
+            normalized.diameter = enrichment.diameter;
+            normalized.diameter_source = enrichment.diameter_source || 'asterank';
+          }
+          if ((!Number.isFinite(normalized.albedo) || normalized.albedo === null) && Number.isFinite(enrichment.albedo)) normalized.albedo = enrichment.albedo;
+          normalized.price = enrichment.price;
+          normalized.profit = enrichment.profit;
+          normalized.delta_v = enrichment.delta_v;
+          normalized.value_extractable_est = enrichment.value_extractable_est;
+          normalized.value_extractable_source = enrichment.value_extractable_source;
+          normalized.economics_source = enrichment.economics_source;
+        } else {
+          normalized.spec_source = normalized.data_source;
+        }
         const pdesKey = normalizeDesignation(normalized.pdes);
         const nhatsRow = nhatsLookup.get(pdesKey) ||
           nhatsLookup.get(normalizeDesignation(normalized.full_name || normalized.name || ''));
@@ -1546,6 +1738,7 @@ self.onmessage = function(e) {
             ? normalized.value_extractable_est * (normalized.diameter_source === 'catalog' ? 0.15 : 0.05)
             : null;
         normalized.screening_value_rank = rankingValue;
+        normalized.rank_score = (normalized.screening_value_rank || 0) / Math.max(normalized.delta_v || 12, 1);
         normalized.nhats = nhatsRow ? {
           accessible: true,
           minDv: nhatsRow.minDv,
@@ -1555,25 +1748,33 @@ self.onmessage = function(e) {
           occ: nhatsRow.occ,
         } : { accessible: false, minDv: null, minDur: null, nTrajectories: null, stayTime: null, occ: null };
         normalized._nhats = !!nhatsRow;
+        normalized.dossier = buildCanonicalDossier(normalized, enrichment || null, nhatsRow || null, {
+          primarySource: sbdbRows.length ? 'sbdb-query' : primarySource,
+          stale: !!sbdbPayload.stale || !!asterankPayload.stale || !!nhatsPayload.stale,
+          updatedAt: Math.max(sbdbPayload.updatedAt || 0, asterankPayload.updatedAt || 0, Date.now()),
+          summaryStatus: normalized.data_source === 'sbdb-query' ? 'source-backed' : 'screening-grade',
+        });
+        normalized.data_confidence = computeDataConfidence(normalized.dossier);
+        normalized.primary_source = normalized.dossier.provenance.primarySource;
+        normalized.provenance_status = normalized.dossier.provenance.summaryStatus;
         catalog.push(normalized);
       }
 
       // Sort by accessibility-adjusted score (profit per km/s of ΔV) so reachable NEOs rank first
       catalog.sort((a, b) => {
-        const scoreA = (a.screening_value_rank || 0) / Math.max(a.delta_v || 12, 1);
-        const scoreB = (b.screening_value_rank || 0) / Math.max(b.delta_v || 12, 1);
+        const scoreA = a.rank_score || 0;
+        const scoreB = b.rank_score || 0;
         return scoreB - scoreA;
       });
       const trimmed = catalog.slice(0, requestedLimit);
 
-      console.log('[Catalog] Asterank →', catalog.length, 'valid, sending', trimmed.length, 'asteroids');
       self.postMessage({
         type: 'catalog_ready',
         data: trimmed,
         nhatsRows,
-        source: asterankPayload.source,
-        fallback: !!asterankPayload.fallback,
-        stale: !!asterankPayload.stale || !!nhatsPayload.stale,
+        source: primarySource,
+        fallback: !!catalogFallback,
+        stale: !!sbdbPayload.stale || !!asterankPayload.stale || !!nhatsPayload.stale,
         requestedLimit,
         returnedCount: trimmed.length,
       });

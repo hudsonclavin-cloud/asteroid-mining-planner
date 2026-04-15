@@ -41,26 +41,42 @@ let priceCacheTime = 0;
 const PRICE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 // ── Shared cache for NASA API proxies ────────────────────────────────────────
-const apiCache = new Map(); // key: URL string, value: { data, expiry }
+const apiCache = new Map(); // key: URL string, value: { data, expiry, cachedAt }
 
 async function cachedProxyFetch(targetUrl, ttlMs) {
   const now    = Date.now();
   const cached = apiCache.get(targetUrl);
   const stale  = cached && now > cached.expiry;
 
-  if (cached && !stale) return { data: cached.data, stale: false };
+  if (cached && !stale) return { data: cached.data, stale: false, cachedAt: cached.cachedAt || now };
 
   try {
     const r = await fetch(targetUrl, { cf: { cacheTtl: Math.floor(ttlMs / 1000) } });
     if (!r.ok) throw new Error(`Upstream HTTP ${r.status}`);
     const isJson = (r.headers.get('content-type') || '').includes('json');
     const data   = isJson ? await r.json() : await r.text();
-    apiCache.set(targetUrl, { data, expiry: now + ttlMs });
-    return { data, stale: false };
+    apiCache.set(targetUrl, { data, expiry: now + ttlMs, cachedAt: now });
+    return { data, stale: false, cachedAt: now };
   } catch (err) {
-    if (cached) return { data: cached.data, stale: true }; // serve stale on upstream failure
+    if (cached) return { data: cached.data, stale: true, cachedAt: cached.cachedAt || now }; // serve stale on upstream failure
     throw err;
   }
+}
+
+function extractSignatureVersion(data) {
+  return data && typeof data === 'object' ? (data.signature?.version || null) : null;
+}
+
+function wrapProxyObject(data, stale, cachedAt, sourceOverride) {
+  const meta = {
+    ok: true,
+    source: sourceOverride || (data && typeof data === 'object' ? data.signature?.source : null) || 'proxy',
+    signatureVersion: extractSignatureVersion(data),
+    stale: !!stale,
+    cachedAt: cachedAt || Date.now(),
+  };
+  if (data && typeof data === 'object' && !Array.isArray(data)) return { ...data, ...meta };
+  return { ...meta, data, raw: data };
 }
 
 // ── Parse JPL Horizons VECTORS text output → [{jd, x, y, z, vx, vy, vz}] ───
@@ -217,8 +233,8 @@ export default {
       if (!url.searchParams.has('stay')) nasaUrl.searchParams.set('stay', '8');
       for (const [k, v] of url.searchParams) nasaUrl.searchParams.set(k, v);
       try {
-        const { data, stale } = await cachedProxyFetch(nasaUrl.toString(), 24 * 60 * 60 * 1000);
-        const body = typeof data === 'object' && data !== null ? { ...data, stale } : { raw: data, stale };
+        const { data, stale, cachedAt } = await cachedProxyFetch(nasaUrl.toString(), 24 * 60 * 60 * 1000);
+        const body = wrapProxyObject(data, stale, cachedAt, 'NASA/JPL NHATS API');
         return jsonResponse(body, 200, origin);
       } catch (err) {
         return jsonResponse({ error: 'NHATS proxy failed', detail: err.message }, 502, origin);
@@ -234,11 +250,61 @@ export default {
       if (!target.searchParams.has('EPHEM_TYPE')) target.searchParams.set('EPHEM_TYPE', 'VECTORS');
       if (!target.searchParams.has('OUT_UNITS'))  target.searchParams.set('OUT_UNITS',  'AU-D');
       try {
-        const { data, stale } = await cachedProxyFetch(target.toString(), 24 * 60 * 60 * 1000);
+        const { data, stale, cachedAt } = await cachedProxyFetch(target.toString(), 24 * 60 * 60 * 1000);
         const vectors = parseHorizonsVectors(typeof data === 'string' ? data : JSON.stringify(data));
-        return jsonResponse({ vectors, stale, source: 'JPL Horizons' }, 200, origin);
+        return jsonResponse({
+          ok: true,
+          source: 'NASA/JPL Horizons API',
+          signatureVersion: extractSignatureVersion(data),
+          stale: !!stale,
+          cachedAt: cachedAt || Date.now(),
+          vectors,
+        }, 200, origin);
       } catch (err) {
         return jsonResponse({ error: 'Horizons proxy failed', detail: err.message }, 502, origin);
+      }
+    }
+
+    // ── GET /api/horizons-lookup ─────────────────────────────────────────────
+    if (url.pathname === '/api/horizons-lookup' && request.method === 'GET') {
+      const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+      if (!checkRateLimit(ip)) return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin);
+      const target = new URL('https://ssd.jpl.nasa.gov/api/horizons_lookup.api');
+      for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
+      if (!target.searchParams.has('format')) target.searchParams.set('format', 'json');
+      try {
+        const { data, stale, cachedAt } = await cachedProxyFetch(target.toString(), 7 * 24 * 60 * 60 * 1000);
+        return jsonResponse(wrapProxyObject(data, stale, cachedAt, 'NASA/JPL Horizons Lookup API'), 200, origin);
+      } catch (err) {
+        return jsonResponse({ error: 'Horizons lookup proxy failed', detail: err.message }, 502, origin);
+      }
+    }
+
+    // ── GET /api/sbdb-query ──────────────────────────────────────────────────
+    if (url.pathname === '/api/sbdb-query' && request.method === 'GET') {
+      const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+      if (!checkRateLimit(ip)) return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin);
+      const target = new URL('https://ssd-api.jpl.nasa.gov/sbdb_query.api');
+      for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
+      try {
+        const { data, stale, cachedAt } = await cachedProxyFetch(target.toString(), 12 * 60 * 60 * 1000);
+        return jsonResponse(wrapProxyObject(data, stale, cachedAt, 'NASA/JPL SBDB Query API'), 200, origin);
+      } catch (err) {
+        return jsonResponse({ error: 'SBDB query proxy failed', detail: err.message }, 502, origin);
+      }
+    }
+
+    // ── GET /api/sbdb ────────────────────────────────────────────────────────
+    if (url.pathname === '/api/sbdb' && request.method === 'GET') {
+      const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+      if (!checkRateLimit(ip)) return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin);
+      const target = new URL('https://ssd-api.jpl.nasa.gov/sbdb.api');
+      for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
+      try {
+        const { data, stale, cachedAt } = await cachedProxyFetch(target.toString(), 24 * 60 * 60 * 1000);
+        return jsonResponse(wrapProxyObject(data, stale, cachedAt, 'NASA/JPL SBDB API'), 200, origin);
+      } catch (err) {
+        return jsonResponse({ error: 'SBDB proxy failed', detail: err.message }, 502, origin);
       }
     }
 
@@ -261,10 +327,24 @@ export default {
       const target = new URL('https://ssd-api.jpl.nasa.gov/cad.api');
       for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
       try {
-        const { data, stale } = await cachedProxyFetch(target.toString(), 24 * 60 * 60 * 1000);
-        return jsonResponse({ ...(typeof data === 'object' ? data : { raw: data }), stale }, 200, origin);
+        const { data, stale, cachedAt } = await cachedProxyFetch(target.toString(), 24 * 60 * 60 * 1000);
+        return jsonResponse(wrapProxyObject(data, stale, cachedAt, 'NASA/JPL CAD API'), 200, origin);
       } catch (err) {
         return jsonResponse({ error: 'CAD proxy failed', detail: err.message }, 502, origin);
+      }
+    }
+
+    // ── GET /api/sentry ──────────────────────────────────────────────────────
+    if (url.pathname === '/api/sentry' && request.method === 'GET') {
+      const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+      if (!checkRateLimit(ip)) return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin);
+      const target = new URL('https://ssd-api.jpl.nasa.gov/sentry.api');
+      for (const [k, v] of url.searchParams) target.searchParams.set(k, v);
+      try {
+        const { data, stale, cachedAt } = await cachedProxyFetch(target.toString(), 24 * 60 * 60 * 1000);
+        return jsonResponse(wrapProxyObject(data, stale, cachedAt, 'NASA/JPL Sentry API'), 200, origin);
+      } catch (err) {
+        return jsonResponse({ error: 'Sentry proxy failed', detail: err.message }, 502, origin);
       }
     }
 
