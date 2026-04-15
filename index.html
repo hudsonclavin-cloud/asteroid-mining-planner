@@ -1564,6 +1564,13 @@ const GM = 1.327124400e20;  // m³/s²
 const AU_m = 1.496e11;       // m per AU
 const GM_AU3_S2 = GM / (AU_m * AU_m * AU_m);
 const TIME_WARP = 86400;
+const MISSION_SPEED_PRESETS = {
+  1: { speed: 3600, label: '1h/s' },
+  10: { speed: 21600, label: '6h/s' },
+  100: { speed: 86400, label: '1d/s' },
+  1000: { speed: 432000, label: '5d/s' },
+  10000: { speed: 2592000, label: '30d/s' },
+};
 const PROPAGATE_INTERVAL_MS = 75;
 
 function dateToJD(year, month, day) {
@@ -3228,10 +3235,15 @@ const missionAnim = {
   active: false, playing: false, speed: 86400,
   animJD: 0, phase: 'idle',
   outboundPts: [], returnPts: [],
+  targetPts: [],
   mode: 'extract',
   jdStart: 0, jdEnd: 0,
+  attachEndJD: 0,
+  captureEndJD: 0,
+  captureRadiusAU: 0,
   redirectVisual: null,
   spacecraft: null, engineLight: null,
+  asteroidBody: null,
   trailLine: null, trailPts: [],
   thrusterPlumes: [],
   autoFollow: false,
@@ -3240,9 +3252,13 @@ const missionAnim = {
   spacecraftDirection: new THREE.Vector3(0, 0, 1),
   sampledPosition: new THREE.Vector3(),
   sampledNext: new THREE.Vector3(),
+  sampledAsteroid: new THREE.Vector3(),
+  sampledAsteroidNext: new THREE.Vector3(),
   followOffset: new THREE.Vector3(0.3, 0.15, 0.3),
   followTarget: new THREE.Vector3(),
   plumeDirection: new THREE.Vector3(0, 0, -1),
+  attachmentOffset: new THREE.Vector3(),
+  captureCenter: new THREE.Vector3(),
 };
 let playbackModeBeforeScrub = 'none';
 let playbackMissionRefBeforeScrub = null;
@@ -3288,6 +3304,75 @@ function createSpacecraft() {
   group.visible = false;
   group.userData.engineLight = engineLight;
   return group;
+}
+
+function getMissionSpeedPreset(uiValue) {
+  return MISSION_SPEED_PRESETS[uiValue] || MISSION_SPEED_PRESETS[100];
+}
+
+function missionSpeedFromUi(uiValue) {
+  return getMissionSpeedPreset(uiValue).speed;
+}
+
+function missionSpeedLabel(uiValue) {
+  return getMissionSpeedPreset(uiValue).label;
+}
+
+function missionUiFromSpeed(speed) {
+  let bestUi = 100;
+  let bestDelta = Infinity;
+  for (const [uiKey, preset] of Object.entries(MISSION_SPEED_PRESETS)) {
+    const delta = Math.abs(preset.speed - speed);
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      bestUi = Number(uiKey);
+    }
+  }
+  return bestUi;
+}
+
+function asteroidMissionColor(ast) {
+  const spec = (ast?.spec || ast?.spec_T || '').toUpperCase();
+  if (spec.startsWith('M')) return 0xa7adb9;
+  if (spec.startsWith('S')) return 0x9d7651;
+  if (spec.startsWith('C')) return 0x5b5f63;
+  return 0x7a6e62;
+}
+
+function createMissionAsteroidBody(ast) {
+  const geo = new THREE.IcosahedronGeometry(0.018, 1);
+  const seedText = `${ast?.full_name || ast?.name || ast?.pdes || ast?.designation || 'aster'}`;
+  let seed = 0;
+  for (let i = 0; i < seedText.length; i++) seed = (seed * 31 + seedText.charCodeAt(i)) >>> 0;
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const wobble = 1 + 0.18 * Math.sin(seed * 0.0001 + x * 9.7 + y * 7.3 + z * 5.1 + i * 0.73);
+    pos.setXYZ(i, x * wobble, y * wobble * 0.94, z * wobble * 1.06);
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshPhongMaterial({
+    color: asteroidMissionColor(ast),
+    shininess: 8,
+    flatShading: true,
+    specular: 0x4b5563,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  const diamKm = Number.isFinite(ast?._diam_m) ? ast._diam_m / 1000 : null;
+  const scale = diamKm ? Math.max(0.75, Math.min(1.6, Math.pow(Math.max(0.05, diamKm), 0.22))) : 1;
+  mesh.scale.setScalar(scale);
+  mesh.visible = false;
+  return mesh;
+}
+
+function updateMissionAsteroidSpin(dt) {
+  if (!missionAnim.asteroidBody?.visible) return;
+  const scale = dt * 60;
+  missionAnim.asteroidBody.rotation.x += 0.0018 * scale;
+  missionAnim.asteroidBody.rotation.y += 0.0026 * scale;
 }
 
 function initThrusterPlumePool(parent, count = 10) {
@@ -5983,20 +6068,24 @@ function buildRedirectTimeline(visual) {
   const inner = document.getElementById('mission-timeline-inner');
   const jd0 = visual?.intercept?.jd_dep;
   const jd1 = visual?.intercept?.jd_arr;
-  const jd2 = visual?.redirect?.jd_earth_arr;
-  const span = jd2 - jd0;
-  if (!(Number.isFinite(jd0) && Number.isFinite(jd1) && Number.isFinite(jd2) && span > 0)) return;
+  const jd2 = visual?._attachEndJD || jd1;
+  const jd3 = visual?.redirect?.jd_earth_arr;
+  const jd4 = visual?._captureEndJD || jd3;
+  const span = jd4 - jd0;
+  if (!(Number.isFinite(jd0) && Number.isFinite(jd1) && Number.isFinite(jd3) && Number.isFinite(jd4) && span > 0)) return;
 
   inner.innerHTML = '<div id="mt-cursor" style="position:absolute;top:0;bottom:0;width:1px;background:#fff;opacity:0.6;pointer-events:none;z-index:2"></div>';
 
-  const phases = [
-    { label:'INTERCEPT', start:jd0, end:jd1, color:'#0d1d2e' },
-    { label:'REDIRECT',  start:jd1, end:jd2, color:'#2a1e00' },
-  ];
+  const phases = [];
+  phases.push({ label:'INTERCEPT', start:jd0, end:jd1, color:'#0d1d2e' });
+  if (jd2 > jd1) phases.push({ label:'ATTACH', start:jd1, end:jd2, color:'#25190f' });
+  phases.push({ label:'REDIRECT', start:Math.max(jd1, jd2), end:jd3, color:'#153322' });
+  if (jd4 > jd3) phases.push({ label:'NEW ORBIT', start:jd3, end:jd4, color:'#10263a' });
   const markers = [
     { label:'DEP', jd:jd0, color:'#00d4ff' },
     { label:'RENDEZVOUS', jd:jd1, color:'#ff4444' },
-    { label:'CAPTURE', jd:jd2, color:'#ff8800' },
+    ...(jd2 > jd1 ? [{ label:'ATTACH', jd:jd2, color:'#ffaa00' }] : []),
+    { label:'CAPTURE', jd:jd3, color:'#00ff88' },
   ];
 
   phases.forEach(p => {
@@ -6093,6 +6182,10 @@ function startMissionAnimation(traj) {
   missionAnim.phase   = 'outbound';
   missionAnim.jdStart = traj.jd_dep;
   missionAnim.jdEnd   = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
+  missionAnim.attachEndJD = 0;
+  missionAnim.captureEndJD = 0;
+  missionAnim.captureRadiusAU = 0;
+  missionAnim.targetPts = [];
   missionAnim.redirectVisual = null;
   missionAnim.autoFollow = true;
   missionAnim.manualOverride = false;
@@ -6102,6 +6195,7 @@ function startMissionAnimation(traj) {
   buildMissionTimeline(traj);
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
+  syncSpeedButtons();
   return true;
 }
 
@@ -6112,12 +6206,14 @@ function startRedirectAnimation(visual) {
 
   const ic = visual.intercept;
   const rd = visual.redirect;
+  const ast = asteroidData[visual.asteroidId] || getSelectedAsteroid();
   const interceptStart = Number.isFinite(ic.segment_jd_start) ? ic.segment_jd_start : ic.jd_dep;
   const interceptEnd = Number.isFinite(ic.segment_jd_end) ? ic.segment_jd_end : ic.jd_arr;
   let interceptPts = ic.orbit_el ? buildOrbitSegmentPoints(ic.orbit_el, interceptStart, interceptEnd, 180) : [];
   const segStart = Number.isFinite(rd.segment_jd_start) ? rd.segment_jd_start : ic.jd_arr;
   const segEnd = Number.isFinite(rd.segment_jd_end) ? rd.segment_jd_end : rd.jd_earth_arr;
   const redirectPts = rd.orbit_el ? buildOrbitSegmentPoints(rd.orbit_el, segStart, segEnd, 220) : [];
+  const asteroidPts = ast ? buildOrbitSegmentPoints(asteroidToOrbitElements(ast), ic.jd_dep, ic.jd_arr, 180) : [];
   if (interceptPts.length < 2) {
     const dep = new THREE.Vector3(ic.earthPos.x, ic.earthPos.y, ic.earthPos.z);
     const arr = new THREE.Vector3(ic.astPos.x, ic.astPos.y, ic.astPos.z);
@@ -6133,6 +6229,7 @@ function startRedirectAnimation(visual) {
   setCurrentJD(ic.jd_dep);
   missionAnim.outboundPts = interceptPts;
   missionAnim.returnPts = redirectPts;
+  missionAnim.targetPts = asteroidPts.length >= 2 ? asteroidPts : [new THREE.Vector3(ic.astPos.x, ic.astPos.y, ic.astPos.z)];
 
   missionAnim.spacecraft = createSpacecraft();
   missionAnim.spacecraft.position.copy(missionAnim.outboundPts[0]);
@@ -6140,6 +6237,12 @@ function startRedirectAnimation(visual) {
   missionAnim.engineLight = missionAnim.spacecraft.userData.engineLight;
   missionAnim.thrusterPlumes = initThrusterPlumePool(missionAnim.spacecraft, 10);
   scene.add(missionAnim.spacecraft);
+
+  if (ast) {
+    missionAnim.asteroidBody = createMissionAsteroidBody(ast);
+    missionAnim.asteroidBody.position.copy(missionAnim.targetPts[Math.max(0, missionAnim.targetPts.length - 1)]);
+    scene.add(missionAnim.asteroidBody);
+  }
 
   const trailGeo = new THREE.BufferGeometry();
   const trailMat = new THREE.LineBasicMaterial({ color:ORBIT_NEON.redirect, opacity:0.45, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
@@ -6153,21 +6256,33 @@ function startRedirectAnimation(visual) {
   missionAnim.animJD = ic.jd_dep;
   missionAnim.phase = 'outbound';
   missionAnim.jdStart = ic.jd_dep;
-  missionAnim.jdEnd = rd.jd_earth_arr;
+  const redirectSpanDays = Math.max(1, rd.jd_earth_arr - ic.jd_arr);
+  const attachDays = Math.min(18, Math.max(6, redirectSpanDays * 0.04));
+  const captureDays = Math.min(24, Math.max(8, redirectSpanDays * 0.05));
+  missionAnim.attachEndJD = Math.min(rd.jd_earth_arr, ic.jd_arr + attachDays);
+  missionAnim.captureEndJD = rd.jd_earth_arr + captureDays;
+  missionAnim.captureRadiusAU = Number.isFinite(visual.capture?.r_cap_km)
+    ? (visual.capture.r_cap_km * 1000) / AU_m
+    : 0.006;
+  missionAnim.jdEnd = missionAnim.captureEndJD;
   missionAnim.redirectVisual = visual;
   missionAnim.autoFollow = true;
   missionAnim.manualOverride = false;
   missionAnim.spacecraftVisible = false;
+  visual._attachEndJD = missionAnim.attachEndJD;
+  visual._captureEndJD = missionAnim.captureEndJD;
 
   document.getElementById('mp-anim-controls').style.display = 'block';
   buildRedirectTimeline(visual);
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
+  syncSpeedButtons();
   return true;
 }
 
 function stopMissionAnimation() {
   if (missionAnim.spacecraft) { disposeObject3D(missionAnim.spacecraft); missionAnim.spacecraft = null; }
+  if (missionAnim.asteroidBody) { disposeObject3D(missionAnim.asteroidBody); missionAnim.asteroidBody = null; }
   if (missionAnim.trailLine)  { disposeObject3D(missionAnim.trailLine);  missionAnim.trailLine  = null; }
   missionAnim.active = false;
   missionAnim.playing = false;
@@ -6175,10 +6290,14 @@ function stopMissionAnimation() {
   missionAnim.mode = 'extract';
   missionAnim.jdStart = 0;
   missionAnim.jdEnd = 0;
+  missionAnim.attachEndJD = 0;
+  missionAnim.captureEndJD = 0;
+  missionAnim.captureRadiusAU = 0;
   missionAnim.redirectVisual = null;
   missionAnim.trailPts = [];
   missionAnim.outboundPts = [];
   missionAnim.returnPts   = [];
+  missionAnim.targetPts = [];
   missionAnim.thrusterPlumes = [];
   missionAnim.autoFollow = false;
   missionAnim.manualOverride = false;
@@ -6190,11 +6309,59 @@ function stopMissionAnimation() {
   scrubber.value = jdToScrubberPos(currentJD);
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
+  syncSpeedButtons();
+}
+
+function setMissionAsteroidPosition(pos) {
+  if (!missionAnim.asteroidBody) return;
+  missionAnim.asteroidBody.position.copy(pos);
+  missionAnim.asteroidBody.visible = true;
+}
+
+function updateAttachedAssembly(centerPos, nextPos, attachOffset = 0.028) {
+  if (!missionAnim.spacecraft) return;
+  if (missionAnim.asteroidBody) setMissionAsteroidPosition(centerPos);
+  missionAnim.spacecraftDirection.subVectors(nextPos, centerPos);
+  if (missionAnim.spacecraftDirection.lengthSq() < 1e-10) {
+    missionAnim.spacecraftDirection.set(0, 0, 1);
+  } else {
+    missionAnim.spacecraftDirection.normalize();
+  }
+  missionAnim.attachmentOffset.copy(missionAnim.spacecraftDirection).multiplyScalar(-attachOffset);
+  missionAnim.sampledPosition.copy(centerPos).add(missionAnim.attachmentOffset);
+  missionAnim.spacecraft.position.copy(missionAnim.sampledPosition);
+  missionAnim.spacecraft.lookAt(nextPos);
+  missionAnim.spacecraft.visible = missionAnim.playing;
+  missionAnim.spacecraftVisible = missionAnim.playing;
+}
+
+function updateRedirectCaptureAssembly(visual, jd) {
+  if (!visual?.capture || !planets[2]) return false;
+  const captureStart = visual.redirect.jd_earth_arr;
+  const captureEnd = missionAnim.captureEndJD || captureStart;
+  const span = Math.max(1, captureEnd - captureStart);
+  const t = Math.max(0, Math.min(1, (jd - captureStart) / span));
+  const radiusAU = missionAnim.captureRadiusAU || 0.006;
+  const earthPos = planets[2].position;
+  const theta = t * TWO_PI * 0.65;
+  missionAnim.captureCenter.set(
+    earthPos.x + radiusAU * Math.cos(theta),
+    earthPos.y,
+    earthPos.z + radiusAU * Math.sin(theta)
+  );
+  missionAnim.sampledNext.set(
+    earthPos.x + radiusAU * Math.cos(theta + 0.12),
+    earthPos.y,
+    earthPos.z + radiusAU * Math.sin(theta + 0.12)
+  );
+  updateAttachedAssembly(missionAnim.captureCenter, missionAnim.sampledNext, 0.024);
+  return true;
 }
 
 function updateMissionAnimation(dt) {
   if (!missionAnim.active) return;
   const traj = missionAnim.mode === 'extract' ? getActiveExtractTrajectory() : null;
+  if (missionAnim.mode !== 'redirect' && missionAnim.asteroidBody) missionAnim.asteroidBody.visible = false;
 
   if (missionAnim.playing) {
     const hardEnd = missionAnim.jdEnd || SCRUBBER_MAX;
@@ -6222,6 +6389,21 @@ function updateMissionAnimation(dt) {
       pathSpan = visual.intercept.jd_arr - visual.intercept.jd_dep;
       normalizedT = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
       burning = normalizedT < 0.05 || normalizedT > 0.95;
+      if (missionAnim.targetPts.length) {
+        samplePathPosition(missionAnim.targetPts, normalizedT, missionAnim.sampledAsteroid, missionAnim.sampledAsteroidNext);
+        setMissionAsteroidPosition(missionAnim.sampledAsteroid);
+      }
+    } else if (jd <= missionAnim.attachEndJD) {
+      missionAnim.phase = 'attach';
+      burning = false;
+      if (missionAnim.targetPts.length) {
+        missionAnim.sampledAsteroid.copy(missionAnim.targetPts[missionAnim.targetPts.length - 1]);
+      } else {
+        missionAnim.sampledAsteroid.set(visual.intercept.astPos.x, visual.intercept.astPos.y, visual.intercept.astPos.z);
+      }
+      if (missionAnim.returnPts.length > 1) missionAnim.sampledAsteroidNext.copy(missionAnim.returnPts[1]);
+      else missionAnim.sampledAsteroidNext.copy(missionAnim.sampledAsteroid);
+      updateAttachedAssembly(missionAnim.sampledAsteroid, missionAnim.sampledAsteroidNext, 0.018);
     } else if (jd <= visual.redirect.jd_earth_arr) {
       missionAnim.phase = 'redirect';
       pathPts = missionAnim.returnPts;
@@ -6229,6 +6411,18 @@ function updateMissionAnimation(dt) {
       pathSpan = visual.redirect.jd_earth_arr - visual.intercept.jd_arr;
       normalizedT = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
       burning = normalizedT < 0.05 || normalizedT > 0.95;
+      const sampled = samplePathPosition(pathPts, normalizedT, missionAnim.sampledAsteroid, missionAnim.sampledAsteroidNext);
+      if (!sampled) {
+        missionAnim.spacecraft.visible = false;
+        missionAnim.spacecraftVisible = false;
+        updateThrusterPlumes(clock.elapsedTime, false);
+        return;
+      }
+      updateAttachedAssembly(missionAnim.sampledAsteroid, missionAnim.sampledAsteroidNext, 0.024);
+    } else if (jd <= missionAnim.captureEndJD) {
+      missionAnim.phase = 'capture';
+      burning = false;
+      updateRedirectCaptureAssembly(visual, jd);
     } else {
       missionAnim.phase = 'done';
       missionAnim.playing = false;
@@ -6280,7 +6474,9 @@ function updateMissionAnimation(dt) {
 
   if (!missionAnim.spacecraft) return;
 
-  if (missionAnim.phase === 'mining') {
+  if (missionAnim.phase === 'attach' || missionAnim.phase === 'redirect' || missionAnim.phase === 'capture') {
+    // assembly position already updated in the redirect branch above
+  } else if (missionAnim.phase === 'mining') {
     missionAnim.spacecraft.position.copy(missionAnim.sampledPosition);
     missionAnim.spacecraft.visible = missionAnim.playing;
     missionAnim.spacecraftVisible = missionAnim.playing;
@@ -6306,6 +6502,7 @@ function updateMissionAnimation(dt) {
         : (0.3 + 0.1 * Math.sin(clock.elapsedTime * 3));
   }
   updateThrusterPlumes(clock.elapsedTime, burning && missionAnim.playing);
+  updateMissionAsteroidSpin(dt);
 
   // Trail
   if (missionAnim.playing) {
@@ -7034,11 +7231,16 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === '[') {
-    const idx = SPEED_STEPS.indexOf(lastSpeed);
+    const activeStep = missionAnim.active ? missionUiFromSpeed(missionAnim.speed) : lastSpeed;
+    const idx = SPEED_STEPS.indexOf(activeStep);
     if (idx > 0) {
-      lastSpeed = SPEED_STEPS[idx - 1];
-      if (missionAnim.active) missionAnim.speed = lastSpeed;
-      else if (isPlaying) simSpeed = lastSpeed;
+      const nextStep = SPEED_STEPS[idx - 1];
+      if (missionAnim.active) {
+        missionAnim.speed = missionSpeedFromUi(nextStep);
+      } else {
+        lastSpeed = nextStep;
+        if (isPlaying) simSpeed = lastSpeed;
+      }
       syncSpeedButtons();
     } else if (missionAnim.active) {
       setMissionAnimationPlaying(false);
@@ -7048,11 +7250,16 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === ']') {
-    const idx = SPEED_STEPS.indexOf(lastSpeed);
+    const activeStep = missionAnim.active ? missionUiFromSpeed(missionAnim.speed) : lastSpeed;
+    const idx = SPEED_STEPS.indexOf(activeStep);
     if (idx < SPEED_STEPS.length - 1) {
-      lastSpeed = SPEED_STEPS[idx + 1];
-      if (missionAnim.active) missionAnim.speed = lastSpeed;
-      else if (isPlaying) simSpeed = lastSpeed;
+      const nextStep = SPEED_STEPS[idx + 1];
+      if (missionAnim.active) {
+        missionAnim.speed = missionSpeedFromUi(nextStep);
+      } else {
+        lastSpeed = nextStep;
+        if (isPlaying) simSpeed = lastSpeed;
+      }
       syncSpeedButtons();
     }
     return;
@@ -7318,7 +7525,6 @@ document.getElementById('btn-anim-stop').addEventListener('click', stopMissionAn
 document.querySelectorAll('.anim-speed-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     missionAnim.speed = parseInt(btn.dataset.aspeed);
-    lastSpeed = missionAnim.speed;
     syncMissionSpeedButtons();
     syncSpeedButtons();
   });
@@ -7556,7 +7762,13 @@ window.addEventListener('touchcancel', endScrub, { passive: true });
 
 function syncSpeedButtons() {
   document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
-    btn.classList.toggle('active', Number(btn.dataset.speed) === lastSpeed);
+    const uiValue = Number(btn.dataset.speed);
+    if (!btn.dataset.baseLabel) btn.dataset.baseLabel = btn.textContent.trim();
+    btn.textContent = missionAnim.active ? missionSpeedLabel(uiValue) : btn.dataset.baseLabel;
+    const isActive = missionAnim.active
+      ? missionUiFromSpeed(missionAnim.speed) === uiValue
+      : uiValue === lastSpeed;
+    btn.classList.toggle('active', isActive);
   });
 }
 
@@ -7586,11 +7798,11 @@ document.getElementById('btn-follow-spacecraft').addEventListener('click', () =>
 
 document.querySelectorAll('.speed-btn[data-speed]').forEach(btn => {
   btn.addEventListener('click', () => {
-    lastSpeed = parseInt(btn.dataset.speed, 10);
     if (missionAnim.active) {
-      missionAnim.speed = lastSpeed;
+      missionAnim.speed = missionSpeedFromUi(parseInt(btn.dataset.speed, 10));
       setMissionAnimationPlaying(true);
     } else {
+      lastSpeed = parseInt(btn.dataset.speed, 10);
       setPlayState(true);
     }
   });

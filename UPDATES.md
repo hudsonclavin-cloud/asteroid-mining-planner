@@ -4,6 +4,25 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Fix — Mission Playback Speed + Redirect Assembly Visualization (2026-04-14)
+
+### Summary
+Mission playback now uses mission-aware bottom-bar speed controls, and redirect playback shows a full visual sequence: outbound intercept, attachment, redirected transfer, and a short new-orbit phase around the destination instead of stopping at a single arrival point.
+
+### Changes
+**`index.html`** — bottom playback controls:
+- Made the bottom speed buttons mission-aware during active mission playback
+- Bottom-bar speed labels now switch to mission rates like `1h/s`, `6h/s`, `1d/s`, `5d/s`, `30d/s`
+- Prevented mission-speed changes from polluting the normal solar-system timeline speed state
+
+**`index.html`** — redirect mission animation:
+- Added a low-poly asteroid body for redirect playback so the target is no longer just an instanced point
+- Added explicit redirect phases: `INTERCEPT`, `ATTACH`, `REDIRECT`, `NEW ORBIT`
+- Extended redirect playback slightly past Earth arrival so the asteroid visibly settles into the destination orbit instead of stopping abruptly
+- Kept the tug attached to the asteroid during redirect and capture phases so the mission reads as one coherent assembly
+
+---
+
 ## Fix — Mission Score Breakdown + CSS Cleanup Direction (2026-04-14)
 
 ### Summary
