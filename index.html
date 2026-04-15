@@ -2554,6 +2554,17 @@ function drawOrbitFromElements(line, el) {
   line.visible = true;
 }
 
+function validateArcPoints(points, label) {
+  const MAX_AU = 5.5; // nothing in the inner solar system planner should exceed Jupiter
+  for (const p of points) {
+    if (p.length() > MAX_AU) {
+      console.error(`[Aster] ${label} arc out of bounds: ${p.length().toFixed(1)} AU — Izzo near-parabolic convergence likely`);
+      return false;
+    }
+  }
+  return true;
+}
+
 function buildOrbitSegmentPoints(el, jdStart, jdEnd, steps = 96) {
   if (!el || !Number.isFinite(jdStart) || !Number.isFinite(jdEnd) || jdEnd <= jdStart) return [];
   const pts = [];
@@ -5064,7 +5075,7 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   const pts = redirect.orbit_el && Number.isFinite(segStart) && Number.isFinite(segEnd)
     ? buildOrbitSegmentPoints(redirect.orbit_el, segStart, segEnd, 112)
     : [];
-  if (pts.length < 2) return false;
+  if (pts.length < 2 || !validateArcPoints(pts, 'redirect')) return false;
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   _redirectArcLine = makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 });
   scene.add(_redirectArcLine);
@@ -5094,7 +5105,7 @@ function drawRedirectInterceptTrajectory(intercept) {
   const pts = intercept.orbit_el && Number.isFinite(segStart) && Number.isFinite(segEnd)
     ? buildOrbitSegmentPoints(intercept.orbit_el, segStart, segEnd, 96)
     : [];
-  if (pts.length >= 2) {
+  if (pts.length >= 2 && validateArcPoints(pts, 'redirect-intercept')) {
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
     scene.add(trajectoryLine);

@@ -4,6 +4,28 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Fix — Redirect Arc Neptune-Scale Rendering (2026-04-14)
+
+### Root Cause
+`_izzTofDerivs` in `physics.worker.js` used `sqrt(1 - λ²(1-x²))` instead of the correct `sqrt(1-x²)` in the Izzo 2015 non-dimensional TOF formula. When `λ ≠ 0` (every real transfer), the Householder iterator converged internally-consistently to the wrong `x` — typically near 1 (near-parabolic). This produced heliocentric velocities approaching escape velocity, which `cart2kep` converted to orbital elements with `a` of tens of AU. `buildOrbitSegmentPoints` then propagated those huge orbits into the Three.js scene, rendering the redirect arc past Neptune.
+
+### Changes
+**`physics.worker.js`** — `_izzTofDerivs` (lines 653–669):
+- Removed `inner`/`sqrtInner`/`b` variables
+- Replaced with `sqrtOmx2 = sqrt(1-x²)` and corrected `T = (acos(x) + λx·sqrtOmx2) / (1-x²)`
+- Updated `q = λx / sqrtOmx2` so Householder derivatives remain consistent with the fixed T
+
+**`index.html`** — `validateArcPoints` helper (added near `buildOrbitSegmentPoints`):
+- Rejects any arc with a point further than 5.5 AU from the Sun, logs a console error
+
+**`index.html`** — `drawRedirectTrajectory`:
+- Guard: `if (pts.length < 2 || !validateArcPoints(pts, 'redirect')) return false;`
+
+**`index.html`** — `drawRedirectInterceptTrajectory`:
+- Guard: bad arc falls through to existing Bézier fallback instead of rendering
+
+---
+
 ## Phase 9J — Hover Suppression + Arc/Ring Labels (2026-04-13)
 
 ### Summary
