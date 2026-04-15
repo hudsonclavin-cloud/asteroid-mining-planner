@@ -4,6 +4,48 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Full Bug Fix + Improvement Pass (2026-04-15)
+
+### Summary
+Resolved all 14 bugs identified in a full-stack sweep and shipped 9 improvements across orbital mechanics, economics, data pipeline, renderer, and UI/HUD layers.
+
+### Bugs Fixed
+
+**`physics.worker.js`**
+- **Bug 2** — `moidApprox` O(n²): reduced sample count 120→60, added early-exit at 0.001 AU
+- **Bug 3** — Lambert phase-1 sweep now tries both prograde and retrograde directions, keeps lower ΔV result
+- **Bug 4** — `isPlausiblePlannerOrbit` now rejects `e > 0.95` (near-parabolic transfers that slip through `e < 1` guard)
+- **Bug 5** — `cart2kep` output tagged `_radians: true`; `moidApprox` uses that flag instead of fragile `epoch_JD` check
+- **Bug 9** — `normalizeAsterankRow` now rejects rows where any of `i`, `om`, `w`, `ma` is missing (was silently defaulting to 0, producing a wrong equatorial orbit)
+- **Bug 10** — Spectral type resolution order corrected: `spec_B` (Bus-DeMeo) → `spec_T` (Tholen) → `spec`
+
+**`index.html`**
+- **Bug 1** — `computeScenarioNPVs` stockpile null fallback: unknown-commodity case now returns a conservative `0.9 × P0` estimate
+- **Bug 6** — `formatValueDisplay` now renders negative NPV as a signed loss (e.g. `-$1.2B`) instead of `unknown`
+- **Bug 7** — `returnedKg` now derived from `massModel.massKg × extractionFraction` (was spacecraft payload × fraction — every asteroid returned the same 50 kg regardless of size)
+- **Bug 8** — ROI formula corrected to `(npv − cost) / cost` (net profit multiple); label updated to `NET ROI`
+- **Bug 11** — `clearRedirectVisualization` now disposes `trajectoryLine` (dashed intercept arc was leaking one geometry + two materials per redirect target switch)
+- **Bug 12** — `buildOrbitSegmentPoints` rejects time spans < 1 day (was producing 96–112 near-identical points → degenerate flickering geometry)
+- **Bug 13** — `renderScenarioBar`: all-negative scenario set now shows a red warning banner instead of four empty bars; stockpile null fallback confirmed present
+- **Bug 14** — `renderScenarioBar` and `renderSensitivityChart` clear `innerHTML` on entry, eliminating stale bars during asteroid switching
+
+### Improvements Added
+
+**`physics.worker.js`**
+- **Imp 1** — `izzoLambertMultiRev(N=1)`: multi-revolution Lambert solver; tried in phase-1 sweep when TOF > 365 days
+- **Imp 3** — `srpWarning` flag on redirect results: true when asteroid is C/B/D-type and coast arc exceeds 180 days
+- **Imp 7** — `condition_code` and `orbitUncertain` (codes 6–9) fields added to all normalized asteroid objects
+- **Imp 8** — Uncertain-orbit asteroids pass the `init` filter unchanged; `orbitUncertain` flag preserved for UI badging
+
+**`index.html`**
+- **Imp 2** — Porkchop launch window canvas added to mission planner panel: ΔV color grid (green=low, red=high) over departure date × TOF axes
+- **Imp 4** — `returnedKg` now mass-model-derived (see Bug 7 — same fix, meaningful NPV differentiation between asteroid sizes)
+- **Imp 5** — `PRICE_DATE` constant + "prices as of [date]" label in economics panel
+- **Imp 6** — Sensitivity tornado chart (`renderSensitivityChart`): ±20% swing on commodity price, returned mass, mission cost, and extraction fraction
+- **Imp 9** — `_orbitSteps()` LOD helper: asteroids with `a > 2 AU` use 48 orbit ring steps vs 100 (52% point reduction for outer-belt bodies)
+
+---
+
 ## Phase 12 — Mission Renderer Truth / Readability Pass (2026-04-15)
 
 ### Summary
