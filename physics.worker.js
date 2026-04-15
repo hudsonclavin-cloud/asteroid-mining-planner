@@ -365,6 +365,55 @@ function cart2kep(x, y, z, vx_kms, vy_kms, vz_kms, t_JD) {
   return { a, e, i: inc, Om, w, M0, epoch_JD: t_JD, nu: nu_anom };
 }
 
+function isPlausiblePlannerOrbit(el, maxApoAu = 5.5) {
+  if (!el || !Number.isFinite(el.a) || !Number.isFinite(el.e)) return false;
+  if (el.a <= 0 || el.e < 0 || el.e >= 1) return false;
+  const peri = el.a * (1 - el.e);
+  const apo = el.a * (1 + el.e);
+  return Number.isFinite(peri) &&
+    Number.isFinite(apo) &&
+    peri > 0 &&
+    apo <= maxApoAu;
+}
+
+function solveLambertWithOrbitGuard(r1, r2, tof_days, originState, epoch_JD) {
+  let lam = null;
+  let orbit_el = null;
+  let usedFallback = false;
+  let suspiciousIzzo = false;
+
+  try { lam = izzoLambert(r1, r2, tof_days); } catch(e) {}
+  if (lam && lam.v1 && lam.v2 && lam.v1.every(Number.isFinite) && lam.v2.every(Number.isFinite)) {
+    try {
+      orbit_el = cart2kep(originState.x, originState.y, originState.z, lam.v1[0], lam.v1[1], lam.v1[2], epoch_JD);
+    } catch(e) {}
+    if (!isPlausiblePlannerOrbit(orbit_el)) {
+      lam = null;
+      orbit_el = null;
+      suspiciousIzzo = true;
+    }
+  } else {
+    lam = null;
+  }
+
+  if (!lam) {
+    try { lam = lambert(r1, r2, tof_days); usedFallback = true; } catch(e) {}
+    if (lam && lam.v1 && lam.v2 && lam.v1.every(Number.isFinite) && lam.v2.every(Number.isFinite)) {
+      try {
+        orbit_el = cart2kep(originState.x, originState.y, originState.z, lam.v1[0], lam.v1[1], lam.v1[2], epoch_JD);
+      } catch(e) {}
+      if (!isPlausiblePlannerOrbit(orbit_el)) {
+        lam = null;
+        orbit_el = null;
+      }
+    } else {
+      lam = null;
+    }
+  }
+
+  return { lam, orbit_el, usedFallback, suspiciousIzzo };
+}
+
 // Propagate a planet at Julian Date jd using Standish 1992 secular elements
 function propagatePlanet(pIdx, jd) {
   const p = PLANETS[pIdx];
@@ -1057,20 +1106,19 @@ self.onmessage = function(e) {
         const r2   = [astArr.x, astArr.y, astArr.z];
         const va   = [astArr.vx, astArr.vy, astArr.vz];
 
-        let lam = null;
-        try { lam = izzoLambert(r1, r2, tof); } catch(e) {}
-        if (!lam || !isFinite(lam.v1?.[0])) {
-          try { lam = lambert(r1, r2, tof); lambert_fallback = true; } catch(e) {}
-        }
-        if (!lam || !lam.v1 || !lam.v2 || !lam.v1.every(Number.isFinite) || !lam.v2.every(Number.isFinite)) continue;
+        const interceptSolve = solveLambertWithOrbitGuard(
+          r1,
+          r2,
+          tof,
+          { x: earthDep.x, y: earthDep.y, z: earthDep.z },
+          jd_dep
+        );
+        const lam = interceptSolve.lam;
+        if (interceptSolve.usedFallback || interceptSolve.suspiciousIzzo) lambert_fallback = true;
+        if (!lam) continue;
 
         const pc = patchedConic(ve, lam.v1, va, lam.v2, R_earth / 1000 + 400);
         if (!pc || !isFinite(pc.dv_dep) || pc.dv_dep > MISSION_GATE_DEP_KMS) continue;
-
-        let interceptOrbitEl = null;
-        try {
-          interceptOrbitEl = cart2kep(earthDep.x, earthDep.y, earthDep.z, lam.v1[0], lam.v1[1], lam.v1[2], jd_dep);
-        } catch (e) {}
 
         interceptCandidates.push({
           jd_dep, jd_arr, tof,
@@ -1078,7 +1126,7 @@ self.onmessage = function(e) {
           earthPos: { x: earthDep.x, y: earthDep.y, z: earthDep.z },
           astPos:   { x: astArr.x,   y: astArr.y,   z: astArr.z },
           v_ast:    { vx: astArr.vx, vy: astArr.vy, vz: astArr.vz },
-          orbit_el: interceptOrbitEl,
+          orbit_el: interceptSolve.orbit_el,
           ve, va,
         });
       }
@@ -1147,12 +1195,17 @@ self.onmessage = function(e) {
         try {
           const astArr2 = [best.astPos.x, best.astPos.y, best.astPos.z];
           const earArr2 = [earthArrPos.x, earthArrPos.y, earthArrPos.z];
-          let rLam = null;
-          try { rLam = izzoLambert(astArr2, earArr2, redirectTofDays); } catch(e) {}
-          if (!rLam || !isFinite(rLam.v1?.[0])) {
-            try { rLam = lambert(astArr2, earArr2, redirectTofDays); redirect_lam_fallback = true; } catch(e) {}
-          }
-          if (!rLam || !isFinite(rLam.v1?.[0]) || !isFinite(rLam.v2?.[0])) {
+          const redirectSolve = solveLambertWithOrbitGuard(
+            astArr2,
+            earArr2,
+            redirectTofDays,
+            { x: best.astPos.x, y: best.astPos.y, z: best.astPos.z },
+            best.jd_arr
+          );
+          const rLam = redirectSolve.lam;
+          redirect_lam_fallback = redirectSolve.usedFallback || redirectSolve.suspiciousIzzo;
+          redirect_orbit_el = redirectSolve.orbit_el;
+          if (!rLam) {
             bestError = 'Redirect Lambert solve failed for all tested return windows.';
             continue;
           }
@@ -1161,7 +1214,6 @@ self.onmessage = function(e) {
           const dv_y = rLam.v1[1] - best.v_ast.vy;
           const dv_z = rLam.v1[2] - best.v_ast.vz;
           dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
-          redirect_orbit_el = cart2kep(best.astPos.x, best.astPos.y, best.astPos.z, rLam.v1[0], rLam.v1[1], rLam.v1[2], best.jd_arr);
 
           const dv_arr_x = rLam.v2[0] - earthArrPos.vx;
           const dv_arr_y = rLam.v2[1] - earthArrPos.vy;

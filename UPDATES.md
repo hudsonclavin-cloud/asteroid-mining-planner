@@ -24,6 +24,11 @@ This file records completed phase summaries per the orchestrator agent protocol.
 **`index.html`** — `drawRedirectInterceptTrajectory`:
 - Guard: bad arc falls through to existing Bézier fallback instead of rendering
 
+**`physics.worker.js`** — redirect Lambert hardening:
+- Added `isPlausiblePlannerOrbit()` to reject implausible heliocentric transfer orbits before they become planner results
+- Added `solveLambertWithOrbitGuard()` so redirect/intercept candidates retry through BMW when Izzo converges to a suspicious near-parabolic ellipse
+- Prevents renderer-only suppression from hiding a still-corrupted worker result
+
 ---
 
 ## Phase 9J — Hover Suppression + Arc/Ring Labels (2026-04-13)
