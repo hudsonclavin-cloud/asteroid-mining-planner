@@ -130,6 +130,8 @@ Mission scores are now explicit instead of opaque. Extract & Return cards show e
 
 ---
 
+=======
+>>>>>>> be1d674 (Fix redirect arc rendering at Neptune-scale distances)
 ## Fix — Redirect Arc Neptune-Scale Rendering (2026-04-14)
 
 ### Root Cause
