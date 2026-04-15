@@ -820,6 +820,32 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   color: #c8d6e5; box-shadow: 0 0 16px rgba(0,212,255,0.12);
   max-width: 220px; line-height: 1.6; display: none;
 }
+/* ─── Phase 13: Shortlist + Score chips ──────────────────────────────────────── */
+#btn-pin-target.pinned { border-color:#fbbf24; color:#fbbf24; }
+.shortlist-row { display:flex; flex-direction:column; border:1px solid #1a2235; margin-bottom:6px; padding:6px 8px; }
+.shortlist-row:hover { border-color:#2a3a4a; }
+.shortlist-row-name { font-size:10px; color:#00d4ff; letter-spacing:0.1em; margin-bottom:4px; }
+.shortlist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2px 4px; }
+.shortlist-cell { display:flex; flex-direction:column; }
+.shortlist-cell-label { font-size:7px; color:#4b5563; letter-spacing:0.1em; text-transform:uppercase; }
+.shortlist-cell-val { font-size:9px; color:#c8d6e5; }
+.shortlist-cell-val.sl-accent { color:#00d4ff; }
+.shortlist-cell-val.sl-good { color:#4af7c4; }
+.shortlist-cell-val.sl-warn { color:#fb923c; }
+.shortlist-row-actions { display:flex; gap:4px; margin-top:6px; }
+/* ─── Phase 14: Scenario table ───────────────────────────────────────────────── */
+.eco-scenario-tbl { width:100%; border-collapse:collapse; font-size:9px; }
+.eco-scenario-tbl th { color:#4b5563; letter-spacing:0.1em; font-weight:normal; text-align:right; padding:2px 4px; border-bottom:1px solid #1a2235; }
+.eco-scenario-tbl th:first-child { text-align:left; }
+.eco-scenario-tbl td { text-align:right; padding:3px 4px; border-bottom:1px solid #0e1620; color:#c8d6e5; }
+.eco-scenario-tbl td:first-child { text-align:left; color:#6a8a9a; }
+.eco-scenario-tbl .scen-cons { color:#fb923c; }
+.eco-scenario-tbl .scen-base { color:#e5e7eb; }
+.eco-scenario-tbl .scen-opt  { color:#4af7c4; }
+/* ─── Phase 13: Split score mini-chips in inspector ─────────────────────────── */
+.split-chip { border:1px solid #1a2235; padding:3px 6px; min-width:60px; }
+.split-chip-label { font-size:7px; color:#4b5563; letter-spacing:0.1em; display:block; }
+.split-chip-val { font-size:10px; display:block; margin-top:1px; }
 </style>
 </head>
 <body>
@@ -1064,10 +1090,11 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     color:#4a5568;font-size:16px;cursor:pointer;font-family:'Space Mono',monospace;z-index:1;line-height:1"
     title="Close (Esc)">✕</button>
   <div id="panel-tabs">
-    <button class="tab-btn active" data-tab="inspector">◈ INSPECTOR</button>
-    <button class="tab-btn" data-tab="economics">$ ECONOMICS</button>
-    <button class="tab-btn" data-tab="materials">◆ MATERIALS</button>
-    <button class="tab-btn" data-tab="research">⬡ RESEARCH</button>
+    <button class="tab-btn active" data-tab="inspector">◈ INSP</button>
+    <button class="tab-btn" data-tab="economics">$ ECO</button>
+    <button class="tab-btn" data-tab="materials">◆ MAT</button>
+    <button class="tab-btn" data-tab="research">⬡ RES</button>
+    <button class="tab-btn" data-tab="shortlist">⊙ LIST</button>
   </div>
   <div id="tab-inspector" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;min-height:0">
   <div class="panel-header">◈ TARGET INSPECTOR</div>
@@ -1089,45 +1116,57 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div class="data-row" style="margin-top:8px"><span class="label">EPOCH</span><span class="value" id="sat-epoch">—</span></div>
   </div>
   <div id="panel-data" style="display:none; flex-direction:column; gap:0;">
+    <!-- ▣ TARGET -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:2px 0 4px">
+      <div class="panel-header" style="margin:0">◈ TARGET</div>
+      <button id="btn-pin-target" class="action-btn" style="font-size:9px;padding:3px 8px;margin:0;letter-spacing:0.1em">⊕ PIN</button>
+    </div>
     <div class="data-row"><span class="label">NAME</span><span class="value accent" id="ast-name">—</span></div>
     <div class="data-row"><span class="label">TYPE</span><span class="value" id="ast-type">—</span></div>
     <div class="data-row"><span class="label">DIAM</span><span class="value" id="ast-diam">—</span></div>
+
+    <!-- ◈ ACCESS -->
+    <div class="panel-header" style="margin-top:8px">◈ ACCESS</div>
     <div class="data-row"><span class="label">SMA</span><span class="value" id="ast-sma">—</span></div>
     <div class="data-row"><span class="label">ECC</span><span class="value" id="ast-ecc">—</span></div>
     <div class="data-row"><span class="label">INC</span><span class="value" id="ast-inc">—</span></div>
     <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="ast-dv">—</span><span class="unc-icon" id="ast-dv-icon" style="display:none">ⓘ</span></div>
     <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
+    <div class="data-row"><span class="label">TOF EST</span><span class="value" id="ast-tof">—</span></div>
+    <div class="data-row"><span class="label">PATHS</span><span class="value" id="ast-paths">—</span></div>
+    <div id="nhats-badge" style="display:none;margin:4px 0;padding:4px 8px;border:1px solid #fbbf24;color:#fbbf24;font-size:10px;letter-spacing:0.12em">
+      ◈ NHATS VERIFIED
+      <div id="nhats-details" style="color:#9ca3af;font-size:9px;margin-top:2px;line-height:1.7"></div>
+    </div>
+
+    <!-- ▶ MISSION -->
+    <div class="panel-header" style="margin-top:8px">▶ MISSION</div>
+    <div id="ast-score-block" style="margin:4px 0 6px;display:flex;flex-wrap:wrap;gap:4px"></div>
+    <div class="data-row"><span class="label">HAZARD</span><span class="value" id="ast-hazard">—</span></div>
+
+    <!-- $ ECONOMICS -->
+    <div class="panel-header" style="margin-top:8px">$ ECONOMICS</div>
+    <div class="data-row"><span class="label">VALUE RANGE</span><span class="value accent" id="ast-value-range">—</span></div>
+    <div class="data-row"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
+    <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
+
+    <!-- ◆ COMPOSITION -->
+    <div class="panel-header" style="margin-top:8px">◆ COMPOSITION</div>
+    <div id="ast-composition" style="font-size:10px;color:#6a8a9a;line-height:1.8;white-space:pre;margin-bottom:6px"></div>
+
+    <!-- ◆ EVIDENCE -->
+    <div class="panel-header">◆ EVIDENCE</div>
     <div class="data-row"><span class="label">LAST OBS</span><span class="value" id="ast-last-obs">—</span></div>
     <div class="data-row"><span class="label">COND CODE</span><span class="value" id="ast-cond-code">—</span></div>
     <div class="data-row"><span class="label">SOURCE</span><span class="value" id="ast-source">—</span></div>
     <div class="data-row"><span class="label">STATUS</span><span class="value" id="ast-status">—</span></div>
-    <div class="data-row" style="margin-top:8px"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
-    <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
 
-    <div class="panel-header" style="margin-top:10px">◆ COMPOSITION</div>
-    <div id="ast-composition" style="font-size:10px;color:#6a8a9a;line-height:1.8;white-space:pre;margin-bottom:8px"></div>
+    <!-- ∿ UNCERTAINTY -->
+    <div class="panel-header" style="margin-top:8px">∿ UNCERTAINTY</div>
+    <div class="data-row"><span class="label">ΔV UNC</span><span class="value" id="ast-dv-unc">—</span></div>
+    <div class="data-row"><span class="label">ORBIT UNC</span><span class="value" id="ast-orbit-unc">—</span></div>
 
-    <div class="panel-header">$ RESOURCE VALUE</div>
-    <div class="data-row"><span class="label">WATER (space)</span><span class="value accent" id="ast-water-val">—</span></div>
-    <div class="data-row"><span class="label">METALS</span><span class="value" id="ast-metal-val">—</span></div>
-    <div class="data-row"><span class="label">PAPER VALUE</span><span class="value profit" id="ast-total-val">—</span></div>
-    <div style="font-size:8px;color:#4b5563;letter-spacing:0.06em;padding:2px 0 4px;line-height:1.4">(spot price &times; mass, pre-market-discount)</div>
-    <div id="feasibility-card" style="display:none;margin:6px 0 10px;padding:6px 8px;
-      border:1px solid #1a2235;font-size:9px;line-height:1.8;color:#c8d6e5">
-      <div style="color:#00d4ff;font-size:8px;letter-spacing:0.1em;margin-bottom:3px">◈ FEASIBILITY</div>
-      <div id="fi-dv">ΔV: —</div>
-      <div id="fi-dur">TOF: —</div>
-      <div id="fi-access">PATHS: —</div>
-      <div id="fi-value">VALUE: —</div>
-      <div id="fi-hazard">HAZARD: —</div>
-    </div>
-
-    <div id="nhats-badge" style="display:none;margin:6px 0 4px;padding:5px 8px;border:1px solid #fbbf24;color:#fbbf24;font-size:10px;letter-spacing:0.12em">
-      ◈ NHATS VERIFIED
-      <div id="nhats-details" style="color:#9ca3af;font-size:9px;margin-top:3px;line-height:1.7"></div>
-    </div>
-
-    <div style="display:flex;gap:6px;margin-bottom:10px">
+    <div style="display:flex;gap:6px;margin:8px 0 6px">
       <a id="link-jpl" href="#" target="_blank" class="ext-link">JPL →</a>
       <a id="link-papers" href="#" target="_blank" class="ext-link">PAPERS →</a>
     </div>
@@ -1234,6 +1273,10 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <div class="data-row"><span class="label">REALIZABLE NPV</span><span class="value accent" id="eco-npv">—</span></div>
       <div class="data-row" style="margin-top:6px"><span class="label">ROI MULTIPLE</span><span class="value profit" id="eco-roi">—</span></div>
 
+      <div class="panel-header" style="margin-top:12px">◈ SCENARIOS</div>
+      <div style="font-size:8px;color:#4b5563;letter-spacing:0.06em;margin-bottom:6px">Conservative · Base · Optimistic extraction assumptions</div>
+      <div id="eco-scenario-table" style="width:100%"></div>
+
       <div id="eco-isru-note" style="display:none;border:1px solid #00d4ff;padding:8px;
         color:#00d4ff;font-size:10px;line-height:1.6;margin-top:10px"></div>
       <div id="eco-cost-warning" style="display:none;border:1px solid #7c3a00;padding:8px;
@@ -1274,6 +1317,20 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div id="research-content" style="display:none;font-size:10px;line-height:1.7;color:#d1d5db"></div>
     <div id="research-meta" style="display:none;margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px"></div>
   </div><!-- /tab-research -->
+
+  <div id="tab-shortlist" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px;border-bottom:1px solid #1a2235;margin-bottom:8px">
+      <div class="panel-header" style="margin:0">⊙ SHORTLIST</div>
+      <button id="btn-clear-shortlist" class="action-btn" style="font-size:9px;padding:3px 8px;margin:0">✕ CLEAR</button>
+    </div>
+    <div id="shortlist-empty" style="color:#4b5563;font-size:11px;padding:8px;text-align:center;line-height:1.7">
+      PIN TARGETS FROM THE<br>INSPECTOR TO COMPARE
+    </div>
+    <div id="shortlist-content" style="display:none">
+      <div id="shortlist-count" style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:6px"></div>
+      <div id="shortlist-table" style="overflow-x:auto"></div>
+    </div>
+  </div><!-- /tab-shortlist -->
 
 <div id="mission-planner" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
 
@@ -1920,6 +1977,169 @@ function computeMissionCost(pointCost, dvUnc) {
   if (!(Number.isFinite(pointCost) && pointCost >= 0)) return { point: null, low: null, high: null };
   const margin = (dvUnc || 0) > 1.0 ? 0.25 : 0.15;
   return { point: pointCost, low: pointCost * (1 - margin), high: pointCost * (1 + margin) };
+}
+
+// ─── Phase 13+14: Split score ─────────────────────────────────────────────────
+// Returns {access, economics, dataConf, opRisk} each 0–100.
+function computeSplitScore(ast, fi) {
+  if (!fi) fi = computeFeasibilityMetrics(ast);
+
+  // ACCESS — based on ΔV and NHATS verification
+  const dv = fi.deltaV.value;
+  let access = null;
+  if (Number.isFinite(dv)) {
+    // Score: 100 at 3 km/s, 0 at 12+ km/s
+    access = Math.max(0, Math.min(100, Math.round(100 - (dv - 3) * 11)));
+    if (fi.accessibility.nhatsVerified) access = Math.min(100, access + 10);
+  }
+
+  // ECONOMICS — based on value range relative to expected cost
+  const valHi = fi.valueRange.optimistic;
+  let economics = null;
+  if (valHi !== null && Number.isFinite(valHi)) {
+    // Score: log-scale, $100M=20, $1B=50, $10B=75, $100B=90
+    economics = Math.max(0, Math.min(100, Math.round(Math.log10(Math.max(valHi, 1e6)) * 16 - 64)));
+  }
+
+  // DATA CONFIDENCE — based on condition code and source
+  let dataConf = null;
+  const cc = ast.condition_code !== null && ast.condition_code !== undefined ? Number(ast.condition_code) : null;
+  const hasSpec = !!(ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy);
+  const hasDiam = !!ast.diameter;
+  const hasMoid = Number.isFinite(Number(ast.moid));
+  let confBase = 50;
+  if (cc !== null) confBase = Math.max(10, 100 - cc * 12);
+  if (hasSpec) confBase += 10;
+  if (hasDiam) confBase += 10;
+  if (hasMoid) confBase += 5;
+  if (fi.accessibility.nhatsVerified) confBase += 10;
+  if (fi.deltaV.method === 'nhats') confBase += 5;
+  dataConf = Math.max(0, Math.min(100, Math.round(confBase)));
+
+  // OPERATIONAL RISK — based on hazard, dv, mass uncertainty
+  let opRisk = 30; // base risk
+  if (fi.hazard.riskLevel === 'high') opRisk += 30;
+  if (dv > 8) opRisk += 20;
+  else if (dv > 6) opRisk += 10;
+  if (!hasDiam) opRisk += 15; // unknown mass = big ops risk
+  if (fi.deltaV.uncertainty > 1) opRisk += 10;
+  opRisk = Math.max(0, Math.min(100, Math.round(opRisk)));
+
+  return { access, economics, dataConf, opRisk };
+}
+
+// Phase 14: scenario economics — conservative / base / optimistic
+function computeScenarioEconomics(ast) {
+  const fi = computeFeasibilityMetrics(ast);
+  const dv = fi.deltaV.value;
+  const scenarios = [
+    { label: 'Conservative', extractFrac: 0.02, launchCost: 5000, totalMult: 2.2, clsSuffix: 'cons' },
+    { label: 'Base',         extractFrac: 0.05, launchCost: 2700, totalMult: 1.8, clsSuffix: 'base' },
+    { label: 'Optimistic',   extractFrac: 0.15, launchCost: 1500, totalMult: 1.4, clsSuffix: 'opt'  },
+  ];
+  return scenarios.map(s => {
+    const eco = computeEconomicsSummary(ast, {
+      dv,
+      extractionFraction: s.extractFrac,
+      launchCostPerKg: s.launchCost,
+      totalCostMultiplier: s.totalMult,
+    });
+    return {
+      label: s.label,
+      clsSuffix: s.clsSuffix,
+      cost: eco.totalCostUsd,
+      npv: eco.realizableNpvUsd,
+      roi: eco.roiMultiple,
+    };
+  });
+}
+
+// Phase 13: shortlist rendering
+function renderShortlistTab() {
+  const empty = document.getElementById('shortlist-empty');
+  const content = document.getElementById('shortlist-content');
+  const countEl = document.getElementById('shortlist-count');
+  const tableEl = document.getElementById('shortlist-table');
+  if (!empty || !content || !tableEl) return;
+  if (pinnedTargets.length === 0) {
+    empty.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  content.style.display = 'block';
+  countEl.textContent = `${pinnedTargets.length} / 5 PINNED`;
+
+  const rows = pinnedTargets.map(idx => {
+    const ast = asteroidData[idx];
+    if (!ast) return '';
+    const astName = (ast.full_name || ast.pdes || '—').substring(0, 22);
+    const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '?').trim();
+    const diam = ast.diameter ? `${Number(ast.diameter).toFixed(1)}km` : (ast.H ? `~${(1329/Math.sqrt(0.15)*Math.pow(10,-ast.H/5)).toFixed(0)}km?` : '—');
+    const fi = computeFeasibilityMetrics(ast);
+    const dv = fi.deltaV.value;
+    const moid = Number.isFinite(Number(ast.moid)) ? Number(ast.moid).toFixed(3) : '—';
+    const valHi = fi.valueRange.optimistic;
+    const valDisp = valHi !== null ? fmtUSD(valHi) : '—';
+    const econ = computeEconomicsSummary(ast, { dv });
+    const npvDisp = econ.realizableNpvUsd !== null ? fmtUSD(econ.realizableNpvUsd) : '—';
+    const split = computeSplitScore(ast, fi);
+    const accessCls = split.access !== null && split.access >= 70 ? 'sl-good' : split.access !== null && split.access >= 40 ? '' : 'sl-warn';
+    const isSelected = selectedId === idx;
+    return `<div class="shortlist-row${isSelected ? '" style="border-color:#00d4ff' : ''}">
+      <div class="shortlist-row-name">${astName}</div>
+      <div class="shortlist-grid">
+        <div class="shortlist-cell"><span class="shortlist-cell-label">TYPE</span><span class="shortlist-cell-val">${spec}</span></div>
+        <div class="shortlist-cell"><span class="shortlist-cell-label">DIAM</span><span class="shortlist-cell-val">${diam}</span></div>
+        <div class="shortlist-cell"><span class="shortlist-cell-label">ΔV</span><span class="shortlist-cell-val ${accessCls}">${dv.toFixed(1)} km/s</span></div>
+        <div class="shortlist-cell"><span class="shortlist-cell-label">MOID</span><span class="shortlist-cell-val">${moid} AU</span></div>
+        <div class="shortlist-cell"><span class="shortlist-cell-label">ACCESS</span><span class="shortlist-cell-val ${accessCls}">${split.access ?? '—'}</span></div>
+        <div class="shortlist-cell"><span class="shortlist-cell-label">DATA CONF</span><span class="shortlist-cell-val">${split.dataConf ?? '—'}</span></div>
+        <div class="shortlist-cell"><span class="shortlist-cell-label">VALUE HI</span><span class="shortlist-cell-val sl-accent">${valDisp}</span></div>
+        <div class="shortlist-cell"><span class="shortlist-cell-label">NPV</span><span class="shortlist-cell-val sl-accent">${npvDisp}</span></div>
+      </div>
+      <div class="shortlist-row-actions">
+        <button class="action-btn" style="font-size:9px;padding:3px 8px" onclick="selectAsteroid(${idx});document.querySelector('.tab-btn[data-tab=\\'inspector\\']').click()">SELECT</button>
+        <button class="action-btn danger" style="font-size:9px;padding:3px 8px" onclick="unpinTarget(${idx})">UNPIN</button>
+      </div>
+    </div>`;
+  }).join('');
+  tableEl.innerHTML = rows;
+}
+
+function togglePin(id) {
+  const idx = pinnedTargets.indexOf(id);
+  if (idx >= 0) {
+    pinnedTargets.splice(idx, 1);
+  } else {
+    if (pinnedTargets.length >= 5) {
+      setStatus('Shortlist full (max 5). Unpin a target first.', true);
+      return;
+    }
+    pinnedTargets.push(id);
+  }
+  // Update pin button if this is the selected asteroid
+  if (selectedId === id) {
+    const pinBtn = document.getElementById('btn-pin-target');
+    if (pinBtn) {
+      const isPinned = pinnedTargets.includes(id);
+      pinBtn.textContent = isPinned ? '✓ PINNED' : '⊕ PIN';
+      pinBtn.classList.toggle('pinned', isPinned);
+    }
+  }
+  // Re-render shortlist if visible
+  const shortlistTab = document.getElementById('tab-shortlist');
+  if (shortlistTab && shortlistTab.style.display !== 'none') renderShortlistTab();
+}
+
+function unpinTarget(id) {
+  const idx = pinnedTargets.indexOf(id);
+  if (idx >= 0) pinnedTargets.splice(idx, 1);
+  if (selectedId === id) {
+    const pinBtn = document.getElementById('btn-pin-target');
+    if (pinBtn) { pinBtn.textContent = '⊕ PIN'; pinBtn.classList.remove('pinned'); }
+  }
+  renderShortlistTab();
 }
 
 // ─── Phase 10: Spectral-type based asteroid colors ────────────────────────────
@@ -4254,6 +4474,36 @@ function renderEconomicsTab(id) {
   } else {
     isruNote.style.display = 'none';
   }
+
+  // Phase 14: scenario table
+  const scenTableEl = document.getElementById('eco-scenario-table');
+  if (scenTableEl) {
+    const scenarios = computeScenarioEconomics(ast);
+    const fmtROI = roi => roi === null ? '—' : roi > 1e6 ? '>1M×' : `${roi.toFixed(0)}×`;
+    const roiCls = roi => roi === null ? '' : roi > 10 ? ' scen-opt' : roi > 1 ? '' : ' scen-cons';
+    scenTableEl.innerHTML = `<table class="eco-scenario-tbl">
+      <thead><tr>
+        <th>SCENARIO</th>
+        <th class="scen-cons">CONS</th>
+        <th class="scen-base">BASE</th>
+        <th class="scen-opt">OPT</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>Total Cost</td>
+          ${scenarios.map(s => `<td class="scen-${s.clsSuffix}">${s.cost !== null ? fmtUSD(s.cost) : '—'}</td>`).join('')}
+        </tr>
+        <tr>
+          <td>Realiz. NPV</td>
+          ${scenarios.map(s => `<td class="scen-${s.clsSuffix}">${s.npv !== null ? fmtUSD(s.npv) : '—'}</td>`).join('')}
+        </tr>
+        <tr>
+          <td>ROI Multiple</td>
+          ${scenarios.map(s => `<td class="${roiCls(s.roi)}">${fmtROI(s.roi)}</td>`).join('')}
+        </tr>
+      </tbody>
+    </table>`;
+  }
 }
 
 function renderMaterialsTab(id) {
@@ -4770,9 +5020,11 @@ function onSatelliteSelect(idx) {
     document.getElementById('tab-economics').style.display  = tab === 'economics'  ? 'block' : 'none';
     document.getElementById('tab-materials').style.display  = tab === 'materials'  ? 'block' : 'none';
     document.getElementById('tab-research').style.display   = tab === 'research'   ? 'block' : 'none';
+    document.getElementById('tab-shortlist').style.display  = tab === 'shortlist'  ? 'block' : 'none';
     if (tab === 'economics' && selectedId >= 0) renderEconomicsTab(selectedId);
     if (tab === 'materials' && selectedId >= 0) renderMaterialsTab(selectedId);
     if (tab === 'research'  && selectedId >= 0) { const ast = asteroidData[selectedId]; if (ast) fetchResearch(ast); }
+    if (tab === 'shortlist') renderShortlistTab();
   });
 
   ['eco-dry-mass','eco-isp'].forEach(id => {
@@ -5014,7 +5266,7 @@ function openMissionPlanner(id) {
   rp.classList.add('panel-open', 'mp-mode');
   document.getElementById('panel-tabs').style.display = 'none';
   document.getElementById('btn-close-panel').style.display = 'none';
-  ['tab-inspector','tab-economics','tab-materials','tab-research'].forEach(t => {
+  ['tab-inspector','tab-economics','tab-materials','tab-research','tab-shortlist'].forEach(t => {
     const el = document.getElementById(t); if (el) el.style.display = 'none';
   });
   document.getElementById('mission-planner').style.display = 'flex';
@@ -6797,6 +7049,19 @@ document.getElementById('btn-shortcuts-toolbar').addEventListener('click', () =>
 });
 document.getElementById('btn-close-panel').addEventListener('click', deselectAsteroid);
 
+// ─── Phase 13: Shortlist / pin wiring ────────────────────────────────────────
+document.getElementById('btn-pin-target').addEventListener('click', () => {
+  if (selectedId >= 0) togglePin(selectedId);
+});
+document.getElementById('btn-clear-shortlist').addEventListener('click', () => {
+  pinnedTargets = [];
+  if (selectedId >= 0) {
+    const pinBtn = document.getElementById('btn-pin-target');
+    if (pinBtn) { pinBtn.textContent = '⊕ PIN'; pinBtn.classList.remove('pinned'); }
+  }
+  renderShortlistTab();
+});
+
 // ─── Phase 5: Onboarding Tour ─────────────────────────────────────────────────
 const TOUR_STEPS = [
   { text: 'Welcome to ASTER — the asteroid mining mission planner. This 5-step tour shows you the key features.', pos: { bottom: '80px', left: '50%', transform: 'translateX(-50%)' } },
@@ -6839,6 +7104,7 @@ const raycaster = new THREE.Raycaster();
 raycaster.params.Points = { threshold: 0.05 };
 let selectedId = -1;
 let selectedAsteroidKey = null;
+let pinnedTargets = []; // array of asteroid indices, max 5
 
 function getSelectedAsteroid() {
   if (selectedId >= 0 && asteroidData[selectedId]) {
@@ -6890,9 +7156,12 @@ function selectAsteroid(id) {
   const diam = ast.diameter ? `${Number(ast.diameter).toFixed(2)} km`
     : (ast.H ? `~${(1329 / Math.sqrt(0.15) * Math.pow(10, -ast.H / 5)).toFixed(1)} km (est)` : '—');
 
+  // ── TARGET section ──
   document.getElementById('ast-name').textContent = name;
   document.getElementById('ast-type').textContent = spec;
   document.getElementById('ast-diam').textContent = diam;
+
+  // ── ACCESS section ──
   document.getElementById('ast-sma').textContent = Number.isFinite(Number(ast.a)) ? `${Number(ast.a).toFixed(4)} AU` : '—';
   document.getElementById('ast-ecc').textContent = Number.isFinite(Number(ast.e)) ? Number(ast.e).toFixed(5) : '—';
   document.getElementById('ast-inc').textContent = Number.isFinite(Number(ast.i)) ? `${Number(ast.i).toFixed(3)}°` : '—';
@@ -6907,73 +7176,78 @@ function selectAsteroid(id) {
     dvIcon.onmouseleave = () => hideUncPopup(300);
   }
   document.getElementById('ast-moid').textContent = Number.isFinite(Number(ast.moid)) ? `${Number(ast.moid).toFixed(4)} AU` : '—';
-  document.getElementById('ast-last-obs').textContent = ast.last_obs || 'unknown';
-  document.getElementById('ast-cond-code').textContent = ast.condition_code !== null && ast.condition_code !== undefined ? String(ast.condition_code) : 'unknown';
-  const provenance = getAsteroidProvenanceSummary(ast);
-  document.getElementById('ast-source').textContent = provenance.source || '—';
-  document.getElementById('ast-status').textContent = provenance.status || '—';
-  // Phase 3: composition + resource value + score
-  const spec3 = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
-  const mappedSpec = getMatSpec(ast);
-  const compText = COMPOSITIONS[spec3]
-    || (mappedSpec ? COMPOSITIONS[mappedSpec] : null)
-    || ((ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy) ? 'Composition model not available' : 'No composition data');
-  document.getElementById('ast-composition').textContent = compText;
+  document.getElementById('ast-tof').textContent = `${Math.round(fi_early.duration.value)} days [${fi_early.duration.source}]`;
+  const accDisp = fi_early.accessibility.nhatsVerified
+    ? `✓ ${fi_early.accessibility.trajectoryCount} NHATS${hasNhatsPlannerMismatch(ast) ? ' (>10km/s)' : ''}`
+    : 'Not in NHATS';
+  document.getElementById('ast-paths').textContent = accDisp;
 
-  const prices3 = getActivePrices();
+  // ── MISSION section — split score chips ──
+  const splitScore = computeSplitScore(ast, fi_early);
+  const scoreBlock = document.getElementById('ast-score-block');
+  if (scoreBlock) {
+    scoreBlock.innerHTML = [
+      { label: 'ACCESS', val: splitScore.access },
+      { label: 'ECON',   val: splitScore.economics },
+      { label: 'DATA',   val: splitScore.dataConf },
+      { label: 'RISK',   val: splitScore.opRisk, invert: true },
+    ].map(({ label, val, invert }) => {
+      const cls = val === null ? 'score-neutral'
+        : (invert ? (val < 30 ? 'score-pos' : val < 60 ? 'score-neg' : 'score-bad')
+                  : (val >= 70 ? 'score-pos' : val >= 40 ? 'score-neg' : 'score-bad'));
+      const display = val === null ? '—' : `${Math.round(val)}`;
+      return `<div class="split-chip"><span class="split-chip-label">${label}</span><span class="split-chip-val ${cls}">${display}</span></div>`;
+    }).join('');
+  }
+  const valLo_fi = fi_early.valueRange.conservative, valHi_fi = fi_early.valueRange.optimistic;
+  const hazDisp = fi_early.hazard.riskLevel === 'high' ? '⚠ PHA (high)'
+                : fi_early.hazard.riskLevel === 'low'  ? `Low (MOID ${fi_early.hazard.moid?.toFixed(3)} AU)`
+                : fi_early.hazard.riskLevel === 'unknown' ? 'unknown'
+                : fi_early.hazard.moid !== null          ? `None (MOID ${fi_early.hazard.moid?.toFixed(3)} AU)`
+                : 'None';
+  document.getElementById('ast-hazard').textContent = hazDisp;
+
+  // ── ECONOMICS section ──
+  const valDisp = valHi_fi !== null ? `${fmtUSD(valLo_fi)} – ${fmtUSD(valHi_fi)}` : 'unknown';
+  document.getElementById('ast-value-range').textContent = valDisp;
   const econ3 = resolveAsteroidEconomics(ast);
-  const massModel3 = econ3.massModel;
-  const spec3g   = mappedSpec;
-  const comp3    = spec3g ? MAT_COMP[spec3g] : null;
-  let revPerKg3  = 0;
-  if (comp3) MAT_KEYS.forEach(k => { revPerKg3 += (comp3[k] / 100) * (prices3[k] || 0); });
-  const mass3    = massModel3 && comp3 ? massModel3.massKg : null;
-  const totalVal3 = mass3 !== null ? mass3 * revPerKg3 : null;
-
   const displayPrice  = econ3.extractableValueUsd;
   const displayProfit = econ3.rawProfitUsd;
   document.getElementById('ast-price').textContent  = formatValueDisplay(displayPrice, { extractionLabel: true });
   document.getElementById('ast-profit').textContent = formatValueDisplay(displayProfit);
 
-  // Derive water/metal sub-values from the same MAT_COMP+prices system used for totalVal3
-  let waterVal3 = null, metalVal3 = null;
-  if (comp3 && mass3 !== null) {
-    waterVal3 = 0;
-    metalVal3 = 0;
-    const waterKeys = ['water'];
-    const metalKeys = ['iron','nickel','cobalt','platinum','gold','silver','copper'];
-    waterKeys.forEach(k => { waterVal3 += mass3 * (comp3[k] || 0) / 100 * (prices3[k] || 0); });
-    metalKeys.forEach(k => { metalVal3 += mass3 * (comp3[k] || 0) / 100 * (prices3[k] || 0); });
-  }
+  // ── COMPOSITION section ──
+  const mappedSpec = getMatSpec(ast);
+  const spec3 = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
+  const compText = COMPOSITIONS[spec3]
+    || (mappedSpec ? COMPOSITIONS[mappedSpec] : null)
+    || ((ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy) ? 'Composition model not available' : 'No composition data');
+  document.getElementById('ast-composition').textContent = compText;
 
-  document.getElementById('ast-water-val').textContent = formatValueDisplay(waterVal3);
-  document.getElementById('ast-metal-val').textContent = formatValueDisplay(metalVal3);
-  document.getElementById('ast-total-val').textContent = formatValueDisplay(totalVal3);
-  const fi = fi_early; // reuse already-computed metrics
-  const dvDisp  = `${fi.deltaV.value.toFixed(2)} km/s (±${fi.deltaV.uncertainty})`;
-  const durDisp = `${Math.round(fi.duration.value)} days  [${fi.duration.source}]`;
-  const accDisp = fi.accessibility.nhatsVerified
-    ? `✓ ${fi.accessibility.trajectoryCount} NHATS trajectories${hasNhatsPlannerMismatch(ast) ? ' · exceeds 10 km/s planner gate' : ''}`
-    : 'Not in NHATS catalog';
-  const valLo_fi = fi.valueRange.conservative, valHi_fi = fi.valueRange.optimistic;
-  const valDisp = valHi_fi !== null ? `${fmtUSD(valLo_fi)} – ${fmtUSD(valHi_fi)}` : 'unknown';
-  const hazDisp = fi.hazard.riskLevel === 'high' ? '⚠ PHA (high)'
-                : fi.hazard.riskLevel === 'low'  ? `Low (MOID ${fi.hazard.moid?.toFixed(3)} AU)`
-                : fi.hazard.riskLevel === 'unknown' ? 'unknown'
-                : fi.hazard.moid !== null          ? `None (MOID ${fi.hazard.moid?.toFixed(3)} AU)`
-                : 'None';
-  const fiDvEl = document.getElementById('fi-dv');
-  fiDvEl.innerHTML = `ΔV: ${dvDisp} [${fi.deltaV.source}] <span class="unc-icon" id="fi-dv-icon">ⓘ</span>`;
-  const fiDvIcon = document.getElementById('fi-dv-icon');
-  if (fiDvIcon) {
-    fiDvIcon.onclick = e => { e.stopPropagation(); showUncPopup(fiDvIcon, dvUncHtml(fi)); };
-    fiDvIcon.onmouseleave = () => hideUncPopup(300);
+  // ── EVIDENCE section ──
+  document.getElementById('ast-last-obs').textContent = ast.last_obs || 'unknown';
+  document.getElementById('ast-cond-code').textContent = ast.condition_code !== null && ast.condition_code !== undefined ? String(ast.condition_code) : 'unknown';
+  const provenance = getAsteroidProvenanceSummary(ast);
+  document.getElementById('ast-source').textContent = provenance.source || '—';
+  document.getElementById('ast-status').textContent = provenance.status || '—';
+
+  // ── UNCERTAINTY section ──
+  const uncLabel = dv_unc >= 2 ? 'HIGH (heuristic)' : dv_unc >= 0.5 ? 'MEDIUM' : 'LOW (NHATS)';
+  document.getElementById('ast-dv-unc').textContent = `±${dv_unc} km/s  [${uncLabel}]`;
+  const cc = ast.condition_code !== null && ast.condition_code !== undefined ? Number(ast.condition_code) : null;
+  const orbitUncLabel = cc === null ? 'unknown'
+    : cc <= 1 ? `${cc} — well-determined`
+    : cc <= 4 ? `${cc} — moderate`
+    : `${cc} — poor`;
+  document.getElementById('ast-orbit-unc').textContent = orbitUncLabel;
+
+  // ── PIN button state ──
+  const pinBtn = document.getElementById('btn-pin-target');
+  if (pinBtn) {
+    const isPinned = pinnedTargets.includes(id);
+    pinBtn.textContent = isPinned ? '✓ PINNED' : '⊕ PIN';
+    pinBtn.classList.toggle('pinned', isPinned);
   }
-  document.getElementById('fi-dur').textContent    = 'TOF: ' + durDisp;
-  document.getElementById('fi-access').textContent = 'PATHS: ' + accDisp;
-  document.getElementById('fi-value').textContent  = 'VALUE: ' + valDisp;
-  document.getElementById('fi-hazard').textContent = 'HAZARD: ' + hazDisp;
-  document.getElementById('feasibility-card').style.display = 'block';
 
   const nhatsBadge = document.getElementById('nhats-badge');
   if (ast.nhats?.accessible) {
@@ -7013,6 +7287,9 @@ function selectAsteroid(id) {
   if (activeTab && activeTab.dataset.tab === 'materials') {
     renderMaterialsTab(id);
   }
+  if (activeTab && activeTab.dataset.tab === 'shortlist') {
+    renderShortlistTab();
+  }
 
   renderLeaderboard();
   drawOrbitEllipse(ast);
@@ -7046,7 +7323,8 @@ function deselectAsteroid() {
   document.getElementById('right-panel').classList.remove('panel-open');
   document.getElementById('panel-idle').style.display = 'block';
   document.getElementById('panel-data').style.display = 'none';
-  const fc = document.getElementById('feasibility-card'); if (fc) fc.style.display = 'none';
+  const pinBtn = document.getElementById('btn-pin-target');
+  if (pinBtn) { pinBtn.textContent = '⊕ PIN'; pinBtn.classList.remove('pinned'); }
   clearTrail();
   orbitLine.visible = false;
   nhatsRing.visible = false;

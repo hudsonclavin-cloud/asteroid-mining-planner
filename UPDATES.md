@@ -801,3 +801,48 @@ Stabilized Capture & Redirect after the recent animation/visual passes by fixing
 ### Result
 - Capture & Redirect is materially more reliable under repeated reruns, mode switches, and playback restarts.
 - Redirect visuals and playback now reflect the solved planner output more closely instead of mixing stale state, fake outbound geometry, and hardcoded lunar cues.
+
+---
+
+## Phase 13 — Decision UI Redesign + Shortlist/Compare (2026-04-15)
+
+### Summary
+Restructured the right-side inspector panel into a clear information hierarchy without changing its footprint. Added a shortlist system to pin and compare up to 5 targets side by side. Added split mission scoring as four independent metrics.
+
+### Changes
+**`index.html`** — inspector restructure:
+- Reorganized `#panel-data` into labeled sections: TARGET → ACCESS → MISSION → ECONOMICS → COMPOSITION → EVIDENCE → UNCERTAINTY
+- Replaced the old flat field list + hidden `#feasibility-card` with direct data rows: TOF EST, PATHS, HAZARD, VALUE RANGE, ΔV UNC, ORBIT UNC
+- Added `⊕ PIN` button in the TARGET section header
+- Abbreviated tab labels to fit the new SHORTLIST tab: INSP / ECO / MAT / RES / LIST
+
+**`index.html`** — shortlist (Phase 13):
+- Added `⊙ LIST` tab and `#tab-shortlist` panel
+- `pinnedTargets[]` state (max 5 per session)
+- `togglePin(id)` / `unpinTarget(id)` functions
+- `renderShortlistTab()` renders a card-per-target grid showing: TYPE, DIAM, ΔV, MOID, ACCESS score, DATA CONF, VALUE HI, NPV
+- SELECT and UNPIN buttons per card; CLEAR ALL button in header
+- Pin state syncs to the inspector tab button (PINNED / PIN)
+
+**`index.html`** — split score chips (Phase 13):
+- Added `computeSplitScore(ast, fi)` returning `{access, economics, dataConf, opRisk}` each 0–100
+- Renders as four mini-chips in the MISSION section of the inspector
+
+---
+
+## Phase 14 — Scenario Economics + Split Scoring (2026-04-15)
+
+### Summary
+Replaced the single-point economics view with a Conservative / Base / Optimistic scenario stack in the Economics tab. Added `computeScenarioEconomics()` with differentiated cost and extraction assumptions per scenario.
+
+### Changes
+**`index.html`** — scenario economics:
+- Added `computeScenarioEconomics(ast)` returning three scenarios with extraction fractions (2% / 5% / 15%) and launch costs ($5k / $2.7k / $1.5k per kg)
+- Each scenario shows Total Cost, Realizable NPV, ROI Multiple
+- Rendered as an inline table in the SCENARIOS section of the Economics tab
+
+### Result
+- The inspector now reads: Target → Access → Mission → Economics → Evidence → Uncertainty
+- Users can pin 3–5 targets and compare accessibility, ΔV, value, and NPV side by side
+- The economics tab shows screening-grade Conservative / Base / Optimistic cases instead of one headline number
+- Mission scoring exposes four sub-components so users can see what drives a target's rank
