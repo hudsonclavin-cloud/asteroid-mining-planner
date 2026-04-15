@@ -2676,14 +2676,14 @@ scene.add(new THREE.Mesh(
 
 // ─── Planets ──────────────────────────────────────────────────────────────────
 const PLANET_CONFIGS = [
-  { name: 'Mercury', color: 0xb5b5b5, r: 0.018 },
-  { name: 'Venus',   color: 0xe8cda0, r: 0.022 },
-  { name: 'Earth',   color: 0x1a6b9e, r: 0.022 },
-  { name: 'Mars',    color: 0xc1440e, r: 0.020 },
-  { name: 'Jupiter', color: 0xc88b3a, r: 0.040 },
-  { name: 'Saturn',  color: 0xe4d191, r: 0.035 },
-  { name: 'Uranus',  color: 0x7de8e8, r: 0.030 },
-  { name: 'Neptune', color: 0x5b6fcd, r: 0.028 },
+  { name: 'Mercury', color: 0xb5b5b5, r: 0.0084 },
+  { name: 'Venus',   color: 0xe8cda0, r: 0.0209 },
+  { name: 'Earth',   color: 0x1a6b9e, r: 0.022  },
+  { name: 'Mars',    color: 0xc1440e, r: 0.0117 },
+  { name: 'Jupiter', color: 0xc88b3a, r: 0.2468 },
+  { name: 'Saturn',  color: 0xe4d191, r: 0.2081 },
+  { name: 'Uranus',  color: 0x7de8e8, r: 0.0882 },
+  { name: 'Neptune', color: 0x5b6fcd, r: 0.0856 },
 ];
 
 const PLANET_VISUALS = {
@@ -2763,7 +2763,7 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
   scene.add(mesh);
   if (cfg.name === 'Saturn') {
     const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(0.07, 0.018, 2, 64),
+      new THREE.TorusGeometry(0.333, 0.083, 2, 64),
       new THREE.MeshPhongMaterial({ color: 0xd4c47a, transparent: true, opacity: 0.6, side: THREE.DoubleSide, shininess: 8 })
     );
     ring.rotation.x = Math.PI / 2.5;
@@ -2774,10 +2774,23 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
 
 // ─── Moon ─────────────────────────────────────────────────────────────────────
 const moonMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.0015, 8, 8),
+  new THREE.SphereGeometry(0.006, 8, 8),
   new THREE.MeshBasicMaterial({ color: 0x888888 })
 );
 scene.add(moonMesh);
+
+// Moon orbit ring — drawn at MOON_VISUAL_A radius around Earth
+const MOON_ORBIT_RING_PTS = [];
+for (let j = 0; j <= 128; j++) {
+  const a = (j / 128) * Math.PI * 2;
+  MOON_ORBIT_RING_PTS.push(new THREE.Vector3(Math.cos(a) * 0.11, 0, Math.sin(a) * 0.11));
+}
+const moonOrbitGeo = new THREE.BufferGeometry().setFromPoints(MOON_ORBIT_RING_PTS);
+const moonOrbitLine = new THREE.Line(
+  moonOrbitGeo,
+  new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.45 })
+);
+scene.add(moonOrbitLine);
 
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
 const planetOrbitGroup = new THREE.Group();
@@ -8673,11 +8686,11 @@ function setStatus(msg, autoFade) {
 
 // ─── Animation Loop ───────────────────────────────────────────────────────────
 function updateMoonPosition(jd) {
-  const MOON_A = 0.00257;       // AU
+  const MOON_VISUAL_A = 0.11;   // visual orbit radius (scene units) — ~5× Earth visual radius
   const MOON_PERIOD = 27.32;    // days
   const angle = (TWO_PI / MOON_PERIOD) * (jd - J2000);
-  const ep = planets[2].position; // Earth is index 2
-  moonMesh.position.set(ep.x + MOON_A * Math.cos(angle), ep.y + MOON_A * Math.sin(angle), ep.z);
+  const ep = planets[2].position;
+  moonMesh.position.set(ep.x + MOON_VISUAL_A * Math.cos(angle), ep.y, ep.z + MOON_VISUAL_A * Math.sin(angle));
 }
 
 function applyPositions(buf) {
@@ -8685,6 +8698,9 @@ function applyPositions(buf) {
     planets[i].position.set(buf[i*3], buf[i*3+1], buf[i*3+2]);
   }
   updateMoonPosition(currentJD);
+  if (moonOrbitLine && planets[2]) {
+    moonOrbitLine.position.copy(planets[2].position);
+  }
   if (asteroidMesh && asteroidCount > 0) {
     const base = 24;
     for (let i = 0; i < asteroidCount; i++) {
