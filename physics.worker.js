@@ -652,15 +652,14 @@ function izzoLambert(r1v, r2v, tof_days, direction) {
 
 function _izzTofDerivs(x, lam) {
   // Elliptic Lancaster-Blanchard TOF (Izzo 2015, Eq. 9) + derivatives
+  // T(x) = (acos(x) + λx·sqrt(1-x²)) / (1-x²)
   const x2 = x * x;
   const omx2 = 1 - x2;
   if (omx2 < 1e-14) return { T: 1e30, dT: 0, d2T: 0, d3T: 0 };
-  const inner = Math.max(0, 1 - lam * lam * omx2);
-  const sqrtInner = Math.sqrt(inner);
-  const b = lam * x;
-  const T  = (Math.acos(x) + b * sqrtInner) / omx2;
+  const sqrtOmx2 = Math.sqrt(omx2);
+  const T  = (Math.acos(x) + lam * x * sqrtOmx2) / omx2;
   if (!isFinite(T)) return { T: 1e30, dT: 0, d2T: 0, d3T: 0 };
-  const q  = (sqrtInner > 1e-14) ? b / sqrtInner : 0;
+  const q  = (sqrtOmx2 > 1e-14) ? (lam * x) / sqrtOmx2 : 0;
   const dT  = (1 - q * T) / omx2;
   const d2T = (2 * dT - q * dT * T + lam * lam) * (-x) / omx2;
   const d3T = (3 * d2T * x - 2 * dT + q * (T + T)) / omx2;
