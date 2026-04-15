@@ -194,7 +194,7 @@ function normalizeAsterankRow(row) {
   const epoch = parseEpochJD(row.epoch);
   if (a === null || e === null || e < 0 || e >= 1 || epoch === null) return null;
   const diameterInfo = resolveDiameterKm(row);
-  const specRaw = String(row.spec || row.spec_T || '').trim();
+  const specRaw = String(row.spec_B || row.spec_T || row.spec || '').trim();
   const rawPrice = resolveWholeBodyCatalogValueUsd(row);
   const rawProfit = parsePositiveOrNull(row.profit);
   const rawDv = parsePositiveOrNull(row.delta_v ?? row.dv);
@@ -208,16 +208,22 @@ function normalizeAsterankRow(row) {
     else if (q < 1.017) astClass = 'APO';
     else astClass = 'AMO';
   }
+  const i_val  = parseFiniteOrNull(row.i);
+  const om_val = parseFiniteOrNull(row.om);
+  const w_val  = parseFiniteOrNull(row.w);
+  const ma_val = parseFiniteOrNull(row.ma);
+  if (i_val === null || om_val === null || w_val === null || ma_val === null) return null;
   const moid = parseFiniteOrNull(row.moid);
-  const conditionCode = parseFiniteOrNull(row.condition_code);
+  const condCode = parseFiniteOrNull(row.condition_code);
+  const orbitUncertain = condCode !== null && condCode >= 6;
   return {
     spkid: row.spkid ? String(row.spkid).trim() : null,
     a,
     e,
-    i: parseFiniteOrNull(row.i) || 0,
-    om: parseFiniteOrNull(row.om) || 0,
-    w: parseFiniteOrNull(row.w) || 0,
-    ma: parseFiniteOrNull(row.ma) || 0,
+    i: i_val,
+    om: om_val,
+    w: w_val,
+    ma: ma_val,
     epoch,
     per: parsePositiveOrNull(row.per) || Math.sqrt(a * a * a),
     pdes: String(row.pdes || row.full_name || '').trim(),
@@ -239,7 +245,8 @@ function normalizeAsterankRow(row) {
     moid,
     delta_v: rawDv,
     last_obs: row.last_obs || null,
-    condition_code: conditionCode === null ? null : conditionCode,
+    condition_code: condCode,
+    orbitUncertain: orbitUncertain,
     data_arc_days: parsePositiveOrNull(row.data_arc),
     n_obs_used: parsePositiveOrNull(row.n_obs_used),
     data_source: row.data_source || 'asterank',
@@ -488,12 +495,12 @@ function cart2kep(x, y, z, vx_kms, vy_kms, vz_kms, t_JD) {
   const M0 = E_anom - e * Math.sin(E_anom);
   if (![a, e, inc, Om, w, M0].every(Number.isFinite)) return null;
 
-  return { a, e, i: inc, Om, w, M0, epoch_JD: t_JD, nu: nu_anom };
+  return { a, e, i: inc, Om, w, M0, epoch_JD: t_JD, nu: nu_anom, _radians: true };
 }
 
 function isPlausiblePlannerOrbit(el, maxApoAu = 5.5) {
   if (!el || !Number.isFinite(el.a) || !Number.isFinite(el.e)) return false;
-  if (el.a <= 0 || el.e < 0 || el.e >= 1) return false;
+  if (el.a <= 0 || el.e < 0 || el.e > 0.95) return false;
   const peri = el.a * (1 - el.e);
   const apo = el.a * (1 + el.e);
   return Number.isFinite(peri) &&
@@ -613,7 +620,7 @@ function applyBurn(ast_or_el, jd, dv_p, dv_n, dv_r) {
 // MOID approximation: sample both orbits independently, find minimum pairwise distance
 // Accuracy ~0.01 AU (see DEVLOG.md)
 function moidApprox(el, jd_ref, nPts) {
-  nPts = nPts || 120;
+  nPts = nPts || 60;
   const earthPts = [];
   const astPts = [];
   const T_earth = 365.25;
@@ -622,7 +629,7 @@ function moidApprox(el, jd_ref, nPts) {
   for (let k = 0; k < nPts; k++) {
     const f = k / nPts;
     earthPts.push(propagatePlanet(2, jd_ref + f * T_earth));
-    if (el.epoch_JD !== undefined) {
+    if (el._radians === true) {
       astPts.push(kep2cart(el.a, el.e, el.i, el.Om, el.w, el.M0, el.epoch_JD, el.epoch_JD + f * T_ast));
     } else {
       const epochJD = el.epoch; // already JD
@@ -631,13 +638,15 @@ function moidApprox(el, jd_ref, nPts) {
   }
 
   let minDist = Infinity;
-  for (let j = 0; j < nPts; j++) {
+  let earlyExit = false;
+  for (let j = 0; j < nPts && !earlyExit; j++) {
     for (let k = 0; k < nPts; k++) {
       const dx = astPts[j].x - earthPts[k].x;
       const dy = astPts[j].y - earthPts[k].y;
       const dz = astPts[j].z - earthPts[k].z;
       const d = Math.sqrt(dx*dx + dy*dy + dz*dz);
       if (d < minDist) minDist = d;
+      if (d < 0.001) { minDist = d; earlyExit = true; break; }
     }
   }
   return minDist;
@@ -844,6 +853,108 @@ function _izzTofDerivs(x, lam) {
 function _unitVec(v) {
   const n = Math.hypot(v[0], v[1], v[2]);
   return n > 0 ? [v[0]/n, v[1]/n, v[2]/n] : [0, 0, 0];
+}
+
+// ─── Multi-revolution Lambert solver (Izzo 2015, N full revolutions) ─────────
+// Solves for N=1 extra revolution (left branch). Returns { v1, v2 } in km/s or null.
+function izzoLambertMultiRev(r1v, r2v, tof_days, N, direction) {
+  if (N !== 1) return null; // only N=1 supported
+  direction = direction || 1;
+  const tof = tof_days * 86400;
+  const mu  = GM_sun;
+
+  const r1 = r1v.map(v => v * AU);
+  const r2 = r2v.map(v => v * AU);
+  const r1n = Math.hypot(r1[0], r1[1], r1[2]);
+  const r2n = Math.hypot(r2[0], r2[1], r2[2]);
+  if (r1n < 1e3 || r2n < 1e3 || tof <= 0) return null;
+
+  const c = Math.hypot(r2[0]-r1[0], r2[1]-r1[1], r2[2]-r1[2]);
+  const s = (r1n + r2n + c) / 2;
+  if (s < 1e3 || c < 1e3) return null;
+
+  const crossVec = [
+    r1[1]*r2[2] - r1[2]*r2[1],
+    r1[2]*r2[0] - r1[0]*r2[2],
+    r1[0]*r2[1] - r1[1]*r2[0],
+  ];
+  const thetaGt180 = (direction === 1) ? (crossVec[2] < 0) : (crossVec[2] >= 0);
+
+  const lambda2 = 1 - c / s;
+  let lambda = Math.sqrt(Math.max(0, lambda2));
+  if (thetaGt180) lambda = -lambda;
+
+  // Non-dimensional TOF
+  const normFactor = Math.sqrt(s * s * s / (2 * mu));
+  const T = tof / normFactor;
+  if (!isFinite(T) || T <= 0) return null;
+
+  // Find x_min (minimum TOF for N=1) by bisection on dT/dx = 0 in [-1, 0] (left branch)
+  let xLo = -1 + 1e-6, xHi = 0;
+  for (let iter = 0; iter < 50; iter++) {
+    const xMid = (xLo + xHi) / 2;
+    const dLo = _izzTofDerivs(xLo, lambda).dT;
+    const dMid = _izzTofDerivs(xMid, lambda).dT;
+    if (!isFinite(dLo) || !isFinite(dMid)) break;
+    if (dLo * dMid <= 0) xHi = xMid;
+    else xLo = xMid;
+    if (xHi - xLo < 1e-10) break;
+  }
+  const x_min = (xLo + xHi) / 2;
+  const T_min_nd = _izzTofDerivs(x_min, lambda).T;
+  // Adjust for N extra revolutions: T_N_min = T_min + 2*pi*N (non-dimensional shift for full revs)
+  // Izzo formulation: T for N revolutions = T_0rev + N*pi (each pi corresponds to half-period in nd units)
+  const T_min = T_min_nd + N * Math.PI;
+  if (T < T_min) return null; // no solution exists
+
+  // Seed at x=0 for left branch multi-rev
+  let x = 0;
+  for (let iter = 0; iter < 60; iter++) {
+    const { T: Tx, dT, d2T, d3T } = _izzTofDerivs(x, lambda);
+    // For N revolutions, effective TOF = Tx + N*pi
+    const Tx_N = Tx + N * Math.PI;
+    const dx = Tx_N - T;
+    if (Math.abs(dx) < 1e-12 * (Math.abs(T) + 1)) break;
+    if (Math.abs(dT) < 1e-20) break;
+    const h2 = d2T / (2 * dT);
+    const h3 = d3T / (6 * dT) - h2 * h2;
+    const step = dx / (dT * (1 + dx * (h2 + dx * h3)));
+    x -= step;
+    if (x <= -1) x = -0.99;
+    else if (x >= 1) x = 0.99;
+  }
+  if (!isFinite(x) || Math.abs(x) >= 1) return null;
+
+  // Recover velocities (same as single-rev)
+  const gamma = Math.sqrt(mu * s / 2);
+  const rho   = (r1n - r2n) / c;
+  const sigma = Math.sqrt(Math.max(0, 1 - rho * rho));
+  const y     = Math.sqrt(Math.max(0, 1 - lambda2 * (1 - x * x)));
+  if (y < 1e-10) return null;
+
+  const Vr1 =  gamma * ((lambda * y - x) - rho * (lambda * y + x)) / r1n;
+  const Vr2 = -gamma * ((lambda * y - x) + rho * (lambda * y + x)) / r2n;
+  const Vt1 =  gamma * sigma * (y + lambda * x) / r1n;
+  const Vt2 =  gamma * sigma * (y + lambda * x) / r2n;
+
+  const r1hat = r1.map(v => v / r1n);
+  const r2hat = r2.map(v => v / r2n);
+  const th1 = _unitVec([
+    r1hat[1]*crossVec[2] - r1hat[2]*crossVec[1],
+    r1hat[2]*crossVec[0] - r1hat[0]*crossVec[2],
+    r1hat[0]*crossVec[1] - r1hat[1]*crossVec[0],
+  ]);
+  const th2 = _unitVec([
+    r2hat[1]*crossVec[2] - r2hat[2]*crossVec[1],
+    r2hat[2]*crossVec[0] - r2hat[0]*crossVec[2],
+    r2hat[0]*crossVec[1] - r2hat[1]*crossVec[0],
+  ]);
+
+  const f = 1 / 1000; // m/s → km/s
+  return {
+    v1: [(Vr1*r1hat[0] + Vt1*th1[0])*f, (Vr1*r1hat[1] + Vt1*th1[1])*f, (Vr1*r1hat[2] + Vt1*th1[2])*f],
+    v2: [(Vr2*r2hat[0] + Vt2*th2[0])*f, (Vr2*r2hat[1] + Vt2*th2[1])*f, (Vr2*r2hat[2] + Vt2*th2[2])*f],
+  };
 }
 
 // ─── Patched-conic helpers ────────────────────────────────────────────────────
@@ -1064,7 +1175,26 @@ self.onmessage = function(e) {
         const r2 = [astArr.x, astArr.y, astArr.z];
         const va  = [astArr.vx, astArr.vy, astArr.vz];
 
-        let lam = izzoLambert(r1, r2, tof);
+        let lam = null;
+        {
+          const lam1 = izzoLambert(r1, r2, tof, 1);
+          const lam2 = izzoLambert(r1, r2, tof, -1);
+          const pc1 = lam1 ? patchedConic(ve, lam1.v1, va, lam1.v2, r_park_km) : null;
+          const pc2 = lam2 ? patchedConic(ve, lam2.v1, va, lam2.v2, r_park_km) : null;
+          const dv1 = (pc1 && isFinite(pc1.dv_dep) && isFinite(pc1.dv_arr)) ? (pc1.dv_dep + pc1.dv_arr) : Infinity;
+          const dv2 = (pc2 && isFinite(pc2.dv_dep) && isFinite(pc2.dv_arr)) ? (pc2.dv_dep + pc2.dv_arr) : Infinity;
+          let bestDvSingle = Math.min(dv1, dv2);
+          lam = (dv1 <= dv2) ? lam1 : lam2;
+          // Multi-revolution (N=1) attempt for long TOFs
+          if (tof > 365) {
+            const lamMR = izzoLambertMultiRev(r1, r2, tof, 1, 1);
+            if (lamMR) {
+              const pcMR = patchedConic(ve, lamMR.v1, va, lamMR.v2, r_park_km);
+              const dvMR = (pcMR && isFinite(pcMR.dv_dep) && isFinite(pcMR.dv_arr)) ? (pcMR.dv_dep + pcMR.dv_arr) : Infinity;
+              if (dvMR < bestDvSingle) lam = lamMR;
+            }
+          }
+        }
         if (!lam) lam = lambert(r1, r2, tof);
         if (!lam) { dbg_lambert_null++; continue; }
 
@@ -1282,7 +1412,7 @@ self.onmessage = function(e) {
       d_m = (1329 / Math.sqrt(albedo)) * Math.pow(10, -H / 5) * 1000;
     }
     const mass_kg = (4 / 3) * Math.PI * Math.pow(d_m / 2, 3) * 1500; // 1500 kg/m³ rubble pile
-    const spec_type = ast.spec || ast.spec_T || 'unknown';
+    const spec_type = ast.spec_B || ast.spec_T || ast.spec || 'unknown';
 
     const mineable_kg = mass_kg * 0.05;
     const water_kg = mineable_kg * (1 - miningFraction);
@@ -1560,6 +1690,11 @@ self.onmessage = function(e) {
     }
     delete finalResult._rank_dv_total;
     delete finalResult._rank_prop_fraction;
+    // SRP warning: low-density C-types on long (>180-day) coasts accumulate significant solar radiation pressure drift
+    const srpWarning = (ast.spec === 'C' || ast.spec === 'B' || ast.spec === 'D') &&
+      Number.isFinite(finalResult.redirect ? finalResult.redirect.tof_redirect : undefined) &&
+      finalResult.redirect.tof_redirect > 180;
+    finalResult.srpWarning = srpWarning;
     self.postMessage(finalResult);
     return;
   }

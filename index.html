@@ -1271,7 +1271,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <div class="data-row"><span class="label">PAPER VALUE (ASTERANK)</span><span class="value accent" id="eco-asterank">—</span></div>
       <div class="data-row"><span class="label">EXTRACTABLE RANGE (10–30%)</span><span class="value accent" id="eco-paper-value">—</span></div>
       <div class="data-row"><span class="label">REALIZABLE NPV</span><span class="value accent" id="eco-npv">—</span></div>
-      <div class="data-row" style="margin-top:6px"><span class="label">ROI MULTIPLE</span><span class="value profit" id="eco-roi">—</span></div>
+      <div id="eco-price-note" style="font-size:8px;color:#4b5563;margin-top:2px">Prices as of — — may not reflect current market</div>
+      <div class="data-row" style="margin-top:6px"><span class="label">NET ROI</span><span class="value profit" id="eco-roi">—</span></div>
 
       <div class="panel-header" style="margin-top:12px">◈ SCENARIOS</div>
       <div style="font-size:8px;color:#4b5563;letter-spacing:0.06em;margin-bottom:6px">Conservative · Base · Optimistic extraction assumptions</div>
@@ -1280,6 +1281,10 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <div class="panel-header" style="margin-top:12px">◈ SELL STRATEGY</div>
       <div style="font-size:8px;color:#4b5563;letter-spacing:0.06em;margin-bottom:6px">NPV by market exit approach (8% discount, elasticity-adjusted)</div>
       <div id="eco-sell-strategy" style="width:100%"></div>
+
+      <div class="panel-header" style="margin-top:12px">◈ SENSITIVITY</div>
+      <div style="font-size:8px;color:#4b5563;letter-spacing:0.06em;margin-bottom:6px">NPV swing at ±20% input variation</div>
+      <div id="eco-sensitivity" style="width:100%"></div>
 
       <div id="eco-isru-note" style="display:none;border:1px solid #00d4ff;padding:8px;
         color:#00d4ff;font-size:10px;line-height:1.6;margin-top:10px"></div>
@@ -1612,6 +1617,13 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 
     </div>
 
+    <div id="mp-porkchop-wrap" style="display:none;margin-top:14px;padding-bottom:20px">
+      <div class="panel-header" style="margin-top:14px">◈ LAUNCH WINDOW</div>
+      <div style="font-size:8px;color:#4b5563;letter-spacing:0.06em;margin-bottom:6px">ΔV contour: departure date × flight time</div>
+      <canvas id="mp-porkchop-canvas" width="220" height="140" style="width:220px;height:140px;border:1px solid #1a2235;display:block"></canvas>
+      <div id="mp-porkchop-legend" style="font-size:8px;color:#4b5563;margin-top:3px">Select a mission result to see launch window</div>
+    </div>
+
   </div>
 </div><!-- /mission-planner -->
 </div><!-- /right-panel -->
@@ -1739,9 +1751,11 @@ function fmtUSD(v) {
 
 function formatValueDisplay(value, options = {}) {
   const { unknownLabel = 'unknown', extractionLabel = false } = options;
-  if (!(Number.isFinite(value) && value > 0)) return unknownLabel;
-  const base = fmtUSD(value);
-  return extractionLabel ? `${base} (5% extraction est.)` : base;
+  if (!Number.isFinite(value)) return unknownLabel;
+  if (value === 0) return '$0';
+  const base = fmtUSD(Math.abs(value));
+  const signed = value < 0 ? `-${base}` : base;
+  return extractionLabel ? `${signed} (5% extraction est.)` : signed;
 }
 
 function fmtTons(t) {
@@ -1903,6 +1917,8 @@ function computeScenarioNPVs(commodity, returnedKg, spotPricePerKg, missionCostU
   } else {
     stockpile = returnedKg * P0 - cost;
   }
+  // Fallback for unknown commodity with no market data
+  if (stockpile === null) stockpile = returnedKg * P0 * 0.9 - cost;
 
   // 4. In-space utilization: avoided launch cost, no market price impact
   const inSpaceRate = commodity === 'water' ? 50000 : 2700; // $/kg
@@ -1914,6 +1930,7 @@ function computeScenarioNPVs(commodity, returnedKg, spotPricePerKg, missionCostU
 function renderScenarioBar(commodity, returnedKg, spotPricePerKg, missionCostUsd) {
   const el = document.getElementById('eco-sell-strategy');
   if (!el) return;
+  el.innerHTML = ''; // clear stale content immediately
   const s = computeScenarioNPVs(commodity, returnedKg, spotPricePerKg, missionCostUsd);
   if (!s) { el.innerHTML = '<div style="color:#4b5563;font-size:9px;padding:4px 0">Insufficient data for scenario comparison</div>'; return; }
   const rows = [
@@ -1922,6 +1939,11 @@ function renderScenarioBar(commodity, returnedKg, spotPricePerKg, missionCostUsd
     { label:'STOCKPILE',    value:s.stockpile,    note:'≤15% price drop',  color:'#22c55e' },
     { label:'IN-SPACE',     value:s.inSpace,      note:'avoided launch $', color:'#00d4ff' },
   ];
+  const allNegative = rows.every(r => Number.isFinite(r.value) && r.value < 0);
+  if (allNegative) {
+    el.innerHTML = '<div style="border:1px solid #7f1d1d;padding:6px 8px;color:#ef4444;font-size:9px">All exit strategies show negative NPV at current cost/mass assumptions.</div>';
+    return;
+  }
   const maxA = Math.max(...rows.map(r => Math.abs(r.value ?? 0)), 1);
   el.innerHTML = rows.map(r => {
     const v = r.value; const ok = Number.isFinite(v);
@@ -1937,6 +1959,144 @@ function renderScenarioBar(commodity, returnedKg, spotPricePerKg, missionCostUsd
         <div style="height:5px;width:${pct.toFixed(1)}%;background:${pos?r.color:'#7f1d1d'};border-radius:2px;transition:width .3s"></div>
       </div></div>`;
   }).join('');
+}
+
+function renderSensitivityChart(ast, econSummary, totalCost) {
+  const el = document.getElementById('eco-sensitivity');
+  if (!el) return;
+  el.innerHTML = ''; // clear stale content immediately
+  const commodity = primaryCommodityForSpec(econSummary.spec);
+  const baseReturnedKg = econSummary.returnedKg;
+  const basePrice = econSummary.revenuePerKg;
+  const baseCost = totalCost;
+  if (!(Number.isFinite(baseReturnedKg) && baseReturnedKg > 0 && Number.isFinite(basePrice) && basePrice > 0)) {
+    el.innerHTML = '<div style="color:#4b5563;font-size:9px;padding:4px 0">Insufficient data for sensitivity analysis</div>';
+    return;
+  }
+
+  const baseNPV = computeRealizableNPV(commodity, baseReturnedKg, basePrice);
+
+  function npvAt(returnedKg, price, cost) {
+    const npv = computeRealizableNPV(commodity, returnedKg, price);
+    if (!Number.isFinite(npv)) return null;
+    return Number.isFinite(cost) ? npv - (cost - (Number.isFinite(baseCost) ? baseCost : 0)) : npv;
+  }
+
+  const inputs = [
+    {
+      label: 'COMMODITY PRICE',
+      low:  computeRealizableNPV(commodity, baseReturnedKg, basePrice * 0.8),
+      high: computeRealizableNPV(commodity, baseReturnedKg, basePrice * 1.2),
+    },
+    {
+      label: 'RETURNED MASS',
+      low:  computeRealizableNPV(commodity, baseReturnedKg * 0.8, basePrice),
+      high: computeRealizableNPV(commodity, baseReturnedKg * 1.2, basePrice),
+    },
+    {
+      label: 'MISSION COST',
+      low:  Number.isFinite(baseNPV) && Number.isFinite(baseCost) ? baseNPV - baseCost * 0.2 : null,
+      high: Number.isFinite(baseNPV) && Number.isFinite(baseCost) ? baseNPV + baseCost * 0.2 : null,
+    },
+    {
+      label: 'EXTRACTION FRAC',
+      low:  computeRealizableNPV(commodity, baseReturnedKg * 0.8, basePrice),
+      high: computeRealizableNPV(commodity, baseReturnedKg * 1.2, basePrice),
+    },
+  ];
+
+  const maxSwing = Math.max(...inputs.map(inp => {
+    const lo = Number.isFinite(inp.low)  ? Math.abs(inp.low)  : 0;
+    const hi = Number.isFinite(inp.high) ? Math.abs(inp.high) : 0;
+    return Math.max(lo, hi);
+  }), 1);
+
+  el.innerHTML = inputs.map(inp => {
+    const lo = inp.low;  const hi = inp.high;
+    const loOk = Number.isFinite(lo); const hiOk = Number.isFinite(hi);
+    const loStr = loOk ? (lo < 0 ? `-${fmtUSD(-lo)}` : fmtUSD(lo)) : 'n/a';
+    const hiStr = hiOk ? (hi < 0 ? `-${fmtUSD(-hi)}` : fmtUSD(hi)) : 'n/a';
+    const loPct = loOk ? Math.min(100, Math.abs(lo) / maxSwing * 100) : 0;
+    const hiPct = hiOk ? Math.min(100, Math.abs(hi) / maxSwing * 100) : 0;
+    const loCol = loOk && lo >= 0 ? '#22c55e' : '#ef4444';
+    const hiCol = hiOk && hi >= 0 ? '#22c55e' : '#ef4444';
+    return `<div style="margin-bottom:8px">
+      <div style="font-size:8px;color:#9ca3af;letter-spacing:.07em;margin-bottom:2px">${inp.label}</div>
+      <div style="display:flex;justify-content:space-between;font-size:7px;margin-bottom:2px">
+        <span style="color:#4b5563">−20%: <span style="color:${loCol}">${loStr}</span></span>
+        <span style="color:#4b5563">+20%: <span style="color:${hiCol}">${hiStr}</span></span>
+      </div>
+      <div style="background:#111;border-radius:2px;height:4px;display:flex;gap:1px">
+        <div style="height:4px;width:${loPct.toFixed(1)}%;background:${loCol};border-radius:2px;transition:width .3s"></div>
+        <div style="height:4px;width:${hiPct.toFixed(1)}%;background:${hiCol};border-radius:2px;transition:width .3s"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function dvColor(t) {
+  // Green (low DV) to Yellow to Red (high DV)
+  const r = Math.round(255 * Math.min(1, t * 2));
+  const g = Math.round(255 * Math.min(1, (1 - t) * 2));
+  return `rgb(${r},${g},30)`;
+}
+
+function renderMissionPorkchop(results) {
+  const wrap = document.getElementById('mp-porkchop-wrap');
+  const canvas = document.getElementById('mp-porkchop-canvas');
+  const legend = document.getElementById('mp-porkchop-legend');
+  if (!canvas || !results || results.length === 0) {
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+  if (wrap) wrap.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Build a grid from the results data
+  const deps = [...new Set(results.map(r => r.jd_dep))].sort((a,b)=>a-b);
+  const tofs = [...new Set(results.map(r => r.tof))].sort((a,b)=>a-b);
+  if (deps.length < 2 || tofs.length < 2) {
+    // Not enough diversity — just plot points
+    const minDv = Math.min(...results.map(r => r.dv_total));
+    const maxDv = Math.max(...results.map(r => r.dv_total));
+    const depMin = deps[0], depMax = deps[deps.length-1] || depMin+1;
+    const tofMin = tofs[0], tofMax = tofs[tofs.length-1] || tofMin+1;
+    results.forEach(r => {
+      const x = Math.round((r.jd_dep - depMin) / (depMax - depMin + 1) * (W-4)) + 2;
+      const y = Math.round((r.tof - tofMin) / (tofMax - tofMin + 1) * (H-4)) + 2;
+      const t = (r.dv_total - minDv) / (maxDv - minDv + 0.001);
+      ctx.fillStyle = dvColor(t);
+      ctx.fillRect(x-2, y-2, 5, 5);
+    });
+  } else {
+    const depMin = deps[0], depMax = deps[deps.length-1];
+    const tofMin = tofs[0], tofMax = tofs[tofs.length-1];
+    const dvMap = {};
+    results.forEach(r => { dvMap[`${r.jd_dep}_${r.tof}`] = r.dv_total; });
+    const allDvs = results.map(r => r.dv_total);
+    const minDv = Math.min(...allDvs), maxDv = Math.max(...allDvs);
+    deps.forEach((dep, di) => {
+      tofs.forEach((tof, ti) => {
+        const dv = dvMap[`${dep}_${tof}`];
+        if (!Number.isFinite(dv)) return;
+        const x = Math.round(di / (deps.length-1) * (W-4)) + 2;
+        const y = Math.round(ti / (tofs.length-1) * (H-4)) + 2;
+        const t = (dv - minDv) / (maxDv - minDv + 0.001);
+        ctx.fillStyle = dvColor(t);
+        ctx.fillRect(x, y, Math.max(1, Math.round(W/deps.length)), Math.max(1, Math.round(H/tofs.length)));
+      });
+    });
+  }
+
+  // Axes labels
+  ctx.fillStyle = '#4b5563';
+  ctx.font = '7px Space Mono, monospace';
+  ctx.fillText('DEP ->', 2, H-2);
+  ctx.fillText('TOF', 2, 8);
+
+  if (legend) legend.textContent = `${results.length} trajectories · DV ${Math.min(...results.map(r=>r.dv_total)).toFixed(2)}-${Math.max(...results.map(r=>r.dv_total)).toFixed(2)} km/s`;
 }
 
 function computeEconomicsSummary(ast, options = {}) {
@@ -1965,11 +2125,16 @@ function computeEconomicsSummary(ast, options = {}) {
     MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
   }
 
-  const returnedKg = Number.isFinite(payloadKg) ? payloadKg * extractionFraction : null;
+  // Prefer mass-based returned mass; fall back to spacecraft-payload-fraction
+  const massModel = resolveAsteroidEconomics(ast)?.massModel;
+  const asteroidMassKg = massModel?.massKg ?? null;
+  const returnedKg = Number.isFinite(asteroidMassKg) && asteroidMassKg > 0
+    ? asteroidMassKg * extractionFraction
+    : (Number.isFinite(payloadKg) ? payloadKg * extractionFraction : null);
   const paperValueUsd = Number.isFinite(returnedKg) && Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
   const npvUsd = computeRealizableNPV(primaryCommodityForSpec(spec), returnedKg, revenuePerKg);
   const roiMultiple = Number.isFinite(totalCostUsd) && totalCostUsd > 0 && Number.isFinite(npvUsd)
-    ? npvUsd / totalCostUsd
+    ? (npvUsd - totalCostUsd) / totalCostUsd
     : null;
 
   return {
@@ -2272,6 +2437,7 @@ const MAT_COMP = {
   X: { water:5,   carbon:2,    silicates:67, iron:18,  nickel:2.5, cobalt:0.08,  pgm:0.004,  gold:0.00015, silver:0.0015, copper:0.0015, rareEarth:0.015 },
 };
 const MAT_DENSITY_KGM3 = { C:1300, S:2700, M:5300, X:2000 };
+const PRICE_DATE = '2025-01';
 const STATIC_PRICES_EARTH = {
   water:0, iron:0.12, nickel:16, cobalt:28, pgm:31000,
   gold:92000, silver:1050, copper:9.50, carbon:0.50, silicates:0.01, rareEarth:250,
@@ -2972,6 +3138,7 @@ function validateArcPoints(points, label) {
 
 function buildOrbitSegmentPoints(el, jdStart, jdEnd, steps = 96) {
   if (!el || !Number.isFinite(jdStart) || !Number.isFinite(jdEnd) || jdEnd <= jdStart) return [];
+  if ((jdEnd - jdStart) < 1) return []; // BUG 12: sub-day arc produces degenerate geometry (96–112 near-identical points → flickering pixel)
   const pts = [];
   for (let i = 0; i <= steps; i++) {
     const jd = jdStart + (jdEnd - jdStart) * (i / steps);
@@ -3125,9 +3292,20 @@ function clearTrail() {
   lastTrailJD = null;
 }
 
+// IMPROVEMENT 9 — Orbit ring draw-call architecture note:
+// Asteroid catalog bodies are rendered as InstancedMesh dots (no per-asteroid orbit rings).
+// The only per-asteroid orbit geometry is built on demand here (hover/trail, single asteroid at a time).
+// Batching into LineSegments is therefore not needed. LOD step reduction is applied below instead:
+// asteroids beyond 2 AU use 48 steps — their orbits are large in world space but subtended by fewer
+// screen pixels at typical zoom, so the lower resolution is visually indistinguishable.
+function _orbitSteps(ast) {
+  if (isMobile) return 48;
+  return (ast?.a > 2) ? 48 : 100;
+}
+
 function updateOrbitEllipse(ast) {
   if (!trailsEnabled || !ast) return;
-  const pts = buildOrbitPoints(ast, isMobile ? 60 : 100);
+  const pts = buildOrbitPoints(ast, _orbitSteps(ast));
   trailLine.geometry.setFromPoints(pts);
   trailLine.visible = true;
   futureLine.visible = false;
@@ -3142,7 +3320,7 @@ function showHoverEllipse(ast) {
     );
     scene.add(hoverEllipseLine);
   }
-  hoverEllipseLine.geometry.setFromPoints(buildOrbitPoints(ast, isMobile ? 60 : 100));
+  hoverEllipseLine.geometry.setFromPoints(buildOrbitPoints(ast, _orbitSteps(ast)));
   hoverEllipseLine.visible = true;
 }
 
@@ -4515,6 +4693,8 @@ function renderEconomicsTab(id) {
   document.getElementById('eco-asterank').textContent = formatValueDisplay(econ.wholeBodyPriceUsd);
   document.getElementById('eco-paper-value').textContent = formatValueDisplay(econSummary.paperValueUsd);
   document.getElementById('eco-npv').textContent = formatValueDisplay(econSummary.realizableNpvUsd);
+  const ecoPriceNote = document.getElementById('eco-price-note');
+  if (ecoPriceNote) ecoPriceNote.textContent = `Prices as of ${PRICE_DATE} — may not reflect current market`;
 
   const roi = econSummary.roiMultiple;
   const roiEl = document.getElementById('eco-roi');
@@ -4559,6 +4739,9 @@ function renderEconomicsTab(id) {
       totalCost
     );
   }
+
+  // Sensitivity tornado chart
+  renderSensitivityChart(ast, econSummary, totalCost);
 
   // Phase 14: scenario table
   const scenTableEl = document.getElementById('eco-scenario-table');
@@ -5758,6 +5941,7 @@ function onRedirectResult(data) {
 function clearRedirectVisualization(options = {}) {
   const { preserveState = false } = options;
   if (_redirectArcLine) { disposeObject3D(_redirectArcLine); _redirectArcLine = null; }
+  if (trajectoryLine)   { disposeObject3D(trajectoryLine);   trajectoryLine = null; }  // BUG 11: dispose intercept arc to prevent geometry/material leak on target switch
   if (_lunarOrbitRing)  { disposeObject3D(_lunarOrbitRing);  _lunarOrbitRing = null; }
   _cargoPodArcs.forEach(disposeObject3D);
   _cargoPodArcs = [];
@@ -6114,6 +6298,7 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
   missionResults.source = source || 'lambert';
   optimalTrajectory = missionResults[0] || null;
   renderTrajectoryList();
+  renderMissionPorkchop(missionResults);
   document.getElementById('mp-results').style.display = 'block';
   document.getElementById('mp-result-count').textContent = `(${results.length} options)`;
   if (results.length) {
