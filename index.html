@@ -584,6 +584,71 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
 .mp-traj-dates { font-size:9px; color:#c8d6e5; }
 .mp-traj-dv    { font-size:10px; color:#00d4ff; letter-spacing:0.06em; }
 .mp-traj-meta  { font-size:8px; color:#6a8a9a; }
+.score-explain {
+  margin-top: 7px;
+  padding: 8px 9px;
+  border: 1px solid #18263a;
+  background: linear-gradient(180deg, rgba(4,17,31,0.95), rgba(3,10,20,0.95));
+}
+.score-explain-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.score-explain-title {
+  font-size: 8px;
+  color: #8aa4bc;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.score-explain-formula {
+  font-size: 8px;
+  color: #4b647b;
+  letter-spacing: 0.06em;
+}
+.score-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.score-chip {
+  border: 1px solid #1f3348;
+  background: rgba(8,16,28,0.92);
+  padding: 4px 6px;
+  min-width: 64px;
+}
+.score-chip-label {
+  display: block;
+  font-size: 7px;
+  color: #59718a;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.score-chip-value {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #d8e6f2;
+}
+.score-chip-value.score-pos { color: #4af7c4; }
+.score-chip-value.score-neg { color: #fb923c; }
+.score-chip-value.score-bad { color: #f87171; }
+.score-chip-value.score-neutral { color: #93a4b8; }
+.score-chip-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 7px;
+  color: #4f6277;
+}
+.score-mini-note {
+  margin-top: 6px;
+  font-size: 7px;
+  color: #53697f;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+}
 .mp-burn-row {
   display:grid; grid-template-columns:18px 1fr 64px 74px 22px;
   gap:4px; align-items:center; margin-bottom:3px; font-size:9px;
@@ -1415,9 +1480,10 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
           <span style="font-size:9px;color:#4b5563;letter-spacing:0.08em">MISSION SCORE</span>
           <span id="rr-score-val" style="font-size:14px;color:#4af7c4;font-weight:bold">—/100</span>
         </div>
-        <div style="height:6px;background:#1a2235;border:1px solid #1f2937">
+      <div style="height:6px;background:#1a2235;border:1px solid #1f2937">
           <div id="rr-score-bar" style="height:100%;width:0%;background:#4af7c4;transition:width 0.4s"></div>
         </div>
+        <div id="rr-score-breakdown"></div>
       </div>
 
       <div id="rr-intercept" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
@@ -4633,6 +4699,7 @@ function openMissionPlanner(id) {
   document.getElementById('mp-burns').style.display     = 'none';
   document.getElementById('mp-actions').style.display         = 'none';
   document.getElementById('mp-redirect-results').style.display = 'none';
+  document.getElementById('rr-score-breakdown').innerHTML = '';
   document.getElementById('mp-progress-bar').style.width = '0%';
   missionResults = []; selectedTrajIdx = -1;
   clearPlannerError();
@@ -4946,6 +5013,18 @@ function onRedirectResult(data) {
 
   const panel = document.getElementById('mp-redirect-results');
   panel.style.display = 'block';
+  const scoreBreakdownEl = document.getElementById('rr-score-breakdown');
+
+  const score = Number.isFinite(data.feasibility_score) ? data.feasibility_score : 0;
+  const barColor = !data.feasible || data.error
+    ? '#f87171'
+    : score >= 60 ? '#4af7c4' : score >= 30 ? '#fb923c' : '#f87171';
+  const scoreBar = document.getElementById('rr-score-bar');
+  scoreBar.style.width = Math.max(0, Math.min(100, score)) + '%';
+  scoreBar.style.background = barColor;
+  document.getElementById('rr-score-val').style.color = barColor;
+  document.getElementById('rr-score-val').textContent = score + '/100';
+  if (scoreBreakdownEl) scoreBreakdownEl.innerHTML = buildRedirectScoreBreakdownHtml(data);
 
   if (!data.feasible || data.error) {
     document.getElementById('rr-infeasible-msg').style.display = 'block';
@@ -4954,20 +5033,9 @@ function onRedirectResult(data) {
     const detail = data.error || `${propulsion} requires ${propLoad} for the best candidate found.`;
     document.getElementById('rr-infeasible-msg').innerHTML =
       `✗ INFEASIBLE — ${detail}<br><span style="color:#9ca3af">Try a smaller/closer target, a different launch window, or a higher-Isp propulsion mode.</span>`;
-    document.getElementById('rr-score-bar').style.width = '0%';
-    document.getElementById('rr-score-val').textContent = '0/100';
     return;
   }
   document.getElementById('rr-infeasible-msg').style.display = 'none';
-
-  // Feasibility score bar
-  const score = data.feasibility_score || 0;
-  const barColor = score >= 60 ? '#4af7c4' : score >= 30 ? '#fb923c' : '#f87171';
-  const scoreBar = document.getElementById('rr-score-bar');
-  scoreBar.style.width = score + '%';
-  scoreBar.style.background = barColor;
-  document.getElementById('rr-score-val').style.color = barColor;
-  document.getElementById('rr-score-val').textContent = score + '/100';
 
   // Intercept trajectory
   const ic = data.intercept;
@@ -5187,6 +5255,148 @@ function drawRedirectCaptureMarker(capture) {
   if (Number.isFinite(capture.r_cap_km)) drawEarthCenteredRing(capture.r_cap_km, ORBIT_NEON.redirect);
 }
 
+function formatSignedScoreTerm(value) {
+  if (!Number.isFinite(value)) return 'unknown';
+  const rounded = Math.round(value);
+  return `${rounded > 0 ? '+' : ''}${rounded}`;
+}
+
+function formatScoreBucket(value, maxValue) {
+  if (!Number.isFinite(value) || !Number.isFinite(maxValue) || maxValue <= 0) return 'unknown';
+  return `${Math.round(value)}/${Math.round(maxValue)}`;
+}
+
+function scoreTermClass(value) {
+  if (!Number.isFinite(value)) return 'score-neutral';
+  if (value > 0.1) return 'score-pos';
+  if (value < -20) return 'score-bad';
+  if (value < -0.1) return 'score-neg';
+  return 'score-neutral';
+}
+
+function scoreBucketClass(value, maxValue) {
+  if (!Number.isFinite(value) || !Number.isFinite(maxValue) || maxValue <= 0) return 'score-neutral';
+  const ratio = value / maxValue;
+  if (ratio >= 0.66) return 'score-pos';
+  if (ratio >= 0.33) return 'score-neg';
+  return 'score-bad';
+}
+
+function renderScoreBreakdownHtml({ title, formula, chips, note }) {
+  const chipHtml = (chips || []).map(chip => `
+    <div class="score-chip">
+      <span class="score-chip-label">${chip.label}</span>
+      <span class="score-chip-value ${chip.valueClass || 'score-neutral'}">${chip.value}</span>
+      ${chip.note ? `<span class="score-chip-note">${chip.note}</span>` : ''}
+    </div>`).join('');
+  return `<div class="score-explain">
+    <div class="score-explain-header">
+      <span class="score-explain-title">${title}</span>
+      ${formula ? `<span class="score-explain-formula">${formula}</span>` : ''}
+    </div>
+    <div class="score-chip-row">${chipHtml}</div>
+    ${note ? `<div class="score-mini-note">${note}</div>` : ''}
+  </div>`;
+}
+
+function buildExtractScoreBreakdownHtml(traj, ops) {
+  if (!traj || !ops) return '';
+  const chips = [
+    {
+      label: 'Base',
+      value: '100',
+      valueClass: 'score-neutral',
+      note: 'starting ceiling',
+    },
+    {
+      label: 'Delta-V',
+      value: formatSignedScoreTerm(ops.dvPenalty),
+      valueClass: scoreTermClass(ops.dvPenalty),
+      note: `${traj.dv_total.toFixed(2)} km/s total`,
+    },
+    {
+      label: 'Launcher',
+      value: formatSignedScoreTerm(ops.launchPenalty),
+      valueClass: scoreTermClass(ops.launchPenalty),
+      note: ops.fitsLaunchVehicle ? 'fits selected vehicle' : 'wet mass exceeds launcher',
+    },
+    {
+      label: 'ROI',
+      value: formatSignedScoreTerm(ops.roiTerm),
+      valueClass: scoreTermClass(ops.roiTerm),
+      note: Number.isFinite(ops.roi) ? `${ops.roi.toFixed(2)}x realized NPV / total cost` : 'unknown stays neutral',
+    },
+  ];
+  const note = Number.isFinite(ops.roi)
+    ? 'Perfect scores need low total ΔV, launcher fit, and strong realized NPV against mission cost.'
+    : 'ROI is neutral here because the realized-return side is unknown or not finite.';
+  return renderScoreBreakdownHtml({
+    title: 'Score Breakdown',
+    formula: '100 - 3×ΔV - launcher penalty + ROI term',
+    chips,
+    note,
+  });
+}
+
+function summarizeRedirectScore(data) {
+  if (!data) return null;
+  const dvTotal = Number.isFinite(data._rank_dv_total) ? data._rank_dv_total : null;
+  const propFraction = Number.isFinite(data._rank_prop_fraction) ? data._rank_prop_fraction : null;
+  const extractableValueUsd = Number.isFinite(data.isru?.extractable_value_usd) ? data.isru.extractable_value_usd : null;
+  const fitsLaunchVehicle = data.logistics?.fits_launch_vehicle === true;
+  const dvScore = Number.isFinite(dvTotal) ? Math.max(0, 1 - dvTotal / 18) * 45 : null;
+  const propScore = Number.isFinite(propFraction) ? Math.max(0, 1 - propFraction) * 30 : null;
+  const valueScore = Number.isFinite(extractableValueUsd)
+    ? Math.min(20, Math.log10(Math.max(1, extractableValueUsd)) / 12 * 20)
+    : null;
+  const launchScore = data.logistics?.fits_launch_vehicle === false ? -20 : (fitsLaunchVehicle ? 5 : null);
+  return { dvTotal, propFraction, extractableValueUsd, fitsLaunchVehicle, dvScore, propScore, valueScore, launchScore };
+}
+
+function buildRedirectScoreBreakdownHtml(data) {
+  const summary = summarizeRedirectScore(data);
+  if (!summary) return '';
+  const launchFitKnown = data.logistics?.fits_launch_vehicle === true || data.logistics?.fits_launch_vehicle === false;
+  const launchNote = launchFitKnown
+    ? (summary.fitsLaunchVehicle ? 'vehicle fit confirmed' : 'vehicle fit failed')
+    : 'vehicle fit unknown';
+  const chips = [
+    {
+      label: 'Delta-V',
+      value: formatScoreBucket(summary.dvScore, 45),
+      valueClass: scoreBucketClass(summary.dvScore, 45),
+      note: Number.isFinite(summary.dvTotal) ? `${summary.dvTotal.toFixed(2)} km/s total redirect budget` : 'unknown total redirect ΔV',
+    },
+    {
+      label: 'Propellant',
+      value: formatScoreBucket(summary.propScore, 30),
+      valueClass: scoreBucketClass(summary.propScore, 30),
+      note: Number.isFinite(summary.propFraction) ? `${Math.round(summary.propFraction * 100)}% asteroid mass` : 'unknown propellant fraction',
+    },
+    {
+      label: 'Value',
+      value: formatScoreBucket(summary.valueScore, 20),
+      valueClass: scoreBucketClass(summary.valueScore, 20),
+      note: Number.isFinite(summary.extractableValueUsd) ? fmtUSD(summary.extractableValueUsd) : 'unknown extractable value',
+    },
+    {
+      label: 'Launcher',
+      value: formatSignedScoreTerm(summary.launchScore),
+      valueClass: scoreTermClass(summary.launchScore),
+      note: launchNote,
+    },
+  ];
+  const note = data.feasible
+    ? 'Redirect scores are weighted from ΔV, propellant fraction, adjusted extractable value, and launcher fit.'
+    : 'This is still the best screened candidate found; hard feasibility gates prevented it from becoming a valid redirect mission.';
+  return renderScoreBreakdownHtml({
+    title: 'Score Breakdown',
+    formula: 'ΔV /45 + propellant /30 + value /20 + launcher',
+    chips,
+    note,
+  });
+}
+
 function summarizeTrajectoryOperationalMetrics(traj) {
   const ast = asteroidData[selectedId];
   if (!ast || !traj) return null;
@@ -5209,10 +5419,13 @@ function summarizeTrajectoryOperationalMetrics(traj) {
   });
   const realizedNpv = econSummary.realizableNpvUsd;
   const roi = Number.isFinite(realizedNpv) && totalCost > 0 ? realizedNpv / totalCost : null;
+  const dvPenalty = -traj.dv_total * 3;
+  const launchPenalty = fitsLaunchVehicle ? 0 : -40;
+  const roiTerm = Number.isFinite(roi) ? Math.max(-15, Math.min(20, Math.log10(Math.max(1e-6, roi + 1)) * 10)) : 0;
   const score = Math.round(
-    Math.max(0, 100 - traj.dv_total * 3 - (fitsLaunchVehicle ? 0 : 40) + (Number.isFinite(roi) ? Math.max(-15, Math.min(20, Math.log10(Math.max(1e-6, roi + 1)) * 10)) : 0))
+    Math.max(0, 100 + dvPenalty + launchPenalty + roiTerm)
   );
-  return { wetKg, fitsLaunchVehicle, launchCost, totalCost, realizedNpv, roi, score };
+  return { wetKg, fitsLaunchVehicle, launchCost, totalCost, realizedNpv, roi, score, dvPenalty, launchPenalty, roiTerm };
 }
 
 function onPlanResult(results, noFeasibleWindow, dbg, source) {
@@ -5304,12 +5517,14 @@ function renderTrajectoryList() {
     const costWarning = profile.totalCost < 500e6
       ? '<div class="mp-traj-meta" style="color:#fbbf24">Historical first-of-a-kind mining missions are typically $2B-$10B+</div>'
       : '';
+    const scoreBreakdown = buildExtractScoreBreakdownHtml(t, ops);
     card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s <span style="font-size:7px;color:#94a3b8;border:1px solid #334155;padding:1px 4px;vertical-align:middle">planning-level estimate</span></div>
       <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
       <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
       <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
+      ${scoreBreakdown}
       <div class="mp-traj-meta" style="color:#64748b">Source: Asterank + screening-grade economics</div>
       ${costWarning}`;
     card.addEventListener('click', () => selectTrajectory(i));

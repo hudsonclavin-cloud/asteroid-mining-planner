@@ -4,6 +4,27 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Fix — Mission Score Breakdown + CSS Cleanup Direction (2026-04-14)
+
+### Summary
+Mission scores are now explicit instead of opaque. Extract & Return cards show exactly what is taking points away from 100, and Redirect results now expose the weighted score buckets even when the best screened candidate is infeasible.
+
+### Changes
+**`index.html`** — score explanation helpers:
+- Added reusable score-breakdown rendering helpers for signed penalties and weighted score buckets
+- Styled the breakdown as compact mission-card callouts using shared CSS classes instead of more inline formatting
+
+**`index.html`** — Extract & Return cards:
+- Each trajectory card now shows a breakdown for `Base 100`, `ΔV`, `Launcher`, and `ROI`
+- Unknown ROI stays visibly neutral instead of looking like a hidden penalty
+
+**`index.html`** — Redirect results:
+- Added `#rr-score-breakdown` below the score bar
+- Redirect score now shows `ΔV /45`, `Propellant /30`, `Value /20`, and `Launcher`
+- Infeasible redirect runs still show the best screened score breakdown so the user can see what dragged the mission down
+
+---
+
 ## Fix — Redirect Arc Neptune-Scale Rendering (2026-04-14)
 
 ### Root Cause
