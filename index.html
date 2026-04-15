@@ -6695,8 +6695,8 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   if (!dragAxis) {
-    // Suppress hover highlights while mission results are displayed
-    if (missionPlanningActive) {
+    // Suppress hover highlights while an asteroid is selected or mission results are displayed
+    if (missionPlanningActive || selectedId >= 0) {
       renderer.domElement.style.cursor = 'default';
       const tt = document.getElementById('asteroid-tooltip');
       if (tt) tt.style.display = 'none';
