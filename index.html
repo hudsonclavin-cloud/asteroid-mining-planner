@@ -665,6 +665,36 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   background:rgba(5,8,16,0.96);border-top:1px solid #1a2235;z-index:9;
   display:none;overflow:hidden;
 }
+#mission-phase-chip {
+  position: fixed;
+  left: 14px;
+  bottom: 102px;
+  z-index: 10;
+  display: none;
+  min-width: 220px;
+  padding: 8px 10px;
+  background: rgba(5, 8, 16, 0.92);
+  border: 1px solid #1a2235;
+  box-shadow: 0 0 18px rgba(0, 212, 255, 0.08);
+  font-family: 'Space Mono', monospace;
+}
+#mission-phase-chip .mpc-kicker {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: #00d4ff;
+  margin-bottom: 4px;
+}
+#mission-phase-chip .mpc-phase {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #d8e6f2;
+}
+#mission-phase-chip .mpc-note {
+  margin-top: 4px;
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: #6a8a9a;
+}
 #mission-timeline-inner { display:flex;height:100%;position:relative; }
 .mt-segment {
   display:flex;flex-direction:column;justify-content:center;align-items:center;
@@ -1080,7 +1110,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div class="panel-header">$ RESOURCE VALUE</div>
     <div class="data-row"><span class="label">WATER (space)</span><span class="value accent" id="ast-water-val">—</span></div>
     <div class="data-row"><span class="label">METALS</span><span class="value" id="ast-metal-val">—</span></div>
-    <div class="data-row"><span class="label">TOTAL EST.</span><span class="value profit" id="ast-total-val">—</span></div>
+    <div class="data-row"><span class="label">PAPER VALUE</span><span class="value profit" id="ast-total-val">—</span></div>
+    <div style="font-size:8px;color:#4b5563;letter-spacing:0.06em;padding:2px 0 4px;line-height:1.4">(spot price &times; mass, pre-market-discount)</div>
     <div id="feasibility-card" style="display:none;margin:6px 0 10px;padding:6px 8px;
       border:1px solid #1a2235;font-size:9px;line-height:1.8;color:#c8d6e5">
       <div style="color:#00d4ff;font-size:8px;letter-spacing:0.1em;margin-bottom:3px">◈ FEASIBILITY</div>
@@ -1198,8 +1229,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <div class="panel-header" style="margin-top:10px">RETURNS</div>
       <div class="data-row"><span class="label">WATER VALUE</span><span class="value accent" id="eco-water">—</span></div>
       <div class="data-row"><span class="label">METAL VALUE</span><span class="value" id="eco-metals">—</span></div>
-      <div class="data-row"><span class="label">ASTERANK VALUE</span><span class="value accent" id="eco-asterank">—</span></div>
-      <div class="data-row"><span class="label">PAPER VALUE</span><span class="value accent" id="eco-paper-value">—</span></div>
+      <div class="data-row"><span class="label">PAPER VALUE (ASTERANK)</span><span class="value accent" id="eco-asterank">—</span></div>
+      <div class="data-row"><span class="label">EXTRACTABLE RANGE (10–30%)</span><span class="value accent" id="eco-paper-value">—</span></div>
       <div class="data-row"><span class="label">REALIZABLE NPV</span><span class="value accent" id="eco-npv">—</span></div>
       <div class="data-row" style="margin-top:6px"><span class="label">ROI MULTIPLE</span><span class="value profit" id="eco-roi">—</span></div>
 
@@ -1532,6 +1563,11 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   <div id="mission-timeline-inner">
     <div id="mt-cursor"></div>
   </div>
+</div>
+<div id="mission-phase-chip">
+  <div class="mpc-kicker" id="mission-phase-kicker">MISSION VISUAL</div>
+  <div class="mpc-phase" id="mission-phase-text">IDLE</div>
+  <div class="mpc-note" id="mission-phase-note">Waiting for active mission</div>
 </div>
 
 <div id="bottom-bar">
@@ -1901,7 +1937,7 @@ const COMPOSITIONS = {
   C: 'Water ice: ~8% mass\nCarbon/org: ~15%\nIron/nickel: ~20%\nSilicates: ~57%',
   B: 'Water ice: ~10% mass\nCarbon: ~20%\nIron/nickel: ~18%\nSilicates: ~52%',
   S: 'Iron/nickel: ~25%\nOlivine: ~35%\nPyroxene: ~30%\nOther: ~10%',
-  M: 'Iron: ~55%\nNickel: ~35%\nCobalt: ~5%\nTrace PGMs: <1%',
+  M: 'Iron: ~55%\nNickel: ~35%\nCobalt: ~5%\nTrace PGMs: ~10–500 ppm (Fe-Ni matrix)',
   D: 'Volatiles: ~15%\nCarbon/org: ~25%\nSilicates: ~55%\nOther: ~5%',
   X: 'Composition uncertain\nCould be M, E, or P type\nRequires spectroscopy',
 };
@@ -1926,6 +1962,7 @@ const MAT_DIFFICULTY = {
   iron:'MED', nickel:'MED',
   cobalt:'HARD', silver:'HARD', copper:'HARD',
   platinum:'EXTR', gold:'EXTR', rareEarth:'EXTR',
+  pgm:'EXTR', // ppm-scale concentration (~10–500 ppm in Fe-Ni matrix); extreme extraction difficulty
 };
 const DIFF_COLOR = { EASY:'#34d399', MED:'#fbbf24', HARD:'#f97316', EXTR:'#f87171' };
 // ─── Materials Tab: Composition + Pricing Data ───────────────────────────────
@@ -2768,6 +2805,7 @@ let trailsEnabled = true;
 let trailLine = null, futureLine = null, hoverEllipseLine = null;
 let lastTrailJD = null;
 let labelPool = [];
+let missionBeacons = [];
 let fpsFrames = 0, fpsLast = performance.now();
 const isMobile = window.innerWidth < 768 || navigator.maxTouchPoints > 1;
 
@@ -2886,23 +2924,32 @@ function placeLabels() {
     lbl.active = true;
   }
   const PLANET_NAMES = ['Mercury','Venus','Earth','Mars','Jupiter','Saturn','Uranus','Neptune'];
-  for (let i = 0; i < planets.length; i++) {
-    const pl = planets[i];
-    if (!pl) continue;
-    project3D(pl.position.x, pl.position.y, pl.position.z, PLANET_NAMES[i], '#60a5fa');
+  if (!missionAnim.active) {
+    for (let i = 0; i < planets.length; i++) {
+      const pl = planets[i];
+      if (!pl) continue;
+      project3D(pl.position.x, pl.position.y, pl.position.z, PLANET_NAMES[i], '#60a5fa');
+    }
   }
   if (selectedId >= 0 && positionCache.length > selectedId * 3) {
     const x = positionCache[selectedId*3], y = positionCache[selectedId*3+1], z = positionCache[selectedId*3+2];
     const name = (asteroidData[selectedId]?.full_name || asteroidData[selectedId]?.pdes || '?').trim();
     project3D(x, y, z, name, '#00d4ff');
   }
-  const top5 = filteredIds.slice(0, 5);
-  for (const id of top5) {
-    if (id === selectedId) continue;
-    if (positionCache.length <= id * 3) continue;
-    const x = positionCache[id*3], y = positionCache[id*3+1], z = positionCache[id*3+2];
-    const name = (asteroidData[id]?.full_name || asteroidData[id]?.pdes || '?').trim().split(' ')[0];
-    project3D(x, y, z, name, '#92400e');
+  if (!missionAnim.active) {
+    const top5 = filteredIds.slice(0, 5);
+    for (const id of top5) {
+      if (id === selectedId) continue;
+      if (positionCache.length <= id * 3) continue;
+      const x = positionCache[id*3], y = positionCache[id*3+1], z = positionCache[id*3+2];
+      const name = (asteroidData[id]?.full_name || asteroidData[id]?.pdes || '?').trim().split(' ')[0];
+      project3D(x, y, z, name, '#92400e');
+    }
+  }
+
+  for (const beacon of missionBeacons) {
+    if (!beacon?.visible) continue;
+    project3D(beacon.position.x, beacon.position.y, beacon.position.z, beacon.userData.label || 'MISSION', beacon.userData.color || '#00d4ff');
   }
 
   // Arc / ring contextual labels
@@ -3266,6 +3313,149 @@ const missionAnim = {
 };
 let playbackModeBeforeScrub = 'none';
 let playbackMissionContextKeyBeforeScrub = null;
+let missionSceneFocusActive = false;
+
+const MISSION_BEACON_SHARED = {
+  coreGeo: new THREE.SphereGeometry(0.011, 10, 10),
+  haloGeo: new THREE.SphereGeometry(0.02, 10, 10),
+};
+MISSION_BEACON_SHARED.coreGeo.userData.sharedAsset = true;
+MISSION_BEACON_SHARED.haloGeo.userData.sharedAsset = true;
+
+function createMissionBeacon(position, color, label, role = null) {
+  const group = new THREE.Group();
+  const core = new THREE.Mesh(
+    MISSION_BEACON_SHARED.coreGeo,
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false })
+  );
+  const halo = new THREE.Mesh(
+    MISSION_BEACON_SHARED.haloGeo,
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.18,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+  );
+  group.add(halo, core);
+  group.position.copy(position);
+  group.userData.label = label;
+  group.userData.color = `#${new THREE.Color(color).getHexString()}`;
+  group.userData.role = role;
+  scene.add(group);
+  missionBeacons.push(group);
+  return group;
+}
+
+function clearMissionBeacons() {
+  while (missionBeacons.length) disposeObject3D(missionBeacons.pop());
+}
+
+function buildMissionBeacons(playable) {
+  clearMissionBeacons();
+  if (!playable) return;
+  if (playable.type === 'extract') {
+    const traj = playable.traj;
+    createMissionBeacon(new THREE.Vector3(traj.earthPos.x, traj.earthPos.y, traj.earthPos.z), 0x00d4ff, 'DEPART');
+    createMissionBeacon(new THREE.Vector3(traj.astPos.x, traj.astPos.y, traj.astPos.z), 0xffaa00, 'RENDEZVOUS');
+    const ep = missionEarthReturnPos || traj.earthPos;
+    createMissionBeacon(new THREE.Vector3(ep.x, ep.y, ep.z), 0x00ff88, 'CAPTURE');
+    return;
+  }
+  const visual = playable.visual;
+  createMissionBeacon(new THREE.Vector3(visual.intercept.earthPos.x, visual.intercept.earthPos.y, visual.intercept.earthPos.z), 0x00d4ff, 'DEPART');
+  createMissionBeacon(new THREE.Vector3(visual.intercept.astPos.x, visual.intercept.astPos.y, visual.intercept.astPos.z), 0xffaa00, 'ATTACH', 'attach-target');
+  createMissionBeacon(planets[2]?.position?.clone?.() || new THREE.Vector3(1, 0, 0), 0x00ff88, 'CAPTURE', 'earth-capture');
+}
+
+function updateMissionBeacons() {
+  if (!missionBeacons.length) return;
+  for (const beacon of missionBeacons) {
+    if (!beacon?.userData?.role) continue;
+    if (beacon.userData.role === 'earth-capture' && planets[2]) {
+      beacon.position.copy(planets[2].position);
+    } else if (beacon.userData.role === 'attach-target') {
+      if (missionAnim.asteroidBody?.visible) beacon.position.copy(missionAnim.asteroidBody.position);
+      else if (missionAnim.targetPts.length) beacon.position.copy(missionAnim.targetPts[missionAnim.targetPts.length - 1]);
+    }
+  }
+}
+
+function setObjectOpacity(object, opacity) {
+  if (!object) return;
+  object.traverse(node => {
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.forEach(mat => {
+      if (!mat) return;
+      if (mat.userData.baseOpacity === undefined) mat.userData.baseOpacity = mat.opacity ?? 1;
+      mat.transparent = true;
+      mat.opacity = mat.userData.baseOpacity * opacity;
+      mat.needsUpdate = true;
+    });
+  });
+}
+
+function applyMissionSceneFocus() {
+  const active = !!missionAnim.active;
+  if (active === missionSceneFocusActive) return;
+  missionSceneFocusActive = active;
+
+  if (asteroidMesh?.material) {
+    asteroidMesh.material.transparent = true;
+    asteroidMesh.material.opacity = active ? 0.22 : 1.0;
+    asteroidMesh.material.depthWrite = !active;
+    asteroidMesh.material.needsUpdate = true;
+  }
+  if (dustMesh?.material) {
+    dustMesh.material.transparent = true;
+    dustMesh.material.opacity = active ? 0.08 : 0.35;
+    dustMesh.material.needsUpdate = true;
+  }
+  if (satelliteMesh?.material) {
+    satelliteMesh.material.transparent = true;
+    satelliteMesh.material.opacity = active ? 0.15 : 1.0;
+    satelliteMesh.material.needsUpdate = true;
+  }
+  setObjectOpacity(planetOrbitGroup, active ? 0.35 : 1.0);
+  planets.forEach(planet => setObjectOpacity(planet, active ? 0.45 : 1.0));
+}
+
+function syncMissionPhaseChip() {
+  const chip = document.getElementById('mission-phase-chip');
+  const kicker = document.getElementById('mission-phase-kicker');
+  const phaseEl = document.getElementById('mission-phase-text');
+  const noteEl = document.getElementById('mission-phase-note');
+  if (!chip || !kicker || !phaseEl || !noteEl) return;
+  if (!missionAnim.active) {
+    chip.style.display = 'none';
+    return;
+  }
+  const phaseMap = {
+    outbound: 'DEPARTURE / TRANSFER',
+    arrival: 'ARRIVAL',
+    mining: 'ASTEROID OPERATIONS',
+    return: 'RETURN LEG',
+    attach: 'RENDEZVOUS / ATTACH',
+    redirect: 'REDIRECT BURN',
+    capture: 'DESTINATION INSERTION',
+    done: 'MISSION COMPLETE',
+  };
+  let note = 'Screening-grade visual';
+  if (missionAnim.mode === 'extract') {
+    note = 'Transfer arcs are approximate presentation curves';
+  } else if (missionAnim.phase === 'outbound') {
+    note = 'Intercept path is solver-backed when available; fallback is labeled approximate';
+  } else if (missionAnim.phase === 'redirect' || missionAnim.phase === 'capture') {
+    note = 'Redirect arc is solver-backed; final orbit phase is presentation-level';
+  } else if (missionAnim.phase === 'attach') {
+    note = 'Attachment dwell is a visual hold, not a solved dynamics segment';
+  }
+  chip.style.display = 'block';
+  kicker.textContent = missionAnim.mode === 'redirect' ? 'CAPTURE / REDIRECT' : 'EXTRACT / RETURN';
+  phaseEl.textContent = phaseMap[missionAnim.phase] || missionAnim.phase.toUpperCase();
+  noteEl.textContent = note;
+}
 
 const SPACECRAFT_SHARED = {
   bodyGeo: new THREE.BoxGeometry(0.04, 0.025, 0.025),
@@ -5260,13 +5450,14 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   if (pts.length < 2 || !validateArcPoints(pts, 'redirect')) return false;
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   _redirectArcLine = makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 });
+  _redirectArcLine.userData.pathQuality = 'solved';
   scene.add(_redirectArcLine);
   showGlowLine(_redirectArcLine);
   // Label anchor — dv_redirect comes from the redirect object argument
   {
     const dvText = redirect && Number.isFinite(redirect.dv_redirect)
-      ? `REDIRECT  ΔV: ${redirect.dv_redirect.toFixed(3)} km/s`
-      : 'REDIRECT ARC';
+      ? `REDIRECT  ΔV: ${redirect.dv_redirect.toFixed(3)} km/s  ·  SOLVED`
+      : 'REDIRECT ARC · SOLVED';
     _setArcAnchor('redirectArc', _redirectArcLine, dvText);
   }
 
@@ -5290,9 +5481,10 @@ function drawRedirectInterceptTrajectory(intercept) {
   if (pts.length >= 2 && validateArcPoints(pts, 'redirect-intercept')) {
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
+    trajectoryLine.userData.pathQuality = 'solved';
     scene.add(trajectoryLine);
     showGlowLine(trajectoryLine);
-    _setArcAnchor('redirectIntercept', trajectoryLine, 'REDIRECT INTERCEPT');
+    _setArcAnchor('redirectIntercept', trajectoryLine, 'REDIRECT INTERCEPT · SOLVED');
     const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
     const arr1 = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
     scene.add(arr1);
@@ -5303,6 +5495,10 @@ function drawRedirectInterceptTrajectory(intercept) {
     return true;
   }
   drawTrajectoryLine(intercept.earthPos, intercept.astPos, { skipReturn: true });
+  if (trajectoryLine) {
+    trajectoryLine.userData.pathQuality = 'approximate';
+    _setArcAnchor('redirectIntercept', trajectoryLine, 'REDIRECT INTERCEPT · APPROX');
+  }
   return true;
 }
 
@@ -5811,12 +6007,11 @@ function computeMissionProfile(traj) {
     dot('OPERATIONS', `${fmtUSD(opsCost * 0.85)} – ${fmtUSD(opsCost * 1.15)}`),
     dot('TOTAL MISSION', `${fmtUSD(costRng_mp.low)} – ${fmtUSD(costRng_mp.high)}`),
     totalCost < 500e6 ? dot('SANITY WARNING', 'Historical mining missions are typically $2B – $10B+') : '',
-    sep('REFERENCE MISSION COSTS'),
-    dot('DART (kinetic impactor)',      '$324M'),
-    dot('OSIRIS-REx (sample return)',   '$1.16B'),
-    dot('KISS asteroid capture study',  '$2.6B'),
-    dot('Psyche (metal asteroid orb.)', '~$1.0B'),
-    dot('First-of-kind mining est.',    '$2B – $10B+'),
+    sep('COST REFERENCE ANCHORS (for sanity comparison)'),
+    dot('DART (2022, kinetic impactor)',         '~$324M'),
+    dot('OSIRIS-REx (2016–2023, sample return)', '~$1.16B'),
+    dot('KISS asteroid capture study (2012)',     '~$2.6B'),
+    dot('First-of-a-kind mining missions',       'expect $2B–$5B+'),
     sep('REVENUE ESTIMATE'),
     dot('ORE PAYLOAD', sc.payload_kg.toLocaleString() + ' kg max'),
     dot('EXTRACTED (5%)', returnedKg.toLocaleString() + ' kg  (conservative — no ISRU at scale demonstrated)'),
@@ -5824,6 +6019,7 @@ function computeMissionProfile(traj) {
     dot('PAPER VALUE', fmtMaybeUSD(paperValue) + '  (spot price, no market impact)'),
     dot('REALIZABLE NPV', fmtMaybeUSD(npvRealized) + '  (demand-adj. 10yr sell, 8% discount)'),
     sep('RETURNS'),
+    'REALIZABLE NPV (10–30% extraction, 5% discount rate):',
     dot('ROI', fmtMaybePct(roiLow)),
     dot('NPV 5%', fmtMaybeUSD(npvLow)),
     breakEvenKg ? dot('BREAK-EVEN PAYLOAD', breakEvenKg.toLocaleString() + ' kg') : '',
@@ -5870,13 +6066,14 @@ function drawTrajectoryLine(earthPos, astPos, options = {}) {
   const pts = curve.getPoints(100);
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
+  trajectoryLine.userData.pathQuality = 'approximate';
   scene.add(trajectoryLine);
   showGlowLine(trajectoryLine);
   // Arc phase labels (set after geometry is in place)
   {
     const t = optimalTrajectory;
-    const depText = t && Number.isFinite(t.dv_dep) ? `DEPARTURE  ΔV: ${t.dv_dep.toFixed(2)} km/s` : 'DEPARTURE';
-    const arrText = t && Number.isFinite(t.dv_arr) ? `ARRIVAL  ΔV: ${t.dv_arr.toFixed(2)} km/s`   : 'ARRIVAL';
+    const depText = t && Number.isFinite(t.dv_dep) ? `DEPARTURE  ΔV: ${t.dv_dep.toFixed(2)} km/s  ·  APPROX` : 'DEPARTURE · APPROX';
+    const arrText = t && Number.isFinite(t.dv_arr) ? `ARRIVAL  ΔV: ${t.dv_arr.toFixed(2)} km/s  ·  APPROX`   : 'ARRIVAL · APPROX';
     _setArcAnchor('departure', trajectoryLine, depText, 0.25);
     _setArcAnchor('arrival',   trajectoryLine, arrText, 0.75);
   }
@@ -5907,12 +6104,13 @@ function _redrawReturnArc(traj, options = {}) {
   const retPts = retCurve.getPoints(80);
   const retGeo = new THREE.BufferGeometry().setFromPoints(retPts);
   const retLine = makeDashedGlowLine(retGeo, ORBIT_NEON.transfer, 0.64, 0.03, 0.02, { haloOpacity: 0.14 });
+  retLine.userData.pathQuality = 'approximate';
   scene.add(retLine);
   showGlowLine(retLine);
   returnArcLine = retLine;
   {
     const t = optimalTrajectory;
-    const retText = t && Number.isFinite(t.dv_return) ? `RETURN  ΔV: ${t.dv_return.toFixed(2)} km/s` : 'RETURN';
+    const retText = t && Number.isFinite(t.dv_return) ? `RETURN  ΔV: ${t.dv_return.toFixed(2)} km/s  ·  APPROX` : 'RETURN · APPROX';
     _setArcAnchor('returnArc', returnArcLine, retText);
   }
 }
@@ -6224,6 +6422,9 @@ function startMissionAnimation(traj) {
 
   document.getElementById('mp-anim-controls').style.display = 'block';
   buildMissionTimeline(traj);
+  buildMissionBeacons({ type: 'extract', traj });
+  applyMissionSceneFocus();
+  syncMissionPhaseChip();
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
   syncSpeedButtons();
@@ -6307,6 +6508,9 @@ function startRedirectAnimation(visual) {
 
   document.getElementById('mp-anim-controls').style.display = 'block';
   buildRedirectTimeline(visual);
+  buildMissionBeacons({ type: 'redirect', visual });
+  applyMissionSceneFocus();
+  syncMissionPhaseChip();
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
   syncSpeedButtons();
@@ -6314,6 +6518,7 @@ function startRedirectAnimation(visual) {
 }
 
 function stopMissionAnimation() {
+  clearMissionBeacons();
   if (missionAnim.spacecraft) { disposeObject3D(missionAnim.spacecraft); missionAnim.spacecraft = null; }
   if (missionAnim.asteroidBody) { disposeObject3D(missionAnim.asteroidBody); missionAnim.asteroidBody = null; }
   if (missionAnim.trailLine)  { disposeObject3D(missionAnim.trailLine);  missionAnim.trailLine  = null; }
@@ -6340,8 +6545,11 @@ function stopMissionAnimation() {
   missionAnim.engineLight = null;
   const ctrl = document.getElementById('mp-anim-controls');
   if (ctrl) ctrl.style.display = 'none';
+  hideMissionTimeline();
   syncScrubberBounds();
   scrubber.value = jdToScrubberPos(currentJD);
+  applyMissionSceneFocus();
+  syncMissionPhaseChip();
   syncMissionSpeedButtons();
   syncMissionPlaybackButtons();
   syncSpeedButtons();
@@ -6464,6 +6672,7 @@ function updateMissionAnimation(dt) {
       missionAnim.spacecraftVisible = false;
       if (missionAnim.spacecraft) missionAnim.spacecraft.visible = false;
       updateThrusterPlumes(clock.elapsedTime, false);
+      syncMissionPhaseChip();
       syncMissionPlaybackButtons();
       syncFollowButton();
       return;
@@ -6501,6 +6710,7 @@ function updateMissionAnimation(dt) {
       missionAnim.spacecraftVisible = false;
       if (missionAnim.spacecraft) missionAnim.spacecraft.visible = false;
       updateThrusterPlumes(clock.elapsedTime, false);
+      syncMissionPhaseChip();
       syncMissionPlaybackButtons();
       syncFollowButton();
       return;
@@ -6538,6 +6748,8 @@ function updateMissionAnimation(dt) {
   }
   updateThrusterPlumes(clock.elapsedTime, burning && missionAnim.playing);
   updateMissionAsteroidSpin(dt);
+  updateMissionBeacons();
+  syncMissionPhaseChip();
 
   // Trail
   if (missionAnim.playing) {

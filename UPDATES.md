@@ -4,6 +4,32 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 12 — Mission Renderer Truth / Readability Pass (2026-04-15)
+
+### Summary
+The mission renderer now makes the active mission easier to read without changing the right-side panel layout. During playback or mission review, the scene shifts into a focused mission mode with explicit phase beacons, a compact phase/status chip, dimmed background objects, and clearer approximate-vs-solved labels on mission paths.
+
+### Changes
+**`index.html`** — mission focus visuals:
+- Added a compact `#mission-phase-chip` overlay showing the active mission mode, phase, and whether the visible path is solver-backed or presentation-level
+- Added in-scene mission beacons for departure, rendezvous/attach, and capture milestones
+- Added mission-only label focus so background planet/leader labels stop competing with active mission visuals
+
+**`index.html`** — scene focus / dimming:
+- Added mission scene focus mode that dims the asteroid cloud, dust cloud, satellite cloud, planet orbit rings, and planet materials while a mission is active
+- Focus is automatically restored when mission playback stops
+
+**`index.html`** — truth labeling on paths:
+- Extract transfer and return arcs are now explicitly labeled `APPROX`
+- Redirect intercept is labeled `SOLVED` when sampled from solved orbital segments and `APPROX` when it falls back to the presentation curve
+- Redirect return arc is labeled `SOLVED`
+
+### Result
+- The active mission now reads as the visual foreground instead of competing with the whole catalog at once
+- Users can distinguish solved redirect geometry from presentation-only arcs directly in the scene
+
+---
+
 ## Phase 11 — Mission Playback State Ownership Cleanup (2026-04-14)
 
 ### Summary

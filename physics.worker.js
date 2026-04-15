@@ -1159,6 +1159,10 @@ self.onmessage = function(e) {
         vinf_arr:   +c.vinf_arr.toFixed(3),
         vinf_return:+bestReturn.vinf_return.toFixed(3),
         lunarAssist: checkLunarAssist(c.vinf_dep),
+        // moidWarning: true when the Asterank MOID field indicates an Earth-proximity risk
+        // (< 0.0005 AU ≈ 75,000 km, roughly Earth's Hill sphere). This is advisory only —
+        // missions are not blocked here because the Asterank MOID is approximate.
+        moidWarning: isFinite(ast.moid) && ast.moid < 0.0005,
         earthPos:   c.earthPos,
         astPos:     c.astPos,
       });
@@ -1598,6 +1602,9 @@ self.onmessage = function(e) {
       const fetchLimit = Math.max(250, Math.min(requestedLimit, 2000));
       const SBDB_URL = buildSbdbQueryUrl(fetchLimit);
       const ASTERANK_URL = buildAsterankUrl(fetchLimit, 'moid');
+      // NHATS_URL is built from NHATS_DEFAULTS (dv: '12', dur: '450', stay: '8').
+      // These values match the accessible NEO screen used by the Redirect mission planner
+      // departure gate (MISSION_GATE_DEP_KMS = 10.0 km/s); dv:'12' provides a margin above it.
       const NHATS_URL = buildNhatsUrl();
 
       async function fetchSbdbWorker() {
