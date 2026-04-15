@@ -3239,6 +3239,8 @@ const missionAnim = {
   outboundPts: [], returnPts: [],
   targetPts: [],
   mode: 'extract',
+  contextKey: null,
+  extractTraj: null,
   jdStart: 0, jdEnd: 0,
   attachEndJD: 0,
   captureEndJD: 0,
@@ -3263,8 +3265,7 @@ const missionAnim = {
   captureCenter: new THREE.Vector3(),
 };
 let playbackModeBeforeScrub = 'none';
-let playbackMissionRefBeforeScrub = null;
-let playbackMissionModeBeforeScrub = null;
+let playbackMissionContextKeyBeforeScrub = null;
 
 const SPACECRAFT_SHARED = {
   bodyGeo: new THREE.BoxGeometry(0.04, 0.025, 0.025),
@@ -3483,20 +3484,46 @@ function getActiveExtractTrajectory() {
   return missionResults[selectedTrajIdx] || optimalTrajectory || null;
 }
 
+function getExtractMissionContextKey(traj) {
+  if (!traj) return null;
+  return [
+    'extract',
+    traj.jd_dep,
+    traj.jd_arr,
+    traj.jd_ret_dep,
+    traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof)),
+    traj.dv_total,
+  ].join(':');
+}
+
+function getRedirectMissionContextKey(visual) {
+  if (!visual?.intercept || !visual?.redirect) return null;
+  return [
+    'redirect',
+    visual.reqId || 0,
+    visual.asteroidId,
+    visual.intercept.jd_dep,
+    visual.intercept.jd_arr,
+    visual.redirect.jd_earth_arr,
+  ].join(':');
+}
+
 function getPlayableMissionContext() {
   if (_activeMissionType === 'redirect') {
-    return activeRedirectVisual ? { type: 'redirect', visual: activeRedirectVisual } : null;
+    return activeRedirectVisual ? {
+      type: 'redirect',
+      visual: activeRedirectVisual,
+      key: getRedirectMissionContextKey(activeRedirectVisual),
+    } : null;
   }
   const traj = getActiveExtractTrajectory();
-  if (traj) return { type: 'extract', traj };
+  if (traj) return { type: 'extract', traj, key: getExtractMissionContextKey(traj) };
   return null;
 }
 
 function missionContextMatches(playable) {
   if (!missionAnim.active || !playable) return false;
-  if (playable.type !== missionAnim.mode) return false;
-  if (playable.type === 'redirect') return missionAnim.redirectVisual === playable.visual;
-  return getActiveExtractTrajectory() === playable.traj;
+  return playable.type === missionAnim.mode && playable.key === missionAnim.contextKey;
 }
 
 function activatePlayableMission(playable) {
@@ -6180,6 +6207,8 @@ function startMissionAnimation(traj) {
   missionAnim.active  = true;
   missionAnim.playing = false;
   missionAnim.mode    = 'extract';
+  missionAnim.contextKey = getExtractMissionContextKey(traj);
+  missionAnim.extractTraj = traj;
   missionAnim.animJD  = traj.jd_dep;
   missionAnim.phase   = 'outbound';
   missionAnim.jdStart = traj.jd_dep;
@@ -6255,6 +6284,8 @@ function startRedirectAnimation(visual) {
   missionAnim.active = true;
   missionAnim.playing = false;
   missionAnim.mode = 'redirect';
+  missionAnim.contextKey = getRedirectMissionContextKey(visual);
+  missionAnim.extractTraj = null;
   missionAnim.animJD = ic.jd_dep;
   missionAnim.phase = 'outbound';
   missionAnim.jdStart = ic.jd_dep;
@@ -6290,6 +6321,8 @@ function stopMissionAnimation() {
   missionAnim.playing = false;
   missionAnim.phase  = 'idle';
   missionAnim.mode = 'extract';
+  missionAnim.contextKey = null;
+  missionAnim.extractTraj = null;
   missionAnim.jdStart = 0;
   missionAnim.jdEnd = 0;
   missionAnim.attachEndJD = 0;
@@ -6362,7 +6395,7 @@ function updateRedirectCaptureAssembly(visual, jd) {
 
 function updateMissionAnimation(dt) {
   if (!missionAnim.active) return;
-  const traj = missionAnim.mode === 'extract' ? getActiveExtractTrajectory() : null;
+  const traj = missionAnim.mode === 'extract' ? missionAnim.extractTraj : null;
   if (missionAnim.mode !== 'redirect' && missionAnim.asteroidBody) missionAnim.asteroidBody.visible = false;
 
   if (missionAnim.playing) {
@@ -7744,10 +7777,7 @@ syncScrubberBounds();
 
 function beginScrub() {
   isScrubbing = true;
-  playbackMissionModeBeforeScrub = missionAnim.mode;
-  playbackMissionRefBeforeScrub = missionAnim.mode === 'redirect'
-    ? missionAnim.redirectVisual
-    : getActiveExtractTrajectory();
+  playbackMissionContextKeyBeforeScrub = missionAnim.contextKey;
   playbackModeBeforeScrub = missionAnim.active && missionAnim.playing
     ? 'mission'
     : isPlaying
@@ -7761,19 +7791,12 @@ function endScrub() {
   if (!isScrubbing) return;
   isScrubbing = false;
   if (playbackModeBeforeScrub === 'mission') {
-    const sameMission =
-      missionAnim.active &&
-      missionAnim.mode === playbackMissionModeBeforeScrub &&
-      (
-        (missionAnim.mode === 'redirect' && missionAnim.redirectVisual === playbackMissionRefBeforeScrub) ||
-        (missionAnim.mode === 'extract' && getActiveExtractTrajectory() === playbackMissionRefBeforeScrub)
-      );
+    const sameMission = missionAnim.active && missionAnim.contextKey === playbackMissionContextKeyBeforeScrub;
     if (sameMission) setMissionAnimationPlaying(true);
   }
   if (playbackModeBeforeScrub === 'timeline') setPlayState(true);
   playbackModeBeforeScrub = 'none';
-  playbackMissionModeBeforeScrub = null;
-  playbackMissionRefBeforeScrub = null;
+  playbackMissionContextKeyBeforeScrub = null;
 }
 
 scrubber.addEventListener('mousedown', beginScrub);

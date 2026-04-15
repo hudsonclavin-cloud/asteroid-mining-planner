@@ -4,6 +4,27 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 11 — Mission Playback State Ownership Cleanup (2026-04-14)
+
+### Summary
+Mission playback now runs off an owned mission context instead of reading the live selected mission result during animation. This removes a class of state collisions where changing the selected trajectory or scrubbing the timeline could mutate or invalidate the active playback mid-flight.
+
+### Changes
+**`index.html`** — mission context ownership:
+- Added stable mission context keys for extract and redirect playback
+- Extract playback now stores its own trajectory snapshot on `missionAnim.extractTraj`
+- Mission-control matching now compares context keys instead of reading whatever mission is currently selected in the panel
+
+**`index.html`** — scrub/resume behavior:
+- Timeline scrubbing now remembers the active mission by context key
+- Mission playback only auto-resumes after scrubbing if the same mission context is still active
+
+### Result
+- Changing the selected extract result while a mission is playing no longer changes the active playback path underneath the renderer
+- Scrub pause/resume is tied to the active mission instance instead of panel state
+
+---
+
 ## Phase 10 — JPL-First Catalog + Dossier Provenance Foundation (2026-04-14)
 
 ### Summary
