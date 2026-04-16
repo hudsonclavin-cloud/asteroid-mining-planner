@@ -856,7 +856,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <button class="tool-btn" id="btn-export-toolbar">↓ EXPORT</button>
     <button class="tool-btn" id="btn-share-toolbar">⬡ SHARE</button>
     <button class="tool-btn" id="btn-shortcuts-toolbar">? HELP</button>
-    <button class="tool-btn" id="btn-scale-mode">◉ SCALE: VISUAL</button>
+    <button class="tool-btn" id="btn-scale-mode">◉ SIZE: VISUAL</button>
   </div>
   <div id="toolbar-right">
     <span class="hud-item" id="hud-date">—</span>
@@ -2630,6 +2630,9 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x050508);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -2645,6 +2648,7 @@ controls.maxDistance = 500;
 const clock = new THREE.Clock();
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.08));
+scene.add(new THREE.HemisphereLight(0x27344f, 0x080a10, 0.2));
 const sunLight = new THREE.PointLight(0xfff4e0, 2.5, 0);
 scene.add(sunLight);
 
@@ -2653,10 +2657,11 @@ const sunMesh = new THREE.Mesh(
   new THREE.MeshBasicMaterial({ color: 0xfff4e0 })
 );
 scene.add(sunMesh);
-scene.add(new THREE.Mesh(
+const sunGlowMesh = new THREE.Mesh(
   new THREE.SphereGeometry(0.12, 16, 16),
   new THREE.MeshBasicMaterial({ color: 0xfff4e0, transparent: true, opacity: 0.15 })
-));
+);
+scene.add(sunGlowMesh);
 
 // Starfield
 (function() {
@@ -2686,6 +2691,10 @@ const PLANET_CONFIGS = [
   { name: 'Uranus',  color: 0x7de8e8, r: 0.0882 },
   { name: 'Neptune', color: 0x5b6fcd, r: 0.0856 },
 ];
+const PLANET_BASE_R = PLANET_CONFIGS.map(cfg => cfg.r);
+const SUN_BASE_R = 0.06;
+const MOON_BASE_R = 0.006;
+const MOON_ORBIT_BASE_A = 0.11;
 
 const PLANET_VISUALS = {
   Mercury: { color: 0x9a9a95, specular: 0x555555, shininess: 12, glow: 0xa0a4ab, glowOpacity: 0.05, rotation: 0.00045 },
@@ -2743,6 +2752,39 @@ function createProceduralLandOverlay(radius, detail = 18, opacity = 0.75) {
   );
 }
 
+function createMoonSurfaceOverlay(radius, detail = 20, opacity = 0.92) {
+  const geo = new THREE.SphereGeometry(radius, detail, detail);
+  const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  const color = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const lat = Math.atan2(y, Math.sqrt(x*x + z*z));
+    const lon = Math.atan2(z, x);
+    const maria = Math.sin(lon * 4.6 + lat * 2.3) * 0.45 + Math.cos(lat * 7.2) * 0.35;
+    const craterField = Math.sin((x + y * 1.8 + z * 0.7) * 18) * 0.15 + Math.cos((x * 0.5 - z) * 24) * 0.1;
+    const tone = maria + craterField;
+    color.setHex(tone > 0.16 ? 0xc7ccd3 : tone > -0.08 ? 0x8a9099 : 0x626873);
+    colors[i*3] = color.r;
+    colors[i*3+1] = color.g;
+    colors[i*3+2] = color.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  return new THREE.Mesh(
+    geo,
+    new THREE.MeshPhongMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity,
+      shininess: 4,
+      specular: 0x404854,
+      depthWrite: false,
+    })
+  );
+}
+
 const planets = PLANET_CONFIGS.map((cfg, idx) => {
   const geo = new THREE.SphereGeometry(cfg.r, 12, 12);
   const visual = PLANET_VISUALS[cfg.name] || PLANET_VISUALS.Mercury;
@@ -2775,51 +2817,95 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
 
 // ─── Moon ─────────────────────────────────────────────────────────────────────
 const moonMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.006, 8, 8),
-  new THREE.MeshBasicMaterial({ color: 0x888888 })
+  new THREE.SphereGeometry(MOON_BASE_R, 24, 24),
+  new THREE.MeshPhongMaterial({
+    color: 0xa9b0bc,
+    specular: 0x6b7482,
+    shininess: 10,
+  })
 );
+moonMesh.add(createMoonSurfaceOverlay(MOON_BASE_R * 1.01, 22, 0.9));
+moonMesh.add(createPlanetAtmosphere(MOON_BASE_R, 0xd8e2f1, 0.08, 1.16));
 scene.add(moonMesh);
 
 // Moon orbit ring — drawn at MOON_VISUAL_A radius around Earth
 const MOON_ORBIT_RING_PTS = [];
 for (let j = 0; j <= 128; j++) {
   const a = (j / 128) * Math.PI * 2;
-  MOON_ORBIT_RING_PTS.push(new THREE.Vector3(Math.cos(a) * 0.11, 0, Math.sin(a) * 0.11));
+  MOON_ORBIT_RING_PTS.push(new THREE.Vector3(Math.cos(a) * MOON_ORBIT_BASE_A, 0, Math.sin(a) * MOON_ORBIT_BASE_A));
 }
 const moonOrbitGeo = new THREE.BufferGeometry().setFromPoints(MOON_ORBIT_RING_PTS);
 const moonOrbitLine = new THREE.Line(
   moonOrbitGeo,
-  new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.45 })
+  new THREE.LineBasicMaterial({ color: 0xb8c4d8, transparent: true, opacity: 0.7 })
 );
 scene.add(moonOrbitLine);
 
 // ─── Scale Mode ───────────────────────────────────────────────────────────────
-// VISUAL: artistic sizes (planets proportional but enlarged for visibility)
-// TRUE:   real physical radii in AU (everything will be tiny dots at solar-system scale)
 const AU_KM = 149597870.7;
-const PLANET_VISUAL_R = [0.0084, 0.0209, 0.022, 0.0117, 0.2468, 0.2081, 0.0882, 0.0856];
 const PLANET_TRUE_R   = [2440, 6052, 6371, 3390, 71492, 60268, 25559, 24764].map(km => km / AU_KM);
-const SUN_VISUAL_R    = 0.06;
 const SUN_TRUE_R      = 696000 / AU_KM;
-const MOON_VISUAL_R   = 0.006;
 const MOON_TRUE_R     = 1737 / AU_KM;
-const MOON_VISUAL_A   = 0.11;
 const MOON_TRUE_A     = 384400 / AU_KM;
+const EARTH_VISUAL_R  = 0.0042;
+const BODY_VISUAL_MAGNIFICATION = EARTH_VISUAL_R / PLANET_TRUE_R[2];
+const PLANET_VISUAL_R = PLANET_TRUE_R.map(r => r * BODY_VISUAL_MAGNIFICATION);
+const SUN_VISUAL_R    = SUN_TRUE_R * 10.0;
+const MOON_VISUAL_R   = Math.max(MOON_TRUE_R * BODY_VISUAL_MAGNIFICATION, 0.00105);
+const MOON_VISUAL_A   = Math.max(MOON_TRUE_A * 6.5, PLANET_VISUAL_R[2] * 4.2);
+const ASTEROID_BASE_R = 0.00012;
+const ASTEROID_VISUAL_R_FLOOR = 0.00005;
+const ASTEROID_MISSION_VISUAL_R_FLOOR = 0.00035;
 let scaleMode = 'visual'; // 'visual' | 'true'
+
+function asteroidTrueRadiusAu(ast) {
+  const diamKm = Number.isFinite(ast?._diam_m) ? ast._diam_m / 1000 : Number(ast?.diameter);
+  return Number.isFinite(diamKm) && diamKm > 0 ? (diamKm * 0.5) / AU_KM : (2.5 / AU_KM);
+}
+
+function asteroidRenderRadiusAu(ast, mode = scaleMode) {
+  const trueRadius = asteroidTrueRadiusAu(ast);
+  if (mode === 'true') return trueRadius;
+  return Math.max(trueRadius * BODY_VISUAL_MAGNIFICATION, ASTEROID_VISUAL_R_FLOOR);
+}
+
+function asteroidMissionRadiusAu(ast, mode = scaleMode) {
+  if (mode === 'true') return asteroidTrueRadiusAu(ast);
+  return Math.max(asteroidRenderRadiusAu(ast, mode) * 5.5, ASTEROID_MISSION_VISUAL_R_FLOOR);
+}
+
+function refreshAsteroidInstanceScales() {
+  if (!asteroidMesh || asteroidCount === 0) return;
+  for (let i = 0; i < asteroidCount; i++) {
+    const ast = asteroidData[i];
+    const scale = asteroidRenderRadiusAu(ast, scaleMode) / ASTEROID_BASE_R;
+    visibleScale[i] = scale;
+    dummy.position.set(
+      positionCache.length > i * 3 ? positionCache[i*3] : 0,
+      positionCache.length > i * 3 + 1 ? positionCache[i*3+1] : 0,
+      positionCache.length > i * 3 + 2 ? positionCache[i*3+2] : 0
+    );
+    dummy.scale.setScalar(scale);
+    dummy.updateMatrix();
+    asteroidMesh.setMatrixAt(i, dummy.matrix);
+  }
+  asteroidMesh.instanceMatrix.needsUpdate = true;
+}
 
 function applyScaleMode(mode) {
   scaleMode = mode;
   const btn = document.getElementById('btn-scale-mode');
-  if (btn) btn.textContent = mode === 'true' ? '◉ SCALE: TRUE' : '◉ SCALE: VISUAL';
+  if (btn) btn.textContent = mode === 'true' ? '◉ SIZE: TRUE' : '◉ SIZE: VISUAL';
 
   planets.forEach((mesh, i) => {
-    mesh.scale.setScalar((mode === 'true' ? PLANET_TRUE_R[i] : PLANET_VISUAL_R[i]) / PLANET_VISUAL_R[i]);
+    mesh.scale.setScalar((mode === 'true' ? PLANET_TRUE_R[i] : PLANET_VISUAL_R[i]) / PLANET_BASE_R[i]);
   });
 
-  if (sunMesh) sunMesh.scale.setScalar(mode === 'true' ? SUN_TRUE_R / SUN_VISUAL_R : 1.0);
-  if (moonMesh) moonMesh.scale.setScalar(mode === 'true' ? MOON_TRUE_R / MOON_VISUAL_R : 1.0);
-  if (moonOrbitLine) moonOrbitLine.scale.setScalar(mode === 'true' ? MOON_TRUE_A / MOON_VISUAL_A : 1.0);
-  if (asteroidMesh) asteroidMesh.scale.setScalar(mode === 'true' ? 0.002 : 1.0);
+  if (sunMesh) sunMesh.scale.setScalar((mode === 'true' ? SUN_TRUE_R : SUN_VISUAL_R) / SUN_BASE_R);
+  if (sunGlowMesh) sunGlowMesh.scale.setScalar((mode === 'true' ? SUN_TRUE_R : SUN_VISUAL_R) / SUN_BASE_R);
+  if (moonMesh) moonMesh.scale.setScalar((mode === 'true' ? MOON_TRUE_R : MOON_VISUAL_R) / MOON_BASE_R);
+  if (moonOrbitLine) moonOrbitLine.scale.setScalar((mode === 'true' ? MOON_TRUE_A : MOON_VISUAL_A) / MOON_ORBIT_BASE_A);
+  refreshAsteroidInstanceScales();
 }
 
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
@@ -3533,6 +3619,7 @@ let pendingPositions = null;
 let wasDragging = false;
 let positionCache = new Float32Array(0);
 let visibleScale = new Float32Array(0);
+applyScaleMode(scaleMode);
 let filteredIds = [];
 let lbSortMode = 'dv';
 let flyTarget = null;
@@ -4047,7 +4134,7 @@ function asteroidMissionColor(ast) {
 }
 
 function createMissionAsteroidBody(ast) {
-  const geo = new THREE.IcosahedronGeometry(0.018, 1);
+  const geo = new THREE.IcosahedronGeometry(1, 3);
   const seedText = `${ast?.full_name || ast?.name || ast?.pdes || ast?.designation || 'aster'}`;
   let seed = 0;
   for (let i = 0; i < seedText.length; i++) seed = (seed * 31 + seedText.charCodeAt(i)) >>> 0;
@@ -4063,14 +4150,12 @@ function createMissionAsteroidBody(ast) {
   geo.computeVertexNormals();
   const mat = new THREE.MeshPhongMaterial({
     color: asteroidMissionColor(ast),
-    shininess: 8,
-    flatShading: true,
-    specular: 0x4b5563,
+    shininess: 14,
+    flatShading: false,
+    specular: 0x5d6674,
   });
   const mesh = new THREE.Mesh(geo, mat);
-  const diamKm = Number.isFinite(ast?._diam_m) ? ast._diam_m / 1000 : null;
-  const scale = diamKm ? Math.max(0.75, Math.min(1.6, Math.pow(Math.max(0.05, diamKm), 0.22))) : 1;
-  mesh.scale.setScalar(scale);
+  mesh.scale.setScalar(asteroidMissionRadiusAu(ast, scaleMode));
   mesh.visible = false;
   return mesh;
 }
@@ -4356,8 +4441,8 @@ function buildAsteroidMesh(data) {
     const H = Number(ast.H);
     const _albedo = Number(ast.albedo) || 0.15;
     const _diamKm = Number(ast.diameter) > 0
-      ? Math.min(35, Number(ast.diameter))
-      : (Number.isFinite(H) && H > 0 ? Math.min(35, (1329 / Math.sqrt(_albedo)) * Math.pow(10, -H / 5)) : null);
+      ? Number(ast.diameter)
+      : (Number.isFinite(H) && H > 0 ? (1329 / Math.sqrt(_albedo)) * Math.pow(10, -H / 5) : null);
     ast._diam_m = _diamKm ? _diamKm * 1000 : null;
     ast._nhats = getAsteroidDV(ast) <= 12;
   }
@@ -4365,8 +4450,12 @@ function buildAsteroidMesh(data) {
   positionCache = new Float32Array(asteroidCount * 3);
   visibleScale  = new Float32Array(asteroidCount).fill(1.0);
 
-  const geo = new THREE.SphereGeometry(0.001, 4, 4);
-  const mat = new THREE.MeshBasicMaterial({ vertexColors: true });
+  const geo = new THREE.SphereGeometry(ASTEROID_BASE_R, 10, 10);
+  const mat = new THREE.MeshPhongMaterial({
+    vertexColors: true,
+    shininess: 12,
+    specular: 0x38404a,
+  });
   asteroidMesh = new THREE.InstancedMesh(geo, mat, asteroidCount);
   asteroidMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
@@ -4374,16 +4463,16 @@ function buildAsteroidMesh(data) {
     const ast = asteroidData[i];
     asteroidMesh.setColorAt(i, spectralTypeColor(ast));
     dummy.position.set(0, 0, 0);
-    // Size by diameter relative to Earth (6371 km), boosted for visibility, clamped 0.5–4.0
-    const diamKm = ast._diam_m ? ast._diam_m / 1000 : (ast.diameter > 0 ? ast.diameter : 5);
-    const diamScale = Math.max(0.5, Math.min(4.0, Math.sqrt(diamKm / 6371) * 60));
-    dummy.scale.setScalar(diamScale);
+    const renderScale = asteroidRenderRadiusAu(ast, scaleMode) / ASTEROID_BASE_R;
+    visibleScale[i] = renderScale;
+    dummy.scale.setScalar(renderScale);
     dummy.updateMatrix();
     asteroidMesh.setMatrixAt(i, dummy.matrix);
   }
 
   asteroidMesh.instanceColor.needsUpdate = true;
   scene.add(asteroidMesh);
+  refreshAsteroidInstanceScales();
   document.getElementById('asteroid-count').textContent = `▲ ${asteroidCount} ASTEROIDS`;
   document.getElementById('panel-idle').innerHTML =
     `CLICK ANY ASTEROID<br>TO SELECT TARGET<br><br>— SOLAR SYSTEM —<br>8 PLANETS ACTIVE<br>${asteroidCount} ASTEROIDS LOADED`;
@@ -7362,7 +7451,9 @@ document.getElementById('btn-shortcuts-toolbar').addEventListener('click', () =>
   document.getElementById('shortcut-overlay').style.display = 'flex';
 });
 document.getElementById('btn-scale-mode')?.addEventListener('click', () => {
-  applyScaleMode(scaleMode === 'visual' ? 'true' : 'visual');
+  const nextMode = scaleMode === 'visual' ? 'true' : 'visual';
+  applyScaleMode(nextMode);
+  setStatus(nextMode === 'true' ? 'Body sizes: true physical scale' : 'Body sizes: visual readability scale', true);
 });
 document.getElementById('btn-close-panel').addEventListener('click', deselectAsteroid);
 

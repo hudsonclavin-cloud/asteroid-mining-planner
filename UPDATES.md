@@ -4,6 +4,34 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 13 — Renderer Scale Truth + Visual Quality Pass (2026-04-15)
+
+### Summary
+Rebalanced the solar-system renderer so orbital distances stay true while body sizes are either physically correct (`TRUE`) or intentionally readable (`VISUAL`) instead of wildly exaggerated. Also upgraded Moon and asteroid shading so the scene no longer reads as coarse placeholder geometry.
+
+### Changes
+**`index.html`** — scale model cleanup:
+- Reworked the toolbar toggle to `SIZE: VISUAL` / `SIZE: TRUE` and applied it from shared AU-based size helpers instead of one-off per-object multipliers
+- Visual mode now uses a restrained readable magnification anchored to Earth rather than the previous oversized planet radii that distorted distance perception
+- True mode now scales planets, Sun, Moon, Moon orbit, asteroid cloud, and mission asteroid body from the same physical diameter/radius model
+
+**`index.html`** — asteroid sizing fixes:
+- Removed the silent `35 km` diameter cap in asteroid normalization so large bodies preserve their real catalog size
+- Replaced the old boosted asteroid scale heuristic with diameter-derived AU radii plus a small visual floor for readability
+- Unified mission asteroid body sizing with the catalog asteroid cloud so selected/cinematic asteroids no longer jump to near-Earth scale
+
+**`index.html`** — render quality:
+- Upgraded the Moon to a higher-detail lit mesh with a procedural surface overlay and a clearer orbit ring
+- Upgraded instanced asteroids from coarse unlit spheres to smoother lit meshes
+- Added ACES tone mapping, sRGB output, and a subtle hemisphere light to improve depth and color response
+
+### Result
+- The Moon is visible again in `VISUAL` mode and remains physically correct in `TRUE` mode
+- Planet spacing reads far closer to real AU separation because body exaggeration is no longer overwhelming the scene
+- Asteroids now track their actual diameters much more closely instead of reading as Earth-sized objects
+
+---
+
 ## Full Bug Fix + Improvement Pass (2026-04-15)
 
 ### Summary
