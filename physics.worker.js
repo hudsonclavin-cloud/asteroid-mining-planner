@@ -1205,6 +1205,13 @@ self.onmessage = function(e) {
         if (!isFinite(pc.dv_dep) || !isFinite(pc.dv_arr) || pc.dv_dep > 50 || pc.dv_arr > 50) { dbg_lambert_null++; continue; } // skip NaN/huge Lambert output
         if (pc.dv_dep > MISSION_GATE_DEP_KMS) { dbg_gate_fail++; continue; }
 
+        // Estimate total mission cost for fair phase-1 pruning.
+        // Return departure ΔV ≈ vinf_arr (encounter v-infinity is a symmetric proxy).
+        // Capture ΔV: call the same function phase 2 will use, so the sort key is consistent.
+        const est_dv_return  = pc.vinf_arr_mag;
+        const est_dv_capture = destinationCaptureDv(pc.vinf_arr_mag, destination, r_park_km);
+        const est_total      = pc.dv_dep + pc.dv_arr + 0.02 * (pc.dv_dep + pc.dv_arr) + est_dv_return + est_dv_capture;
+
         phase1.push({
           jd_dep, jd_arr, tof,
           dv_dep: pc.dv_dep, dv_arr: pc.dv_arr,
@@ -1212,14 +1219,18 @@ self.onmessage = function(e) {
           C3: pc.C3,
           vinf_dep: pc.vinf_dep_mag,
           vinf_arr: pc.vinf_arr_mag,
+          est_total,
           earthPos: { x: r1[0], y: r1[1], z: r1[2] },
           astPos:   { x: r2[0], y: r2[1], z: r2[2] },
         });
       }
     }
 
-    // Keep top 30 outbound by combined outbound ΔV
-    phase1.sort((a, b) => (a.dv_dep + a.dv_arr) - (b.dv_dep + b.dv_arr));
+    // Sort by estimated total mission ΔV (not just outbound), then keep top 200.
+    // This prevents phase-1 from discarding missions with slightly higher outbound
+    // cost but much lower return + capture cost — which would otherwise never reach
+    // phase 2 and could be the true global minimum.
+    phase1.sort((a, b) => a.est_total - b.est_total);
     const candidates = phase1.slice(0, 200);
 
     // ── Phase 2: return Lambert + destination capture ────────────────────────
@@ -1248,9 +1259,11 @@ self.onmessage = function(e) {
         const vad = [astDep.vx,  astDep.vy,  astDep.vz];
         const ved = [earthArr.vx,earthArr.vy,earthArr.vz];
 
-        let lam = izzoLambert(rr1, rr2, ret_tof);
-        if (!lam) lam = lambert(rr1, rr2, ret_tof);
-        if (!lam || !lam.v1 || !lam.v2 || !lam.v1.every(Number.isFinite) || !lam.v2.every(Number.isFinite)) continue;
+        // Use orbit-guarded solver: rejects near-parabolic solutions that pass
+        // the finite-check but produce implausible transfer orbits (e > 0.95 etc.)
+        const retSolve = solveLambertWithOrbitGuard(rr1, rr2, ret_tof, astDep, jd_ret_dep);
+        const lam = retSolve.lam;
+        if (!lam) continue;
 
         const dv_ret_dep = Math.hypot(lam.v1[0]-vad[0], lam.v1[1]-vad[1], lam.v1[2]-vad[2]);
         const vinf_ret   = Math.hypot(lam.v2[0]-ved[0], lam.v2[1]-ved[1], lam.v2[2]-ved[2]);
@@ -1303,7 +1316,7 @@ self.onmessage = function(e) {
         astPos:     c.astPos,
         // ── Provenance ───────────────────────────────────────────────────────
         model_grade:      'screening',       // Lambert patched-conic, two-body only
-        selection_basis:  'outbound-dv-prefilter', // phase-1 prune on dep+arr ΔV; re-ranked by ops score in UI
+        selection_basis:  'estimated-total-prefilter', // phase-1 prune on est. total ΔV (outbound + vinf_arr proxy for return+capture)
         capture_basis:    'screening-grade Earth-insertion + destination adder',
         dv_uncertainty:   0.15,              // ±15% planning-level uncertainty
         warnings,

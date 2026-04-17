@@ -6488,8 +6488,13 @@ function renderTrajectoryList() {
     const gradeColor  = t.model_grade === 'screening' ? '#64748b' : t.model_grade === 'concept' ? '#4a6a9a' : '#94a3b8';
     const gradeLabel  = (t.model_grade || 'planning-level').toUpperCase();
     const gradeBadge  = `<span style="font-size:7px;color:${gradeColor};border:1px solid ${gradeColor};padding:1px 4px;vertical-align:middle" title="${t.capture_basis || ''}">${gradeLabel} ESTIMATE ±${Math.round((t.dv_uncertainty||uncPct)*100)}%</span>`;
-    const selBasis    = t.selection_basis === 'outbound-dv-prefilter'
-      ? '<span style="font-size:7px;color:#4b5563" title="Candidates pruned by outbound ΔV in phase 1; re-ranked by total ops score in the UI">PREFILTER RANKED</span>'
+    const selBasisNote = t.selection_basis === 'estimated-total-prefilter'
+      ? 'Candidates ranked by estimated total mission ΔV before phase-2 return solve'
+      : t.selection_basis === 'outbound-dv-prefilter'
+      ? 'Candidates ranked by outbound ΔV only in phase 1 — may miss better-return solutions'
+      : '';
+    const selBasis = selBasisNote
+      ? `<span style="font-size:7px;color:#4b5563" title="${selBasisNote}">RANKED</span>`
       : '';
     const warningHtml = (t.warnings && t.warnings.length)
       ? t.warnings.map(w => `<div class="mp-traj-meta" style="color:#fb923c;font-size:8px">⚠ ${w}</div>`).join('')

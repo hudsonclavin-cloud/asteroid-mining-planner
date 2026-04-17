@@ -4,178 +4,34 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 14 — Step 2: Optimizer Ranking Alignment (2026-04-16)
+
+### Summary
+Fixed the mission optimizer so phase-1 candidate pruning uses the same metric as the final ranking shown to the user. Also hardened the phase-2 return Lambert with orbit-quality guards.
+
+### Changes
+**`physics.worker.js`** — phase-1 sort key:
+- Replaced `dv_dep + dv_arr` sort key with `est_total = dv_dep + dv_arr + mcc_est + vinf_arr + destinationCaptureDv(vinf_arr)` — same breakdown phase 2 uses
+- `vinf_arr` is a symmetric proxy for return departure cost; `destinationCaptureDv` called with identical args so the estimate is internally consistent
+- `selection_basis` updated to `'estimated-total-prefilter'`
+
+**`physics.worker.js`** — phase-2 return Lambert:
+- Replaced raw `izzoLambert` + `lambert` fallback with `solveLambertWithOrbitGuard` to reject near-parabolic return solutions before they corrupt the result ΔV
+
+**`index.html`** — UI basis note:
+- `RANKED` badge tooltip now reads the correct basis string; legacy `outbound-dv-prefilter` results get a warning note
+
+---
+
 ## Phase 14 — Step 1: Mission Result Provenance (2026-04-16)
 
 ### Summary
-Added explicit provenance tagging to all mission planner outputs so every ΔV number and score is labelled with its model grade (screening, heuristic) rather than being presented as solved truth. No solver behavior was changed — this is a disclosure pass only.
+Added explicit provenance tagging to all mission planner outputs — no solver behavior changed.
 
 ### Changes
-**`physics.worker.js`** — provenance fields on results:
-- `plan_mission` result objects now carry `model_grade: 'screening'`, `selection_basis: 'outbound-dv-prefilter'`, `capture_basis`, `dv_uncertainty: 0.15`, and a `warnings[]` array populated for high-capture-ΔV and high-total-ΔV cases
-- Redirect result top-level now carries `model_grade: 'screening'` and `capture_grade: 'heuristic'`
-- Redirect `capture` sub-object: `model_grade: 'heuristic'`, `capture_basis` reworded to `'heuristic (v∞ × 0.35 + destination adder)'` to make the approximation explicit
+**`physics.worker.js`** — result objects now carry `model_grade`, `selection_basis`, `capture_basis`, `dv_uncertainty`, and `warnings[]`. Redirect capture sub-object tagged `model_grade: 'heuristic'` with explicit basis string.
 
-**`index.html`** — UI disclosure:
-- `renderTrajectoryList`: ΔV badge now reads `SCREENING ESTIMATE ±15%` (sourced from `result.model_grade` and `result.dv_uncertainty`) instead of the hardcoded `planning-level estimate` string
-- `renderTrajectoryList`: selection-basis note `PREFILTER RANKED` shown when `selection_basis === 'outbound-dv-prefilter'`, explaining that phase-1 pruned on outbound ΔV only
-- `renderTrajectoryList`: advisory warnings from `result.warnings[]` rendered as amber ⚠ lines under each card
-- `onRedirectResult` capture section: Capture ΔV line now reads `… [HEURISTIC]` inline, making the model grade visible without restructuring the panel
-
----
-
-## Phase 13 — Renderer Scale Truth + Visual Quality Pass (2026-04-15)
-
-### Summary
-Rebalanced the solar-system renderer so orbital distances stay true while body sizes are either physically correct (`TRUE`) or intentionally readable (`VISUAL`) instead of wildly exaggerated. Also upgraded Moon and asteroid shading so the scene no longer reads as coarse placeholder geometry.
-
-### Changes
-**`index.html`** — scale model cleanup:
-- Reworked the toolbar toggle to `SIZE: VISUAL` / `SIZE: TRUE` and applied it from shared AU-based size helpers instead of one-off per-object multipliers
-- Visual mode now uses a restrained readable magnification anchored to Earth rather than the previous oversized planet radii that distorted distance perception
-- True mode now scales planets, Sun, Moon, Moon orbit, asteroid cloud, and mission asteroid body from the same physical diameter/radius model
-
-**`index.html`** — asteroid sizing fixes:
-- Removed the silent `35 km` diameter cap in asteroid normalization so large bodies preserve their real catalog size
-- Replaced the old boosted asteroid scale heuristic with diameter-derived AU radii plus a small visual floor for readability
-- Unified mission asteroid body sizing with the catalog asteroid cloud so selected/cinematic asteroids no longer jump to near-Earth scale
-
-**`index.html`** — render quality:
-- Upgraded the Moon to a higher-detail lit mesh with a procedural surface overlay and a clearer orbit ring
-- Upgraded instanced asteroids from coarse unlit spheres to smoother lit meshes
-- Added ACES tone mapping, sRGB output, and a subtle hemisphere light to improve depth and color response
-
-### Result
-- The Moon is visible again in `VISUAL` mode and remains physically correct in `TRUE` mode
-- Planet spacing reads far closer to real AU separation because body exaggeration is no longer overwhelming the scene
-- Asteroids now track their actual diameters much more closely instead of reading as Earth-sized objects
-
----
-
-## Full Bug Fix + Improvement Pass (2026-04-15)
-
-### Summary
-Resolved all 14 bugs identified in a full-stack sweep and shipped 9 improvements across orbital mechanics, economics, data pipeline, renderer, and UI/HUD layers.
-
-### Bugs Fixed
-
-**`physics.worker.js`**
-- **Bug 2** — `moidApprox` O(n²): reduced sample count 120→60, added early-exit at 0.001 AU
-- **Bug 3** — Lambert phase-1 sweep now tries both prograde and retrograde directions, keeps lower ΔV result
-- **Bug 4** — `isPlausiblePlannerOrbit` now rejects `e > 0.95` (near-parabolic transfers that slip through `e < 1` guard)
-- **Bug 5** — `cart2kep` output tagged `_radians: true`; `moidApprox` uses that flag instead of fragile `epoch_JD` check
-- **Bug 9** — `normalizeAsterankRow` now rejects rows where any of `i`, `om`, `w`, `ma` is missing (was silently defaulting to 0, producing a wrong equatorial orbit)
-- **Bug 10** — Spectral type resolution order corrected: `spec_B` (Bus-DeMeo) → `spec_T` (Tholen) → `spec`
-
-**`index.html`**
-- **Bug 1** — `computeScenarioNPVs` stockpile null fallback: unknown-commodity case now returns a conservative `0.9 × P0` estimate
-- **Bug 6** — `formatValueDisplay` now renders negative NPV as a signed loss (e.g. `-$1.2B`) instead of `unknown`
-- **Bug 7** — `returnedKg` now derived from `massModel.massKg × extractionFraction` (was spacecraft payload × fraction — every asteroid returned the same 50 kg regardless of size)
-- **Bug 8** — ROI formula corrected to `(npv − cost) / cost` (net profit multiple); label updated to `NET ROI`
-- **Bug 11** — `clearRedirectVisualization` now disposes `trajectoryLine` (dashed intercept arc was leaking one geometry + two materials per redirect target switch)
-- **Bug 12** — `buildOrbitSegmentPoints` rejects time spans < 1 day (was producing 96–112 near-identical points → degenerate flickering geometry)
-- **Bug 13** — `renderScenarioBar`: all-negative scenario set now shows a red warning banner instead of four empty bars; stockpile null fallback confirmed present
-- **Bug 14** — `renderScenarioBar` and `renderSensitivityChart` clear `innerHTML` on entry, eliminating stale bars during asteroid switching
-
-### Improvements Added
-
-**`physics.worker.js`**
-- **Imp 1** — `izzoLambertMultiRev(N=1)`: multi-revolution Lambert solver; tried in phase-1 sweep when TOF > 365 days
-- **Imp 3** — `srpWarning` flag on redirect results: true when asteroid is C/B/D-type and coast arc exceeds 180 days
-- **Imp 7** — `condition_code` and `orbitUncertain` (codes 6–9) fields added to all normalized asteroid objects
-- **Imp 8** — Uncertain-orbit asteroids pass the `init` filter unchanged; `orbitUncertain` flag preserved for UI badging
-
-**`index.html`**
-- **Imp 2** — Porkchop launch window canvas added to mission planner panel: ΔV color grid (green=low, red=high) over departure date × TOF axes
-- **Imp 4** — `returnedKg` now mass-model-derived (see Bug 7 — same fix, meaningful NPV differentiation between asteroid sizes)
-- **Imp 5** — `PRICE_DATE` constant + "prices as of [date]" label in economics panel
-- **Imp 6** — Sensitivity tornado chart (`renderSensitivityChart`): ±20% swing on commodity price, returned mass, mission cost, and extraction fraction
-- **Imp 9** — `_orbitSteps()` LOD helper: asteroids with `a > 2 AU` use 48 orbit ring steps vs 100 (52% point reduction for outer-belt bodies)
-
----
-
-## Phase 12 — Mission Renderer Truth / Readability Pass (2026-04-15)
-
-### Summary
-The mission renderer now makes the active mission easier to read without changing the right-side panel layout. During playback or mission review, the scene shifts into a focused mission mode with explicit phase beacons, a compact phase/status chip, dimmed background objects, and clearer approximate-vs-solved labels on mission paths.
-
-### Changes
-**`index.html`** — mission focus visuals:
-- Added a compact `#mission-phase-chip` overlay showing the active mission mode, phase, and whether the visible path is solver-backed or presentation-level
-- Added in-scene mission beacons for departure, rendezvous/attach, and capture milestones
-- Added mission-only label focus so background planet/leader labels stop competing with active mission visuals
-
-**`index.html`** — scene focus / dimming:
-- Added mission scene focus mode that dims the asteroid cloud, dust cloud, satellite cloud, planet orbit rings, and planet materials while a mission is active
-- Focus is automatically restored when mission playback stops
-
-**`index.html`** — truth labeling on paths:
-- Extract transfer and return arcs are now explicitly labeled `APPROX`
-- Redirect intercept is labeled `SOLVED` when sampled from solved orbital segments and `APPROX` when it falls back to the presentation curve
-- Redirect return arc is labeled `SOLVED`
-
-### Result
-- The active mission now reads as the visual foreground instead of competing with the whole catalog at once
-- Users can distinguish solved redirect geometry from presentation-only arcs directly in the scene
-
----
-
-## Phase 11 — Mission Playback State Ownership Cleanup (2026-04-14)
-
-### Summary
-Mission playback now runs off an owned mission context instead of reading the live selected mission result during animation. This removes a class of state collisions where changing the selected trajectory or scrubbing the timeline could mutate or invalidate the active playback mid-flight.
-
-### Changes
-**`index.html`** — mission context ownership:
-- Added stable mission context keys for extract and redirect playback
-- Extract playback now stores its own trajectory snapshot on `missionAnim.extractTraj`
-- Mission-control matching now compares context keys instead of reading whatever mission is currently selected in the panel
-
-**`index.html`** — scrub/resume behavior:
-- Timeline scrubbing now remembers the active mission by context key
-- Mission playback only auto-resumes after scrubbing if the same mission context is still active
-
-### Result
-- Changing the selected extract result while a mission is playing no longer changes the active playback path underneath the renderer
-- Scrub pause/resume is tied to the active mission instance instead of panel state
-
----
-
-## Phase 10 — JPL-First Catalog + Dossier Provenance Foundation (2026-04-14)
-
-### Summary
-Aster’s catalog pipeline now starts from NASA/JPL SBDB Query instead of Asterank. The app still preserves the existing flat asteroid fields for compatibility, but each asteroid now carries a canonical `dossier` object with source/status metadata so later UI and scoring work can stop guessing where values came from.
-
-### Changes
-**`worker/index.js`** — new proxy routes and proxy metadata:
-- Added `GET /api/sbdb-query`
-- Added `GET /api/sbdb`
-- Added `GET /api/sentry`
-- Added `GET /api/horizons-lookup`
-- Extended JPL proxy responses with `ok`, `source`, `signatureVersion`, `stale`, and `cachedAt`
-
-**`physics.worker.js`** — JPL-first catalog loading:
-- Added `buildSbdbQueryUrl()` and switched `fetch_catalog` to use SBDB Query as the primary startup catalog
-- Kept NHATS as a parallel accessibility overlay
-- Kept Asterank as enrichment for economics and screening ΔV instead of primary orbit truth
-- Preserved legacy flat asteroid fields so the current UI, filters, and mission planner continue to work
-
-**`physics.worker.js`** — canonical dossier layer:
-- Added SBDB Query row normalization
-- Added canonical object-key matching across SBDB, NHATS, and Asterank
-- Added `dossier.version = 1` objects on each asteroid with:
-  - `id`
-  - `orbit`
-  - `physical`
-  - `accessibility`
-  - `hazard`
-  - `economics`
-  - `provenance`
-- Added `data_confidence`, `primary_source`, and `provenance_status` compatibility fields
-
-**`index.html`** — first provenance surfacing:
-- Bumped catalog cache to `aster_catalog_v8` to avoid mixing old and dossier-backed payloads
-- Added `SOURCE` and `STATUS` lines to the target inspector
-- Selected-target inspector now shows where the current target data came from and whether it is source-backed or still screening-grade
+**`index.html`** — trajectory cards: ΔV badge sourced from `result.model_grade`/`dv_uncertainty`; `warnings[]` rendered as amber ⚠ lines; redirect Capture ΔV line inline-labelled `[HEURISTIC]`.
 
 ---
 
@@ -189,6 +45,7 @@ Mission playback now uses mission-aware bottom-bar speed controls, and redirect 
 - Made the bottom speed buttons mission-aware during active mission playback
 - Bottom-bar speed labels now switch to mission rates like `1h/s`, `6h/s`, `1d/s`, `5d/s`, `30d/s`
 - Prevented mission-speed changes from polluting the normal solar-system timeline speed state
+do so
 
 **`index.html`** — redirect mission animation:
 - Added a low-poly asteroid body for redirect playback so the target is no longer just an instanced point
@@ -219,8 +76,6 @@ Mission scores are now explicit instead of opaque. Extract & Return cards show e
 
 ---
 
-=======
->>>>>>> be1d674 (Fix redirect arc rendering at Neptune-scale distances)
 ## Fix — Redirect Arc Neptune-Scale Rendering (2026-04-14)
 
 ### Root Cause
@@ -890,48 +745,3 @@ Stabilized Capture & Redirect after the recent animation/visual passes by fixing
 ### Result
 - Capture & Redirect is materially more reliable under repeated reruns, mode switches, and playback restarts.
 - Redirect visuals and playback now reflect the solved planner output more closely instead of mixing stale state, fake outbound geometry, and hardcoded lunar cues.
-
----
-
-## Phase 13 — Decision UI Redesign + Shortlist/Compare (2026-04-15)
-
-### Summary
-Restructured the right-side inspector panel into a clear information hierarchy without changing its footprint. Added a shortlist system to pin and compare up to 5 targets side by side. Added split mission scoring as four independent metrics.
-
-### Changes
-**`index.html`** — inspector restructure:
-- Reorganized `#panel-data` into labeled sections: TARGET → ACCESS → MISSION → ECONOMICS → COMPOSITION → EVIDENCE → UNCERTAINTY
-- Replaced the old flat field list + hidden `#feasibility-card` with direct data rows: TOF EST, PATHS, HAZARD, VALUE RANGE, ΔV UNC, ORBIT UNC
-- Added `⊕ PIN` button in the TARGET section header
-- Abbreviated tab labels to fit the new SHORTLIST tab: INSP / ECO / MAT / RES / LIST
-
-**`index.html`** — shortlist (Phase 13):
-- Added `⊙ LIST` tab and `#tab-shortlist` panel
-- `pinnedTargets[]` state (max 5 per session)
-- `togglePin(id)` / `unpinTarget(id)` functions
-- `renderShortlistTab()` renders a card-per-target grid showing: TYPE, DIAM, ΔV, MOID, ACCESS score, DATA CONF, VALUE HI, NPV
-- SELECT and UNPIN buttons per card; CLEAR ALL button in header
-- Pin state syncs to the inspector tab button (PINNED / PIN)
-
-**`index.html`** — split score chips (Phase 13):
-- Added `computeSplitScore(ast, fi)` returning `{access, economics, dataConf, opRisk}` each 0–100
-- Renders as four mini-chips in the MISSION section of the inspector
-
----
-
-## Phase 14 — Scenario Economics + Split Scoring (2026-04-15)
-
-### Summary
-Replaced the single-point economics view with a Conservative / Base / Optimistic scenario stack in the Economics tab. Added `computeScenarioEconomics()` with differentiated cost and extraction assumptions per scenario.
-
-### Changes
-**`index.html`** — scenario economics:
-- Added `computeScenarioEconomics(ast)` returning three scenarios with extraction fractions (2% / 5% / 15%) and launch costs ($5k / $2.7k / $1.5k per kg)
-- Each scenario shows Total Cost, Realizable NPV, ROI Multiple
-- Rendered as an inline table in the SCENARIOS section of the Economics tab
-
-### Result
-- The inspector now reads: Target → Access → Mission → Economics → Evidence → Uncertainty
-- Users can pin 3–5 targets and compare accessibility, ΔV, value, and NPV side by side
-- The economics tab shows screening-grade Conservative / Base / Optimistic cases instead of one headline number
-- Mission scoring exposes four sub-components so users can see what drives a target's rank
