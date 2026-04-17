@@ -4,6 +4,34 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 14 — Step 3: Remove Fake Staging / Hard-Fail Infeasible Mass (2026-04-16)
+
+### Summary
+Removed the fake 3-stage fallback that made physically impossible missions look launchable, and removed the silent propellant cap that hid mass-ratio violations. Infeasible missions now fail visibly.
+
+### Changes
+**`index.html`** — `propellantKgNum`:
+- Removed `Math.min(raw, m_dry * 19)` cap — function now returns true Tsiolkovsky mass without silently pretending infeasible missions are achievable
+- Added `isSingleStageFeasible(dv_kms, isp)` helper: returns false when mass ratio > 20 (~95% propellant fraction, practical single-stage limit)
+
+**`index.html`** — `computeMissionProfile`:
+- Removed the 3-stage fallback entirely. The old code split ΔV equally into 3 independent stages each using `sc.dry_kg`, which is not real cascade staging — each stage ignored the mass of the others
+- Replaced with straightforward single-stage Tsiolkovsky + `propulsionInfeasible` flag when mass ratio exceeds 20
+- Profile text now shows `INFEASIBLE — mass ratio N× (max ~20× for single-stage chemical)` and marks propellant/wet-mass fields as `N/A (infeasible)` instead of fake numbers
+- `propulsionInfeasible` returned in profile object
+
+**`index.html`** — `summarizeTrajectoryOperationalMetrics`:
+- Guards against non-finite `propKg` (extreme ΔV edge cases)
+- `fitsLaunchVehicle` forced `false` when propulsion is infeasible (independent of wet mass check)
+- `launchCost` / `totalCost` set to `null` when infeasible — not displayed as a real number
+- Score adds a hard `-50` infeasibility penalty on top of the existing `-40` overweight penalty
+
+**`index.html`** — trajectory cards:
+- `✗ PROPULSION INFEASIBLE` red badge shown on card rank line when `ops.propulsionInfeasible`
+- Launch cost cell shows `N/A` instead of a number for infeasible missions
+
+---
+
 ## Phase 14 — Step 2: Optimizer Ranking Alignment (2026-04-16)
 
 ### Summary

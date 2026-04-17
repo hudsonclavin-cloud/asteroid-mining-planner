@@ -5639,10 +5639,17 @@ document.getElementById('btn-export-toolbar').addEventListener('click', exportFi
 // ─── Phase 7D: Mission Planner ────────────────────────────────────────────────
 
 function propellantKgNum(dv_kms, isp, m_dry) {
-  // Numeric Tsiolkovsky (returns kg, not string). Capped at 95% propellant fraction (mass ratio 20).
+  // Numeric Tsiolkovsky. Returns the true propellant mass — no cap.
+  // Callers must check feasibility: mass ratio > 20 (propFrac > 95%) is impractical.
   const g0 = 0.00980665; // km/s²
-  const raw = m_dry * (Math.exp(dv_kms / (g0 * isp)) - 1);
-  return Math.min(raw, m_dry * 19);
+  return m_dry * (Math.exp(dv_kms / (g0 * isp)) - 1);
+}
+
+// Returns true if the ΔV is achievable with a single chemical stage.
+// Mass ratio > 20 (~95% propellant fraction) is not practical for flight hardware.
+function isSingleStageFeasible(dv_kms, isp) {
+  const g0 = 0.00980665;
+  return Math.exp(dv_kms / (g0 * isp)) <= 20;
 }
 
 function openMissionPlanner(id) {
@@ -6368,12 +6375,15 @@ function summarizeTrajectoryOperationalMetrics(traj) {
   const sc = SPACECRAFT[missionConfig.spacecraft] || SPACECRAFT.medium;
   const lv = LAUNCH_VEHICLES[missionConfig.launchVehicle] || LAUNCH_VEHICLES.f9;
   const g0 = 0.00980665;
-  const propKg = sc.dry_kg * (Math.exp(traj.dv_total / (g0 * sc.isp)) - 1);
+  const rawPropKg = sc.dry_kg * (Math.exp(traj.dv_total / (g0 * sc.isp)) - 1);
+  // Guard: propulsion infeasible if mass ratio > 20; score reflects that honestly.
+  const propulsionInfeasible = !isSingleStageFeasible(traj.dv_total, sc.isp);
+  const propKg = Number.isFinite(rawPropKg) ? rawPropKg : sc.dry_kg * 19; // cap for cost math only
   const wetKg = sc.dry_kg + propKg;
-  const fitsLaunchVehicle = wetKg <= lv.max_kg;
+  const fitsLaunchVehicle = !propulsionInfeasible && wetKg <= lv.max_kg;
   const opsDays = Math.round(traj.tof + (traj.tof_return || 0) + (traj.stay_days || 0));
-  const launchCost = wetKg * lv.cost_per_kg;
-  const totalCost = launchCost + sc.cost_usd + (opsDays / 30) * 8e6;
+  const launchCost = propulsionInfeasible ? null : wetKg * lv.cost_per_kg;
+  const totalCost = propulsionInfeasible ? null : launchCost + sc.cost_usd + (opsDays / 30) * 8e6;
   const econSummary = computeEconomicsSummary(ast, {
     dryMass: sc.dry_kg,
     isp: sc.isp,
@@ -6387,10 +6397,12 @@ function summarizeTrajectoryOperationalMetrics(traj) {
   const dvPenalty = -traj.dv_total * 3;
   const launchPenalty = fitsLaunchVehicle ? 0 : -40;
   const roiTerm = Number.isFinite(roi) ? Math.max(-15, Math.min(20, Math.log10(Math.max(1e-6, roi + 1)) * 10)) : 0;
+  // Propulsion infeasibility is a hard -50 penalty on top of the overweight penalty
+  const infeasiblePenalty = propulsionInfeasible ? -50 : 0;
   const score = Math.round(
-    Math.max(0, 100 + dvPenalty + launchPenalty + roiTerm)
+    Math.max(0, 100 + dvPenalty + launchPenalty + roiTerm + infeasiblePenalty)
   );
-  return { wetKg, fitsLaunchVehicle, launchCost, totalCost, realizedNpv, roi, score, dvPenalty, launchPenalty, roiTerm };
+  return { wetKg, fitsLaunchVehicle, launchCost, totalCost, realizedNpv, roi, score, dvPenalty, launchPenalty, roiTerm, propulsionInfeasible };
 }
 
 function onPlanResult(results, noFeasibleWindow, dbg, source) {
@@ -6477,8 +6489,11 @@ function renderTrajectoryList() {
     const hvBadge = t.highDv
       ? '<span style="font-size:7px;color:#fb923c;border:1px solid #fb923c;padding:1px 4px;margin-left:5px;vertical-align:middle">⚠ HIGH ΔV</span>'
       : '';
-    const lvBadge = ops?.fitsLaunchVehicle === false
+    const lvBadge = ops?.fitsLaunchVehicle === false && !ops?.propulsionInfeasible
       ? '<span style="font-size:7px;color:#f87171;border:1px solid #f87171;padding:1px 4px;margin-left:5px;vertical-align:middle">OVERWEIGHT</span>'
+      : '';
+    const infeasBadge = ops?.propulsionInfeasible
+      ? '<span style="font-size:7px;color:#dc2626;border:1px solid #dc2626;padding:1px 4px;margin-left:5px;vertical-align:middle;font-weight:bold">✗ PROPULSION INFEASIBLE</span>'
       : '';
     const costWarning = profile.totalCost < 500e6
       ? '<div class="mp-traj-meta" style="color:#fbbf24">Historical first-of-a-kind mining missions are typically $2B-$10B+</div>'
@@ -6499,12 +6514,12 @@ function renderTrajectoryList() {
     const warningHtml = (t.warnings && t.warnings.length)
       ? t.warnings.map(w => `<div class="mp-traj-meta" style="color:#fb923c;font-size:8px">⚠ ${w}</div>`).join('')
       : '';
-    card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${badge}</div>
+    card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${infeasBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s &nbsp;${gradeBadge}</div>
       <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
       <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
-      <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
+      <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${ops?.propulsionInfeasible ? 'N/A' : fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
       ${scoreBreakdown}
       <div class="mp-traj-meta" style="color:#3a5060">Source: Asterank · ${gradeLabel} economics &nbsp;${selBasis}</div>
       ${warningHtml}
@@ -6566,24 +6581,18 @@ function computeMissionProfile(traj) {
   const dest = DEST_LABELS[missionConfig.destination]  || 'LEO';
   const g0   = 0.00980665;
 
-  // ── Propulsion: single-stage or 3-stage if mass ratio > 10 ──────────────────
-  const rawPropKg = sc.dry_kg * (Math.exp(traj.dv_total / (g0 * sc.isp)) - 1);
-  const isStaged  = rawPropKg > 10 * sc.dry_kg;
-  let propKg, wetKg, propNote;
-  if (isStaged) {
-    // 3 equal ΔV stages (chemical, Isp 320/350/320 s)
-    const dvS = traj.dv_total / 3;
-    propKg  = sc.dry_kg * (Math.exp(dvS / (g0 * 320)) - 1)
-            + sc.dry_kg * (Math.exp(dvS / (g0 * 350)) - 1)
-            + sc.dry_kg * (Math.exp(dvS / (g0 * 320)) - 1);
-    wetKg   = sc.dry_kg + propKg;
-    propNote = '3-stage chemical (high-ΔV mode)';
-  } else {
-    propKg  = propellantKgNum(traj.dv_total, sc.isp, sc.dry_kg);
-    wetKg   = sc.dry_kg + propKg;
-    propNote = `single-stage, Isp ${sc.isp} s`;
-  }
-  const frac = propKg / wetKg;
+  // ── Propulsion: single-stage Tsiolkovsky. Hard-fail if mass ratio > 20. ─────
+  // The previous 3-stage fallback split ΔV equally across three independent
+  // stages (each using sc.dry_kg), which is not real cascade staging and made
+  // infeasible high-ΔV missions look achievable. Removed.
+  const propKg  = propellantKgNum(traj.dv_total, sc.isp, sc.dry_kg);
+  const wetKg   = sc.dry_kg + propKg;
+  const frac    = propKg / wetKg;
+  const massRatio      = wetKg / sc.dry_kg;
+  const propulsionInfeasible = !isSingleStageFeasible(traj.dv_total, sc.isp);
+  const propNote = propulsionInfeasible
+    ? `INFEASIBLE — mass ratio ${massRatio.toFixed(0)}× (max ~20× for single-stage chemical)`
+    : `single-stage, Isp ${sc.isp} s`;
 
   const dot = (label, val) => `  ${label.padEnd(22, '.')} ${val}`;
   const sep = (label) => `\n─── ${label} ${'─'.repeat(Math.max(0, 45 - label.length))}`;
@@ -6667,9 +6676,10 @@ function computeMissionProfile(traj) {
     traj.lunarAssist ? dot('LUNAR GRAVITY ASSIST', 'CANDIDATE (low C3)') : '',
     sep('PROPULSION'),
     dot('MODEL', propNote),
+    propulsionInfeasible ? dot('⚠  PROPULSION STATUS', 'INFEASIBLE — reduce ΔV or use multi-stage vehicle') : '',
     dot('DRY MASS', sc.dry_kg.toLocaleString() + ' kg'),
-    dot('PROPELLANT MASS', Math.round(propKg).toLocaleString() + ' kg'),
-    dot('WET MASS', Math.round(wetKg).toLocaleString() + ' kg'),
+    dot('PROPELLANT MASS', propulsionInfeasible ? `>${Math.round(sc.dry_kg*19).toLocaleString()} kg (not achievable single-stage)` : Math.round(propKg).toLocaleString() + ' kg'),
+    dot('WET MASS', propulsionInfeasible ? 'N/A (infeasible)' : Math.round(wetKg).toLocaleString() + ' kg'),
     dot('MASS FRACTION', (frac*100).toFixed(1) + '%'),
     dot('LAUNCH CAPACITY', lv.max_kg.toLocaleString()+' kg '+(fits?'✓ FITS':'✗ OVERWEIGHT')),
     overweightLine,
@@ -6720,6 +6730,7 @@ function computeMissionProfile(traj) {
     roiHigh,
     paperValue,
     realizedNpv: npvRealized,
+    propulsionInfeasible,
   };
 }
 
