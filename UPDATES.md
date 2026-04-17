@@ -4,6 +4,25 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 14 — Step 7: Physics Validation Harness (2026-04-16)
+
+### Summary
+Added `tests/physics-validation.mjs` — a Node.js test harness that loads `physics.worker.js` into an isolated `vm` sandbox (no browser or worker runtime required) and runs 20 regression tests across 6 sections. All 20 pass.
+
+### Tests added (`npm test`)
+- **Section 1 — kep2cart/cart2kep round-trips** (4 tests): Earth, Amor-class, high-eccentricity Apollo, and full state→elements→state round-trip; tolerances 1e-6–1e-10.
+- **Section 2 — Zero-impulse burn invariant** (3 tests): Zero ΔV preserves `a` and `e`; prograde burn raises `a`; normal burn changes `i`.
+- **Section 3 — Lambert solver fixture cases** (4 tests): Izzo and BMW solvers on a 120° non-degenerate transfer (avoids 180° singularity); short-arc fast transfer; near-degenerate r1≈r2 graceful null.
+- **Section 4 — Staging monotonicity** (4 tests): `propellantKgNum` monotone with ΔV; no silent cap at mass ratio 20; `isSingleStageFeasible` thresholds correct.
+- **Section 5 — Capture model invariants** (3 tests): `destinationCaptureDv` monotone with v∞; GEO/L1 > LEO adders; always positive-finite.
+- **Section 6 — Phase-1 prefilter regression** (2 tests): `est_total` sort correctly ranks low-return-cost candidate first; regression guard confirms old outbound-only sort would have ranked wrong candidate first.
+
+### Files changed
+- `tests/physics-validation.mjs` — new harness (20 tests, 0 failures)
+- `package.json` — `"test": "node tests/physics-validation.mjs"`
+
+---
+
 ## Phase 14 — Step 6: Geometry and Diagnostics Loophole Fixes (2026-04-16)
 
 ### Summary

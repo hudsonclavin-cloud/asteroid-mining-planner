@@ -1,0 +1,8 @@
+{
+  "name": "asteroid-mining-planner",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/physics-validation.mjs"
+  }
+}
