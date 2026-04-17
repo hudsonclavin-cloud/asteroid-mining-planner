@@ -4,6 +4,26 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 14 — Step 6: Geometry and Diagnostics Loophole Fixes (2026-04-16)
+
+### Summary
+Closed three gaps where invalid numbers or sampled outputs were either silently corrupting geometry or displaying without qualification.
+
+### Changes
+**`index.html`** — `validateArcPoints`:
+- Added explicit NaN/Infinity check before the distance test. Previously `NaN > 5.5` evaluates to `false` in JS, so non-finite points passed the guard and were written into Three.js geometry buffers, producing invisible or degenerate arcs without any console warning. Now any non-finite component logs an error and rejects the arc.
+
+**`index.html`** — `buildOrbitSegmentPoints`:
+- Added per-point non-finite filter inside the loop: points where `kep2cartJS` returns NaN or Infinity are skipped rather than pushed to the buffer. Prevents single bad propagation steps from invalidating an otherwise good arc.
+
+**`index.html`** — burn panel MOID display:
+- `bp-moid-after` now prefixed with `≈` and carries a `title` tooltip: `Sampled approximation (120-point orbital scan) — not a solved geometric MOID`
+
+**`index.html`** — `onCloseApproaches`:
+- Close approach result now appends `[sampled]` and a tooltip: `Closest approach from a 5-year sampled orbital scan — not a solved ephemeris result`. "None within 5yr" case also labeled `[sampled]`.
+
+---
+
 ## Phase 14 — Step 5: UI Disclosure Cleanup (2026-04-16)
 
 ### Summary

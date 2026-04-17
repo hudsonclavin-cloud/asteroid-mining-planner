@@ -3257,6 +3257,13 @@ function drawOrbitFromElements(line, el) {
 function validateArcPoints(points, label) {
   const MAX_AU = 5.5; // nothing in the inner solar system planner should exceed Jupiter
   for (const p of points) {
+    // NaN components: p.length() returns NaN, and NaN > MAX_AU is false — so NaN
+    // points pass the distance check silently and corrupt Three.js geometry. Check
+    // explicitly before the distance test.
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.z)) {
+      console.error(`[Aster] ${label} arc has non-finite point (NaN/Infinity) — discarding arc`);
+      return false;
+    }
     if (p.length() > MAX_AU) {
       console.error(`[Aster] ${label} arc out of bounds: ${p.length().toFixed(1)} AU — Izzo near-parabolic convergence likely`);
       return false;
@@ -3272,6 +3279,8 @@ function buildOrbitSegmentPoints(el, jdStart, jdEnd, steps = 96) {
   for (let i = 0; i <= steps; i++) {
     const jd = jdStart + (jdEnd - jdStart) * (i / steps);
     const state = kep2cartJS(el.a, el.e, el.i, el.Om, el.w, el.M0, el.epoch_JD, jd);
+    // Skip non-finite points rather than letting them corrupt the geometry buffer
+    if (!Number.isFinite(state.x) || !Number.isFinite(state.y) || !Number.isFinite(state.z)) continue;
     pts.push(new THREE.Vector3(state.x, state.y, state.z));
   }
   return pts;
@@ -8050,7 +8059,15 @@ function onBurnResult(data) {
   document.getElementById('bp-T-before').textContent = origPeriod ? `${origPeriod.toFixed(0)}d` : '—';
   document.getElementById('bp-T-after').textContent = newPeriod ? `${newPeriod.toFixed(0)}d` : '—';
   document.getElementById('bp-moid-before').textContent = ast.moid ? `${Number(ast.moid).toFixed(3)} AU` : '—';
-  document.getElementById('bp-moid-after').textContent = data.moid_approx != null ? `${data.moid_approx.toFixed(3)} AU` : '—';
+  // moid_approx is a sampled approximation (120-point scan), not a solved geometric MOID.
+  const moidAfterEl = document.getElementById('bp-moid-after');
+  if (data.moid_approx != null) {
+    moidAfterEl.textContent = `≈${data.moid_approx.toFixed(3)} AU`;
+    moidAfterEl.title = 'Sampled approximation (120-point orbital scan) — not a solved geometric MOID';
+  } else {
+    moidAfterEl.textContent = '—';
+    moidAfterEl.title = '';
+  }
 
   const total = Math.sqrt(burnDV.p**2 + burnDV.n**2 + burnDV.r**2);
   document.getElementById('bp-dv').textContent = `${total.toFixed(2)} km/s`;
@@ -8065,11 +8082,15 @@ function onBurnResult(data) {
 }
 
 function onCloseApproaches(results) {
+  // Results come from a 5-year orbital scan (sampled positions), not a JPL ephemeris solution.
+  const el = document.getElementById('bp-approach');
   if (results && results.length > 0) {
     const best = results[0];
-    document.getElementById('bp-approach').textContent = `${jdToDate(best.jd)} (${best.dist.toFixed(3)} AU)`;
+    el.textContent = `${jdToDate(best.jd)} (${best.dist.toFixed(3)} AU) [sampled]`;
+    el.title = 'Closest approach from a 5-year sampled orbital scan — not a solved ephemeris result';
   } else {
-    document.getElementById('bp-approach').textContent = 'None within 5yr';
+    el.textContent = 'None within 5yr [sampled]';
+    el.title = 'Based on sampled orbital scan — exact approach dates may differ';
   }
 }
 
