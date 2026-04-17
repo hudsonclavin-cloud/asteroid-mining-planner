@@ -1269,6 +1269,12 @@ self.onmessage = function(e) {
       const dv_total = c.dv_dep + c.dv_arr + mcc + bestReturn.dv_return + bestReturn.dv_capture;
       if (!Number.isFinite(dv_total) || dv_total > MISSION_GATE_TOTAL_KMS) continue;
 
+      // Provenance: all Lambert-patched-conic results are screening-grade.
+      // Candidate pool was pruned by outbound ΔV only (phase 1), so final
+      // ranking by total mission ΔV may not reflect the global optimum.
+      const warnings = [];
+      if (bestReturn.dv_capture > 3) warnings.push('High capture ΔV — destination adder may underestimate gravity losses');
+      if (dv_total > MISSION_HIGH_DV_KMS) warnings.push('High total ΔV — mass budget will be tight');
       results.push({
         jd_dep:    c.jd_dep,
         jd_arr:    c.jd_arr,
@@ -1295,6 +1301,12 @@ self.onmessage = function(e) {
         moidWarning: isFinite(ast.moid) && ast.moid < 0.0005,
         earthPos:   c.earthPos,
         astPos:     c.astPos,
+        // ── Provenance ───────────────────────────────────────────────────────
+        model_grade:      'screening',       // Lambert patched-conic, two-body only
+        selection_basis:  'outbound-dv-prefilter', // phase-1 prune on dep+arr ΔV; re-ranked by ops score in UI
+        capture_basis:    'screening-grade Earth-insertion + destination adder',
+        dv_uncertainty:   0.15,              // ±15% planning-level uncertainty
+        warnings,
       });
     }
 
@@ -1541,6 +1553,10 @@ self.onmessage = function(e) {
           schema_version: 1,
           reqId,
           feasible: redirectFeasible,
+          // Intercept ΔV: Lambert patched-conic (screening). Redirect ΔV: Tsiolkovsky impulse.
+          // Capture ΔV: heuristic (v∞ × 0.35). None are verified insertion solutions.
+          model_grade: 'screening',
+          capture_grade: 'heuristic',
           intercept: {
             jd_dep: best.jd_dep,
             jd_arr: best.jd_arr,
@@ -1573,7 +1589,9 @@ self.onmessage = function(e) {
             r_cap_km: captureProfile.orbitRadiusKm,
             v_inf_earth_arrival: isFinite(earth_arrival_vinf) ? earth_arrival_vinf : null,
             capture_modeled: Number.isFinite(dv_capture_target),
-            capture_basis: 'screening-grade Earth-arrival insertion + target adders',
+            // Heuristic: capture ΔV = v_inf * 0.35, clamped ≥ 0.25 km/s. Not a solved insertion.
+            capture_basis: 'heuristic (v∞ × 0.35 + destination adder)',
+            model_grade: 'heuristic',
           },
           asteroid: { mass_kg, d_m, spec_type },
           isru: {

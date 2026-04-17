@@ -6030,12 +6030,13 @@ function onRedirectResult(data) {
   const cap = data.capture;
   if (!cap) { showPlannerError('Redirect capture data missing (internal error).'); return; }
   const captureHeader = document.getElementById('rr-capture-header');
+  const captureGradeLabel = (cap.model_grade || data.capture_grade || 'heuristic').toUpperCase();
   if (captureHeader) captureHeader.textContent = `${(cap.label || 'Destination').toUpperCase()} CAPTURE`;
   document.getElementById('rr-capture-text').textContent =
     `Earth arr  ${jdToDate(rd.jd_earth_arr)}\n` +
     `Transit    ${Math.round(rd.tof_redirect)} days\n` +
     `Earth-arr v∞ ${fmtRedirectSpeed(cap.v_inf_earth_arrival)}\n` +
-    `Capture ΔV ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) : 'unknown'}\n` +
+    `Capture ΔV ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) : 'unknown'} [${captureGradeLabel}]\n` +
     `Delivery ΔV ${fmtRedirectSpeed(cap.dv_delivery)}\n` +
     `Target orbit  ${Number.isFinite(cap.r_cap_km) ? Math.round(cap.r_cap_km).toLocaleString() + ' km radius' : 'unknown'}\n` +
     `Delivery node ${cap.delivery_label || 'unknown'}\n` +
@@ -6466,7 +6467,7 @@ function renderTrajectoryList() {
     const profile = t._profile || (t._profile = computeMissionProfile(t));
     const dep   = jdToDate(t.jd_dep);
     const arr   = jdToDate(t.jd_arr);
-    const dvUnc = +(t.dv_total * uncPct).toFixed(2);
+    const dvUnc = +(t.dv_total * (t.dv_uncertainty || uncPct)).toFixed(2);
     const ops = summarizeTrajectoryOperationalMetrics(t);
     const card  = document.createElement('div');
     card.className = 'mp-traj-card' + (i === selectedTrajIdx ? ' mp-traj-selected' : '');
@@ -6483,14 +6484,25 @@ function renderTrajectoryList() {
       ? '<div class="mp-traj-meta" style="color:#fbbf24">Historical first-of-a-kind mining missions are typically $2B-$10B+</div>'
       : '';
     const scoreBreakdown = buildExtractScoreBreakdownHtml(t, ops);
+    // Provenance badge: sourced from result.model_grade set by the physics worker
+    const gradeColor  = t.model_grade === 'screening' ? '#64748b' : t.model_grade === 'concept' ? '#4a6a9a' : '#94a3b8';
+    const gradeLabel  = (t.model_grade || 'planning-level').toUpperCase();
+    const gradeBadge  = `<span style="font-size:7px;color:${gradeColor};border:1px solid ${gradeColor};padding:1px 4px;vertical-align:middle" title="${t.capture_basis || ''}">${gradeLabel} ESTIMATE ±${Math.round((t.dv_uncertainty||uncPct)*100)}%</span>`;
+    const selBasis    = t.selection_basis === 'outbound-dv-prefilter'
+      ? '<span style="font-size:7px;color:#4b5563" title="Candidates pruned by outbound ΔV in phase 1; re-ranked by total ops score in the UI">PREFILTER RANKED</span>'
+      : '';
+    const warningHtml = (t.warnings && t.warnings.length)
+      ? t.warnings.map(w => `<div class="mp-traj-meta" style="color:#fb923c;font-size:8px">⚠ ${w}</div>`).join('')
+      : '';
     card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
-      <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s <span style="font-size:7px;color:#94a3b8;border:1px solid #334155;padding:1px 4px;vertical-align:middle">planning-level estimate</span></div>
+      <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s &nbsp;${gradeBadge}</div>
       <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
       <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
       <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
       ${scoreBreakdown}
-      <div class="mp-traj-meta" style="color:#64748b">Source: Asterank + screening-grade economics</div>
+      <div class="mp-traj-meta" style="color:#3a5060">Source: Asterank · ${gradeLabel} economics &nbsp;${selBasis}</div>
+      ${warningHtml}
       ${costWarning}`;
     card.addEventListener('click', () => selectTrajectory(i));
     list.appendChild(card);

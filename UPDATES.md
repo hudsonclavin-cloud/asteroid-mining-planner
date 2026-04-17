@@ -4,6 +4,25 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 14 — Step 1: Mission Result Provenance (2026-04-16)
+
+### Summary
+Added explicit provenance tagging to all mission planner outputs so every ΔV number and score is labelled with its model grade (screening, heuristic) rather than being presented as solved truth. No solver behavior was changed — this is a disclosure pass only.
+
+### Changes
+**`physics.worker.js`** — provenance fields on results:
+- `plan_mission` result objects now carry `model_grade: 'screening'`, `selection_basis: 'outbound-dv-prefilter'`, `capture_basis`, `dv_uncertainty: 0.15`, and a `warnings[]` array populated for high-capture-ΔV and high-total-ΔV cases
+- Redirect result top-level now carries `model_grade: 'screening'` and `capture_grade: 'heuristic'`
+- Redirect `capture` sub-object: `model_grade: 'heuristic'`, `capture_basis` reworded to `'heuristic (v∞ × 0.35 + destination adder)'` to make the approximation explicit
+
+**`index.html`** — UI disclosure:
+- `renderTrajectoryList`: ΔV badge now reads `SCREENING ESTIMATE ±15%` (sourced from `result.model_grade` and `result.dv_uncertainty`) instead of the hardcoded `planning-level estimate` string
+- `renderTrajectoryList`: selection-basis note `PREFILTER RANKED` shown when `selection_basis === 'outbound-dv-prefilter'`, explaining that phase-1 pruned on outbound ΔV only
+- `renderTrajectoryList`: advisory warnings from `result.warnings[]` rendered as amber ⚠ lines under each card
+- `onRedirectResult` capture section: Capture ΔV line now reads `… [HEURISTIC]` inline, making the model grade visible without restructuring the panel
+
+---
+
 ## Phase 13 — Renderer Scale Truth + Visual Quality Pass (2026-04-15)
 
 ### Summary
