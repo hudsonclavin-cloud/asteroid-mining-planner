@@ -4,6 +4,27 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 14 — Step 5: UI Disclosure Cleanup (2026-04-16)
+
+### Summary
+Approximate numbers no longer read as solved truth. Three UI surfaces updated to name the actual solver or data source behind each displayed value.
+
+### Changes
+**`index.html`** — leaderboard ΔV source badge:
+- Each asteroid row now shows a colored source badge next to the ΔV value: `NHATS` (cyan, JPL-verified), `AST` (gray, Asterank catalog screening-grade), or `est.` (dark, Hohmann–Vis-viva approximation ±3 km/s)
+- Tooltip on the ΔV span includes full source and uncertainty
+
+**`index.html`** — `syncMissionPhaseChip` notes:
+- Per-phase notes now name the actual solver: outbound/return legs say `Lambert solved arc (Izzo 2015) · ±15% ΔV uncertainty`; capture phase says `Capture ΔV: heuristic (v∞ × 0.35) — not a solved insertion`; attach dwell and surface mining dwell say they are visual holds; redirect burn says `Tsiolkovsky impulse · ΔV solved`
+- Separate note branches for `extract` and `redirect` mission modes
+
+**`index.html`** — `onRedirectResult` capture panel:
+- Promoted model grade from inline `[HEURISTIC]` suffix to a dedicated `Model grade` row
+- Added two-line note: `Capture ΔV is not a solved orbit insertion. Add 30–50% margin for real mission planning.`
+- `capture_basis` string displayed on the same line as the grade label
+
+---
+
 ## Phase 14 — Step 4: Unify Economics and Returned-Mass Assumptions (2026-04-16)
 
 ### Summary

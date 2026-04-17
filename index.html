@@ -4042,15 +4042,22 @@ function syncMissionPhaseChip() {
     capture: 'DESTINATION INSERTION',
     done: 'MISSION COMPLETE',
   };
-  let note = 'Screening-grade visual';
+  // Phase notes name the actual solver used so viewers know what is solved vs visual.
+  let note = 'Screening-grade · Lambert patched-conic';
   if (missionAnim.mode === 'extract') {
-    note = 'Transfer arcs are approximate presentation curves';
-  } else if (missionAnim.phase === 'outbound') {
-    note = 'Intercept path is solver-backed when available; fallback is labeled approximate';
-  } else if (missionAnim.phase === 'redirect' || missionAnim.phase === 'capture') {
-    note = 'Redirect arc is solver-backed; final orbit phase is presentation-level';
-  } else if (missionAnim.phase === 'attach') {
-    note = 'Attachment dwell is a visual hold, not a solved dynamics segment';
+    const phase = missionAnim.phase;
+    if (phase === 'outbound')  note = 'Lambert solved arc (Izzo 2015) · ±15% ΔV uncertainty';
+    else if (phase === 'arrival')  note = 'Arrival burn: Lambert patched-conic · screening-grade';
+    else if (phase === 'mining')   note = 'Surface dwell — visual hold, no dynamics modeled';
+    else if (phase === 'return')   note = 'Return Lambert arc (Izzo 2015) · orbit-guard validated';
+    else note = 'Lambert patched-conic · screening-grade';
+  } else if (missionAnim.mode === 'redirect') {
+    const phase = missionAnim.phase;
+    if (phase === 'outbound')  note = 'Intercept: Lambert solved (Izzo 2015) · orbit-guard validated';
+    else if (phase === 'attach')   note = 'Attachment dwell — visual hold, not a solved dynamics segment';
+    else if (phase === 'redirect') note = 'Redirect burn: Tsiolkovsky impulse · ΔV solved';
+    else if (phase === 'capture')  note = 'Capture ΔV: heuristic (v∞ × 0.35) — not a solved insertion';
+    else note = 'Redirect mission · screening-grade';
   }
   chip.style.display = 'block';
   kicker.textContent = missionAnim.mode === 'redirect' ? 'CAPTURE / REDIRECT' : 'EXTRACT / RETURN';
@@ -4731,7 +4738,13 @@ function renderLeaderboard() {
     const sk = getSpecKey(ast);
     const skClass = ['C','S','M','X','D'].includes(sk) ? sk : 'O';
     const fi     = computeFeasibilityMetrics(ast);
-    const dvStr  = `${fi.deltaV.value.toFixed(1)} (±${fi.deltaV.uncertainty})`;
+    // Source badge: NHATS (verified) | AST (Asterank catalog) | est. (Hohmann approximation)
+    const dvSourceBadge = fi.deltaV.method === 'nhats'
+      ? '<span style="color:#00d4ff;font-size:7px;margin-left:2px" title="JPL NHATS verified ΔV">NHATS</span>'
+      : fi.deltaV.method === 'asterank'
+      ? '<span style="color:#6b8a9a;font-size:7px;margin-left:2px" title="Asterank catalog ΔV (screening-grade)">AST</span>'
+      : '<span style="color:#4b5563;font-size:7px;margin-left:2px" title="Hohmann–Vis-viva estimate (±3 km/s)">est.</span>';
+    const dvStr  = `${fi.deltaV.value.toFixed(1)}`;
     const durStr = fi.duration.value > 0 ? Math.round(fi.duration.value) + (fi.duration.source !== 'NHATS' ? '*' : '') : '—';
     const valStr = fi.valueRange.optimistic !== null ? fmtUSD(fi.valueRange.optimistic) : 'unknown';
     const nhBadge = fi.accessibility.nhatsVerified
@@ -4750,7 +4763,7 @@ function renderLeaderboard() {
         <span class="lb-type lb-type-${skClass}" style="font-size:8px">${skClass}</span>
       </div>
       <div style="display:flex;gap:6px;font-size:8px;color:#6a8a9a">
-        <span title="Delta-V">ΔV <span style="color:#00d4ff">${dvStr}</span></span>
+        <span title="Delta-V — source: ${fi.deltaV.source} ±${fi.deltaV.uncertainty} km/s">ΔV <span style="color:#00d4ff">${dvStr}</span>${dvSourceBadge}</span>
         <span title="Mission duration">TOF <span style="color:#c8d6e5">${durStr}d</span></span>
         <span title="Optimistic value (30% extraction)" style="margin-left:auto">${valStr}</span>
       </div>
@@ -6043,11 +6056,15 @@ function onRedirectResult(data) {
     `Earth arr  ${jdToDate(rd.jd_earth_arr)}\n` +
     `Transit    ${Math.round(rd.tof_redirect)} days\n` +
     `Earth-arr v∞ ${fmtRedirectSpeed(cap.v_inf_earth_arrival)}\n` +
-    `Capture ΔV ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) : 'unknown'} [${captureGradeLabel}]\n` +
-    `Delivery ΔV ${fmtRedirectSpeed(cap.dv_delivery)}\n` +
-    `Target orbit  ${Number.isFinite(cap.r_cap_km) ? Math.round(cap.r_cap_km).toLocaleString() + ' km radius' : 'unknown'}\n` +
-    `Delivery node ${cap.delivery_label || 'unknown'}\n` +
-    `Model basis  ${cap.capture_basis || 'unknown'}`;
+    `\n` +
+    `Capture ΔV   ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) : 'unknown'}\n` +
+    `Delivery ΔV  ${fmtRedirectSpeed(cap.dv_delivery)}\n` +
+    `Target orbit ${Number.isFinite(cap.r_cap_km) ? Math.round(cap.r_cap_km).toLocaleString() + ' km radius' : 'unknown'}\n` +
+    `Dest. node   ${cap.delivery_label || 'unknown'}\n` +
+    `\n` +
+    `Model grade  ${captureGradeLabel} — ${cap.capture_basis || 'unknown'}\n` +
+    `             (Capture ΔV is not a solved orbit insertion.\n` +
+    `              Add 30–50% margin for real mission planning.)`;
 
   // ISRU yield
   const isru = data.isru;
