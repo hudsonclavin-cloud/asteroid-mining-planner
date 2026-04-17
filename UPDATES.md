@@ -4,6 +4,28 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 15 — Step 1: ΔV Budget Bar on Trajectory Cards (2026-04-17)
+
+### Summary
+Each trajectory card in the mission planner results list now shows a stacked proportional bar that visually encodes how the total ΔV is split across mission legs. The breakdown is immediately scannable without reading the numbers.
+
+### Changes
+**`index.html`** — new `buildDvBudgetBar(t)` function:
+- Renders a 5px-tall horizontal flex bar with five colored segments, each proportional to its ΔV fraction of the total:
+  - **Cyan** — Departure (outbound burn)
+  - **Orange** — Arrival (asteroid insertion)
+  - **Dark gray** — MCC (mid-course correction, usually tiny)
+  - **Purple** — Return departure
+  - **Green** — Destination capture
+- Each segment carries a `title` tooltip showing leg name, km/s value, and percentage
+- A legend row beneath the bar labels each segment with its abbreviation and percentage
+- Zero-valued segments are omitted from both bar and legend
+
+**`index.html`** — `renderTrajectoryList`:
+- `buildDvBudgetBar(t)` injected between the ΔV TOTAL headline and the numeric breakdown meta row
+
+---
+
 ## Phase 14 — Step 7: Physics Validation Harness (2026-04-16)
 
 ### Summary

@@ -6493,6 +6493,33 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
   }
 }
 
+// ── ΔV Budget Bar ─────────────────────────────────────────────────────────────
+// Renders a proportional stacked bar showing the cost of each mission leg.
+// Segments: departure (cyan) · arrival (orange) · MCC (dim) · return (purple) · capture (green)
+function buildDvBudgetBar(t) {
+  const total = t.dv_total || 1;
+  const mcc   = t.dv_mcc || +(t.dv_dep * 0.02).toFixed(3);
+  const legs  = [
+    { v: t.dv_dep,          color: '#00d4ff', label: 'Dep',     abbr: '↑' },
+    { v: t.dv_arr,          color: '#fb923c', label: 'Arr',     abbr: '↓' },
+    { v: mcc,               color: '#374151', label: 'MCC',     abbr: 'M' },
+    { v: t.dv_return,       color: '#a78bfa', label: 'Return',  abbr: '⟵' },
+    { v: t.dv_capture || 0, color: '#4ade80', label: 'Capture', abbr: '⊙' },
+  ];
+  const segs = legs.map(l => {
+    if (l.v <= 0) return '';
+    const pct  = (l.v / total * 100).toFixed(1);
+    const tip  = `${l.label}: ${l.v.toFixed(2)} km/s (${pct}%)`;
+    return `<span style="display:block;width:${pct}%;height:100%;background:${l.color};opacity:0.85;flex-shrink:0" title="${tip}"></span>`;
+  }).join('');
+  const legend = legs.filter(l => l.v > 0).map(l => {
+    const pct = (l.v / total * 100).toFixed(0);
+    return `<span style="color:${l.color};margin-right:7px;font-size:7px">${l.abbr} ${l.label} ${pct}%</span>`;
+  }).join('');
+  return `<div style="margin:5px 0 2px;height:5px;background:#07121e;border-radius:3px;overflow:hidden;display:flex">${segs}</div>` +
+         `<div style="margin-bottom:3px">${legend}</div>`;
+}
+
 function renderTrajectoryList() {
   const errorEl = document.getElementById('mp-results-error');
   if (errorEl) errorEl.style.display = 'none';
@@ -6543,6 +6570,7 @@ function renderTrajectoryList() {
     card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${infeasBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s &nbsp;${gradeBadge}</div>
+      ${buildDvBudgetBar(t)}
       <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
       <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
       <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${ops?.propulsionInfeasible ? 'N/A' : fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
