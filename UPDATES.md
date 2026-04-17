@@ -4,6 +4,24 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 15 — Step 2: Feasibility Traffic Light on Trajectory Cards (2026-04-17)
+
+### Summary
+Each trajectory card now shows a glowing colored dot + label immediately below the rank line. Users can scan feasibility at a glance without parsing numbers.
+
+### Changes
+**`index.html`** — new `buildFeasibilityLight(ops)` function:
+- **Green ●  GO** — feasible + score ≥ 60: trajectory clears mass ratio and economics thresholds
+- **Amber ●  MARGINAL** — feasible + score 30–59: mass ratio OK but high ΔV or poor ROI
+- **Red ●  NO-GO** — propulsion infeasible (mass ratio > 20) OR score < 30
+- Dot has a subtle CSS box-shadow glow matching the indicator color
+- Full tooltip text explains the reason on hover
+
+**`index.html`** — `renderTrajectoryList`:
+- `buildFeasibilityLight(ops)` inserted between the rank line and the departure/arrival dates
+
+---
+
 ## Phase 15 — Step 1: ΔV Budget Bar on Trajectory Cards (2026-04-17)
 
 ### Summary

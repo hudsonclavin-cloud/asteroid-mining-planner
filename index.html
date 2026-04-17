@@ -6493,6 +6493,28 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
   }
 }
 
+// ── Feasibility Traffic Light ─────────────────────────────────────────────────
+// Green = feasible + score ≥ 60 (GO), Amber = feasible + score 30–59 (MARGINAL),
+// Red = propulsion infeasible OR score < 30 (NO-GO).
+function buildFeasibilityLight(ops) {
+  if (!ops) return '';
+  let color, label, tip;
+  if (ops.propulsionInfeasible) {
+    color = '#ef4444'; label = 'NO-GO'; tip = 'Propulsion infeasible — mass ratio exceeds single-stage limit';
+  } else if (ops.score >= 60) {
+    color = '#22c55e'; label = 'GO';       tip = `Score ${ops.score}/100 — feasible trajectory, positive economics`;
+  } else if (ops.score >= 30) {
+    color = '#f59e0b'; label = 'MARGINAL'; tip = `Score ${ops.score}/100 — feasible but marginal economics or high ΔV`;
+  } else {
+    color = '#ef4444'; label = 'NO-GO';   tip = `Score ${ops.score}/100 — poor economics or overweight`;
+  }
+  return `<div style="display:flex;align-items:center;gap:6px;margin:3px 0 4px">` +
+    `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};box-shadow:0 0 6px ${color}88;flex-shrink:0"></span>` +
+    `<span style="font-size:9px;font-weight:700;letter-spacing:0.08em;color:${color}" title="${tip}">${label}</span>` +
+    `<span style="font-size:7px;color:#374151;margin-left:2px" title="${tip}">${tip}</span>` +
+    `</div>`;
+}
+
 // ── ΔV Budget Bar ─────────────────────────────────────────────────────────────
 // Renders a proportional stacked bar showing the cost of each mission leg.
 // Segments: departure (cyan) · arrival (orange) · MCC (dim) · return (purple) · capture (green)
@@ -6568,6 +6590,7 @@ function renderTrajectoryList() {
       ? t.warnings.map(w => `<div class="mp-traj-meta" style="color:#fb923c;font-size:8px">⚠ ${w}</div>`).join('')
       : '';
     card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${infeasBadge}${badge}</div>
+      ${buildFeasibilityLight(ops)}
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s &nbsp;${gradeBadge}</div>
       ${buildDvBudgetBar(t)}
