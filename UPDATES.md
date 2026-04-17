@@ -4,6 +4,43 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 15 — Steps 6–9: Engineering Depth (Phase 3) (2026-04-17)
+
+### Summary
+Four engineering layers that add real mission-design rigor: launch vehicle C3 limits, ΔV margin to the single-stage wall, a mission environment panel (comms delay + solar power), and propulsion type labeling with Isp sensitivity in the mass budget.
+
+### Step 6 — C3 Capability on Launch Vehicles
+**`index.html`** — `LAUNCH_VEHICLES`:
+- Added `c3_max_km2s2` to every vehicle (planning-level estimates from publicly available payload-to-C3 curves):
+  - F9 Rideshare: 2, Falcon 9: 12, Falcon Heavy: 30, Starship: 60, Vulcan: 18, New Glenn: 12
+- `summarizeTrajectoryOperationalMetrics`: computes `c3Exceeded = trajC3 > lv.c3_max_km2s2`; returned in ops object
+- Trajectory cards: amber `C3 EXCEEDED` badge on rank line when violated
+- `computeMissionProfile` text: C3 line now shows `(LV limit: X km²/s²  ✓/✗ EXCEEDED)` inline
+
+### Step 7 — ΔV Margin vs. Mass-Ratio Limit
+**`index.html`** — trajectory card hero section:
+- Inline IIFE computes `dvMax = g0 × Isp × ln(20)` (single-stage limit at mass ratio 20)
+- Shows remaining margin as `X.XX km/s (Y% of limit)` in green/amber/red below the ΔV hero
+- When exceeded, shows `ΔV exceeds single-stage limit by X.XX km/s` in red
+
+### Step 8 — Mission Environment Panel
+**`index.html`** — new `buildMissionEnvironment(traj)` function + `#mp-environment` panel:
+- **Heliocentric distance**: asteroid semi-major axis in AU
+- **Solar flux**: 1361/r² W/m² with ⚠ LOW POWER flag (r > 2 AU, suggest RTG) and ⚠ HIGH THERMAL flag (r < 0.8 AU, active cooling required)
+- **1-way comms delay**: Earth-asteroid separation at departure × 499 s/AU, displayed in minutes
+- **Propellant mass range**: propellantKgNum at Isp ± isp_tol to show mass budget sensitivity
+- **Propulsion type**: from `sc.propulsion_type`
+- Panel shown after trajectory selection, hidden on reset
+
+### Step 9 — Propulsion Type + Isp Sensitivity in Mission Profile
+**`index.html`** — `SPACECRAFT`:
+- Added `propulsion_type` (human-readable class) and `isp_tol` (±fraction for sensitivity) to each vehicle:
+  - Light Prospector: `Ion thruster (Isp ~3000 s)`, tol 5%
+  - Medium Miner / Heavy Hauler: `Bipropellant chemical (Isp ~320 s)`, tol 3%
+- `computeMissionProfile` PROPULSION section: new `TYPE` row; `PROPELLANT MASS` row now shows `X kg  [Isp±N%: lo–hi kg]` range
+
+---
+
 ## Phase 15 — Step 5: Card Information Hierarchy (2026-04-17)
 
 ### Summary

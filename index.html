@@ -1494,6 +1494,14 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
         white-space:pre;overflow-x:auto;border-radius:2px"></div>
     </div>
 
+    <!-- Phase 15 Step 3: Mission Environment panel -->
+    <div id="mp-environment" style="display:none;margin-top:8px">
+      <div class="panel-header">◈ MISSION ENVIRONMENT</div>
+      <div id="mp-environment-content" style="font-family:'Space Mono',monospace;font-size:8px;
+        line-height:2;color:#6a8a9a;background:#060a14;border:1px solid #0d1f33;
+        padding:8px 10px;border-radius:2px"></div>
+    </div>
+
     <!-- Phase 9E: Model Assumptions collapsible -->
     <div id="mp-assumptions-wrap" style="display:none;margin-top:6px">
       <button id="mp-assumptions-toggle"
@@ -2450,17 +2458,20 @@ const STATIC_PRICES_SPACE = {
 
 // ─── Mission Planner Constants ─────────────────────────────────────────────────
 const SPACECRAFT = {
-  light:  { name:'Light Prospector', dry_kg:500,   payload_kg:200,   isp:3000, cost_usd:50e6  },
-  medium: { name:'Medium Miner',     dry_kg:5000,  payload_kg:2000,  isp:320,  cost_usd:180e6 },
-  heavy:  { name:'Heavy Hauler',     dry_kg:50000, payload_kg:20000, isp:320,  cost_usd:500e6 },
+  // propulsion_type: human-readable propulsion class; isp_tol: ±fraction for sensitivity note
+  light:  { name:'Light Prospector', dry_kg:500,   payload_kg:200,   isp:3000, cost_usd:50e6,  propulsion_type:'Ion thruster (Isp ~3000 s)',       isp_tol:0.05 },
+  medium: { name:'Medium Miner',     dry_kg:5000,  payload_kg:2000,  isp:320,  cost_usd:180e6, propulsion_type:'Bipropellant chemical (Isp ~320 s)', isp_tol:0.03 },
+  heavy:  { name:'Heavy Hauler',     dry_kg:50000, payload_kg:20000, isp:320,  cost_usd:500e6, propulsion_type:'Bipropellant chemical (Isp ~320 s)', isp_tol:0.03 },
 };
 const LAUNCH_VEHICLES = {
-  f9_rs:   { name:'Falcon 9 Rideshare', cost_per_kg:5000,  max_kg:1000,   label:'F9 Rideshare' },
-  f9:      { name:'Falcon 9',           cost_per_kg:2700,  max_kg:22800,  label:'Falcon 9'     },
-  fh:      { name:'Falcon Heavy',       cost_per_kg:1500,  max_kg:63800,  label:'Falcon Heavy' },
-  starship:{ name:'Starship',           cost_per_kg:100,   max_kg:150000, label:'Starship*'    },
-  vulcan:  { name:'Vulcan Centaur',     cost_per_kg:4000,  max_kg:27200,  label:'Vulcan'       },
-  ng:      { name:'New Glenn',          cost_per_kg:2000,  max_kg:45000,  label:'New Glenn*'   },
+  // c3_max_km2s2: approximate maximum achievable C3 (km²/s²) with meaningful payload.
+  // Sources: publicly available payload-to-C3 curves; treat as planning-level estimates.
+  f9_rs:   { name:'Falcon 9 Rideshare', cost_per_kg:5000,  max_kg:1000,   label:'F9 Rideshare', c3_max_km2s2:2   },
+  f9:      { name:'Falcon 9',           cost_per_kg:2700,  max_kg:22800,  label:'Falcon 9',      c3_max_km2s2:12  },
+  fh:      { name:'Falcon Heavy',       cost_per_kg:1500,  max_kg:63800,  label:'Falcon Heavy',  c3_max_km2s2:30  },
+  starship:{ name:'Starship',           cost_per_kg:100,   max_kg:150000, label:'Starship*',     c3_max_km2s2:60  },
+  vulcan:  { name:'Vulcan Centaur',     cost_per_kg:4000,  max_kg:27200,  label:'Vulcan',        c3_max_km2s2:18  },
+  ng:      { name:'New Glenn',          cost_per_kg:2000,  max_kg:45000,  label:'New Glenn*',    c3_max_km2s2:12  },
 };
 const DEST_LABELS = {
   leo:'LEO (400 km)', geo:'GEO (35,786 km)', l1:'Earth-Moon L1',
@@ -5692,8 +5703,9 @@ function openMissionPlanner(id) {
     (ast.name || ast.full_name || ast.designation || '').split(' ').slice(0,4).join(' ');
   document.getElementById('mp-computing').style.display = 'none';
   document.getElementById('mp-results').style.display   = 'none';
-  document.getElementById('mp-profile').style.display   = 'none';
-  document.getElementById('mp-burns').style.display     = 'none';
+  document.getElementById('mp-profile').style.display     = 'none';
+  document.getElementById('mp-burns').style.display       = 'none';
+  const _mpEnv = document.getElementById('mp-environment'); if (_mpEnv) _mpEnv.style.display = 'none';
   document.getElementById('mp-actions').style.display         = 'none';
   document.getElementById('mp-redirect-results').style.display = 'none';
   document.getElementById('rr-score-breakdown').innerHTML = '';
@@ -5820,8 +5832,9 @@ async function runMissionOptimizer() {
 
   document.getElementById('mp-computing').style.display = 'block';
   document.getElementById('mp-results').style.display   = 'none';
-  document.getElementById('mp-profile').style.display   = 'none';
-  document.getElementById('mp-burns').style.display     = 'none';
+  document.getElementById('mp-profile').style.display     = 'none';
+  document.getElementById('mp-burns').style.display       = 'none';
+  const _mpEnv = document.getElementById('mp-environment'); if (_mpEnv) _mpEnv.style.display = 'none';
   document.getElementById('mp-actions').style.display   = 'none';
   document.getElementById('mp-progress-bar').style.width = '5%';
   document.getElementById('mp-progress-label').textContent = 'Running Aster Lambert solver...';
@@ -6418,6 +6431,9 @@ function summarizeTrajectoryOperationalMetrics(traj) {
   const propKg = Number.isFinite(rawPropKg) ? rawPropKg : sc.dry_kg * 19; // cap for cost math only
   const wetKg = sc.dry_kg + propKg;
   const fitsLaunchVehicle = !propulsionInfeasible && wetKg <= lv.max_kg;
+  // C3 capability check: trajectory departure C3 vs. launch vehicle limit
+  const trajC3 = traj.C3 || 0;
+  const c3Exceeded = Number.isFinite(lv.c3_max_km2s2) && trajC3 > lv.c3_max_km2s2;
   const opsDays = Math.round(traj.tof + (traj.tof_return || 0) + (traj.stay_days || 0));
   const launchCost = propulsionInfeasible ? null : wetKg * lv.cost_per_kg;
   const totalCost = propulsionInfeasible ? null : launchCost + sc.cost_usd + (opsDays / 30) * 8e6;
@@ -6439,7 +6455,7 @@ function summarizeTrajectoryOperationalMetrics(traj) {
   const score = Math.round(
     Math.max(0, 100 + dvPenalty + launchPenalty + roiTerm + infeasiblePenalty)
   );
-  return { wetKg, fitsLaunchVehicle, launchCost, totalCost, realizedNpv, roi, score, dvPenalty, launchPenalty, roiTerm, propulsionInfeasible };
+  return { wetKg, fitsLaunchVehicle, launchCost, totalCost, realizedNpv, roi, score, dvPenalty, launchPenalty, roiTerm, propulsionInfeasible, c3Exceeded, trajC3, c3Max: lv.c3_max_km2s2 };
 }
 
 function onPlanResult(results, noFeasibleWindow, dbg, source) {
@@ -6578,6 +6594,9 @@ function renderTrajectoryList() {
     const lvBadge = ops?.fitsLaunchVehicle === false && !ops?.propulsionInfeasible
       ? '<span style="font-size:7px;color:#f87171;border:1px solid #f87171;padding:1px 4px;margin-left:5px;vertical-align:middle">OVERWEIGHT</span>'
       : '';
+    const c3Badge = ops?.c3Exceeded
+      ? `<span style="font-size:7px;color:#fbbf24;border:1px solid #fbbf24;padding:1px 4px;margin-left:5px;vertical-align:middle" title="C3 ${ops.trajC3.toFixed(1)} km²/s² exceeds ${ops.c3Max} km²/s² limit for this vehicle">C3 EXCEEDED</span>`
+      : '';
     const infeasBadge = ops?.propulsionInfeasible
       ? '<span style="font-size:7px;color:#dc2626;border:1px solid #dc2626;padding:1px 4px;margin-left:5px;vertical-align:middle;font-weight:bold">✗ PROPULSION INFEASIBLE</span>'
       : '';
@@ -6604,13 +6623,24 @@ function renderTrajectoryList() {
     const heroLaunch = ops?.propulsionInfeasible ? '<span style="color:#ef4444">INFEASIBLE</span>' : fmtUSD(ops?.launchCost);
     const heroNpv    = fmtUSD(profile.realizedNpv);
     card.innerHTML = `
-      <div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${infeasBadge}${badge}</div>
+      <div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${infeasBadge}${c3Badge}${badge}</div>
       ${buildFeasibilityLight(ops)}
       <div style="display:flex;align-items:baseline;gap:8px;margin:4px 0 2px">
         <span style="font-size:13px;font-weight:700;color:#e8f0f8;letter-spacing:0.01em">${t.dv_total.toFixed(2)} km/s</span>
         <span style="font-size:8px;color:#4b5563">± ${dvUnc}</span>
         <span style="margin-left:auto;font-size:8px;color:#6a8a9a">Score <strong style="color:#c8d6e5">${ops?.score ?? '—'}</strong>/100 ${lvBadge}</span>
       </div>
+      ${(() => {
+        const sc = SPACECRAFT[missionConfig.spacecraft] || SPACECRAFT.medium;
+        const g0 = 0.00980665;
+        const dvMax = g0 * sc.isp * Math.log(20); // ΔV at mass ratio 20
+        const margin = dvMax - t.dv_total;
+        const marginPct = (margin / dvMax * 100).toFixed(0);
+        const mColor = margin > 3 ? '#22c55e' : margin > 1 ? '#f59e0b' : '#ef4444';
+        return margin > 0
+          ? `<div style="font-size:7px;color:${mColor};margin-bottom:2px" title="Max single-stage ΔV at mass ratio 20 = ${dvMax.toFixed(2)} km/s">ΔV margin: ${margin.toFixed(2)} km/s (${marginPct}% of limit) remaining</div>`
+          : `<div style="font-size:7px;color:#ef4444;margin-bottom:2px">ΔV exceeds single-stage limit by ${Math.abs(margin).toFixed(2)} km/s</div>`;
+      })()}
       <div style="display:flex;gap:14px;font-size:8px;color:#6a8a9a;margin-bottom:2px">
         <span>Launch <strong style="color:#c8d6e5">${heroLaunch}</strong></span>
         <span>NPV <strong style="color:#c8d6e5">${heroNpv}</strong></span>
@@ -6669,6 +6699,7 @@ function selectTrajectory(idx) {
   document.getElementById('mp-actions').style.display = 'block';
   drawBurnVectors({ ...traj, earthPos: live?.earthPos || traj.earthPos, astPos: live?.astPos || traj.astPos });
   buildMissionTimeline(traj);
+  buildMissionEnvironment(traj);
   // Re-render porkchop so selected dot updates (only if panel is visible)
   if (porkchopData &&
       document.getElementById('porkchop-panel').style.display !== 'none') {
@@ -6787,15 +6818,25 @@ function computeMissionProfile(traj) {
     dot('4 · ASTEROID DEPART', traj.dv_return.toFixed(3) + ' km/s'),
     dot('5 · DEST. CAPTURE', (traj.dv_capture||0).toFixed(3) + ' km/s'),
     dot('TOTAL MISSION ΔV', traj.dv_total.toFixed(2) + ' km/s'),
-    dot('C3', (traj.C3||0).toFixed(2) + ' km²/s²'),
+    dot('C3', (traj.C3||0).toFixed(2) + ' km²/s²' + (lv.c3_max_km2s2 ? `  (LV limit: ${lv.c3_max_km2s2} km²/s²${(traj.C3||0) > lv.c3_max_km2s2 ? '  ✗ EXCEEDED' : '  ✓'})` : '')),
     dot('V∞ DEPARTURE', (traj.vinf_dep||0).toFixed(2) + ' km/s'),
     dot('V∞ ARRIVAL', (traj.vinf_arr||0).toFixed(2) + ' km/s'),
     traj.lunarAssist ? dot('LUNAR GRAVITY ASSIST', 'CANDIDATE (low C3)') : '',
     sep('PROPULSION'),
+    dot('TYPE', sc.propulsion_type || `Chemical, Isp ${sc.isp} s`),
     dot('MODEL', propNote),
     propulsionInfeasible ? dot('⚠  PROPULSION STATUS', 'INFEASIBLE — reduce ΔV or use multi-stage vehicle') : '',
     dot('DRY MASS', sc.dry_kg.toLocaleString() + ' kg'),
-    dot('PROPELLANT MASS', propulsionInfeasible ? `>${Math.round(sc.dry_kg*19).toLocaleString()} kg (not achievable single-stage)` : Math.round(propKg).toLocaleString() + ' kg'),
+    (() => {
+      // Isp sensitivity: show propellant mass range at ±isp_tol
+      const tol = sc.isp_tol || 0.03;
+      const pLo = propellantKgNum(traj.dv_total, sc.isp*(1+tol), sc.dry_kg);
+      const pHi = propellantKgNum(traj.dv_total, sc.isp*(1-tol), sc.dry_kg);
+      const pFmt = v => Number.isFinite(v) ? Math.round(v).toLocaleString() + ' kg' : 'N/A';
+      return propulsionInfeasible
+        ? dot('PROPELLANT MASS', `>${Math.round(sc.dry_kg*19).toLocaleString()} kg (not achievable single-stage)`)
+        : dot('PROPELLANT MASS', `${Math.round(propKg).toLocaleString()} kg  [Isp±${(tol*100).toFixed(0)}%: ${pFmt(pLo)}–${pFmt(pHi)}]`);
+    })(),
     dot('WET MASS', propulsionInfeasible ? 'N/A (infeasible)' : Math.round(wetKg).toLocaleString() + ' kg'),
     dot('MASS FRACTION', (frac*100).toFixed(1) + '%'),
     dot('LAUNCH CAPACITY', lv.max_kg.toLocaleString()+' kg '+(fits?'✓ FITS':'✗ OVERWEIGHT')),
@@ -7039,6 +7080,64 @@ function drawBurnVectors(traj) {
 function clearBurnVectors() {
   burnVectorArrows.forEach(disposeObject3D);
   burnVectorArrows = [];
+}
+
+// ── Mission Environment: comms delay + solar power at asteroid ─────────────────
+function buildMissionEnvironment(traj) {
+  const el = document.getElementById('mp-environment');
+  const content = document.getElementById('mp-environment-content');
+  if (!el || !content) return;
+  const ast = asteroidData[selectedId];
+  if (!ast || !traj) { el.style.display = 'none'; return; }
+
+  const AU_KM = 149597870.7;     // km per AU
+  const C_KMS = 299792.458;       // speed of light km/s
+  const SOLAR_FLUX_1AU = 1361;    // W/m² at 1 AU
+
+  // Earth-asteroid distance at departure (AU) — from stored positions
+  const ep = traj.earthPos || {};
+  const ap = traj.astPos   || {};
+  const distDepAU = (ep.x !== undefined && ap.x !== undefined)
+    ? Math.hypot(ap.x - ep.x, ap.y - ep.y, ap.z - ep.z)
+    : null;
+
+  // Signal delay
+  const delayDep_s  = distDepAU !== null ? distDepAU * AU_KM / C_KMS : null;
+  const delayDep_min = delayDep_s !== null ? (delayDep_s / 60).toFixed(1) : '—';
+
+  // Heliocentric distance at asteroid (semi-major axis ≈ mean distance)
+  const r_ast = ast.a || 1.0;       // AU
+  const solarFlux = SOLAR_FLUX_1AU / (r_ast * r_ast);  // W/m²
+
+  // Power/thermal flags
+  const powerFlag    = r_ast > 2.0 ? ` ⚠ LOW POWER (${r_ast.toFixed(2)} AU — solar arrays ≈ ${Math.round(solarFlux)} W/m²; may need RTG)` : '';
+  const thermalFlag  = r_ast < 0.8 ? ` ⚠ HIGH THERMAL (${r_ast.toFixed(2)} AU — ${Math.round(solarFlux)} W/m²; requires active cooling)` : '';
+  const envFlag      = powerFlag || thermalFlag || ' nominal solar power range';
+
+  // Isp sensitivity for selected spacecraft
+  const sc = SPACECRAFT[missionConfig.spacecraft] || SPACECRAFT.medium;
+  const g0 = 0.00980665;
+  const isp    = sc.isp;
+  const ispTol = sc.isp_tol || 0.03;
+  const propBase = propellantKgNum(traj.dv_total, isp,           sc.dry_kg);
+  const propHi   = propellantKgNum(traj.dv_total, isp*(1-ispTol), sc.dry_kg); // worst-case (lower Isp)
+  const propLo   = propellantKgNum(traj.dv_total, isp*(1+ispTol), sc.dry_kg); // best-case (higher Isp)
+  const ispSensNote = Number.isFinite(propBase)
+    ? `${Math.round(propLo).toLocaleString()} – ${Math.round(propHi).toLocaleString()} kg  (±${(ispTol*100).toFixed(0)}% Isp)`
+    : '—';
+
+  const row = (label, val) =>
+    `<div><span style="color:#4a6a7a;display:inline-block;width:170px">${label}</span>${val}</div>`;
+
+  content.innerHTML =
+    row('Heliocentric distance:', `${r_ast.toFixed(3)} AU`) +
+    row('Solar flux at asteroid:', `${Math.round(solarFlux).toLocaleString()} W/m²  (ref: 1361 W/m² @ 1 AU)` + `<span style="color:#f59e0b">${envFlag}</span>`) +
+    row('1-way comms delay (dep):', distDepAU !== null ? `${delayDep_min} min  (${distDepAU.toFixed(3)} AU)` : '—  (position data unavailable)') +
+    row('Propellant mass range:', ispSensNote) +
+    row('Propulsion type:', sc.propulsion_type || `Isp ${isp} s`) +
+    `<div style="margin-top:6px;color:#2a4050;border-top:1px solid #0a1825;padding-top:4px;font-size:7px">Solar flux = 1361/r² W/m²  ·  comms delay = dist × 499 s/AU  ·  Isp sensitivity ±${(ispTol*100).toFixed(0)}%</div>`;
+
+  el.style.display = 'block';
 }
 
 function buildMissionTimeline(traj) {
