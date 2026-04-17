@@ -4,6 +4,55 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 15 — Step 5: Card Information Hierarchy (2026-04-17)
+
+### Summary
+Trajectory cards reorganized into a clear three-zone layout: hero metrics at the top, trajectory details in the middle, provenance/warnings at the bottom. Critical numbers are now scannable in one pass without reading all rows.
+
+### Changes
+**`index.html`** — `renderTrajectoryList` card HTML:
+- **Hero zone**: total ΔV at 13px/bold (previously 9px with label prefix) + score pill + launch cost + NPV in one compact row — the first thing the eye lands on
+- **Separator dividers**: two `border-top` lines dividing hero / details / footer zones
+- **Detail zone**: departure/arrival dates now share the TOF on the same line; leg breakdown meta row retained
+- **Footer zone**: paper value + provenance label dimmed to `#2a4050` so it recedes visually; `Score X/100` row removed from footer (promoted to hero)
+
+---
+
+## Phase 15 — Step 4: Leaderboard Score Bars + Medal Markers (2026-04-17)
+
+### Summary
+The leaderboard now communicates ranking at a glance via gold/silver/bronze position markers and a color-coded accessibility bar on each row.
+
+### Changes
+**`index.html`** — `renderLeaderboard`:
+- **Medal markers**: ranks #1/#2/#3 show a gold/silver/bronze colored dot to the left of the asteroid name; remaining ranks show a dim numeric rank
+- **Accessibility score bar**: 2px bar below each row, width proportional to accessibility (ΔV 3–13 km/s → 100–0%); green < 6 km/s, amber 6–9 km/s, red > 9 km/s
+
+---
+
+## Phase 15 — Step 3: 3D Scene Contrast (2026-04-17)
+
+### Summary
+Three contrast changes make the selected asteroid and active trajectory pop against the dimmed background field.
+
+### Changes
+**`index.html`** — planet orbit rings:
+- Non-Earth planet opacity `0.24 → 0.14`, haloOpacity `0.08 → 0.04` — background reference only, not competing with active trajectory
+- Earth orbit opacity `0.82 → 0.70`, haloOpacity `0.22 → 0.14` — still recognizable but no longer the brightest object
+
+**`index.html`** — selected asteroid orbit ring (`orbitLine`):
+- Opacity `0.88 → 0.98`, haloOpacity `0.18 → 0.32` — full brightness; `setGlowLineColor` call updated to match
+
+**`index.html`** — hover orbit ring (`hoverOrbitLine`):
+- Opacity `0.52 → 0.28`, haloOpacity `0.12 → 0.05` — stays visible on hover but no longer competes with the selected ring
+
+**`index.html`** — trajectory arcs:
+- Outbound + redirect arcs: haloOpacity `0.20 → 0.38`, core opacity `0.92 → 0.96`
+- Return arc: core opacity `0.64 → 0.78`, haloOpacity `0.14 → 0.28`
+- Redirect intercept arc: haloOpacity `0.22 → 0.36`
+
+---
+
 ## Phase 15 — Step 2: Feasibility Traffic Light on Trajectory Cards (2026-04-17)
 
 ### Summary

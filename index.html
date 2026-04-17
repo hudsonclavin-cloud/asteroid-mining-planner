@@ -2918,8 +2918,8 @@ PLANET_SMA.forEach((sma, idx) => {
   }
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
   const color = idx === 2 ? 0x00d4ff : 0x5a4fb3;
-  const opacity = idx === 2 ? 0.82 : 0.24;
-  planetOrbitGroup.add(makeGlowLine(geo, color, opacity, { haloOpacity: idx === 2 ? 0.22 : 0.08 }));
+  const opacity = idx === 2 ? 0.70 : 0.14; // dimmer background — keeps selected asteroid prominent
+  planetOrbitGroup.add(makeGlowLine(geo, color, opacity, { haloOpacity: idx === 2 ? 0.14 : 0.04 }));
 });
 scene.add(planetOrbitGroup);
 
@@ -3195,10 +3195,10 @@ function makeOrbitLine(color, dashed, opacity, options = {}) {
 }
 
 // Selected orbit
-const orbitLine = makeOrbitLine(ORBIT_NEON.asteroid, false, 0.88, { haloOpacity: 0.18 });
+const orbitLine = makeOrbitLine(ORBIT_NEON.asteroid, false, 0.98, { haloOpacity: 0.32 }); // selected: full brightness
 
 // Hover orbit preview — faint ellipse shown when hovering before clicking
-const hoverOrbitLine = makeOrbitLine(ORBIT_NEON.asteroid, false, 0.52, { haloOpacity: 0.12 });
+const hoverOrbitLine = makeOrbitLine(ORBIT_NEON.asteroid, false, 0.28, { haloOpacity: 0.05 }); // hover: dim — selected should dominate
 
 // NHATS pulsing ring — shown on selected NHATS-verified asteroid
 const nhatsRingGeo = new THREE.RingGeometry(0.008, 0.012, 32);
@@ -3288,14 +3288,14 @@ function buildOrbitSegmentPoints(el, jdStart, jdEnd, steps = 96) {
 
 // Draw orbit from Asterank asteroid (degrees, MJD epoch)
 function drawOrbitEllipse(ast) {
-  setGlowLineColor(orbitLine, getOrbitGlowColor(ast), ast?.nhats?.accessible ? 0.9 : 0.86);
+  setGlowLineColor(orbitLine, getOrbitGlowColor(ast), 0.98, 0.32);
   setGlowLinePoints(orbitLine, buildOrbitPoints(ast, 256));
   orbitLine.visible = true;
 }
 
 function drawHoverOrbit(ast) {
   if (!ast) { hoverOrbitLine.visible = false; return; }
-  setGlowLineColor(hoverOrbitLine, getOrbitGlowColor(ast), ast?.nhats?.accessible ? 0.6 : 0.52, ast?.nhats?.accessible ? 0.16 : 0.12);
+  setGlowLineColor(hoverOrbitLine, getOrbitGlowColor(ast), 0.28, 0.05);
   setGlowLinePoints(hoverOrbitLine, buildOrbitPoints(ast, 256));
   hoverOrbitLine.visible = true;
 }
@@ -4766,9 +4766,19 @@ function renderLeaderboard() {
       ? '<span style="color:#fbbf24;font-size:8px;margin-left:3px" title="NHATS uses a different accessibility model than the 10 km/s planner departure gate">ΔV!</span>'
       : '';
     const name = (ast.full_name || ast.pdes || '—').substring(0, 14);
+    // Medal for top 3 ranks
+    const medal = rank === 0 ? `<span style="color:#ffd700;font-size:9px;margin-right:4px;flex-shrink:0" title="#1">●</span>`
+                : rank === 1 ? `<span style="color:#c0c0c0;font-size:9px;margin-right:4px;flex-shrink:0" title="#2">●</span>`
+                : rank === 2 ? `<span style="color:#cd7f32;font-size:9px;margin-right:4px;flex-shrink:0" title="#3">●</span>`
+                : `<span style="color:#1e3040;font-size:9px;margin-right:4px;flex-shrink:0">${rank+1}</span>`;
+    // Accessibility score bar: ΔV 3–13 km/s mapped to 100–0%
+    const dv = fi.deltaV.value;
+    const barPct = Math.max(0, Math.min(100, (1 - (dv - 3) / 10) * 100)).toFixed(1);
+    const barColor = dv < 6 ? '#22c55e' : dv < 9 ? '#f59e0b' : '#ef4444';
+    const scoreBar = `<div style="height:2px;background:#07121e;border-radius:1px;margin-top:4px;overflow:hidden"><div style="width:${barPct}%;height:100%;background:${barColor};opacity:0.75"></div></div>`;
     return `<div class="lb-row ${selectedId===idx?'lb-selected':''}" data-idx="${idx}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1px">
-        <span style="font-size:9px;color:#c8d6e5">${name}${nhBadge}${hazBadge}${gateBadge}</span>
+        <span style="display:flex;align-items:center;font-size:9px;color:#c8d6e5">${medal}${name}${nhBadge}${hazBadge}${gateBadge}</span>
         <span class="lb-type lb-type-${skClass}" style="font-size:8px">${skClass}</span>
       </div>
       <div style="display:flex;gap:6px;font-size:8px;color:#6a8a9a">
@@ -4776,6 +4786,7 @@ function renderLeaderboard() {
         <span title="Mission duration">TOF <span style="color:#c8d6e5">${durStr}d</span></span>
         <span title="Optimistic value (30% extraction)" style="margin-left:auto">${valStr}</span>
       </div>
+      ${scoreBar}
     </div>`;
   }).join('');
 
@@ -6137,7 +6148,7 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
     : [];
   if (pts.length < 2 || !validateArcPoints(pts, 'redirect')) return false;
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  _redirectArcLine = makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 });
+  _redirectArcLine = makeGlowLine(geo, ORBIT_NEON.redirect, 0.97, { haloOpacity: 0.36 });
   _redirectArcLine.userData.pathQuality = 'solved';
   scene.add(_redirectArcLine);
   showGlowLine(_redirectArcLine);
@@ -6168,7 +6179,7 @@ function drawRedirectInterceptTrajectory(intercept) {
     : [];
   if (pts.length >= 2 && validateArcPoints(pts, 'redirect-intercept')) {
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
+    trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.96, 0.03, 0.02, { haloOpacity: 0.38 });
     trajectoryLine.userData.pathQuality = 'solved';
     scene.add(trajectoryLine);
     showGlowLine(trajectoryLine);
@@ -6589,16 +6600,30 @@ function renderTrajectoryList() {
     const warningHtml = (t.warnings && t.warnings.length)
       ? t.warnings.map(w => `<div class="mp-traj-meta" style="color:#fb923c;font-size:8px">⚠ ${w}</div>`).join('')
       : '';
-    card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${infeasBadge}${badge}</div>
+    // Hero metrics: ΔV and cost at-a-glance
+    const heroLaunch = ops?.propulsionInfeasible ? '<span style="color:#ef4444">INFEASIBLE</span>' : fmtUSD(ops?.launchCost);
+    const heroNpv    = fmtUSD(profile.realizedNpv);
+    card.innerHTML = `
+      <div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${infeasBadge}${badge}</div>
       ${buildFeasibilityLight(ops)}
-      <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
-      <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s &nbsp;${gradeBadge}</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin:4px 0 2px">
+        <span style="font-size:13px;font-weight:700;color:#e8f0f8;letter-spacing:0.01em">${t.dv_total.toFixed(2)} km/s</span>
+        <span style="font-size:8px;color:#4b5563">± ${dvUnc}</span>
+        <span style="margin-left:auto;font-size:8px;color:#6a8a9a">Score <strong style="color:#c8d6e5">${ops?.score ?? '—'}</strong>/100 ${lvBadge}</span>
+      </div>
+      <div style="display:flex;gap:14px;font-size:8px;color:#6a8a9a;margin-bottom:2px">
+        <span>Launch <strong style="color:#c8d6e5">${heroLaunch}</strong></span>
+        <span>NPV <strong style="color:#c8d6e5">${heroNpv}</strong></span>
+        <span style="margin-left:auto">${gradeBadge}</span>
+      </div>
       ${buildDvBudgetBar(t)}
-      <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
+      <div style="border-top:1px solid #0d1f33;margin:5px 0 4px"></div>
+      <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr} &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
+      <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s</div>
       <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
-      <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${ops?.propulsionInfeasible ? 'N/A' : fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
       ${scoreBreakdown}
-      <div class="mp-traj-meta" style="color:#3a5060">Source: Asterank · ${gradeLabel} economics &nbsp;${selBasis}</div>
+      <div style="border-top:1px solid #0a1825;margin:5px 0 3px"></div>
+      <div class="mp-traj-meta" style="color:#2a4050">Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; ${gradeLabel} economics &nbsp;${selBasis}</div>
       ${warningHtml}
       ${costWarning}`;
     card.addEventListener('click', () => selectTrajectory(i));
@@ -6845,7 +6870,7 @@ function drawTrajectoryLine(earthPos, astPos, options = {}) {
   );
   const pts = curve.getPoints(100);
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
+  trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.96, 0.03, 0.02, { haloOpacity: 0.38 });
   trajectoryLine.userData.pathQuality = 'approximate';
   scene.add(trajectoryLine);
   showGlowLine(trajectoryLine);
@@ -6883,7 +6908,7 @@ function _redrawReturnArc(traj, options = {}) {
     new THREE.Vector3(ep.x, ep.y, ep.z));
   const retPts = retCurve.getPoints(80);
   const retGeo = new THREE.BufferGeometry().setFromPoints(retPts);
-  const retLine = makeDashedGlowLine(retGeo, ORBIT_NEON.transfer, 0.64, 0.03, 0.02, { haloOpacity: 0.14 });
+  const retLine = makeDashedGlowLine(retGeo, ORBIT_NEON.transfer, 0.78, 0.03, 0.02, { haloOpacity: 0.28 }); // return arc — slightly dimmer than outbound
   retLine.userData.pathQuality = 'approximate';
   scene.add(retLine);
   showGlowLine(retLine);
