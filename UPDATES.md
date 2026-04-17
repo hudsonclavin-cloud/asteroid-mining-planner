@@ -4,6 +4,24 @@ This file records completed phase summaries per the orchestrator agent protocol.
 
 ---
 
+## Phase 14 — Step 4: Unify Economics and Returned-Mass Assumptions (2026-04-16)
+
+### Summary
+`computeMissionProfile` previously computed its own `returnedKg = sc.payload_kg × 0.05` independently of `computeEconomicsSummary`, meaning two different asteroid sizes would produce identical revenue numbers. Now both use the same source of truth.
+
+### Changes
+**`index.html`** — `computeMissionProfile` revenue section:
+- Replaced `sc.payload_kg * 0.05` with a call to `computeEconomicsSummary` using the actual trajectory spacecraft and ΔV
+- `returnedKg` now uses asteroid mass × 5% extraction when a mass model is available, capped at `sc.payload_kg` (spacecraft can't carry more than its capacity)
+- `returnedKgIsFallback` flag set when no asteroid mass model exists; profile text shows `⚠ DEMO ASSUMPTION — no asteroid mass model; using payload×5%`
+- `returnedKgCapped` flag set when asteroid-derived mass exceeded payload capacity; shows the available vs. carried amount
+- `paperValue` and `npvRealized` both sourced from `econSummary` so revenue and NPV are internally consistent
+
+**`index.html`** — `breakEvenKg`:
+- Formula corrected from `totalCost / (revenuePerKg * 0.05)` (was computing asteroid size needed, not ore to return) to `totalCost / revenuePerKg` (kg of ore to return at market price to recover mission cost)
+
+---
+
 ## Phase 14 — Step 3: Remove Fake Staging / Hard-Fail Infeasible Mass (2026-04-16)
 
 ### Summary

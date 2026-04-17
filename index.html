@@ -6614,25 +6614,39 @@ function computeMissionProfile(traj) {
   const dvUnc_mp = traj.dv_total * 0.15;
   const costRng_mp = computeMissionCost(totalCost, dvUnc_mp);
 
-  // ── Revenue (5% extraction — conservative, no industrial-scale ISRU demonstrated) ──
-  const prices = getActivePrices();
+  // ── Revenue — single source of truth: computeEconomicsSummary ───────────────
+  // Previously this section used sc.payload_kg * 0.05 (constant per spacecraft,
+  // ignoring asteroid size). computeEconomicsSummary uses asteroid mass × 5%,
+  // capped here at sc.payload_kg so we never claim to return more than the
+  // spacecraft can carry. If asteroid mass is unknown, falls back to payload
+  // fraction and flags it as a demo assumption.
+  const econSummary = computeEconomicsSummary(ast, {
+    dryMass: sc.dry_kg,
+    isp: sc.isp,
+    dv: traj.dv_total,
+    launchCostPerKg: lv.cost_per_kg,
+    totalCostMultiplier: 1,
+    payloadKg: sc.payload_kg,
+    extractionFraction: 0.05,
+  });
   const spec   = getMatSpec(ast);
-  const comp   = spec ? MAT_COMP[spec] : null;
-  let revenuePerKg = null;
-  if (comp) {
-    revenuePerKg = 0;
-    MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
-  }
-  const returnedKg = sc.payload_kg * 0.05;
+  const massModel = resolveAsteroidEconomics(ast)?.massModel;
+  const revenuePerKg = econSummary.revenuePerKg;
+  // Cap returned mass at spacecraft payload capacity; flag fallback
+  const returnedKgRaw = econSummary.returnedKg;
+  const returnedKg = Number.isFinite(returnedKgRaw)
+    ? Math.min(returnedKgRaw, sc.payload_kg)
+    : sc.payload_kg * 0.05;
+  const returnedKgIsFallback = !Number.isFinite(massModel?.massKg) || !Number.isFinite(returnedKgRaw);
+  const returnedKgCapped     = Number.isFinite(returnedKgRaw) && returnedKgRaw > sc.payload_kg;
   const revLow  = Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
-  const revHigh = revLow; // single rate — collapse to 5%
+  const revHigh = revLow;
 
   // ── Demand-adjusted realizable NPV (constant-elasticity model) ───────────────
-  // Infer primary commodity from spectral type
-  const _specChar = spec ? spec.charAt(0).toUpperCase() : '?';
-  const _commodity = _specChar === 'M' ? 'platinum' : _specChar === 'S' ? 'nickel' : _specChar === 'C' ? 'water' : null;
-  const paperValue   = Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
-  const npvRealized  = _commodity && Number.isFinite(revenuePerKg) ? computeRealizableNPV(_commodity, returnedKg, revenuePerKg) : null;
+  const paperValue   = econSummary.paperValueUsd !== undefined
+    ? (Number.isFinite(returnedKg) && Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null)
+    : null;
+  const npvRealized  = econSummary.realizableNpvUsd ?? null;
 
   // ── Simple time-value NPV for ROI display ───────────────────────────────────
   const missionYears = opsDays / 365.25;
@@ -6642,7 +6656,8 @@ function computeMissionProfile(traj) {
 
   const roiLow  = Number.isFinite(revLow) && totalCost > 0 ? (revLow  - totalCost) / totalCost * 100 : null;
   const roiHigh = roiLow;
-  const breakEvenKg = Number.isFinite(revenuePerKg) && revenuePerKg > 0 ? Math.ceil(totalCost / (revenuePerKg * 0.05)) : null;
+  // Break-even = kg of ore to return at market price to recover mission cost
+  const breakEvenKg = Number.isFinite(revenuePerKg) && revenuePerKg > 0 && totalCost > 0 ? Math.ceil(totalCost / revenuePerKg) : null;
   const fmtMaybeUSD = v => Number.isFinite(v) ? fmtUSD(v) : 'unknown';
   const fmtMaybePct = v => Number.isFinite(v) ? `${v.toFixed(0)}%` : 'unknown';
 
@@ -6695,8 +6710,13 @@ function computeMissionProfile(traj) {
     dot('KISS asteroid capture study (2012)',     '~$2.6B'),
     dot('First-of-a-kind mining missions',       'expect $2B–$5B+'),
     sep('REVENUE ESTIMATE'),
-    dot('ORE PAYLOAD', sc.payload_kg.toLocaleString() + ' kg max'),
-    dot('EXTRACTED (5%)', returnedKg.toLocaleString() + ' kg  (conservative — no ISRU at scale demonstrated)'),
+    dot('ORE PAYLOAD', sc.payload_kg.toLocaleString() + ' kg max (spacecraft limit)'),
+    dot('RETURNED MASS', (() => {
+      const kg = Math.round(returnedKg).toLocaleString();
+      if (returnedKgIsFallback) return `${kg} kg  ⚠ DEMO ASSUMPTION — no asteroid mass model; using payload×5%`;
+      if (returnedKgCapped)     return `${kg} kg  (capped at payload limit; asteroid source: ${Math.round(returnedKgRaw).toLocaleString()} kg available)`;
+      return `${kg} kg  (asteroid mass-model × 5% extraction)`;
+    })()),
     dot('REVENUE / KG', Number.isFinite(revenuePerKg) ? '$' + revenuePerKg.toFixed(2) : 'unknown'),
     dot('PAPER VALUE', fmtMaybeUSD(paperValue) + '  (spot price, no market impact)'),
     dot('REALIZABLE NPV', fmtMaybeUSD(npvRealized) + '  (demand-adj. 10yr sell, 8% discount)'),
