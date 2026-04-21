@@ -1545,6 +1545,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   </div>
   <button id="btn-follow-spacecraft" class="speed-btn" title="Re-enable camera follow">⊙ Follow Spacecraft</button>
   <div id="asteroid-count">▲ 0 ASTEROIDS</div>
+  <button id="btn-sat-toggle" class="speed-btn" onclick="toggleSatellites()" title="Toggle satellite orbits">SAT: OFF</button>
   <div id="bottom-hints" style="font-size:9px;color:#4b5563;letter-spacing:0.08em;display:flex;gap:16px;align-items:center">
     <span style="cursor:pointer" id="btn-shortcut-hint">? SHORTCUTS</span>
     <a href="https://github.com/hudsonclavin/asteroid-mining-planner" target="_blank"
@@ -2145,9 +2146,11 @@ controls.minDistance = 0.1;
 controls.maxDistance = 500;
 const clock = new THREE.Clock();
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.08));
-const sunLight = new THREE.PointLight(0xfff4e0, 2.5, 0);
-scene.add(sunLight);
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+const sunDirectional = new THREE.DirectionalLight(0xffffff, 0.8);
+sunDirectional.castShadow = false;
+scene.add(sunDirectional);
+scene.add(sunDirectional.target);
 
 const sunMesh = new THREE.Mesh(
   new THREE.SphereGeometry(0.06, 16, 16),
@@ -2274,12 +2277,37 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
   return mesh;
 });
 
+// ─── Planet + Sun textures (same-origin, no CORS) ─────────────────────────────
+(function() {
+  const loader = new THREE.TextureLoader();
+  const texMap = [
+    [0, '2k_mercury.jpg'], [1, '2k_venus_surface.jpg'],
+    [2, '2k_earth_daymap.jpg'], [3, '2k_mars.jpg'],
+    [4, '2k_jupiter.jpg'], [5, '2k_saturn.jpg'],
+    [6, '2k_uranus.jpg'], [7, '2k_neptune.jpg'],
+  ];
+  texMap.forEach(([i, f]) => loader.load('./textures/' + f,
+    tex => { planets[i].material.map = tex; planets[i].material.color.setHex(0xffffff); planets[i].material.needsUpdate = true; },
+    undefined, () => {}));
+  loader.load('./textures/2k_sun.jpg',
+    tex => { sunMesh.material.map = tex; sunMesh.material.color.setHex(0xffffff); sunMesh.material.needsUpdate = true; },
+    undefined, () => {});
+  // Saturn ring texture
+  const satRing = planets[5]?.children[0];
+  if (satRing) loader.load('./textures/2k_saturn_ring_alpha.png',
+    tex => { satRing.material.map = tex; satRing.material.alphaMap = tex; satRing.material.needsUpdate = true; },
+    undefined, () => {});
+})();
+
 // ─── Moon ─────────────────────────────────────────────────────────────────────
-const moonMesh = new THREE.Mesh(
-  new THREE.SphereGeometry(0.0015, 8, 8),
-  new THREE.MeshBasicMaterial({ color: 0x888888 })
-);
+const moonMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
+const moonMesh = new THREE.Mesh(new THREE.SphereGeometry(0.0015, 12, 12), moonMat);
 scene.add(moonMesh);
+(function() {
+  new THREE.TextureLoader().load('./textures/2k_moon.jpg',
+    tex => { moonMat.map = tex; moonMat.color.setHex(0xffffff); moonMat.needsUpdate = true; },
+    undefined, () => {});
+})();
 
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
 const planetOrbitGroup = new THREE.Group();
@@ -2505,6 +2533,56 @@ function makeGlowLine(geometry, color, opacity, options = {}) {
 
 function makeDashedGlowLine(geometry, color, opacity, dashSize = 0.03, gapSize = 0.02, options = {}) {
   return makeGlowLine(geometry, color, opacity, { ...options, dashed: true, dashSize, gapSize });
+}
+
+// ─── Major Moons ──────────────────────────────────────────────────────────────
+const _AU_KM = 149597870.7;
+const MOONS = [
+  { name:'Io',        parent:4, r:0.0009, a_km:421700,   T_d:1.769138,  color:0xd4a017 },
+  { name:'Europa',    parent:4, r:0.0008, a_km:671100,   T_d:3.551181,  color:0xd0ccc0 },
+  { name:'Ganymede',  parent:4, r:0.0012, a_km:1070400,  T_d:7.154553,  color:0x8c7b6b },
+  { name:'Callisto',  parent:4, r:0.0011, a_km:1882700,  T_d:16.68902,  color:0x5a5550 },
+  { name:'Titan',     parent:5, r:0.0012, a_km:1221870,  T_d:15.94542,  color:0xc87941 },
+  { name:'Rhea',      parent:5, r:0.0006, a_km:527040,   T_d:4.517500,  color:0xb8b0a8 },
+  { name:'Dione',     parent:5, r:0.0005, a_km:377400,   T_d:2.736915,  color:0xc8c0b8 },
+  { name:'Tethys',    parent:5, r:0.0005, a_km:294660,   T_d:1.887802,  color:0xd0ccc0 },
+  { name:'Enceladus', parent:5, r:0.0004, a_km:238020,   T_d:1.370218,  color:0xf0f0f0 },
+  { name:'Mimas',     parent:5, r:0.0003, a_km:185520,   T_d:0.942422,  color:0xb0a898 },
+  { name:'Triton',    parent:7, r:0.0007, a_km:354759,   T_d:5.876854,  color:0xd0b8b0, retro:true },
+];
+const majorMoonMeshes = [], majorMoonOrbitLines = [];
+(function() {
+  MOONS.forEach(m => {
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(m.r, 8, 8),
+      new THREE.MeshPhongMaterial({ color: m.color, shininess: 8 })
+    );
+    mesh.userData.moonData = m;
+    scene.add(mesh);
+    majorMoonMeshes.push(mesh);
+
+    const a = m.a_km / _AU_KM;
+    const pts = [];
+    for (let j = 0; j <= 64; j++) {
+      const ang = (j / 64) * TWO_PI;
+      pts.push(new THREE.Vector3(Math.cos(ang) * a, 0, Math.sin(ang) * a));
+    }
+    const line = makeGlowLine(new THREE.BufferGeometry().setFromPoints(pts), 0x2a3a4a, 0.3, { haloOpacity: 0 });
+    scene.add(line);
+    line.visible = true;
+    majorMoonOrbitLines.push(line);
+  });
+})();
+
+function updateMajorMoons(jd) {
+  MOONS.forEach((m, i) => {
+    const dir = m.retro ? -1 : 1;
+    const nu = (TWO_PI / m.T_d) * (jd - J2000) * dir;
+    const a = m.a_km / _AU_KM;
+    const pPos = planets[m.parent].position;
+    majorMoonMeshes[i].position.set(pPos.x + a * Math.cos(nu), pPos.y, pPos.z + a * Math.sin(nu));
+    majorMoonOrbitLines[i].position.copy(pPos);
+  });
 }
 
 /** Show a freshly-created glow line and call computeLineDistances for dashed materials. */
@@ -2987,6 +3065,7 @@ let nhatsMap = null; // Map<string, nhats_row> keyed by des.trim() — null unti
 let earthLayerActive = false;
 let satelliteData = [];
 let satelliteMesh = null;
+let satellitesEnabled = false;
 let selectedSatId = -1;
 let issIndex = -1;
 let issOrbitLine = null;
@@ -4261,6 +4340,14 @@ const CELESTRAK_GROUPS = [
   { name: 'starlink', url: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json' },
 ];
 
+function toggleSatellites() {
+  satellitesEnabled = !satellitesEnabled;
+  const btn = document.getElementById('btn-sat-toggle');
+  if (btn) btn.textContent = satellitesEnabled ? 'SAT: ON' : 'SAT: OFF';
+  if (satellitesEnabled && satelliteData.length === 0) fetchSatellites();
+  if (!satellitesEnabled && satelliteMesh) satelliteMesh.visible = false;
+}
+
 async function fetchSatellites() {
   setStatus('Fetching satellite catalog...');
   const cacheKey = 'aster_satellites_v1';
@@ -4386,11 +4473,11 @@ function activateEarthLayer() {
   earthDetailGroup.visible = true;
   shellGroup.visible = true;
   planets[2].visible = false;
-  if (satelliteMesh) satelliteMesh.visible = true;
+  if (satelliteMesh) satelliteMesh.visible = satellitesEnabled;
   if (issOrbitLine) issOrbitLine.visible = true;
   document.getElementById('earth-hud').style.display = 'block';
   setStatus('EARTH LAYER — satellite orbits active', true);
-  if (satelliteData.length === 0) fetchSatellites();
+  if (satellitesEnabled && satelliteData.length === 0) fetchSatellites();
 }
 
 function deactivateEarthLayer() {
@@ -5627,11 +5714,11 @@ function selectTrajectory(idx) {
   missionEarthReturnPos = null;
   clearTrajectoryLine();
   const live = getLiveMissionPositions(traj);
-  drawTrajectoryLine(live?.earthPos || traj.earthPos, live?.astPos || traj.astPos, { returnEarthPos: live?.returnEarthPos });
+  drawTrajectoryLine(traj.earthPos, traj.astPos, { returnEarthPos: live?.returnEarthPos || traj.earthPos });
   // Frame camera on Earth departure position to show trajectory
   {
-    const ep  = live?.earthPos || traj.earthPos;
-    const ap  = live?.astPos || traj.astPos;
+    const ep  = traj.earthPos;
+    const ap  = traj.astPos;
     const sep = Math.hypot(ap.x - ep.x, ap.y - ep.y, ap.z - ep.z);
     flyTarget = { x: ep.x, y: ep.y, z: ep.z, dist: Math.max(1.5, sep * 1.2), progress: 0 };
   }
@@ -5918,7 +6005,7 @@ function syncActiveMissionVisuals() {
   if (!live) return;
   if (trajectoryLine || returnArcLine || trajectoryArrows.length) {
     clearMissionPathVisuals();
-    drawTrajectoryLine(live.earthPos, live.astPos, { returnEarthPos: live.returnEarthPos });
+    drawTrajectoryLine(traj.earthPos, traj.astPos, { returnEarthPos: live?.returnEarthPos });
   }
   if (burnVectorArrows.length) {
     clearBurnVectors();
@@ -7876,6 +7963,8 @@ function applyPositions(buf) {
     planets[i].position.set(buf[i*3], buf[i*3+1], buf[i*3+2]);
   }
   updateMoonPosition(currentJD);
+  moonMesh.lookAt(planets[2].position);
+  updateMajorMoons(currentJD);
   if (asteroidMesh && asteroidCount > 0) {
     const base = 24;
     for (let i = 0; i < asteroidCount; i++) {
@@ -7995,7 +8084,7 @@ function animate() {
     earthDetailGroup.position.copy(earthPos);
     shellGroup.position.copy(earthPos);
 
-    if (satelliteMesh && satelliteData.length > 0 && frameCount % 3 === 0) {
+    if (satellitesEnabled && satelliteMesh && satelliteData.length > 0 && frameCount % 3 === 0) {
       const satCount = Math.min(satelliteData.length, 8000);
       for (let i = 0; i < satCount; i++) {
         try {
@@ -8020,6 +8109,7 @@ function animate() {
   // ─── Phase 5: Labels ──────────────────────────────────────────────────────
   placeLabels();
 
+  sunDirectional.target.position.copy(planets[2].position);
   controls.update();
   renderer.render(scene, camera);
 }
