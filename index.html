@@ -1501,8 +1501,8 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       </div>
 
       <div id="rr-capture" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
-        <div id="rr-capture-header" style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">DESTINATION CAPTURE</div>
-        <pre id="rr-capture-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
+        <div id="rr-capture-header" style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px" title="Lunar capture ΔV is a patched-conic approximation — not a high-fidelity solution">DESTINATION CAPTURE</div>
+        <pre id="rr-capture-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap" title="Capture ΔV figures are patched-conic approximations. Screening-grade only."></pre>
       </div>
 
       <div id="rr-isru" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
@@ -2288,15 +2288,16 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
   ];
   texMap.forEach(([i, f]) => loader.load('./textures/' + f,
     tex => { planets[i].material.map = tex; planets[i].material.color.setHex(0xffffff); planets[i].material.needsUpdate = true; },
-    undefined, () => {}));
+    undefined, e => console.warn(`[tex] planet ${i} (${f}) failed:`, e?.message || 'load error')));
   loader.load('./textures/2k_sun.jpg',
     tex => { sunMesh.material.map = tex; sunMesh.material.color.setHex(0xffffff); sunMesh.material.needsUpdate = true; },
-    undefined, () => {});
-  // Saturn ring texture
-  const satRing = planets[5]?.children[0];
+    undefined, e => console.warn('[tex] sun failed:', e?.message || 'load error'));
+  // Saturn ring texture — children[0] is the RingGeometry mesh added during planet setup
+  const satRing = planets[5]?.children.find(c => c.geometry?.type === 'RingGeometry');
   if (satRing) loader.load('./textures/2k_saturn_ring_alpha.png',
     tex => { satRing.material.map = tex; satRing.material.alphaMap = tex; satRing.material.needsUpdate = true; },
-    undefined, () => {});
+    undefined, e => console.warn('[tex] saturn ring failed:', e?.message || 'load error'));
+  else console.warn('[tex] saturn ring mesh not found — ring texture skipped');
 })();
 
 // ─── Moon ─────────────────────────────────────────────────────────────────────
@@ -2306,7 +2307,7 @@ scene.add(moonMesh);
 (function() {
   new THREE.TextureLoader().load('./textures/2k_moon.jpg',
     tex => { moonMat.map = tex; moonMat.color.setHex(0xffffff); moonMat.needsUpdate = true; },
-    undefined, () => {});
+    undefined, e => console.warn('[tex] moon failed:', e?.message || 'load error'));
 })();
 
 const PLANET_SMA = [0.387, 0.723, 1.000, 1.524, 5.203, 9.537, 19.19, 30.07];
@@ -3140,6 +3141,7 @@ worker.onmessage = ({ data }) => {
   if (data.type === 'catalog_ready') {
     // Cache to IndexedDB; fall back to localStorage (top 2000 only)
     const payload = {
+      schema_version: 7,
       data: data.data,
       timestamp: Date.now(),
       meta: {
@@ -5216,7 +5218,7 @@ function onRedirectResult(data) {
     `Depart    ${jdToDate(ic.jd_dep)}\n` +
     `Arrive    ${jdToDate(ic.jd_arr)}\n` +
     `TOF       ${ic.tof} days\n` +
-    `ΔV dep    ${ic.dv_dep.toFixed(2)} km/s`;
+    `ΔV dep    ${ic.dv_dep.toFixed(2)} km/s (est.)`;
 
   // Asteroid mass + propellant
   const ast_d = data.asteroid;
@@ -5245,12 +5247,12 @@ function onRedirectResult(data) {
   const cap = data.capture;
   if (!cap) { showPlannerError('Redirect capture data missing (internal error).'); return; }
   const captureHeader = document.getElementById('rr-capture-header');
-  if (captureHeader) captureHeader.textContent = `${(cap.label || 'Destination').toUpperCase()} CAPTURE`;
+  if (captureHeader) captureHeader.textContent = `${(cap.label || 'Destination').toUpperCase()} CAPTURE (approx)`;
   document.getElementById('rr-capture-text').textContent =
     `Earth arr  ${jdToDate(rd.jd_earth_arr)}\n` +
     `Transit    ${Math.round(rd.tof_redirect)} days\n` +
     `Earth-arr v∞ ${fmtRedirectSpeed(cap.v_inf_earth_arrival)}\n` +
-    `Capture ΔV ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) : 'unknown'}\n` +
+    `Capture ΔV ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) + ' (approx)' : 'unknown'}\n` +
     `Delivery ΔV ${fmtRedirectSpeed(cap.dv_delivery)}\n` +
     `Target orbit  ${Number.isFinite(cap.r_cap_km) ? Math.round(cap.r_cap_km).toLocaleString() + ' km radius' : 'unknown'}\n` +
     `Delivery node ${cap.delivery_label || 'unknown'}\n` +
@@ -5693,7 +5695,7 @@ function renderTrajectoryList() {
     card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s <span style="font-size:7px;color:#94a3b8;border:1px solid #334155;padding:1px 4px;vertical-align:middle">planning-level estimate</span></div>
-      <div class="mp-traj-meta">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
+      <div class="mp-traj-meta" title="Screening-grade Lambert estimate — individual burn values carry ±15% uncertainty">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
       <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
       <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
       ${scoreBreakdown}
@@ -5844,13 +5846,13 @@ function computeMissionProfile(traj) {
     dot('RETURN DEPART', traj.jd_ret_dep ? jdToDate(traj.jd_ret_dep) : '—'),
     dot('RETURN ARRIVAL', traj.jd_ret_arr ? jdToDate(traj.jd_ret_arr) : '—'),
     dot('MISSION DURATION', opsDays + ' days (est)'),
-    sep('DELTA-V BUDGET'),
-    dot('1 · DEPARTURE BURN', traj.dv_dep.toFixed(3) + ' km/s  (from ' + (missionConfig.parkingAlt_km||400) + ' km LEO)'),
-    dot('2 · ASTEROID ARRIVAL', traj.dv_arr.toFixed(3) + ' km/s'),
-    dot('3 · MID-COURSE (MCC)', (traj.dv_mcc||0).toFixed(3) + ' km/s  (2% budget)'),
-    dot('4 · ASTEROID DEPART', traj.dv_return.toFixed(3) + ' km/s'),
-    dot('5 · DEST. CAPTURE', (traj.dv_capture||0).toFixed(3) + ' km/s'),
-    dot('TOTAL MISSION ΔV', traj.dv_total.toFixed(2) + ' km/s'),
+    sep('DELTA-V BUDGET  (screening-grade Lambert estimates, ±15%)'),
+    dot('1 · DEPARTURE BURN', traj.dv_dep.toFixed(3) + ' km/s (est.)  (from ' + (missionConfig.parkingAlt_km||400) + ' km LEO)'),
+    dot('2 · ASTEROID ARRIVAL', traj.dv_arr.toFixed(3) + ' km/s (est.)'),
+    dot('3 · MID-COURSE (MCC)', (traj.dv_mcc||0).toFixed(3) + ' km/s (est.)  (2% budget)'),
+    dot('4 · ASTEROID DEPART', traj.dv_return.toFixed(3) + ' km/s (est.)'),
+    dot('5 · DEST. CAPTURE', (traj.dv_capture||0).toFixed(3) + ' km/s (est.)'),
+    dot('TOTAL MISSION ΔV', traj.dv_total.toFixed(2) + ' km/s (est.)'),
     dot('C3', (traj.C3||0).toFixed(2) + ' km²/s²'),
     dot('V∞ DEPARTURE', (traj.vinf_dep||0).toFixed(2) + ' km/s'),
     dot('V∞ ARRIVAL', (traj.vinf_arr||0).toFixed(2) + ' km/s'),
