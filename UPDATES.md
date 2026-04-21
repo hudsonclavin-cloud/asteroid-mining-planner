@@ -713,3 +713,73 @@ Stabilized Capture & Redirect after the recent animation/visual passes by fixing
 ### Result
 - Capture & Redirect is materially more reliable under repeated reruns, mode switches, and playback restarts.
 - Redirect visuals and playback now reflect the solved planner output more closely instead of mixing stale state, fake outbound geometry, and hardcoded lunar cues.
+
+---
+
+## Post-v3 Retrospective — What Went Wrong (2026-04-21)
+
+Three independent audits (physics/truth, architecture/state, visual/rendering) cross-checked against FOUNDING_DOCUMENT.md and the full UPDATES.md log.
+
+---
+
+### Physics & Truth Failures
+
+**Root cause: shipped the planner before the physics model was trustworthy.**
+
+The clearest failure moment was Phase 9A: Lambert was already correct (Izzo 2015), but there were no departure/arrival gates and no cap on the Tsiolkovsky mass ratio. A 64 km/s ΔV with Isp 320 s produced a 726-million mass ratio → 37 trillion kg wet mass → $55 quintillion launch cost. The fix (15 km/s gate, 95% propellant fraction cap) was a post-v3 retrofit, not a baseline invariant.
+
+Redirect compounded this. Before Phase 9K, redirect assumed a hardcoded Hohmann-like return and guessed lunar capture without solving it. The update log explicitly admits lunar capture was not a high-fidelity solution until the honesty label was added in Phase 9I. Phase 9L retroactively labeled Earth-arrival v∞ honestly — meaning the baseline was displaying solved-looking output for an unsolved problem.
+
+Uncertainty and provenance were also missing from the start. FOUNDING_DOCUMENT section 8 requires source labels on every displayed number. v3 showed single-value ΔV with no ± range, a "Mining Score" 0–100 with no source breakout, and economics without demand-elasticity disclaimers. Phases 9C–9E added the honesty layer after the fact.
+
+**Pattern:** truth was a retrofit, not a contract.
+
+---
+
+### Architecture & State Failures
+
+**Root cause: index.html became the catch-all system file.**
+
+Post-v3, index.html absorbed planner logic, UI state, economics, playback, cache/share state, and rendering — all in one 8,000+ line file. The founding document called for strict ownership boundaries; those were never enforced. The result was that the same class of regression (state leak, stale result, ownership conflict) kept returning across phases 9J through 9Q.
+
+Solver policy reversed twice in 11 days: mdesign added in Phase 9F, removed in Phase 9I. SBDB was added then dropped earlier. Each reversal meant cache key churn (v1 → v7 in roughly 3 months) and cleanup code that ran before the cache check it was meant to protect — Phase 9I had to fix a regression where v7 was being deleted before startup could use it.
+
+The playback state machine had three overlapping fixes (9J, 9K, 9Q) and is still contested: `currentJD`, `missionAnim`, and `playbackModeBeforeScrub` are parallel string-based state with no single owner. A fragile scrub-restore pattern at lines 7812–7835 is the direct result.
+
+**Pattern:** features shipped faster than the architecture could support them, and the catch-all file made every fix a potential cascade.
+
+---
+
+### Visual & Texture Failures
+
+**Root cause: assets were never committed; errors were silenced.**
+
+The texture work that caused repeated crashes had three compounding failures:
+
+1. **Missing asset directory.** `./textures/` was referenced in code but the directory did not exist on disk at push time. All 13 texture loads 404'd silently.
+
+2. **Empty error callbacks.** Every `TextureLoader.load()` call used `() => {}` as the error handler. No logging, no fallback material assignment, no console warning. Silent degradation looks like success until you notice the planets are white.
+
+3. **CORS with CDN.** The earlier attempt used `solarsystemscope.com` CDN URLs. That CDN does not serve `Access-Control-Allow-Origin` headers, and `.tif` files are not browser-decodable. Three.js TextureLoader sets `crossOrigin = 'anonymous'` by default, which triggers a preflight that gets rejected. The CDN URLs also returned HTML pages, not images.
+
+The fix was: download textures locally via curl, commit the `textures/` directory, and use same-origin relative paths. The Earth detail swap (`earthDetailGroup`) had no bug — it was structurally correct. Three.js version (0.128.0, pinned) was not a factor.
+
+The deeper structural issue: index.html owns both rendering and mission state, so visual passes kept colliding with planner fixes. Each texture/shader pass required touching the same file as every physics and state change, making regressions nearly inevitable.
+
+**Pattern:** visual work was attempted before the renderer had a stable, isolated layer to sit on.
+
+---
+
+### Recovery Priority (from Codex + audit synthesis)
+
+| Priority | Item |
+|---|---|
+| P0 | Product freeze — Lambert-only, no mdesign, redirect = lunar-orbit only, every number needs provenance |
+| P0 | Mission result schema + playback state machine with one owner |
+| P0 | Physics gate audit — all paths must hit the 15 km/s gate and propellant cap |
+| P1 | Cache versioning discipline — schema fields, migration rules, no unconditional deletion |
+| P1 | Renderer decomposition — scene, body visuals, mission overlays, playback, labels as separate concerns |
+| P1 | Texture pipeline — committed assets, non-empty error callbacks, validated child targeting |
+| P2 | Uncertainty labels on every user-facing number (founding document section 8) |
+| P2 | Moon/Earth deep-zoom only after renderer isolation exists |
+
