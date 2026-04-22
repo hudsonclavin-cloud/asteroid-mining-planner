@@ -945,3 +945,35 @@ Hardened the NHATS path after tracing the remaining startup/offline warning to t
 ### Result
 - NHATS and catalog requests now follow the same API base as the page.
 - Local dev no longer depends on a tiny fixed list of localhost ports.
+
+---
+
+## Phase 9V — Moon Orbit + True Size Display Modes (2026-04-21)
+
+### Summary
+Added explicit renderer controls for physically relative body sizes and Moon-system orbit overlays, and upgraded the Moon model itself from a flat circular ring to an inclined Earth-relative orbit used consistently in both the renderer and the physics worker.
+
+### Key fixes
+- `index.html`
+  - Added bottom-bar controls:
+    - `SIZE: READ` / `SIZE: TRUE`
+    - `MOONS: ON` / `MOONS: OFF`
+  - Replaced the flat Moon-position shortcut with an inclined, Earth-relative orbit model including nodal regression.
+  - Added a live Moon orbit overlay around Earth.
+  - Added true-size scaling support for:
+    - Sun
+    - planets
+    - Earth’s Moon
+    - major moons
+  - Kept the existing readable display-scale mode as the default for normal browsing.
+- `physics.worker.js`
+  - Updated the Moon propagation helper to use the same inclined orbit model as the renderer so Moon-targeted planning stays consistent with the scene.
+
+### Verification
+- `node --check physics.worker.js`
+- `node --check` on extracted `index.html` module script
+- `git diff --check`
+
+### Result
+- The Moon no longer moves on a fake flat ring.
+- True physical body-size relationships are now available as an explicit scene option instead of being implied.

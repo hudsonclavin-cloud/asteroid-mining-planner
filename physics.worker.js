@@ -17,6 +17,9 @@ const R_cap     = R_moon + 5000;          // km — 5000 km altitude lunar captu
 const AU_KM     = AU / 1000;
 const MOON_A_AU = 384400 / AU_KM;
 const MOON_PERIOD_DAYS = 27.321661;
+const MOON_INCLINATION = 5.145 * DEG;
+const MOON_NODE_J2000 = 125.08 * DEG;
+const MOON_NODE_PERIOD_DAYS = 6798.38;
 const EM_L1_RADIUS_KM = 326000;
 const EM_L2_RADIUS_KM = 444000;
 
@@ -117,15 +120,27 @@ function wrapToTwoPi(theta) {
 function moonRelativeState(jd) {
   const angle = wrapToTwoPi((TWO_PI / MOON_PERIOD_DAYS) * (jd - J2000));
   const omega = TWO_PI / MOON_PERIOD_DAYS; // rad/day
-  const vx_au_day = -MOON_A_AU * omega * Math.sin(angle);
-  const vy_au_day =  MOON_A_AU * omega * Math.cos(angle);
+  const nodeRate = -TWO_PI / MOON_NODE_PERIOD_DAYS;
+  const node = wrapToTwoPi(MOON_NODE_J2000 + nodeRate * (jd - J2000));
+  const cosNode = Math.cos(node), sinNode = Math.sin(node);
+  const cosI = Math.cos(MOON_INCLINATION), sinI = Math.sin(MOON_INCLINATION);
+  const xOrb = MOON_A_AU * Math.cos(angle);
+  const yOrb = MOON_A_AU * Math.sin(angle);
+  const vxOrb = -MOON_A_AU * omega * Math.sin(angle);
+  const vyOrb = MOON_A_AU * omega * Math.cos(angle);
+  const x = xOrb * cosNode - yOrb * cosI * sinNode;
+  const y = xOrb * sinNode + yOrb * cosI * cosNode;
+  const z = yOrb * sinI;
+  const vx_au_day = vxOrb * cosNode - vyOrb * cosI * sinNode;
+  const vy_au_day = vxOrb * sinNode + vyOrb * cosI * cosNode;
+  const vz_au_day = vyOrb * sinI;
   return {
-    x: MOON_A_AU * Math.cos(angle),
-    y: MOON_A_AU * Math.sin(angle),
-    z: 0,
+    x,
+    y,
+    z,
     vx: vx_au_day * AU_KM / 86400,
     vy: vy_au_day * AU_KM / 86400,
-    vz: 0,
+    vz: vz_au_day * AU_KM / 86400,
   };
 }
 
