@@ -1,5 +1,30 @@
 # ASTER Phase 5 QA Report
 
+## Phase 6 — Zero-Build Contract / Smoke Checks
+
+These checks are intentionally static and plain-Node so they can run without a browser,
+bundler, or test framework install.
+
+### Run
+
+```bash
+node --test tests/*.test.mjs
+```
+
+### Coverage
+
+- Confirms every `./textures/...` reference in `index.html` resolves to a real file under `textures/`
+- Confirms `worker/README.md` route docs match the routes implemented in `worker/index.js`
+- Confirms worker env vars used in code are documented
+- Confirms worker local-dev origin docs include the currently supported localhost ports
+- Confirms `.gitignore` protects local worker secrets and Wrangler state
+
+### Scope note
+
+These are contract/smoke checks, not browser E2E checks. They are meant to catch repo drift
+and the specific “missing textures / stale worker docs / secret hygiene” failures that were
+showing up before runtime.
+
 ## Bug 1 — CRITICAL: TDZ crash on page load
 **Description:** Phase 5 state variables (`trailLine`, `futureLine`, `labelPool`) declared with `let` after their first usage in `init()`, causing a Temporal Dead Zone `ReferenceError` that prevented the page from loading entirely.
 

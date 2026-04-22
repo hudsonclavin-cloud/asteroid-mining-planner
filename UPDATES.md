@@ -783,3 +783,165 @@ The deeper structural issue: index.html owns both rendering and mission state, s
 | P2 | Uncertainty labels on every user-facing number (founding document section 8) |
 | P2 | Moon/Earth deep-zoom only after renderer isolation exists |
 
+---
+
+## Phase 9R — Economics + Provenance Alignment (2026-04-21)
+
+### Summary
+Aligned the economics surfaces with the founding document by replacing the duplicated return-value math with one canonical screening-grade model and adding explicit provenance rows to the inspector/economics panels.
+
+### Key fixes
+- `index.html`
+  - Added a canonical returned-mass model: `mission return = min(payload cap, 5% extractable mass)` from the asteroid mass/composition model.
+  - Reworked `computeEconomicsSummary()` so `Paper Value`, `Realizable NPV`, and `EST. ROI` all derive from the same payload-capped return model.
+  - Separated whole-body context values from mission-return values:
+    - `WHOLE-BODY WATER`
+    - `WHOLE-BODY METALS`
+    - `MISSION RETURN`
+    - `RETURNS MODEL`
+    - `PRICE SOURCE`
+  - Added inspector provenance rows:
+    - `TYPE NOTE`
+    - `DATA SOURCE`
+    - `VALUE SOURCE`
+    - `MODEL`
+  - Renamed misleading labels like `EST VALUE`, `NET PROFIT`, `TOTAL EST.`, and `ROI MULTIPLE` to wording that matches the founding-document framing.
+  - Removed stale “30% extraction” / “mining score” language from leaderboard and explanation text.
+  - Updated the mission profile export text to reuse the same canonical economics summary instead of a second local revenue model.
+
+### Verification
+- `node --check` on extracted `index.html` module script
+- `git diff --check`
+- Headless Chrome DOM smoke load against local static server
+
+### Result
+- Economics now behave like one model instead of three contradictory approximations.
+- Provenance is visible on the key value surfaces instead of being implicit or absent.
+
+---
+
+## Phase 9S — Extract Renderer Truth Alignment (2026-04-21)
+
+### Summary
+Removed the synthetic Bezier-style extract mission path and switched extract rendering/playback to use solved Lambert segment geometry from the worker, matching how redirect rendering already behaved.
+
+### Key fixes
+- `physics.worker.js`
+  - Added `outboundOrbitEl` to extract planner results so the UI can render the outbound leg from solved orbital elements instead of inventing a curve.
+- `index.html`
+  - Added `buildExtractMissionSegments()` to sample outbound and return path points from:
+    - `outboundOrbitEl`
+    - `returnOrbitEl`
+    - the segment date bounds
+  - Replaced extract-mode `QuadraticBezierCurve3` mission lines with sampled solved segments.
+  - Replaced return-arc Bezier rendering with sampled solved return geometry.
+  - Updated burn vectors to use path tangents at the real burn locations instead of straight-line chord directions.
+  - Updated extract mission playback so the spacecraft follows the same solved segment points used by the static renderer.
+  - Added explicit status messages when solved extract segment geometry is unavailable instead of silently drawing decorative fallback arcs.
+
+### Verification
+- `node --check physics.worker.js`
+- `node --check` on extracted `index.html` module script
+- `git diff --check`
+- Real browser E2E:
+  - loaded app
+  - selected `433 Eros (1898 DQ)`
+  - opened planner
+  - ran `FIND BEST ROUTE`
+  - got `10` trajectory cards
+  - opened mission profile
+  - confirmed burn table + `MISSION RETURN`
+  - started playback and confirmed mission timeline/controls appeared
+
+### Result
+- Extract mode now renders solved path geometry instead of decorative curves.
+- Static visuals and playback consume the same mission path data.
+
+---
+
+## Phase 9T — Saturn Ring Texture Fix + Phase 6 Hygiene (2026-04-21)
+
+### Summary
+Finished two cleanup tracks in parallel: fixed the Saturn ring texture hookup in the renderer and added zero-build docs/tests/hygiene coverage for the current repo state.
+
+### Key fixes
+- `index.html`
+  - Marked Saturn’s ring mesh with stable metadata (`name` + `userData`) during planet construction.
+  - Replaced the brittle ring-texture lookup that searched only for `RingGeometry`; the loader now finds the actual Saturn ring mesh even when it is built with `TorusGeometry`.
+- `.gitignore`
+  - Expanded local-secret and Wrangler-state ignores:
+    - `worker/.dev.vars`
+    - `worker/.dev.vars.*`
+    - `.wrangler/`
+    - `worker/.wrangler/`
+    - `.env.local`
+- `worker/README.md`
+  - Updated worker docs to match the current route set, current env vars, localhost origins, and the zero-build smoke-check workflow.
+- `DEVLOG.md`
+  - Added a Phase 6 note documenting the docs/tests/hygiene sweep.
+- `QA.md`
+  - Added a Phase 6 static QA section and run instructions.
+- `tests/phase6-contract-smoke.test.mjs`
+  - Added plain-Node smoke coverage for:
+    - texture references in `index.html`
+    - worker route drift between docs and implementation
+    - worker env-var docs drift
+    - localhost origin docs drift
+    - `.gitignore` coverage for worker secrets and Wrangler state
+
+### Verification
+- `node --test tests/*.test.mjs` → `5/5` passing
+- `node --check physics.worker.js`
+- `node --check` on extracted `index.html` module script
+- `git diff --check`
+- Renderer smoke with software WebGL:
+  - startup completed
+  - Saturn ring warning removed
+  - remaining warning: `NHATS` offline
+
+### Remaining non-blocking issue
+- `NHATS` may still be offline during startup and currently reports:
+  - `[NHATS] failed: All NHATS URLs failed`
+  - This is surfaced honestly in the UI and no longer fails silently.
+
+---
+
+## Phase 9U — NHATS Reliability Hardening (2026-04-21)
+
+### Summary
+Hardened the NHATS path after tracing the remaining startup/offline warning to two reliability problems: the page and `physics.worker.js` were not sharing one API base, and the Cloudflare worker only default-allowed a small fixed set of localhost ports.
+
+### Key fixes
+- `index.html`
+  - Added `resolveWorkerUrl()` so the app can use:
+    - `?apiBase=...` / `?workerUrl=...` overrides
+    - deployed `https://aster-proxy.hudsonclavin.workers.dev` by default
+    - local workers explicitly during dev via `?apiBase=http://127.0.0.1:8787`
+  - Switched `/api/prices` to use the same resolved worker base.
+  - Started passing `apiBase` into the physics worker for:
+    - startup/init
+    - catalog fetch
+    - NHATS fetch
+    - NHATS retry
+- `physics.worker.js`
+  - Replaced hardcoded NHATS/Asterank route URLs with a configurable worker-side API base.
+  - Added worker-side config handling with URL sanitization and safe fallback to production.
+  - Added retry/fallback logic so NHATS and Asterank fetches can fall back to the production proxy if a custom/local API base fails.
+- `worker/index.js`
+  - Relaxed local-dev origin allowance so `http://localhost:<any-port>` and `http://127.0.0.1:<any-port>` work by default.
+- `worker/README.md`
+  - Updated local-origin docs to reflect wildcard localhost/127.0.0.1 port support.
+- `tests/phase6-contract-smoke.test.mjs`
+  - Replaced the exact-port README assertion with wildcard localhost documentation checks.
+  - Added a regression check that `physics.worker.js` no longer hardcodes production NHATS/Asterank route URLs.
+
+### Verification
+- `node --test tests/*.test.mjs`
+- `node --check physics.worker.js`
+- `node --check worker/index.js`
+- `node --check` on extracted `index.html` module script
+- live `curl` verification against deployed `/api/nhats`
+
+### Result
+- NHATS and catalog requests now follow the same API base as the page.
+- Local dev no longer depends on a tiny fixed list of localhost ports.

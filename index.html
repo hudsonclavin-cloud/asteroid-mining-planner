@@ -1061,6 +1061,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
   <div id="panel-data" style="display:none; flex-direction:column; gap:0;">
     <div class="data-row"><span class="label">NAME</span><span class="value accent" id="ast-name">—</span></div>
     <div class="data-row"><span class="label">TYPE</span><span class="value" id="ast-type">—</span></div>
+    <div class="data-row"><span class="label">TYPE NOTE</span><span class="value" id="ast-type-note">—</span></div>
     <div class="data-row"><span class="label">DIAM</span><span class="value" id="ast-diam">—</span></div>
     <div class="data-row"><span class="label">SMA</span><span class="value" id="ast-sma">—</span></div>
     <div class="data-row"><span class="label">ECC</span><span class="value" id="ast-ecc">—</span></div>
@@ -1069,8 +1070,11 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
     <div class="data-row"><span class="label">LAST OBS</span><span class="value" id="ast-last-obs">—</span></div>
     <div class="data-row"><span class="label">COND CODE</span><span class="value" id="ast-cond-code">—</span></div>
-    <div class="data-row" style="margin-top:8px"><span class="label">EST VALUE</span><span class="value accent" id="ast-price">—</span></div>
-    <div class="data-row"><span class="label">NET PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
+    <div class="data-row"><span class="label">DATA SOURCE</span><span class="value" id="ast-source">—</span></div>
+    <div class="data-row"><span class="label">VALUE SOURCE</span><span class="value" id="ast-value-source">—</span></div>
+    <div class="data-row"><span class="label">MODEL</span><span class="value" id="ast-resource-model">—</span></div>
+    <div class="data-row" style="margin-top:8px"><span class="label">PAPER VALUE</span><span class="value accent" id="ast-price">—</span></div>
+    <div class="data-row"><span class="label">ASTERANK PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
 
     <div class="panel-header" style="margin-top:10px">◆ COMPOSITION</div>
     <div id="ast-composition" style="font-size:10px;color:#6a8a9a;line-height:1.8;white-space:pre;margin-bottom:8px"></div>
@@ -1078,7 +1082,7 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
     <div class="panel-header">$ RESOURCE VALUE</div>
     <div class="data-row"><span class="label">WATER (space)</span><span class="value accent" id="ast-water-val">—</span></div>
     <div class="data-row"><span class="label">METALS</span><span class="value" id="ast-metal-val">—</span></div>
-    <div class="data-row"><span class="label">TOTAL EST.</span><span class="value profit" id="ast-total-val">—</span></div>
+    <div class="data-row"><span class="label">WHOLE-BODY EST.</span><span class="value profit" id="ast-total-val">—</span></div>
     <div id="feasibility-card" style="display:none;margin:6px 0 10px;padding:6px 8px;
       border:1px solid #1a2235;font-size:9px;line-height:1.8;color:#c8d6e5">
       <div style="color:#00d4ff;font-size:8px;letter-spacing:0.1em;margin-bottom:3px">◈ FEASIBILITY</div>
@@ -1194,12 +1198,15 @@ button.speed-btn.active { border-color: #00d4ff; color: #00d4ff; box-shadow: 0 0
       <div class="data-row"><span class="label">TOTAL COST</span><span class="value warning" id="eco-total-cost">—</span><span class="unc-icon" id="eco-cost-icon" style="display:none">ⓘ</span></div>
 
       <div class="panel-header" style="margin-top:10px">RETURNS</div>
-      <div class="data-row"><span class="label">WATER VALUE</span><span class="value accent" id="eco-water">—</span></div>
-      <div class="data-row"><span class="label">METAL VALUE</span><span class="value" id="eco-metals">—</span></div>
+      <div class="data-row"><span class="label">WHOLE-BODY WATER</span><span class="value accent" id="eco-water">—</span></div>
+      <div class="data-row"><span class="label">WHOLE-BODY METALS</span><span class="value" id="eco-metals">—</span></div>
       <div class="data-row"><span class="label">ASTERANK VALUE</span><span class="value accent" id="eco-asterank">—</span></div>
+      <div class="data-row"><span class="label">MISSION RETURN</span><span class="value" id="eco-returned-mass">—</span></div>
+      <div class="data-row"><span class="label">RETURNS MODEL</span><span class="value" id="eco-return-model">—</span></div>
+      <div class="data-row"><span class="label">PRICE SOURCE</span><span class="value" id="eco-price-source">—</span></div>
       <div class="data-row"><span class="label">PAPER VALUE</span><span class="value accent" id="eco-paper-value">—</span></div>
       <div class="data-row"><span class="label">REALIZABLE NPV</span><span class="value accent" id="eco-npv">—</span></div>
-      <div class="data-row" style="margin-top:6px"><span class="label">ROI MULTIPLE</span><span class="value profit" id="eco-roi">—</span></div>
+      <div class="data-row" style="margin-top:6px"><span class="label">EST. ROI</span><span class="value profit" id="eco-roi">—</span></div>
 
       <div id="eco-isru-note" style="display:none;border:1px solid #00d4ff;padding:8px;
         color:#00d4ff;font-size:10px;line-height:1.6;margin-top:10px"></div>
@@ -1646,6 +1653,21 @@ function formatValueDisplay(value, options = {}) {
   return extractionLabel ? `${base} (5% extraction est.)` : base;
 }
 
+function formatMassDisplay(kg, unknownLabel = 'unknown') {
+  if (!(Number.isFinite(kg) && kg >= 0)) return unknownLabel;
+  if (kg >= 1e9) return `${(kg / 1e9).toFixed(2)}B kg`;
+  if (kg >= 1e6) return `${(kg / 1e6).toFixed(2)}M kg`;
+  if (kg >= 1e3) return `${(kg / 1e3).toFixed(1)} t`;
+  return `${Math.round(kg)} kg`;
+}
+
+function formatIsoDateShort(ts) {
+  if (!ts) return 'unknown';
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return String(ts);
+  return d.toISOString().slice(0, 10);
+}
+
 function fmtTons(t) {
   if (!t && t !== 0) return '—';
   const n = Number(t);
@@ -1747,6 +1769,72 @@ function resolveAsteroidEconomics(ast) {
   };
 }
 
+function getCatalogSourceLabel(ast) {
+  if (ast?.source_label) return ast.source_label;
+  const parts = ['Asterank'];
+  if (ast?.nhats?.accessible) parts.push('NHATS');
+  if (ast?.jpl_source || ast?.orbit_source === 'JPL') parts.push('JPL');
+  return parts.join(' + ');
+}
+
+function getPriceSourceLabel() {
+  if (priceSource === 'loading') return 'prices loading';
+  if (priceSource === 'live') return `live spot prices (${formatIsoDateShort(priceAt)})`;
+  if (priceSource === 'cached') return `cached spot prices (${formatIsoDateShort(priceAt)})`;
+  if (priceSource === 'static') return 'static fallback prices';
+  return String(priceSource || 'unknown');
+}
+
+function computeWholeBodyValueSummary(ast) {
+  const matData = computeMaterialRows(ast);
+  if (!matData?.rows?.length) {
+    return {
+      waterValueUsd: null,
+      metalValueUsd: null,
+      totalValueUsd: null,
+      source: 'unknown composition or size',
+    };
+  }
+  const waterKeys = new Set(['water']);
+  const metalKeys = new Set(['iron', 'nickel', 'cobalt', 'pgm', 'gold', 'silver', 'copper', 'rareEarth']);
+  let waterValueUsd = 0;
+  let metalValueUsd = 0;
+  let totalValueUsd = 0;
+  matData.rows.forEach(row => {
+    totalValueUsd += row.totalValue;
+    if (waterKeys.has(row.key)) waterValueUsd += row.totalValue;
+    if (metalKeys.has(row.key)) metalValueUsd += row.totalValue;
+  });
+  return {
+    waterValueUsd,
+    metalValueUsd,
+    totalValueUsd,
+    source: `whole-body composition estimate (${matData.spec}-type, ${getPriceSourceLabel()})`,
+  };
+}
+
+function computeReturnedMassModel(ast, options = {}) {
+  const extractionFraction = Number.isFinite(options.extractionFraction) ? options.extractionFraction : 0.05;
+  const payloadKg = Number.isFinite(options.payloadKg) ? Math.max(0, options.payloadKg) : null;
+  const massModel = resolveAsteroidMassModel(ast);
+  const extractableKg = massModel ? massModel.massKg * extractionFraction : null;
+  const returnedKg = Number.isFinite(extractableKg)
+    ? (Number.isFinite(payloadKg) ? Math.min(extractableKg, payloadKg) : extractableKg)
+    : null;
+  let limit = 'unknown';
+  if (Number.isFinite(extractableKg) && Number.isFinite(payloadKg)) {
+    limit = extractableKg > payloadKg ? 'payload-capped' : 'extraction-capped';
+  } else if (Number.isFinite(payloadKg)) {
+    limit = 'payload-only';
+  } else if (Number.isFinite(extractableKg)) {
+    limit = 'extraction-only';
+  }
+  const source = massModel
+    ? `${(extractionFraction * 100).toFixed(0)}% extraction, payload-capped by spacecraft throughput`
+    : 'unknown asteroid mass or spectral model';
+  return { extractableKg, returnedKg, limit, source, massModel };
+}
+
 function primaryCommodityForSpec(spec) {
   const s = (spec || '').charAt(0).toUpperCase();
   if (s === 'M') return 'platinum';
@@ -1797,8 +1885,9 @@ function computeEconomicsSummary(ast, options = {}) {
     revenuePerKg = 0;
     MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
   }
-
-  const returnedKg = Number.isFinite(payloadKg) ? payloadKg * extractionFraction : null;
+  const returnModel = computeReturnedMassModel(ast, { payloadKg, extractionFraction });
+  const wholeBodyValue = computeWholeBodyValueSummary(ast);
+  const returnedKg = returnModel.returnedKg;
   const paperValueUsd = Number.isFinite(returnedKg) && Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
   const npvUsd = computeRealizableNPV(primaryCommodityForSpec(spec), returnedKg, revenuePerKg);
   const roiMultiple = Number.isFinite(totalCostUsd) && totalCostUsd > 0 && Number.isFinite(npvUsd)
@@ -1812,10 +1901,19 @@ function computeEconomicsSummary(ast, options = {}) {
     launchMassKg,
     launchCostUsd,
     totalCostUsd,
+    extractableKg: returnModel.extractableKg,
     returnedKg,
+    returnModelLimit: returnModel.limit,
+    returnModelSource: returnModel.source,
     paperValueUsd,
     realizableNpvUsd: npvUsd,
     roiMultiple,
+    priceSourceLabel: getPriceSourceLabel(),
+    economicsSourceLabel: `screening-grade composition economics (${getCatalogSourceLabel(ast)})`,
+    wholeBodyWaterValueUsd: wholeBodyValue.waterValueUsd,
+    wholeBodyMetalValueUsd: wholeBodyValue.metalValueUsd,
+    wholeBodyTotalValueUsd: wholeBodyValue.totalValueUsd,
+    wholeBodyValueSource: wholeBodyValue.source,
   };
 }
 
@@ -1860,8 +1958,7 @@ function computeFeasibilityMetrics(ast) {
     durVal = Math.round(180 + (dvVal - 3) * 20);    durUnc = 60;  durSrc = 'Aster est.';
   }
 
-  // Value range (10%–30% extraction efficiency)
-  // Prefer Asterank price; fall back to composition-based estimate so value is never $0 when we have diameter data
+  // Screening spread around the extractable-value estimate, not a second extraction-efficiency model.
   const rawVal = getDisplayValueUsd(ast);
 
   // Hazard
@@ -1873,7 +1970,7 @@ function computeFeasibilityMetrics(ast) {
     deltaV:        { value: dvVal,  uncertainty: dvUnc,  source: dvSrc,  method: dvMethod },
     duration:      { value: durVal, uncertainty: durUnc, source: durSrc },
     accessibility: { nhatsVerified: !!(ast.nhats?.accessible), trajectoryCount: ast.nhats?.nTrajectories || 0 },
-    valueRange:    { conservative: rawVal !== null ? rawVal * 0.10 : null, optimistic: rawVal !== null ? rawVal * 0.30 : null },
+    valueRange:    { conservative: rawVal !== null ? rawVal * 0.80 : null, optimistic: rawVal !== null ? rawVal * 1.20 : null },
     hazard:        { moid, pha, riskLevel },
   };
 }
@@ -2005,7 +2102,7 @@ async function fetchPrices(forceRefresh = false) {
     } catch(_) {}
   }
   try {
-    const res = await fetch('https://aster-proxy.hudsonclavin.workers.dev/api/prices');
+    const res = await fetch(`${WORKER_URL}/api/prices`);
     if (res.ok) {
       cachedPriceData = await res.json();
       priceSource = cachedPriceData?.source || 'live';
@@ -2271,6 +2368,8 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
       new THREE.TorusGeometry(0.07, 0.018, 2, 64),
       new THREE.MeshPhongMaterial({ color: 0xd4c47a, transparent: true, opacity: 0.6, side: THREE.DoubleSide, shininess: 8 })
     );
+    ring.name = 'saturn-ring';
+    ring.userData.saturnRing = true;
     ring.rotation.x = Math.PI / 2.5;
     mesh.add(ring);
   }
@@ -2292,8 +2391,13 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
   loader.load('./textures/2k_sun.jpg',
     tex => { sunMesh.material.map = tex; sunMesh.material.color.setHex(0xffffff); sunMesh.material.needsUpdate = true; },
     undefined, e => console.warn('[tex] sun failed:', e?.message || 'load error'));
-  // Saturn ring texture — children[0] is the RingGeometry mesh added during planet setup
-  const satRing = planets[5]?.children.find(c => c.geometry?.type === 'RingGeometry');
+  // Saturn ring texture — find the dedicated ring mesh by stable metadata, with geometry fallback
+  const satRing = planets[5]?.children.find(c =>
+    c?.userData?.saturnRing ||
+    c?.name === 'saturn-ring' ||
+    c?.geometry?.type === 'TorusGeometry' ||
+    c?.geometry?.type === 'RingGeometry'
+  );
   if (satRing) loader.load('./textures/2k_saturn_ring_alpha.png',
     tex => { satRing.material.map = tex; satRing.material.alphaMap = tex; satRing.material.needsUpdate = true; },
     undefined, e => console.warn('[tex] saturn ring failed:', e?.message || 'load error'));
@@ -2430,10 +2534,24 @@ function cart2kepJS(x, y, z, vx_kms, vy_kms, vz_kms, t_JD) {
   if (e > 1e-10) {
     nu_anom = Math.acos(Math.max(-1, Math.min(1, (e_vec[0]*x+e_vec[1]*y+e_vec[2]*z)/(e*r))));
     if (x*vx+y*vy+z*vz2 < 0) nu_anom = TWO_PI - nu_anom;
+  } else if (n_mag > 1e-10) {
+    const cosU = Math.max(-1, Math.min(1, (n_vec[0]*x + n_vec[1]*y) / (n_mag * r)));
+    let u = Math.acos(cosU);
+    if (z < 0) u = TWO_PI - u;
+    w = 0;
+    nu_anom = u;
+  } else {
+    nu_anom = ((Math.atan2(y, x) % TWO_PI) + TWO_PI) % TWO_PI;
+    w = 0;
+    Om = 0;
   }
-  const E_anom = 2 * Math.atan2(Math.sqrt(1-e)*Math.sin(nu_anom/2), Math.sqrt(1+e)*Math.cos(nu_anom/2));
-  const M0 = E_anom - e * Math.sin(E_anom);
-  return { a, e, i: inc, Om, w, M0, epoch_JD: t_JD, nu: nu_anom };
+  const M0 = e > 1e-10
+    ? (() => {
+        const E_anom = 2 * Math.atan2(Math.sqrt(1-e)*Math.sin(nu_anom/2), Math.sqrt(1+e)*Math.cos(nu_anom/2));
+        return E_anom - e * Math.sin(E_anom);
+      })()
+    : nu_anom;
+  return { a, e, i: inc, Om, w, M0: ((M0 % TWO_PI) + TWO_PI) % TWO_PI, epoch_JD: t_JD, nu: ((nu_anom % TWO_PI) + TWO_PI) % TWO_PI };
 }
 
 // Apply impulsive burn on main thread (synchronous, for gizmo preview)
@@ -2726,6 +2844,22 @@ function buildOrbitSegmentPoints(el, jdStart, jdEnd, steps = 96) {
     pts.push(new THREE.Vector3(state.x, state.y, state.z));
   }
   return pts;
+}
+
+function buildExtractMissionSegments(traj) {
+  if (!traj) return null;
+  const jdRetArr = Number.isFinite(traj.jd_ret_arr)
+    ? traj.jd_ret_arr
+    : (Number.isFinite(traj.jd_ret_dep) && Number.isFinite(traj.tof_return) ? traj.jd_ret_dep + traj.tof_return : null);
+  const outboundPts = traj.outboundOrbitEl && Number.isFinite(traj.jd_dep) && Number.isFinite(traj.jd_arr)
+    ? buildOrbitSegmentPoints(traj.outboundOrbitEl, traj.jd_dep, traj.jd_arr, 140)
+    : [];
+  const returnPts = traj.returnOrbitEl && Number.isFinite(traj.jd_ret_dep) && Number.isFinite(jdRetArr)
+    ? buildOrbitSegmentPoints(traj.returnOrbitEl, traj.jd_ret_dep, jdRetArr, 140)
+    : [];
+  if (outboundPts.length >= 2 && !validateArcPoints(outboundPts, 'extract-outbound')) return null;
+  if (returnPts.length >= 2 && !validateArcPoints(returnPts, 'extract-return')) return null;
+  return { outboundPts, returnPts, jdRetArr };
 }
 
 // Draw orbit from Asterank asteroid (degrees, MJD epoch)
@@ -3102,7 +3236,7 @@ worker.onmessage = ({ data }) => {
       const nEl = document.getElementById('hud-nhats');
       if (nEl) nEl.textContent = `NHATS: ${data.error || 'JPL API unavailable'}`;
       // Single retry after 60s — do not loop indefinitely
-      setTimeout(() => worker.postMessage({ cmd: 'fetch_nhats' }), 60000);
+      setTimeout(() => worker.postMessage({ cmd: 'fetch_nhats', apiBase: WORKER_URL }), 60000);
       return;
     }
     try {
@@ -3190,6 +3324,10 @@ worker.onmessage = ({ data }) => {
     return;
   }
   if (data.type === 'plan_result') {
+    if (_activeMissionType !== 'extract') return;
+    if (Number.isFinite(data.reqId) && Number.isFinite(_activeExtractRequestId) && data.reqId !== _activeExtractRequestId) {
+      return;
+    }
     if (typeof _plannerTimeoutId !== 'undefined' && _plannerTimeoutId) {
       clearTimeout(_plannerTimeoutId);
       _plannerTimeoutId = null;
@@ -3215,8 +3353,8 @@ worker.onmessage = ({ data }) => {
     showPlannerError(data.message || 'Worker error');
     return;
   }
-  if (data.type === 'query_pos_result' && data.reqId === 'earth_return' && data.ok) {
-    missionEarthReturnPos = { x: data.x, y: data.y, z: data.z };
+  if (data.type === 'query_pos_result' && Number.isFinite(data.reqId) && data.reqId === _activeReturnQueryId && data.ok) {
+    missionReturnTargetPos = { x: data.x, y: data.y, z: data.z };
     if (optimalTrajectory) {
       syncActiveMissionVisuals();
     }
@@ -3307,11 +3445,14 @@ let _cargoPodArcs     = [];
 let activeRedirectVisual = null;
 let _redirectRequestSeq = 0;
 let _activeRedirectRequestId = 0;
+let _extractRequestSeq = 0;
+let _activeExtractRequestId = 0;
 let mpBurns           = [];
 
 // ── Phase 7F: Mission Visualization ──────────────────────────────────────────
 let burnVectorArrows       = [];
-let missionEarthReturnPos  = null;
+let missionReturnTargetPos = null;
+let _activeReturnQueryId   = 0;
 const missionAnim = {
   active: false, playing: false, speed: 86400,
   animJD: 0, phase: 'idle',
@@ -3638,7 +3779,21 @@ function togglePrimaryPlayback() {
 }
 
 // ─── Cloudflare Worker (Perplexity research proxy) ────────────────────────────
-const WORKER_URL = 'https://aster-proxy.hudsonclavin.workers.dev';
+function resolveWorkerUrl() {
+  const fallback = 'https://aster-proxy.hudsonclavin.workers.dev';
+  try {
+    const params = new URLSearchParams(location.search);
+    const explicit = params.get('apiBase') || params.get('workerUrl') || fallback;
+    const url = new URL(explicit, location.href);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('invalid protocol');
+    const pathname = url.pathname && url.pathname !== '/' ? url.pathname.replace(/\/+$/, '') : '';
+    return `${url.origin}${pathname}`;
+  } catch (_) {
+    return fallback;
+  }
+}
+
+const WORKER_URL = resolveWorkerUrl();
 
 // Lightweight Kepler position for static dust cloud (no worker needed)
 function keplerPosAU(ast, jd) {
@@ -3735,7 +3890,7 @@ function buildAsteroidMesh(data) {
   document.getElementById('panel-idle').innerHTML =
     `CLICK ANY ASTEROID<br>TO SELECT TARGET<br><br>— SOLAR SYSTEM —<br>8 PLANETS ACTIVE<br>${asteroidCount} ASTEROIDS LOADED`;
 
-  worker.postMessage({ cmd: 'init', asteroids: asteroidData });
+  worker.postMessage({ cmd: 'init', asteroids: asteroidData, apiBase: WORKER_URL });
   worker.postMessage({ cmd: 'propagate', jd: currentJD });
 
   // Initial filter pass to populate leaderboard
@@ -4010,7 +4165,7 @@ function renderLeaderboard() {
       <div style="display:flex;gap:6px;font-size:8px;color:#6a8a9a">
         <span title="Delta-V">ΔV <span style="color:#00d4ff">${dvStr}</span></span>
         <span title="Mission duration">TOF <span style="color:#c8d6e5">${durStr}d</span></span>
-        <span title="Optimistic value (30% extraction)" style="margin-left:auto">${valStr}</span>
+        <span title="Screening-grade extractable value estimate" style="margin-left:auto">${valStr}</span>
       </div>
     </div>`;
   }).join('');
@@ -4058,6 +4213,9 @@ function renderEconomicsTab(id) {
   const opsDaysEco = Math.round(dv * 60); // rough mission duration for tooltip
   const econ = resolveAsteroidEconomics(ast);
   const massModel = econ.massModel;
+  const returnMassEl = document.getElementById('eco-returned-mass');
+  const returnModelEl = document.getElementById('eco-return-model');
+  const priceSourceEl = document.getElementById('eco-price-source');
   document.getElementById('eco-dv').textContent = `${dv.toFixed(2)} (±${eco_fi.deltaV.uncertainty}) km/s`;
   document.getElementById('eco-propellant').textContent = Number.isFinite(propMass)
     ? (propMass > 999 ? `${(propMass/1000).toFixed(1)} t` : `${Math.round(propMass)} kg`)
@@ -4075,13 +4233,17 @@ function renderEconomicsTab(id) {
   }
 
   const spec = getMatSpec(ast);
-  const frac = spec ? FRACTIONS[spec] : null;
-  const waterVal = massModel && frac ? massModel.massKg * frac.water * 1000 : null;
-  const metalPrice = spec === 'M' ? 30 : spec ? 0.15 : null;
-  const metalVal = massModel && frac && metalPrice !== null ? massModel.massKg * frac.metals * metalPrice : null;
-  document.getElementById('eco-water').textContent = formatValueDisplay(waterVal);
-  document.getElementById('eco-metals').textContent = formatValueDisplay(metalVal);
+  document.getElementById('eco-water').textContent = formatValueDisplay(econSummary.wholeBodyWaterValueUsd);
+  document.getElementById('eco-metals').textContent = formatValueDisplay(econSummary.wholeBodyMetalValueUsd);
   document.getElementById('eco-asterank').textContent = formatValueDisplay(econ.wholeBodyPriceUsd);
+  if (returnMassEl) returnMassEl.textContent = formatMassDisplay(econSummary.returnedKg);
+  if (returnModelEl) {
+    const capLabel = econSummary.returnModelLimit && econSummary.returnModelLimit !== 'unknown'
+      ? ` [${econSummary.returnModelLimit}]`
+      : '';
+    returnModelEl.textContent = `${econSummary.returnModelSource}${capLabel}`;
+  }
+  if (priceSourceEl) priceSourceEl.textContent = econSummary.priceSourceLabel;
   document.getElementById('eco-paper-value').textContent = formatValueDisplay(econSummary.paperValueUsd);
   document.getElementById('eco-npv').textContent = formatValueDisplay(econSummary.realizableNpvUsd);
 
@@ -4102,19 +4264,22 @@ function renderEconomicsTab(id) {
   }
 
   const isruNote = document.getElementById('eco-isru-note');
-  if (massModel && spec === 'C' && waterVal > 0) {
-    const waterTons = massModel.massKg * frac.water / 1000;
-    const missions = Math.round(waterTons / 5);
+  if (massModel && spec === 'C' && Number.isFinite(econSummary.wholeBodyWaterValueUsd) && econSummary.wholeBodyWaterValueUsd > 0) {
+    const waterKg = computeMaterialRows(ast)?.rows?.find(row => row.key === 'water')?.kg || null;
+    const waterTons = Number.isFinite(waterKg) ? waterKg / 1000 : null;
     isruNote.style.display = 'block';
-    isruNote.textContent = `◈ WATER POSITIVE — Contains ~${(waterTons/1000).toFixed(0)}k tons of water. Sufficient to refuel ~${missions} additional missions via in-situ propellant production (ISRU).`;
+    isruNote.textContent = Number.isFinite(waterTons)
+      ? `◈ SCREENING NOTE — Whole-body water estimate is ~${(waterTons/1000).toFixed(0)}k tons, but mission return assumes 5% extraction and payload-capped throughput. Treat all return numbers as screening-grade, not profit forecasts.`
+      : '◈ SCREENING NOTE — Whole-body water exists in the composition model, but mission return remains 5% extraction and payload-capped throughput.';
   } else if (!massModel) {
     isruNote.style.display = 'block';
     isruNote.textContent = '◈ UNKNOWN SIZE — Cannot estimate extractable water, metals, or ROI without a measured or H-derived diameter.';
-  } else if (!frac) {
+  } else if (!spec) {
     isruNote.style.display = 'block';
     isruNote.textContent = '◈ UNKNOWN SPECTRAL TYPE — Cannot estimate extractable water, metals, or ROI without a composition model.';
   } else {
-    isruNote.style.display = 'none';
+    isruNote.style.display = 'block';
+    isruNote.textContent = '◈ SCREENING NOTE — Mission return uses a 5% extraction assumption with payload-capped throughput. Whole-body water and metal values are context only, not mission-return forecasts.';
   }
 }
 
@@ -4167,7 +4332,7 @@ async function fetchNHATSData() {
       }
     } catch(_) {}
   }
-  worker.postMessage({ cmd: 'fetch_nhats' });
+  worker.postMessage({ cmd: 'fetch_nhats', apiBase: WORKER_URL });
 }
 
 // ─── Phase 9: Research Tab ─────────────────────────────────────────────────────
@@ -4906,7 +5071,7 @@ function closeMissionPlanner() {
   clearTrajectoryLine();
   const selectedAst = getSelectedAsteroid();
   if (selectedAst && !burnModeActive) drawOrbitEllipse(selectedAst);
-  missionEarthReturnPos = null;
+  missionReturnTargetPos = null;
   missionResults = [];
   missionResults.source = null;
 }
@@ -4988,8 +5153,8 @@ async function runMissionOptimizer() {
   missionConfig.launchVehicle   = document.getElementById('mp-launch-vehicle').value;
   missionConfig.launchYearStart = ys;
   missionConfig.launchYearEnd   = ye;
-  const jd_start = J2000 + (ys - 2000) * 365.25;
-  const jd_end   = J2000 + (ye - 2000) * 365.25;
+  const jd_start = dateToJD(ys, 1, 1);
+  const jd_end   = dateToJD(ye + 1, 1, 1);
   const parkAlt  = parseInt(document.getElementById('mp-park-alt').value) || 400;
   const sc       = missionConfig.spacecraft;
   const STAY_MAP = { light:14, medium:45, heavy:90 };
@@ -5002,6 +5167,8 @@ async function runMissionOptimizer() {
   document.getElementById('mp-actions').style.display   = 'none';
   document.getElementById('mp-progress-bar').style.width = '5%';
   document.getElementById('mp-progress-label').textContent = 'Running Aster Lambert solver...';
+  missionReturnTargetPos = null;
+  _activeReturnQueryId = 0;
 
   try {
 
@@ -5012,8 +5179,11 @@ async function runMissionOptimizer() {
       showPlannerError('Worker timeout (>30 s). The solver may be overloaded — try a shorter launch window or a NHATS ✓ target.');
     }, 30000);
 
+    const reqId = ++_extractRequestSeq;
+    _activeExtractRequestId = reqId;
     worker.postMessage({
       cmd: 'plan_mission', ast, jd_start, jd_end,
+      reqId,
       destination: missionConfig.destination,
       parkingAlt_km: parkAlt,
       spacecraft: sc,
@@ -5037,7 +5207,9 @@ function setMissionType(type, options = {}) {
   if (type === 'redirect') {
     optimalTrajectory = null;
     selectedTrajIdx = -1;
-    missionEarthReturnPos = null;
+    missionReturnTargetPos = null;
+    _activeExtractRequestId = 0;
+    _activeReturnQueryId = 0;
   }
   // Hide all result panels on mode switch
   ['mp-results','mp-profile','mp-burns','mp-actions','mp-redirect-results'].forEach(id => {
@@ -5238,7 +5410,7 @@ function onRedirectResult(data) {
     `Spec type ${ast_d.spec_type}\n` +
     `Redirect ΔV ${fmtRedirectSpeed(rd.dv_redirect)}\n` +
     `Propulsion  ${rd.propulsion} (Isp ${rd.isp_s}s)\n` +
-    `Prop load   ${fmtRedirectPercent(flags.prop_fraction_pct)} of asteroid mass\n` +
+    `Prop load   ${fmtRedirectPercent(flags.prop_fraction_pct)} of redirected stack mass\n` +
     `Spacecraft  ${logistics.spacecraft_name || 'unknown'}\n` +
     `Launch stack ${Number.isFinite(logistics.tug_launch_mass_kg) ? Math.round(logistics.tug_launch_mass_kg).toLocaleString() + ' kg' : 'unknown'} via ${logistics.launch_vehicle_name || 'unknown'}`;
   document.getElementById('rr-prop-warn').style.display = flags.high_prop_load ? 'block' : 'none';
@@ -5249,9 +5421,9 @@ function onRedirectResult(data) {
   const captureHeader = document.getElementById('rr-capture-header');
   if (captureHeader) captureHeader.textContent = `${(cap.label || 'Destination').toUpperCase()} CAPTURE (approx)`;
   document.getElementById('rr-capture-text').textContent =
-    `Earth arr  ${jdToDate(rd.jd_earth_arr)}\n` +
+    `Capture arr ${jdToDate(rd.jd_capture_arr)}\n` +
     `Transit    ${Math.round(rd.tof_redirect)} days\n` +
-    `Earth-arr v∞ ${fmtRedirectSpeed(cap.v_inf_earth_arrival)}\n` +
+    `Arrival v∞ ${fmtRedirectSpeed(cap.v_inf_capture_arrival)}\n` +
     `Capture ΔV ${cap.capture_modeled ? fmtRedirectSpeed(cap.dv_lunar_capture) + ' (approx)' : 'unknown'}\n` +
     `Delivery ΔV ${fmtRedirectSpeed(cap.dv_delivery)}\n` +
     `Target orbit  ${Number.isFinite(cap.r_cap_km) ? Math.round(cap.r_cap_km).toLocaleString() + ' km radius' : 'unknown'}\n` +
@@ -5313,7 +5485,7 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
   }
 
   const segStart = Number.isFinite(redirect.segment_jd_start) ? redirect.segment_jd_start : intercept.jd_arr;
-  const segEnd = Number.isFinite(redirect.segment_jd_end) ? redirect.segment_jd_end : redirect.jd_earth_arr;
+  const segEnd = Number.isFinite(redirect.segment_jd_end) ? redirect.segment_jd_end : redirect.jd_capture_arr;
   const pts = redirect.orbit_el && Number.isFinite(segStart) && Number.isFinite(segEnd)
     ? buildOrbitSegmentPoints(redirect.orbit_el, segStart, segEnd, 112)
     : [];
@@ -5330,7 +5502,7 @@ function drawRedirectTrajectory(ast, intercept, redirect) {
     _setArcAnchor('redirectArc', _redirectArcLine, dvText);
   }
 
-  // Arrow at asteroid showing redirect direction toward Earth arrival
+  // Arrow at asteroid showing redirect direction toward target capture arrival
   if (pts.length >= 2) {
     const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
     const arr = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, ORBIT_NEON.redirect, 0.05, 0.025);
@@ -5362,8 +5534,7 @@ function drawRedirectInterceptTrajectory(intercept) {
     trajectoryArrows.push(arr2);
     return true;
   }
-  drawTrajectoryLine(intercept.earthPos, intercept.astPos, { skipReturn: true });
-  return true;
+  return false;
 }
 
 function syncActiveRedirectVisuals() {
@@ -5384,13 +5555,16 @@ function syncActiveRedirectVisuals() {
 function drawLunarOrbitRing() {
   if (!moonMesh) return;
   const pts = [];
-  const r = 0.006; // AU-scale ring radius
+  const capture = activeRedirectVisual?.capture;
+  const center = getCaptureTargetPosition(capture);
+  if (!center) return;
+  const r = Number.isFinite(capture?.r_cap_km) ? (capture.r_cap_km * 1000) / AU_m : (6737 * 1000) / AU_m;
   for (let i = 0; i <= 64; i++) {
     const theta = (i / 64) * Math.PI * 2;
     pts.push(new THREE.Vector3(
-      moonMesh.position.x + r * Math.cos(theta),
-      moonMesh.position.y,
-      moonMesh.position.z + r * Math.sin(theta),
+      center.x + r * Math.cos(theta),
+      center.y,
+      center.z + r * Math.sin(theta),
     ));
   }
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
@@ -5401,17 +5575,16 @@ function drawLunarOrbitRing() {
   _setArcAnchor('lunarOrbit', _lunarOrbitRing, 'NRHO TARGET ORBIT', 0.25);
 }
 
-function drawEarthCenteredRing(radiusKm, color = ORBIT_NEON.redirect) {
-  if (!planets[2] || !Number.isFinite(radiusKm) || radiusKm <= 0) return;
+function drawCaptureRingAt(center, radiusKm, color = ORBIT_NEON.redirect) {
+  if (!center || !Number.isFinite(radiusKm) || radiusKm <= 0) return;
   const radiusAU = (radiusKm * 1000) / AU_m;
-  const earthPos = planets[2].position;
   const pts = [];
   for (let i = 0; i <= 96; i++) {
     const theta = (i / 96) * Math.PI * 2;
     pts.push(new THREE.Vector3(
-      earthPos.x + radiusAU * Math.cos(theta),
-      earthPos.y,
-      earthPos.z + radiusAU * Math.sin(theta),
+      center.x + radiusAU * Math.cos(theta),
+      center.y,
+      center.z + radiusAU * Math.sin(theta),
     ));
   }
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
@@ -5422,11 +5595,12 @@ function drawEarthCenteredRing(radiusKm, color = ORBIT_NEON.redirect) {
 
 function drawRedirectCaptureMarker(capture) {
   if (!capture) return;
-  if (capture.target_key === 'lunar_orbit') {
+  if (capture.target_body === 'moon' || capture.target_key === 'lunar_orbit') {
     drawLunarOrbitRing();
     return;
   }
-  if (Number.isFinite(capture.r_cap_km)) drawEarthCenteredRing(capture.r_cap_km, ORBIT_NEON.redirect);
+  const center = getCaptureTargetPosition(capture);
+  if (center && Number.isFinite(capture.r_cap_km)) drawCaptureRingAt(center, capture.r_cap_km, ORBIT_NEON.redirect);
 }
 
 function formatSignedScoreTerm(value) {
@@ -5495,7 +5669,7 @@ function buildExtractScoreBreakdownHtml(traj, ops) {
       note: ops.fitsLaunchVehicle ? 'fits selected vehicle' : 'wet mass exceeds launcher',
     },
     {
-      label: 'ROI',
+      label: 'Est. ROI',
       value: formatSignedScoreTerm(ops.roiTerm),
       valueClass: scoreTermClass(ops.roiTerm),
       note: Number.isFinite(ops.roi) ? `${ops.roi.toFixed(2)}x realized NPV / total cost` : 'unknown stays neutral',
@@ -5506,7 +5680,7 @@ function buildExtractScoreBreakdownHtml(traj, ops) {
     : 'ROI is neutral here because the realized-return side is unknown or not finite.';
   return renderScoreBreakdownHtml({
     title: 'Score Breakdown',
-    formula: '100 - 3×ΔV - launcher penalty + ROI term',
+    formula: '100 - 3×ΔV - launcher penalty + screening ROI term',
     chips,
     note,
   });
@@ -5658,7 +5832,7 @@ function onPlanResult(results, noFeasibleWindow, dbg, source) {
       <div><span style="color:#4a6a7a;display:inline-block;width:130px">Spacecraft:</span>Single-stage Tsiolkovsky</div>
       <div><span style="color:#4a6a7a;display:inline-block;width:130px">Margin reserves:</span>Not included — add ±10–20%</div>
       <div><span style="color:#4a6a7a;display:inline-block;width:130px">ΔV uncertainty:</span>±15% (Lambert patched-conic)</div>
-      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Segment split:</span>Lambert-computed per segment</div>
+      <div><span style="color:#4a6a7a;display:inline-block;width:130px">Segment split:</span>Lambert-computed per solved segment</div>
       <div style="margin-top:6px;color:#3a5a6a;border-top:1px solid #0d1f33;padding-top:6px">For high-fidelity analysis: <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a>.</div>`;
   }
 }
@@ -5696,7 +5870,7 @@ function renderTrajectoryList() {
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
       <div class="mp-traj-dv">ΔV TOTAL: ${t.dv_total.toFixed(2)} ± ${dvUnc} km/s <span style="font-size:7px;color:#94a3b8;border:1px solid #334155;padding:1px 4px;vertical-align:middle">planning-level estimate</span></div>
       <div class="mp-traj-meta" title="Screening-grade Lambert estimate — individual burn values carry ±15% uncertainty">Dep ${t.dv_dep.toFixed(2)} + Arr ${t.dv_arr.toFixed(2)} + Ret ${t.dv_return.toFixed(2)} + Cap ${(t.dv_capture||0).toFixed(2)} km/s &nbsp;·&nbsp; TOF ${Math.round(t.tof)}d</div>
-      <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d</div>
+      <div class="mp-traj-meta" style="color:#4b5563">C3: ${(t.C3||0).toFixed(1)} km²/s² &nbsp;·&nbsp; Stay: ${t.stay_days||'?'}d &nbsp;·&nbsp; Return: ${Math.round(t.tof_return||0)}d to ${(t.returnTarget?.label || DEST_LABELS[missionConfig.destination] || 'target')}</div>
       <div class="mp-traj-meta" style="color:#6a8a9a">Score ${ops?.score ?? '—'}/100 ${lvBadge}&nbsp;·&nbsp; Launch ${fmtUSD(ops?.launchCost)} &nbsp;·&nbsp; Paper ${fmtUSD(profile.paperValue)} &nbsp;·&nbsp; NPV ${fmtUSD(profile.realizedNpv)}</div>
       ${scoreBreakdown}
       <div class="mp-traj-meta" style="color:#64748b">Source: Asterank + screening-grade economics</div>
@@ -5713,10 +5887,9 @@ function selectTrajectory(idx) {
   optimalTrajectory = traj;
   document.querySelectorAll('.mp-traj-card').forEach((c, i) =>
     c.classList.toggle('mp-traj-selected', i === idx));
-  missionEarthReturnPos = null;
+  missionReturnTargetPos = null;
   clearTrajectoryLine();
-  const live = getLiveMissionPositions(traj);
-  drawTrajectoryLine(traj.earthPos, traj.astPos, { returnEarthPos: live?.returnEarthPos || traj.earthPos });
+  drawTrajectoryLine(traj);
   // Frame camera on Earth departure position to show trajectory
   {
     const ep  = traj.earthPos;
@@ -5724,9 +5897,10 @@ function selectTrajectory(idx) {
     const sep = Math.hypot(ap.x - ep.x, ap.y - ep.y, ap.z - ep.z);
     flyTarget = { x: ep.x, y: ep.y, z: ep.z, dist: Math.max(1.5, sep * 1.2), progress: 0 };
   }
-  // Request accurate Earth return position
-  if (traj.jd_ret_arr) {
-    worker.postMessage({ cmd:'query_pos', jd: traj.jd_ret_arr, planetIdx: 2, reqId: 'earth_return' });
+  // Request accurate terminal return position for the selected destination
+  if (traj.jd_ret_arr && traj.returnTarget?.body) {
+    const reqId = ++_activeReturnQueryId;
+    worker.postMessage({ cmd:'query_pos', jd: traj.jd_ret_arr, reqId, target: traj.returnTarget });
   }
   const profile = computeMissionProfile(traj);
   document.getElementById('mp-profile-text').textContent = profile.text;
@@ -5742,7 +5916,7 @@ function selectTrajectory(idx) {
   renderBurnEditTable();
   document.getElementById('mp-burns').style.display   = 'block';
   document.getElementById('mp-actions').style.display = 'block';
-  drawBurnVectors({ ...traj, earthPos: live?.earthPos || traj.earthPos, astPos: live?.astPos || traj.astPos });
+  drawBurnVectors(traj);
   buildMissionTimeline(traj);
   // Re-render porkchop so selected dot updates (only if panel is visible)
   if (porkchopData &&
@@ -5797,25 +5971,22 @@ function computeMissionProfile(traj) {
   const dvUnc_mp = traj.dv_total * 0.15;
   const costRng_mp = computeMissionCost(totalCost, dvUnc_mp);
 
-  // ── Revenue (5% extraction — conservative, no industrial-scale ISRU demonstrated) ──
-  const prices = getActivePrices();
-  const spec   = getMatSpec(ast);
-  const comp   = spec ? MAT_COMP[spec] : null;
-  let revenuePerKg = null;
-  if (comp) {
-    revenuePerKg = 0;
-    MAT_KEYS.forEach(k => { revenuePerKg += (comp[k] / 100) * (prices[k] || 0); });
-  }
-  const returnedKg = sc.payload_kg * 0.05;
-  const revLow  = Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
-  const revHigh = revLow; // single rate — collapse to 5%
-
-  // ── Demand-adjusted realizable NPV (constant-elasticity model) ───────────────
-  // Infer primary commodity from spectral type
-  const _specChar = spec ? spec.charAt(0).toUpperCase() : '?';
-  const _commodity = _specChar === 'M' ? 'platinum' : _specChar === 'S' ? 'nickel' : _specChar === 'C' ? 'water' : null;
-  const paperValue   = Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg : null;
-  const npvRealized  = _commodity && Number.isFinite(revenuePerKg) ? computeRealizableNPV(_commodity, returnedKg, revenuePerKg) : null;
+  // ── Revenue (canonical screening-grade return model) ────────────────────────
+  const spec = getMatSpec(ast);
+  const econSummary = computeEconomicsSummary(ast, {
+    dryMass: sc.dry_kg,
+    isp: sc.isp,
+    dv: traj.dv_total,
+    launchCostPerKg: lv.cost_per_kg,
+    totalCostMultiplier: 1,
+    payloadKg: sc.payload_kg,
+  });
+  const revenuePerKg = econSummary.revenuePerKg;
+  const returnedKg = econSummary.returnedKg;
+  const revLow = econSummary.paperValueUsd;
+  const revHigh = revLow;
+  const paperValue = econSummary.paperValueUsd;
+  const npvRealized = econSummary.realizableNpvUsd;
 
   // ── Simple time-value NPV for ROI display ───────────────────────────────────
   const missionYears = opsDays / 365.25;
@@ -5825,7 +5996,7 @@ function computeMissionProfile(traj) {
 
   const roiLow  = Number.isFinite(revLow) && totalCost > 0 ? (revLow  - totalCost) / totalCost * 100 : null;
   const roiHigh = roiLow;
-  const breakEvenKg = Number.isFinite(revenuePerKg) && revenuePerKg > 0 ? Math.ceil(totalCost / (revenuePerKg * 0.05)) : null;
+  const breakEvenKg = Number.isFinite(revenuePerKg) && revenuePerKg > 0 ? Math.ceil(totalCost / revenuePerKg) : null;
   const fmtMaybeUSD = v => Number.isFinite(v) ? fmtUSD(v) : 'unknown';
   const fmtMaybePct = v => Number.isFinite(v) ? `${v.toFixed(0)}%` : 'unknown';
 
@@ -5878,13 +6049,13 @@ function computeMissionProfile(traj) {
     dot('Psyche (metal asteroid orb.)', '~$1.0B'),
     dot('First-of-kind mining est.',    '$2B – $10B+'),
     sep('REVENUE ESTIMATE'),
-    dot('ORE PAYLOAD', sc.payload_kg.toLocaleString() + ' kg max'),
-    dot('EXTRACTED (5%)', returnedKg.toLocaleString() + ' kg  (conservative — no ISRU at scale demonstrated)'),
+    dot('ORE PAYLOAD CAP', sc.payload_kg.toLocaleString() + ' kg max'),
+    dot('MISSION RETURN', `${Math.round(returnedKg || 0).toLocaleString()} kg  (${econSummary.returnModelSource})`),
     dot('REVENUE / KG', Number.isFinite(revenuePerKg) ? '$' + revenuePerKg.toFixed(2) : 'unknown'),
     dot('PAPER VALUE', fmtMaybeUSD(paperValue) + '  (spot price, no market impact)'),
     dot('REALIZABLE NPV', fmtMaybeUSD(npvRealized) + '  (demand-adj. 10yr sell, 8% discount)'),
     sep('RETURNS'),
-    dot('ROI', fmtMaybePct(roiLow)),
+    dot('EST. ROI', fmtMaybePct(roiLow)),
     dot('NPV 5%', fmtMaybeUSD(npvLow)),
     breakEvenKg ? dot('BREAK-EVEN PAYLOAD', breakEvenKg.toLocaleString() + ' kg') : '',
     sep('PROPAGATION METHOD'),
@@ -5915,66 +6086,53 @@ function computeMissionProfile(traj) {
   };
 }
 
-function drawTrajectoryLine(earthPos, astPos, options = {}) {
-  const ex = earthPos.x, ey = earthPos.y, ez = earthPos.z;
-  const ax = astPos.x,   ay = astPos.y,   az = astPos.z;
-  const dx = ax - ex, dy = ay - ey;
-  const midX = (ex + ax) / 2;
-  const midY = (ey + ay) / 2 + Math.hypot(dx, dy) * 0.3;
-  const midZ = (ez + az) / 2;
-  const curve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(ex, ey, ez),
-    new THREE.Vector3(midX, midY, midZ),
-    new THREE.Vector3(ax, ay, az),
-  );
-  const pts = curve.getPoints(100);
-  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+function drawTrajectoryLine(traj) {
+  const segments = buildExtractMissionSegments(traj);
+  if (!segments || segments.outboundPts.length < 2) {
+    setStatus('Extract path unavailable without solved segment geometry', true);
+    return false;
+  }
+  const geo = new THREE.BufferGeometry().setFromPoints(segments.outboundPts);
   trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
   scene.add(trajectoryLine);
   showGlowLine(trajectoryLine);
-  // Arc phase labels (set after geometry is in place)
-  {
-    const t = optimalTrajectory;
-    const depText = t && Number.isFinite(t.dv_dep) ? `DEPARTURE  ΔV: ${t.dv_dep.toFixed(2)} km/s` : 'DEPARTURE';
-    const arrText = t && Number.isFinite(t.dv_arr) ? `ARRIVAL  ΔV: ${t.dv_arr.toFixed(2)} km/s`   : 'ARRIVAL';
-    _setArcAnchor('departure', trajectoryLine, depText, 0.25);
-    _setArcAnchor('arrival',   trajectoryLine, arrText, 0.75);
-  }
-  // Departure arrow (green, pointing toward asteroid)
-  const dir = new THREE.Vector3(ax - ex, ay - ey, az - ez).normalize();
-  const arr1 = new THREE.ArrowHelper(dir, new THREE.Vector3(ex, ey, ez), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
-  scene.add(arr1); trajectoryArrows.push(arr1);
-  // Arrival arrow (red, retro-burn)
-  const arr2 = new THREE.ArrowHelper(dir.clone().negate(), new THREE.Vector3(ax, ay, az), 0.12, 0xffcf66, 0.05, 0.025);
-  scene.add(arr2); trajectoryArrows.push(arr2);
-  // Return arc (dashed) — drawn once Earth return pos is known
-  if (optimalTrajectory && !options.skipReturn) _redrawReturnArc(optimalTrajectory, { astPos, returnEarthPos: options.returnEarthPos });
+  const depText = Number.isFinite(traj?.dv_dep) ? `DEPARTURE  ΔV: ${traj.dv_dep.toFixed(2)} km/s` : 'DEPARTURE';
+  const arrText = Number.isFinite(traj?.dv_arr) ? `ARRIVAL  ΔV: ${traj.dv_arr.toFixed(2)} km/s` : 'ARRIVAL';
+  _setArcAnchor('departure', trajectoryLine, depText, 0.15);
+  _setArcAnchor('arrival', trajectoryLine, arrText, 0.85);
+
+  const outboundFallback = new THREE.Vector3(
+    (traj.astPos?.x || 0) - (traj.earthPos?.x || 0),
+    (traj.astPos?.y || 0) - (traj.earthPos?.y || 0),
+    (traj.astPos?.z || 0) - (traj.earthPos?.z || 0),
+  );
+  const depDir = getPathDirection(segments.outboundPts, 0.02, outboundFallback, false);
+  const arrDir = getPathDirection(segments.outboundPts, 0.98, outboundFallback, true);
+  const depPos = segments.outboundPts[0];
+  const arrPos = segments.outboundPts[segments.outboundPts.length - 1];
+  const depArrow = new THREE.ArrowHelper(depDir, depPos.clone(), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
+  const arrArrow = new THREE.ArrowHelper(arrDir, arrPos.clone(), 0.12, 0xffcf66, 0.05, 0.025);
+  scene.add(depArrow); trajectoryArrows.push(depArrow);
+  scene.add(arrArrow); trajectoryArrows.push(arrArrow);
+
+  _redrawReturnArc(traj, segments);
+  return true;
 }
 
-function _redrawReturnArc(traj, options = {}) {
+function _redrawReturnArc(traj, segments = null) {
   if (returnArcLine) { disposeObject3D(returnArcLine); returnArcLine = null; }
-  const ep = options.returnEarthPos || missionEarthReturnPos || traj.earthPos;
-  const origin = options.astPos || traj.astPos;
-  const ax = origin.x, ay = origin.y, az = origin.z;
-  const dx2 = ep.x - ax, dy2 = ep.y - ay;
-  const mid2X = (ax + ep.x) / 2;
-  const mid2Y = (ay + ep.y) / 2 + Math.hypot(dx2, dy2) * 0.25;
-  const mid2Z = (az + ep.z) / 2;
-  const retCurve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(ax, ay, az),
-    new THREE.Vector3(mid2X, mid2Y, mid2Z),
-    new THREE.Vector3(ep.x, ep.y, ep.z));
-  const retPts = retCurve.getPoints(80);
-  const retGeo = new THREE.BufferGeometry().setFromPoints(retPts);
+  const resolvedSegments = segments || buildExtractMissionSegments(traj);
+  if (!resolvedSegments || resolvedSegments.returnPts.length < 2) return false;
+  const retGeo = new THREE.BufferGeometry().setFromPoints(resolvedSegments.returnPts);
   const retLine = makeDashedGlowLine(retGeo, ORBIT_NEON.transfer, 0.64, 0.03, 0.02, { haloOpacity: 0.14 });
   scene.add(retLine);
   showGlowLine(retLine);
   returnArcLine = retLine;
   {
-    const t = optimalTrajectory;
-    const retText = t && Number.isFinite(t.dv_return) ? `RETURN  ΔV: ${t.dv_return.toFixed(2)} km/s` : 'RETURN';
+    const retText = traj && Number.isFinite(traj.dv_return) ? `RETURN  ΔV: ${traj.dv_return.toFixed(2)} km/s` : 'RETURN';
     _setArcAnchor('returnArc', returnArcLine, retText);
   }
+  return true;
 }
 
 function getCurrentAsteroidPosition(id = selectedId) {
@@ -5989,8 +6147,31 @@ function getLiveMissionPositions(traj) {
   return {
     earthPos: { x: planets[2].position.x, y: planets[2].position.y, z: planets[2].position.z },
     astPos,
-    returnEarthPos: missionEarthReturnPos || traj.earthPos,
+    returnTargetPos: missionReturnTargetPos || traj.returnTargetPos || traj.earthPos,
   };
+}
+
+function getPathDirection(pathPts, t, fallbackVec, reverse = false) {
+  const fallback = fallbackVec && fallbackVec.lengthSq() > 0 ? fallbackVec.clone().normalize() : new THREE.Vector3(1, 0, 0);
+  if (!pathPts || pathPts.length < 2) return reverse ? fallback.negate() : fallback;
+  const clamped = Math.max(0, Math.min(0.999999, t));
+  const scaled = clamped * (pathPts.length - 1);
+  const idx = Math.floor(scaled);
+  const p0 = pathPts[idx];
+  const p1 = pathPts[Math.min(idx + 1, pathPts.length - 1)];
+  const dir = new THREE.Vector3().subVectors(p1, p0);
+  if (dir.lengthSq() < 1e-10) return reverse ? fallback.negate() : fallback;
+  dir.normalize();
+  return reverse ? dir.negate() : dir;
+}
+
+function samplePathVector(pathPts, t, fallback) {
+  if (!pathPts || !pathPts.length) return fallback ? fallback.clone() : null;
+  if (pathPts.length === 1) return pathPts[0].clone();
+  const pos = new THREE.Vector3();
+  const next = new THREE.Vector3();
+  samplePathPosition(pathPts, t, pos, next);
+  return pos;
 }
 
 function syncActiveMissionVisuals() {
@@ -6003,15 +6184,13 @@ function syncActiveMissionVisuals() {
     syncActiveRedirectVisuals();
     return;
   }
-  const live = getLiveMissionPositions(traj);
-  if (!live) return;
   if (trajectoryLine || returnArcLine || trajectoryArrows.length) {
     clearMissionPathVisuals();
-    drawTrajectoryLine(traj.earthPos, traj.astPos, { returnEarthPos: live?.returnEarthPos });
+    drawTrajectoryLine(traj);
   }
   if (burnVectorArrows.length) {
     clearBurnVectors();
-    drawBurnVectors({ ...traj, earthPos: live.earthPos, astPos: live.astPos });
+    drawBurnVectors(traj);
   }
 }
 
@@ -6062,31 +6241,66 @@ function getBurnColor(label) {
 
 function drawBurnVectors(traj) {
   clearBurnVectors();
-  const ep = missionEarthReturnPos || traj.earthPos;
+  const segments = buildExtractMissionSegments(traj);
+  if (!segments?.outboundPts?.length) return;
+  const outboundFallback = new THREE.Vector3(
+    (traj.astPos?.x || 0) - (traj.earthPos?.x || 0),
+    (traj.astPos?.y || 0) - (traj.earthPos?.y || 0),
+    (traj.astPos?.z || 0) - (traj.earthPos?.z || 0),
+  );
+  const returnFallback = new THREE.Vector3(
+    (traj.returnTargetPos?.x || traj.earthPos?.x || 0) - (traj.astPos?.x || 0),
+    (traj.returnTargetPos?.y || traj.earthPos?.y || 0) - (traj.astPos?.y || 0),
+    (traj.returnTargetPos?.z || traj.earthPos?.z || 0) - (traj.astPos?.z || 0),
+  );
+  const returnPts = segments.returnPts?.length ? segments.returnPts : null;
   const burnDefs = [
-    { pos: traj.earthPos, label: mpBurns[0]?.label || '1 · DEPARTURE',       dv: traj.dv_dep, jd: traj.jd_dep },
-    { pos: traj.astPos,   label: mpBurns[1]?.label || '2 · ASTEROID ARRIVAL', dv: traj.dv_arr, jd: traj.jd_arr },
-    { pos: { x:(traj.earthPos.x+traj.astPos.x)/2, y:(traj.earthPos.y+traj.astPos.y)/2+0.05, z:(traj.earthPos.z+traj.astPos.z)/2 },
-      label: mpBurns[2]?.label || '3 · MCC', dv: traj.dv_mcc||0, jd: mpBurns[2]?.jd },
-    { pos: traj.astPos, label: mpBurns[3]?.label || '4 · ASTEROID DEP.', dv: traj.dv_return, jd: traj.jd_ret_dep, offset:[0.04,0,0] },
-    { pos: ep, label: mpBurns[4]?.label || '5 · DEST. CAPTURE', dv: traj.dv_capture||0, jd: traj.jd_ret_arr, offset:[0,0.04,0] },
+    {
+      pos: segments.outboundPts[0].clone(),
+      label: mpBurns[0]?.label || '1 · DEPARTURE',
+      dv: traj.dv_dep,
+      jd: traj.jd_dep,
+      dir: getPathDirection(segments.outboundPts, 0.02, outboundFallback, false),
+    },
+    {
+      pos: segments.outboundPts[segments.outboundPts.length - 1].clone(),
+      label: mpBurns[1]?.label || '2 · ASTEROID ARRIVAL',
+      dv: traj.dv_arr,
+      jd: traj.jd_arr,
+      dir: getPathDirection(segments.outboundPts, 0.98, outboundFallback, true),
+    },
+    {
+      pos: samplePathVector(segments.outboundPts, 0.5, segments.outboundPts[0]),
+      label: mpBurns[2]?.label || '3 · MCC',
+      dv: traj.dv_mcc || 0,
+      jd: mpBurns[2]?.jd,
+      dir: getPathDirection(segments.outboundPts, 0.5, outboundFallback, false),
+    },
+    {
+      pos: returnPts ? returnPts[0].clone() : segments.outboundPts[segments.outboundPts.length - 1].clone(),
+      label: mpBurns[3]?.label || '4 · ASTEROID DEP.',
+      dv: traj.dv_return,
+      jd: traj.jd_ret_dep,
+      dir: getPathDirection(returnPts, 0.02, returnFallback, false),
+      offset: [0.04, 0, 0],
+    },
+    {
+      pos: returnPts ? returnPts[returnPts.length - 1].clone() : new THREE.Vector3(traj.returnTargetPos?.x || 0, traj.returnTargetPos?.y || 0, traj.returnTargetPos?.z || 0),
+      label: mpBurns[4]?.label || '5 · DEST. CAPTURE',
+      dv: traj.dv_capture || 0,
+      jd: traj.jd_ret_arr,
+      dir: getPathDirection(returnPts, 0.98, returnFallback, true),
+      offset: [0, 0.04, 0],
+    },
   ];
 
-  const outDir = new THREE.Vector3(
-    traj.astPos.x-traj.earthPos.x, traj.astPos.y-traj.earthPos.y, traj.astPos.z-traj.earthPos.z).normalize();
-  const retroDir = outDir.clone().negate();
-  const mccDir   = new THREE.Vector3(-outDir.y, outDir.x, 0).normalize();
-  const retDir   = new THREE.Vector3(ep.x-traj.astPos.x, ep.y-traj.astPos.y, ep.z-traj.astPos.z).normalize();
-  const capDir   = retDir.clone().negate();
-  const DIRS     = [outDir, retroDir, mccDir, retDir, capDir];
-
-  burnDefs.forEach((b, i) => {
+  burnDefs.forEach((b) => {
     if (!b.dv || b.dv < 0.001) return;
     const len    = Math.max(0.06, Math.min(0.28, b.dv * 0.04));
     const col    = getBurnColor(b.label);
     const ox     = b.offset?.[0]||0, oy = b.offset?.[1]||0, oz = b.offset?.[2]||0;
     const origin = new THREE.Vector3(b.pos.x+ox, b.pos.y+oy, b.pos.z+oz);
-    const arrow  = new THREE.ArrowHelper(DIRS[i], origin, len, col, len*0.3, len*0.12);
+    const arrow  = new THREE.ArrowHelper(b.dir, origin, len, col, len*0.3, len*0.12);
     arrow.userData = { burnLabel: b.label, dv: b.dv, jd: b.jd };
     scene.add(arrow);
     burnVectorArrows.push(arrow);
@@ -6158,7 +6372,7 @@ function buildRedirectTimeline(visual) {
   const jd0 = visual?.intercept?.jd_dep;
   const jd1 = visual?.intercept?.jd_arr;
   const jd2 = visual?._attachEndJD || jd1;
-  const jd3 = visual?.redirect?.jd_earth_arr;
+  const jd3 = visual?.redirect?.jd_capture_arr;
   const jd4 = visual?._captureEndJD || jd3;
   const span = jd4 - jd0;
   if (!(Number.isFinite(jd0) && Number.isFinite(jd1) && Number.isFinite(jd3) && Number.isFinite(jd4) && span > 0)) return;
@@ -6229,26 +6443,13 @@ function startMissionAnimation(traj) {
   stopMissionAnimation();
   setPlayState(false);
   setCurrentJD(traj.jd_dep);
-  const dx   = traj.astPos.x - traj.earthPos.x, dy = traj.astPos.y - traj.earthPos.y;
-  const midX = (traj.earthPos.x + traj.astPos.x) / 2;
-  const midY = (traj.earthPos.y + traj.astPos.y) / 2 + Math.hypot(dx, dy) * 0.3;
-  const midZ = (traj.earthPos.z + traj.astPos.z) / 2;
-  const outCurve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(traj.earthPos.x, traj.earthPos.y, traj.earthPos.z),
-    new THREE.Vector3(midX, midY, midZ),
-    new THREE.Vector3(traj.astPos.x, traj.astPos.y, traj.astPos.z));
-  missionAnim.outboundPts = outCurve.getPoints(200);
-
-  const ep    = missionEarthReturnPos || traj.earthPos;
-  const dx2   = ep.x - traj.astPos.x, dy2 = ep.y - traj.astPos.y;
-  const midX2 = (traj.astPos.x + ep.x) / 2;
-  const midY2 = (traj.astPos.y + ep.y) / 2 + Math.hypot(dx2, dy2) * 0.3;
-  const midZ2 = (traj.astPos.z + ep.z) / 2;
-  const retCurve = new THREE.QuadraticBezierCurve3(
-    new THREE.Vector3(traj.astPos.x, traj.astPos.y, traj.astPos.z),
-    new THREE.Vector3(midX2, midY2, midZ2),
-    new THREE.Vector3(ep.x, ep.y, ep.z));
-  missionAnim.returnPts = retCurve.getPoints(200);
+  const segments = buildExtractMissionSegments(traj);
+  if (!segments || segments.outboundPts.length < 2 || segments.returnPts.length < 2) {
+    setStatus('Extract animation unavailable without solved segment geometry', true);
+    return false;
+  }
+  missionAnim.outboundPts = segments.outboundPts;
+  missionAnim.returnPts = segments.returnPts;
   if (!missionAnim.outboundPts.length || !missionAnim.returnPts.length) return false;
 
   missionAnim.spacecraft = createSpacecraft();
@@ -6300,15 +6501,12 @@ function startRedirectAnimation(visual) {
   const interceptEnd = Number.isFinite(ic.segment_jd_end) ? ic.segment_jd_end : ic.jd_arr;
   let interceptPts = ic.orbit_el ? buildOrbitSegmentPoints(ic.orbit_el, interceptStart, interceptEnd, 180) : [];
   const segStart = Number.isFinite(rd.segment_jd_start) ? rd.segment_jd_start : ic.jd_arr;
-  const segEnd = Number.isFinite(rd.segment_jd_end) ? rd.segment_jd_end : rd.jd_earth_arr;
+  const segEnd = Number.isFinite(rd.segment_jd_end) ? rd.segment_jd_end : rd.jd_capture_arr;
   const redirectPts = rd.orbit_el ? buildOrbitSegmentPoints(rd.orbit_el, segStart, segEnd, 220) : [];
   const asteroidPts = ast ? buildOrbitSegmentPoints(asteroidToOrbitElements(ast), ic.jd_dep, ic.jd_arr, 180) : [];
   if (interceptPts.length < 2) {
-    const dep = new THREE.Vector3(ic.earthPos.x, ic.earthPos.y, ic.earthPos.z);
-    const arr = new THREE.Vector3(ic.astPos.x, ic.astPos.y, ic.astPos.z);
-    const mid = dep.clone().lerp(arr, 0.5);
-    mid.y += dep.distanceTo(arr) * 0.3;
-    interceptPts = new THREE.QuadraticBezierCurve3(dep, mid, arr).getPoints(180);
+    setStatus('Redirect intercept animation unavailable without solved segment geometry', true);
+    return false;
   }
   if (redirectPts.length < 2) {
     setStatus('Redirect animation unavailable for current solution window', true);
@@ -6345,11 +6543,11 @@ function startRedirectAnimation(visual) {
   missionAnim.animJD = ic.jd_dep;
   missionAnim.phase = 'outbound';
   missionAnim.jdStart = ic.jd_dep;
-  const redirectSpanDays = Math.max(1, rd.jd_earth_arr - ic.jd_arr);
+  const redirectSpanDays = Math.max(1, rd.jd_capture_arr - ic.jd_arr);
   const attachDays = Math.min(18, Math.max(6, redirectSpanDays * 0.04));
   const captureDays = Math.min(24, Math.max(8, redirectSpanDays * 0.05));
-  missionAnim.attachEndJD = Math.min(rd.jd_earth_arr, ic.jd_arr + attachDays);
-  missionAnim.captureEndJD = rd.jd_earth_arr + captureDays;
+  missionAnim.attachEndJD = Math.min(rd.jd_capture_arr, ic.jd_arr + attachDays);
+  missionAnim.captureEndJD = rd.jd_capture_arr + captureDays;
   missionAnim.captureRadiusAU = Number.isFinite(visual.capture?.r_cap_km)
     ? (visual.capture.r_cap_km * 1000) / AU_m
     : 0.006;
@@ -6425,23 +6623,24 @@ function updateAttachedAssembly(centerPos, nextPos, attachOffset = 0.028) {
 }
 
 function updateRedirectCaptureAssembly(visual, jd) {
-  if (!visual?.capture || !planets[2]) return false;
-  const captureStart = visual.redirect.jd_earth_arr;
+  if (!visual?.capture) return false;
+  const captureStart = visual.redirect.jd_capture_arr;
   const captureEnd = missionAnim.captureEndJD || captureStart;
   const span = Math.max(1, captureEnd - captureStart);
   const t = Math.max(0, Math.min(1, (jd - captureStart) / span));
   const radiusAU = missionAnim.captureRadiusAU || 0.006;
-  const earthPos = planets[2].position;
+  const targetPos = getCaptureTargetPosition(visual.capture);
+  if (!targetPos) return false;
   const theta = t * TWO_PI * 0.65;
   missionAnim.captureCenter.set(
-    earthPos.x + radiusAU * Math.cos(theta),
-    earthPos.y,
-    earthPos.z + radiusAU * Math.sin(theta)
+    targetPos.x + radiusAU * Math.cos(theta),
+    targetPos.y,
+    targetPos.z + radiusAU * Math.sin(theta)
   );
   missionAnim.sampledNext.set(
-    earthPos.x + radiusAU * Math.cos(theta + 0.12),
-    earthPos.y,
-    earthPos.z + radiusAU * Math.sin(theta + 0.12)
+    targetPos.x + radiusAU * Math.cos(theta + 0.12),
+    targetPos.y,
+    targetPos.z + radiusAU * Math.sin(theta + 0.12)
   );
   updateAttachedAssembly(missionAnim.captureCenter, missionAnim.sampledNext, 0.024);
   return true;
@@ -6493,11 +6692,11 @@ function updateMissionAnimation(dt) {
       if (missionAnim.returnPts.length > 1) missionAnim.sampledAsteroidNext.copy(missionAnim.returnPts[1]);
       else missionAnim.sampledAsteroidNext.copy(missionAnim.sampledAsteroid);
       updateAttachedAssembly(missionAnim.sampledAsteroid, missionAnim.sampledAsteroidNext, 0.018);
-    } else if (jd <= visual.redirect.jd_earth_arr) {
+    } else if (jd <= visual.redirect.jd_capture_arr) {
       missionAnim.phase = 'redirect';
       pathPts = missionAnim.returnPts;
       pathStart = visual.intercept.jd_arr;
-      pathSpan = visual.redirect.jd_earth_arr - visual.intercept.jd_arr;
+      pathSpan = visual.redirect.jd_capture_arr - visual.intercept.jd_arr;
       normalizedT = Math.max(0, Math.min(1, pathSpan > 0 ? (jd - pathStart) / pathSpan : 0));
       burning = normalizedT < 0.05 || normalizedT > 0.95;
       const sampled = samplePathPosition(pathPts, normalizedT, missionAnim.sampledAsteroid, missionAnim.sampledAsteroidNext);
@@ -6642,7 +6841,7 @@ document.getElementById('btn-close-panel').addEventListener('click', deselectAst
 // ─── Phase 5: Onboarding Tour ─────────────────────────────────────────────────
 const TOUR_STEPS = [
   { text: 'Welcome to ASTER — the asteroid mining mission planner. This 5-step tour shows you the key features.', pos: { bottom: '80px', left: '50%', transform: 'translateX(-50%)' } },
-  { text: 'The left panel ranks asteroids by mining score. Click any row to select a target, or use the filters at the top.', pos: { top: '80px', left: '340px' } },
+  { text: 'The left panel ranks asteroids by screening value and accessibility. Click any row to select a target, or use the filters at the top.', pos: { top: '80px', left: '340px' } },
   { text: 'Click any asteroid in the 3D view to inspect it. The right panel shows orbital elements, economics, and resource composition.', pos: { top: '80px', right: '360px' } },
   { text: 'Select an asteroid then press B (or click PLAN MISSION) to enter burn mode. Drag the gizmo arrows to simulate a ΔV maneuver.', pos: { bottom: '80px', right: '360px' } },
   { text: 'Press ? to see all keyboard shortcuts. Use [ and ] to control time speed, F to fly to your selected asteroid.', pos: { bottom: '80px', left: '50%', transform: 'translateX(-50%)' } },
@@ -6713,6 +6912,9 @@ function selectAsteroid(id) {
 
   document.getElementById('ast-name').textContent = name;
   document.getElementById('ast-type').textContent = spec;
+  document.getElementById('ast-type-note').textContent = spec && spec !== '?'
+    ? 'spectral taxonomy; composition remains uncertain'
+    : 'spectral taxonomy unavailable';
   document.getElementById('ast-diam').textContent = diam;
   document.getElementById('ast-sma').textContent = Number.isFinite(Number(ast.a)) ? `${Number(ast.a).toFixed(4)} AU` : '—';
   document.getElementById('ast-ecc').textContent = Number.isFinite(Number(ast.e)) ? Number(ast.e).toFixed(5) : '—';
@@ -6730,6 +6932,7 @@ function selectAsteroid(id) {
   document.getElementById('ast-moid').textContent = Number.isFinite(Number(ast.moid)) ? `${Number(ast.moid).toFixed(4)} AU` : '—';
   document.getElementById('ast-last-obs').textContent = ast.last_obs || 'unknown';
   document.getElementById('ast-cond-code').textContent = ast.condition_code !== null && ast.condition_code !== undefined ? String(ast.condition_code) : 'unknown';
+  document.getElementById('ast-source').textContent = getCatalogSourceLabel(ast);
   // Phase 3: composition + resource value + score
   const spec3 = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().charAt(0).toUpperCase();
   const mappedSpec = getMatSpec(ast);
@@ -6738,35 +6941,22 @@ function selectAsteroid(id) {
     || ((ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy) ? 'Composition model not available' : 'No composition data');
   document.getElementById('ast-composition').textContent = compText;
 
-  const prices3 = getActivePrices();
   const econ3 = resolveAsteroidEconomics(ast);
   const massModel3 = econ3.massModel;
-  const spec3g   = mappedSpec;
-  const comp3    = spec3g ? MAT_COMP[spec3g] : null;
-  let revPerKg3  = 0;
-  if (comp3) MAT_KEYS.forEach(k => { revPerKg3 += (comp3[k] / 100) * (prices3[k] || 0); });
-  const mass3    = massModel3 && comp3 ? massModel3.massKg : null;
-  const totalVal3 = mass3 !== null ? mass3 * revPerKg3 : null;
+  const wholeBody3 = computeWholeBodyValueSummary(ast);
 
   const displayPrice  = econ3.extractableValueUsd;
   const displayProfit = econ3.rawProfitUsd;
-  document.getElementById('ast-price').textContent  = formatValueDisplay(displayPrice, { extractionLabel: true });
+  document.getElementById('ast-value-source').textContent = `${econ3.extractableValueSource}; ${getPriceSourceLabel()}`;
+  document.getElementById('ast-resource-model').textContent = massModel3
+    ? `${massModel3.spec}-type density model, H/diameter-derived mass`
+    : 'unknown size or spectral model';
+  document.getElementById('ast-price').textContent  = formatValueDisplay(displayPrice);
   document.getElementById('ast-profit').textContent = formatValueDisplay(displayProfit);
 
-  // Derive water/metal sub-values from the same MAT_COMP+prices system used for totalVal3
-  let waterVal3 = null, metalVal3 = null;
-  if (comp3 && mass3 !== null) {
-    waterVal3 = 0;
-    metalVal3 = 0;
-    const waterKeys = ['water'];
-    const metalKeys = ['iron','nickel','cobalt','platinum','gold','silver','copper'];
-    waterKeys.forEach(k => { waterVal3 += mass3 * (comp3[k] || 0) / 100 * (prices3[k] || 0); });
-    metalKeys.forEach(k => { metalVal3 += mass3 * (comp3[k] || 0) / 100 * (prices3[k] || 0); });
-  }
-
-  document.getElementById('ast-water-val').textContent = formatValueDisplay(waterVal3);
-  document.getElementById('ast-metal-val').textContent = formatValueDisplay(metalVal3);
-  document.getElementById('ast-total-val').textContent = formatValueDisplay(totalVal3);
+  document.getElementById('ast-water-val').textContent = formatValueDisplay(wholeBody3.waterValueUsd);
+  document.getElementById('ast-metal-val').textContent = formatValueDisplay(wholeBody3.metalValueUsd);
+  document.getElementById('ast-total-val').textContent = formatValueDisplay(wholeBody3.totalValueUsd);
   const fi = fi_early; // reuse already-computed metrics
   const dvDisp  = `${fi.deltaV.value.toFixed(2)} km/s (±${fi.deltaV.uncertainty})`;
   const durDisp = `${Math.round(fi.duration.value)} days  [${fi.duration.source}]`;
@@ -7960,6 +8150,34 @@ function updateMoonPosition(jd) {
   moonMesh.position.set(ep.x + MOON_A * Math.cos(angle), ep.y + MOON_A * Math.sin(angle), ep.z);
 }
 
+function getCaptureTargetPosition(capture) {
+  if (!capture) return null;
+  if (capture.targetPos && Number.isFinite(capture.targetPos.x) && Number.isFinite(capture.targetPos.y) && Number.isFinite(capture.targetPos.z)) {
+    if (capture.target_body !== 'moon' && capture.target_body !== 'el4' && capture.target_body !== 'el5') {
+      return capture.targetPos;
+    }
+  }
+  if (!planets[2]) return null;
+  if (capture.target_body === 'moon') {
+    return { x: moonMesh.position.x, y: moonMesh.position.y, z: moonMesh.position.z };
+  }
+  const earthPos = planets[2].position;
+  const moonDx = moonMesh.position.x - earthPos.x;
+  const moonDy = moonMesh.position.y - earthPos.y;
+  const moonDz = moonMesh.position.z - earthPos.z;
+  if (capture.target_body === 'el4' || capture.target_body === 'el5') {
+    const sign = capture.target_body === 'el4' ? 1 : -1;
+    const cos60 = 0.5;
+    const sin60 = sign * Math.sqrt(3) / 2;
+    return {
+      x: earthPos.x + moonDx * cos60 - moonDy * sin60,
+      y: earthPos.y + moonDx * sin60 + moonDy * cos60,
+      z: earthPos.z + moonDz,
+    };
+  }
+  return capture.targetPos || null;
+}
+
 function applyPositions(buf) {
   for (let i = 0; i < 8; i++) {
     planets[i].position.set(buf[i*3], buf[i*3+1], buf[i*3+2]);
@@ -8213,7 +8431,7 @@ async function init() {
   const sub = document.getElementById('loading-sub');
   if (sub) sub.textContent = 'Connecting to NASA databases...';
   loadSourceStatus = {};
-  worker.postMessage({ cmd: 'fetch_catalog', limit: window.ASTEROID_LIMIT || 5000 });
+  worker.postMessage({ cmd: 'fetch_catalog', limit: window.ASTEROID_LIMIT || 5000, apiBase: WORKER_URL });
   // loadStateFromURL and showTour are called from catalog_ready handler
 }
 

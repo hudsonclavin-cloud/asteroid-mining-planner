@@ -1,118 +1,126 @@
 # aster-proxy — Cloudflare Worker
 
-Proxies `POST /api/research` requests from the Aster frontend
-(`hudsonclavin.github.io`) to the OpenAI AI API.
+Cloudflare Worker for Aster's browser-facing API routes.
 
-The OpenAI API key is stored as a Cloudflare encrypted secret — it never
-appears in source code or git history.
+Current routes:
 
----
+- `POST /api/research`
+- `GET /api/prices`
+- `GET /api/asterank`
+- `GET /api/nhats`
+- `GET /api/horizons`
+- `GET /api/cad`
 
-## Prerequisites
+## Security Model
 
-- Cloudflare account (free tier works)
-- Node.js 18+
-
----
+- `OPENAI_API_KEY` stays in Cloudflare secrets.
+- `POST /api/research` requires an allowed browser `Origin`.
+- Allowed origins default to:
+  - `https://hudsonclavin-cloud.github.io`
+  - any local dev origin on `http://localhost:<port>` or `http://127.0.0.1:<port>`
+- Additional origins can be added with the `ALLOWED_ORIGINS` environment variable as a comma-separated list.
+- Research requests are rate-limited to `10/min/IP`.
+- Proxy GET routes are rate-limited to `60/min/IP`.
+- Upstream error bodies are not returned to clients.
 
 ## Deploy
 
 ```bash
-# 1. Install Wrangler (Cloudflare's CLI)
-npm install -g wrangler
-
-# 2. Login to your Cloudflare account
-wrangler login
-
-# 3. Set the API key secret (you'll be prompted to paste it)
-#    This is stored encrypted in Cloudflare — never committed to git.
+cd worker
 wrangler secret put OPENAI_API_KEY
-
-# 4. Deploy from the worker/ directory
-cd worker/
 wrangler deploy
 ```
 
-The worker will be live at:
-```
-https://aster-proxy.<your-cloudflare-subdomain>.workers.dev
-```
-
----
-
-## Local development
+Optional:
 
 ```bash
-cd worker/
+# comma-separated exact origins
+wrangler secret put ALLOWED_ORIGINS
+
+# optional live metals source for /api/prices
+wrangler secret put METALS_API_KEY
+```
+
+The worker runs from [wrangler.toml](/Users/hudsonclavin/asteroid-mining-planner/worker/wrangler.toml).
+
+## Local Dev
+
+```bash
+cd worker
 wrangler dev
 ```
 
-Wrangler will prompt you to use a local `.dev.vars` file for secrets during dev.
-Create `worker/.dev.vars` (gitignored):
+Create `worker/.dev.vars`:
+
+```env
+OPENAI_API_KEY=sk-...
+ALLOWED_ORIGINS=http://staging.example.com,https://preview.example.com
+METALS_API_KEY=optional-live-pricing-key
 ```
-OPENAI_API_KEY=pplx-your-key-here
-```
 
-Then POST to `http://localhost:8787/api/research`.
+The repo should ignore `worker/.dev.vars`.
 
-> **Note:** CORS is locked to `https://hudsonclavin.github.io`. For local
-> browser testing, temporarily add `http://localhost:8080` to `ALLOWED_ORIGIN`
-> in `index.js` — don't commit that change.
-
----
-
-## API reference
+## Research API
 
 ### `POST /api/research`
 
-**Request body (JSON):**
+Request body:
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `asteroidName` | string | one of these | Human-readable name (e.g. `"433 Eros"`) |
-| `designation` | string | one of these | Official designation (e.g. `"433"`) |
-| `spectralType` | string | no | SMASS spectral class (`"S"`, `"C"`, etc.) |
-| `orbit` | object | no | `{ a, e, i }` — SMA (AU), eccentricity, inclination (°) |
-| `miningScore` | number | no | Aster composite mining score 0–100 |
-
-**Example:**
 ```json
 {
   "asteroidName": "433 Eros",
   "designation": "433",
   "spectralType": "S",
   "orbit": { "a": 1.458, "e": 0.223, "i": 10.83 },
-  "miningScore": 72
+  "deltaV_kms": 6.11
 }
 ```
 
-**Success response `200`:**
+Accepted optional planner context fields:
+
+- `deltaV_kms`
+- `miningScore`
+
+At least one of these is required:
+
+- `asteroidName`
+- `designation`
+
+Success response:
+
 ```json
 {
-  "content": "## 433 Eros Research Briefing\n...",
+  "content": "## Research briefing ...",
   "model": "gpt-4o-mini",
-  "usage": { "prompt_tokens": 180, "completion_tokens": 620 }
+  "usage": {
+    "prompt_tokens": 100,
+    "completion_tokens": 500
+  }
 }
 ```
 
-**Error responses:**
+Common errors:
 
-| Status | Meaning |
-|---|---|
-| 400 | Missing or malformed request body |
-| 404 | Wrong path or method |
-| 429 | Rate limit exceeded (10 req/min per IP) |
-| 502 | OpenAI API unreachable or returned an error |
+- `400` invalid JSON or missing asteroid identity
+- `403` missing/disallowed origin
+- `429` rate limit exceeded
+- `502` upstream unavailable/error
+- `503` `OPENAI_API_KEY` missing
 
----
+## Proxy Routes
 
-## Notes
+The GET proxy routes only forward a small allowlisted set of query params. That is intentional. Do not widen those pass-throughs casually.
 
-- **Rate limiting:** 10 requests/minute per IP, tracked in-process. Resets if
-  Cloudflare recycles the worker isolate. Adequate for a hobby project; for
-  strict enforcement use Cloudflare Rate Limiting or Durable Objects.
-- **CORS:** restricted to `https://hudsonclavin.github.io`.
-- **Model:** `gpt-4o-mini` (OpenAI's search-augmented model). Change in
-  `index.js` if needed.
-- **Cost:** Cloudflare Workers free tier allows 100,000 requests/day. OpenAI
-  charges per token — budget accordingly.
+## Zero-Build Smoke Checks
+
+From the repo root:
+
+```bash
+node --test tests/*.test.mjs
+```
+
+Current checks cover:
+
+- texture asset references in `index.html`
+- route/env-var drift between `worker/index.js` and this README
+- local secret / Wrangler hygiene in `.gitignore`

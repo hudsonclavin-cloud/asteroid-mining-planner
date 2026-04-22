@@ -1,0 +1,8 @@
+worker/.dev.vars
+.env.local
+worker/.dev.vars.*
+.env
+.env.*
+.DS_Store
+.wrangler/
+worker/.wrangler/

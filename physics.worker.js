@@ -9,9 +9,16 @@ const DEG = Math.PI / 180;
 const GM_AU3_S2 = GM_sun / (AU * AU * AU); // ~3.964e-14 AU³/s²
 const GM_earth  = 3.986004418e14;          // m³/s²
 const R_earth   = 6.3781e6;               // m
+const GM_mars   = 42828.375214;           // km³/s²
+const R_mars    = 3389.5;                 // km
 const GM_moon   = 4902.0;                 // km³/s²
 const R_moon    = 1737.4;                 // km
 const R_cap     = R_moon + 5000;          // km — 5000 km altitude lunar capture orbit
+const AU_KM     = AU / 1000;
+const MOON_A_AU = 384400 / AU_KM;
+const MOON_PERIOD_DAYS = 27.321661;
+const EM_L1_RADIUS_KM = 326000;
+const EM_L2_RADIUS_KM = 444000;
 
 // Standish 1992 planet elements at J2000 + secular rates
 // Format: [a0, da, e0, de, i0, di, Om0, dOm, L0, dL, wb0, dwb]
@@ -58,6 +65,8 @@ const MISSION_GATE_DEP_KMS = 10.0;
 const MISSION_GATE_TOTAL_KMS = 25.0;
 const MISSION_HIGH_DV_KMS = 12.0;
 const NHATS_DEFAULTS = { dv: '12', dur: '450', stay: '8' };
+const DEFAULT_PROXY_BASE = 'https://aster-proxy.hudsonclavin.workers.dev';
+let API_BASE_URL = DEFAULT_PROXY_BASE;
 const DEFAULT_REDIRECT_CAPTURE = { key: 'lunar_orbit', label: 'Lunar Orbit', orbitRadiusKm: 6737, captureExtraDv: 1.7 };
 const DEFAULT_REDIRECT_DELIVERY = { key: 'leo', label: 'Low Earth Orbit (LEO)', captureExtraDv: 0.0, deliveryExtraDv: 0.0, marketMultiplier: 1.0 };
 const DEFAULT_REDIRECT_SPACECRAFT = { name: 'Medium Miner', dry_kg: 5000, payload_kg: 2000, isp: 320, cost_usd: 180e6 };
@@ -99,20 +108,121 @@ function parseEpochJD(value) {
   return n > 2400000 ? n : null;
 }
 
-function buildNhatsUrl(overrides) {
-  return 'https://aster-proxy.hudsonclavin.workers.dev/api/nhats?' + new URLSearchParams({
-    ...NHATS_DEFAULTS,
-    ...(overrides || {}),
-  }).toString();
+function wrapToTwoPi(theta) {
+  let out = theta % TWO_PI;
+  if (out < 0) out += TWO_PI;
+  return out;
 }
 
-function buildAsterankUrl(limit) {
-  return 'https://aster-proxy.hudsonclavin.workers.dev/api/asterank?' + new URLSearchParams({
+function moonRelativeState(jd) {
+  const angle = wrapToTwoPi((TWO_PI / MOON_PERIOD_DAYS) * (jd - J2000));
+  const omega = TWO_PI / MOON_PERIOD_DAYS; // rad/day
+  const vx_au_day = -MOON_A_AU * omega * Math.sin(angle);
+  const vy_au_day =  MOON_A_AU * omega * Math.cos(angle);
+  return {
+    x: MOON_A_AU * Math.cos(angle),
+    y: MOON_A_AU * Math.sin(angle),
+    z: 0,
+    vx: vx_au_day * AU_KM / 86400,
+    vy: vy_au_day * AU_KM / 86400,
+    vz: 0,
+  };
+}
+
+function propagateMoonState(jd) {
+  const earth = propagatePlanet(2, jd);
+  const rel = moonRelativeState(jd);
+  return {
+    x: earth.x + rel.x,
+    y: earth.y + rel.y,
+    z: earth.z + rel.z,
+    vx: earth.vx + rel.vx,
+    vy: earth.vy + rel.vy,
+    vz: earth.vz + rel.vz,
+  };
+}
+
+function propagateEarthMoonLagrangeState(jd, pointKey) {
+  const earth = propagatePlanet(2, jd);
+  const rel = moonRelativeState(jd);
+  const relNorm = Math.hypot(rel.x, rel.y, rel.z) || 1;
+  const ux = rel.x / relNorm;
+  const uy = rel.y / relNorm;
+  const uz = rel.z / relNorm;
+  const radiusKm = pointKey === 'l2' || pointKey === 'el5' ? EM_L2_RADIUS_KM : EM_L1_RADIUS_KM;
+  const radiusAu = radiusKm / AU_KM;
+  let px = earth.x + ux * radiusAu;
+  let py = earth.y + uy * radiusAu;
+  let pz = earth.z + uz * radiusAu;
+  let vx = earth.vx + rel.vx * (radiusAu / MOON_A_AU);
+  let vy = earth.vy + rel.vy * (radiusAu / MOON_A_AU);
+  let vz = earth.vz + rel.vz * (radiusAu / MOON_A_AU);
+  if (pointKey === 'el4' || pointKey === 'el5') {
+    const sign = pointKey === 'el4' ? 1 : -1;
+    const cos60 = 0.5;
+    const sin60 = sign * Math.sqrt(3) / 2;
+    const rx = rel.x * cos60 - rel.y * sin60;
+    const ry = rel.x * sin60 + rel.y * cos60;
+    const rvx = rel.vx * cos60 - rel.vy * sin60;
+    const rvy = rel.vx * sin60 + rel.vy * cos60;
+    px = earth.x + rx;
+    py = earth.y + ry;
+    pz = earth.z + rel.z;
+    vx = earth.vx + rvx;
+    vy = earth.vy + rvy;
+    vz = earth.vz + rel.vz;
+  }
+  return { x: px, y: py, z: pz, vx, vy, vz };
+}
+
+function buildNhatsUrl(overrides, baseOverride) {
+  return buildApiUrl('/api/nhats', {
+    ...NHATS_DEFAULTS,
+    ...(overrides || {}),
+  }, baseOverride);
+}
+
+function buildAsterankUrl(limit, baseOverride) {
+  return buildApiUrl('/api/asterank', {
     query: JSON.stringify({ neo: 'Y' }),
     limit: String(limit),
     sort: 'delta_v',
     fields: 'pdes,full_name,a,e,i,om,w,ma,epoch,H,spec,profit,delta_v,price,closeness,neo,pha,class,diameter,albedo,moid,last_obs,condition_code',
-  }).toString();
+  }, baseOverride);
+}
+
+function sanitizeApiBase(value) {
+  try {
+    const raw = String(value || DEFAULT_PROXY_BASE).trim();
+    const url = new URL(raw);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('invalid protocol');
+    const pathname = url.pathname && url.pathname !== '/' ? url.pathname.replace(/\/+$/, '') : '';
+    return `${url.origin}${pathname}`;
+  } catch (_) {
+    return DEFAULT_PROXY_BASE;
+  }
+}
+
+function buildApiUrl(path, params, baseOverride = API_BASE_URL) {
+  const url = new URL(`${sanitizeApiBase(baseOverride)}${path}`);
+  for (const [key, value] of Object.entries(params || {})) {
+    if (value === null || value === undefined || value === '') continue;
+    url.searchParams.set(key, String(value));
+  }
+  return url.toString();
+}
+
+function applyWorkerConfig(msg) {
+  if (!msg || typeof msg !== 'object') return;
+  if (Object.prototype.hasOwnProperty.call(msg, 'apiBase')) {
+    API_BASE_URL = sanitizeApiBase(msg.apiBase);
+  }
+}
+
+function getApiBaseCandidates() {
+  const primary = sanitizeApiBase(API_BASE_URL);
+  const fallback = sanitizeApiBase(DEFAULT_PROXY_BASE);
+  return primary === fallback ? [primary] : [primary, fallback];
 }
 
 function getNhatsMetricValue(value, key) {
@@ -355,14 +465,29 @@ function cart2kep(x, y, z, vx_kms, vy_kms, vz_kms, t_JD) {
   if (e > 1e-10) {
     nu_anom = Math.acos(Math.max(-1, Math.min(1, dot(e_vec, r_vec) / (e * r))));
     if (dot(r_vec, v_vec) < 0) nu_anom = TWO_PI - nu_anom;
+  } else if (n_mag > 1e-10) {
+    const cosU = Math.max(-1, Math.min(1, dot(n_vec, r_vec) / (n_mag * r)));
+    let u = Math.acos(cosU);
+    if (z < 0) u = TWO_PI - u;
+    w = 0;
+    nu_anom = u;
+  } else {
+    nu_anom = wrapToTwoPi(Math.atan2(y, x));
+    w = 0;
+    Om = 0;
   }
 
   // Mean anomaly via eccentric anomaly
-  const E_anom = 2 * Math.atan2(Math.sqrt(1-e)*Math.sin(nu_anom/2), Math.sqrt(1+e)*Math.cos(nu_anom/2));
-  const M0 = E_anom - e * Math.sin(E_anom);
+  let M0;
+  if (e > 1e-10) {
+    const E_anom = 2 * Math.atan2(Math.sqrt(1-e)*Math.sin(nu_anom/2), Math.sqrt(1+e)*Math.cos(nu_anom/2));
+    M0 = E_anom - e * Math.sin(E_anom);
+  } else {
+    M0 = nu_anom;
+  }
   if (![a, e, inc, Om, w, M0].every(Number.isFinite)) return null;
 
-  return { a, e, i: inc, Om, w, M0, epoch_JD: t_JD, nu: nu_anom };
+  return { a, e, i: inc, Om, w, M0: wrapToTwoPi(M0), epoch_JD: t_JD, nu: wrapToTwoPi(nu_anom) };
 }
 
 function isPlausiblePlannerOrbit(el, maxApoAu = 5.5) {
@@ -412,6 +537,96 @@ function solveLambertWithOrbitGuard(r1, r2, tof_days, originState, epoch_JD) {
   }
 
   return { lam, orbit_el, usedFallback, suspiciousIzzo };
+}
+
+function resolveMissionTarget(destination, jd, r_park_km) {
+  switch (destination) {
+    case 'geo':
+      return {
+        key: 'geo',
+        label: 'GEO',
+        body: 'earth',
+        state: propagatePlanet(2, jd),
+        orbitRadiusKm: 42164,
+        captureExtraDv: 0,
+        captureBasis: 'patched-conic Earth capture',
+      };
+    case 'lunar':
+      return {
+        key: 'lunar',
+        label: 'Lunar Surface',
+        body: 'moon',
+        state: propagateMoonState(jd),
+        orbitRadiusKm: R_moon + 100,
+        captureExtraDv: 1.6,
+        captureBasis: 'patched-conic Moon capture + landing adder',
+      };
+    case 'l1':
+      return {
+        key: 'l1',
+        label: 'Earth-Moon L1',
+        body: 'eml1',
+        state: propagateEarthMoonLagrangeState(jd, 'l1'),
+        orbitRadiusKm: EM_L1_RADIUS_KM,
+        captureExtraDv: 0.5,
+        captureBasis: 'screening-grade Earth-Moon L1 insertion',
+      };
+    case 'l2':
+      return {
+        key: 'l2',
+        label: 'Earth-Moon L2',
+        body: 'eml2',
+        state: propagateEarthMoonLagrangeState(jd, 'l2'),
+        orbitRadiusKm: EM_L2_RADIUS_KM,
+        captureExtraDv: 0.5,
+        captureBasis: 'screening-grade Earth-Moon L2 insertion',
+      };
+    case 'mars':
+      return {
+        key: 'mars',
+        label: 'Mars Orbit',
+        body: 'mars',
+        state: propagatePlanet(3, jd),
+        orbitRadiusKm: R_mars + 400,
+        captureExtraDv: 0.0,
+        captureBasis: 'patched-conic Mars orbit insertion',
+      };
+    case 'leo':
+    default:
+      return {
+        key: 'leo',
+        label: 'LEO',
+        body: 'earth',
+        state: propagatePlanet(2, jd),
+        orbitRadiusKm: r_park_km,
+        captureExtraDv: 0,
+        captureBasis: 'patched-conic Earth capture',
+      };
+  }
+}
+
+function resolveRedirectCaptureTarget(captureProfile, jd) {
+  const key = captureProfile?.key || DEFAULT_REDIRECT_CAPTURE.key;
+  if (key === 'el4' || key === 'el5') {
+    return {
+      key,
+      label: captureProfile.label,
+      body: key,
+      state: propagateEarthMoonLagrangeState(jd, key),
+      orbitRadiusKm: captureProfile.orbitRadiusKm,
+      captureExtraDv: captureProfile.captureExtraDv || 0,
+      captureBasis: `screening-grade Earth-Moon ${key.toUpperCase()} insertion`,
+    };
+  }
+  return {
+    key: 'lunar_orbit',
+    label: captureProfile.label,
+    body: 'moon',
+    state: propagateMoonState(jd),
+    orbitRadiusKm: captureProfile.orbitRadiusKm || DEFAULT_REDIRECT_CAPTURE.orbitRadiusKm,
+    captureExtraDv: captureProfile.captureExtraDv || 0,
+    captureBasis: 'patched-conic Moon orbit insertion',
+  };
 }
 
 // Propagate a planet at Julian Date jd using Standish 1992 secular elements
@@ -745,16 +960,29 @@ function patchedConic(v_earth, v_t1, v_ast, v_t2, r_park_km) {
   return { dv_dep, dv_arr, C3, vinf_dep_mag, vinf_arr_mag: dv_arr };
 }
 
-// Compute destination-capture ΔV on return.
-// v_inf_mag: arrival v-infinity at Earth [km/s]
-function destinationCaptureDv(v_inf_mag, destination, r_park_km) {
-  const mu_e = 398600.4418;
-  const rp   = r_park_km;
-  const v_circ = Math.sqrt(mu_e / rp);
-  const v_hyp  = Math.sqrt(v_inf_mag * v_inf_mag + 2 * mu_e / rp);
-  const dv_leo = v_hyp - v_circ;
-  const extras = { leo:0, geo:1.5, l1:0.5, l2:0.5, lunar:1.7, mars:0.9 }; // screening-only adders
-  return dv_leo + (extras[destination] || 0);
+// Compute destination-capture ΔV using the actual target body/state when available.
+function destinationCaptureDv(v_inf_mag, targetProfile) {
+  if (!Number.isFinite(v_inf_mag) || !targetProfile) return null;
+  const extra = targetProfile.captureExtraDv || 0;
+  if (targetProfile.body === 'earth') {
+    const rp = targetProfile.orbitRadiusKm;
+    const v_circ = Math.sqrt(398600.4418 / rp);
+    const v_hyp = Math.sqrt(v_inf_mag * v_inf_mag + 2 * 398600.4418 / rp);
+    return v_hyp - v_circ + extra;
+  }
+  if (targetProfile.body === 'moon') {
+    const rp = targetProfile.orbitRadiusKm || R_cap;
+    const v_circ = Math.sqrt(GM_moon / rp);
+    const v_hyp = Math.sqrt(v_inf_mag * v_inf_mag + 2 * GM_moon / rp);
+    return Math.max(0, v_hyp - v_circ) + extra;
+  }
+  if (targetProfile.body === 'mars') {
+    const rp = targetProfile.orbitRadiusKm || (R_mars + 400);
+    const v_circ = Math.sqrt(GM_mars / rp);
+    const v_hyp = Math.sqrt(v_inf_mag * v_inf_mag + 2 * GM_mars / rp);
+    return Math.max(0, v_hyp - v_circ) + extra;
+  }
+  return Math.max(0.15, v_inf_mag * 0.25) + extra;
 }
 
 // Heuristic: flag low-C3 departures as lunar-assist candidates (v_inf < 3.2 km/s → C3 < ~10)
@@ -764,7 +992,12 @@ function checkLunarAssist(vinf_dep_mag) {
 
 // ─── Message handler ─────────────────────────────────────────────────────────
 self.onmessage = function(e) {
-  const msg = e.data;
+  const msg = e.data || {};
+  applyWorkerConfig(msg);
+
+  if (msg.cmd === 'configure') {
+    return;
+  }
 
   if (msg.cmd === 'init') {
     asteroids = Array.isArray(msg.asteroids) ? msg.asteroids.filter(ast =>
@@ -855,39 +1088,29 @@ self.onmessage = function(e) {
 
     for (let i = 0; i < nx; i++) {
       const t1 = jd_start + i / (nx - 1) * (jd_end - jd_start);
-      let r1, v_ast;
+      let earth1;
       try {
-        const s1 = burnEl ? propagateElements(burnEl, t1) : propagateAsteroid(ast, t1);
-        r1 = [s1.x, s1.y, s1.z];
-        v_ast = [s1.vx, s1.vy, s1.vz];
+        earth1 = propagatePlanet(2, t1);
       } catch(_) {
         for (let j = 0; j < ny; j++) grid[i*ny+j] = 20;
         continue;
       }
+      const r1 = [earth1.x, earth1.y, earth1.z];
+      const v_earth1 = [earth1.vx, earth1.vy, earth1.vz];
 
       for (let j = 0; j < ny; j++) {
         const tof = tof_min + j / (ny - 1) * (tof_max - tof_min);
         const t2 = t1 + tof;
         try {
-          const earth2 = propagatePlanet(2, t2);
-          const r2 = [earth2.x, earth2.y, earth2.z];
-          const v_earth2 = [earth2.vx, earth2.vy, earth2.vz];
-
-          let lam = izzoLambert(r1, r2, tof);
-          if (!lam) lam = lambert(r1, r2, tof);
+          const ast2 = burnEl ? propagateElements(burnEl, t2) : propagateAsteroid(ast, t2);
+          const r2 = [ast2.x, ast2.y, ast2.z];
+          const v_ast2 = [ast2.vx, ast2.vy, ast2.vz];
+          const solve = solveLambertWithOrbitGuard(r1, r2, tof, { x: earth1.x, y: earth1.y, z: earth1.z }, t1);
+          const lam = solve.lam;
           if (!lam) { grid[i*ny+j] = 20; continue; }
-
-          const dv_dep = Math.sqrt(
-            Math.pow(lam.v1[0]-v_ast[0],2) +
-            Math.pow(lam.v1[1]-v_ast[1],2) +
-            Math.pow(lam.v1[2]-v_ast[2],2)
-          );
-          const dv_arr = Math.sqrt(
-            Math.pow(lam.v2[0]-v_earth2[0],2) +
-            Math.pow(lam.v2[1]-v_earth2[1],2) +
-            Math.pow(lam.v2[2]-v_earth2[2],2)
-          );
-          grid[i*ny+j] = Math.min(20, dv_dep + dv_arr);
+          const pc = patchedConic(v_earth1, lam.v1, v_ast2, lam.v2, R_earth / 1000 + 400);
+          if (!pc || !Number.isFinite(pc.dv_dep) || !Number.isFinite(pc.dv_arr)) { grid[i*ny+j] = 20; continue; }
+          grid[i*ny+j] = Math.min(20, pc.dv_dep + pc.dv_arr);
         } catch(_) {
           grid[i*ny+j] = 20;
         }
@@ -899,7 +1122,7 @@ self.onmessage = function(e) {
   }
 
   if (msg.cmd === 'plan_mission') {
-    const { ast, jd_start, jd_end, destination, parkingAlt_km, spacecraft, stayDays: stayMsg } = msg;
+    const { ast, jd_start, jd_end, destination, parkingAlt_km, spacecraft, stayDays: stayMsg, reqId } = msg;
     const r_park_km = 6371 + (parkingAlt_km || 400);
     const STAY_DEF  = { light: 14, medium: 45, heavy: 90 };
     const stayDays  = stayMsg || STAY_DEF[spacecraft] || 45;
@@ -938,8 +1161,8 @@ self.onmessage = function(e) {
         const r2 = [astArr.x, astArr.y, astArr.z];
         const va  = [astArr.vx, astArr.vy, astArr.vz];
 
-        let lam = izzoLambert(r1, r2, tof);
-        if (!lam) lam = lambert(r1, r2, tof);
+        const solve = solveLambertWithOrbitGuard(r1, r2, tof, { x: earthDep.x, y: earthDep.y, z: earthDep.z }, jd_dep);
+        const lam = solve.lam;
         if (!lam) { dbg_lambert_null++; continue; }
 
         const pc = patchedConic(ve, lam.v1, va, lam.v2, r_park_km);
@@ -958,6 +1181,7 @@ self.onmessage = function(e) {
           vinf_arr: pc.vinf_arr_mag,
           earthPos: { x: r1[0], y: r1[1], z: r1[2] },
           astPos:   { x: r2[0], y: r2[1], z: r2[2] },
+          orbit_el: solve.orbit_el || null,
         });
       }
     }
@@ -983,28 +1207,35 @@ self.onmessage = function(e) {
         const ret_tof     = 60 + 540 * rs / 20;
         const jd_ret_arr  = jd_ret_dep + ret_tof;
 
-        let astDep, earthArr;
+        let astDep, target;
         try { astDep  = propagateAsteroid(ast, jd_ret_dep); } catch(_) { continue; }
-        try { earthArr = propagatePlanet(2, jd_ret_arr);    } catch(_) { continue; }
+        try { target = resolveMissionTarget(destination, jd_ret_arr, r_park_km); } catch(_) { continue; }
 
         const rr1 = [astDep.x,   astDep.y,   astDep.z];
-        const rr2 = [earthArr.x, earthArr.y, earthArr.z];
+        const rr2 = [target.state.x, target.state.y, target.state.z];
         const vad = [astDep.vx,  astDep.vy,  astDep.vz];
-        const ved = [earthArr.vx,earthArr.vy,earthArr.vz];
-
-        let lam = izzoLambert(rr1, rr2, ret_tof);
-        if (!lam) lam = lambert(rr1, rr2, ret_tof);
+        const vtd = [target.state.vx, target.state.vy, target.state.vz];
+        const solve = solveLambertWithOrbitGuard(rr1, rr2, ret_tof, { x: astDep.x, y: astDep.y, z: astDep.z }, jd_ret_dep);
+        const lam = solve.lam;
         if (!lam || !lam.v1 || !lam.v2 || !lam.v1.every(Number.isFinite) || !lam.v2.every(Number.isFinite)) continue;
 
         const dv_ret_dep = Math.hypot(lam.v1[0]-vad[0], lam.v1[1]-vad[1], lam.v1[2]-vad[2]);
-        const vinf_ret   = Math.hypot(lam.v2[0]-ved[0], lam.v2[1]-ved[1], lam.v2[2]-ved[2]);
-        const dv_cap     = destinationCaptureDv(vinf_ret, destination, r_park_km);
+        const vinf_ret   = Math.hypot(lam.v2[0]-vtd[0], lam.v2[1]-vtd[1], lam.v2[2]-vtd[2]);
+        const dv_cap     = destinationCaptureDv(vinf_ret, target);
         const total_return = dv_ret_dep + dv_cap;
         if (![dv_ret_dep, vinf_ret, dv_cap, total_return].every(Number.isFinite)) continue;
 
         if (!bestReturn || total_return < bestReturn.total_return) {
-          bestReturn = { dv_return: dv_ret_dep, dv_capture: dv_cap,
-            vinf_return: vinf_ret, tof_return: ret_tof, jd_ret_arr, total_return };
+          bestReturn = {
+            dv_return: dv_ret_dep,
+            dv_capture: dv_cap,
+            vinf_return: vinf_ret,
+            tof_return: ret_tof,
+            jd_ret_arr,
+            total_return,
+            target,
+            orbit_el: solve.orbit_el || null,
+          };
         }
       }
       if (!bestReturn) continue;
@@ -1014,6 +1245,8 @@ self.onmessage = function(e) {
       if (!Number.isFinite(dv_total) || dv_total > MISSION_GATE_TOTAL_KMS) continue;
 
       results.push({
+        schema_version: 2,
+        reqId,
         jd_dep:    c.jd_dep,
         jd_arr:    c.jd_arr,
         jd_ret_dep,
@@ -1035,6 +1268,20 @@ self.onmessage = function(e) {
         lunarAssist: checkLunarAssist(c.vinf_dep),
         earthPos:   c.earthPos,
         astPos:     c.astPos,
+        outboundOrbitEl: c.orbit_el || null,
+        returnTarget: {
+          key: bestReturn.target.key,
+          label: bestReturn.target.label,
+          body: bestReturn.target.body,
+          orbitRadiusKm: bestReturn.target.orbitRadiusKm,
+          captureBasis: bestReturn.target.captureBasis,
+        },
+        returnTargetPos: {
+          x: bestReturn.target.state.x,
+          y: bestReturn.target.state.y,
+          z: bestReturn.target.state.z,
+        },
+        returnOrbitEl: bestReturn.orbit_el || null,
       });
     }
 
@@ -1043,11 +1290,11 @@ self.onmessage = function(e) {
     const dbg = { lambert_null: dbg_lambert_null, gate_fail: dbg_gate_fail,
       phase1_count: phase1.length, best_dv: dbg_best_dv === Infinity ? null : +dbg_best_dv.toFixed(2) };
     if (top.length === 0) {
-      self.postMessage({ type: 'plan_result', results: [], noFeasibleWindow: true,
+      self.postMessage({ type: 'plan_result', schema_version: 2, reqId, results: [], noFeasibleWindow: true,
         dbg: Object.assign(dbg, { dv_dep_gate: MISSION_GATE_DEP_KMS, dv_total_gate: MISSION_GATE_TOTAL_KMS, high_dv_badge_gate: MISSION_HIGH_DV_KMS }) });
       return;
     }
-    self.postMessage({ type: 'plan_result', results: top, noFeasibleWindow: false, dbg });
+    self.postMessage({ type: 'plan_result', schema_version: 2, reqId, results: top, noFeasibleWindow: false, dbg });
     return;
   }
 
@@ -1182,22 +1429,22 @@ self.onmessage = function(e) {
       let bestError = 'No redirect transfer solved for this intercept.';
 
       for (const redirectTofDays of redirectTofCandidates) {
-        const jd_earth_arr = best.jd_arr + redirectTofDays;
+        const jd_capture_arr = best.jd_arr + redirectTofDays;
 
-        let earthArrPos;
-        try { earthArrPos = propagatePlanet(2, jd_earth_arr); } catch(e) { continue; }
+        let targetCapture;
+        try { targetCapture = resolveRedirectCaptureTarget(captureProfile, jd_capture_arr); } catch(e) { continue; }
 
         let dv_redirect = null;
-        let earth_arrival_vinf = null;
+        let capture_arrival_vinf = null;
         let redirect_lam_fallback = false;
         let redirect_orbit_el = null;
 
         try {
           const astArr2 = [best.astPos.x, best.astPos.y, best.astPos.z];
-          const earArr2 = [earthArrPos.x, earthArrPos.y, earthArrPos.z];
+          const targetArr2 = [targetCapture.state.x, targetCapture.state.y, targetCapture.state.z];
           const redirectSolve = solveLambertWithOrbitGuard(
             astArr2,
-            earArr2,
+            targetArr2,
             redirectTofDays,
             { x: best.astPos.x, y: best.astPos.y, z: best.astPos.z },
             best.jd_arr
@@ -1215,10 +1462,10 @@ self.onmessage = function(e) {
           const dv_z = rLam.v1[2] - best.v_ast.vz;
           dv_redirect = Math.hypot(dv_x, dv_y, dv_z);
 
-          const dv_arr_x = rLam.v2[0] - earthArrPos.vx;
-          const dv_arr_y = rLam.v2[1] - earthArrPos.vy;
-          const dv_arr_z = rLam.v2[2] - earthArrPos.vz;
-          earth_arrival_vinf = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
+          const dv_arr_x = rLam.v2[0] - targetCapture.state.vx;
+          const dv_arr_y = rLam.v2[1] - targetCapture.state.vy;
+          const dv_arr_z = rLam.v2[2] - targetCapture.state.vz;
+          capture_arrival_vinf = Math.hypot(dv_arr_x, dv_arr_y, dv_arr_z);
         } catch(e) {
           bestError = 'Redirect transfer evaluation failed during state conversion.';
           continue;
@@ -1237,8 +1484,9 @@ self.onmessage = function(e) {
 
         const v_e = propulsionModule.isp_s * 9.80665 / 1000;
         const mass_ratio = isFinite(dv_redirect) ? Math.exp(dv_redirect / v_e) : null;
-        const m_prop = isFinite(mass_ratio) ? mass_kg * (mass_ratio - 1) / mass_ratio : null;
-        const m_prop_fraction = isFinite(m_prop) ? m_prop / mass_kg : null;
+        const redirectedInertMassKg = mass_kg + spacecraftProfile.dry_kg + spacecraftProfile.payload_kg;
+        const m_prop = isFinite(mass_ratio) ? redirectedInertMassKg * (mass_ratio - 1) : null;
+        const m_prop_fraction = isFinite(m_prop) ? m_prop / redirectedInertMassKg : null;
 
         const tugDryKg = spacecraftProfile.dry_kg + spacecraftProfile.payload_kg;
         const outboundMassRatio = Number.isFinite(best.dv_dep) ? Math.exp(best.dv_dep / v_e) : null;
@@ -1248,11 +1496,9 @@ self.onmessage = function(e) {
         const launchCostUsd = Number.isFinite(tugLaunchMassKg) ? tugLaunchMassKg * launchProfile.cost_per_kg : null;
         const supportMissionCostUsd = Number.isFinite(launchCostUsd) ? launchCostUsd + (spacecraftProfile.cost_usd || 0) : null;
 
-        const captureBaseDv = Number.isFinite(earth_arrival_vinf)
-          ? Math.max(0.25, earth_arrival_vinf * 0.35)
-          : null;
+        const captureBaseDv = destinationCaptureDv(capture_arrival_vinf, targetCapture);
         const dv_capture_target = Number.isFinite(captureBaseDv)
-          ? captureBaseDv + (captureProfile.captureExtraDv || 0)
+          ? captureBaseDv
           : null;
         const dv_delivery = Number.isFinite(dv_capture_target)
           ? (deliveryProfile.deliveryExtraDv || 0)
@@ -1295,25 +1541,28 @@ self.onmessage = function(e) {
           redirect: {
             dv_redirect,
             tof_redirect: redirectTofDays,
-            jd_earth_arr,
-            earthArrPos: { x: earthArrPos.x, y: earthArrPos.y, z: earthArrPos.z },
+            jd_capture_arr,
+            targetBody: targetCapture.body,
+            targetPos: { x: targetCapture.state.x, y: targetCapture.state.y, z: targetCapture.state.z },
             propulsion: propulsionModule.name,
             isp_s: propulsionModule.isp_s,
             orbit_el: redirect_orbit_el,
             segment_jd_start: best.jd_arr,
-            segment_jd_end: jd_earth_arr,
+            segment_jd_end: jd_capture_arr,
           },
           capture: {
             target_key: captureProfile.key || null,
             label: captureProfile.label,
+            target_body: targetCapture.body,
             delivery_key: deliveryProfile.key || null,
             delivery_label: deliveryProfile.label,
             dv_lunar_capture: dv_capture_target,
             dv_delivery,
             r_cap_km: captureProfile.orbitRadiusKm,
-            v_inf_earth_arrival: isFinite(earth_arrival_vinf) ? earth_arrival_vinf : null,
+            targetPos: { x: targetCapture.state.x, y: targetCapture.state.y, z: targetCapture.state.z },
+            v_inf_capture_arrival: isFinite(capture_arrival_vinf) ? capture_arrival_vinf : null,
             capture_modeled: Number.isFinite(dv_capture_target),
-            capture_basis: 'screening-grade Earth-arrival insertion + target adders',
+            capture_basis: targetCapture.captureBasis,
           },
           asteroid: { mass_kg, d_m, spec_type },
           isru: {
@@ -1435,9 +1684,20 @@ self.onmessage = function(e) {
   }
 
   if (msg.cmd === 'query_pos') {
-    const { jd, planetIdx, reqId } = msg;
+    const { jd, planetIdx, reqId, target } = msg;
     try {
-      const s = propagatePlanet(planetIdx, jd);
+      let s;
+      if (target && typeof target === 'object') {
+        if (target.body === 'moon') s = propagateMoonState(jd);
+        else if (target.body === 'eml1') s = propagateEarthMoonLagrangeState(jd, 'l1');
+        else if (target.body === 'eml2') s = propagateEarthMoonLagrangeState(jd, 'l2');
+        else if (target.body === 'el4') s = propagateEarthMoonLagrangeState(jd, 'el4');
+        else if (target.body === 'el5') s = propagateEarthMoonLagrangeState(jd, 'el5');
+        else if (target.body === 'mars') s = propagatePlanet(3, jd);
+        else s = propagatePlanet(2, jd);
+      } else {
+        s = propagatePlanet(planetIdx, jd);
+      }
       self.postMessage({ type: 'query_pos_result', reqId, ok: true,
         x: s.x, y: s.y, z: s.z, vx: s.vx, vy: s.vy, vz: s.vz });
     } catch(e) {
@@ -1448,18 +1708,20 @@ self.onmessage = function(e) {
 
   if (msg.cmd === 'fetch_nhats') {
     (async function() {
-      const url = buildNhatsUrl();
-      try {
-        const r = await fetch(url);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const json = await r.json();
-        const rows = (json.data || json.nhats || [])
-          .map(normalizeNhatsRow)
-          .filter(row => row && row.des);
-        self.postMessage({ type: 'nhats_result', ok: true, data: rows, source: 'nhats', stale: !!json.stale });
-        return;
-      } catch(err) {
-        console.warn('[NHATS worker] fetch error:', err.message);
+      for (const base of getApiBaseCandidates()) {
+        const url = buildNhatsUrl(undefined, base);
+        try {
+          const r = await fetch(url);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const json = await r.json();
+          const rows = (json.data || json.nhats || [])
+            .map(normalizeNhatsRow)
+            .filter(row => row && row.des);
+          self.postMessage({ type: 'nhats_result', ok: true, data: rows, source: 'nhats', stale: !!json.stale });
+          return;
+        } catch(err) {
+          console.warn('[NHATS worker] fetch error:', err.message, `(${base})`);
+        }
       }
       self.postMessage({ type: 'nhats_result', ok: false, error: 'All NHATS URLs failed' });
     })();
@@ -1470,45 +1732,50 @@ self.onmessage = function(e) {
     (async function() {
       const requestedLimit = Math.max(10, Math.min(Number(msg.limit) || 5000, 5000));
       const fetchLimit = Math.max(250, Math.min(requestedLimit, 2000));
-      const ASTERANK_URL = buildAsterankUrl(fetchLimit);
-      const NHATS_URL = buildNhatsUrl();
 
       async function fetchAsterankWorker() {
-        try {
-          const r = await fetch(ASTERANK_URL);
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          const rows = await r.json();
-          if (!Array.isArray(rows) || rows.length === 0) throw new Error('empty response');
-          console.log('[Catalog] Asterank:', rows.length, 'rows');
-          self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
-          return { rows, source: 'asterank', fallback: false, stale: false };
-        } catch(err) {
-          console.warn('[Catalog] Asterank fetch failed:', err.message);
+        for (const base of getApiBaseCandidates()) {
+          try {
+            const r = await fetch(buildAsterankUrl(fetchLimit, base));
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const rows = await r.json();
+            if (!Array.isArray(rows) || rows.length === 0) throw new Error('empty response');
+            console.log('[Catalog] Asterank:', rows.length, 'rows');
+            self.postMessage({ type: 'load_progress', source: 'asterank', status: 'ok', count: rows.length });
+            return { rows, source: 'asterank', fallback: false, stale: false };
+          } catch(err) {
+            console.warn('[Catalog] Asterank fetch failed:', err.message, `(${base})`);
+          }
+        }
+        {
           const rows = FALLBACK_CATALOG.slice();
           if (rows.length > 0) {
             self.postMessage({ type: 'load_progress', source: 'asterank', status: 'fallback', count: rows.length });
             return { rows, source: 'fallback-static', fallback: true, stale: true };
           }
-          self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: err.message });
+          self.postMessage({ type: 'load_progress', source: 'asterank', status: 'error', error: 'offline' });
           return { rows: [], source: 'asterank', fallback: false, stale: false };
         }
       }
 
       async function fetchNHATSWorker() {
-        try {
-          const r = await fetch(NHATS_URL);
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          const json = await r.json();
-          const rows = (json.data || json.nhats || [])
-            .map(normalizeNhatsRow)
-            .filter(row => row && row.des);
-          console.log('[Catalog] NHATS:', rows.length, 'rows');
-          self.postMessage({ type: 'load_progress', source: 'nhats', status: 'ok', count: rows.length });
-          return { rows, source: 'nhats', stale: !!json.stale };
-        } catch(err) {
-          self.postMessage({ type: 'load_progress', source: 'nhats', status: 'error', error: 'offline' });
-          return { rows: [], source: 'nhats', stale: true };
+        for (const base of getApiBaseCandidates()) {
+          try {
+            const r = await fetch(buildNhatsUrl(undefined, base));
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const json = await r.json();
+            const rows = (json.data || json.nhats || [])
+              .map(normalizeNhatsRow)
+              .filter(row => row && row.des);
+            console.log('[Catalog] NHATS:', rows.length, 'rows');
+            self.postMessage({ type: 'load_progress', source: 'nhats', status: 'ok', count: rows.length });
+            return { rows, source: 'nhats', stale: !!json.stale };
+          } catch(err) {
+            console.warn('[Catalog] NHATS fetch failed:', err.message, `(${base})`);
+          }
         }
+        self.postMessage({ type: 'load_progress', source: 'nhats', status: 'error', error: 'offline' });
+        return { rows: [], source: 'nhats', stale: true };
       }
 
       // Fetch in parallel
