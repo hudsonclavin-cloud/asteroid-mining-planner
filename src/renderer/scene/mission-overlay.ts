@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { scene, disposeObject3D } from './index';
+import { syncActiveRedirectVisuals } from '../../economics/mission-costs/redirect';
 import {
   ORBIT_NEON,
   makeDashedGlowLine,
@@ -214,29 +215,7 @@ function _redrawReturnArc(
   return true;
 }
 
-export function syncActiveMissionVisuals(deps: {
-  _activeMissionType: string;
-  activeRedirectVisual: any;
-  missionResults: any[];
-  selectedTrajIdx: number;
-  optimalTrajectory: any;
-  trajectoryLine: THREE.Object3D | null;
-  returnArcLine: THREE.Object3D | null;
-  trajectoryArrows: THREE.Object3D[];
-  burnVectorArrows: THREE.Object3D[];
-  syncActiveRedirectVisuals: () => void;
-  clearMissionPathVisuals: () => void;
-  clearBurnVectors: () => void;
-  drawBurnVectors: (traj: any) => void;
-  drawTrajectoryLine: (traj: any) => boolean;
-}): void {
-  const {
-    _activeMissionType, activeRedirectVisual, missionResults, selectedTrajIdx,
-    optimalTrajectory, trajectoryLine, returnArcLine, trajectoryArrows,
-    burnVectorArrows, syncActiveRedirectVisuals, clearMissionPathVisuals,
-    clearBurnVectors, drawBurnVectors, drawTrajectoryLine,
-  } = deps;
-
+export function syncActiveMissionVisuals(): void {
   if ((_activeMissionType === 'redirect' || missionAnim.mode === 'redirect') && activeRedirectVisual) {
     syncActiveRedirectVisuals();
     return;

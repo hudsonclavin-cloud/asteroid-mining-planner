@@ -1,7 +1,6 @@
 // TODO: import from src/utils/url.ts (resolveWorkerUrl, WORKER_URL)
 // TODO: import from src/ui/hud/mission-control/state.ts (missionResults, selectedTrajIdx, _activeExtractRequestId, _activeRedirectRequestId, _activeReturnQueryId, missionReturnTargetPos, optimalTrajectory, _activeMissionType, _plannerTimeoutId)
 // TODO: import from src/ui/hud/mission-control/burn-mode.ts (onBurnResult)
-// TODO: import from src/data/nhats.ts (applyNHATSData)
 // TODO: import from src/ui/hud/mission-control/index.ts (onPlanResult, onRedirectResult, showPlannerError, syncActiveMissionVisuals)
 // TODO: import from src/ui/overlays/loading.ts (loadSourceStatus)
 // TODO: import from src/data/catalog.ts (saveToIndexedDB, buildAsteroidMesh, asteroidData, selectedAsteroidKey, selectedId)
@@ -12,6 +11,7 @@
 import { setPendingPositions } from '../../state/index';
 import { lastPropJD, setLastPropJD, lastPropagateRequestMs, setLastPropagateRequestMs, currentJD } from '../../utils/time-state';
 import { WORKER_URL } from '../../utils/config';
+import { applyNHATSData } from '../../data/nhats/index';
 
 const PROPAGATE_INTERVAL_MS = 75;
 
@@ -54,7 +54,7 @@ export function initWorker(): Worker {
       try {
         localStorage.setItem('aster_nhats_v2', JSON.stringify({ data: data.data, timestamp: Date.now() }));
       } catch(_) {}
-      applyNHATSData(data.data); // TODO: import from src/data/nhats.ts
+      applyNHATSData(data.data);
       return;
     }
 
@@ -273,7 +273,6 @@ declare let selectedId: number;
 declare let asteroidData: any[];
 declare function fetchNHATSData(): void;
 declare function onCloseApproaches(results: any[]): void;
-declare function applyNHATSData(data: any): void;
 declare function saveToIndexedDB(key: string, payload: any): Promise<void>;
 declare function buildAsteroidMesh(data: any[]): void;
 declare function loadStateFromURL(): void;
