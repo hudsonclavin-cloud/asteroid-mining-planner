@@ -456,3 +456,68 @@ export function stopMissionAnimation() {
   if (ctrl) ctrl.style.display = 'none';
   hideMissionTimeline();
 }
+
+export function updateSpacecraftFollow(camera: any, controls: any): void {
+  if (!(missionAnim.active && missionAnim.playing && missionAnim.autoFollow && !missionAnim.manualOverride && missionAnim.spacecraft?.visible)) return;
+  missionAnim.followTarget.copy(missionAnim.spacecraft.position).add(missionAnim.followOffset);
+  camera.position.lerp(missionAnim.followTarget, 0.03);
+  controls.target.lerp(missionAnim.spacecraft.position, 0.05);
+}
+
+export function updateBurnVectorPulse(burnVectorArrows: any[], elapsedTime: number): void {
+  if (!burnVectorArrows.length) return;
+  const pulse = 1.0 + 0.15 * Math.abs(Math.sin(elapsedTime * 2));
+  burnVectorArrows.forEach((arrow: any) => arrow.scale.setScalar(pulse));
+}
+
+export function updateMissionAnimation(dt: number, clampJD: (jd: number) => number): void {
+  if (!missionAnim.active) return;
+  if (missionAnim.mode !== 'redirect' && missionAnim.asteroidBody) missionAnim.asteroidBody.visible = false;
+
+  if (missionAnim.playing) {
+    const hardEnd = missionAnim.jdEnd || (currentJD + 365 * 5);
+    const nextJD = Math.min(hardEnd, clampJD(missionAnim.animJD + (missionAnim.speed / 86400) * dt));
+    missionAnim.animJD = nextJD;
+    setCurrentJD(nextJD);
+  } else {
+    missionAnim.animJD = currentJD;
+  }
+
+  if (!missionAnim.spacecraft) return;
+
+  // Phase-based spacecraft movement using sampled path points
+  let pathPts: THREE.Vector3[] | null = null;
+  let normalizedT = 0;
+
+  if (missionAnim.mode === 'extract') {
+    const traj = missionAnim.redirectVisual ? null : (missionAnim as any)._traj;
+    if (!traj) return;
+    const jd = currentJD;
+    const jd_ret_arr = traj.jd_ret_arr || (traj.jd_ret_dep + (traj.tof_return || traj.tof));
+    if (jd <= traj.jd_arr) {
+      pathPts = missionAnim.outboundPts;
+      normalizedT = Math.max(0, Math.min(1, (jd - traj.jd_dep) / traj.tof));
+    } else if (jd <= traj.jd_ret_dep) {
+      missionAnim.spacecraft.position.set(traj.astPos.x, traj.astPos.y, traj.astPos.z);
+      missionAnim.spacecraft.visible = missionAnim.playing;
+      return;
+    } else if (jd <= jd_ret_arr) {
+      pathPts = missionAnim.returnPts;
+      normalizedT = Math.max(0, Math.min(1, (jd - traj.jd_ret_dep) / (traj.tof_return || traj.tof)));
+    } else {
+      missionAnim.playing = false;
+      missionAnim.spacecraft.visible = false;
+      return;
+    }
+  }
+
+  if (pathPts && pathPts.length > 1) {
+    const idx = Math.floor(normalizedT * (pathPts.length - 1));
+    const pt = pathPts[Math.min(idx, pathPts.length - 1)];
+    missionAnim.spacecraft.position.copy(pt);
+    const nextPt = pathPts[Math.min(idx + 1, pathPts.length - 1)];
+    missionAnim.spacecraft.lookAt(nextPt);
+    missionAnim.spacecraft.visible = missionAnim.playing;
+    missionAnim.spacecraftVisible = missionAnim.playing;
+  }
+}

@@ -132,6 +132,13 @@ export function deactivateEarthLayer(deps: {
   }
 }
 
+export function updateEarthDetailSpin(dt: number, earthRotationSpeed: number): void {
+  const scale = dt * 60;
+  earthDetailMesh.rotation.y += earthRotationSpeed * scale;
+  if (_proceduralLand) (_proceduralLand as any).rotation.y += earthRotationSpeed * 1.08 * scale;
+  atmMesh.rotation.y += earthRotationSpeed * 0.4 * scale;
+}
+
 // ─── Capture target position ──────────────────────────────────────────────────
 // Source: index.html lines 7495–7521
 

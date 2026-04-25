@@ -9,6 +9,11 @@
 // TODO: import from src/ui/modals/tour.ts (showTour)
 // TODO: import from src/physics/porkchop.ts (renderPorkchop)
 
+import { setPendingPositions } from '../../state/index';
+import { lastPropJD, setLastPropJD, lastPropagateRequestMs, setLastPropagateRequestMs, currentJD } from '../../utils/time-state';
+
+const PROPAGATE_INTERVAL_MS = 75;
+
 let _worker: Worker | null = null;
 
 export function initWorker(): Worker {
@@ -17,7 +22,7 @@ export function initWorker(): Worker {
   _worker.onmessage = ({ data }: MessageEvent) => {
     if (data.type === 'positions') {
       if (data.jd !== lastPropJD) return;
-      pendingPositions = data.buffer;
+      setPendingPositions(data.buffer);
       return;
     }
     if (data.type === 'burn_result') {
@@ -247,11 +252,19 @@ export function postQueryPos(params: { jd: number; reqId: number; target: string
   getWorker().postMessage({ cmd: 'query_pos', ...params });
 }
 
+// ─── Propagation throttle ─────────────────────────────────────────────────────
+
+export function maybePropagateCurrentJD(force = false): void {
+  if (currentJD === lastPropJD) return;
+  const now = performance.now();
+  if (!force && (now - lastPropagateRequestMs) < PROPAGATE_INTERVAL_MS) return;
+  getWorker().postMessage({ cmd: 'propagate', jd: currentJD });
+  setLastPropJD(currentJD);
+  setLastPropagateRequestMs(now);
+}
+
 // ─── Module-level mutable state referenced in the onmessage handler ──────────
 // TODO: lift these into their canonical modules and import them here
-
-declare let lastPropJD: number;
-declare let pendingPositions: any;
 declare let WORKER_URL: string;
 declare let loadSourceStatus: Record<string, string>;
 declare let selectedAsteroidKey: string | null;

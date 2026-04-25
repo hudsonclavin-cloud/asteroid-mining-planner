@@ -30,14 +30,14 @@ import {
   optimalTrajectory,
   selectedId,
   asteroidData,
-} from '../../../../state/index';
-import { SPACECRAFT } from '../../../../economics/mission-costs/defaults';
-import { jdToDate } from '../../../../utils/dates';
-import { propellantKgNum } from '../../../../economics/mission-costs/index';
-import { currentJD } from '../../../../utils/time-state';
-import { drawBurnVectors } from '../../../../renderer/scene/mission-overlay';
-import { drawOrbitFromElements } from '../../../../renderer/scene/orbits/index';
-import { applyBurn } from '../../../../physics/orbital/burns';
+} from '../../../state/index';
+import { SPACECRAFT } from '../../../economics/mission-costs/defaults';
+import { jdToDate } from '../../../utils/dates';
+import { propellantKgNum } from '../../../economics/mission-costs/index';
+import { currentJD } from '../../../utils/time-state';
+import { drawBurnVectors } from '../../../renderer/scene/mission-overlay';
+import { drawOrbitFromElements } from '../../../renderer/scene/orbits/index';
+import { applyBurn } from '../../../physics/orbital/burns';
 import { toggleBurnMode, updateBurnUI } from './burn-mode';
 
 // ─── Mission-Planner burn table (mpBurns[]) ──────────────────────────────────

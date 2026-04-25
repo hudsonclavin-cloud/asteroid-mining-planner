@@ -156,3 +156,10 @@ export const planets = PLANET_CONFIGS.map((cfg, idx) => {
   }
   return mesh;
 });
+
+export function updatePlanetSpin(dt: number): void {
+  const scale = dt * 60;
+  planets.forEach(planet => {
+    planet.rotation.y += (planet.userData.rotationSpeed || 0.0005) * scale;
+  });
+}

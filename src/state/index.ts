@@ -158,3 +158,36 @@ export function setActiveMissionType(v: 'extract' | 'redirect') { _activeMission
 
 export const _arcAnchors: any[] = [null, null, null];
 export function setArcAnchor(i: number, v: any) { _arcAnchors[i] = v; }
+
+// ── Asteroid rendering state ──────────────────────────────────────────────────
+
+export let asteroidMesh: any = null;
+export function setAsteroidMesh(v: any) { asteroidMesh = v; }
+
+export let asteroidCount: number = 0;
+export function setAsteroidCount(v: number) { asteroidCount = v; }
+
+export let positionCache: Float32Array = new Float32Array(0);
+export function setPositionCache(v: Float32Array) { positionCache = v; }
+
+export let visibleScale: Float32Array = new Float32Array(0);
+export function setVisibleScale(v: Float32Array) { visibleScale = v; }
+
+// ── Worker pending positions ──────────────────────────────────────────────────
+
+export let pendingPositions: Float32Array | null = null;
+export function setPendingPositions(v: Float32Array | null) { pendingPositions = v; }
+
+// ── Per-frame animation state ─────────────────────────────────────────────────
+
+export let ghostTime: number = 0;
+export function setGhostTime(v: number) { ghostTime = v; }
+
+export let fpsFrames: number = 0;
+export function setFpsFrames(v: number) { fpsFrames = v; }
+
+export let fpsLast: number = 0;
+export function setFpsLast(v: number) { fpsLast = v; }
+
+export let frameCount: number = 0;
+export function setFrameCount(v: number) { frameCount = v; }

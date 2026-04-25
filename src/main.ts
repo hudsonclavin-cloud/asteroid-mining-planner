@@ -17,14 +17,17 @@ import * as THREE from 'three';
 import { initWorker, getWorker } from './workers/physics/client';
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
-import { initScene, scene, planets, sunMesh, animate, renderer, camera, moonOrbitVisualsEnabled, setMoonOrbitVisualsEnabled } from './renderer/scene/index';
-import { createProceduralLandOverlay } from './renderer/scene/planets';
+import { initScene, scene, sunMesh, animate, renderer, camera, controls, moonOrbitVisualsEnabled, setMoonOrbitVisualsEnabled, nhatsRing, nhatsRingMat, registerAnimateHooks } from './renderer/scene/index';
+import { planets } from './renderer/scene/planets';
+import { createProceduralLandOverlay, updatePlanetSpin, PLANET_VISUALS } from './renderer/scene/planets';
 import { initTextures } from './renderer/scene/textures';
-import { initGizmo, gizmoRaycaster } from './renderer/scene/gizmo';
-import { initEarthDetail } from './renderer/scene/earth/detail';
+import { initGizmo, gizmoRaycaster, updateGizmo } from './renderer/scene/gizmo';
+import { initEarthDetail, earthLayerActive, earthDetailGroup, shellGroup, updateEarthDetailSpin } from './renderer/scene/earth/detail';
 import { initPorkchop } from './renderer/scene/orbits/porkchop';
 import { renderPorkchop } from './renderer/scene/orbits/porkchop';
-import { missionAnim, setMissionAnimationPlaying } from './renderer/scene/mission-overlay';
+import { missionAnim, setMissionAnimationPlaying, updateSpacecraftFollow, updateBurnVectorPulse, updateMissionAnimation } from './renderer/scene/mission-overlay';
+import { consumePendingPositions, updateTimelineIndicator } from './renderer/scene/per-frame';
+import { maybePropagateCurrentJD } from './workers/physics/client';
 
 // ── UI ────────────────────────────────────────────────────────────────────────
 import { initLabels } from './ui/overlays/labels';
@@ -49,7 +52,9 @@ import { exportMissionPlan, exportMissionReport } from './utils/export';
 import { encodeStateToURL } from './utils/share';
 import { setStatus } from './utils/status';
 import { jdToDate } from './utils/dates';
-import { currentJD, setCurrentJD, lastSpeed, setIsPlaying, setLastSpeed, setSimSpeed } from './utils/time-state';
+import { currentJD, setCurrentJD, lastSpeed, setIsPlaying, setLastSpeed, setSimSpeed, isPlaying, isScrubbing, simSpeed, clampJD } from './utils/time-state';
+import { kep2cart } from './physics/orbital/keplerian/elements';
+import { updateLabelPositions } from './ui/overlays/labels';
 import {
   selectedId,
   setSelectedId,
@@ -75,6 +80,13 @@ import {
   missionConfig,
   burnVectorArrows,
   activeRedirectVisual,
+  burnModeActive,
+  positionCache,
+  fpsFrames, setFpsFrames,
+  fpsLast, setFpsLast,
+  frameCount, setFrameCount,
+  flyTarget, setFlyTarget,
+  ghostTime, setGhostTime,
 } from './state/index';
 import { SPACECRAFT } from './economics/mission-costs/defaults';
 import { propellantKgNum } from './economics/mission-costs/index';
@@ -325,7 +337,119 @@ async function main() {
     fetchNHATSData(),
   ]);
 
-  // 17. Animation loop
+  // 17. Register per-frame hooks
+  const DEG = Math.PI / 180;
+  registerAnimateHooks({
+    onFrame(dt: number, now: number, elapsedTime: number) {
+      setFrameCount(frameCount + 1);
+
+      // Mission animation & time advance
+      updateMissionAnimation(dt, clampJD);
+
+      // Spacecraft follow camera
+      updateSpacecraftFollow(camera, controls);
+
+      // Burn vector pulse
+      updateBurnVectorPulse(burnVectorArrows, elapsedTime);
+
+      // Planet spin
+      updatePlanetSpin(dt);
+      updateEarthDetailSpin(dt, (PLANET_VISUALS as any).Earth?.rotation ?? 0.0002);
+
+      // Timeline indicator
+      if (optimalTrajectory && (() => { const el = document.getElementById('mission-timeline'); return el && el.style.display !== 'none'; })()) {
+        updateTimelineIndicator();
+      }
+
+      // FPS counter
+      setFpsFrames(fpsFrames + 1);
+      if (now - fpsLast >= 1000) {
+        const fpEl = document.getElementById('fps-display');
+        if (fpEl) fpEl.textContent = fpsFrames + ' FPS';
+        const ocEl = document.getElementById('obj-count-display');
+        if (ocEl) ocEl.textContent = asteroidData.length + ' AST';
+        const hEl = document.getElementById('hud-fps');
+        if (hEl) hEl.textContent = fpsFrames + ' FPS';
+        setFpsFrames(0);
+        setFpsLast(now);
+      }
+
+      // Time advancement
+      if (!missionAnim.active && !isScrubbing && simSpeed !== 0) {
+        const nextJD = clampJD(currentJD + (simSpeed / 86400) * dt);
+        if (nextJD === currentJD) {
+          setIsPlaying(false);
+        } else {
+          setCurrentJD(nextJD);
+        }
+      }
+
+      // Worker propagation
+      maybePropagateCurrentJD(!isPlaying && !missionAnim.playing);
+
+      // Apply buffered positions
+      consumePendingPositions();
+
+      // NHATS pulsing ring
+      if (selectedId >= 0 && asteroidData[selectedId]?.nhats?.accessible && positionCache.length > selectedId * 3) {
+        nhatsRing.position.set(positionCache[selectedId * 3], positionCache[selectedId * 3 + 1], positionCache[selectedId * 3 + 2]);
+        nhatsRing.quaternion.copy(camera.quaternion);
+        nhatsRingMat.opacity = Math.sin(Date.now() * 0.002) * 0.3 + 0.5;
+        nhatsRing.visible = true;
+      } else {
+        nhatsRing.visible = false;
+      }
+
+      // Gizmo update in burn mode
+      if (burnModeActive && selectedId >= 0) {
+        updateGizmo({
+          burnModeActive, selectedId, asteroidData, currentBurnElements,
+          currentJD, camera,
+          kep2cartJS: (a: number, e: number, i: number, om: number, w: number, m: number, epoch: number, jd: number) =>
+            kep2cart(a, e, i, om, w, m, epoch, jd),
+          DEG,
+        });
+      }
+
+      // Fly-to animation
+      if (flyTarget) {
+        const ft = flyTarget as any;
+        ft.progress = Math.min(1, ft.progress + (16 / 1500));
+        const t = ft.progress;
+        const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        const tgtV = new THREE.Vector3(ft.x, ft.y, ft.z);
+        const dir = new THREE.Vector3(0.3, 0.4, 1).normalize();
+        const dest = tgtV.clone().add(dir.multiplyScalar(ft.dist));
+        camera.position.lerp(dest, ease * 0.08);
+        (camera as any).controls?.target?.lerp?.(tgtV, ease * 0.08);
+        if (ft.progress >= 1) setFlyTarget(null);
+      }
+
+      // Earth layer distance check
+      if (planets[2]) {
+        const earthPos = planets[2].position;
+        const distToEarth = camera.position.distanceTo(earthPos);
+        if (distToEarth < 0.15 && !earthLayerActive) {
+          earthDetailGroup.visible = true;
+          shellGroup.visible = true;
+        } else if (distToEarth >= 0.15 && earthLayerActive) {
+          earthDetailGroup.visible = false;
+          shellGroup.visible = false;
+        }
+        if (earthLayerActive) {
+          earthDetailGroup.position.copy(earthPos);
+          shellGroup.position.copy(earthPos);
+        }
+      }
+
+      // Sun light tracks Earth
+      if (planets[2]) {
+        (camera as any)._sunDir?.target?.position?.copy?.(planets[2].position);
+      }
+    },
+  });
+
+  // 18. Animation loop
   animate();
 }
 

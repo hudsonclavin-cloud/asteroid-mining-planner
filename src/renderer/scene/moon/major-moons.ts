@@ -5,11 +5,11 @@
  */
 
 import * as THREE from 'three';
-import { scene } from '../../index';
-import { planets } from '../../planets';
-import { J2000, TWO_PI } from '../../../../physics/constants/index';
-import { makeGlowLine } from '../../orbits/index';
-import { moonOrbitVisualsEnabled } from '../../index';
+import { scene } from '../index';
+import { planets } from '../planets';
+import { J2000, TWO_PI } from '../../../physics/constants/index';
+import { makeGlowLine } from '../orbits/index';
+import { moonOrbitVisualsEnabled } from '../index';
 
 // ─── Major Moons ──────────────────────────────────────────────────────────────
 export const _AU_KM = 149597870.7;

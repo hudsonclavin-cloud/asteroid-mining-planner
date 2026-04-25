@@ -45,3 +45,14 @@ export function setLastSpeed(s: number) { lastSpeed = s; }
 export function setLastPropagateRequestMs(t: number) { lastPropagateRequestMs = t; }
 export function setIsScrubbing(v: boolean) { isScrubbing = v; }
 export function setLastSentJD(jd: number | null) { lastSentJD = jd; }
+
+export const SCRUBBER_MIN = TODAY_JD - 365 * 3;
+export const SCRUBBER_MAX = TODAY_JD + 365 * 5;
+
+export function getTimelineBounds(): { min: number; max: number } {
+  return { min: SCRUBBER_MIN, max: SCRUBBER_MAX };
+}
+
+export function clampJD(jd: number): number {
+  return Math.max(SCRUBBER_MIN, Math.min(SCRUBBER_MAX, Number(jd)));
+}
