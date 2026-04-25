@@ -42,11 +42,24 @@ import {
 
 import { SPACECRAFT, LAUNCH_VEHICLES, DELIVERY_DESTINATIONS, REDIRECT_CAPTURE_TARGETS } from './defaults';
 
-import { jdToDate } from '../../utils/dates';
+import { jdToDate, fmtUSD } from '../../utils/dates';
 
 import { propellantKgNum, computeEconomicsSummary } from './index';
 
 import { getWorker } from '../../workers/physics/client';
+
+import * as THREE from 'three';
+import { scene, disposeObject3D } from '../../renderer/scene/index';
+import {
+  ORBIT_NEON, makeGlowLine, makeDashedGlowLine, showGlowLine, setGlowLineColor,
+  setGlowLinePoints, buildOrbitSegmentPoints, validateArcPoints,
+  asteroidToOrbitElements, drawOrbitFromElements, setArcAnchorFromGlowLine,
+} from '../../renderer/scene/orbits/index';
+import { getCaptureTargetPosition } from '../../renderer/scene/earth/detail';
+import { moonMesh } from '../../renderer/scene/moon/index';
+import { AU_m } from '../../physics/constants/index';
+import { setStatus } from '../../utils/status';
+import { flyTarget, setFlyTarget } from '../../state/index';
 
 // ─── Redirect Propulsion Table ────────────────────────────────────────────────
 
@@ -99,7 +112,6 @@ export function fmtRedirectValue(v: number): string {
   if (v >= 1e12) return `$${(v/1e12).toFixed(1)}T`;
   if (v >= 1e9) return `$${(v/1e9).toFixed(1)}B`;
   if (v >= 1e6) return `$${(v/1e6).toFixed(0)}M`;
-  // @ts-ignore — runtime global during transition
   return fmtUSD(v);
 }
 
@@ -351,12 +363,10 @@ export function onRedirectResult(data: any) {
   setMissionPlanningActive(true);
   setActiveRedirectVisual({ asteroidId: selectedId, intercept: ic, redirect: rd, capture: cap });
   if (!drawRedirectInterceptTrajectory(ic)) {
-    // @ts-ignore — renderer global during transition
     setStatus('Redirect intercept path unavailable for current solution window', true);
   }
-  // @ts-ignore — renderer global during transition
+  // @ts-ignore — runtime global during transition
   if (!drawRedirectTrajectory(getSelectedAsteroid(), ic, rd)) {
-    // @ts-ignore — renderer global during transition
     setStatus('Redirect path unavailable for current solution window', true);
   }
   drawRedirectCaptureMarker(cap);
@@ -366,9 +376,8 @@ export function onRedirectResult(data: any) {
 
 export function clearRedirectVisualization(options: any = {}) {
   const { preserveState = false } = options;
-  if (_redirectArcLine) { /* @ts-ignore — renderer global */ disposeObject3D(_redirectArcLine); setRedirectArcLine(null); }
-  if (_lunarOrbitRing)  { /* @ts-ignore — renderer global */ disposeObject3D(_lunarOrbitRing);  setLunarOrbitRing(null); }
-  // @ts-ignore — renderer global
+  if (_redirectArcLine) { disposeObject3D(_redirectArcLine); setRedirectArcLine(null); }
+  if (_lunarOrbitRing)  { disposeObject3D(_lunarOrbitRing);  setLunarOrbitRing(null); }
   _cargoPodArcs.forEach((a: any) => disposeObject3D(a));
   setCargoPodArcs([]);
   // @ts-ignore — renderer global during transition
@@ -387,12 +396,9 @@ export function clearRedirectVisualization(options: any = {}) {
 export function drawRedirectTrajectory(ast: any, intercept: any, redirect: any): boolean {
   // @ts-ignore — runtime global during transition
   orbitLine.visible = false;
-  // @ts-ignore — runtime global during transition
   if (ast) drawOrbitFromElements(redirectOriginalOrbitLine, asteroidToOrbitElements(ast));
   if (redirect.orbit_el) {
-    // @ts-ignore — runtime global during transition
     drawOrbitFromElements(redirectAdjustedOrbitLine, redirect.orbit_el);
-    // @ts-ignore — runtime global during transition
     setGlowLineColor(redirectAdjustedOrbitLine, ORBIT_NEON.redirect, 0.22, 0.05);
   } else {
     // @ts-ignore — runtime global during transition
@@ -402,37 +408,26 @@ export function drawRedirectTrajectory(ast: any, intercept: any, redirect: any):
   const segStart = Number.isFinite(redirect.segment_jd_start) ? redirect.segment_jd_start : intercept.jd_arr;
   const segEnd = Number.isFinite(redirect.segment_jd_end) ? redirect.segment_jd_end : redirect.jd_capture_arr;
   const pts = redirect.orbit_el && Number.isFinite(segStart) && Number.isFinite(segEnd)
-    // @ts-ignore — runtime global during transition
     ? buildOrbitSegmentPoints(redirect.orbit_el, segStart, segEnd, 112)
     : [];
-  // @ts-ignore — runtime global during transition
   if (pts.length < 2 || !validateArcPoints(pts, 'redirect')) return false;
-  // @ts-ignore — runtime global during transition
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  // @ts-ignore — renderer global during transition
   setRedirectArcLine(makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 }));
-  // @ts-ignore — renderer global during transition
   scene.add(_redirectArcLine);
-  // @ts-ignore — renderer global during transition
   showGlowLine(_redirectArcLine);
   // Label anchor — dv_redirect comes from the redirect object argument
   {
     const dvText = redirect && Number.isFinite(redirect.dv_redirect)
       ? `REDIRECT  ΔV: ${redirect.dv_redirect.toFixed(3)} km/s`
       : 'REDIRECT ARC';
-    // @ts-ignore — renderer global during transition
-    _setArcAnchor('redirectArc', _redirectArcLine, dvText);
+    setArcAnchorFromGlowLine('redirectArc', _redirectArcLine, dvText);
   }
 
   // Arrow at asteroid showing redirect direction toward target capture arrival
   if (pts.length >= 2) {
-    // @ts-ignore — runtime global during transition
     const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
-    // @ts-ignore — runtime global during transition
     const arr = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, ORBIT_NEON.redirect, 0.05, 0.025);
-    // @ts-ignore — runtime global during transition
     scene.add(arr);
-    // @ts-ignore — runtime global during transition
     _cargoPodArcs.push(arr);
   }
   return true;
@@ -443,34 +438,20 @@ export function drawRedirectInterceptTrajectory(intercept: any): boolean {
   const segStart = Number.isFinite(intercept.segment_jd_start) ? intercept.segment_jd_start : intercept.jd_dep;
   const segEnd = Number.isFinite(intercept.segment_jd_end) ? intercept.segment_jd_end : intercept.jd_arr;
   const pts = intercept.orbit_el && Number.isFinite(segStart) && Number.isFinite(segEnd)
-    // @ts-ignore — runtime global during transition
     ? buildOrbitSegmentPoints(intercept.orbit_el, segStart, segEnd, 96)
     : [];
-  // @ts-ignore — runtime global during transition
   if (pts.length >= 2 && validateArcPoints(pts, 'redirect-intercept')) {
-    // @ts-ignore — runtime global during transition
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    // @ts-ignore — renderer global during transition
     setTrajectoryLine(makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 }));
-    // @ts-ignore — renderer global during transition
     scene.add(trajectoryLine);
-    // @ts-ignore — renderer global during transition
     showGlowLine(trajectoryLine);
-    // @ts-ignore — renderer global during transition
-    _setArcAnchor('redirectIntercept', trajectoryLine, 'REDIRECT INTERCEPT');
-    // @ts-ignore — runtime global during transition
+    setArcAnchorFromGlowLine('redirectIntercept', trajectoryLine, 'REDIRECT INTERCEPT');
     const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
-    // @ts-ignore — runtime global during transition
     const arr1 = new THREE.ArrowHelper(dir, pts[0].clone(), 0.12, ORBIT_NEON.transfer, 0.05, 0.025);
-    // @ts-ignore — runtime global during transition
     scene.add(arr1);
-    // @ts-ignore — runtime global during transition
     trajectoryArrows.push(arr1);
-    // @ts-ignore — runtime global during transition
     const arr2 = new THREE.ArrowHelper(dir.clone().negate(), pts[pts.length - 1].clone(), 0.12, 0xffcf66, 0.05, 0.025);
-    // @ts-ignore — runtime global during transition
     scene.add(arr2);
-    // @ts-ignore — runtime global during transition
     trajectoryArrows.push(arr2);
     return true;
   }
@@ -479,79 +460,60 @@ export function drawRedirectInterceptTrajectory(intercept: any): boolean {
 
 export function syncActiveRedirectVisuals() {
   if (!activeRedirectVisual) return;
-  // @ts-ignore — renderer global during transition
+  // @ts-ignore — runtime global during transition
   const ast = asteroidData[activeRedirectVisual.asteroidId] || getSelectedAsteroid();
   if (!ast) return;
   // @ts-ignore — runtime global during transition
   clearMissionPathVisuals();
   clearRedirectVisualization({ preserveState: true });
   if (!drawRedirectInterceptTrajectory(activeRedirectVisual.intercept)) {
-    // @ts-ignore — renderer global during transition
     setStatus('Redirect intercept path unavailable for current solution window', true);
   }
   if (!drawRedirectTrajectory(ast, activeRedirectVisual.intercept, activeRedirectVisual.redirect)) {
-    // @ts-ignore — renderer global during transition
     setStatus('Redirect path unavailable for current solution window', true);
   }
   drawRedirectCaptureMarker(activeRedirectVisual.capture);
 }
 
 export function drawLunarOrbitRing() {
-  // @ts-ignore — runtime global during transition
   if (!moonMesh) return;
   const pts: any[] = [];
   const capture = activeRedirectVisual?.capture;
-  // @ts-ignore — runtime global during transition
   const center = getCaptureTargetPosition(capture);
   if (!center) return;
-  // @ts-ignore — runtime global during transition
   const r = Number.isFinite(capture?.r_cap_km) ? (capture.r_cap_km * 1000) / AU_m : (6737 * 1000) / AU_m;
   for (let i = 0; i <= 64; i++) {
     const theta = (i / 64) * Math.PI * 2;
-    // @ts-ignore — runtime global during transition
     pts.push(new THREE.Vector3(
       center.x + r * Math.cos(theta),
       center.y,
       center.z + r * Math.sin(theta),
     ));
   }
-  // @ts-ignore — runtime global during transition
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  // @ts-ignore — renderer global during transition
   setLunarOrbitRing(makeGlowLine(geo, ORBIT_NEON.redirect, 0.68, { haloOpacity: 0.16 }));
-  // @ts-ignore — renderer global during transition
   scene.add(_lunarOrbitRing);
-  // @ts-ignore — renderer global during transition
   showGlowLine(_lunarOrbitRing);
   // Label anchor: top of ring (quarter-point in the pts array ≈ 90° position)
-  // @ts-ignore — renderer global during transition
-  _setArcAnchor('lunarOrbit', _lunarOrbitRing, 'NRHO TARGET ORBIT', 0.25);
+  setArcAnchorFromGlowLine('lunarOrbit', _lunarOrbitRing, 'NRHO TARGET ORBIT', 0.25);
 }
 
 export function drawCaptureRingAt(center: any, radiusKm: number, color?: number) {
-  // @ts-ignore — runtime global during transition
   if (!center || !Number.isFinite(radiusKm) || radiusKm <= 0) return;
-  // @ts-ignore — runtime global during transition
   const _color = color ?? ORBIT_NEON.redirect;
-  // @ts-ignore — runtime global during transition
   const radiusAU = (radiusKm * 1000) / AU_m;
   const pts: any[] = [];
   for (let i = 0; i <= 96; i++) {
     const theta = (i / 96) * Math.PI * 2;
-    // @ts-ignore — runtime global during transition
     pts.push(new THREE.Vector3(
       center.x + radiusAU * Math.cos(theta),
       center.y,
       center.z + radiusAU * Math.sin(theta),
     ));
   }
-  // @ts-ignore — runtime global during transition
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  // @ts-ignore — renderer global during transition
   setLunarOrbitRing(makeGlowLine(geo, _color, 0.52, { haloOpacity: 0.12 }));
-  // @ts-ignore — renderer global during transition
   scene.add(_lunarOrbitRing);
-  // @ts-ignore — runtime global during transition
   showGlowLine(_lunarOrbitRing);
 }
 
@@ -561,9 +523,7 @@ export function drawRedirectCaptureMarker(capture: any) {
     drawLunarOrbitRing();
     return;
   }
-  // @ts-ignore — runtime global during transition
   const center = getCaptureTargetPosition(capture);
-  // @ts-ignore — runtime global during transition
   if (center && Number.isFinite(capture.r_cap_km)) drawCaptureRingAt(center, capture.r_cap_km, ORBIT_NEON.redirect);
 }
 
@@ -692,7 +652,6 @@ export function buildRedirectScoreBreakdownHtml(data: any): string {
       value: formatScoreBucket(summary.valueScore, 20),
       valueClass: scoreBucketClass(summary.valueScore, 20),
       note: Number.isFinite(summary.extractableValueUsd)
-        // @ts-ignore — runtime global during transition
         ? fmtUSD(summary.extractableValueUsd)
         : 'unknown extractable value',
     },

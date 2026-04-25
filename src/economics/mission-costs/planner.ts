@@ -34,6 +34,16 @@ import { propellantKgNum, computeEconomicsSummary } from './index';
 
 import { getWorker } from '../../workers/physics/client';
 
+import * as THREE from 'three';
+import { scene, disposeObject3D } from '../../renderer/scene/index';
+import {
+  ORBIT_NEON, makeGlowLine, makeDashedGlowLine, showGlowLine,
+  setGlowLinePoints, buildOrbitSegmentPoints, validateArcPoints,
+  asteroidToOrbitElements, setArcAnchorFromGlowLine,
+} from '../../renderer/scene/orbits/index';
+import { setStatus } from '../../utils/status';
+import { flyTarget, setFlyTarget } from '../../state/index';
+
 export async function runMissionOptimizer() {
   // @ts-ignore — runtime global during transition
   clearPlannerError();
@@ -242,8 +252,7 @@ export function selectTrajectory(idx: number) {
     const ep  = traj.earthPos;
     const ap  = traj.astPos;
     const sep = Math.hypot(ap.x - ep.x, ap.y - ep.y, ap.z - ep.z);
-    // @ts-ignore — runtime global during transition
-    flyTarget = { x: ep.x, y: ep.y, z: ep.z, dist: Math.max(1.5, sep * 1.2), progress: 0 };
+    setFlyTarget({ x: ep.x, y: ep.y, z: ep.z, dist: Math.max(1.5, sep * 1.2), progress: 0 });
   }
   // Request accurate terminal return position for the selected destination
   if (traj.jd_ret_arr && traj.returnTarget?.body) {
