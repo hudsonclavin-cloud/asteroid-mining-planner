@@ -8,7 +8,7 @@ export default defineConfig({
   root: '.',
   publicDir: 'textures',   // serves textures/ as static assets
   build: {
-    outDir: 'dist',
+    outDir: 'docs',
     emptyOutDir: true,
   },
   resolve: {
