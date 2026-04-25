@@ -17,6 +17,9 @@
  * TODO: import from src/... once Stage 9 wiring is complete.
  */
 
+import { WORKER_URL } from '../../utils/config';
+import { getWorker } from '../../workers/physics/client';
+
 export async function fetchNHATSData(): Promise<void> {
   const cacheKey = 'aster_nhats_v2'; // bumped to force fresh fetch after URL change
   const cached = localStorage.getItem(cacheKey);
@@ -30,6 +33,5 @@ export async function fetchNHATSData(): Promise<void> {
       }
     } catch (_) {}
   }
-  // TODO: import worker and WORKER_URL from src/...
-  (window as any).worker.postMessage({ cmd: 'fetch_nhats', apiBase: (window as any).WORKER_URL });
+  getWorker().postMessage({ cmd: 'fetch_nhats', apiBase: WORKER_URL });
 }

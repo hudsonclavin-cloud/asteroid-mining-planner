@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { copyFileSync, mkdirSync } from 'fs';
 
 export default defineConfig({
   root: '.',
@@ -18,4 +19,16 @@ export default defineConfig({
   esbuild: {
     target: 'es2020',
   },
+  plugins: [
+    {
+      name: 'copy-physics-worker',
+      writeBundle() {
+        mkdirSync(resolve(__dirname, 'docs'), { recursive: true });
+        copyFileSync(
+          resolve(__dirname, 'physics.worker.js'),
+          resolve(__dirname, 'docs/physics.worker.js')
+        );
+      },
+    },
+  ],
 });

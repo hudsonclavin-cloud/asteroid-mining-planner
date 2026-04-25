@@ -6,3 +6,4 @@ worker/.dev.vars.*
 .DS_Store
 .wrangler/
 worker/.wrangler/
+node_modules/

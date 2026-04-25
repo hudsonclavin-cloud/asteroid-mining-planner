@@ -11,13 +11,16 @@
 
 import { setPendingPositions } from '../../state/index';
 import { lastPropJD, setLastPropJD, lastPropagateRequestMs, setLastPropagateRequestMs, currentJD } from '../../utils/time-state';
+import { WORKER_URL } from '../../utils/config';
 
 const PROPAGATE_INTERVAL_MS = 75;
 
 let _worker: Worker | null = null;
 
 export function initWorker(): Worker {
-  _worker = new Worker('./physics.worker.js?v=10k');
+  const workerUrl = `${import.meta.env.BASE_URL}physics.worker.js?v=10k`;
+  _worker = new Worker(workerUrl);
+  (window as any).worker = _worker;
 
   _worker.onmessage = ({ data }: MessageEvent) => {
     if (data.type === 'positions') {
@@ -46,7 +49,6 @@ export function initWorker(): Worker {
         if (nEl) nEl.textContent = `NHATS: ${data.error || 'JPL API unavailable'}`;
         // Single retry after 60s — do not loop indefinitely
         setTimeout(() => _worker!.postMessage({ cmd: 'fetch_nhats', apiBase: WORKER_URL }), 60000);
-        // TODO: import WORKER_URL from src/utils/url.ts
         return;
       }
       try {
@@ -265,7 +267,6 @@ export function maybePropagateCurrentJD(force = false): void {
 
 // ─── Module-level mutable state referenced in the onmessage handler ──────────
 // TODO: lift these into their canonical modules and import them here
-declare let WORKER_URL: string;
 declare let loadSourceStatus: Record<string, string>;
 declare let selectedAsteroidKey: string | null;
 declare let selectedId: number;

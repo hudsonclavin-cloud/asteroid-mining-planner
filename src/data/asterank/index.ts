@@ -21,6 +21,8 @@
 
 // TODO: import saveToIndexedDB from src/data/cache/indexeddb
 // TODO: import fetchNHATSData from src/data/nhats
+import { WORKER_URL } from '../../utils/config';
+import { getWorker } from '../../workers/physics/client';
 
 /**
  * Post a fetch_catalog command to the physics worker.
@@ -30,10 +32,10 @@ export function triggerCatalogFetch(): void {
   const sub = document.getElementById('loading-sub');
   if (sub) sub.textContent = 'Connecting to NASA databases...';
   (window as any).loadSourceStatus = {};
-  (window as any).worker.postMessage({
+  getWorker().postMessage({
     cmd: 'fetch_catalog',
     limit: (window as any).ASTEROID_LIMIT || 5000,
-    apiBase: (window as any).WORKER_URL,
+    apiBase: WORKER_URL,
   });
   // loadStateFromURL and showTour are called from catalog_ready handler
 }
