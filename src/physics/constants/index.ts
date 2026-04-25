@@ -3,6 +3,7 @@
 
 export const GM_sun = 1.327124400e20; // m³/s²
 export const AU = 1.496e11;           // m per AU
+export const AU_m = AU;               // alias used by renderer modules
 export const J2000 = 2451545.0;       // JD of J2000 epoch
 export const TWO_PI = 2 * Math.PI;
 export const DEG = Math.PI / 180;

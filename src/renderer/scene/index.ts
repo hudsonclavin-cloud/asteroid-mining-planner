@@ -73,6 +73,24 @@ export function initScene(): void {
   // Call this to ensure side-effects (DOM attachment) have run.
 }
 
+// ─── Object disposal ──────────────────────────────────────────────────────────
+// Source: index.html lines 3966–3973
+
+function disposeMaterial(mat: any) {
+  if (!mat) return;
+  if (Array.isArray(mat)) { mat.forEach(disposeMaterial); return; }
+  if (typeof mat.dispose === 'function') mat.dispose();
+}
+
+export function disposeObject3D(obj: THREE.Object3D | null | undefined): void {
+  if (!obj) return;
+  obj.traverse((node: any) => {
+    if (node.geometry && !node.geometry.userData?.sharedAsset && typeof node.geometry.dispose === 'function') node.geometry.dispose();
+    disposeMaterial(node.material);
+  });
+  if (obj.parent) obj.parent.remove(obj);
+}
+
 // ─── Main animation loop ──────────────────────────────────────────────────────
 // TODO: import from src/renderer/scene/planets (planets)
 // TODO: import from src/renderer/scene/moon/index (moonOrbitLine, moonMesh, moonRelativeSceneState, MOON_PERIOD_DAYS)

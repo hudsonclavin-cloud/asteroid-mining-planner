@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { solveKepler } from '../../../physics/orbital/keplerian/kepler';
+import { kep2cart } from '../../../physics/orbital/keplerian/elements';
+import { _arcAnchors } from '../../../state/index';
 
 // TODO: import from src/renderer/scene/index (scene)
 // TODO: import from src/utils/constants (TWO_PI, ORBIT_NEON)
@@ -123,6 +126,118 @@ export function createPlanetOrbitRings(scene: THREE.Scene): THREE.Group {
 // Module-scope orbit ring group stub — wired up when scene is available
 // TODO: replace with import of scene and call createPlanetOrbitRings(scene)
 export let planetOrbitGroup: THREE.Group = new THREE.Group();
+
+// ─── Glow line helpers ────────────────────────────────────────────────────────
+// Source: index.html lines 2048–2093
+
+export function showGlowLine(group: THREE.Group | null | undefined): void {
+  if (!group) return;
+  group.visible = true;
+  const g = group.userData?.glow;
+  if (g?.dashed) {
+    if (g.core) (g.core as THREE.Line).computeLineDistances();
+    if (g.halo) (g.halo as THREE.Line).computeLineDistances();
+  }
+}
+
+export function setGlowLineColor(target: THREE.Group | null | undefined, color: number, opacity?: number, haloOpacity: number | null = null): void {
+  const glow = target?.userData?.glow;
+  if (!glow) return;
+  const nextHaloOpacity = haloOpacity ?? Math.max(0.08, (opacity ?? 0.8) * 0.18);
+  glow.color = color;
+  [glow.core, glow.halo].forEach((line: any, idx: number) => {
+    if (!line?.material) return;
+    line.material.color.setHex(color);
+    line.material.opacity = idx === 0 ? (opacity ?? line.material.opacity) : nextHaloOpacity;
+    line.material.needsUpdate = true;
+  });
+}
+
+export function setGlowLinePoints(target: THREE.Group | null | undefined, points: THREE.Vector3[]): void {
+  const glow = target?.userData?.glow;
+  if (!glow) return;
+  [glow.core, glow.halo].forEach((line: any) => {
+    line.geometry.setFromPoints(points);
+    if (glow.dashed) {
+      const pos = line.geometry.getAttribute('position');
+      if (pos && pos.count > 1) line.computeLineDistances();
+    }
+  });
+}
+
+// ─── Orbit element helpers ────────────────────────────────────────────────────
+// Source: index.html lines 2130–2186
+
+export function asteroidToOrbitElements(ast: any): { a: number; e: number; i: number; Om: number; w: number; M0: number; epoch_JD: number } {
+  const DEG = Math.PI / 180;
+  return { a: ast.a, e: ast.e, i: ast.i * DEG, Om: ast.om * DEG, w: ast.w * DEG, M0: ast.ma * DEG, epoch_JD: ast.epoch };
+}
+
+export function buildOrbitPointsFromElements(el: { a: number; e: number; i: number; Om: number; w: number }, steps = 256): THREE.Vector3[] {
+  const pts: THREE.Vector3[] = [];
+  const { a, e, i, Om, w } = el;
+  const cosOm = Math.cos(Om), sinOm = Math.sin(Om);
+  const cosI  = Math.cos(i),  sinI  = Math.sin(i);
+  const cosW  = Math.cos(w),  sinW  = Math.sin(w);
+  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
+  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
+  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
+  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
+  const Rzx = sinW*sinI;
+  const Rzy = cosW*sinI;
+  for (let k = 0; k <= steps; k++) {
+    const M_step = (k / steps) * TWO_PI - Math.PI;
+    const E_step = solveKepler(M_step, e);
+    const nu = 2 * Math.atan2(Math.sqrt(1+e)*Math.sin(E_step/2), Math.sqrt(1-e)*Math.cos(E_step/2));
+    const r = a * (1 - e * Math.cos(E_step));
+    const xo = r * Math.cos(nu), yo = r * Math.sin(nu);
+    pts.push(new THREE.Vector3(xo*Rxx + yo*Rxy, xo*Ryx + yo*Ryy, xo*Rzx + yo*Rzy));
+  }
+  return pts;
+}
+
+export function drawOrbitFromElements(line: THREE.Group | null | undefined, el: any): void {
+  setGlowLinePoints(line, buildOrbitPointsFromElements(el, 256));
+  if (line) line.visible = true;
+}
+
+export function validateArcPoints(points: THREE.Vector3[], label: string): boolean {
+  const MAX_AU = 5.5;
+  for (const p of points) {
+    if (p.length() > MAX_AU) {
+      console.error(`[Aster] ${label} arc out of bounds: ${p.length().toFixed(1)} AU`);
+      return false;
+    }
+  }
+  return true;
+}
+
+export function buildOrbitSegmentPoints(
+  el: { a: number; e: number; i: number; Om: number; w: number; M0: number; epoch_JD: number } | null,
+  jdStart: number,
+  jdEnd: number,
+  steps = 96
+): THREE.Vector3[] {
+  if (!el || !Number.isFinite(jdStart) || !Number.isFinite(jdEnd) || jdEnd <= jdStart) return [];
+  const pts: THREE.Vector3[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const jd = jdStart + (jdEnd - jdStart) * (i / steps);
+    const state = kep2cart(el.a, el.e, el.i, el.Om, el.w, el.M0, el.epoch_JD, jd);
+    pts.push(new THREE.Vector3(state.x, state.y, state.z));
+  }
+  return pts;
+}
+
+// ─── Arc label anchors ────────────────────────────────────────────────────────
+// Source: index.html line 2410
+
+export function setArcAnchorFromGlowLine(key: number, glowGroup: THREE.Group | null | undefined, text: string, frac = 0.5): void {
+  const pos = (glowGroup as any)?.userData?.glow?.core?.geometry?.attributes?.position?.array;
+  if (!pos || pos.length < 6) { _arcAnchors[key] = null; return; }
+  const nPts = pos.length / 3;
+  const idx  = Math.max(0, Math.min(nPts - 1, Math.round(frac * (nPts - 1))));
+  _arcAnchors[key] = { pos: new THREE.Vector3(pos[idx*3], pos[idx*3+1], pos[idx*3+2]), text };
+}
 
 // ─── Orbit geometry helpers ───────────────────────────────────────────────────
 

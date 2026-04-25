@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-// TODO: import from src/renderer/scene — scene, planets, shellGroup
+import { planets } from '../planets';
+import { moonMesh } from '../moon/index';
+// TODO: import from src/renderer/scene — scene, shellGroup
 // TODO: import from src/renderer/scene/earth — createProceduralLandOverlay
 // TODO: import from src/renderer/scene/earth/satellites — satelliteMesh, satellitesEnabled, satelliteData, fetchSatellites
 // TODO: import from src/renderer/scene/moon — issOrbitLine, applyMoonOrbitVisualState
@@ -128,4 +130,35 @@ export function deactivateEarthLayer(deps: {
     document.getElementById('sat-panel')!.style.display = 'none';
     document.getElementById('panel-idle')!.style.display = 'block';
   }
+}
+
+// ─── Capture target position ──────────────────────────────────────────────────
+// Source: index.html lines 7495–7521
+
+export function getCaptureTargetPosition(capture: any): { x: number; y: number; z: number } | null {
+  if (!capture) return null;
+  if (capture.targetPos && Number.isFinite(capture.targetPos.x) && Number.isFinite(capture.targetPos.y) && Number.isFinite(capture.targetPos.z)) {
+    if (capture.target_body !== 'moon' && capture.target_body !== 'el4' && capture.target_body !== 'el5') {
+      return capture.targetPos;
+    }
+  }
+  if (!planets[2]) return null;
+  if (capture.target_body === 'moon') {
+    return { x: moonMesh.position.x, y: moonMesh.position.y, z: moonMesh.position.z };
+  }
+  const earthPos = planets[2].position;
+  const moonDx = moonMesh.position.x - earthPos.x;
+  const moonDy = moonMesh.position.y - earthPos.y;
+  const moonDz = moonMesh.position.z - earthPos.z;
+  if (capture.target_body === 'el4' || capture.target_body === 'el5') {
+    const sign = capture.target_body === 'el4' ? 1 : -1;
+    const cos60 = 0.5;
+    const sin60 = sign * Math.sqrt(3) / 2;
+    return {
+      x: earthPos.x + moonDx * cos60 - moonDy * sin60,
+      y: earthPos.y + moonDx * sin60 + moonDy * cos60,
+      z: earthPos.z + moonDz,
+    };
+  }
+  return capture.targetPos || null;
 }
