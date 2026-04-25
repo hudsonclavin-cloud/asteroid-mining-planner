@@ -2,10 +2,6 @@
  * Orbital trail BufferGeometry system — selected-asteroid ellipse, future-arc
  * dashed line, and hover ellipse overlay.
  * Extracted verbatim from index.html lines 2317–2371.
- *
- * Cross-module deps stubbed with @ts-ignore:
- *   - isMobile         (not defined in any src/ util)
- *   - buildOrbitPoints (not defined in any src/ module)
  */
 
 import * as THREE from 'three';
