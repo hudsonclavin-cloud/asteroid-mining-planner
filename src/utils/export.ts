@@ -23,22 +23,12 @@ import { jdToDate, formatValueDisplay, fmtUSD } from './dates';
 import { currentJD } from './time-state';
 import { computeMissionProfile } from '../economics/mission-costs/planner';
 import { computeEconomicsSummary } from '../economics/mission-costs/index';
+import {
+  computeFeasibilityMetrics,
+  resolveAsteroidMassModel,
+  resolveAsteroidEconomics,
+} from '../economics/pricing/active';
 import { setStatus } from './status';
-// @ts-ignore — runtime global during transition
-declare function computeFeasibilityMetrics(ast: Record<string, unknown>): {
-  deltaV: { value: number; source: string };
-};
-// @ts-ignore — runtime global during transition
-declare function resolveAsteroidMassModel(ast: Record<string, unknown>): {
-  diameterM: number;
-  massKg: number;
-} | null;
-// @ts-ignore — runtime global during transition
-declare function resolveAsteroidEconomics(ast: Record<string, unknown>): {
-  extractableValueUsd: number;
-  wholeBodyPriceUsd: number;
-  rawProfitUsd: number;
-};
 
 // ─── exportMissionPlan ────────────────────────────────────────────────────────
 

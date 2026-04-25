@@ -17,6 +17,8 @@ import {
 } from './index';
 
 import { formatIsoDateShort } from '../../utils/dates';
+import { MAT_DIFFICULTY } from '../scoring';
+import { getNhatsMetricValue } from '../../physics/catalog/normalizers';
 
 // ─── Material Composition Constants ───────────────────────────────────────────
 
@@ -72,11 +74,9 @@ export function getActivePrices(): Record<string, number> {
  * Preference: NHATS verified → Asterank field → Aster Hohmann estimate.
  */
 export function getDisplayDeltaV(ast: any): number {
-  // @ts-ignore — runtime global during transition
   const nhatsDv = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDv, 'dv') : 0;
   if (nhatsDv > 0) return nhatsDv;
   if (Number(ast.delta_v) > 0) return Number(ast.delta_v);
-  // @ts-ignore — runtime global during transition
   return getAsteroidDV(ast);
 }
 
@@ -142,7 +142,6 @@ export function primaryCommodityForSpec(spec: string | null): string | null {
 export function computeReturnedMassModel(ast: any, options: any = {}): any {
   const extractionFraction = Number.isFinite(options.extractionFraction) ? options.extractionFraction : 0.05;
   const payloadKg = Number.isFinite(options.payloadKg) ? Math.max(0, options.payloadKg) : null;
-  // @ts-ignore — runtime global during transition
   const massModel = resolveAsteroidMassModel(ast);
   const extractableKg = massModel ? massModel.massKg * extractionFraction : null;
   const returnedKg = Number.isFinite(extractableKg)
@@ -169,7 +168,6 @@ export function computeReturnedMassModel(ast: any, options: any = {}): any {
  * broken down by water, metals, and total. Uses MAT_COMP + active prices.
  */
 export function computeWholeBodyValueSummary(ast: any): any {
-  // @ts-ignore — runtime global during transition
   const matData = computeMaterialRows(ast);
   if (!matData?.rows?.length) {
     return {
@@ -200,3 +198,127 @@ export function computeWholeBodyValueSummary(ast: any): any {
 // Re-export matSortKey and matSortAsc so callers that import from this module
 // can read them without a separate import from pricing/index.
 export { matSortKey, matSortAsc };
+
+export function getAsteroidDV(ast: any): number {
+  if (ast.delta_v && Number(ast.delta_v) > 0) return Number(ast.delta_v);
+  if (ast.dv && Number(ast.dv) > 0) return Number(ast.dv);
+  if (ast.min_dv && Number(ast.min_dv) > 0) return Number(ast.min_dv);
+  const a = Number(ast.a) || 1.5;
+  const e = Number(ast.e) || 0;
+  const i_rad = (Number(ast.i) || 0) * Math.PI / 180;
+  const mu = 1.0;
+  const v_earth = Math.sqrt(mu / 1.0);
+  const v_ast = Math.sqrt(mu * (1 + e) / (a * (1 - e)));
+  const dv_transfer = Math.abs(v_ast - v_earth);
+  const dv_inc = 2 * v_earth * Math.sin(i_rad / 2);
+  const dv_au_yr = dv_transfer + dv_inc * 0.5;
+  const LEO_DEPART = 3.2;
+  return Math.min(15.0, dv_au_yr * 4.740 + LEO_DEPART);
+}
+
+export function getDisplayDuration(ast: any): number {
+  const nhatsDur = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDur, 'dur') : 0;
+  if (nhatsDur > 0) return nhatsDur;
+  return Math.round(180 + (getDisplayDeltaV(ast) - 3) * 20);
+}
+
+export function getAsteroidDiameterMeters(ast: any): number | null {
+  const direct = Number(ast?._diam_m);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const diamKm = Number(ast?.diameter);
+  if (Number.isFinite(diamKm) && diamKm > 0) return diamKm * 1000;
+  const hVal = Number(ast?.H);
+  if (!(Number.isFinite(hVal) && hVal > 0)) return null;
+  const albedo = Number(ast?.albedo);
+  const safeAlbedo = Number.isFinite(albedo) && albedo > 0 ? albedo : 0.15;
+  return (1329 / Math.sqrt(safeAlbedo)) * Math.pow(10, -hVal / 5) * 1000;
+}
+
+export function resolveAsteroidMassModel(ast: any): any {
+  const diameterM = getAsteroidDiameterMeters(ast);
+  if (!(Number.isFinite(diameterM) && diameterM > 0)) return null;
+  const spec = getMatSpec(ast);
+  const densityKgM3 = MAT_DENSITY_KGM3[spec || 'X'] || 2000;
+  const radiusM = diameterM / 2;
+  const massKg = (4 / 3) * Math.PI * radiusM * radiusM * radiusM * densityKgM3;
+  return { diameterM, radiusM, densityKgM3, massKg, spec };
+}
+
+export function computeMaterialRows(ast: any): any {
+  const massModel = resolveAsteroidMassModel(ast);
+  if (!massModel || !massModel.spec) return null;
+  const spec = massModel.spec;
+  const comp = MAT_COMP[spec];
+  const massKg = massModel.massKg;
+  const prices = getActivePrices();
+  const rows = MAT_KEYS.map((k) => {
+    const pct = comp[k] || 0;
+    const kg = massKg * (pct / 100);
+    const priceKg = prices[k] || 0;
+    return {
+      key: k,
+      name: MAT_NAMES[k],
+      pct,
+      kg,
+      priceKg,
+      totalValue: kg * priceKg,
+      difficulty: MAT_DIFFICULTY[k],
+    };
+  });
+  rows.sort((a, b) => {
+    const dir = matSortAsc ? 1 : -1;
+    if (matSortKey === 'name') return a.name.localeCompare(b.name) * dir;
+    return ((a as any)[matSortKey] - (b as any)[matSortKey]) * dir;
+  });
+  return { rows, massKg, spec, massModel };
+}
+
+export function resolveAsteroidEconomics(ast: any): any {
+  const massModel = resolveAsteroidMassModel(ast);
+  const wholeBodyPriceUsd = Number.isFinite(ast?.price) && ast.price > 0 ? ast.price : null;
+  const rawProfitUsd = Number.isFinite(ast?.profit) && ast.profit > 0 ? ast.profit : null;
+  let extractableValueUsd = Number.isFinite(ast?.value_extractable_est) && ast.value_extractable_est > 0
+    ? ast.value_extractable_est
+    : null;
+  if (extractableValueUsd === null) {
+    const matData = computeMaterialRows(ast);
+    if (matData?.rows?.length) {
+      extractableValueUsd = matData.rows.reduce((sum: number, row: any) => sum + row.totalValue, 0);
+    }
+  }
+  return {
+    diameterKm: massModel ? massModel.diameterM / 1000 : null,
+    diameterSource: ast?.diameter_source || (massModel ? 'estimated' : 'unknown'),
+    wholeBodyPriceUsd,
+    rawProfitUsd,
+    extractableValueUsd,
+    extractableValueSource: extractableValueUsd !== null ? (ast?.value_extractable_source || 'heuristic') : 'unknown',
+    hasKnownSize: !!massModel,
+    massModel,
+  };
+}
+
+export function computeFeasibilityMetrics(ast: any): any {
+  let dvVal = null;
+  let dvUnc: number | string = '?';
+  let dvSrc = 'Unknown';
+  let dvMethod = 'unknown';
+  const nhatsDv = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDv, 'dv') : 0;
+  if (nhatsDv > 0) {
+    dvVal = nhatsDv; dvUnc = 0.3; dvSrc = 'NHATS'; dvMethod = 'JPL NHATS';
+  } else if (Number(ast.delta_v) > 0) {
+    dvVal = Number(ast.delta_v); dvUnc = 1.0; dvSrc = 'Asterank'; dvMethod = 'catalog';
+  } else {
+    dvVal = getAsteroidDV(ast); dvUnc = 3.0; dvSrc = 'Aster est.'; dvMethod = 'hohmann-visviva';
+  }
+  const nhatsDur = ast.nhats?.accessible ? getNhatsMetricValue(ast.nhats.minDur, 'dur') : 0;
+  const durationVal = nhatsDur > 0 ? nhatsDur : Math.round(180 + (dvVal - 3) * 20);
+  const econ = resolveAsteroidEconomics(ast);
+  return {
+    deltaV: { value: dvVal, uncertainty: dvUnc, source: dvSrc, method: dvMethod },
+    duration: { value: durationVal, source: nhatsDur > 0 ? 'NHATS' : 'heuristic' },
+    valueRange: { optimistic: econ.extractableValueUsd, conservative: econ.rawProfitUsd ?? econ.extractableValueUsd },
+    accessibility: { nhatsVerified: !!ast.nhats?.accessible },
+    hazard: { riskLevel: ast.pha ? 'PHA' : 'nominal' },
+  };
+}

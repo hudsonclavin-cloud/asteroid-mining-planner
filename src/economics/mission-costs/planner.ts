@@ -50,6 +50,12 @@ import { renderBurnEditTable } from '../../ui/hud/mission-control/burn-sequence'
 import { renderPorkchop } from '../../renderer/scene/orbits/porkchop';
 import { buildExtractScoreBreakdownHtml, summarizeTrajectoryOperationalMetrics } from './redirect';
 import { clearPlannerError, showPlannerError } from '../../ui/hud/mission-control/errors';
+import {
+  clearTrajectoryLine,
+  drawTrajectoryLine,
+  drawBurnVectors,
+  buildMissionTimeline,
+} from '../../renderer/scene/mission-overlay';
 
 export async function runMissionOptimizer() {
   clearPlannerError();
@@ -230,9 +236,7 @@ export function selectTrajectory(idx: number) {
   document.querySelectorAll('.mp-traj-card').forEach((c, i) =>
     (c as HTMLElement).classList.toggle('mp-traj-selected', i === idx));
   setMissionReturnTargetPos(null);
-  // @ts-ignore — runtime global during transition
   clearTrajectoryLine();
-  // @ts-ignore — runtime global during transition
   drawTrajectoryLine(traj);
   // Frame camera on Earth departure position to show trajectory
   {
@@ -261,9 +265,7 @@ export function selectTrajectory(idx: number) {
   renderBurnEditTable();
   (document.getElementById('mp-burns') as HTMLElement).style.display   = 'block';
   (document.getElementById('mp-actions') as HTMLElement).style.display = 'block';
-  // @ts-ignore — runtime global during transition
   drawBurnVectors(traj);
-  // @ts-ignore — runtime global during transition
   buildMissionTimeline(traj);
   // Re-render porkchop so selected dot updates (only if panel is visible)
   if (

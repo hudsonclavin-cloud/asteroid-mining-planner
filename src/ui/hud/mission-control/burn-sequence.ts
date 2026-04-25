@@ -29,22 +29,16 @@ import {
   missionConfig,
   optimalTrajectory,
   selectedId,
+  asteroidData,
 } from '../../../../state/index';
 import { SPACECRAFT } from '../../../../economics/mission-costs/defaults';
 import { jdToDate } from '../../../../utils/dates';
 import { propellantKgNum } from '../../../../economics/mission-costs/index';
 import { currentJD } from '../../../../utils/time-state';
-
-// @ts-ignore — runtime global during transition
-declare function drawBurnVectors(traj: unknown): void;
-// @ts-ignore — runtime global during transition
-declare function computeMultiBurnElements(idx: number): unknown;
-// @ts-ignore — runtime global during transition
-declare function recomputeAllBurnOrbits(): void;
-// @ts-ignore — runtime global during transition
-declare function updateBurnUI(): void;
-// @ts-ignore — runtime global during transition
-declare function toggleBurnMode(): void;
+import { drawBurnVectors } from '../../../../renderer/scene/mission-overlay';
+import { drawOrbitFromElements } from '../../../../renderer/scene/orbits/index';
+import { applyBurn } from '../../../../physics/orbital/burns';
+import { toggleBurnMode, updateBurnUI } from './burn-mode';
 
 // ─── Mission-Planner burn table (mpBurns[]) ──────────────────────────────────
 
@@ -155,7 +149,7 @@ export function addGizmoBurn(): void {
   burns.push({ dv_p: burnDV.p, dv_n: burnDV.n, dv_r: burnDV.r, jd: currentJD });
   setActiveBurnIdx(burns.length - 1);
   setBurnDV({ p: 0, n: 0, r: 0 });
-  setCurrentBurnElements(computeMultiBurnElements(activeBurnIdx));
+  setCurrentBurnElements(computeMultiBurnElements(burns.length - 1));
   renderBurnList();
   recomputeAllBurnOrbits();
   updateBurnUI();
@@ -200,4 +194,36 @@ export function initBurnListEvents(): void {
       renderBurnList();
     }
   });
+}
+
+export function computeMultiBurnElements(upToIdx: number): any {
+  if (selectedId < 0 || burns.length === 0) return null;
+  let el = null;
+  for (let i = 0; i <= Math.min(upToIdx, burns.length - 1); i++) {
+    const b = burns[i];
+    const src = el || asteroidData[selectedId];
+    el = applyBurn(src, b.jd, b.dv_p, b.dv_n, b.dv_r);
+    if (!el || el.e >= 1) return null;
+  }
+  return el;
+}
+
+export function recomputeAllBurnOrbits(): void {
+  burnOrbitLines.forEach((l: any) => { l.visible = false; });
+  newOrbitLine.visible = false;
+  originalOrbitLine.visible = false;
+  if (burns.length === 0 || selectedId < 0) return;
+
+  const ast = asteroidData[selectedId];
+  const origEl = { a: ast.a, e: ast.e, i: ast.i * Math.PI / 180, Om: ast.om * Math.PI / 180, w: ast.w * Math.PI / 180, M0: ast.ma * Math.PI / 180, epoch_JD: ast.epoch };
+  drawOrbitFromElements(originalOrbitLine, origEl);
+
+  for (let i = 0; i < burns.length; i++) {
+    const el = computeMultiBurnElements(i);
+    if (el && el.e < 1 && burnOrbitLines[i]) {
+      burnOrbitLines[i].material.color.setHex(BURN_COLORS[i]);
+      drawOrbitFromElements(burnOrbitLines[i], el);
+    }
+  }
+  setCurrentBurnElements(computeMultiBurnElements(burns.length - 1));
 }

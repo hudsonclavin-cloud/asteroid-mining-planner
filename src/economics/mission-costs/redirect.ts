@@ -67,6 +67,13 @@ import { AU_m } from '../../physics/constants/index';
 import { setStatus } from '../../utils/status';
 import { flyTarget, setFlyTarget } from '../../state/index';
 import { clearPlannerError, showPlannerError } from '../../ui/hud/mission-control/errors';
+import {
+  clearTrajectoryLine,
+  stopMissionAnimation,
+  hideMissionTimeline,
+  clearMissionPathVisuals,
+  clearBurnVectors,
+} from '../../renderer/scene/mission-overlay';
 
 // ─── Redirect Propulsion Table ────────────────────────────────────────────────
 
@@ -99,7 +106,6 @@ export function setMissionType(type: string, options: any = {}) {
   });
   clearPlannerError();
   if (resetVisuals) {
-    // @ts-ignore — runtime global during transition
     clearTrajectoryLine();
     clearRedirectVisualization();
   }
@@ -188,13 +194,9 @@ export async function runRedirectOptimizer() {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-  // @ts-ignore — runtime global during transition
   stopMissionAnimation();
-  // @ts-ignore — runtime global during transition
   hideMissionTimeline();
-  // @ts-ignore — runtime global during transition
   clearMissionPathVisuals();
-  // @ts-ignore — runtime global during transition
   clearBurnVectors();
 
   if (_plannerTimeoutId) clearTimeout(_plannerTimeoutId);
@@ -338,13 +340,9 @@ export function onRedirectResult(data: any) {
     `Catalog body ${fmtRedirectValue(isru.whole_body_price_usd)}`;
 
   // 3D visualization
-  // @ts-ignore — runtime global during transition
   clearMissionPathVisuals();
-  // @ts-ignore — runtime global during transition
   clearBurnVectors();
-  // @ts-ignore — runtime global during transition
   stopMissionAnimation();
-  // @ts-ignore — runtime global during transition
   hideMissionTimeline();
   clearRedirectVisualization();
   setOptimalTrajectory(null);
@@ -443,7 +441,6 @@ export function syncActiveRedirectVisuals() {
   if (!activeRedirectVisual) return;
   const ast = asteroidData[activeRedirectVisual.asteroidId] || getSelectedAsteroid();
   if (!ast) return;
-  // @ts-ignore — runtime global during transition
   clearMissionPathVisuals();
   clearRedirectVisualization({ preserveState: true });
   if (!drawRedirectInterceptTrajectory(activeRedirectVisual.intercept)) {
