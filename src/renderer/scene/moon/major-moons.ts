@@ -2,8 +2,6 @@
  * Major moon meshes, orbit geometry, and per-frame position update.
  * Extracted verbatim from index.html lines 1935–2005.
  *
- * Cross-module deps stubbed with @ts-ignore:
- *   - moonOrbitVisualsEnabled (not yet exported from scene/index)
  */
 
 import * as THREE from 'three';
@@ -64,7 +62,6 @@ export const majorMoonOrbitLines: THREE.Group[] = [];
     }
     const line = makeGlowLine(new THREE.BufferGeometry().setFromPoints(pts), 0x2a3a4a, 0.3, { haloOpacity: 0 });
     scene.add(line);
-    // @ts-ignore — runtime global during transition
     line.visible = moonOrbitVisualsEnabled;
     majorMoonOrbitLines.push(line);
   });

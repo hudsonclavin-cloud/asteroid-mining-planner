@@ -3,7 +3,7 @@
  * Source: index.html lines ~4255–4360.
  */
 
-import { selectedId, asteroidData, burns, missionConfig, selectedTrajIdx } from '../state/index';
+import { selectedId, asteroidData, burns, missionConfig, selectedTrajIdx, _activeMissionType } from '../state/index';
 import { currentJD } from './time-state';
 import { camera } from '../renderer/scene/index';
 
@@ -23,8 +23,7 @@ export function buildShareState(options: { includeMissionPlanner?: boolean } = {
   };
   if (includeMissionPlanner) {
     state.mp = {
-      // @ts-ignore — _activeMissionType not yet in state module
-      type: (typeof _activeMissionType !== 'undefined' ? _activeMissionType : ''),
+      type: _activeMissionType,
       dest: missionConfig.destination, sc: missionConfig.spacecraft,
       lv: missionConfig.launchVehicle, rt: missionConfig.redirectTarget, rp: missionConfig.redirectPropulsion,
       ys: missionConfig.launchYearStart, ye: missionConfig.launchYearEnd, ti: selectedTrajIdx,

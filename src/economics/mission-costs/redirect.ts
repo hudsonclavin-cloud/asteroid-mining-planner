@@ -38,6 +38,12 @@ import {
   setMissionPlanningActive,
   trajectoryLine, setTrajectoryLine, trajectoryArrows,
   _arcAnchors,
+  orbitLine,
+  redirectOriginalOrbitLine,
+  redirectAdjustedOrbitLine,
+  _activeMissionType,
+  setActiveMissionType,
+  getSelectedAsteroid,
 } from '../../state/index';
 
 import { SPACECRAFT, LAUNCH_VEHICLES, DELIVERY_DESTINATIONS, REDIRECT_CAPTURE_TARGETS } from './defaults';
@@ -60,6 +66,7 @@ import { moonMesh } from '../../renderer/scene/moon/index';
 import { AU_m } from '../../physics/constants/index';
 import { setStatus } from '../../utils/status';
 import { flyTarget, setFlyTarget } from '../../state/index';
+import { clearPlannerError, showPlannerError } from '../../ui/hud/mission-control/errors';
 
 // ─── Redirect Propulsion Table ────────────────────────────────────────────────
 
@@ -74,8 +81,7 @@ export const REDIRECT_PROPULSION: Record<string, { name: string; isp_s: number }
 
 export function setMissionType(type: string, options: any = {}) {
   const { resetVisuals = true } = options;
-  // @ts-ignore — runtime global during transition
-  _activeMissionType = type;
+  setActiveMissionType(type as 'extract' | 'redirect');
   (document.getElementById('btn-type-extract') as HTMLElement).dataset.on  = (type === 'extract').toString();
   (document.getElementById('btn-type-redirect') as HTMLElement).dataset.on = (type === 'redirect').toString();
   (document.getElementById('mp-redirect-config') as HTMLElement).style.display = type === 'redirect' ? 'block' : 'none';
@@ -91,7 +97,6 @@ export function setMissionType(type: string, options: any = {}) {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-  // @ts-ignore — runtime global during transition
   clearPlannerError();
   if (resetVisuals) {
     // @ts-ignore — runtime global during transition
@@ -126,28 +131,22 @@ export function fmtRedirectPercent(v: number): string {
 // ─── Redirect Optimizer ───────────────────────────────────────────────────────
 
 export async function runRedirectOptimizer() {
-  // @ts-ignore — runtime global during transition
   clearPlannerError();
-  // @ts-ignore — runtime global during transition
   const ast = getSelectedAsteroid();
   if (!ast) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('No asteroid selected — click an asteroid first.');
     return;
   }
   if (!isFinite(ast.a) || !isFinite(ast.e) || !isFinite(ast.i)) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('Asteroid is missing orbital elements (a/e/i). Cannot plan redirect mission.');
     return;
   }
   // Founding Doc §6.2: redirect planning is blocked for any asteroid with a non-zero Sentry impact probability
   if (ast.Sentry && Number.isFinite(ast.Sentry.impact_probability) && ast.Sentry.impact_probability > 0) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('RESTRICTED: This asteroid has a non-zero Sentry impact probability. Redirect planning is blocked for potentially hazardous objects.');
     return;
   }
   if (!isFinite(ast.epoch)) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('Asteroid epoch is missing. Cannot propagate orbit.');
     return;
   }
@@ -156,12 +155,10 @@ export async function runRedirectOptimizer() {
   const yearEnd   = parseInt((document.getElementById('mp-year-end') as HTMLInputElement).value)   || 2035;
   const currentYear = new Date().getFullYear();
   if (yearStart < currentYear || yearEnd < currentYear) {
-    // @ts-ignore — runtime global during transition
     showPlannerError(`Launch window must be ${currentYear} or later. Past years are blocked.`);
     return;
   }
   if (yearEnd < yearStart) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('Launch window end year must be greater than or equal to the start year.');
     return;
   }
@@ -207,7 +204,6 @@ export async function runRedirectOptimizer() {
     if (_activeRedirectRequestId !== reqId) return;
     setActiveRedirectRequestId(0);
     setPlannerTimeoutId(null);
-    // @ts-ignore — runtime global during transition
     showPlannerError('Worker timeout (>30 s). Try a shorter launch window or a closer target.');
   }, 30000));
 
@@ -227,7 +223,6 @@ export async function runRedirectOptimizer() {
     });
   } catch(err) {
     if (_activeRedirectRequestId === reqId) setActiveRedirectRequestId(0);
-    // @ts-ignore — runtime global during transition
     showPlannerError(err);
   }
 }
@@ -238,12 +233,10 @@ export function onRedirectResult(data: any) {
   if (Number.isFinite(data.reqId) && data.reqId !== _activeRedirectRequestId) return;
   setActiveRedirectRequestId(0);
   if (_plannerTimeoutId) { clearTimeout(_plannerTimeoutId); setPlannerTimeoutId(null); }
-  // @ts-ignore — runtime global during transition
   clearPlannerError();
   (document.getElementById('mp-computing') as HTMLElement).style.display = 'none';
 
   if (data.schema_version !== 1) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('Redirect result schema mismatch. Refresh required before planning redirect missions.');
     return;
   }
@@ -277,7 +270,6 @@ export function onRedirectResult(data: any) {
   // Intercept trajectory
   const ic = data.intercept;
   if (!ic) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('Redirect result missing intercept data (internal error).');
     return;
   }
@@ -292,7 +284,6 @@ export function onRedirectResult(data: any) {
   const rd    = data.redirect;
   const flags = data.flags;
   if (!ast_d || !rd || !flags) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('Redirect result is incomplete (internal error).');
     return;
   }
@@ -317,7 +308,6 @@ export function onRedirectResult(data: any) {
   // Redirect capture / delivery
   const cap = data.capture;
   if (!cap) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('Redirect capture data missing (internal error).');
     return;
   }
@@ -336,7 +326,6 @@ export function onRedirectResult(data: any) {
   // ISRU yield
   const isru = data.isru;
   if (!isru) {
-    // @ts-ignore — runtime global during transition
     showPlannerError('Redirect ISRU data missing (internal error).');
     return;
   }
@@ -365,7 +354,6 @@ export function onRedirectResult(data: any) {
   if (!drawRedirectInterceptTrajectory(ic)) {
     setStatus('Redirect intercept path unavailable for current solution window', true);
   }
-  // @ts-ignore — runtime global during transition
   if (!drawRedirectTrajectory(getSelectedAsteroid(), ic, rd)) {
     setStatus('Redirect path unavailable for current solution window', true);
   }
@@ -380,28 +368,21 @@ export function clearRedirectVisualization(options: any = {}) {
   if (_lunarOrbitRing)  { disposeObject3D(_lunarOrbitRing);  setLunarOrbitRing(null); }
   _cargoPodArcs.forEach((a: any) => disposeObject3D(a));
   setCargoPodArcs([]);
-  // @ts-ignore — renderer global during transition
   redirectOriginalOrbitLine.visible = false;
-  // @ts-ignore — renderer global during transition
   redirectAdjustedOrbitLine.visible = false;
   if (!preserveState) setActiveRedirectVisual(null);
-  // @ts-ignore — runtime global during transition
-  _arcAnchors.redirectIntercept = null;
-  // @ts-ignore — runtime global during transition
-  _arcAnchors.redirectArc       = null;
-  // @ts-ignore — runtime global during transition
-  _arcAnchors.lunarOrbit        = null;
+  (_arcAnchors as any).redirectIntercept = null;
+  (_arcAnchors as any).redirectArc = null;
+  (_arcAnchors as any).lunarOrbit = null;
 }
 
 export function drawRedirectTrajectory(ast: any, intercept: any, redirect: any): boolean {
-  // @ts-ignore — runtime global during transition
   orbitLine.visible = false;
   if (ast) drawOrbitFromElements(redirectOriginalOrbitLine, asteroidToOrbitElements(ast));
   if (redirect.orbit_el) {
     drawOrbitFromElements(redirectAdjustedOrbitLine, redirect.orbit_el);
     setGlowLineColor(redirectAdjustedOrbitLine, ORBIT_NEON.redirect, 0.22, 0.05);
   } else {
-    // @ts-ignore — runtime global during transition
     redirectAdjustedOrbitLine.visible = false;
   }
 
@@ -460,7 +441,6 @@ export function drawRedirectInterceptTrajectory(intercept: any): boolean {
 
 export function syncActiveRedirectVisuals() {
   if (!activeRedirectVisual) return;
-  // @ts-ignore — runtime global during transition
   const ast = asteroidData[activeRedirectVisual.asteroidId] || getSelectedAsteroid();
   if (!ast) return;
   // @ts-ignore — runtime global during transition

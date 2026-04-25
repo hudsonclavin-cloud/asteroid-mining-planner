@@ -24,13 +24,16 @@ import {
   mpBurns,
   selectedId,
   asteroidData,
+  porkchopData,
+  getSelectedAsteroid,
 } from '../../state/index';
 
 import { SPACECRAFT, LAUNCH_VEHICLES, DEST_LABELS } from './defaults';
 
-import { jdToDate, fmtUSD } from '../../utils/dates';
+import { jdToDate, fmtUSD, dateToJD } from '../../utils/dates';
 
-import { propellantKgNum, computeEconomicsSummary } from './index';
+import { propellantKgNum, computeEconomicsSummary, computeMissionCost } from './index';
+import { getMatSpec } from '../pricing/active';
 
 import { getWorker } from '../../workers/physics/client';
 
@@ -43,41 +46,34 @@ import {
 } from '../../renderer/scene/orbits/index';
 import { setStatus } from '../../utils/status';
 import { flyTarget, setFlyTarget } from '../../state/index';
+import { renderBurnEditTable } from '../../ui/hud/mission-control/burn-sequence';
+import { renderPorkchop } from '../../renderer/scene/orbits/porkchop';
+import { buildExtractScoreBreakdownHtml, summarizeTrajectoryOperationalMetrics } from './redirect';
+import { clearPlannerError, showPlannerError } from '../../ui/hud/mission-control/errors';
 
 export async function runMissionOptimizer() {
-  // @ts-ignore — runtime global during transition
   clearPlannerError();
-  // @ts-ignore — runtime global during transition
   const ast = getSelectedAsteroid();
-  // @ts-ignore — runtime global during transition
   if (!ast) return showPlannerError('No asteroid selected — click an asteroid first.');
 
   // Validate asteroid orbital elements before sending to worker
-  // @ts-ignore — runtime global during transition
   if (!ast) return showPlannerError('No asteroid selected.');
   const required = ['a', 'e', 'i', 'om', 'w', 'ma'];
-  // @ts-ignore — runtime global during transition
   const missing = required.filter(k => ast[k] === undefined || isNaN(ast[k]));
-  // @ts-ignore — runtime global during transition
   if (missing.length) return showPlannerError(`Asteroid missing orbital elements: ${missing.join(', ')}`);
-  // @ts-ignore — runtime global during transition
   if (ast.epoch === undefined || isNaN(ast.epoch)) return showPlannerError('Asteroid epoch is undefined.');
 
   const ys = parseInt((document.getElementById('mp-year-start') as HTMLInputElement).value) || 2026;
   const ye = parseInt((document.getElementById('mp-year-end') as HTMLInputElement).value)   || 2035;
   const currentYear = new Date().getFullYear();
-  // @ts-ignore — runtime global during transition
   if (ys < currentYear || ye < currentYear) return showPlannerError(`Launch window must be ${currentYear} or later. Past years are blocked.`);
-  // @ts-ignore — runtime global during transition
   if (ye < ys) return showPlannerError('Launch window end year must be greater than or equal to the start year.');
   missionConfig.destination     = (document.getElementById('mp-destination') as HTMLSelectElement).value;
   missionConfig.spacecraft      = (document.querySelector('input[name="mp-craft"]:checked') as HTMLInputElement)?.value || 'medium';
   missionConfig.launchVehicle   = (document.getElementById('mp-launch-vehicle') as HTMLSelectElement).value;
   missionConfig.launchYearStart = ys;
   missionConfig.launchYearEnd   = ye;
-  // @ts-ignore — runtime global during transition
   const jd_start = dateToJD(ys, 1, 1);
-  // @ts-ignore — runtime global during transition
   const jd_end   = dateToJD(ye + 1, 1, 1);
   const parkAlt  = parseInt((document.getElementById('mp-park-alt') as HTMLInputElement).value) || 400;
   const sc       = missionConfig.spacecraft;
@@ -100,7 +96,6 @@ export async function runMissionOptimizer() {
     if (_plannerTimeoutId) clearTimeout(_plannerTimeoutId);
     setPlannerTimeoutId(setTimeout(() => {
       setPlannerTimeoutId(null);
-      // @ts-ignore — runtime global during transition
       showPlannerError('Worker timeout (>30 s). The solver may be overloaded — try a shorter launch window or a NHATS ✓ target.');
     }, 30000));
 
@@ -115,7 +110,6 @@ export async function runMissionOptimizer() {
       stayDays: STAY_MAP[sc] || 45,
     });
   } catch(err) {
-    // @ts-ignore — runtime global during transition
     showPlannerError(err);
   }
 }
@@ -151,9 +145,7 @@ export function onPlanResult(results: any[], noFeasibleWindow: boolean, dbg: any
   }
   setMissionPlanningActive(true);
   const sortedResults: any[] = [...results].sort((a: any, b: any) => {
-    // @ts-ignore — runtime global during transition
     const sa = summarizeTrajectoryOperationalMetrics(a);
-    // @ts-ignore — runtime global during transition
     const sb = summarizeTrajectoryOperationalMetrics(b);
     const scoreA = Number.isFinite(sa?.score) ? sa.score : -Infinity;
     const scoreB = Number.isFinite(sb?.score) ? sb.score : -Infinity;
@@ -163,13 +155,11 @@ export function onPlanResult(results: any[], noFeasibleWindow: boolean, dbg: any
   (sortedResults as any).source = source || 'lambert';
   setMissionResults(sortedResults);
   setOptimalTrajectory(missionResults[0] || null);
-  // @ts-ignore — runtime global during transition
   renderTrajectoryList();
   (document.getElementById('mp-results') as HTMLElement).style.display = 'block';
   (document.getElementById('mp-result-count') as HTMLElement).textContent = `(${results.length} options)`;
   if (results.length) {
     (document.getElementById('mp-assumptions-wrap') as HTMLElement).style.display = 'block';
-    // @ts-ignore — runtime global during transition
     selectTrajectory(0);
   }
   // Refresh model assumptions panel
@@ -201,7 +191,6 @@ export function renderTrajectoryList() {
     const dep   = jdToDate(t.jd_dep);
     const arr   = jdToDate(t.jd_arr);
     const dvUnc = +(t.dv_total * uncPct).toFixed(2);
-    // @ts-ignore — runtime global during transition
     const ops = summarizeTrajectoryOperationalMetrics(t);
     const card  = document.createElement('div');
     card.className = 'mp-traj-card' + (i === selectedTrajIdx ? ' mp-traj-selected' : '');
@@ -217,7 +206,6 @@ export function renderTrajectoryList() {
     const costWarning = profile.totalCost < 500e6
       ? '<div class="mp-traj-meta" style="color:#fbbf24">Historical first-of-a-kind mining missions are typically $2B-$10B+</div>'
       : '';
-    // @ts-ignore — runtime global during transition
     const scoreBreakdown = buildExtractScoreBreakdownHtml(t, ops);
     card.innerHTML = `<div class="mp-traj-rank">#${i+1}${gaBadge}${hvBadge}${badge}</div>
       <div class="mp-traj-dates">↑ ${dep} &nbsp;→&nbsp; ↓ ${arr}</div>
@@ -228,7 +216,6 @@ export function renderTrajectoryList() {
       ${scoreBreakdown}
       <div class="mp-traj-meta" style="color:#64748b">Source: Asterank + screening-grade economics</div>
       ${costWarning}`;
-    // @ts-ignore — runtime global during transition
     card.addEventListener('click', () => selectTrajectory(i));
     list.appendChild(card);
   });
@@ -271,7 +258,6 @@ export function selectTrajectory(idx: number) {
     { label:'4 · ASTEROID DEP.',   jd: traj.jd_ret_dep || traj.jd_arr+30, dv_kms: traj.dv_return },
     { label:'5 · DEST. CAPTURE',   jd: traj.jd_ret_arr || traj.jd_arr+30+(traj.tof_return||traj.tof), dv_kms: traj.dv_capture || 0 },
   );
-  // @ts-ignore — runtime global during transition
   renderBurnEditTable();
   (document.getElementById('mp-burns') as HTMLElement).style.display   = 'block';
   (document.getElementById('mp-actions') as HTMLElement).style.display = 'block';
@@ -281,11 +267,9 @@ export function selectTrajectory(idx: number) {
   buildMissionTimeline(traj);
   // Re-render porkchop so selected dot updates (only if panel is visible)
   if (
-    // @ts-ignore — runtime global during transition
     porkchopData &&
     (document.getElementById('porkchop-panel') as HTMLElement).style.display !== 'none'
   ) {
-    // @ts-ignore — runtime global during transition
     renderPorkchop(porkchopData); // redraws grid then overlays current mission results
   }
 }
@@ -334,11 +318,9 @@ export function computeMissionProfile(traj: any): any {
   const totalCost  = launchCost + sc.cost_usd + opsCost;
   const _src     = (missionResults as any).source || 'lambert';
   const dvUnc_mp = traj.dv_total * 0.15;
-  // @ts-ignore — runtime global during transition
   const costRng_mp = computeMissionCost(totalCost, dvUnc_mp);
 
   // ── Revenue (canonical screening-grade return model) ────────────────────────
-  // @ts-ignore — runtime global during transition
   const spec = getMatSpec(ast);
   const econSummary = computeEconomicsSummary(ast, {
     dryMass: sc.dry_kg,

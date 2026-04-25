@@ -20,6 +20,21 @@ export function jdToDate(jd: number): string {
   return `${year}-${MONTHS[month - 1]}-${String(day).padStart(2, '0')}`;
 }
 
+/** Convert a calendar date to Julian Date at 00:00 UTC. */
+export function dateToJD(year: number, month: number, day: number): number {
+  const a = Math.floor((14 - month) / 12);
+  const y = year + 4800 - a;
+  const m = month + 12 * a - 3;
+  const jdn = day
+    + Math.floor((153 * m + 2) / 5)
+    + 365 * y
+    + Math.floor(y / 4)
+    - Math.floor(y / 100)
+    + Math.floor(y / 400)
+    - 32045;
+  return jdn - 0.5;
+}
+
 /** Format a USD value with K/M/B/T/Q suffix. Returns '—' for null/undefined. */
 export function fmtUSD(v: number | null | undefined): string {
   if (!v && v !== 0) return '—';

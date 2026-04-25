@@ -21,9 +21,9 @@ import {
 } from '../state/index';
 import { jdToDate, formatValueDisplay, fmtUSD } from './dates';
 import { currentJD } from './time-state';
-
-// @ts-ignore — runtime global during transition
-declare function computeMissionProfile(traj: unknown): { text: string };
+import { computeMissionProfile } from '../economics/mission-costs/planner';
+import { computeEconomicsSummary } from '../economics/mission-costs/index';
+import { setStatus } from './status';
 // @ts-ignore — runtime global during transition
 declare function computeFeasibilityMetrics(ast: Record<string, unknown>): {
   deltaV: { value: number; source: string };
@@ -39,23 +39,6 @@ declare function resolveAsteroidEconomics(ast: Record<string, unknown>): {
   wholeBodyPriceUsd: number;
   rawProfitUsd: number;
 };
-// @ts-ignore — runtime global during transition
-declare function computeEconomicsSummary(
-  ast: Record<string, unknown>,
-  opts: {
-    dryMass: number;
-    isp: number;
-    dv: number;
-    launchCostPerKg: number;
-    totalCostMultiplier: number;
-    payloadKg: number;
-  }
-): {
-  paperValueUsd: number;
-  realizableNpvUsd: number;
-};
-// @ts-ignore — runtime global during transition
-declare function setStatus(msg: string, warn?: boolean): void;
 
 // ─── exportMissionPlan ────────────────────────────────────────────────────────
 

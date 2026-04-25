@@ -15,6 +15,9 @@ export function setAsteroidData(v: any[]) { asteroidData = v; }
 
 export let selectedId = -1;
 export function setSelectedId(v: number) { selectedId = v; }
+export function getSelectedAsteroid(): any | null {
+  return selectedId >= 0 ? asteroidData[selectedId] ?? null : null;
+}
 
 export let flyTarget: any = null;
 export function setFlyTarget(v: any) { flyTarget = v; }
@@ -140,6 +143,16 @@ export function setRedirectOriginalOrbitLine(v: any) { redirectOriginalOrbitLine
 
 export let redirectAdjustedOrbitLine: any = null;
 export function setRedirectAdjustedOrbitLine(v: any) { redirectAdjustedOrbitLine = v; }
+
+// ── Selected asteroid orbit line ───────────────────────────────────────────────
+
+export let orbitLine: any = null;
+export function setOrbitLine(v: any) { orbitLine = v; }
+
+// ── Mission type toggle ────────────────────────────────────────────────────────
+
+export let _activeMissionType: 'extract' | 'redirect' = 'extract';
+export function setActiveMissionType(v: 'extract' | 'redirect') { _activeMissionType = v; }
 
 // ── Arc anchors (mission overlay) ─────────────────────────────────────────────
 

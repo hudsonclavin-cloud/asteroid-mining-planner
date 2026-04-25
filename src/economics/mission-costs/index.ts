@@ -39,6 +39,21 @@ export function propellantKgNum(dv_kms: number, isp: number, m_dry: number): num
   return Math.min(raw, m_dry * 19); // 95% propellant fraction cap
 }
 
+/** Mission cost uncertainty band driven by the current ΔV uncertainty estimate. */
+export function computeMissionCost(pointCost: number, dvUnc: number | { value?: number; low?: number; high?: number } | null | undefined) {
+  const spread = typeof dvUnc === 'number'
+    ? dvUnc
+    : Number.isFinite((dvUnc as any)?.value)
+      ? Number((dvUnc as any).value)
+      : 0;
+  const frac = Math.max(0.1, Math.min(0.35, spread > 0 ? spread / 10 : 0.15));
+  return {
+    low: pointCost * (1 - frac),
+    high: pointCost * (1 + frac),
+    frac,
+  };
+}
+
 /**
  * Compute a screening-grade economics summary for a target asteroid.
  * All outputs are order-of-magnitude estimates — not mission-grade.
