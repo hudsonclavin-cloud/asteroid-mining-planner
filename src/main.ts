@@ -18,6 +18,7 @@ import { initWorker, getWorker } from './workers/physics/client';
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
 import { initScene, scene, sunMesh, animate, renderer, camera, controls, moonOrbitVisualsEnabled, setMoonOrbitVisualsEnabled, nhatsRing, nhatsRingMat, registerAnimateHooks } from './renderer/scene/index';
+import { dummy } from './renderer/scene/index';
 import { planets } from './renderer/scene/planets';
 import { createProceduralLandOverlay, updatePlanetSpin, PLANET_VISUALS } from './renderer/scene/planets';
 import { initTextures } from './renderer/scene/textures';
@@ -25,6 +26,7 @@ import { initGizmo, gizmoRaycaster, updateGizmo } from './renderer/scene/gizmo';
 import { initEarthDetail, earthLayerActive, earthDetailGroup, shellGroup, updateEarthDetailSpin } from './renderer/scene/earth/detail';
 import { initPorkchop } from './renderer/scene/orbits/porkchop';
 import { renderPorkchop } from './renderer/scene/orbits/porkchop';
+import { buildAsteroidMesh } from './renderer/scene/asteroids/instanced-field/index';
 import { missionAnim, setMissionAnimationPlaying, updateSpacecraftFollow, updateBurnVectorPulse, updateMissionAnimation } from './renderer/scene/mission-overlay';
 import { consumePendingPositions, updateTimelineIndicator } from './renderer/scene/per-frame';
 import { maybePropagateCurrentJD } from './workers/physics/client';
@@ -46,10 +48,11 @@ import { fetchResearchBriefing } from './ui/panels/right/research';
 // ── Data ──────────────────────────────────────────────────────────────────────
 import { fetchPrices } from './economics/pricing/index';
 import { fetchNHATSData } from './data/nhats/index';
+import { triggerCatalogFetch } from './data/asterank/index';
 import { runMissionOptimizer, selectTrajectory } from './economics/mission-costs/planner';
 import { runRedirectOptimizer } from './economics/mission-costs/redirect';
 import { exportMissionPlan, exportMissionReport } from './utils/export';
-import { encodeStateToURL } from './utils/share';
+import { encodeStateToURL, loadStateFromURL } from './utils/share';
 import { setStatus } from './utils/status';
 import { jdToDate } from './utils/dates';
 import { currentJD, setCurrentJD, lastSpeed, setIsPlaying, setLastSpeed, setSimSpeed, isPlaying, isScrubbing, simSpeed, clampJD } from './utils/time-state';
@@ -59,6 +62,8 @@ import {
   selectedId,
   setSelectedId,
   asteroidData,
+  asteroidCount,
+  asteroidMesh,
   currentBurnElements,
   optimalTrajectory,
   setOptimalTrajectory,
@@ -82,6 +87,12 @@ import {
   activeRedirectVisual,
   burnModeActive,
   positionCache,
+  visibleScale,
+  setAsteroidData,
+  setAsteroidCount,
+  setAsteroidMesh,
+  setPositionCache,
+  setVisibleScale,
   fpsFrames, setFpsFrames,
   fpsLast, setFpsLast,
   frameCount, setFrameCount,
@@ -90,6 +101,9 @@ import {
 } from './state/index';
 import { SPACECRAFT } from './economics/mission-costs/defaults';
 import { propellantKgNum } from './economics/mission-costs/index';
+import { saveToIndexedDB } from './data/cache/indexeddb';
+import { showTour } from './ui/modals/tour';
+import { getAsteroidDV, resolveAsteroidEconomics } from './economics/pricing/active';
 
 const noop = (): void => {};
 const fmtSliderVal = (pos: number): string => {
@@ -165,6 +179,32 @@ function getPlayableMissionContext(): any {
 }
 function missionContextMatches(_ctx: any): boolean { return false; }
 function activatePlayableMission(_ctx: any): boolean { return false; }
+function spectralTypeColor(ast: any): THREE.Color {
+  const spec = (ast.spec || ast.spec_B || ast.spec_T || ast.taxonomy || '').trim().toUpperCase().charAt(0);
+  if (spec === 'C' || spec === 'B') return new THREE.Color(0x4488ff);
+  if (spec === 'D') return new THREE.Color(0x3366cc);
+  if (spec === 'S' || spec === 'Q' || spec === 'A') return new THREE.Color(0xff8844);
+  if (spec === 'M' || spec === 'E' || spec === 'P') return new THREE.Color(0xffcc00);
+  if (spec === 'X' || spec === 'V' || spec === 'T') return new THREE.Color(0xcc66ff);
+  return new THREE.Color(0x00d4ff);
+}
+function getDisplayValueUsd(ast: any): number | null {
+  return resolveAsteroidEconomics(ast).extractableValueUsd;
+}
+function keplerPosAU(ast: any, jd: number): { x: number; y: number; z: number } {
+  const deg = Math.PI / 180;
+  const state = kep2cart(
+    Number(ast.a) || 1,
+    Number(ast.e) || 0,
+    (Number(ast.i) || 0) * deg,
+    (Number(ast.om) || 0) * deg,
+    (Number(ast.w) || 0) * deg,
+    (Number(ast.ma) || 0) * deg,
+    Number(ast.epoch) || 2451545.0,
+    jd,
+  );
+  return { x: state.x, y: state.y, z: state.z };
+}
 function setMissionAnimationPlayingWrapper(playing: boolean): void {
   setMissionAnimationPlaying(playing, {
     syncSpeedButtons,
@@ -175,7 +215,58 @@ function setMissionAnimationPlayingWrapper(playing: boolean): void {
   });
 }
 
+let selectedAsteroidKey: string | null = null;
+
+function installLegacyBootBridges(): void {
+  Object.defineProperty(window, 'selectedId', {
+    configurable: true,
+    get: () => selectedId,
+    set: (v: number) => setSelectedId(v),
+  });
+  Object.defineProperty(window, 'asteroidData', {
+    configurable: true,
+    get: () => asteroidData,
+  });
+  Object.defineProperty(window, 'selectedAsteroidKey', {
+    configurable: true,
+    get: () => selectedAsteroidKey,
+    set: (v: string | null) => { selectedAsteroidKey = v; },
+  });
+  (window as any).loadSourceStatus = (window as any).loadSourceStatus || {};
+  (window as any).saveToIndexedDB = saveToIndexedDB;
+  (window as any).fetchNHATSData = fetchNHATSData;
+  (window as any).loadStateFromURL = loadStateFromURL;
+  (window as any).showTour = showTour;
+  (window as any).buildAsteroidMesh = (data: any[]) =>
+    buildAsteroidMesh(data, {
+      scene,
+      dummy,
+      currentJD,
+      worker: getWorker(),
+      asteroidData,
+      asteroidCount,
+      asteroidMesh,
+      positionCache,
+      visibleScale,
+      keplerPosAU,
+      spectralTypeColor,
+      getAsteroidDV,
+      getDisplayValueUsd,
+      applyFilters: noop,
+      setAsteroidData,
+      setAsteroidCount,
+      setAsteroidMesh,
+      setPositionCache,
+      setVisibleScale,
+      setDustMesh: noop,
+      setDustCount: noop,
+      WORKER_URL: (window as any).WORKER_URL,
+    });
+}
+
 async function main() {
+  installLegacyBootBridges();
+
   // 1. Physics worker
   initWorker();
 
@@ -332,10 +423,8 @@ async function main() {
   initTour();
 
   // 16. Async data fetches
-  await Promise.all([
-    fetchPrices(),
-    fetchNHATSData(),
-  ]);
+  await fetchPrices();
+  triggerCatalogFetch();
 
   // 17. Register per-frame hooks
   const DEG = Math.PI / 180;

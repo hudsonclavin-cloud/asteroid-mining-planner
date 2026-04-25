@@ -12,6 +12,7 @@ import { setPendingPositions } from '../../state/index';
 import { lastPropJD, setLastPropJD, lastPropagateRequestMs, setLastPropagateRequestMs, currentJD } from '../../utils/time-state';
 import { WORKER_URL } from '../../utils/config';
 import { applyNHATSData } from '../../data/nhats/index';
+import { onCatalogReady } from '../../data/asterank/index';
 
 const PROPAGATE_INTERVAL_MS = 75;
 
@@ -59,10 +60,11 @@ export function initWorker(): Worker {
     }
 
     if (data.type === 'load_progress') {
+      const loadSourceStatus = ((window as any).loadSourceStatus ||= {});
       const icon = data.status === 'ok' ? '✓' : data.status === 'fallback' ? '⚠' : '✗';
       const label = data.source.toUpperCase();
       const detail = data.status === 'ok' || data.status === 'fallback' ? `${data.count}` : 'offline';
-      loadSourceStatus[data.source] = `${label} ${icon} ${detail}`; // TODO: import loadSourceStatus from src/ui/overlays/loading.ts
+      loadSourceStatus[data.source] = `${label} ${icon} ${detail}`;
       if (data.source === 'nhats') {
         const nEl = document.getElementById('hud-nhats');
         if (nEl) {
@@ -85,46 +87,7 @@ export function initWorker(): Worker {
     }
 
     if (data.type === 'catalog_ready') {
-      // Cache to IndexedDB; fall back to localStorage (top 2000 only)
-      const payload = {
-        schema_version: 7,
-        data: data.data,
-        timestamp: Date.now(),
-        meta: {
-          source: data.source || 'asterank',
-          fallback: !!data.fallback,
-          stale: !!data.stale,
-          requestedLimit: data.requestedLimit || data.data.length,
-          returnedCount: data.returnedCount || data.data.length,
-        },
-      };
-      if (Array.isArray(data.data) && data.data.length > 0) {
-        saveToIndexedDB('aster_catalog_v7', payload).catch(() => { // TODO: import from src/data/catalog.ts
-          try { localStorage.setItem('aster_catalog_v7', JSON.stringify({ ...payload, data: data.data.slice(0, 2000) })); } catch(_) {}
-        });
-      }
-      // Cache NHATS rows alongside
-      if (data.nhatsRows && data.nhatsRows.length > 0) {
-        try { localStorage.setItem('aster_nhats_v2', JSON.stringify({ data: data.nhatsRows, timestamp: Date.now(), meta: { stale: !!data.stale, source: 'nhats' } })); } catch(_) {}
-      }
-      const prevAsteroidKey = selectedAsteroidKey || // TODO: import from src/data/catalog.ts
-        (selectedId >= 0 ? ((asteroidData[selectedId]?.pdes || asteroidData[selectedId]?.full_name || '').trim()) : null);
-      buildAsteroidMesh(data.data); // TODO: import from src/data/catalog.ts
-      if (prevAsteroidKey) {
-        const newIdx = asteroidData.findIndex((a: any) =>
-          (a.pdes || '').trim() === prevAsteroidKey ||
-          (a.full_name || '').trim() === prevAsteroidKey
-        );
-        selectedAsteroidKey = prevAsteroidKey;
-        selectedId = newIdx >= 0 ? newIdx : -1;
-      }
-      const loading = document.getElementById('loading');
-      loading!.style.transition = 'opacity 0.6s';
-      loading!.style.opacity = '0';
-      setTimeout(() => (loading!.style.display = 'none'), 700);
-      fetchNHATSData(); // TODO: import from src/data/nhats.ts
-      loadStateFromURL(); // TODO: import from src/utils/url.ts
-      if (!localStorage.getItem('aster_toured')) showTour(); // TODO: import from src/ui/modals/tour.ts
+      onCatalogReady(data);
       return;
     }
 
