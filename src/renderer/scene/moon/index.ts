@@ -24,7 +24,7 @@ moonMesh.userData.baseRadius = MOON_DISPLAY_RADIUS;
 moonMesh.userData.trueRadiusKm = MOON_TRUE_RADIUS_KM;
 // TODO: scene.add(moonMesh) — call after scene is available
 (function() {
-  new THREE.TextureLoader().load('./textures/2k_moon.jpg',
+  new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}2k_moon.jpg`,
     tex => { moonMat.map = tex; moonMat.color.setHex(0xffffff); moonMat.needsUpdate = true; },
     undefined, e => console.warn('[tex] moon failed:', (e as Error)?.message || 'load error'));
 })();

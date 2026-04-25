@@ -10,20 +10,21 @@ export function initTextures(
 ): void {
   (function() {
     const loader = new THREE.TextureLoader();
+    const assetUrl = (filename: string) => `${import.meta.env.BASE_URL}${filename}`;
     const texMap: [number, string][] = [
       [0, '2k_mercury.jpg'], [1, '2k_venus_surface.jpg'],
       [2, '2k_earth_daymap.jpg'], [3, '2k_mars.jpg'],
       [4, '2k_jupiter.jpg'], [5, '2k_saturn.jpg'],
       [6, '2k_uranus.jpg'], [7, '2k_neptune.jpg'],
     ];
-    texMap.forEach(([i, f]) => loader.load('./textures/' + f,
+    texMap.forEach(([i, f]) => loader.load(assetUrl(f),
       tex => {
         (planets[i].material as THREE.MeshPhongMaterial).map = tex;
         (planets[i].material as THREE.MeshPhongMaterial).color.setHex(0xffffff);
         (planets[i].material as THREE.MeshPhongMaterial).needsUpdate = true;
       },
       undefined, e => console.warn(`[tex] planet ${i} (${f}) failed:`, (e as Error)?.message || 'load error')));
-    loader.load('./textures/2k_sun.jpg',
+    loader.load(assetUrl('2k_sun.jpg'),
       tex => {
         (sunMesh.material as THREE.MeshBasicMaterial).map = tex;
         (sunMesh.material as THREE.MeshBasicMaterial).color.setHex(0xffffff);
@@ -37,7 +38,7 @@ export function initTextures(
       (c as THREE.Mesh)?.geometry?.type === 'TorusGeometry' ||
       (c as THREE.Mesh)?.geometry?.type === 'RingGeometry'
     ) as THREE.Mesh | undefined;
-    if (satRing) loader.load('./textures/2k_saturn_ring_alpha.png',
+    if (satRing) loader.load(assetUrl('2k_saturn_ring_alpha.png'),
       tex => {
         (satRing.material as THREE.MeshPhongMaterial).map = tex;
         (satRing.material as THREE.MeshPhongMaterial).alphaMap = tex;
