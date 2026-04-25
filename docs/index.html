@@ -11,9 +11,7 @@
 <title>ASTER — Asteroid Mining Mission Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-<style>/* Styles extracted to src/styles/main.css */
-</style>
+<link rel="stylesheet" href="./src/styles/main.css">
 <script type="importmap">
 {
   "imports": {
@@ -22,8 +20,8 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/asteroid-mining-planner/assets/index-BahuyYQ1.js"></script>
-  <link rel="stylesheet" crossorigin href="/asteroid-mining-planner/assets/index-DBnyUIUO.css">
+<style>/* Styles extracted to src/styles/main.css */
+</style>
 </head>
 <body>
 
@@ -795,7 +793,7 @@
   </div>
 </div>
 
-<script type="text/plain" data-removed="replaced by src/main.ts">
+<script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -1637,10 +1635,10 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
     [4, '2k_jupiter.jpg'], [5, '2k_saturn.jpg'],
     [6, '2k_uranus.jpg'], [7, '2k_neptune.jpg'],
   ];
-  texMap.forEach(([i, f]) => loader.load('./textures/' + f,
+  texMap.forEach(([i, f]) => loader.load('./' + f,
     tex => { planets[i].material.map = tex; planets[i].material.color.setHex(0xffffff); planets[i].material.needsUpdate = true; },
     undefined, e => console.warn(`[tex] planet ${i} (${f}) failed:`, e?.message || 'load error')));
-  loader.load('./textures/2k_sun.jpg',
+  loader.load('./2k_sun.jpg',
     tex => { sunMesh.material.map = tex; sunMesh.material.color.setHex(0xffffff); sunMesh.material.needsUpdate = true; },
     undefined, e => console.warn('[tex] sun failed:', e?.message || 'load error'));
   // Saturn ring texture — find the dedicated ring mesh by stable metadata, with geometry fallback
@@ -1650,7 +1648,7 @@ const planets = PLANET_CONFIGS.map((cfg, idx) => {
     c?.geometry?.type === 'TorusGeometry' ||
     c?.geometry?.type === 'RingGeometry'
   );
-  if (satRing) loader.load('./textures/2k_saturn_ring_alpha.png',
+  if (satRing) loader.load('./2k_saturn_ring_alpha.png',
     tex => { satRing.material.map = tex; satRing.material.alphaMap = tex; satRing.material.needsUpdate = true; },
     undefined, e => console.warn('[tex] saturn ring failed:', e?.message || 'load error'));
   else console.warn('[tex] saturn ring mesh not found — ring texture skipped');
@@ -1670,7 +1668,7 @@ moonMesh.userData.baseRadius = MOON_DISPLAY_RADIUS;
 moonMesh.userData.trueRadiusKm = MOON_TRUE_RADIUS_KM;
 scene.add(moonMesh);
 (function() {
-  new THREE.TextureLoader().load('./textures/2k_moon.jpg',
+  new THREE.TextureLoader().load('./2k_moon.jpg',
     tex => { moonMat.map = tex; moonMat.color.setHex(0xffffff); moonMat.needsUpdate = true; },
     undefined, e => console.warn('[tex] moon failed:', e?.message || 'load error'));
 })();
