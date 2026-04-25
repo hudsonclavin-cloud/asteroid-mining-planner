@@ -9,6 +9,21 @@
  *   - Default dry mass: 1,000 kg
  */
 
+import {
+  getDisplayDeltaV,
+  getActivePrices,
+  MAT_COMP,
+  MAT_KEYS,
+  computeReturnedMassModel,
+  computeWholeBodyValueSummary,
+  primaryCommodityForSpec,
+  getMatSpec,
+  getPriceSourceLabel,
+  getCatalogSourceLabel,
+} from '../pricing/active';
+
+import { computeRealizableNPV } from '../npv/index';
+
 /**
  * Numeric Tsiolkovsky rocket equation (returns propellant kg, not a string).
  * Capped at 95% propellant fraction (mass ratio 20) to gate against
@@ -27,16 +42,10 @@ export function propellantKgNum(dv_kms: number, isp: number, m_dry: number): num
 /**
  * Compute a screening-grade economics summary for a target asteroid.
  * All outputs are order-of-magnitude estimates — not mission-grade.
- *
- * TODO: import getDisplayDeltaV, getActivePrices, MAT_COMP, MAT_KEYS,
- *       computeReturnedMassModel, computeWholeBodyValueSummary, computeRealizableNPV,
- *       primaryCommodityForSpec, getMatSpec, getPriceSourceLabel, getCatalogSourceLabel
- *       from their src/ modules once Stage 9 wires.
  */
 export function computeEconomicsSummary(ast: any, options: any = {}): any {
   const dryMass = Number.isFinite(options.dryMass) ? options.dryMass : 1000;
   const isp = Number.isFinite(options.isp) ? options.isp : 450;
-  // @ts-ignore — runtime global during transition
   const dv = Number.isFinite(options.dv) ? options.dv : getDisplayDeltaV(ast);
   const launchCostPerKg = Number.isFinite(options.launchCostPerKg) ? options.launchCostPerKg : 2700;
   const totalCostMultiplier = Number.isFinite(options.totalCostMultiplier) ? options.totalCostMultiplier : 1.8;
@@ -52,27 +61,19 @@ export function computeEconomicsSummary(ast: any, options: any = {}): any {
   const launchCostUsd = Number.isFinite(launchMassKg) ? launchMassKg! * launchCostPerKg : null;
   const totalCostUsd = Number.isFinite(launchCostUsd) ? launchCostUsd! * totalCostMultiplier : null;
 
-  // TODO: resolve composition/prices/NPV from imported modules in Stage 9
-  // @ts-ignore
   const spec = getMatSpec(ast);
-  // @ts-ignore
   const prices = getActivePrices();
-  // @ts-ignore
   const comp = spec ? MAT_COMP[spec] : null;
   let revenuePerKg: number | null = null;
   if (comp) {
     revenuePerKg = 0;
-    // @ts-ignore
     MAT_KEYS.forEach((k: string) => { revenuePerKg! += (comp[k] / 100) * (prices[k] || 0); });
   }
-  // @ts-ignore
   const returnModel = computeReturnedMassModel(ast, { payloadKg, extractionFraction });
-  // @ts-ignore
   const wholeBodyValue = computeWholeBodyValueSummary(ast);
   const returnedKg = returnModel.returnedKg;
   const paperValueUsd = Number.isFinite(returnedKg) && Number.isFinite(revenuePerKg) ? returnedKg * revenuePerKg! : null;
-  // @ts-ignore
-  const npvUsd = computeRealizableNPV(primaryCommodityForSpec(spec), returnedKg, revenuePerKg);
+  const npvUsd = computeRealizableNPV(primaryCommodityForSpec(spec) ?? '', returnedKg, revenuePerKg ?? 0);
   const roiMultiple = Number.isFinite(totalCostUsd) && totalCostUsd! > 0 && Number.isFinite(npvUsd)
     ? npvUsd! / totalCostUsd!
     : null;
@@ -82,9 +83,7 @@ export function computeEconomicsSummary(ast: any, options: any = {}): any {
     extractableKg: returnModel.extractableKg, returnedKg,
     returnModelLimit: returnModel.limit, returnModelSource: returnModel.source,
     paperValueUsd, realizableNpvUsd: npvUsd, roiMultiple,
-    // @ts-ignore
     priceSourceLabel: getPriceSourceLabel(),
-    // @ts-ignore
     economicsSourceLabel: `screening-grade composition economics (${getCatalogSourceLabel(ast)})`,
     wholeBodyWaterValueUsd: wholeBodyValue.waterValueUsd,
     wholeBodyMetalValueUsd: wholeBodyValue.metalValueUsd,

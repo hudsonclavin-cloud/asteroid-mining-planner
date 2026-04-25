@@ -11,8 +11,30 @@
  *   4. computeMissionProfile() — produces the full mission cost/revenue text block
  */
 
-// @ts-ignore — runtime global during transition
-async function runMissionOptimizer() {
+import {
+  missionConfig,
+  missionResults, setMissionResults,
+  selectedTrajIdx, setSelectedTrajIdx,
+  optimalTrajectory, setOptimalTrajectory,
+  setMissionPlanningActive,
+  setMissionReturnTargetPos,
+  _activeReturnQueryId, setActiveReturnQueryId,
+  _plannerTimeoutId, setPlannerTimeoutId,
+  bumpExtractRequestSeq, setActiveExtractRequestId,
+  mpBurns,
+  selectedId,
+  asteroidData,
+} from '../../state/index';
+
+import { SPACECRAFT, LAUNCH_VEHICLES, DEST_LABELS } from './defaults';
+
+import { jdToDate, fmtUSD } from '../../utils/dates';
+
+import { propellantKgNum, computeEconomicsSummary } from './index';
+
+import { getWorker } from '../../workers/physics/client';
+
+export async function runMissionOptimizer() {
   // @ts-ignore — runtime global during transition
   clearPlannerError();
   // @ts-ignore — runtime global during transition
@@ -38,26 +60,19 @@ async function runMissionOptimizer() {
   if (ys < currentYear || ye < currentYear) return showPlannerError(`Launch window must be ${currentYear} or later. Past years are blocked.`);
   // @ts-ignore — runtime global during transition
   if (ye < ys) return showPlannerError('Launch window end year must be greater than or equal to the start year.');
-  // @ts-ignore — runtime global during transition
   missionConfig.destination     = (document.getElementById('mp-destination') as HTMLSelectElement).value;
-  // @ts-ignore — runtime global during transition
   missionConfig.spacecraft      = (document.querySelector('input[name="mp-craft"]:checked') as HTMLInputElement)?.value || 'medium';
-  // @ts-ignore — runtime global during transition
   missionConfig.launchVehicle   = (document.getElementById('mp-launch-vehicle') as HTMLSelectElement).value;
-  // @ts-ignore — runtime global during transition
   missionConfig.launchYearStart = ys;
-  // @ts-ignore — runtime global during transition
   missionConfig.launchYearEnd   = ye;
   // @ts-ignore — runtime global during transition
   const jd_start = dateToJD(ys, 1, 1);
   // @ts-ignore — runtime global during transition
   const jd_end   = dateToJD(ye + 1, 1, 1);
   const parkAlt  = parseInt((document.getElementById('mp-park-alt') as HTMLInputElement).value) || 400;
-  // @ts-ignore — runtime global during transition
   const sc       = missionConfig.spacecraft;
   const STAY_MAP: Record<string, number> = { light:14, medium:45, heavy:90 };
-  // @ts-ignore — runtime global during transition
-  missionConfig.parkingAlt_km = parkAlt;
+  (missionConfig as any).parkingAlt_km = parkAlt;
 
   (document.getElementById('mp-computing') as HTMLElement).style.display = 'block';
   (document.getElementById('mp-results') as HTMLElement).style.display   = 'none';
@@ -66,33 +81,24 @@ async function runMissionOptimizer() {
   (document.getElementById('mp-actions') as HTMLElement).style.display   = 'none';
   (document.getElementById('mp-progress-bar') as HTMLElement).style.width = '5%';
   (document.getElementById('mp-progress-label') as HTMLElement).textContent = 'Running Aster Lambert solver...';
-  // @ts-ignore — runtime global during transition
-  missionReturnTargetPos = null;
-  // @ts-ignore — runtime global during transition
-  _activeReturnQueryId = 0;
+  setMissionReturnTargetPos(null);
+  setActiveReturnQueryId(0);
 
   try {
 
     // 30-second timeout: if worker never replies, surface an error
-    // @ts-ignore — runtime global during transition
     if (_plannerTimeoutId) clearTimeout(_plannerTimeoutId);
-    // @ts-ignore — runtime global during transition
-    _plannerTimeoutId = setTimeout(() => {
-      // @ts-ignore — runtime global during transition
-      _plannerTimeoutId = null;
+    setPlannerTimeoutId(setTimeout(() => {
+      setPlannerTimeoutId(null);
       // @ts-ignore — runtime global during transition
       showPlannerError('Worker timeout (>30 s). The solver may be overloaded — try a shorter launch window or a NHATS ✓ target.');
-    }, 30000);
+    }, 30000));
 
-    // @ts-ignore — runtime global during transition
-    const reqId = ++_extractRequestSeq;
-    // @ts-ignore — runtime global during transition
-    _activeExtractRequestId = reqId;
-    // @ts-ignore — runtime global during transition
-    worker.postMessage({
+    const reqId = bumpExtractRequestSeq();
+    setActiveExtractRequestId(reqId);
+    getWorker().postMessage({
       cmd: 'plan_mission', ast, jd_start, jd_end,
       reqId,
-      // @ts-ignore — runtime global during transition
       destination: missionConfig.destination,
       parkingAlt_km: parkAlt,
       spacecraft: sc,
@@ -103,8 +109,6 @@ async function runMissionOptimizer() {
     showPlannerError(err);
   }
 }
-
-export { runMissionOptimizer };
 
 // ─── Result handling ──────────────────────────────────────────────────────────
 
@@ -117,9 +121,7 @@ export function onPlanResult(results: any[], noFeasibleWindow: boolean, dbg: any
       ? `<br><span style="color:#4b5563;font-size:9px">diag: lambert_null=${dbg.lambert_null} gate_fail=${dbg.gate_fail} phase1=${dbg.phase1_count} best_dv=${dbg.best_dv ?? '—'}</span>`
       : '';
     const bestDv = dbg?.best_dv;
-    // @ts-ignore — runtime global during transition
     const hint = bestDv && bestDv < 30
-      // @ts-ignore — runtime global during transition
       ? `Best one-way ΔV found: ${bestDv} km/s — try extending the window past ${missionConfig.launchYearEnd || 2035} or pick a NHATS ✓ target.`
       : 'Try a NHATS ✓ target (◈ NHATS ACCESSIBLE ONLY filter), extend the launch window, or pick a lower-ΔV asteroid.';
     if (errorPanel) {
@@ -137,10 +139,8 @@ export function onPlanResult(results: any[], noFeasibleWindow: boolean, dbg: any
     }
     return;
   }
-  // @ts-ignore — runtime global during transition
-  missionPlanningActive = true;
-  // @ts-ignore — runtime global during transition
-  missionResults = [...results].sort((a: any, b: any) => {
+  setMissionPlanningActive(true);
+  const sortedResults: any[] = [...results].sort((a: any, b: any) => {
     // @ts-ignore — runtime global during transition
     const sa = summarizeTrajectoryOperationalMetrics(a);
     // @ts-ignore — runtime global during transition
@@ -150,10 +150,9 @@ export function onPlanResult(results: any[], noFeasibleWindow: boolean, dbg: any
     if (scoreB !== scoreA) return scoreB - scoreA;
     return a.dv_total - b.dv_total;
   });
-  // @ts-ignore — runtime global during transition
-  missionResults.source = source || 'lambert';
-  // @ts-ignore — runtime global during transition
-  optimalTrajectory = missionResults[0] || null;
+  (sortedResults as any).source = source || 'lambert';
+  setMissionResults(sortedResults);
+  setOptimalTrajectory(missionResults[0] || null);
   // @ts-ignore — runtime global during transition
   renderTrajectoryList();
   (document.getElementById('mp-results') as HTMLElement).style.display = 'block';
@@ -187,19 +186,14 @@ export function renderTrajectoryList() {
   const uncPct = 0.15;
   const badge  = '<span style="color:#4a6a7a;font-size:7px;border:1px solid #4a6a7a;padding:1px 3px;margin-left:4px;vertical-align:middle">📐 ASTER</span>';
   list.innerHTML = '';
-  // @ts-ignore — runtime global during transition
   missionResults.forEach((t: any, i: number) => {
-    // @ts-ignore — runtime global during transition
     const profile = t._profile || (t._profile = computeMissionProfile(t));
-    // @ts-ignore — runtime global during transition
     const dep   = jdToDate(t.jd_dep);
-    // @ts-ignore — runtime global during transition
     const arr   = jdToDate(t.jd_arr);
     const dvUnc = +(t.dv_total * uncPct).toFixed(2);
     // @ts-ignore — runtime global during transition
     const ops = summarizeTrajectoryOperationalMetrics(t);
     const card  = document.createElement('div');
-    // @ts-ignore — runtime global during transition
     card.className = 'mp-traj-card' + (i === selectedTrajIdx ? ' mp-traj-selected' : '');
     const gaBadge = t.lunarAssist
       ? '<span style="font-size:7px;color:#fbbf24;border:1px solid #fbbf24;padding:1px 4px;margin-left:5px;vertical-align:middle">LUNAR GA</span>'
@@ -230,22 +224,15 @@ export function renderTrajectoryList() {
   });
 }
 
-// fmtUSD is a runtime global — declare a local shim type so TypeScript is satisfied
-// @ts-ignore — runtime global during transition
-declare function fmtUSD(v: number): string;
 
 export function selectTrajectory(idx: number) {
-  // @ts-ignore — runtime global during transition
-  selectedTrajIdx = idx;
-  // @ts-ignore — runtime global during transition
+  setSelectedTrajIdx(idx);
   const traj = missionResults[idx];
   if (!traj) return;
-  // @ts-ignore — runtime global during transition
-  optimalTrajectory = traj;
+  setOptimalTrajectory(traj);
   document.querySelectorAll('.mp-traj-card').forEach((c, i) =>
     (c as HTMLElement).classList.toggle('mp-traj-selected', i === idx));
-  // @ts-ignore — runtime global during transition
-  missionReturnTargetPos = null;
+  setMissionReturnTargetPos(null);
   // @ts-ignore — runtime global during transition
   clearTrajectoryLine();
   // @ts-ignore — runtime global during transition
@@ -260,24 +247,21 @@ export function selectTrajectory(idx: number) {
   }
   // Request accurate terminal return position for the selected destination
   if (traj.jd_ret_arr && traj.returnTarget?.body) {
-    // @ts-ignore — runtime global during transition
-    const reqId = ++_activeReturnQueryId;
-    // @ts-ignore — runtime global during transition
-    worker.postMessage({ cmd:'query_pos', jd: traj.jd_ret_arr, reqId, target: traj.returnTarget });
+    const reqId = _activeReturnQueryId + 1;
+    setActiveReturnQueryId(reqId);
+    getWorker().postMessage({ cmd:'query_pos', jd: traj.jd_ret_arr, reqId, target: traj.returnTarget });
   }
-  // @ts-ignore — runtime global during transition
   const profile = computeMissionProfile(traj);
   (document.getElementById('mp-profile-text') as HTMLElement).textContent = profile.text;
   (document.getElementById('mp-profile') as HTMLElement).style.display = 'block';
   (document.getElementById('mp-verify-wrap') as HTMLElement).style.display = 'flex';
-  // @ts-ignore — runtime global during transition
-  mpBurns = [
+  mpBurns.splice(0, mpBurns.length,
     { label:'1 · DEPARTURE',       jd: traj.jd_dep,                       dv_kms: traj.dv_dep    },
     { label:'2 · ASTEROID ARRIVAL',jd: traj.jd_arr,                       dv_kms: traj.dv_arr    },
     { label:'3 · MCC',             jd: (traj.jd_dep + traj.jd_arr) / 2,   dv_kms: traj.dv_mcc || +(traj.dv_dep * 0.02).toFixed(3) },
     { label:'4 · ASTEROID DEP.',   jd: traj.jd_ret_dep || traj.jd_arr+30, dv_kms: traj.dv_return },
     { label:'5 · DEST. CAPTURE',   jd: traj.jd_ret_arr || traj.jd_arr+30+(traj.tof_return||traj.tof), dv_kms: traj.dv_capture || 0 },
-  ];
+  );
   // @ts-ignore — runtime global during transition
   renderBurnEditTable();
   (document.getElementById('mp-burns') as HTMLElement).style.display   = 'block';
@@ -298,13 +282,9 @@ export function selectTrajectory(idx: number) {
 }
 
 export function computeMissionProfile(traj: any): any {
-  // @ts-ignore — runtime global during transition
   const ast  = asteroidData[selectedId];
-  // @ts-ignore — runtime global during transition
-  const sc   = SPACECRAFT[missionConfig.spacecraft]    || SPACECRAFT.medium;
-  // @ts-ignore — runtime global during transition
-  const lv   = LAUNCH_VEHICLES[missionConfig.launchVehicle] || LAUNCH_VEHICLES.f9;
-  // @ts-ignore — runtime global during transition
+  const sc   = SPACECRAFT[missionConfig.spacecraft as keyof typeof SPACECRAFT]    || SPACECRAFT.medium;
+  const lv   = LAUNCH_VEHICLES[missionConfig.launchVehicle as keyof typeof LAUNCH_VEHICLES] || LAUNCH_VEHICLES.f9;
   const dest = DEST_LABELS[missionConfig.destination]  || 'LEO';
   const g0   = 0.00980665;
 
@@ -321,7 +301,6 @@ export function computeMissionProfile(traj: any): any {
     wetKg   = sc.dry_kg + propKg;
     propNote = '3-stage chemical (high-ΔV mode)';
   } else {
-    // @ts-ignore — runtime global during transition
     propKg  = propellantKgNum(traj.dv_total, sc.isp, sc.dry_kg);
     wetKg   = sc.dry_kg + propKg;
     propNote = `single-stage, Isp ${sc.isp} s`;
@@ -334,7 +313,6 @@ export function computeMissionProfile(traj: any): any {
   // ── Launch cost & overweight check ──────────────────────────────────────────
   const launchCost = wetKg * lv.cost_per_kg;
   const fits       = wetKg <= lv.max_kg;
-  // @ts-ignore — runtime global during transition
   const betterLV   = Object.values(LAUNCH_VEHICLES)
     .filter((v: any) => v.max_kg >= wetKg)
     .sort((a: any, b: any) => a.cost_per_kg - b.cost_per_kg)[0] as any;
@@ -345,8 +323,7 @@ export function computeMissionProfile(traj: any): any {
   const opsDays    = Math.round(traj.tof + (traj.tof_return || traj.tof) + (traj.stay_days || 45));
   const opsCost    = (opsDays / 30) * 8e6;  // $8M/month — DSN time, staffing, contingency
   const totalCost  = launchCost + sc.cost_usd + opsCost;
-  // @ts-ignore — runtime global during transition
-  const _src     = missionResults.source || 'lambert';
+  const _src     = (missionResults as any).source || 'lambert';
   const dvUnc_mp = traj.dv_total * 0.15;
   // @ts-ignore — runtime global during transition
   const costRng_mp = computeMissionCost(totalCost, dvUnc_mp);
@@ -354,7 +331,6 @@ export function computeMissionProfile(traj: any): any {
   // ── Revenue (canonical screening-grade return model) ────────────────────────
   // @ts-ignore — runtime global during transition
   const spec = getMatSpec(ast);
-  // @ts-ignore — runtime global during transition
   const econSummary = computeEconomicsSummary(ast, {
     dryMass: sc.dry_kg,
     isp: sc.isp,
@@ -393,19 +369,14 @@ export function computeMissionProfile(traj: any): any {
     dot('SPACECRAFT', sc.name),
     dot('LAUNCH VEHICLE', lv.name),
     sep('TRAJECTORY'),
-    // @ts-ignore — runtime global during transition
     dot('LAUNCH DATE', jdToDate(traj.jd_dep)),
-    // @ts-ignore — runtime global during transition
     dot('ARRIVAL DATE', jdToDate(traj.jd_arr)),
     dot('MINING STAY', (traj.stay_days || '?') + ' days'),
-    // @ts-ignore — runtime global during transition
     dot('RETURN DEPART', traj.jd_ret_dep ? jdToDate(traj.jd_ret_dep) : '—'),
-    // @ts-ignore — runtime global during transition
     dot('RETURN ARRIVAL', traj.jd_ret_arr ? jdToDate(traj.jd_ret_arr) : '—'),
     dot('MISSION DURATION', opsDays + ' days (est)'),
     sep('DELTA-V BUDGET  (screening-grade Lambert estimates, ±15%)'),
-    // @ts-ignore — runtime global during transition
-    dot('1 · DEPARTURE BURN', traj.dv_dep.toFixed(3) + ' km/s (est.)  (from ' + (missionConfig.parkingAlt_km||400) + ' km LEO)'),
+    dot('1 · DEPARTURE BURN', traj.dv_dep.toFixed(3) + ' km/s (est.)  (from ' + ((missionConfig as any).parkingAlt_km||400) + ' km LEO)'),
     dot('2 · ASTEROID ARRIVAL', traj.dv_arr.toFixed(3) + ' km/s (est.)'),
     dot('3 · MID-COURSE (MCC)', (traj.dv_mcc||0).toFixed(3) + ' km/s (est.)  (2% budget)'),
     dot('4 · ASTEROID DEPART', traj.dv_return.toFixed(3) + ' km/s (est.)'),

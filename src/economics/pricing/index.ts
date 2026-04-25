@@ -6,8 +6,8 @@
  * caches in sessionStorage as 'aster_prices_v1', falls back to STATIC_PRICES_EARTH.
  */
 
-// TODO: import WORKER_URL from src/utils/config.ts
-// TODO: import STATIC_PRICES_EARTH from src/economics/pricing/active.ts
+import { WORKER_URL } from '../../utils/config';
+import { STATIC_PRICES_EARTH } from './active';
 
 /** Raw price payload from the worker or static fallback. Module-level singleton. */
 export let cachedPriceData: any = null;
@@ -42,7 +42,6 @@ export async function fetchPrices(forceRefresh = false): Promise<void> {
     } catch(_) {}
   }
   try {
-    // @ts-ignore — WORKER_URL is a runtime global during transition
     const res = await fetch(`${WORKER_URL}/api/prices`);
     if (res.ok) {
       cachedPriceData = await res.json();
@@ -52,7 +51,6 @@ export async function fetchPrices(forceRefresh = false): Promise<void> {
       return;
     }
   } catch(_) {}
-  // @ts-ignore — STATIC_PRICES_EARTH is a runtime global during transition
   cachedPriceData = { prices: STATIC_PRICES_EARTH, source: 'static', timestamp: Date.now() };
   priceSource = cachedPriceData.source;
   priceAt = cachedPriceData.timestamp;

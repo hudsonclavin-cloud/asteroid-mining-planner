@@ -12,18 +12,16 @@
  *   including orbital elements, ΔV budget, planned gizmo burns, and economics.
  */
 
-// @ts-ignore — runtime global during transition
-declare let selectedTrajIdx: number;
-// @ts-ignore — runtime global during transition
-declare let missionResults: Array<unknown> & { source?: string };
-// @ts-ignore — runtime global during transition
-declare let selectedId: number;
-// @ts-ignore — runtime global during transition
-declare const asteroidData: Array<Record<string, unknown>>;
-// @ts-ignore — runtime global during transition
-declare const burns: Array<{ dv_p: number; dv_n: number; dv_r: number; jd: number }>;
-// @ts-ignore — runtime global during transition
-declare const currentJD: number;
+import {
+  selectedTrajIdx,
+  missionResults,
+  selectedId,
+  asteroidData,
+  burns,
+} from '../state/index';
+import { jdToDate, formatValueDisplay, fmtUSD } from './dates';
+import { currentJD } from './time-state';
+
 // @ts-ignore — runtime global during transition
 declare function computeMissionProfile(traj: unknown): { text: string };
 // @ts-ignore — runtime global during transition
@@ -57,12 +55,6 @@ declare function computeEconomicsSummary(
   realizableNpvUsd: number;
 };
 // @ts-ignore — runtime global during transition
-declare function jdToDate(jd: number): string;
-// @ts-ignore — runtime global during transition
-declare function formatValueDisplay(v: number): string;
-// @ts-ignore — runtime global during transition
-declare function fmtUSD(v: number): string;
-// @ts-ignore — runtime global during transition
 declare function setStatus(msg: string, warn?: boolean): void;
 
 // ─── exportMissionPlan ────────────────────────────────────────────────────────
@@ -72,11 +64,8 @@ declare function setStatus(msg: string, warn?: boolean): void;
  * Source: index.html lines 6150–6162
  */
 export function exportMissionPlan(): void {
-  // @ts-ignore — runtime global during transition
   if (selectedTrajIdx < 0 || !missionResults[selectedTrajIdx]) return;
-  // @ts-ignore — runtime global during transition
   const profile = computeMissionProfile(missionResults[selectedTrajIdx]);
-  // @ts-ignore — runtime global during transition
   const ast = asteroidData[selectedId] as Record<string, unknown>;
   const blob = new Blob([profile.text], { type:'text/plain' });
   const url  = URL.createObjectURL(blob);
@@ -96,9 +85,7 @@ export function exportMissionPlan(): void {
  * Source: index.html lines 4181–4253
  */
 export function exportMissionReport(): void {
-  // @ts-ignore — runtime global during transition
   if (selectedId < 0) { setStatus('Select an asteroid first', true); return; }
-  // @ts-ignore — runtime global during transition
   const ast = asteroidData[selectedId] as Record<string, unknown>;
   const name = (ast.full_name || ast.pdes || 'unknown') as string;
   const fi = computeFeasibilityMetrics(ast);
@@ -112,7 +99,6 @@ export function exportMissionReport(): void {
   const g0 = 0.00980665;
   const m_prop = 1000 * (Math.exp(dv / (g0 * 450)) - 1);
   const launchCost = (1000 + m_prop) * 2700 * 1.8;
-  // @ts-ignore — runtime global during transition
   const burnLines = burns.map((b: { dv_p: number; dv_n: number; dv_r: number }, i: number) =>
     `  Burn ${i+1}: prograde ${b.dv_p.toFixed(3)} km/s, radial ${b.dv_r.toFixed(3)} km/s, normal ${b.dv_n.toFixed(3)} km/s`
   );
@@ -145,7 +131,6 @@ export function exportMissionReport(): void {
     '── MISSION ΔV BUDGET ───────────────────────────────────────',
     `  Min. Rendezvous ΔV: ${dv.toFixed(3)} km/s${dvSuffix}`,
     `  Propellant mass:    ${m_prop.toFixed(0)} kg (Isp=450s, m_dry=1000kg)`,
-    // @ts-ignore — runtime global during transition
     ...(burns.length > 0 ? ['', '  Planned Burns:', ...burnLines] : []),
     '',
     '── ECONOMICS ───────────────────────────────────────────────',

@@ -25,3 +25,6 @@ export function resolveWorkerUrl(): string {
 
 /** Resolved Worker URL — singleton, safe to import from anywhere. */
 export const WORKER_URL = resolveWorkerUrl();
+
+/** True on phones/tablets — used to reduce geometry resolution. */
+export const isMobile = window.innerWidth < 768 || navigator.maxTouchPoints > 1;

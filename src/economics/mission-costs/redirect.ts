@@ -19,6 +19,35 @@
  *   - summarizeTrajectoryOperationalMetrics
  */
 
+import {
+  bumpRedirectRequestSeq,
+  _activeRedirectRequestId, setActiveRedirectRequestId,
+  _redirectArcLine, setRedirectArcLine,
+  _lunarOrbitRing, setLunarOrbitRing,
+  _cargoPodArcs, setCargoPodArcs,
+  activeRedirectVisual, setActiveRedirectVisual,
+  missionConfig,
+  selectedId,
+  asteroidData,
+  _plannerTimeoutId, setPlannerTimeoutId,
+  setOptimalTrajectory,
+  setSelectedTrajIdx,
+  setMissionReturnTargetPos,
+  setActiveExtractRequestId,
+  setActiveReturnQueryId,
+  setMissionPlanningActive,
+  trajectoryLine, setTrajectoryLine, trajectoryArrows,
+  _arcAnchors,
+} from '../../state/index';
+
+import { SPACECRAFT, LAUNCH_VEHICLES, DELIVERY_DESTINATIONS, REDIRECT_CAPTURE_TARGETS } from './defaults';
+
+import { jdToDate } from '../../utils/dates';
+
+import { propellantKgNum, computeEconomicsSummary } from './index';
+
+import { getWorker } from '../../workers/physics/client';
+
 // ─── Redirect Propulsion Table ────────────────────────────────────────────────
 
 export const REDIRECT_PROPULSION: Record<string, { name: string; isp_s: number }> = {
@@ -38,16 +67,11 @@ export function setMissionType(type: string, options: any = {}) {
   (document.getElementById('btn-type-redirect') as HTMLElement).dataset.on = (type === 'redirect').toString();
   (document.getElementById('mp-redirect-config') as HTMLElement).style.display = type === 'redirect' ? 'block' : 'none';
   if (type === 'redirect') {
-    // @ts-ignore — runtime global during transition
-    optimalTrajectory = null;
-    // @ts-ignore — runtime global during transition
-    selectedTrajIdx = -1;
-    // @ts-ignore — runtime global during transition
-    missionReturnTargetPos = null;
-    // @ts-ignore — runtime global during transition
-    _activeExtractRequestId = 0;
-    // @ts-ignore — runtime global during transition
-    _activeReturnQueryId = 0;
+    setOptimalTrajectory(null);
+    setSelectedTrajIdx(-1);
+    setMissionReturnTargetPos(null);
+    setActiveExtractRequestId(0);
+    setActiveReturnQueryId(0);
   }
   // Hide all result panels on mode switch
   ['mp-results','mp-profile','mp-burns','mp-actions','mp-redirect-results'].forEach(id => {
@@ -134,29 +158,18 @@ export async function runRedirectOptimizer() {
 
   const propulsionModule = getRedirectPropulsionModule();
   const miningFraction   = (parseInt((document.getElementById('mp-mining-split') as HTMLInputElement).value) || 50) / 100;
-  // @ts-ignore — runtime global during transition
-  const captureTarget = REDIRECT_CAPTURE_TARGETS[(document.getElementById('mp-redirect-target') as HTMLSelectElement).value] || REDIRECT_CAPTURE_TARGETS.lunar_orbit;
-  // @ts-ignore — runtime global during transition
-  const deliveryDestination = DELIVERY_DESTINATIONS[(document.getElementById('mp-destination') as HTMLSelectElement).value] || DELIVERY_DESTINATIONS.leo;
+  const captureTarget = REDIRECT_CAPTURE_TARGETS[(document.getElementById('mp-redirect-target') as HTMLSelectElement).value as keyof typeof REDIRECT_CAPTURE_TARGETS] || REDIRECT_CAPTURE_TARGETS.lunar_orbit;
+  const deliveryDestination = DELIVERY_DESTINATIONS[(document.getElementById('mp-destination') as HTMLSelectElement).value as keyof typeof DELIVERY_DESTINATIONS] || DELIVERY_DESTINATIONS.leo;
   const spacecraftKey = (document.querySelector('input[name="mp-craft"]:checked') as HTMLInputElement)?.value || 'medium';
-  // @ts-ignore — runtime global during transition
-  const spacecraft = SPACECRAFT[spacecraftKey] || SPACECRAFT.medium;
+  const spacecraft = SPACECRAFT[spacecraftKey as keyof typeof SPACECRAFT] || SPACECRAFT.medium;
   const launchVehicleKey = (document.getElementById('mp-launch-vehicle') as HTMLSelectElement).value;
-  // @ts-ignore — runtime global during transition
-  const launchVehicle = LAUNCH_VEHICLES[launchVehicleKey] || LAUNCH_VEHICLES.f9;
-  // @ts-ignore — runtime global during transition
+  const launchVehicle = LAUNCH_VEHICLES[launchVehicleKey as keyof typeof LAUNCH_VEHICLES] || LAUNCH_VEHICLES.f9;
   missionConfig.destination = deliveryDestination.key;
-  // @ts-ignore — runtime global during transition
   missionConfig.spacecraft = spacecraftKey;
-  // @ts-ignore — runtime global during transition
   missionConfig.launchVehicle = launchVehicleKey;
-  // @ts-ignore — runtime global during transition
   missionConfig.launchYearStart = yearStart;
-  // @ts-ignore — runtime global during transition
   missionConfig.launchYearEnd = yearEnd;
-  // @ts-ignore — runtime global during transition
   missionConfig.redirectPropulsion = (document.getElementById('mp-redirect-propulsion') as HTMLSelectElement).value;
-  // @ts-ignore — runtime global during transition
   missionConfig.redirectTarget = captureTarget.key;
 
   (document.getElementById('mp-computing') as HTMLElement).style.display = 'block';
@@ -175,27 +188,19 @@ export async function runRedirectOptimizer() {
   // @ts-ignore — runtime global during transition
   clearBurnVectors();
 
-  // @ts-ignore — runtime global during transition
   if (_plannerTimeoutId) clearTimeout(_plannerTimeoutId);
-  // @ts-ignore — runtime global during transition
-  const reqId = ++_redirectRequestSeq;
-  // @ts-ignore — runtime global during transition
-  _activeRedirectRequestId = reqId;
-  // @ts-ignore — runtime global during transition
-  _plannerTimeoutId = setTimeout(() => {
-    // @ts-ignore — runtime global during transition
+  const reqId = bumpRedirectRequestSeq();
+  setActiveRedirectRequestId(reqId);
+  setPlannerTimeoutId(setTimeout(() => {
     if (_activeRedirectRequestId !== reqId) return;
-    // @ts-ignore — runtime global during transition
-    _activeRedirectRequestId = 0;
-    // @ts-ignore — runtime global during transition
-    _plannerTimeoutId = null;
+    setActiveRedirectRequestId(0);
+    setPlannerTimeoutId(null);
     // @ts-ignore — runtime global during transition
     showPlannerError('Worker timeout (>30 s). Try a shorter launch window or a closer target.');
-  }, 30000);
+  }, 30000));
 
   try {
-    // @ts-ignore — runtime global during transition
-    worker.postMessage({
+    getWorker().postMessage({
       cmd: 'plan_redirect_mission',
       reqId,
       ast,
@@ -209,8 +214,7 @@ export async function runRedirectOptimizer() {
       launchVehicle,
     });
   } catch(err) {
-    // @ts-ignore — runtime global during transition
-    if (_activeRedirectRequestId === reqId) _activeRedirectRequestId = 0;
+    if (_activeRedirectRequestId === reqId) setActiveRedirectRequestId(0);
     // @ts-ignore — runtime global during transition
     showPlannerError(err);
   }
@@ -219,12 +223,9 @@ export async function runRedirectOptimizer() {
 // ─── Redirect Result Rendering ────────────────────────────────────────────────
 
 export function onRedirectResult(data: any) {
-  // @ts-ignore — runtime global during transition
   if (Number.isFinite(data.reqId) && data.reqId !== _activeRedirectRequestId) return;
-  // @ts-ignore — runtime global during transition
-  _activeRedirectRequestId = 0;
-  // @ts-ignore — runtime global during transition
-  if (_plannerTimeoutId) { clearTimeout(_plannerTimeoutId); _plannerTimeoutId = null; }
+  setActiveRedirectRequestId(0);
+  if (_plannerTimeoutId) { clearTimeout(_plannerTimeoutId); setPlannerTimeoutId(null); }
   // @ts-ignore — runtime global during transition
   clearPlannerError();
   (document.getElementById('mp-computing') as HTMLElement).style.display = 'none';
@@ -269,9 +270,7 @@ export function onRedirectResult(data: any) {
     return;
   }
   (document.getElementById('rr-intercept-text') as HTMLElement).textContent =
-    // @ts-ignore — runtime global during transition
     `Depart    ${jdToDate(ic.jd_dep)}\n` +
-    // @ts-ignore — runtime global during transition
     `Arrive    ${jdToDate(ic.jd_arr)}\n` +
     `TOF       ${ic.tof} days\n` +
     `ΔV dep    ${ic.dv_dep.toFixed(2)} km/s (est.)`;
@@ -313,7 +312,6 @@ export function onRedirectResult(data: any) {
   const captureHeader = document.getElementById('rr-capture-header');
   if (captureHeader) captureHeader.textContent = `${(cap.label || 'Destination').toUpperCase()} CAPTURE (approx)`;
   (document.getElementById('rr-capture-text') as HTMLElement).textContent =
-    // @ts-ignore — runtime global during transition
     `Capture arr ${jdToDate(rd.jd_capture_arr)}\n` +
     `Transit    ${Math.round(rd.tof_redirect)} days\n` +
     `Arrival v∞ ${fmtRedirectSpeed(cap.v_inf_capture_arrival)}\n` +
@@ -348,21 +346,17 @@ export function onRedirectResult(data: any) {
   // @ts-ignore — runtime global during transition
   hideMissionTimeline();
   clearRedirectVisualization();
-  // @ts-ignore — runtime global during transition
-  optimalTrajectory = null;
-  // @ts-ignore — runtime global during transition
-  selectedTrajIdx = -1;
-  // @ts-ignore — runtime global during transition
-  missionPlanningActive = true;
-  // @ts-ignore — runtime global during transition
-  activeRedirectVisual = { asteroidId: selectedId, intercept: ic, redirect: rd, capture: cap };
+  setOptimalTrajectory(null);
+  setSelectedTrajIdx(-1);
+  setMissionPlanningActive(true);
+  setActiveRedirectVisual({ asteroidId: selectedId, intercept: ic, redirect: rd, capture: cap });
   if (!drawRedirectInterceptTrajectory(ic)) {
-    // @ts-ignore — runtime global during transition
+    // @ts-ignore — renderer global during transition
     setStatus('Redirect intercept path unavailable for current solution window', true);
   }
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
   if (!drawRedirectTrajectory(getSelectedAsteroid(), ic, rd)) {
-    // @ts-ignore — runtime global during transition
+    // @ts-ignore — renderer global during transition
     setStatus('Redirect path unavailable for current solution window', true);
   }
   drawRedirectCaptureMarker(cap);
@@ -372,20 +366,16 @@ export function onRedirectResult(data: any) {
 
 export function clearRedirectVisualization(options: any = {}) {
   const { preserveState = false } = options;
-  // @ts-ignore — runtime global during transition
-  if (_redirectArcLine) { disposeObject3D(_redirectArcLine); _redirectArcLine = null; }
-  // @ts-ignore — runtime global during transition
-  if (_lunarOrbitRing)  { disposeObject3D(_lunarOrbitRing);  _lunarOrbitRing = null; }
-  // @ts-ignore — runtime global during transition
-  _cargoPodArcs.forEach(disposeObject3D);
-  // @ts-ignore — runtime global during transition
-  _cargoPodArcs = [];
-  // @ts-ignore — runtime global during transition
+  if (_redirectArcLine) { /* @ts-ignore — renderer global */ disposeObject3D(_redirectArcLine); setRedirectArcLine(null); }
+  if (_lunarOrbitRing)  { /* @ts-ignore — renderer global */ disposeObject3D(_lunarOrbitRing);  setLunarOrbitRing(null); }
+  // @ts-ignore — renderer global
+  _cargoPodArcs.forEach((a: any) => disposeObject3D(a));
+  setCargoPodArcs([]);
+  // @ts-ignore — renderer global during transition
   redirectOriginalOrbitLine.visible = false;
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
   redirectAdjustedOrbitLine.visible = false;
-  // @ts-ignore — runtime global during transition
-  if (!preserveState) activeRedirectVisual = null;
+  if (!preserveState) setActiveRedirectVisual(null);
   // @ts-ignore — runtime global during transition
   _arcAnchors.redirectIntercept = null;
   // @ts-ignore — runtime global during transition
@@ -419,18 +409,18 @@ export function drawRedirectTrajectory(ast: any, intercept: any, redirect: any):
   if (pts.length < 2 || !validateArcPoints(pts, 'redirect')) return false;
   // @ts-ignore — runtime global during transition
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  // @ts-ignore — runtime global during transition
-  _redirectArcLine = makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 });
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
+  setRedirectArcLine(makeGlowLine(geo, ORBIT_NEON.redirect, 0.95, { haloOpacity: 0.22 }));
+  // @ts-ignore — renderer global during transition
   scene.add(_redirectArcLine);
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
   showGlowLine(_redirectArcLine);
   // Label anchor — dv_redirect comes from the redirect object argument
   {
     const dvText = redirect && Number.isFinite(redirect.dv_redirect)
       ? `REDIRECT  ΔV: ${redirect.dv_redirect.toFixed(3)} km/s`
       : 'REDIRECT ARC';
-    // @ts-ignore — runtime global during transition
+    // @ts-ignore — renderer global during transition
     _setArcAnchor('redirectArc', _redirectArcLine, dvText);
   }
 
@@ -460,13 +450,13 @@ export function drawRedirectInterceptTrajectory(intercept: any): boolean {
   if (pts.length >= 2 && validateArcPoints(pts, 'redirect-intercept')) {
     // @ts-ignore — runtime global during transition
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    // @ts-ignore — runtime global during transition
-    trajectoryLine = makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 });
-    // @ts-ignore — runtime global during transition
+    // @ts-ignore — renderer global during transition
+    setTrajectoryLine(makeDashedGlowLine(geo, ORBIT_NEON.transfer, 0.92, 0.03, 0.02, { haloOpacity: 0.2 }));
+    // @ts-ignore — renderer global during transition
     scene.add(trajectoryLine);
-    // @ts-ignore — runtime global during transition
+    // @ts-ignore — renderer global during transition
     showGlowLine(trajectoryLine);
-    // @ts-ignore — runtime global during transition
+    // @ts-ignore — renderer global during transition
     _setArcAnchor('redirectIntercept', trajectoryLine, 'REDIRECT INTERCEPT');
     // @ts-ignore — runtime global during transition
     const dir = new THREE.Vector3().subVectors(pts[1], pts[0]).normalize();
@@ -488,25 +478,21 @@ export function drawRedirectInterceptTrajectory(intercept: any): boolean {
 }
 
 export function syncActiveRedirectVisuals() {
-  // @ts-ignore — runtime global during transition
   if (!activeRedirectVisual) return;
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
   const ast = asteroidData[activeRedirectVisual.asteroidId] || getSelectedAsteroid();
   if (!ast) return;
   // @ts-ignore — runtime global during transition
   clearMissionPathVisuals();
   clearRedirectVisualization({ preserveState: true });
-  // @ts-ignore — runtime global during transition
   if (!drawRedirectInterceptTrajectory(activeRedirectVisual.intercept)) {
-    // @ts-ignore — runtime global during transition
+    // @ts-ignore — renderer global during transition
     setStatus('Redirect intercept path unavailable for current solution window', true);
   }
-  // @ts-ignore — runtime global during transition
   if (!drawRedirectTrajectory(ast, activeRedirectVisual.intercept, activeRedirectVisual.redirect)) {
-    // @ts-ignore — runtime global during transition
+    // @ts-ignore — renderer global during transition
     setStatus('Redirect path unavailable for current solution window', true);
   }
-  // @ts-ignore — runtime global during transition
   drawRedirectCaptureMarker(activeRedirectVisual.capture);
 }
 
@@ -514,7 +500,6 @@ export function drawLunarOrbitRing() {
   // @ts-ignore — runtime global during transition
   if (!moonMesh) return;
   const pts: any[] = [];
-  // @ts-ignore — runtime global during transition
   const capture = activeRedirectVisual?.capture;
   // @ts-ignore — runtime global during transition
   const center = getCaptureTargetPosition(capture);
@@ -532,14 +517,14 @@ export function drawLunarOrbitRing() {
   }
   // @ts-ignore — runtime global during transition
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  // @ts-ignore — runtime global during transition
-  _lunarOrbitRing = makeGlowLine(geo, ORBIT_NEON.redirect, 0.68, { haloOpacity: 0.16 });
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
+  setLunarOrbitRing(makeGlowLine(geo, ORBIT_NEON.redirect, 0.68, { haloOpacity: 0.16 }));
+  // @ts-ignore — renderer global during transition
   scene.add(_lunarOrbitRing);
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
   showGlowLine(_lunarOrbitRing);
   // Label anchor: top of ring (quarter-point in the pts array ≈ 90° position)
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
   _setArcAnchor('lunarOrbit', _lunarOrbitRing, 'NRHO TARGET ORBIT', 0.25);
 }
 
@@ -562,9 +547,9 @@ export function drawCaptureRingAt(center: any, radiusKm: number, color?: number)
   }
   // @ts-ignore — runtime global during transition
   const geo = new THREE.BufferGeometry().setFromPoints(pts);
-  // @ts-ignore — runtime global during transition
-  _lunarOrbitRing = makeGlowLine(geo, _color, 0.52, { haloOpacity: 0.12 });
-  // @ts-ignore — runtime global during transition
+  // @ts-ignore — renderer global during transition
+  setLunarOrbitRing(makeGlowLine(geo, _color, 0.52, { haloOpacity: 0.12 }));
+  // @ts-ignore — renderer global during transition
   scene.add(_lunarOrbitRing);
   // @ts-ignore — runtime global during transition
   showGlowLine(_lunarOrbitRing);
@@ -736,13 +721,10 @@ export function buildRedirectScoreBreakdownHtml(data: any): string {
  * used both for trajectory card scoring and for mission profile cost/ROI display.
  */
 export function summarizeTrajectoryOperationalMetrics(traj: any) {
-  // @ts-ignore — runtime global during transition
   const ast = asteroidData[selectedId];
   if (!ast || !traj) return null;
-  // @ts-ignore — runtime global during transition
-  const sc = SPACECRAFT[missionConfig.spacecraft] || SPACECRAFT.medium;
-  // @ts-ignore — runtime global during transition
-  const lv = LAUNCH_VEHICLES[missionConfig.launchVehicle] || LAUNCH_VEHICLES.f9;
+  const sc = SPACECRAFT[missionConfig.spacecraft as keyof typeof SPACECRAFT] || SPACECRAFT.medium;
+  const lv = LAUNCH_VEHICLES[missionConfig.launchVehicle as keyof typeof LAUNCH_VEHICLES] || LAUNCH_VEHICLES.f9;
   const g0 = 0.00980665;
   const propKg = sc.dry_kg * (Math.exp(traj.dv_total / (g0 * sc.isp)) - 1);
   const wetKg = sc.dry_kg + propKg;
@@ -750,7 +732,6 @@ export function summarizeTrajectoryOperationalMetrics(traj: any) {
   const opsDays = Math.round(traj.tof + (traj.tof_return || 0) + (traj.stay_days || 0));
   const launchCost = wetKg * lv.cost_per_kg;
   const totalCost = launchCost + sc.cost_usd + (opsDays / 30) * 8e6;
-  // @ts-ignore — runtime global during transition
   const econSummary = computeEconomicsSummary(ast, {
     dryMass: sc.dry_kg,
     isp: sc.isp,

@@ -123,3 +123,45 @@ export function createPlanetOrbitRings(scene: THREE.Scene): THREE.Group {
 // Module-scope orbit ring group stub — wired up when scene is available
 // TODO: replace with import of scene and call createPlanetOrbitRings(scene)
 export let planetOrbitGroup: THREE.Group = new THREE.Group();
+
+// ─── Orbit geometry helpers ───────────────────────────────────────────────────
+
+const DEG = Math.PI / 180;
+
+/**
+ * Rotate a point from the orbit plane to J2000 ecliptic coordinates.
+ * Source: index.html lines 1755–1766.
+ */
+export function orbitPlaneToEcliptic(
+  xOrb: number, yOrb: number,
+  i_rad: number, Om_rad: number, w_rad: number
+): { x: number; y: number; z: number } {
+  const cosOm = Math.cos(Om_rad), sinOm = Math.sin(Om_rad);
+  const cosI  = Math.cos(i_rad),  sinI  = Math.sin(i_rad);
+  const cosW  = Math.cos(w_rad),  sinW  = Math.sin(w_rad);
+  const Rxx = cosOm*cosW - sinOm*sinW*cosI;
+  const Rxy = -(cosOm*sinW + sinOm*cosW*cosI);
+  const Ryx = sinOm*cosW + cosOm*sinW*cosI;
+  const Ryy = -(sinOm*sinW - cosOm*cosW*cosI);
+  const Rzx = sinW*sinI;
+  const Rzy = cosW*sinI;
+  return { x: xOrb*Rxx + yOrb*Rxy, y: xOrb*Ryx + yOrb*Ryy, z: xOrb*Rzx + yOrb*Rzy };
+}
+
+/**
+ * Sample N+1 points evenly around the full orbital ellipse (AU, scene coords).
+ * Source: index.html lines 1769–1781.
+ */
+export function buildOrbitPoints(ast: any, steps: number): THREE.Vector3[] {
+  const pts: THREE.Vector3[] = [];
+  const e = ast.e, a = ast.a;
+  const i_rad = ast.i * DEG, Om_rad = ast.om * DEG, w_rad = ast.w * DEG;
+  for (let k = 0; k <= steps; k++) {
+    const nu = (TWO_PI * k) / steps;
+    const E = 2 * Math.atan2(Math.sqrt(1 - e) * Math.sin(nu / 2), Math.sqrt(1 + e) * Math.cos(nu / 2));
+    const r = a * (1 - e * Math.cos(E));
+    const p = orbitPlaneToEcliptic(r * Math.cos(nu), r * Math.sin(nu), i_rad, Om_rad, w_rad);
+    pts.push(new THREE.Vector3(p.x, p.y, p.z));
+  }
+  return pts;
+}

@@ -23,7 +23,8 @@ controls.maxDistance = 500;
 export const clock = new THREE.Clock();
 // TODO: import from src/utils/constants (BODY_SCALE_MODES)
 let bodyScaleMode = /* BODY_SCALE_MODES.readable */ 'readable';
-let moonOrbitVisualsEnabled = true;
+export let moonOrbitVisualsEnabled = true;
+export function setMoonOrbitVisualsEnabled(v: boolean) { moonOrbitVisualsEnabled = v; }
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 export const sunDirectional = new THREE.DirectionalLight(0xffffff, 0.8);

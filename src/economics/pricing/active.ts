@@ -12,7 +12,11 @@ import {
   matPriceMode,
   matSortKey,
   matSortAsc,
+  priceSource,
+  priceAt,
 } from './index';
+
+import { formatIsoDateShort } from '../../utils/dates';
 
 // ─── Material Composition Constants ───────────────────────────────────────────
 
@@ -92,15 +96,10 @@ export function getCatalogSourceLabel(ast: any): string {
  * References module-level priceSource / priceAt from pricing/index.ts via runtime globals.
  */
 export function getPriceSourceLabel(): string {
-  // @ts-ignore — runtime global during transition
   if (priceSource === 'loading') return 'prices loading';
-  // @ts-ignore — runtime global during transition
   if (priceSource === 'live') return `live spot prices (${formatIsoDateShort(priceAt)})`;
-  // @ts-ignore — runtime global during transition
   if (priceSource === 'cached') return `cached spot prices (${formatIsoDateShort(priceAt)})`;
-  // @ts-ignore — runtime global during transition
   if (priceSource === 'static') return 'static fallback prices';
-  // @ts-ignore — runtime global during transition
   return String(priceSource || 'unknown');
 }
 

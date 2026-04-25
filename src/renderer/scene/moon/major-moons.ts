@@ -3,34 +3,15 @@
  * Extracted verbatim from index.html lines 1935–2005.
  *
  * Cross-module deps stubbed with @ts-ignore:
- *   - THREE          (global via script tag)
- *   - scene          (runtime global — THREE.Scene)
- *   - planets        (runtime global — THREE.Mesh[])
- *   - TWO_PI         (runtime global constant)
- *   - J2000          (runtime global constant)
- *   - makeGlowLine   (runtime global from orbits module)
- *   - moonOrbitVisualsEnabled (runtime global state flag)
+ *   - moonOrbitVisualsEnabled (not yet exported from scene/index)
  */
 
-// @ts-ignore — runtime global during transition
-declare const THREE: typeof import('three');
-// @ts-ignore — runtime global during transition
-declare const scene: import('three').Scene;
-// @ts-ignore — runtime global during transition
-declare const planets: import('three').Mesh[];
-// @ts-ignore — runtime global during transition
-declare const TWO_PI: number;
-// @ts-ignore — runtime global during transition
-declare const J2000: number;
-// @ts-ignore — runtime global during transition
-declare function makeGlowLine(
-  geometry: import('three').BufferGeometry,
-  color: number,
-  opacity: number,
-  options: { haloOpacity: number }
-): import('three').Group;
-// @ts-ignore — runtime global during transition
-declare let moonOrbitVisualsEnabled: boolean;
+import * as THREE from 'three';
+import { scene } from '../../index';
+import { planets } from '../../planets';
+import { J2000, TWO_PI } from '../../../../physics/constants/index';
+import { makeGlowLine } from '../../orbits/index';
+import { moonOrbitVisualsEnabled } from '../../index';
 
 // ─── Major Moons ──────────────────────────────────────────────────────────────
 export const _AU_KM = 149597870.7;
@@ -60,39 +41,28 @@ export const MOONS: MoonDef[] = [
   { name:'Triton',    parent:7, displayR:0.0007, radiusKm:1353.4, a_km:354759,   T_d:5.876854,  color:0xd0b8b0, retro:true },
 ];
 
-// @ts-ignore — runtime global during transition
-export const majorMoonMeshes: import('three').Mesh[] = [];
-// @ts-ignore — runtime global during transition
-export const majorMoonOrbitLines: import('three').Group[] = [];
+export const majorMoonMeshes: THREE.Mesh[] = [];
+export const majorMoonOrbitLines: THREE.Group[] = [];
 
 (function() {
   MOONS.forEach(m => {
-    // @ts-ignore — runtime global during transition
     const mesh = new THREE.Mesh(
-      // @ts-ignore — runtime global during transition
       new THREE.SphereGeometry(m.displayR, 8, 8),
-      // @ts-ignore — runtime global during transition
       new THREE.MeshPhongMaterial({ color: m.color, shininess: 8 })
     );
     mesh.userData.moonData = m;
     mesh.userData.baseRadius = m.displayR;
     mesh.userData.trueRadiusKm = m.radiusKm;
-    // @ts-ignore — runtime global during transition
     scene.add(mesh);
     majorMoonMeshes.push(mesh);
 
     const a = m.a_km / _AU_KM;
-    // @ts-ignore — runtime global during transition
-    const pts: import('three').Vector3[] = [];
+    const pts: THREE.Vector3[] = [];
     for (let j = 0; j <= 64; j++) {
-      // @ts-ignore — runtime global during transition
       const ang = (j / 64) * TWO_PI;
-      // @ts-ignore — runtime global during transition
       pts.push(new THREE.Vector3(Math.cos(ang) * a, 0, Math.sin(ang) * a));
     }
-    // @ts-ignore — runtime global during transition
     const line = makeGlowLine(new THREE.BufferGeometry().setFromPoints(pts), 0x2a3a4a, 0.3, { haloOpacity: 0 });
-    // @ts-ignore — runtime global during transition
     scene.add(line);
     // @ts-ignore — runtime global during transition
     line.visible = moonOrbitVisualsEnabled;
@@ -103,10 +73,8 @@ export const majorMoonOrbitLines: import('three').Group[] = [];
 export function updateMajorMoons(jd: number): void {
   MOONS.forEach((m, i) => {
     const dir = m.retro ? -1 : 1;
-    // @ts-ignore — runtime global during transition
     const nu = (TWO_PI / m.T_d) * (jd - J2000) * dir;
     const a = m.a_km / _AU_KM;
-    // @ts-ignore — runtime global during transition
     const pPos = planets[m.parent].position;
     majorMoonMeshes[i].position.set(pPos.x + a * Math.cos(nu), pPos.y, pPos.z + a * Math.sin(nu));
     majorMoonOrbitLines[i].position.copy(pPos);
