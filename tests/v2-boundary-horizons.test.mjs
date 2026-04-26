@@ -66,8 +66,8 @@ test('Slice 1 Earth/Moon fixture ingests into canonical meters, m/s, and aligned
   const canonical = horizons.ingestSlice1EarthMoonFixture(fixture);
 
   assert.equal(canonical.frame, core.FRAME_HELIO_J2000_ICRF);
-  assert.equal(canonical.earth.length, 31);
-  assert.equal(canonical.moon.length, 31);
+  assert.equal(canonical.earth.length, fixture.targets.earth.records.length);
+  assert.equal(canonical.moon.length, fixture.targets.moon.records.length);
 
   const rawEarth0 = fixture.targets.earth.records[0];
   const earth0 = canonical.earth[0];

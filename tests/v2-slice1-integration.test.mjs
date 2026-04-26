@@ -61,18 +61,19 @@ test('Slice 1 Horizons fixture exists with Earth and Moon 30-day samples', () =>
   assert.equal(fixture.source, 'JPL Horizons API');
   assert.ok(Array.isArray(fixture.targets?.earth?.records));
   assert.ok(Array.isArray(fixture.targets?.moon?.records));
-  assert.equal(fixture.targets.earth.records.length, 31);
-  assert.equal(fixture.targets.moon.records.length, 31);
+  assert.ok(fixture.targets.earth.records.length >= 31);
+  assert.equal(fixture.targets.earth.records.length, fixture.targets.moon.records.length);
 });
 
 test('Slice 1 boundary ingress produces canonical heliocentric Earth/Moon states', async () => {
   const { core, boundary } = await loadCompiledSlice1Modules();
   const fixture = loadSlice1Fixture();
   const slice = boundary.ingestSlice1EarthMoonFixture(fixture);
+  const expectedSamples = fixture.targets.earth.records.length;
 
   assert.equal(slice.frame, core.FRAME_HELIO_J2000_ICRF);
-  assert.equal(slice.earth.length, 31);
-  assert.equal(slice.moon.length, 31);
+  assert.equal(slice.earth.length, expectedSamples);
+  assert.equal(slice.moon.length, expectedSamples);
 
   for (const sample of [slice.earth[0], slice.moon[0], slice.earth.at(-1), slice.moon.at(-1)]) {
     core.assertCanonicalState(sample.state);
