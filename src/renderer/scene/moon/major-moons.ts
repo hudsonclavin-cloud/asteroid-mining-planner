@@ -55,10 +55,14 @@ export const majorMoonOrbitLines: THREE.Group[] = [];
     majorMoonMeshes.push(mesh);
 
     const a = m.a_km / _AU_KM;
+    // Galilean / Saturnian moons are nearly equatorial (~0–2°); Triton is retrograde ~157°
+    const inc = (m.retro ? 157.345 : 1.5) * (Math.PI / 180);
     const pts: THREE.Vector3[] = [];
     for (let j = 0; j <= 64; j++) {
       const ang = (j / 64) * TWO_PI;
-      pts.push(new THREE.Vector3(Math.cos(ang) * a, 0, Math.sin(ang) * a));
+      const xOrb = Math.cos(ang) * a;
+      const yOrb = Math.sin(ang) * a;
+      pts.push(new THREE.Vector3(xOrb, yOrb * Math.sin(inc), yOrb * Math.cos(inc)));
     }
     const line = makeGlowLine(new THREE.BufferGeometry().setFromPoints(pts), 0x2a3a4a, 0.3, { haloOpacity: 0 });
     scene.add(line);
@@ -72,8 +76,15 @@ export function updateMajorMoons(jd: number): void {
     const dir = m.retro ? -1 : 1;
     const nu = (TWO_PI / m.T_d) * (jd - J2000) * dir;
     const a = m.a_km / _AU_KM;
+    const inc = (m.retro ? 157.345 : 1.5) * (Math.PI / 180);
     const pPos = planets[m.parent].position;
-    majorMoonMeshes[i].position.set(pPos.x + a * Math.cos(nu), pPos.y, pPos.z + a * Math.sin(nu));
+    const xOrb = a * Math.cos(nu);
+    const yOrb = a * Math.sin(nu);
+    majorMoonMeshes[i].position.set(
+      pPos.x + xOrb,
+      pPos.y + yOrb * Math.sin(inc),
+      pPos.z + yOrb * Math.cos(inc)
+    );
     majorMoonOrbitLines[i].position.copy(pPos);
   });
 }

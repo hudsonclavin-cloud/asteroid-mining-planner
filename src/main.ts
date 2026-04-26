@@ -27,6 +27,8 @@ import { initEarthDetail, earthLayerActive, earthDetailGroup, shellGroup, update
 import { initPorkchop } from './renderer/scene/orbits/porkchop';
 import { renderPorkchop } from './renderer/scene/orbits/porkchop';
 import { buildAsteroidMesh } from './renderer/scene/asteroids/instanced-field/index';
+import { majorMoonMeshes, majorMoonOrbitLines } from './renderer/scene/moon/major-moons';
+import { moonMesh, physicalRadiusToSceneAU } from './renderer/scene/moon/index';
 import { missionAnim, setMissionAnimationPlaying, updateSpacecraftFollow, updateBurnVectorPulse, updateMissionAnimation } from './renderer/scene/mission-overlay';
 import { consumePendingPositions, updateTimelineIndicator } from './renderer/scene/per-frame';
 import { maybePropagateCurrentJD } from './workers/physics/client';
@@ -163,9 +165,38 @@ function populateSavedPresets(): void {}
 function renderEconomicsTab(_id: number): void {}
 function renderMaterialsTab(_id: number): void {}
 function togglePrimaryPlayback(): void {}
-function toggleBodyScaleMode(): void {}
+let _bodyScaleTrue = false;
+function applyBodyScaleMode(): void {
+  const trueScaleFactor = (baseRadius: number, radiusKm: number): number => {
+    if (!Number.isFinite(baseRadius) || !Number.isFinite(radiusKm) || baseRadius <= 0) return 1;
+    return physicalRadiusToSceneAU(radiusKm) / baseRadius;
+  };
+  planets.forEach(mesh => {
+    mesh.scale.setScalar(_bodyScaleTrue ? trueScaleFactor(mesh.userData.baseRadius, mesh.userData.trueRadiusKm) : 1);
+  });
+  moonMesh.scale.setScalar(_bodyScaleTrue ? trueScaleFactor(moonMesh.userData.baseRadius, moonMesh.userData.trueRadiusKm) : 1);
+  majorMoonMeshes.forEach(mesh => {
+    mesh.scale.setScalar(_bodyScaleTrue ? trueScaleFactor(mesh.userData.baseRadius, mesh.userData.trueRadiusKm) : 1);
+  });
+  sunMesh.scale.setScalar(_bodyScaleTrue ? trueScaleFactor(sunMesh.userData.baseRadius, sunMesh.userData.trueRadiusKm) : 1);
+  const btn = document.getElementById('btn-scale-mode');
+  if (btn) { btn.classList.toggle('active', _bodyScaleTrue); btn.textContent = _bodyScaleTrue ? 'SIZE: TRUE' : 'SIZE: READ'; }
+}
+function toggleBodyScaleMode(): void {
+  _bodyScaleTrue = !_bodyScaleTrue;
+  applyBodyScaleMode();
+  setStatus(_bodyScaleTrue ? 'Body scale: TRUE RELATIVE SIZES' : 'Body scale: READABLE DISPLAY SIZES', true);
+}
+function applyMoonOrbitVisualState(): void {
+  const visible = moonOrbitVisualsEnabled && !earthLayerActive;
+  majorMoonOrbitLines.forEach(line => { line.visible = visible; });
+  const btn = document.getElementById('btn-moon-orbits');
+  if (btn) { btn.classList.toggle('active', moonOrbitVisualsEnabled); btn.textContent = moonOrbitVisualsEnabled ? 'MOONS: ON' : 'MOONS: OFF'; }
+}
 function toggleMoonOrbitVisuals(): void {
   setMoonOrbitVisualsEnabled(!moonOrbitVisualsEnabled);
+  applyMoonOrbitVisualState();
+  setStatus(moonOrbitVisualsEnabled ? 'Moon orbits ON' : 'Moon orbits OFF', true);
 }
 function syncFollowButton(): void {}
 function syncSpeedButtons(): void {}
