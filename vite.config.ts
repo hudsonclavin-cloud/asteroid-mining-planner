@@ -9,6 +9,12 @@ export default defineConfig({
   build: {
     outDir: 'docs',
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        legacy: resolve(__dirname, 'index.html'),
+        earthMoonV2: resolve(__dirname, 'v2/earth-moon/index.html'),
+      },
+    },
   },
   resolve: {
     alias: {
