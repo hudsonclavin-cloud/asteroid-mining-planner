@@ -74,17 +74,21 @@ Slice 2 introduces no new reference frames. The heliocentric ICRF root frame and
 - `core/` never stores UI state
 - `render/` never mutates canonical physical state
 
-### 3.4 Propagation Checks
+### 3.4 Propagation and Interpolation Checks
+
+#### INV-005: Propagation Drift Bounds (deferred — applies when a propagator is introduced)
 
 - Relative specific-orbital-energy drift must stay below `1e-9` per orbit for two-body Keplerian propagators
 - Relative angular-momentum drift must stay below `1e-9` per orbit for two-body Keplerian propagators
 - Future n-body integrators must stay below `1e-6` per orbit across the declared validation window unless a stricter bound is specified
 - Invalid states fail loudly in dev mode
 
+#### INV-008: Interpolation Error Bound (Slice 2)
+
 Slice 2 introduces interpolation, not propagation. Slice 2 body states (Sun, Mercury, Venus, Earth, Moon, Mars) are recovered between daily Horizons fixture samples using cubic Hermite interpolation. Interpolation error is bounded per-body and must remain below the following cutover bars when validated at 6-hour cadence against Horizons truth:
 
 | Body    | Cutover bar |
-|---------|-------------|
+| ------- | ----------- |
 | Sun     | 0.00002 km  |
 | Mercury | 100 km      |
 | Venus   | 1 km        |
