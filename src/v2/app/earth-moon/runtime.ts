@@ -178,7 +178,9 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
     ).normalize();
 
     sunTarget.position.copy(earthView);
-    sunLight.position.copy(earthView).addScaledVector(sunDirection, 10_000_000_000);
+    // DirectionalLight uses the vector from light position to target to derive lighting
+    // direction; the magnitude does not create distance falloff, so a unit offset is enough.
+    sunLight.position.copy(earthView).addScaledVector(sunDirection, 1);
 
     camera.lookAt(earthView);
     camera.updateMatrixWorld();
