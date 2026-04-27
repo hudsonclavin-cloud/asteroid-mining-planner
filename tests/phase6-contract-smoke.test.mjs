@@ -18,10 +18,10 @@ function unique(values) {
 test('all texture assets referenced by index.html exist on disk', () => {
   const html = readRepoFile('index.html');
   const refs = unique(
-    [...html.matchAll(/\.\/textures\/([A-Za-z0-9_.-]+)/g)].map((match) => match[1]),
+    [...html.matchAll(/\b(2k_[A-Za-z0-9_.-]+)\b/g)].map((match) => match[1]),
   ).sort();
 
-  assert.ok(refs.length > 0, 'expected at least one ./textures/ reference in index.html');
+  assert.ok(refs.length > 0, 'expected at least one texture filename reference in index.html');
 
   const missing = refs.filter((asset) => !fs.existsSync(path.join(repoRoot, 'textures', asset)));
   assert.deepEqual(
