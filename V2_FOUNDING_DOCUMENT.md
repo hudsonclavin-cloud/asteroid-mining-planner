@@ -251,7 +251,7 @@ If those criteria are not met, the slice does not ship.
 
 ### Inner Solar System Slice Bar (Slice 2)
 
-- Interpolated position error for each of the six bodies stays below the per-body INV-008 bars across the full `2026-05-01` to `2026-07-30` validation window at 6-hour cadence
+- Interpolated position error for each body stays below the per-body bars defined in §3.4 (Sun `0.00002 km`, Mercury `100 km`, Venus `1 km`, Earth `0.5 km`, Moon `20 km`, Mars `0.05 km`) across the full `2026-05-01` to `2026-07-30` validation window at 6-hour cadence. Bars are codified as INV-008.
 - Default heliocentric overview camera (~5 AU from Sun) renders all six bodies findable: Sun visible at honest scale, all others reachable via halo overlays
 - Continuous zoom from heliocentric overview to `400 km` altitude above any of the six body surfaces shows no floating-origin precision artifacts
 - `60 fps` target on Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display
