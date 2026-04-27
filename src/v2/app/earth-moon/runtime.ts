@@ -108,14 +108,14 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
   const moonMesh = createBodyMesh(MOON_RADIUS_M, 0xb5b5b5);
   scene.add(earthMesh, moonMesh);
 
-  const ambientLight = new THREE.AmbientLight(0x202020, 1.5);
+  const ambientLight = new THREE.AmbientLight(0x404060, 2.0);
   const sunLight = new THREE.DirectionalLight(0xffffff, 1.6);
   const sunTarget = new THREE.Object3D();
   scene.add(ambientLight, sunLight, sunTarget);
   sunLight.target = sunTarget;
 
   let currentSampleIndex = 0;
-  let orbitRadius = MAX_CAMERA_DISTANCE_M;
+  let orbitRadius = 8e8;
   let orbitAzimuth = 0;
   let orbitPolar = Math.PI / 2;
   let disposed = false;
