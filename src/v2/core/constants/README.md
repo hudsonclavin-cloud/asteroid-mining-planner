@@ -36,6 +36,8 @@ BODY499_RADII = (   3396.19      3396.19      3376.20  )   -- line 3390
 BODY301_RADII = (   1737.4       1737.4       1737.4   )   -- line 3497
 ```
 
+Note: `BODY399_RADII` appears at lines `555`, `562`, `831`, and `3362` in `pck00010.tpc`. All four occurrences define the same triplet `(6378.1366, 6378.1366, 6356.7519)`. Line `3362` is the canonical reference cited above. The duplication is a `pck00010` file structure artifact and does not affect the loaded value, since SPICE applies last-definition semantics and all definitions agree.
+
 Reference: `vendor/naif/pck00010.tpc`, downloaded 2026-04.
 
 ## Rules for implementors
