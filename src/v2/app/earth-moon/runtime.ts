@@ -211,9 +211,9 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
     lastPointerX = event.clientX;
     lastPointerY = event.clientY;
 
-    orbitAzimuth -= dx * ORBIT_SENSITIVITY * 0.01;
+    orbitAzimuth -= dx * ORBIT_SENSITIVITY;
     orbitPolar = clamp(
-      orbitPolar + dy * ORBIT_SENSITIVITY * 0.01,
+      orbitPolar + dy * ORBIT_SENSITIVITY,
       0.001,
       Math.PI - 0.001,
     );
