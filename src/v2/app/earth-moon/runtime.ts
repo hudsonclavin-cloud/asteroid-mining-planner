@@ -115,7 +115,7 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
   sunLight.target = sunTarget;
 
   let currentSampleIndex = 0;
-  let orbitRadius = 8e8;
+  let orbitRadius = 2e9;
   let orbitAzimuth = 0;
   let orbitPolar = Math.PI / 2;
   let disposed = false;
