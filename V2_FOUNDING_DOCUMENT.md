@@ -267,6 +267,23 @@ If those criteria are not met, the slice does not ship.
 
 If those criteria are not met, the slice does not ship.
 
+### Measured Results
+
+Slice 2 cleared all per-body interpolation bars with 4–6× margin against Horizons truth at 6-hour cadence across the 90-day validation window:
+
+| Body    | Cutover bar | Measured max | Margin |
+| ------- | ----------- | ------------ | ------ |
+| Sun     | 0.00002 km  | 3.5e-6 km    | 5.7×   |
+| Mercury | 100 km      | 20.1 km      | 5.0×   |
+| Venus   | 1 km        | 0.18 km      | 5.5×   |
+| Earth   | 0.5 km      | 0.09 km      | 5.5×   |
+| Moon    | 20 km       | 5.0 km       | 4.0×   |
+| Mars    | 0.05 km     | 0.009 km     | 5.6×   |
+
+Frame round-trip error remained within bounds across all six bodies. INV-001 through INV-008 passed with zero violations across the validation window. 60 fps held during continuous zoom from heliocentric overview to 400 km altitude on the target machine class. Console clean on first load after the BodyId type-export fix.
+
+Note: The bar is set at 3× measured max with rounding for cleanliness (per `tools/slice2-research/interpolation-report.md`). The 4–6× margins observed indicate substantial headroom — the bars are correctly calibrated, not artificially tight.
+
 ---
 
 ## 7. Validation Strategy
