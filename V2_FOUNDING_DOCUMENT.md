@@ -415,3 +415,17 @@ These items are deferred but tracked here so they are not lost.
 - **ECEF / body-fixed frames** — deferred until mission-planning or surface-relative work requires them; deliberately excluded from Slice 2 (see §3.2)
 
 These are open questions, not decisions. They will be revisited at the Slice 3 planning dispatch.
+
+---
+
+## 13. Slice 2 Known Limitations
+
+These are limitations of the shipped Slice 2 deliverable, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
+
+- **Camera body focus:** the default camera orbits a fixed point in heliocentric space. There is currently no UI to retarget the camera to Mercury, Venus, Mars, or any specific body for close-up zoom. Earth and Moon are reachable from the default camera orientation. Body focus selection is planned as a Slice 2 polish commit.
+
+- **Test infrastructure gap:** the cutover test suite did not catch the BodyId type re-export bug because `tsc` with full type graph silently strips type-only re-exports, while esbuild (the Vite dev server transform) does not. The fix landed `--isolatedModules` across all v2 test `tsc` invocations, which mirrors esbuild's single-file behavior. A more durable fix would add a Vite build smoke test that fails CI when the dev server cannot import the v2 entry point. This is deferred to a future infrastructure pass.
+
+- **Planet systems and outer planets:** Slice 2 covers Sun, Mercury, Venus, Earth, Moon, and Mars only. Mars's moons (Phobos, Deimos), the outer planets (Jupiter, Saturn, Uranus, Neptune), and any of their moons are out of scope. These are planned as Slices 3+, scoped one planet system at a time per the architecture pattern proven in Slice 2.
+
+- **No mission planning or trajectory rendering:** Slice 2 is rendering and validation only. The `src/v2/mission/` folder remains scaffolded but unimplemented. Mission planning slice timing is not yet scoped.
