@@ -237,6 +237,14 @@ export function ingestHorizonsFixture(fixture: HorizonsFixture): Record<string, 
   return result;
 }
 
+export function ingestSlice2Fixture(fixture: HorizonsFixture): Record<string, CanonicalStateSample[]> {
+  const required = ['sun', 'mercury', 'venus', 'earth', 'moon', 'mars'];
+  for (const key of required) {
+    if (!fixture.targets[key]) throw new Error(`Slice 2 fixture missing required body: ${key}`);
+  }
+  return ingestHorizonsFixture(fixture);
+}
+
 function assertAlignedTimesteps(earth: CanonicalStateSample[], moon: CanonicalStateSample[]): void {
   if (earth.length !== moon.length) {
     throw new Error(`Slice 1 Earth/Moon fixtures must have matching sample counts (${earth.length} vs ${moon.length})`);
