@@ -27,6 +27,7 @@ async function loadModules() {
           '--module', 'NodeNext',
           '--target', 'ES2020',
           '--moduleResolution', 'NodeNext',
+          '--isolatedModules', 'true',
           path.join(repoRoot, 'src', 'v2', 'core', 'index.ts'),
           path.join(repoRoot, 'src', 'v2', 'boundary', 'horizons.ts'),
         ],
