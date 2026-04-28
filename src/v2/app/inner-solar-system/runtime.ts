@@ -25,6 +25,14 @@ const FOCUS_TRANSITION_DURATION_MS = 650;
 
 // All six body IDs in render order
 const BODY_IDS: BodyId[] = ['sun', 'mercury', 'venus', 'earth', 'moon', 'mars'];
+const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
+  '1': 'sun',
+  '2': 'mercury',
+  '3': 'venus',
+  '4': 'earth',
+  '5': 'moon',
+  '6': 'mars',
+};
 
 type FocusBodyId = BodyId | null;
 type Position3 = CanonicalState['positionM'];
@@ -71,6 +79,18 @@ function createBodyMesh(bodyId: BodyId): THREE.Mesh {
   }
 
   return new THREE.Mesh(geometry, material);
+}
+
+function getDefaultFocusRadius(bodyId: BodyId): number {
+  const radiusM = BODY_CONSTANTS[bodyId].radiusM;
+  return Math.max(5 * radiusM, radiusM + 400_000);
+}
+
+function getMinOrbitRadiusForFocus(bodyId: FocusBodyId): number {
+  if (bodyId === null) {
+    return MIN_CAMERA_DISTANCE_M;
+  }
+  return BODY_CONSTANTS[bodyId].radiusM + 400_000;
 }
 
 export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => void> {
@@ -217,6 +237,31 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
     return lerpPosition(focusTransitionFromAnchor, targetAnchor, progress);
   }
 
+  function startFocusTransition(nextFocusBody: FocusBodyId, nextOrbitRadius: number): void {
+    const nowMs = performance.now();
+    const fromAnchor = getCurrentOrbitCenter(nowMs);
+    if (!fromAnchor) {
+      return;
+    }
+
+    const activeFocusBody = getActiveFocusBody(nowMs);
+    targetFocusBody = nextFocusBody;
+    focusTransitionFromAnchor = fromAnchor;
+    focusTransitionStartMs = nowMs;
+    orbitRadius = clamp(
+      nextOrbitRadius,
+      getMinOrbitRadiusForFocus(nextFocusBody),
+      MAX_CAMERA_DISTANCE_M,
+    );
+
+    if (activeFocusBody === nextFocusBody) {
+      currentFocusBody = nextFocusBody;
+      focusTransitionFromAnchor = null;
+    }
+
+    updateVisibleState(nowMs);
+  }
+
   function updateVisibleState(nowMs = performance.now()): void {
     const anchorPosM = getCurrentOrbitCenter(nowMs);
     if (!anchorPosM) return;
@@ -347,6 +392,17 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
     updateVisibleState();
   }
 
+  /*
+   * Keyboard mapping:
+   * 1 → Sun
+   * 2 → Mercury
+   * 3 → Venus
+   * 4 → Earth
+   * 5 → Moon
+   * 6 → Mars
+   * 0 → Heliocentric overview
+   * Arrow/Home/End retain time scrubbing behavior.
+   */
   function onKeyDown(event: KeyboardEvent): void {
     if (event.key === 'ArrowRight') {
       scrubSamples(event.shiftKey ? TIME_SCRUB_FAST_STEP : TIME_SCRUB_STEP);
@@ -366,13 +422,24 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
       updateVisibleState();
       return;
     }
-    if (event.key === '0') {
+
+    const nextFocusBody = FOCUS_KEY_TO_BODY[event.key];
+    if (nextFocusBody) {
       const nowMs = performance.now();
-      targetFocusBody = null;
-      focusTransitionFromAnchor = getCurrentOrbitCenter(nowMs);
-      focusTransitionStartMs = nowMs;
-      orbitRadius = OVERVIEW_ORBIT_RADIUS_M;
-      updateVisibleState();
+      const activeFocusBody = getActiveFocusBody(nowMs);
+      const nextOrbitRadius = activeFocusBody === null
+        ? getDefaultFocusRadius(nextFocusBody)
+        : clamp(
+          orbitRadius,
+          getMinOrbitRadiusForFocus(nextFocusBody),
+          MAX_CAMERA_DISTANCE_M,
+        );
+      startFocusTransition(nextFocusBody, nextOrbitRadius);
+      return;
+    }
+
+    if (event.key === '0') {
+      startFocusTransition(null, OVERVIEW_ORBIT_RADIUS_M);
     }
   }
 
