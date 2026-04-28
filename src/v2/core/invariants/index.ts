@@ -3,6 +3,7 @@ export {
   assertCanonicalUnits,
   assertFiniteState,
   assertFrameTag,
+  assertInterpolationError,
   assertPhysicalTruthOnly,
 } from './assertions.js';
 

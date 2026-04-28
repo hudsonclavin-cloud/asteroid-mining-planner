@@ -1,6 +1,7 @@
 import type { CanonicalState, InvariantId, Vec3F64 } from '../types.js';
 import { isFrameId } from '../frames/ids.js';
 import { failInvariant } from './runtime.js';
+import { INV008_BARS_M } from '../constants/bodies.js';
 
 const FORBIDDEN_UNIT_KEYS = new Set([
   'positionKm',
@@ -142,4 +143,28 @@ export function assertCanonicalState(state: CanonicalState): void {
   assertFiniteState(state);
   assertFrameTag(state);
   assertPhysicalTruthOnly(state);
+}
+
+export function assertInterpolationError(
+  estimateM: Vec3F64,
+  truthM: Vec3F64,
+  bodyId: string,
+  inv: InvariantId
+): void {
+  const dx = estimateM.x - truthM.x;
+  const dy = estimateM.y - truthM.y;
+  const dz = estimateM.z - truthM.z;
+  const errorM = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const barM = (INV008_BARS_M as Record<string, number>)[bodyId];
+  if (barM === undefined) {
+    failInvariant(inv, `No INV-008 bar defined for body: ${bodyId}`);
+    return;
+  }
+  if (errorM > barM) {
+    failInvariant(inv, `INV-008 interpolation error exceeded bar for body '${bodyId}'`, {
+      errorM,
+      barM,
+      bodyId,
+    });
+  }
 }

@@ -46,12 +46,16 @@ export type {
   InvariantViolationHandler,
 } from './invariants/index.js';
 
+export * from './constants/index.js';
+export * from './interpolators/index.js';
+
 export {
   assertCanonicalState,
   assertCanonicalUnits,
   assertFiniteState,
   assertFrameRoundTrip,
   assertFrameTag,
+  assertInterpolationError,
   assertPhysicalTruthOnly,
   AssertError,
   computeFrameRoundTripRelativeError,
