@@ -169,7 +169,7 @@ Properties:
 
 ### Slice 1: Earth + Moon Honest Mode
 
-**Status: shipped at `/v2/earth-moon`.**
+**Status: shipped at `/v2/earth-moon` (now redirected to `/v2/inner-solar-system` per DEC-5).**
 
 This was the mandatory first slice.
 
@@ -203,6 +203,8 @@ Earth + Moon is the smallest slice that forces the architecture to solve:
 
 ### Slice 2: Inner Solar System Honest Mode
 
+**Status: shipped at `/v2/inner-solar-system` on 2026-04-27.**
+
 This slice extends honest mode to the full inner solar system using fixture-based interpolation.
 
 #### Included
@@ -233,7 +235,7 @@ The inner solar system is the smallest extension that forces the architecture to
 
 #### Route Migration (DEC-5)
 
-Slice 2 ships at `/v2/inner-solar-system`. When Slice 2 cutover is validated, `/v2/earth-moon` displays a redirect notice pointing to the new route. The redirect grace period is one calendar week. After the grace period, `/v2/earth-moon` is removed and returns 404. The Earth-Moon view is not lost — it is accessible inside Slice 2 by zooming in to the inner system.
+Slice 2 ships at `/v2/inner-solar-system`. `/v2/earth-moon` permanently redirects to `/v2/inner-solar-system` on Slice 2 cutover. The Earth-Moon view is reachable inside Slice 2 by zooming in.
 
 ---
 
