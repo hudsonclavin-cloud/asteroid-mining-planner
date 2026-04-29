@@ -23,11 +23,11 @@ const BODIES = [
 ];
 
 const CADENCES = [
-  { label: 'daily', stepSize: '1 d' },
-  { label: '12h', stepSize: '12 h' },
-  { label: '6h', stepSize: '6 h' },
-  { label: '3h', stepSize: '3 h' },
-  { label: 'truth', stepSize: '30 m' },
+  { label: 'daily', stepSize: "'1 d'" },
+  { label: '12h', stepSize: "'12 h'" },
+  { label: '6h', stepSize: "'6 h'" },
+  { label: '3h', stepSize: "'3 h'" },
+  { label: 'truth', stepSize: "'30 m'" },
 ];
 
 function buildParams(body, cadence) {
