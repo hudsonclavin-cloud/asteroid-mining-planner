@@ -27,6 +27,14 @@ const CADENCES = [
 ];
 
 const TRUTH_CADENCE = { label: 'truth', display: '30 m' };
+const IO_EXTENSION_CADENCES = [
+  { label: 'daily', display: '1 d' },
+  { label: '12h', display: '12 h' },
+  { label: '6h', display: '6 h' },
+  { label: '3h', display: '3 h' },
+  { label: '1h', display: '1 h' },
+  { label: '30m', display: '30 m' },
+];
 
 function add(a, b) {
   return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z };
@@ -124,7 +132,7 @@ function measureCadence(candidate, truth) {
 }
 
 function chooseRecommendedCadence(rows) {
-  return rows.find((row) => row.maxErrorKm <= 10) ?? rows[rows.length - 1];
+  return rows.find((row) => row.maxErrorKm <= 10) ?? null;
 }
 
 function formatKm(value) {
@@ -149,24 +157,40 @@ function buildResultsRows(results) {
     .join('\n');
 }
 
-function buildCadenceRecommendationRows(recommendations) {
+function buildCadenceRecommendationRows(recommendations, ioExtensionRecommendation = null) {
   return recommendations
     .map((recommendation) => {
-      const needsSupplement = recommendation.body === 'io' && recommendation.maxErrorKm > 10;
+      if (recommendation.body === 'io' && ioExtensionRecommendation) {
+        return `- Io: recommend ${ioExtensionRecommendation.cadenceDisplay} after the Io-only extension. Max ${formatKm(ioExtensionRecommendation.maxErrorKm)} km at ${ioExtensionRecommendation.cadenceDisplay}, which clears the ~10 km target.`;
+      }
+
+      if (!recommendation.recommended) {
+        return `- ${recommendation.bodyDisplay}: no baseline shared cadence in this first-pass matrix stays under the ~10 km target. A body-specific extension or a different architecture path is required.`;
+      }
+
+      const row = recommendation.recommended;
+      const needsSupplement = recommendation.body === 'io' && row.maxErrorKm > 10;
       const note = needsSupplement
         ? '3 h still exceeds ~10 km; Io extension required'
-        : `max ${formatKm(recommendation.maxErrorKm)} km at ${recommendation.cadenceDisplay}`;
-      return `- ${recommendation.bodyDisplay}: recommend ${recommendation.cadenceDisplay} as the loosest cadence under the ~10 km target. ${note}.`;
+        : `max ${formatKm(row.maxErrorKm)} km at ${row.cadenceDisplay}`;
+      return `- ${recommendation.bodyDisplay}: recommend ${row.cadenceDisplay} as the loosest cadence under the ~10 km target. ${note}.`;
     })
     .join('\n');
 }
 
-function buildBarRows(recommendations) {
+function buildBarRows(recommendations, ioExtensionRecommendation = null) {
   return recommendations
     .map((recommendation) => {
-      const recommendedBarKm = roundUpClean(recommendation.maxErrorKm * 3);
-      const headroom = recommendedBarKm > 0 ? recommendedBarKm / recommendation.maxErrorKm : 0;
-      return `- ${recommendation.bodyDisplay}: ${recommendation.cadenceDisplay} cadence, max ${formatKm(recommendation.maxErrorKm)} km, suggested bar ${formatBar(recommendedBarKm)} km, honest margin ${headroom.toFixed(1)}x.`;
+      const row =
+        recommendation.body === 'io' && ioExtensionRecommendation
+          ? ioExtensionRecommendation
+          : recommendation.recommended;
+      if (!row) {
+        return `- ${recommendation.bodyDisplay}: no bar proposed from the baseline matrix because no tested cadence cleared the ~10 km target.`;
+      }
+      const recommendedBarKm = roundUpClean(row.maxErrorKm * 3);
+      const headroom = recommendedBarKm > 0 ? recommendedBarKm / row.maxErrorKm : 0;
+      return `- ${recommendation.bodyDisplay}: ${row.cadenceDisplay} cadence, max ${formatKm(row.maxErrorKm)} km, suggested bar ${formatBar(recommendedBarKm)} km, honest margin ${headroom.toFixed(1)}x.`;
     })
     .join('\n');
 }
@@ -188,10 +212,55 @@ function titleCase(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function buildReport(results, recommendations, fetchTimestampByBody) {
-  const ioNeedsSupplement = recommendations.some(
-    (recommendation) => recommendation.body === 'io' && recommendation.maxErrorKm > 10,
-  );
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function buildIoExtensionRows(rows) {
+  return rows
+    .map(
+      (row) =>
+        `| ${row.cadenceDisplay} | ${formatKm(row.maxErrorKm)} | ${formatKm(row.rmsErrorKm)} | ${row.truthPointCount} |`,
+    )
+    .join('\n');
+}
+
+function decideIoExtensionRecommendation(rows) {
+  const oneHour = rows.find((row) => row.cadence === '1h');
+  const thirtyMinute = rows.find((row) => row.cadence === '30m');
+
+  if (oneHour && oneHour.maxErrorKm <= 10) {
+    return `Option B with Io at 1 h is supported by the data. Max error is ${formatKm(oneHour.maxErrorKm)} km, which is comfortably below the ~10 km target without the storage cost of 30 m cadence.`;
+  }
+  if (thirtyMinute && thirtyMinute.maxErrorKm <= 10) {
+    return `Option B with Io at 30 m is supported by the data. The 1 h option remains above the ~10 km target, while 30 m brings Io below the target.`;
+  }
+  return 'Option C SPK ingestion or Option D accepted error budget is required. Even the finest tested sampled cadence remained above the ~10 km target.';
+}
+
+function buildReport(results, recommendations, fetchTimestampByBody, ioExtensionRows = null) {
+  const ioBaselineRecommendation = recommendations.find((recommendation) => recommendation.body === 'io');
+  const ioNeedsSupplement = !ioBaselineRecommendation?.recommended;
+  const ioExtensionRecommendation = ioExtensionRows ? chooseRecommendedCadence(ioExtensionRows) : null;
+
+  const ioExtensionSection = ioExtensionRows
+    ? `
+## Io Cadence Extension
+
+The initial 30-minute truth run showed that Io at 3 h cadence is still far above the ~10 km target, so an Io-only extension was run against 15-minute truth.
+
+| Cadence | Max error (km) | RMS error (km) | Truth points |
+| --- | ---: | ---: | ---: |
+${buildIoExtensionRows(ioExtensionRows)}
+
+Recommendation: ${decideIoExtensionRecommendation(ioExtensionRows)}
+`
+    : '';
 
   return `# Slice 3 Interpolation Measurement Report
 
@@ -221,13 +290,13 @@ ${buildResultsRows(results)}
 
 ## Cadence Recommendation Per Body
 
-${buildCadenceRecommendationRows(recommendations)}
+${buildCadenceRecommendationRows(recommendations, ioExtensionRecommendation)}
 
 ## Recommended Cutover Bars Per Body
 
 Suggested cutover bars are computed as \`3 × max error\`, rounded up to a clean number, using the recommended cadence for each body.
 
-${buildBarRows(recommendations)}
+${buildBarRows(recommendations, ioExtensionRecommendation)}
 
 ## Cadence Policy Recommendation
 
@@ -237,13 +306,14 @@ Per-body cadence is the better policy. A uniform cadence wastes storage on slow-
 
 - \`CENTER='500@599'\` worked on the first try for all four Galileans; no center-ambiguity workaround was required.
 - Jupiter daily cadence is expected to be viable because the heliocentric motion is smooth over this window.
-- Io is the most likely outlier because its orbital timescale is short relative to the coarser candidate cadences.${ioNeedsSupplement ? '\n- Io exceeds the ~10 km target at 3 h cadence in this first-pass experiment, so the Io cadence extension is required.' : '\n- Io stays below the ~10 km target at 3 h cadence in this first-pass experiment, so the Io cadence extension is not needed.'}
+- Io is the most likely outlier because its orbital timescale is short relative to the coarser candidate cadences.${ioNeedsSupplement ? '\n- In the shared-cadence matrix, Io never drops below the ~10 km target; the Io cadence extension is therefore required.' : '\n- Io stays below the ~10 km target in the shared-cadence matrix, so the Io cadence extension is not needed.'}
 
 ## Data Provenance
 
 - API endpoint: \`https://ssd.jpl.nasa.gov/api/horizons.api\`
 - Cached data directory: \`tools/slice3-research/data/\`
 ${buildProvenanceRows(fetchTimestampByBody)}
+${ioExtensionSection}
 `;
 }
 
@@ -251,6 +321,7 @@ async function main() {
   const results = [];
   const recommendations = [];
   const fetchTimestampByBody = new Map();
+  let ioExtensionRows = null;
 
   for (const body of BODIES) {
     const truth = await readDataset(body.name, TRUTH_CADENCE.label);
@@ -272,10 +343,29 @@ async function main() {
     }
 
     results.push(...bodyRows);
-    recommendations.push(chooseRecommendedCadence(bodyRows));
+    recommendations.push({
+      body: body.name,
+      bodyDisplay: titleCase(body.name),
+      recommended: chooseRecommendedCadence(bodyRows),
+    });
   }
 
-  const report = buildReport(results, recommendations, fetchTimestampByBody);
+  const ioExtensionTruthPath = path.join(dataDir, 'truth-15m-io.json');
+  if (await fileExists(ioExtensionTruthPath)) {
+    const ioTruth = await readDataset('io', 'truth-15m');
+    ioExtensionRows = [];
+    for (const cadence of IO_EXTENSION_CADENCES) {
+      const candidate = await readDataset('io', cadence.label);
+      const measured = measureCadence(candidate, ioTruth);
+      ioExtensionRows.push({
+        cadence: cadence.label,
+        cadenceDisplay: cadence.display,
+        ...measured,
+      });
+    }
+  }
+
+  const report = buildReport(results, recommendations, fetchTimestampByBody, ioExtensionRows);
   await fs.writeFile(reportPath, `${report}\n`, 'utf8');
   console.log(report);
 }

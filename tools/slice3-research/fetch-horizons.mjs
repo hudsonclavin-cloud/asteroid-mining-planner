@@ -13,6 +13,7 @@ const WINDOW = {
 const HORIZONS_BASE_URL = 'https://ssd.jpl.nasa.gov/api/horizons.api';
 const SLOW_FETCH_WARNING_MS = 5 * 60 * 1000;
 const refresh = process.argv.includes('--refresh');
+const ioExtensionOnly = process.argv.includes('--io-extension');
 
 const BODIES = [
   { name: 'jupiter', command: '599', center: '@sun' },
@@ -28,6 +29,12 @@ const CADENCES = [
   { label: '6h', stepSize: "'6 h'" },
   { label: '3h', stepSize: "'3 h'" },
   { label: 'truth', stepSize: "'30 m'" },
+];
+
+const IO_EXTENSION_CADENCES = [
+  { label: '1h', stepSize: "'1 h'" },
+  { label: '30m', stepSize: "'30 m'" },
+  { label: 'truth-15m', stepSize: "'15 m'" },
 ];
 
 function buildParams(body, cadence) {
@@ -165,8 +172,11 @@ async function fetchDataset(body, cadence) {
 async function main() {
   await fs.mkdir(dataDir, { recursive: true });
 
-  for (const body of BODIES) {
-    for (const cadence of CADENCES) {
+  const bodies = ioExtensionOnly ? BODIES.filter((body) => body.name === 'io') : BODIES;
+  const cadences = ioExtensionOnly ? IO_EXTENSION_CADENCES : CADENCES;
+
+  for (const body of bodies) {
+    for (const cadence of cadences) {
       await fetchDataset(body, cadence);
     }
   }
