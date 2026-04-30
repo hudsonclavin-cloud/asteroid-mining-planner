@@ -1,4 +1,10 @@
 import type { CanonicalState } from '../types.js';
+import { failInvariant } from '../invariants/runtime.js';
+import {
+  getBodyCadence,
+  getInterpolationInvariantId,
+  type BodyId,
+} from '../constants/bodies.js';
 
 // Interpolate a single scalar component using cubic Hermite basis functions.
 // p0, p1 are endpoint positions; v0, v1 are endpoint velocities; dt is the
@@ -71,4 +77,46 @@ export function interpolateBodyState(
     frame: s0.frame,
     tdbSeconds,
   };
+}
+
+export function interpolateBodyStateSeries(
+  bodyId: BodyId,
+  samples: readonly CanonicalState[],
+  tdbSeconds: number,
+): CanonicalState {
+  if (samples.length === 0) {
+    failInvariant(
+      getInterpolationInvariantId(bodyId),
+      `Cannot interpolate empty sample series for body '${bodyId}'`,
+      { bodyId, tdbSeconds, expectedCadenceSeconds: getBodyCadence(bodyId) }
+    );
+    throw new Error('unreachable');
+  }
+
+  for (const sample of samples) {
+    if (sample.tdbSeconds === tdbSeconds) {
+      return sample;
+    }
+  }
+
+  for (let i = 0; i < samples.length - 1; i++) {
+    const s0 = samples[i];
+    const s1 = samples[i + 1];
+    if (tdbSeconds > s0.tdbSeconds && tdbSeconds < s1.tdbSeconds) {
+      return interpolateBodyState(s0, s1, tdbSeconds);
+    }
+  }
+
+  failInvariant(
+    getInterpolationInvariantId(bodyId),
+    `Requested interpolation time is outside available sample range for body '${bodyId}'`,
+    {
+      bodyId,
+      tdbSeconds,
+      minTdbSeconds: samples[0].tdbSeconds,
+      maxTdbSeconds: samples[samples.length - 1]?.tdbSeconds ?? samples[0].tdbSeconds,
+      expectedCadenceSeconds: getBodyCadence(bodyId),
+    }
+  );
+  throw new Error('unreachable');
 }

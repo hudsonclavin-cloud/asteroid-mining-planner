@@ -45,6 +45,9 @@ const { configureInvariantRuntime, resetInvariantRuntime } = await import(
 const { FRAME_HELIO_J2000_ICRF } = await import(
   pathToFileURL(path.join(tempOutDir, 'core', 'frames', 'ids.js')).href
 );
+const { createCanonicalState } = await import(
+  pathToFileURL(path.join(tempOutDir, 'core', 'index.js')).href
+);
 
 const FRAME = FRAME_HELIO_J2000_ICRF;
 
@@ -105,11 +108,21 @@ const s1 = {
 // Test 4: assertInterpolationError throws for Earth error > 500 m
 {
   configureInvariantRuntime({ mode: 'throw' });
-  const estimate = { x: 1000, y: 0, z: 0 };  // 1000 m from origin
-  const truth = { x: 0, y: 0, z: 0 };         // error = 1000 m > 500 m bar
+  const estimate = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 0,
+    positionM: { x: 1000, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+  const truth = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 0,
+    positionM: { x: 0, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
   let threw = false;
   try {
-    assertInterpolationError(estimate, truth, 'earth', 'INV-008');
+    assertInterpolationError(estimate, truth, 'earth');
   } catch (e) {
     threw = true;
   }
@@ -120,11 +133,21 @@ const s1 = {
 // Test 5: assertInterpolationError passes for Earth error < 500 m
 {
   configureInvariantRuntime({ mode: 'throw' });
-  const estimate = { x: 100, y: 0, z: 0 };  // 100 m from origin
-  const truth = { x: 0, y: 0, z: 0 };        // error = 100 m < 500 m bar
+  const estimate = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 0,
+    positionM: { x: 100, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+  const truth = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 0,
+    positionM: { x: 0, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
   let threw = false;
   try {
-    assertInterpolationError(estimate, truth, 'earth', 'INV-008');
+    assertInterpolationError(estimate, truth, 'earth');
   } catch (e) {
     threw = true;
   }

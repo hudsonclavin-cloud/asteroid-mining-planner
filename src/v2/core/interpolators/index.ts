@@ -1,1 +1,1 @@
-export { interpolateBodyState } from './hermite.js';
+export { interpolateBodyState, interpolateBodyStateSeries } from './hermite.js';
