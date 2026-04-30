@@ -52,7 +52,7 @@ export function assertFrameRoundTrip(
   const relativeError = computeFrameRoundTripRelativeError(sample, from, to, tdbSeconds);
 
   if (relativeError >= FRAME_ROUND_TRIP_MAX_RELATIVE_ERROR) {
-    failInvariant('INV-004', 'Frame round-trip relative error exceeded Slice 1 bound', {
+    failInvariant('INV-004', 'Frame round-trip relative error exceeded bound', {
       from,
       to,
       tdbSeconds,

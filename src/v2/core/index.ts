@@ -26,9 +26,11 @@ export {
 export {
   FRAME_GCRS_EARTH,
   FRAME_HELIO_J2000_ICRF,
+  FRAME_JUPITER_J2000_ICRF,
   FRAME_IDS,
   configureFrameTransformHooks,
   getEarthHeliocentricStateProvider,
+  getJupiterHeliocentricStateProvider,
   isFrameId,
   resetFrameTransformHooks,
   transformCanonicalState,
@@ -38,6 +40,7 @@ export type {
   EarthHeliocentricStateProvider,
   FrameId,
   FrameTransformHooks,
+  JupiterHeliocentricStateProvider,
 } from './frames/index.js';
 
 export type {

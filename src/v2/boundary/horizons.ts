@@ -1,6 +1,7 @@
 import {
   FRAME_HELIO_J2000_ICRF,
   FRAME_GCRS_EARTH,
+  FRAME_JUPITER_J2000_ICRF,
   J2000_ECLIPTIC_OBLIQUITY_RAD,
   assertCanonicalState,
   createCanonicalState,
@@ -127,6 +128,10 @@ export function inferCanonicalFrame(frameHint?: string, originHint?: string): Fr
   const frame = String(frameHint || '').toUpperCase();
   const origin = String(originHint || '').toUpperCase();
 
+  if (origin.includes('JUPITER-CENTERED')) {
+    return FRAME_JUPITER_J2000_ICRF;
+  }
+
   if (frame.includes('GCRS') || origin.includes('EARTH-CENTERED') || origin.includes('GEOCENTRIC')) {
     return FRAME_GCRS_EARTH;
   }
@@ -241,6 +246,14 @@ export function ingestSlice2Fixture(fixture: HorizonsFixture): Record<string, Ca
   const required = ['sun', 'mercury', 'venus', 'earth', 'moon', 'mars'];
   for (const key of required) {
     if (!fixture.targets[key]) throw new Error(`Slice 2 fixture missing required body: ${key}`);
+  }
+  return ingestHorizonsFixture(fixture);
+}
+
+export function ingestSlice3Fixture(fixture: HorizonsFixture): Record<string, CanonicalStateSample[]> {
+  const required = ['jupiter', 'io', 'europa', 'ganymede', 'callisto'];
+  for (const key of required) {
+    if (!fixture.targets[key]) throw new Error(`Slice 3 fixture missing required body: ${key}`);
   }
   return ingestHorizonsFixture(fixture);
 }

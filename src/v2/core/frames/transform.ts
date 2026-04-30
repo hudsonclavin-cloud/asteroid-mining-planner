@@ -2,18 +2,22 @@ import type { CanonicalState } from '../types.js';
 import {
   FRAME_GCRS_EARTH,
   FRAME_HELIO_J2000_ICRF,
+  FRAME_JUPITER_J2000_ICRF,
   type FrameId,
 } from './ids.js';
 import { assertCanonicalState } from '../invariants/assertions.js';
 import { failInvariant } from '../invariants/runtime.js';
 
 export type EarthHeliocentricStateProvider = (tdbSeconds: number) => CanonicalState;
+export type JupiterHeliocentricStateProvider = (tdbSeconds: number) => CanonicalState;
 
 export interface FrameTransformHooks {
   readonly earthHeliocentricStateProvider: EarthHeliocentricStateProvider;
+  readonly jupiterHeliocentricStateProvider: JupiterHeliocentricStateProvider;
 }
 
 let earthHeliocentricStateProvider: EarthHeliocentricStateProvider | null = null;
+let jupiterHeliocentricStateProvider: JupiterHeliocentricStateProvider | null = null;
 
 function subtractVec3(
   left: CanonicalState['positionM'],
@@ -37,35 +41,60 @@ function addVec3(
   };
 }
 
-function resolveEarthHeliocentricState(tdbSeconds: number): CanonicalState {
-  if (!earthHeliocentricStateProvider) {
+function resolveHeliocentricAnchorState(
+  label: 'Earth' | 'Jupiter',
+  frame: FrameId,
+  tdbSeconds: number,
+  provider: EarthHeliocentricStateProvider | JupiterHeliocentricStateProvider | null
+): CanonicalState {
+  if (!provider) {
     failInvariant(
       'INV-004',
-      'Earth heliocentric anchor provider is not configured for frame transforms',
-      { tdbSeconds }
+      `${label} heliocentric anchor provider is not configured for frame transforms`,
+      { tdbSeconds, frame }
     );
     throw new Error('unreachable');
   }
 
-  const earthState = earthHeliocentricStateProvider(tdbSeconds);
-  assertCanonicalState(earthState);
+  const anchorState = provider(tdbSeconds);
+  assertCanonicalState(anchorState);
 
-  if (earthState.frame !== FRAME_HELIO_J2000_ICRF) {
-    failInvariant('INV-004', 'Earth anchor state must be tagged as FRAME_HELIO_J2000_ICRF', {
-      frame: earthState.frame,
+  if (anchorState.frame !== FRAME_HELIO_J2000_ICRF) {
+    failInvariant('INV-004', `${label} anchor state must be tagged as FRAME_HELIO_J2000_ICRF`, {
+      frame: anchorState.frame,
     });
   }
 
-  return earthState;
+  return anchorState;
+}
+
+function resolveEarthHeliocentricState(tdbSeconds: number): CanonicalState {
+  return resolveHeliocentricAnchorState(
+    'Earth',
+    FRAME_GCRS_EARTH,
+    tdbSeconds,
+    earthHeliocentricStateProvider
+  );
+}
+
+function resolveJupiterHeliocentricState(tdbSeconds: number): CanonicalState {
+  return resolveHeliocentricAnchorState(
+    'Jupiter',
+    FRAME_JUPITER_J2000_ICRF,
+    tdbSeconds,
+    jupiterHeliocentricStateProvider
+  );
 }
 
 function assertSupportedTransform(from: FrameId, to: FrameId): void {
   const supported =
     (from === FRAME_HELIO_J2000_ICRF && to === FRAME_GCRS_EARTH) ||
-    (from === FRAME_GCRS_EARTH && to === FRAME_HELIO_J2000_ICRF);
+    (from === FRAME_GCRS_EARTH && to === FRAME_HELIO_J2000_ICRF) ||
+    (from === FRAME_HELIO_J2000_ICRF && to === FRAME_JUPITER_J2000_ICRF) ||
+    (from === FRAME_JUPITER_J2000_ICRF && to === FRAME_HELIO_J2000_ICRF);
 
   if (!supported) {
-    failInvariant('INV-004', 'Unsupported Slice 1 frame transform pair', { from, to });
+    failInvariant('INV-004', 'Unsupported frame transform pair', { from, to });
   }
 }
 
@@ -75,16 +104,26 @@ export function configureFrameTransformHooks(
   if (hooks.earthHeliocentricStateProvider) {
     earthHeliocentricStateProvider = hooks.earthHeliocentricStateProvider;
   }
+  if (hooks.jupiterHeliocentricStateProvider) {
+    jupiterHeliocentricStateProvider = hooks.jupiterHeliocentricStateProvider;
+  }
 }
 
 export function resetFrameTransformHooks(): void {
   earthHeliocentricStateProvider = null;
+  jupiterHeliocentricStateProvider = null;
 }
 
 export function getEarthHeliocentricStateProvider():
   | EarthHeliocentricStateProvider
   | null {
   return earthHeliocentricStateProvider;
+}
+
+export function getJupiterHeliocentricStateProvider():
+  | JupiterHeliocentricStateProvider
+  | null {
+  return jupiterHeliocentricStateProvider;
 }
 
 export function transformCanonicalState(
@@ -118,21 +157,46 @@ export function transformCanonicalState(
 
   assertSupportedTransform(fromFrame, toFrame);
 
-  const earthState = resolveEarthHeliocentricState(tdbSeconds);
+  const earthState =
+    fromFrame === FRAME_GCRS_EARTH || toFrame === FRAME_GCRS_EARTH
+      ? resolveEarthHeliocentricState(tdbSeconds)
+      : null;
+  const jupiterState =
+    fromFrame === FRAME_JUPITER_J2000_ICRF || toFrame === FRAME_JUPITER_J2000_ICRF
+      ? resolveJupiterHeliocentricState(tdbSeconds)
+      : null;
 
   if (fromFrame === FRAME_HELIO_J2000_ICRF && toFrame === FRAME_GCRS_EARTH) {
     return {
       ...state,
-      positionM: subtractVec3(state.positionM, earthState.positionM),
-      velocityMps: subtractVec3(state.velocityMps, earthState.velocityMps),
+      positionM: subtractVec3(state.positionM, earthState!.positionM),
+      velocityMps: subtractVec3(state.velocityMps, earthState!.velocityMps),
       frame: FRAME_GCRS_EARTH,
+    };
+  }
+
+  if (fromFrame === FRAME_GCRS_EARTH && toFrame === FRAME_HELIO_J2000_ICRF) {
+    return {
+      ...state,
+      positionM: addVec3(state.positionM, earthState!.positionM),
+      velocityMps: addVec3(state.velocityMps, earthState!.velocityMps),
+      frame: FRAME_HELIO_J2000_ICRF,
+    };
+  }
+
+  if (fromFrame === FRAME_HELIO_J2000_ICRF && toFrame === FRAME_JUPITER_J2000_ICRF) {
+    return {
+      ...state,
+      positionM: subtractVec3(state.positionM, jupiterState!.positionM),
+      velocityMps: subtractVec3(state.velocityMps, jupiterState!.velocityMps),
+      frame: FRAME_JUPITER_J2000_ICRF,
     };
   }
 
   return {
     ...state,
-    positionM: addVec3(state.positionM, earthState.positionM),
-    velocityMps: addVec3(state.velocityMps, earthState.velocityMps),
+    positionM: addVec3(state.positionM, jupiterState!.positionM),
+    velocityMps: addVec3(state.velocityMps, jupiterState!.velocityMps),
     frame: FRAME_HELIO_J2000_ICRF,
   };
 }
