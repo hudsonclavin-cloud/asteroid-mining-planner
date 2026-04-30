@@ -18,4 +18,11 @@ export {
   writeCameraRelativePositionsToF32Buffer,
 } from './camera-relative.js';
 
+export {
+  createJupiterOblateMesh,
+  JUPITER_EQUATORIAL_RADIUS_M,
+  JUPITER_POLAR_RADIUS_M,
+  JUPITER_POLAR_SCALE,
+} from './jupiter-oblate.js';
+
 export { mountEmptyViewportCanvas } from './empty-viewport.js';
