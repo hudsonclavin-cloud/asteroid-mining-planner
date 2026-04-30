@@ -40,6 +40,60 @@ Note: `BODY399_RADII` appears at lines `555`, `562`, `831`, and `3362` in `pck00
 
 Reference: `vendor/naif/pck00010.tpc`, downloaded 2026-04.
 
+## Jupiter System Bodies
+
+These constants extend the body table above for Slice 3. Physical radii remain `core/` data; cadence policy belongs in `src/v2/boundary/slice3-fixture-spec.md`.
+
+### Jupiter
+
+- NAIF body ID: `599`
+- Triaxial radii (m): `a = 71,492,000`, `b = 71,492,000`, `c = 66,854,000`
+- Mean equatorial radius for sphere mesh reference: `71,492,000 m`
+- Render note: Jupiter render uses all three axes per `src/v2/render/jupiter-oblate.md`; the `a` value is not sufficient for the honest Jupiter mesh
+- `pck00010` line: `3406`
+- Color reference: `0xD9C3A3` — tan / cream banded, intentionally muted
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Io
+
+- NAIF body ID: `501`
+- Triaxial radii (m): `a = 1,829,400`, `b = 1,819,400`, `c = 1,815,700`
+- Mean equatorial radius for sphere mesh: `1,829,400 m`
+- Render note: Slice 3 uses the `a` value only; Io renders as a sphere
+- `pck00010` line: `3555`
+- Color reference: `0xC9A15A` — muted yellow-orange
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Europa
+
+- NAIF body ID: `502`
+- Triaxial radii (m): `a = 1,562,600`, `b = 1,560,300`, `c = 1,559,500`
+- Mean equatorial radius for sphere mesh: `1,562,600 m`
+- Render note: Slice 3 uses the `a` value only; Europa renders as a sphere
+- `pck00010` line: `3556`
+- Color reference: `0xD8D3C5` — white / cream, lightly desaturated
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Ganymede
+
+- NAIF body ID: `503`
+- Triaxial radii (m): `a = 2,631,200`, `b = 2,631,200`, `c = 2,631,200`
+- Mean equatorial radius for sphere mesh: `2,631,200 m`
+- Render note: Slice 3 uses the `a` value only; Ganymede renders as a sphere
+- `pck00010` line: `3557`
+- Color reference: `0x9A8F7A` — tan-grey, intentionally subdued
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Callisto
+
+- NAIF body ID: `504`
+- Triaxial radii (m): `a = 2,410,300`, `b = 2,410,300`, `c = 2,410,300`
+- Mean equatorial radius for sphere mesh: `2,410,300 m`
+- Render note: Slice 3 uses the `a` value only; Callisto renders as a sphere
+- `pck00010` line: `3558`
+- Color reference: `0x5E5851` — dark grey, low saturation
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
 ## Rules for implementors
 
 1. Convert km → m by multiplying by 1000. Never store a km value in a `core/` export.
