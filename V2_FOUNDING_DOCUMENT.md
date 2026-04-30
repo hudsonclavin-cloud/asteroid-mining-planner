@@ -150,7 +150,7 @@ Rules:
 - Linear interpolation is **allowed** in `render/` for screen-only effects (e.g., halo position smoothing between frames)
 - Per-body interpolation error must remain below the cutover bars in §3.4 when validated against Horizons truth at 6-hour cadence between daily fixture samples
 - The runtime assertion is `assertInterpolationError(estimate, truth, bodyId)` — throws in dev, structured log in prod
-- This policy is codified as INV-008
+- This policy is codified as INV-008 (Slice 2 bodies) and INV-009 (Slice 3 bodies). The runtime check signature is unified across both invariants; per-body cadence is read from the constants module rather than passed at call time.
 
 ### 3.8 Frame Graph Extension (Slice 3)
 
@@ -563,7 +563,7 @@ The Slice 3 tripwire is **4 focused weekends from the start of the Slice 3 imple
 
 ## 13. Known Limitations
 
-These are limitations of the shipped Slice 2 deliverable, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
+These are limitations of the shipped Slice 2 deliverable and the planned Slice 3 deliverable, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
 
 - **Camera body focus:** the default camera orbits a fixed point in heliocentric space. There is currently no UI to retarget the camera to Mercury, Venus, Mars, or any specific body for close-up zoom. Earth and Moon are reachable from the default camera orientation. Body focus selection is planned as a Slice 2 polish commit.
 

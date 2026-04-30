@@ -99,4 +99,4 @@ These constants extend the body table above for Slice 3. Physical radii remain `
 1. Convert km → m by multiplying by 1000. Never store a km value in a `core/` export.
 2. Visualization colors live in `render/` only. They are sourced from this table but must not appear in any `core/` module.
 3. The `b` and `c` values (minor semi-axes) are provided for completeness. Unless a module explicitly models oblateness, use the mean equatorial radius `a`.
-4. Earth is oblate: `a = 6378.1366 km`, `c = 6356.7519 km`. WGS-84 flattening must be sourced from this table and documented at point of use.
+4. Earth is oblate (`a = 6378.1366 km`, `c = 6356.7519 km`). Slices 1 and 2 render Earth as a sphere using `a`; this is acceptable because oblateness is sub-pixel at any zoom that frames Earth in the heliocentric scene. Future slices that render Earth at sufficient zoom for oblateness to matter (Slice 5+ Earth-fixed surface work) must use the triaxial values.
