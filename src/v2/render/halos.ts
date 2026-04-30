@@ -17,7 +17,7 @@ export class HaloSystem {
   constructor(scene: THREE.Scene) {
     this.scene = scene;
 
-    const bodyIds: BodyId[] = ['sun', 'mercury', 'venus', 'earth', 'moon', 'mars'];
+    const bodyIds = Object.keys(BODY_CONSTANTS) as BodyId[];
     for (const bodyId of bodyIds) {
       const color = BODY_CONSTANTS[bodyId].vizColor;
       const material = new THREE.SpriteMaterial({
