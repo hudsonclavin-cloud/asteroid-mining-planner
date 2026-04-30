@@ -14,6 +14,7 @@ export default defineConfig({
         legacy: resolve(__dirname, 'index.html'),
         earthMoonV2: resolve(__dirname, 'v2/earth-moon/index.html'),
         innerSolarSystemV2: resolve(__dirname, 'v2/inner-solar-system/index.html'),
+        solarSystemV2: resolve(__dirname, 'v2/solar-system/index.html'),
       },
     },
   },
