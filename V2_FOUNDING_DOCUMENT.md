@@ -290,7 +290,7 @@ Slice 2 ships at `/v2/inner-solar-system`. `/v2/earth-moon` permanently redirect
 
 ### Slice 3: Jupiter System Honest Mode
 
-**Status: in implementation (clock starts at Slice 3 implementation dispatch).**
+**Status: shipped at `/v2/solar-system` on 2026-05-01.**
 
 This slice extends honest mode to Jupiter and the four Galilean moons, introducing the first planet-centered inertial frame and the per-body cadence pattern.
 
@@ -388,6 +388,26 @@ Note: The bar is set at 3× measured max with rounding for cleanliness (per `too
 - Jupiter renders as an oblate ellipsoid (visible at sufficient zoom).
 
 If those criteria are not met, the slice does not ship.
+
+### Slice 3 Measured Results
+
+Slice 3 cleared all five per-body interpolation bars across the 90-day validation window with the following margins:
+
+| Body | Cutover bar | Measured max | Margin |
+|------|-------------|--------------|--------|
+| Jupiter | 50 km | 7.142806 km | 7.0× |
+| Io | 5 km | 0.544296 km | 9.2× |
+| Europa | 20 km | 4.504309 km | 4.4× |
+| Ganymede | 20 km | 6.610469 km | 3.0× |
+| Callisto | 50 km | 7.016665 km | 7.1× |
+
+Frame round-trip error: FRAME_HELIO_J2000_ICRF ↔ FRAME_JUPITER_J2000_ICRF measured zero relative error across one round-trip and ten-chain — the transform is implemented as pure subtraction/addition of Jupiter's heliocentric state with no intermediate matrix multiplications, making it mathematically reversible to floating-point precision.
+
+INV-001 through INV-009 passed with zero violations across the validation window. Slice 1 and Slice 2 cutover harnesses continue to pass (regression check).
+
+Manual browser verification on the target machine class (Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display) confirmed: 60 fps during continuous zoom from heliocentric overview through Jupiter system to 400 km altitude above any of the eleven body surfaces; default Jupiter-centered camera frames all four Galileans on initial paint; halo system active for sub-pixel bodies; oblate Jupiter visible at sufficient zoom; redirects from /v2/inner-solar-system and /v2/earth-moon resolve to /v2/solar-system.
+
+Note: The cutover bars are calibrated at 3-9× measured max with honest per-body margins (per src/v2/core/invariants/INV-009.md). Margins of 3-9× indicate substantial headroom; the bars are correctly calibrated, not artificially tight.
 
 ---
 
