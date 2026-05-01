@@ -584,7 +584,7 @@ The Slice 3 tripwire is **4 focused weekends from the start of the Slice 3 imple
 
 ## 13. Known Limitations
 
-These are limitations of the shipped Slice 2 deliverable and the planned Slice 3 deliverable, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
+These are limitations of the shipped Slice 2 and Slice 3 deliverables, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
 
 - **Camera body focus:** the default camera orbits a fixed point in heliocentric space. There is currently no UI to retarget the camera to Mercury, Venus, Mars, or any specific body for close-up zoom. Earth and Moon are reachable from the default camera orientation. Body focus selection is planned as a Slice 2 polish commit.
 
@@ -600,3 +600,4 @@ These are limitations of the shipped Slice 2 deliverable and the planned Slice 3
 - Jupiter renders as oblate ellipsoid; Galileans render as spheres using their `a` axis. Io's and Europa's minor triaxial variation is intentionally simplified.
 - Body rotation (Io tidal lock, Europa tidal lock, Jupiter ~10-hour rotation) is not animated.
 - Time scrubbing advances by the densest cadence in the current slice (1h for Slice 3); slower-cadence bodies are interpolated to the current time per §3.10.
+- Cutover test data path gap: the Slice 3 cutover harness validates frame transforms on raw fixture samples in heliocentric-norm scale, where INV-004's `<10·ε` bound holds by floating-point arithmetic. The runtime evaluates frame transforms on native-frame (GCRS or Jupiter-centered) interpolated states, where translate-by-large-vector cancellation produces relative errors ~10-100× the INV-004 bound — not a transform bug, but a fundamental property of IEEE 754. The Slice 3 implementation surfaced this as a runtime AssertError that the test suite did not catch (see commit `5a03c09` fix). Future cutover harnesses should mirror the runtime's actual data path (interpolated states, native frames) where applicable, not just verify transforms in their best-case input regime. Same shape of test/runtime gap as the BodyId import bug from Slice 2 — the test suite tests the right thing, but not the input distribution that the runtime exercises.
