@@ -64,6 +64,7 @@ transform(state, fromFrame, toFrame, tdbSeconds) -> state
 - Round-trip frame transforms must satisfy:
   - `||transform(transform(s, A, B, t), B, A, t) - s|| / max(||s||, 1) < 10 * Number.EPSILON` for one round-trip
   - chained round-trips across ten transforms must stay under `100 * Number.EPSILON`
+- INV-004 applies to round-trips evaluated in the heliocentric frame, or another frame where the input state's position magnitude is comparable to the translation vector magnitude. Applying INV-004 to a small-norm native-frame state through a translate-by-large-vector round-trip violates the bound by IEEE 754 floating-point cancellation, not by transform error; this is by design of the bound, not a permission to relax it. Native-frame interpolation accuracy is governed by INV-008 and INV-009.
 
 Slice 2 introduces no new reference frames. The heliocentric ICRF root frame and GCRS Earth-centered frame established in Slice 1 are sufficient for all six Slice 2 bodies: Sun, Mercury, Venus, Earth, Moon, and Mars. Adding ECEF, body-fixed, or topocentric frames is a deliberate deferral to a future slice where mission-planning or surface-relative work demands them.
 

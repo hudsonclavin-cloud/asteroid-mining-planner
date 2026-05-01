@@ -33,9 +33,10 @@ Failure policy:
 ## INV-004: Frame Round-Trip Bound
 
 - Statement: `transform(transform(s, A, B, t), B, A, t)` must return the original state within `10 * Number.EPSILON` relative error per round-trip and within `100 * Number.EPSILON` across a chain of ten transforms.
-- Runtime check: `assertFrameRoundTrip(sample: CanonicalState, from: FrameId, to: FrameId, tdbSeconds: number): void`
+- Scope: INV-004 applies to round-trips evaluated in the heliocentric frame, or another frame where the input state's norm is comparable to the translation vector magnitude. Applying it to a small-norm native-frame state through a translate-by-large-vector round-trip will exceed the bound by IEEE 754 cancellation rather than transform error; that is by design of the bound, not a relaxation of it. Native-frame interpolation accuracy is governed by INV-008 and INV-009.
+- Runtime check: frame round-trip assertion helper in `round-trip.ts`
 - Failure mode: throw in dev, structured error log in prod
-- Enforced by: `core/frames/tests` and dev-only transform assertions
+- Enforced by: `core/frames/tests` and targeted V2 slice tests
 
 ## INV-005: Propagation Drift Bounds
 

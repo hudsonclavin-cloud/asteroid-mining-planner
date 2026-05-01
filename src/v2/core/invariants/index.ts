@@ -7,12 +7,7 @@ export {
   assertPhysicalTruthOnly,
 } from './assertions.js';
 
-export {
-  assertFrameRoundTrip,
-  computeFrameRoundTripRelativeError,
-  FRAME_ROUND_TRIP_CHAIN10_MAX_RELATIVE_ERROR,
-  FRAME_ROUND_TRIP_MAX_RELATIVE_ERROR,
-} from './round-trip.js';
+export * from './round-trip.js';
 
 export {
   AssertError,

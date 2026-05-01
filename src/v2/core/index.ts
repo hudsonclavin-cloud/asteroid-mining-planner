@@ -51,20 +51,4 @@ export type {
 
 export * from './constants/index.js';
 export * from './interpolators/index.js';
-
-export {
-  assertCanonicalState,
-  assertCanonicalUnits,
-  assertFiniteState,
-  assertFrameRoundTrip,
-  assertFrameTag,
-  assertInterpolationError,
-  assertPhysicalTruthOnly,
-  AssertError,
-  computeFrameRoundTripRelativeError,
-  configureInvariantRuntime,
-  FRAME_ROUND_TRIP_CHAIN10_MAX_RELATIVE_ERROR,
-  FRAME_ROUND_TRIP_MAX_RELATIVE_ERROR,
-  failInvariant,
-  resetInvariantRuntime,
-} from './invariants/index.js';
+export * from './invariants/index.js';
