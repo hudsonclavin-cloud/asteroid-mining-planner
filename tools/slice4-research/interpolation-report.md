@@ -61,7 +61,7 @@
 - Titan: recommend 12 h as the loosest cadence under the ~10 km target. Max 6.034 km at 12 h.
 - Rhea: recommend 3 h as the loosest cadence under the ~10 km target. Max 1.265 km at 3 h.
 - Iapetus: recommend 1 d as the loosest cadence under the ~10 km target. Max 0.618783 km at 1 d.
-- Tethys: no tested cadence clears the ~10 km target. A denser supplement or architectural escalation is required.
+- Tethys: recommend 1 h as the loosest cadence under the ~10 km target. Max 0.284336 km at 1 h.
 - Dione: recommend 3 h as the loosest cadence under the ~10 km target. Max 6.778 km at 3 h.
 - Mimas: recommend 1 h as the loosest cadence under the ~10 km target. Max 3.359 km at 1 h.
 - Enceladus: recommend 1 h as the loosest cadence under the ~10 km target. Max 0.857091 km at 1 h.
@@ -74,14 +74,14 @@ Suggested cutover bars are computed as `3 × max error`, rounded up to a clean n
 - Titan: 12 h cadence, max 6.034 km, suggested bar 20 km, honest margin 3.3x.
 - Rhea: 3 h cadence, max 1.265 km, suggested bar 5 km, honest margin 4.0x.
 - Iapetus: 1 d cadence, max 0.618783 km, suggested bar 2 km, honest margin 3.2x.
-- Tethys: no cutover bar proposed yet because no tested cadence cleared the ~10 km target.
+- Tethys: 1 h cadence, max 0.284336 km, suggested bar 1 km, honest margin 3.5x.
 - Dione: 3 h cadence, max 6.778 km, suggested bar 50 km, honest margin 7.4x.
 - Mimas: 1 h cadence, max 3.359 km, suggested bar 20 km, honest margin 6.0x.
 - Enceladus: 1 h cadence, max 0.857091 km, suggested bar 5 km, honest margin 5.8x.
 
 ## Cadence Policy Recommendation
 
-Per-body cadence remains the correct architectural pattern, but the current measured set does not yet produce a complete all-body cadence recommendation because at least one body did not clear the ~10 km target. The Mimas supplement was required. The Enceladus supplement was required.
+Per-body cadence is the correct Slice 4 policy. A shared cadence would waste storage on slow bodies like Saturn, Titan, and Iapetus while still under-serving fast local motion in the inner Saturn system. Mimas is the cadence driver at 1 h. Enceladus settles at 1 h. The Mimas supplement was required. The Enceladus supplement was required. Projected Saturn-system fixture size, if only the recommended cadences are retained in a single tuple-based fixture envelope matching the Slice 3 builder pattern, is about 1.76 MiB (1846463 bytes).
 
 ## Notes and Anomalies
 
@@ -90,7 +90,6 @@ Per-body cadence remains the correct architectural pattern, but the current meas
 - Mimas at 3 h is the new cadence cliff: max error is 267.98 km, so the supplement is required.
 - Enceladus at 3 h exceeds the ~10 km target (69.043 km), so a denser supplement is required.
 - Tethys at 3 h exceeds the ~10 km target (22.958 km), so a denser supplement is required.
-- No tested cadence clears the ~10 km target for: Tethys.
 - The Mimas supplement is incorporated into the recommendation set below.
 - The Enceladus supplement is incorporated into the recommendation set below.
 
@@ -137,5 +136,21 @@ The baseline 30-minute-truth matrix left Enceladus above the ~10 km target at 3 
 | 30 m | 0.0536029 | 0.0516503 | 4320 |
 
 Recommendation: use 1 h for Enceladus. Max error is 0.857091 km at 1 h.
+
+
+## Tethys Cadence Extension
+
+The baseline 30-minute-truth matrix left Tethys above the ~10 km target at 3 h, so a denser extension was run against 15 m truth.
+
+| Cadence | Max error (km) | RMS error (km) | Truth points |
+| --- | ---: | ---: | ---: |
+| 1 d | 78078.10 | 49819.47 | 8550 |
+| 12 h | 5626.02 | 3616.59 | 8460 |
+| 6 h | 364.16 | 236.73 | 8280 |
+| 3 h | 22.958 | 15.262 | 7920 |
+| 1 h | 0.284336 | 0.209327 | 6480 |
+| 30 m | 0.0177903 | 0.0177419 | 4320 |
+
+Recommendation: use 1 h for Tethys. Max error is 0.284336 km at 1 h.
 
 

@@ -470,8 +470,10 @@ async function loadSupplementRows(bodyName) {
 
   const truth = await readDataset(bodyName, supplement.truthLabel);
   const rows = [];
+  const datasets = new Map();
   for (const cadence of supplement.cadences) {
     const candidate = await readDataset(bodyName, cadence.label);
+    datasets.set(cadence.label, candidate);
     const measured = measureCadence(candidate, truth);
     rows.push({
       body: bodyName,
@@ -481,7 +483,7 @@ async function loadSupplementRows(bodyName) {
       ...measured,
     });
   }
-  return rows;
+  return { rows, datasets };
 }
 
 async function main() {
@@ -520,12 +522,15 @@ async function main() {
   }
 
   for (const bodyName of Object.keys(SUPPLEMENTS)) {
-    const rows = await loadSupplementRows(bodyName);
-    if (!rows) continue;
-    supplementRowsByBody.set(bodyName, rows);
+    const loaded = await loadSupplementRows(bodyName);
+    if (!loaded) continue;
+    supplementRowsByBody.set(bodyName, loaded.rows);
+    for (const [cadence, dataset] of loaded.datasets.entries()) {
+      datasetsByBodyAndCadence.set(`${bodyName}:${cadence}`, dataset);
+    }
     const recommendation = recommendations.find((entry) => entry.body === bodyName);
     if (recommendation) {
-      recommendation.recommended = chooseRecommendedCadence(rows);
+      recommendation.recommended = chooseRecommendedCadence(loaded.rows);
     }
   }
 
