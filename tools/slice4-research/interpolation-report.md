@@ -64,7 +64,7 @@
 - Tethys: no tested cadence clears the ~10 km target. A denser supplement or architectural escalation is required.
 - Dione: recommend 3 h as the loosest cadence under the ~10 km target. Max 6.778 km at 3 h.
 - Mimas: recommend 1 h as the loosest cadence under the ~10 km target. Max 3.359 km at 1 h.
-- Enceladus: no tested cadence clears the ~10 km target. A denser supplement or architectural escalation is required.
+- Enceladus: recommend 1 h as the loosest cadence under the ~10 km target. Max 0.857091 km at 1 h.
 
 ## Recommended Cutover Bars Per Body
 
@@ -77,11 +77,11 @@ Suggested cutover bars are computed as `3 × max error`, rounded up to a clean n
 - Tethys: no cutover bar proposed yet because no tested cadence cleared the ~10 km target.
 - Dione: 3 h cadence, max 6.778 km, suggested bar 50 km, honest margin 7.4x.
 - Mimas: 1 h cadence, max 3.359 km, suggested bar 20 km, honest margin 6.0x.
-- Enceladus: no cutover bar proposed yet because no tested cadence cleared the ~10 km target.
+- Enceladus: 1 h cadence, max 0.857091 km, suggested bar 5 km, honest margin 5.8x.
 
 ## Cadence Policy Recommendation
 
-Per-body cadence remains the correct architectural pattern, but the current measured set does not yet produce a complete all-body cadence recommendation because at least one body did not clear the ~10 km target. The Mimas supplement was required.
+Per-body cadence remains the correct architectural pattern, but the current measured set does not yet produce a complete all-body cadence recommendation because at least one body did not clear the ~10 km target. The Mimas supplement was required. The Enceladus supplement was required.
 
 ## Notes and Anomalies
 
@@ -90,8 +90,9 @@ Per-body cadence remains the correct architectural pattern, but the current meas
 - Mimas at 3 h is the new cadence cliff: max error is 267.98 km, so the supplement is required.
 - Enceladus at 3 h exceeds the ~10 km target (69.043 km), so a denser supplement is required.
 - Tethys at 3 h exceeds the ~10 km target (22.958 km), so a denser supplement is required.
-- No tested cadence clears the ~10 km target for: Tethys, Enceladus.
+- No tested cadence clears the ~10 km target for: Tethys.
 - The Mimas supplement is incorporated into the recommendation set below.
+- The Enceladus supplement is incorporated into the recommendation set below.
 
 ## Data Provenance
 
@@ -120,5 +121,21 @@ The baseline 30-minute-truth matrix left Mimas above the ~10 km target at 3 h, s
 | 30 m | 0.210263 | 0.181886 | 4320 |
 
 Recommendation: use 1 h for Mimas. Max error is 3.359 km at 1 h.
+
+
+## Enceladus Cadence Extension
+
+The baseline 30-minute-truth matrix left Enceladus above the ~10 km target at 3 h, so a denser extension was run against 15 m truth.
+
+| Cadence | Max error (km) | RMS error (km) | Truth points |
+| --- | ---: | ---: | ---: |
+| 1 d | 192439.81 | 121239.73 | 8550 |
+| 12 h | 16130.06 | 10087.31 | 8460 |
+| 6 h | 1084.70 | 682.02 | 8280 |
+| 3 h | 69.043 | 44.324 | 7920 |
+| 1 h | 0.857091 | 0.609372 | 6480 |
+| 30 m | 0.0536029 | 0.0516503 | 4320 |
+
+Recommendation: use 1 h for Enceladus. Max error is 0.857091 km at 1 h.
 
 
