@@ -115,6 +115,25 @@ Bars validated at 15-minute (Io) and 30-minute (others) Horizons truth cadence. 
 
 INV-008 (Slice 2 bars) remains in force unchanged. INV-009 is additive.
 
+#### INV-010: Per-Body Interpolation Error Bound (Slice 4)
+
+Slice 4 introduces `FRAME_SATURN_J2000_ICRF` and per-body cadence for the Saturn system, with three independent `1h`-cadence bodies (Mimas, Enceladus, Tethys). Interpolation error is bounded per body at each body's own cadence:
+
+| Body      | Cadence | Cutover bar |
+|-----------|---------|-------------|
+| Saturn    | 1d      | 1 km        |
+| Titan     | 12h     | 20 km       |
+| Rhea      | 3h      | 5 km        |
+| Iapetus   | 1d      | 2 km        |
+| Tethys    | 1h      | 1 km        |
+| Dione     | 3h      | 50 km       |
+| Mimas     | 1h      | 20 km       |
+| Enceladus | 1h      | 5 km        |
+
+Bars validated at 15-minute (Mimas, Enceladus, Tethys) and 30-minute (others) Horizons truth cadence. See `src/v2/core/invariants/INV-010.md` for the full specification.
+
+INV-008 (Slice 2 bars) and INV-009 (Slice 3 bars) remain in force unchanged. INV-010 is additive.
+
 ### 3.5 Rendering Truth
 
 - Honest mode reads directly from canonical `core/` state
@@ -139,6 +158,8 @@ INV-001 through INV-007 apply to all canonical state values in Slice 2 unchanged
 
 INV-009 (Per-Body Interpolation Error Bound) is additive. INV-001 through INV-008 continue to apply unchanged. The per-body cadence pattern introduced by INV-009 is the canonical fixture pattern from Slice 3 forward.
 
+INV-010 (Per-Body Interpolation Error Bound for Saturn system) is additive. INV-001 through INV-009 continue to apply unchanged. Slice 4's three independent `1h`-cadence bodies validate that the per-body cadence pattern from Slice 3 extends to multiple fast-orbit bodies in a single slice; SPK ingestion remains a Slice 5+ candidate per §12.
+
 See `src/v2/core/invariants/README.md` for INV-001 through INV-007 and `src/v2/core/invariants/INV-008.md` for the interpolation bound.
 
 ### 3.7 Interpolation Policy
@@ -151,7 +172,7 @@ Rules:
 - Linear interpolation is **allowed** in `render/` for screen-only effects (e.g., halo position smoothing between frames)
 - Per-body interpolation error must remain below the cutover bars in §3.4 when validated against Horizons truth at 6-hour cadence between daily fixture samples
 - The runtime assertion is `assertInterpolationError(estimate, truth, bodyId)` — throws in dev, structured log in prod
-- This policy is codified as INV-008 (Slice 2 bodies) and INV-009 (Slice 3 bodies). The runtime check signature is unified across both invariants; per-body cadence is read from the constants module rather than passed at call time.
+- This policy is codified as INV-008 (Slice 2 bodies), INV-009 (Slice 3 bodies), and INV-010 (Slice 4 bodies). The runtime check signature is unified across all three invariants; per-body cadence is read from the constants module rather than passed at call time.
 
 ### 3.8 Frame Graph Extension (Slice 3)
 
@@ -184,6 +205,20 @@ Keyboard time-scrubbing advances by the densest cadence in the current slice (1h
 Implication: fast-orbit bodies (Io) sweep visibly between scrub steps; slow-orbit bodies (Callisto) barely move per step. This asymmetry is honest — it reflects actual orbital periods.
 
 Slice 4+ inherits this policy. The densest cadence in the current scene determines the scrub step.
+
+### 3.11 Frame Graph Extension (Slice 4)
+
+Slice 4 introduces `FRAME_SATURN_J2000_ICRF` as a child of `FRAME_HELIO_J2000_ICRF`, mirroring the `FRAME_JUPITER_J2000_ICRF` pattern from §3.8.
+
+- Origin: Saturn's center of mass.
+- Orientation: J2000/ICRF aligned (axes parallel to parent heliocentric frame).
+- Parent: `FRAME_HELIO_J2000_ICRF`.
+- All seven Saturnian moon states (Titan, Rhea, Iapetus, Tethys, Dione, Mimas, Enceladus) live in this frame.
+- Saturn's own state lives in the parent heliocentric frame.
+- Frame transform from Saturn-centered to heliocentric: add Saturn's heliocentric state vector. Inverse transform: subtract Saturn's heliocentric state.
+- Saturn's ring system also lives in `FRAME_SATURN_J2000_ICRF`, axis-aligned with Saturn's equatorial plane (Z-axis).
+
+Slice 4 confirms that the planet-centered inertial frame pattern from §3.8 extends cleanly. The heliocentric root frame is now parent to two planet-centered frames (Jupiter, Saturn). Slice 5+ planet systems extend the same pattern.
 
 ---
 
@@ -329,6 +364,50 @@ Jupiter is the smallest planet system that forces the architecture to:
 
 Slice 3 ships at `/v2/solar-system`. `/v2/inner-solar-system` permanently redirects to `/v2/solar-system` on Slice 3 cutover. `/v2/earth-moon`'s existing redirect (currently pointing to `/v2/inner-solar-system`) is updated at Slice 3 cutover to point directly to `/v2/solar-system`. All future planet-system slices extend `/v2/solar-system`; no per-planet routes.
 
+### Slice 4: Saturn System Honest Mode
+
+Status: in implementation (clock starts at Slice 4 implementation dispatch).
+
+This slice extends honest mode to Saturn, seven major moons, and the ring system. It introduces `FRAME_SATURN_J2000_ICRF` as the second planet-centered inertial frame and validates the planet-frame pattern across multiple instances.
+
+#### Included
+
+- Saturn, Titan, Rhea, Iapetus, Tethys, Dione, Mimas, Enceladus at honest scale
+- `FRAME_SATURN_J2000_ICRF`: new planet-centered inertial frame, child of `FRAME_HELIO_J2000_ICRF` (see §3.11)
+- Per-body fixture cadence: Saturn `1d`, Titan `12h`, Rhea `3h`, Iapetus `1d`, Tethys `1h`, Dione `3h`, Mimas `1h`, Enceladus `1h` (see §3.9 and `src/v2/boundary/slice4-fixture-spec.md`)
+- Cubic Hermite interpolation per body at its own cadence
+- Saturn rendered as oblate ellipsoid using all three `pck00010` axes (~9.8% flattening, more pronounced than Jupiter's 6.5%) — see `src/v2/render/saturn-oblate.md`
+- Seven Saturnian moons rendered as spheres using each body's `a` axis (deliberate triaxial simplification per Galilean precedent)
+- Saturn ring system rendered as semi-transparent disk + visible Cassini Division at `117,500-122,050 km` from Saturn center (see `src/v2/render/saturn-rings.md`)
+- Halo overlays unchanged from Slice 2 — 3-pixel apparent diameter threshold
+- Default camera reframes to outer-system overview showing both Jupiter and Saturn systems
+- Time scrubbing by densest cadence (1h for Slice 4, same as Slice 3) per §3.10
+- Route: `/v2/solar-system` extends; no new route per §3.11
+
+#### Excluded
+
+- Hyperion, Phoebe, and Saturn's other ~270 minor moons
+- E ring, F ring, and other diffuse outer rings
+- Cassini Division substructure (Huygens Gap, Encke Gap, individual ringlets)
+- B ring spokes
+- Particle-level ring rendering or any particle dynamics
+- Ring shadows (Saturn onto rings, rings onto Saturn)
+- Anisotropic phase scattering (forward-scattering vs back-scattering)
+- Ring tilt evolution as Saturn moves through its 29.5-year heliocentric orbit (the visual ring-opening / closing cycle observable from Earth)
+- Body-fixed rotation animation
+- Triaxial rendering of Mimas, Enceladus, Tethys, Iapetus (intentionally simplified to spherical despite measurable triaxiality)
+- Outer planets beyond Saturn (Uranus, Neptune)
+- All Slice 3 non-goals carry forward
+
+#### Why Slice 4
+
+Saturn is the smallest planet system that:
+
+- Validates the planet-centered inertial frame pattern (§3.8) across a second instance, confirming it as canonical for Slice 5+
+- Forces three independent fast-orbit bodies into a single slice (Mimas `0.94d`, Enceladus `1.37d`, Tethys `1.89d`), pressure-testing the per-body cadence pattern beyond Slice 3's single-fast-body Io case
+- Introduces ring rendering as a new render-layer architectural concern, establishing the pattern for any future ringed-body work (Jupiter's faint rings, Uranus's rings, Neptune's rings)
+- Renders an oblate body more pronounced than Jupiter, validating that the oblate pattern (§3.8 sibling discussion in `src/v2/render/jupiter-oblate.md`) generalizes across flattening ratios
+
 ---
 
 ## 6. Cutover Criteria
@@ -409,6 +488,19 @@ Manual browser verification on the target machine class (Apple Silicon Mac, inte
 
 Note: The cutover bars are calibrated at 3-9× measured max with honest per-body margins (per src/v2/core/invariants/INV-009.md). Margins of 3-9× indicate substantial headroom; the bars are correctly calibrated, not artificially tight.
 
+### Saturn System Slice Bar (Slice 4)
+
+- Per-body interpolated position error stays below the bars defined in §3.4 (Saturn `1 km` at `1d`, Titan `20 km` at `12h`, Rhea `5 km` at `3h`, Iapetus `2 km` at `1d`, Tethys `1 km` at `1h`, Dione `50 km` at `3h`, Mimas `20 km` at `1h`, Enceladus `5 km` at `1h`) across the full `2026-05-01` to `2026-07-30` validation window. Bars are codified as INV-010.
+- Default outer-system camera renders Saturn as visible oblate ellipsoid with ring system visible (Cassini Division resolved at sufficient zoom). All seven moons findable (visible directly or via halo).
+- Continuous zoom from heliocentric overview through Saturn system to `400 km` altitude above any of Saturn, Titan, Rhea, Iapetus, Tethys, Dione, Mimas, Enceladus, no precision artifacts.
+- `60 fps` target on Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display.
+- Frame round-trips: `FRAME_HELIO_J2000_ICRF` ↔ `FRAME_SATURN_J2000_ICRF` stays below `10 × Number.EPSILON` for one round-trip and `100 × Number.EPSILON` across a chain of ten transforms. Slice 1, 2, 3 round-trip bounds remain in force.
+- Development invariants INV-001 through INV-010 pass with zero violations.
+- Slice 4 ships at `/v2/solar-system`. `/v2/inner-solar-system` and `/v2/earth-moon` redirects remain in place.
+- Saturn renders as oblate ellipsoid, ring system renders as tilted semi-transparent disk with Cassini Division visible.
+
+If those criteria are not met, the slice does not ship.
+
 ---
 
 ## 7. Validation Strategy
@@ -437,6 +529,14 @@ JPL Horizons vectors remain the truth authority. Slice 3 uses the API parameters
 `STEP_SIZE` values must be quoted (`'1 d'` not `1 D`) per the fetcher implementation note from pre-research.
 
 See `src/v2/boundary/slice3-fixture-spec.md` for the full fixture contract.
+
+### Slice 4 Truth Source
+
+JPL Horizons vectors remain the truth authority. Slice 4 uses the API parameters defined in `tools/slice4-research/fetch-horizons.mjs`. Saturnian moon queries use `CENTER='500@699'` (explicit Saturn geocenter ID, mirroring Slice 3's Galilean `CENTER='500@599'` pattern). `CENTER='500@699'` was confirmed working for all seven moons in pre-research without center-ambiguity workaround.
+
+`STEP_SIZE` values must be quoted (`'1 d'` not `1 D`) per the implementation note inherited from Slice 3.
+
+See `src/v2/boundary/slice4-fixture-spec.md` for the full fixture contract.
 
 ### Minimum Automated Checks
 
@@ -503,6 +603,17 @@ The orchestrator enforces the wall between `src/v2/` and legacy.
 | `economics` | Frozen |
 | orchestrator | Enforces the v2 wall, reviews cutover, resolves cross-agent conflicts |
 
+### Slice 4 Ownership
+
+| Agent | Owns |
+|---|---|
+| `orbital-mechanics` | INV-010, `FRAME_SATURN_J2000_ICRF` transforms, interpolation extensions for Saturn-system per-body cadence (three `1h` bodies), Saturn system body constants |
+| `data-layer` | Horizons fetcher extension to Saturn system, Slice 4 fixture ingestion (`ingestSlice4Fixture`), `saturn-centered` frame inference |
+| `renderer` | Scene composition extension to Saturn system, oblate Saturn rendering per `src/v2/render/saturn-oblate.md`, ring system rendering per `src/v2/render/saturn-rings.md`, default outer-system camera, halo continuity for new bodies |
+| `ui-hud` | Frozen |
+| `economics` | Frozen |
+| orchestrator | Enforces v2 wall, reviews cutover, resolves cross-agent conflicts |
+
 ---
 
 ## 10. Non-Goals
@@ -543,6 +654,22 @@ All Slice 2 non-goals carry forward. Additionally:
 - Io and Europa triaxial rendering — intentionally simplified to spherical (sub-pixel variation at any zoom)
 - Saturn, Uranus, Neptune systems
 
+### Non-Goals For Slice 4
+
+All Slice 3 non-goals carry forward. Additionally:
+
+- Hyperion, Phoebe, and Saturn's other minor moons beyond the seven majors in scope
+- E ring, F ring, and other diffuse outer rings
+- Cassini Division substructure (Huygens Gap, Encke Gap, ringlets)
+- B ring spokes
+- Particle-level ring rendering or particle dynamics
+- Ring shadows (Saturn onto rings, rings onto Saturn)
+- Anisotropic phase scattering for ring brightness
+- Ring tilt evolution over Saturn's 29.5-year heliocentric orbit (rings render at fixed tilt to Saturn's equator, structurally correct; ring-opening/closing visual cycle as observed from Earth is render-only and deferred)
+- Body-fixed rotation animation for Saturn or any moon
+- Triaxial rendering of Saturnian moons — intentionally simplified to spherical (Galilean precedent), even where `pck00010` has measurable triaxiality
+- Uranus, Neptune systems
+
 ---
 
 ## 11. Failure Condition
@@ -561,6 +688,10 @@ The Slice 2 tripwire is **4 focused weekends from the start of the Slice 2 imple
 
 The Slice 3 tripwire is **4 focused weekends from the start of the Slice 3 implementation dispatch**. Weekend 1 is consumed when implementation begins. If all five per-body INV-009 cutover bars are not met by end of weekend 4, the per-body cadence approach and Hermite interpolation are re-evaluated before Slice 4. SPK ingestion becomes a candidate at that point.
 
+### Slice 4
+
+The Slice 4 tripwire is **4 focused weekends from the start of the Slice 4 implementation dispatch**. Weekend 1 is consumed when implementation begins. If all eight per-body INV-010 cutover bars are not met by end of weekend 4, the per-body cadence approach and Hermite interpolation are re-evaluated before Slice 5. SPK ingestion becomes a stronger candidate at that point. Slice 4 also tripwires the ring rendering architectural pattern: if the single-disk + Cassini-Division approach proves visually unacceptable at cutover review, the rendering scope is re-evaluated before declaring cutover.
+
 ---
 
 ## 12. Open Questions
@@ -570,6 +701,11 @@ The Slice 3 tripwire is **4 focused weekends from the start of the Slice 3 imple
 - **ECEF / body-fixed frames** — confirmed deferred; planet-centered inertial pattern (§3.8) is sufficient for Slices 3+ without surface-relative work.
 - **Planet-centered frame pattern validation** — Slice 3 demonstrates the pattern; Slice 4+ reuses it.
 
+### Resolved at Slice 4 planning
+
+- **Multi-instance planet-frame validation** — Slice 4 confirms the §3.8 pattern extends cleanly to a second planet-centered frame (Saturn), with three independent fast-orbit bodies pressure-testing per-body cadence.
+- **Ring rendering architectural pattern** — established in `src/v2/render/saturn-rings.md` as a separate render-layer module. Generalization to a `PlanetRing` primitive is deferred until a second ringed-body slice actually needs it.
+
 ### Open
 
 - **Star background** — deferred to a later visual-polish slice
@@ -577,8 +713,9 @@ The Slice 3 tripwire is **4 focused weekends from the start of the Slice 3 imple
 - **Light-time correction** — deferred until needed for precision astrometry
 - **Asterism overlays and planet orbit traces** — deferred until trajectory rendering slice
 - **Body rotation animation** — deferred to a future visual-polish slice
-- **SPK ingestion** — candidate for Slice 5+ if Mars-system Phobos cadence requirements (likely 30-minute or denser) prove burdensome at scale
-- **Saturn oblate rendering** — Saturn is more oblate than Jupiter (~10% flattening); the oblate pattern from `src/v2/render/jupiter-oblate.md` should be reused for Saturn (Slice 4+)
+- **SPK ingestion** — Slice 4's three independent `1h`-cadence bodies validated per-body Hermite, but Mars-system Phobos at `7.65h` orbital period is predicted to require sub-hourly cadence (likely `30-minute` or denser). SPK ingestion remains a Slice 5+ candidate, with stronger pressure now that Slice 4 has shown fixture size growing 2-3× per slice (Slice 2 `~250 KB` → Slice 3 `~780 KB` → Slice 4 `~1.85 MB`).
+- **Uranus and Neptune rings** — both have ring systems (Uranus's rings discovered 1977, Neptune's confirmed by Voyager 2 in 1989). The `saturn-rings.md` pattern should generalize, but Uranus's rings are nearly opaque dark particles and Neptune's are partial arcs — different visual character from Saturn. Revisit at Slice 6+ planning.
+- **Ring tilt evolution rendering** — Saturn's rings cycle from edge-on to fully open over ~15 years from Earth's viewpoint. This is rendered correctly at any single epoch (rings are tilted to Saturn's equator, which is fixed in `FRAME_SATURN_J2000_ICRF`), but the visual cycle as Saturn moves through its heliocentric orbit is not animated. Honest at any snapshot; not animated across multi-year scrubs.
 
 ---
 
@@ -601,3 +738,13 @@ These are limitations of the shipped Slice 2 and Slice 3 deliverables, recorded 
 - Body rotation (Io tidal lock, Europa tidal lock, Jupiter ~10-hour rotation) is not animated.
 - Time scrubbing advances by the densest cadence in the current slice (1h for Slice 3); slower-cadence bodies are interpolated to the current time per §3.10.
 - Cutover test data path gap: the Slice 3 cutover harness validates frame transforms on raw fixture samples in heliocentric-norm scale, where INV-004's `<10·ε` bound holds by floating-point arithmetic. The runtime evaluates frame transforms on native-frame (GCRS or Jupiter-centered) interpolated states, where translate-by-large-vector cancellation produces relative errors ~10-100× the INV-004 bound — not a transform bug, but a fundamental property of IEEE 754. The Slice 3 implementation surfaced this as a runtime AssertError that the test suite did not catch (see commit `5a03c09` fix). Future cutover harnesses should mirror the runtime's actual data path (interpolated states, native frames) where applicable, not just verify transforms in their best-case input regime. Same shape of test/runtime gap as the BodyId import bug from Slice 2 — the test suite tests the right thing, but not the input distribution that the runtime exercises.
+
+### Slice 4
+
+- Per-body fixture cadence with three independent `1h`-cadence bodies (Mimas, Enceladus, Tethys). Slice 2 and Slice 3 fixtures continue to work unchanged.
+- Saturn renders as oblate ellipsoid (~9.8% flattening); seven major moons render as spheres using each body's `a` axis. Mimas's triaxial spread (`208/197/191 km`, ~8% variation) is larger than Io's (~0.8%) and may be visibly noticeable at close zoom. Slice 4 ships with spherical Mimas as a deliberate simplification per Galilean precedent; revisit at Slice 4 polish if visual artifact reports surface.
+- Saturn rings render as a single semi-transparent disk with explicit Cassini Division at `117,500-122,050 km`. Substructure within the A and B rings, B-ring spokes, the E and F rings, ring shadows, and anisotropic phase scattering are all deferred.
+- Ring tilt is fixed to Saturn's equator in `FRAME_SATURN_J2000_ICRF`, structurally correct at any snapshot. The visual ring-opening / closing cycle observed from Earth over Saturn's ~29.5-year orbit is not animated.
+- Body rotation (Saturn ~10.66h, tidal locks for moons) is not animated. Same deferral pattern as Slice 3.
+- Time scrubbing advances by the densest cadence in the current slice (1h for Slice 4, unchanged from Slice 3); Iapetus at `79d` barely moves per scrub step while Mimas sweeps visibly.
+- Fixture size growth is accelerating: Slice 2 `~250 KB`, Slice 3 `~780 KB`, Slice 4 `~1.85 MB`. Slice 5 (Mars system, predicted `30-minute` cadence for Phobos) may force the SPK ingestion path open.
