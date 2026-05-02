@@ -94,6 +94,102 @@ These constants extend the body table above for Slice 3. Physical radii remain `
 - Color reference: `0x5E5851` — dark grey, low saturation
 - Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
 
+## Saturn System Bodies
+
+These constants extend the body table above for Slice 4. Physical radii remain `core/` data; cadence policy belongs in `src/v2/boundary/slice4-fixture-spec.md`.
+
+### Saturn
+
+- NAIF body ID: `699`
+- Triaxial radii (m): `a = 60,268,000`, `b = 60,268,000`, `c = 54,364,000`
+- Mean equatorial radius for sphere mesh reference: `60,268,000 m`
+- Render note: Saturn render uses all three axes per `src/v2/render/saturn-oblate.md`; the `a` value is not sufficient for the honest Saturn mesh
+- `pck00010` line: `3422`
+- Color reference: `0xD8C3A5` — tan / cream banded, intentionally muted
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Titan
+
+- NAIF body ID: `606`
+- Triaxial radii (m): `a = 2,575,150`, `b = 2,574,780`, `c = 2,574,470`
+- Mean equatorial radius for sphere mesh: `2,575,150 m`
+- Render note: Slice 4 uses the `a` value only; Titan renders as a sphere, with triaxial variation intentionally simplified per the Galilean precedent
+- `pck00010` line: `3634`
+- Color reference: `0x9E8562` — tan-brown haze
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Rhea
+
+- NAIF body ID: `605`
+- Triaxial radii (m): `a = 765,000`, `b = 763,100`, `c = 762,400`
+- Mean equatorial radius for sphere mesh: `765,000 m`
+- Render note: Slice 4 uses the `a` value only; Rhea renders as a sphere, with triaxial variation intentionally simplified per the Galilean precedent
+- `pck00010` line: `3633`
+- Color reference: `0xCFCFD3` — bright grey
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Iapetus
+
+- NAIF body ID: `608`
+- Triaxial radii (m): `a = 745,700`, `b = 745,700`, `c = 712,100`
+- Mean equatorial radius for sphere mesh: `745,700 m`
+- Render note: Slice 4 uses the `a` value only; Iapetus renders as a sphere, with triaxial variation intentionally simplified per the Galilean precedent
+- `pck00010` line: `3636`
+- Color reference: `0xA79884` — tan-grey
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Tethys
+
+- NAIF body ID: `603`
+- Triaxial radii (m): `a = 538,400`, `b = 528,300`, `c = 526,300`
+- Mean equatorial radius for sphere mesh: `538,400 m`
+- Render note: Slice 4 uses the `a` value only; Tethys renders as a sphere, with triaxial variation intentionally simplified per the Galilean precedent
+- `pck00010` line: `3631`
+- Color reference: `0xF0ECE2` — white-bright
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Dione
+
+- NAIF body ID: `604`
+- Triaxial radii (m): `a = 563,400`, `b = 561,300`, `c = 559,600`
+- Mean equatorial radius for sphere mesh: `563,400 m`
+- Render note: Slice 4 uses the `a` value only; Dione renders as a sphere, with triaxial variation intentionally simplified per the Galilean precedent
+- `pck00010` line: `3632`
+- Color reference: `0xE8E0D3` — white-cream
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Mimas
+
+- NAIF body ID: `601`
+- Triaxial radii (m): `a = 207,800`, `b = 196,700`, `c = 190,600`
+- Mean equatorial radius for sphere mesh: `207,800 m`
+- Render note: Slice 4 uses the `a` value only; Mimas renders as a sphere, with triaxial variation intentionally simplified per the Galilean precedent
+- `pck00010` line: `3629`
+- Color reference: `0x9F9B96` — grey-neutral
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Enceladus
+
+- NAIF body ID: `602`
+- Triaxial radii (m): `a = 256,600`, `b = 251,400`, `c = 248,300`
+- Mean equatorial radius for sphere mesh: `256,600 m`
+- Render note: Slice 4 uses the `a` value only; Enceladus renders as a sphere, with triaxial variation intentionally simplified per the Galilean precedent
+- `pck00010` line: `3630`
+- Color reference: `0xF6F6F2` — near-white
+- Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
+
+### Saturn Rings
+
+- Saturn's rings are not `BODY*_RADII` entries, but they are still physical-truth data that `core/` and `render/` must agree on
+- Render policy reference: `src/v2/render/saturn-rings.md`
+- D ring inner radius: `66,900,000 m`
+- C ring inner radius: `74,491,000 m`
+- A ring outer radius: `136,780,000 m`
+- Cassini Division inner radius: `117,500,000 m`
+- Cassini Division outer radius: `122,050,000 m`
+- Frame note: Saturn's rings live in `FRAME_SATURN_J2000_ICRF`, axis-aligned with Saturn's equator
+- Source: PDS Ring-Moon Systems Node, "Vital Statistics for Saturn's Rings" — `https://pds-rings.seti.org/saturn/saturn_rings_table.html`
+
 ## Rules for implementors
 
 1. Convert km → m by multiplying by 1000. Never store a km value in a `core/` export.
