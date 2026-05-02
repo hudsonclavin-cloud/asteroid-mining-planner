@@ -63,7 +63,7 @@
 - Iapetus: recommend 1 d as the loosest cadence under the ~10 km target. Max 0.618783 km at 1 d.
 - Tethys: no tested cadence clears the ~10 km target. A denser supplement or architectural escalation is required.
 - Dione: recommend 3 h as the loosest cadence under the ~10 km target. Max 6.778 km at 3 h.
-- Mimas: no tested cadence clears the ~10 km target. A denser supplement or architectural escalation is required.
+- Mimas: recommend 1 h as the loosest cadence under the ~10 km target. Max 3.359 km at 1 h.
 - Enceladus: no tested cadence clears the ~10 km target. A denser supplement or architectural escalation is required.
 
 ## Recommended Cutover Bars Per Body
@@ -76,12 +76,12 @@ Suggested cutover bars are computed as `3 × max error`, rounded up to a clean n
 - Iapetus: 1 d cadence, max 0.618783 km, suggested bar 2 km, honest margin 3.2x.
 - Tethys: no cutover bar proposed yet because no tested cadence cleared the ~10 km target.
 - Dione: 3 h cadence, max 6.778 km, suggested bar 50 km, honest margin 7.4x.
-- Mimas: no cutover bar proposed yet because no tested cadence cleared the ~10 km target.
+- Mimas: 1 h cadence, max 3.359 km, suggested bar 20 km, honest margin 6.0x.
 - Enceladus: no cutover bar proposed yet because no tested cadence cleared the ~10 km target.
 
 ## Cadence Policy Recommendation
 
-Per-body cadence remains the correct architectural pattern, but the current measured set does not yet produce a complete all-body cadence recommendation because at least one body did not clear the ~10 km target.
+Per-body cadence remains the correct architectural pattern, but the current measured set does not yet produce a complete all-body cadence recommendation because at least one body did not clear the ~10 km target. The Mimas supplement was required.
 
 ## Notes and Anomalies
 
@@ -89,7 +89,9 @@ Per-body cadence remains the correct architectural pattern, but the current meas
 - Saturn daily cadence is expected to be viable because the heliocentric motion is smooth over this 90-day window.
 - Mimas at 3 h is the new cadence cliff: max error is 267.98 km, so the supplement is required.
 - Enceladus at 3 h exceeds the ~10 km target (69.043 km), so a denser supplement is required.
-- No tested cadence clears the ~10 km target for: Tethys, Mimas, Enceladus.
+- Tethys at 3 h exceeds the ~10 km target (22.958 km), so a denser supplement is required.
+- No tested cadence clears the ~10 km target for: Tethys, Enceladus.
+- The Mimas supplement is incorporated into the recommendation set below.
 
 ## Data Provenance
 
@@ -103,5 +105,20 @@ Per-body cadence remains the correct architectural pattern, but the current meas
 - Dione: fetched 2026-05-02T15:57:11.769Z; cached files: tools/slice4-research/data/daily-dione.json, tools/slice4-research/data/12h-dione.json, tools/slice4-research/data/6h-dione.json, tools/slice4-research/data/3h-dione.json, tools/slice4-research/data/truth-dione.json
 - Mimas: fetched 2026-05-02T15:57:13.568Z; cached files: tools/slice4-research/data/daily-mimas.json, tools/slice4-research/data/12h-mimas.json, tools/slice4-research/data/6h-mimas.json, tools/slice4-research/data/3h-mimas.json, tools/slice4-research/data/truth-mimas.json
 - Enceladus: fetched 2026-05-02T15:57:15.431Z; cached files: tools/slice4-research/data/daily-enceladus.json, tools/slice4-research/data/12h-enceladus.json, tools/slice4-research/data/6h-enceladus.json, tools/slice4-research/data/3h-enceladus.json, tools/slice4-research/data/truth-enceladus.json
+
+## Mimas Cadence Extension
+
+The baseline 30-minute-truth matrix left Mimas above the ~10 km target at 3 h, so a denser extension was run against 15 m truth.
+
+| Cadence | Max error (km) | RMS error (km) | Truth points |
+| --- | ---: | ---: | ---: |
+| 1 d | 428800.61 | 268928.69 | 8550 |
+| 12 h | 53648.07 | 31812.18 | 8460 |
+| 6 h | 4074.36 | 2336.04 | 8280 |
+| 3 h | 267.98 | 155.03 | 7920 |
+| 1 h | 3.359 | 2.145 | 6480 |
+| 30 m | 0.210263 | 0.181886 | 4320 |
+
+Recommendation: use 1 h for Mimas. Max error is 3.359 km at 1 h.
 
 

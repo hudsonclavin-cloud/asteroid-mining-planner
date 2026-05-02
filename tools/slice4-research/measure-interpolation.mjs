@@ -59,6 +59,19 @@ const SUPPLEMENTS = {
       { label: '30m', display: '30 m' },
     ],
   },
+  tethys: {
+    title: 'Tethys Cadence Extension',
+    truthLabel: 'truth-15m',
+    truthDisplay: '15 m',
+    cadences: [
+      { label: 'daily', display: '1 d' },
+      { label: '12h', display: '12 h' },
+      { label: '6h', display: '6 h' },
+      { label: '3h', display: '3 h' },
+      { label: '1h', display: '1 h' },
+      { label: '30m', display: '30 m' },
+    ],
+  },
 };
 
 function add(a, b) {
@@ -319,6 +332,7 @@ function buildNotes(results, recommendations, supplementRowsByBody) {
 
   const mimas3h = results.find((row) => row.body === 'mimas' && row.cadence === '3h');
   const enceladus3h = results.find((row) => row.body === 'enceladus' && row.cadence === '3h');
+  const tethys3h = results.find((row) => row.body === 'tethys' && row.cadence === '3h');
   if (mimas3h) {
     notes.push(
       mimas3h.maxErrorKm <= 10
@@ -331,6 +345,13 @@ function buildNotes(results, recommendations, supplementRowsByBody) {
       enceladus3h.maxErrorKm <= 10
         ? `- Enceladus at 3 h stays under the ~10 km target (${formatKm(enceladus3h.maxErrorKm)} km).`
         : `- Enceladus at 3 h exceeds the ~10 km target (${formatKm(enceladus3h.maxErrorKm)} km), so a denser supplement is required.`,
+    );
+  }
+  if (tethys3h) {
+    notes.push(
+      tethys3h.maxErrorKm <= 10
+        ? `- Tethys at 3 h stays under the ~10 km target (${formatKm(tethys3h.maxErrorKm)} km).`
+        : `- Tethys at 3 h exceeds the ~10 km target (${formatKm(tethys3h.maxErrorKm)} km), so a denser supplement is required.`,
     );
   }
 

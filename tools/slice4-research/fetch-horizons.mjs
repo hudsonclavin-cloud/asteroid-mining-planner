@@ -13,6 +13,9 @@ const WINDOW = {
 const HORIZONS_BASE_URL = 'https://ssd.jpl.nasa.gov/api/horizons.api';
 const SLOW_FETCH_WARNING_MS = 5 * 60 * 1000;
 const refresh = process.argv.includes('--refresh');
+const mimasExtension = process.argv.includes('--mimas-extension');
+const enceladusExtension = process.argv.includes('--enceladus-extension');
+const tethysExtension = process.argv.includes('--tethys-extension');
 
 const BODIES = [
   { name: 'saturn', command: '699', center: '@sun' },
@@ -31,6 +34,12 @@ const CADENCES = [
   { label: '6h', stepSize: "'6 h'" },
   { label: '3h', stepSize: "'3 h'" },
   { label: 'truth', stepSize: "'30 m'" },
+];
+
+const EXTENSION_CADENCES = [
+  { label: '1h', stepSize: "'1 h'" },
+  { label: '30m', stepSize: "'30 m'" },
+  { label: 'truth-15m', stepSize: "'15 m'" },
 ];
 
 function buildParams(body, cadence) {
@@ -168,8 +177,24 @@ async function fetchDataset(body, cadence) {
 async function main() {
   await fs.mkdir(dataDir, { recursive: true });
 
-  for (const body of BODIES) {
-    for (const cadence of CADENCES) {
+  const extensionFlags = [
+    ['mimas', mimasExtension],
+    ['enceladus', enceladusExtension],
+    ['tethys', tethysExtension],
+  ].filter(([, enabled]) => enabled);
+
+  if (extensionFlags.length > 1) {
+    throw new Error('Only one extension flag may be used at a time');
+  }
+
+  const bodies =
+    extensionFlags.length === 0
+      ? BODIES
+      : BODIES.filter((body) => body.name === extensionFlags[0][0]);
+  const cadences = extensionFlags.length === 0 ? CADENCES : EXTENSION_CADENCES;
+
+  for (const body of bodies) {
+    for (const cadence of cadences) {
       await fetchDataset(body, cadence);
     }
   }
