@@ -190,6 +190,18 @@ These constants extend the body table above for Slice 4. Physical radii remain `
 - Frame note: Saturn's rings live in `FRAME_SATURN_J2000_ICRF`, axis-aligned with Saturn's equator
 - Source: PDS Ring-Moon Systems Node, "Vital Statistics for Saturn's Rings" — `https://pds-rings.seti.org/saturn/saturn_rings_table.html`
 
+### Saturn Ring Substructure (Slice 5)
+
+- Source of record: `tools/slice5-research/ring-substructure.json`
+- Render policy reference: `src/v2/render/saturn-ring-substructure.md`
+- Huygens Gap: `117,500,000-117,930,000 m`, type `gap`, contains `Huygens Ringlet`
+- Huygens Ringlet: `117,806,000-117,824,000 m`, type `ringlet`
+- Laplace Gap: `119,845,000-120,086,000 m`, type `gap`, contains `Laplace Ringlet`
+- Laplace Ringlet: `120,037,000-120,078,000 m`, type `ringlet`
+- Encke Gap: `133,423,000-133,745,000 m`, type `gap`, shepherd moon `Pan`
+- Keeler Gap: `136,487,000-136,522,000 m`, type `gap`, shepherd moon `Daphnis`
+- Roche Division: `136,770,000-139,380,000 m`, type `division`, transition from the A ring outer edge toward the out-of-scope F ring
+
 ## Rules for implementors
 
 1. Convert km → m by multiplying by 1000. Never store a km value in a `core/` export.
