@@ -36,6 +36,19 @@ function compileRenderHelper() {
   );
 }
 
+let saturnRingsModulePromise;
+
+async function loadSaturnRingsModule() {
+  if (!saturnRingsModulePromise) {
+    compileRenderHelper();
+    saturnRingsModulePromise = import(
+      pathToFileURL(path.join(tempOutDir, 'render', 'saturn-rings.js')).href
+    );
+  }
+
+  return saturnRingsModulePromise;
+}
+
 function radialExtents(geometry) {
   const positions = geometry.attributes.position.array;
   let min = Infinity;
@@ -68,43 +81,48 @@ function assertNormalsPointAlongPositiveY(geometry) {
   }
 }
 
-test('Saturn rings geometry radii, Cassini placement, alpha contract, and local orientation all match spec', async () => {
-  compileRenderHelper();
+function getRequiredObject(group, name) {
+  const object = group.getObjectByName(name);
+  assert.ok(object, `expected object '${name}' to exist`);
+  return object;
+}
 
-  const module = await import(
-    pathToFileURL(path.join(tempOutDir, 'render', 'saturn-rings.js')).href
-  );
-
+test('Saturn ring local plane stays on XZ with +Y normals', async () => {
+  const module = await loadSaturnRingsModule();
   const {
     createSaturnRingsGroup,
-    createSaturnRingTexture,
-    sampleSaturnCassiniDivisionOpacity,
-    sampleSaturnRingOpacity,
-    SATURN_CASSINI_DIVISION_INNER_RADIUS_M,
-    SATURN_CASSINI_DIVISION_OUTER_RADIUS_M,
-    SATURN_RING_B_OUTER_RADIUS_M,
-    SATURN_RING_C_OUTER_RADIUS_M,
-    SATURN_RING_DEFAULT_INNER_RADIUS_M,
-    SATURN_RING_FALLBACK_INNER_RADIUS_M,
     SATURN_RING_LOCAL_PLANE_ROTATION_X_RAD,
-    SATURN_RING_OUTER_RADIUS_M,
-    SATURN_RING_REGION_OPACITY,
   } = module;
 
   assert.equal(SATURN_RING_LOCAL_PLANE_ROTATION_X_RAD, -Math.PI / 2);
 
   const defaultGroup = createSaturnRingsGroup();
-  const fallbackGroup = createSaturnRingsGroup({ omitDRing: true });
+  const defaultMain = getRequiredObject(defaultGroup, 'saturn-rings-main');
+  const defaultCassini = getRequiredObject(defaultGroup, 'saturn-rings-cassini-division');
 
-  const defaultMain = defaultGroup.getObjectByName('saturn-rings-main');
-  const defaultCassini = defaultGroup.getObjectByName('saturn-rings-cassini-division');
-  const fallbackMain = fallbackGroup.getObjectByName('saturn-rings-main');
-
-  assert.ok(defaultMain);
-  assert.ok(defaultCassini);
-  assert.ok(fallbackMain);
   assert.equal(defaultGroup.userData.localPlaneNormalAxis, 'Y');
   assert.equal(defaultGroup.userData.renderOnly, true);
+  assertNormalsPointAlongPositiveY(defaultMain.geometry);
+  assertNormalsPointAlongPositiveY(defaultCassini.geometry);
+});
+
+test('Saturn main ring and Cassini geometry radii match spec', async () => {
+  const module = await loadSaturnRingsModule();
+  const {
+    createSaturnRingsGroup,
+    SATURN_CASSINI_DIVISION_INNER_RADIUS_M,
+    SATURN_CASSINI_DIVISION_OUTER_RADIUS_M,
+    SATURN_RING_DEFAULT_INNER_RADIUS_M,
+    SATURN_RING_FALLBACK_INNER_RADIUS_M,
+    SATURN_RING_OUTER_RADIUS_M,
+  } = module;
+
+  const defaultGroup = createSaturnRingsGroup();
+  const fallbackGroup = createSaturnRingsGroup({ omitDRing: true });
+
+  const defaultMain = getRequiredObject(defaultGroup, 'saturn-rings-main');
+  const defaultCassini = getRequiredObject(defaultGroup, 'saturn-rings-cassini-division');
+  const fallbackMain = getRequiredObject(fallbackGroup, 'saturn-rings-main');
 
   const defaultMainExtents = radialExtents(defaultMain.geometry);
   const fallbackMainExtents = radialExtents(fallbackMain.geometry);
@@ -117,9 +135,21 @@ test('Saturn rings geometry radii, Cassini placement, alpha contract, and local 
   assert.ok(Math.abs(fallbackMainExtents.max - SATURN_RING_OUTER_RADIUS_M) <= toleranceM);
   assert.ok(Math.abs(cassiniExtents.min - SATURN_CASSINI_DIVISION_INNER_RADIUS_M) <= toleranceM);
   assert.ok(Math.abs(cassiniExtents.max - SATURN_CASSINI_DIVISION_OUTER_RADIUS_M) <= toleranceM);
+});
 
-  assertNormalsPointAlongPositiveY(defaultMain.geometry);
-  assertNormalsPointAlongPositiveY(defaultCassini.geometry);
+test('Saturn ring opacity sampling preserves D/C/B/A ordering', async () => {
+  const module = await loadSaturnRingsModule();
+  const {
+    sampleSaturnRingOpacity,
+    SATURN_CASSINI_DIVISION_INNER_RADIUS_M,
+    SATURN_CASSINI_DIVISION_OUTER_RADIUS_M,
+    SATURN_RING_B_OUTER_RADIUS_M,
+    SATURN_RING_C_OUTER_RADIUS_M,
+    SATURN_RING_DEFAULT_INNER_RADIUS_M,
+    SATURN_RING_FALLBACK_INNER_RADIUS_M,
+    SATURN_RING_OUTER_RADIUS_M,
+    SATURN_RING_REGION_OPACITY,
+  } = module;
 
   const dSample = sampleSaturnRingOpacity(
     (SATURN_RING_DEFAULT_INNER_RADIUS_M + SATURN_RING_FALLBACK_INNER_RADIUS_M) / 2
@@ -141,7 +171,16 @@ test('Saturn rings geometry radii, Cassini placement, alpha contract, and local 
   assert.ok(dSample < cSample);
   assert.ok(cSample < bSample);
   assert.ok(cSample < aSample && aSample < bSample);
+  assert.equal(sampleSaturnRingOpacity(SATURN_RING_OUTER_RADIUS_M + 1), 0);
+});
 
+test('Saturn Cassini opacity peaks at the division center', async () => {
+  const module = await loadSaturnRingsModule();
+  const {
+    sampleSaturnCassiniDivisionOpacity,
+    SATURN_CASSINI_DIVISION_INNER_RADIUS_M,
+    SATURN_CASSINI_DIVISION_OUTER_RADIUS_M,
+  } = module;
   const cassiniMid =
     (SATURN_CASSINI_DIVISION_INNER_RADIUS_M + SATURN_CASSINI_DIVISION_OUTER_RADIUS_M) / 2;
   const cassiniInnerEdge = SATURN_CASSINI_DIVISION_INNER_RADIUS_M + 1;
@@ -154,7 +193,11 @@ test('Saturn rings geometry radii, Cassini placement, alpha contract, and local 
   assert.ok(cassiniMidOpacity > cassiniOuterOpacity);
   assert.ok(cassiniInnerOpacity > 0);
   assert.ok(cassiniOuterOpacity > 0);
+});
 
+test('Saturn ring texture preserves multiple radial alpha levels', async () => {
+  const module = await loadSaturnRingsModule();
+  const { createSaturnRingTexture } = module;
   const texture = createSaturnRingTexture();
   const data = texture.image.data;
   const nonZeroAlphaValues = new Set();
@@ -165,4 +208,166 @@ test('Saturn rings geometry radii, Cassini placement, alpha contract, and local 
   }
 
   assert.ok(nonZeroAlphaValues.size >= 4, `expected >=4 distinct alpha levels, got ${nonZeroAlphaValues.size}`);
+});
+
+test('Saturn ring substructure adds seven named sibling meshes under saturn-rings', async () => {
+  const module = await loadSaturnRingsModule();
+  const { createSaturnRingsGroup } = module;
+  const group = createSaturnRingsGroup();
+
+  const expectedNames = [
+    'saturn-rings-huygens-gap',
+    'saturn-rings-huygens-ringlet',
+    'saturn-rings-laplace-gap',
+    'saturn-rings-laplace-ringlet',
+    'saturn-rings-encke-gap',
+    'saturn-rings-keeler-gap',
+    'saturn-rings-roche-division',
+  ];
+
+  for (const name of expectedNames) {
+    const mesh = getRequiredObject(group, name);
+    assert.equal(mesh.parent, group);
+    assert.equal(mesh.userData.role, 'ring-substructure');
+  }
+
+  assert.equal(group.children.length, 9);
+  assert.deepEqual(group.userData.substructureFeatureNames, [
+    'Huygens Gap',
+    'Huygens Ringlet',
+    'Laplace Gap',
+    'Laplace Ringlet',
+    'Encke Gap',
+    'Keeler Gap',
+    'Roche Division',
+  ]);
+});
+
+test('Saturn ring substructure radii match Slice 5 constants', async () => {
+  const module = await loadSaturnRingsModule();
+  const {
+    createSaturnRingsGroup,
+    SATURN_ENCKE_GAP_INNER_RADIUS_M,
+    SATURN_ENCKE_GAP_OUTER_RADIUS_M,
+    SATURN_HUYGENS_GAP_INNER_RADIUS_M,
+    SATURN_HUYGENS_GAP_OUTER_RADIUS_M,
+    SATURN_HUYGENS_RINGLET_INNER_RADIUS_M,
+    SATURN_HUYGENS_RINGLET_OUTER_RADIUS_M,
+    SATURN_KEELER_GAP_INNER_RADIUS_M,
+    SATURN_KEELER_GAP_OUTER_RADIUS_M,
+    SATURN_LAPLACE_GAP_INNER_RADIUS_M,
+    SATURN_LAPLACE_GAP_OUTER_RADIUS_M,
+    SATURN_LAPLACE_RINGLET_INNER_RADIUS_M,
+    SATURN_LAPLACE_RINGLET_OUTER_RADIUS_M,
+    SATURN_ROCHE_DIVISION_INNER_RADIUS_M,
+    SATURN_ROCHE_DIVISION_OUTER_RADIUS_M,
+  } = module;
+
+  const group = createSaturnRingsGroup();
+  const toleranceM = 10;
+  const expected = [
+    ['saturn-rings-huygens-gap', SATURN_HUYGENS_GAP_INNER_RADIUS_M, SATURN_HUYGENS_GAP_OUTER_RADIUS_M],
+    ['saturn-rings-huygens-ringlet', SATURN_HUYGENS_RINGLET_INNER_RADIUS_M, SATURN_HUYGENS_RINGLET_OUTER_RADIUS_M],
+    ['saturn-rings-laplace-gap', SATURN_LAPLACE_GAP_INNER_RADIUS_M, SATURN_LAPLACE_GAP_OUTER_RADIUS_M],
+    ['saturn-rings-laplace-ringlet', SATURN_LAPLACE_RINGLET_INNER_RADIUS_M, SATURN_LAPLACE_RINGLET_OUTER_RADIUS_M],
+    ['saturn-rings-encke-gap', SATURN_ENCKE_GAP_INNER_RADIUS_M, SATURN_ENCKE_GAP_OUTER_RADIUS_M],
+    ['saturn-rings-keeler-gap', SATURN_KEELER_GAP_INNER_RADIUS_M, SATURN_KEELER_GAP_OUTER_RADIUS_M],
+    ['saturn-rings-roche-division', SATURN_ROCHE_DIVISION_INNER_RADIUS_M, SATURN_ROCHE_DIVISION_OUTER_RADIUS_M],
+  ];
+
+  for (const [name, innerRadiusM, outerRadiusM] of expected) {
+    const mesh = getRequiredObject(group, name);
+    const extents = radialExtents(mesh.geometry);
+    assert.ok(Math.abs(extents.min - innerRadiusM) <= toleranceM, `${name} inner radius`);
+    assert.ok(Math.abs(extents.max - outerRadiusM) <= toleranceM, `${name} outer radius`);
+    assert.equal(mesh.userData.innerRadiusM, innerRadiusM);
+    assert.equal(mesh.userData.outerRadiusM, outerRadiusM);
+  }
+});
+
+test('Saturn ring substructure renderOrder keeps gaps below ringlets and preserves Slice 4 meshes', async () => {
+  const module = await loadSaturnRingsModule();
+  const {
+    createSaturnRingsGroup,
+    SATURN_RING_CASSINI_RENDER_ORDER,
+    SATURN_RING_GAP_RENDER_ORDER,
+    SATURN_RING_MAIN_RENDER_ORDER,
+    SATURN_RING_RINGLET_RENDER_ORDER,
+  } = module;
+
+  const group = createSaturnRingsGroup();
+  const main = getRequiredObject(group, 'saturn-rings-main');
+  const cassini = getRequiredObject(group, 'saturn-rings-cassini-division');
+  const huygensGap = getRequiredObject(group, 'saturn-rings-huygens-gap');
+  const huygensRinglet = getRequiredObject(group, 'saturn-rings-huygens-ringlet');
+  const laplaceGap = getRequiredObject(group, 'saturn-rings-laplace-gap');
+  const laplaceRinglet = getRequiredObject(group, 'saturn-rings-laplace-ringlet');
+  const enckeGap = getRequiredObject(group, 'saturn-rings-encke-gap');
+  const keelerGap = getRequiredObject(group, 'saturn-rings-keeler-gap');
+  const rocheDivision = getRequiredObject(group, 'saturn-rings-roche-division');
+
+  assert.equal(main.renderOrder, SATURN_RING_MAIN_RENDER_ORDER);
+  assert.equal(cassini.renderOrder, SATURN_RING_CASSINI_RENDER_ORDER);
+  assert.equal(huygensGap.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
+  assert.equal(laplaceGap.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
+  assert.equal(enckeGap.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
+  assert.equal(keelerGap.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
+  assert.equal(rocheDivision.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
+  assert.equal(huygensRinglet.renderOrder, SATURN_RING_RINGLET_RENDER_ORDER);
+  assert.equal(laplaceRinglet.renderOrder, SATURN_RING_RINGLET_RENDER_ORDER);
+  assert.ok(huygensGap.renderOrder < huygensRinglet.renderOrder);
+  assert.ok(laplaceGap.renderOrder < laplaceRinglet.renderOrder);
+});
+
+test('Saturn ring substructure preserves child ordering in inner-radius sequence', async () => {
+  const module = await loadSaturnRingsModule();
+  const { createSaturnRingsGroup } = module;
+  const group = createSaturnRingsGroup();
+  const childNames = group.children.map((child) => child.name);
+
+  assert.deepEqual(childNames, [
+    'saturn-rings-main',
+    'saturn-rings-cassini-division',
+    'saturn-rings-huygens-gap',
+    'saturn-rings-huygens-ringlet',
+    'saturn-rings-laplace-gap',
+    'saturn-rings-laplace-ringlet',
+    'saturn-rings-encke-gap',
+    'saturn-rings-keeler-gap',
+    'saturn-rings-roche-division',
+  ]);
+});
+
+test('Saturn Roche Division uses a fading texture rather than a flat-opacity band', async () => {
+  const module = await loadSaturnRingsModule();
+  const {
+    createSaturnRingsGroup,
+    createSaturnRocheDivisionTexture,
+    SATURN_ROCHE_DIVISION_INNER_RADIUS_M,
+    SATURN_ROCHE_DIVISION_OUTER_RADIUS_M,
+    SATURN_RING_SUBSTRUCTURE_OPACITY,
+  } = module;
+
+  const group = createSaturnRingsGroup();
+  const rocheDivision = getRequiredObject(group, 'saturn-rings-roche-division');
+  assert.ok(rocheDivision.material.map, 'Roche Division should use a gradient texture');
+  assert.equal(rocheDivision.userData.featureType, 'division');
+  assert.equal(rocheDivision.userData.feature, 'Roche Division');
+  assert.equal(rocheDivision.userData.innerRadiusM, SATURN_ROCHE_DIVISION_INNER_RADIUS_M);
+  assert.equal(rocheDivision.userData.outerRadiusM, SATURN_ROCHE_DIVISION_OUTER_RADIUS_M);
+
+  const texture = createSaturnRocheDivisionTexture();
+  const data = texture.image.data;
+  let minAlpha = 255;
+  let maxAlpha = 0;
+  for (let i = 3; i < data.length; i += 4) {
+    const alpha = data[i];
+    if (alpha === 0) continue;
+    minAlpha = Math.min(minAlpha, alpha);
+    maxAlpha = Math.max(maxAlpha, alpha);
+  }
+
+  assert.ok(maxAlpha > minAlpha, 'Roche Division texture should fade outward');
+  assert.ok(maxAlpha >= Math.round(SATURN_RING_SUBSTRUCTURE_OPACITY.rocheInner * 255) - 2);
+  assert.ok(minAlpha <= Math.round(SATURN_RING_SUBSTRUCTURE_OPACITY.rocheOuter * 255) + 2);
 });
