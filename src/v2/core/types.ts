@@ -31,4 +31,5 @@ export type InvariantId =
   | 'INV-006'
   | 'INV-007'
   | 'INV-008'
-  | 'INV-009';
+  | 'INV-009'
+  | 'INV-010';

@@ -9,7 +9,15 @@ export type BodyId =
   | 'io'
   | 'europa'
   | 'ganymede'
-  | 'callisto';
+  | 'callisto'
+  | 'saturn'
+  | 'titan'
+  | 'rhea'
+  | 'iapetus'
+  | 'tethys'
+  | 'dione'
+  | 'mimas'
+  | 'enceladus';
 
 export interface TriaxialRadiiM {
   a: number;
@@ -17,7 +25,7 @@ export interface TriaxialRadiiM {
   c: number;
 }
 
-export type InterpolationInvariantId = 'INV-008' | 'INV-009';
+export type InterpolationInvariantId = 'INV-008' | 'INV-009' | 'INV-010';
 
 export interface BodyConstants {
   naifId: number;
@@ -45,6 +53,19 @@ export const BODY_CONSTANTS: Record<BodyId, BodyConstants> = {
   europa:    { naifId: 502, radiusM:    1_562_600.0, vizColor: 0xD8D3C5 },
   ganymede:  { naifId: 503, radiusM:    2_631_200.0, vizColor: 0x9A8F7A },
   callisto:  { naifId: 504, radiusM:    2_410_300.0, vizColor: 0x5E5851 },
+  saturn:    {
+    naifId: 699,
+    radiusM: 60_268_000.0,
+    radiiM: { a: 60_268_000.0, b: 60_268_000.0, c: 54_364_000.0 },
+    vizColor: 0xD8C3A5,
+  },
+  titan:     { naifId: 606, radiusM:    2_575_150.0, vizColor: 0x9E8562 },
+  rhea:      { naifId: 605, radiusM:      765_000.0, vizColor: 0xCFCFD3 },
+  iapetus:   { naifId: 608, radiusM:      745_700.0, vizColor: 0xA79884 },
+  tethys:    { naifId: 603, radiusM:      538_400.0, vizColor: 0xF0ECE2 },
+  dione:     { naifId: 604, radiusM:      563_400.0, vizColor: 0xE8E0D3 },
+  mimas:     { naifId: 601, radiusM:      207_800.0, vizColor: 0x9F9B96 },
+  enceladus: { naifId: 602, radiusM:      256_600.0, vizColor: 0xF6F6F2 },
 };
 
 // INV-008 cutover bars in meters (km values from founding doc × 1000)
@@ -60,7 +81,28 @@ export const INV008_BARS_M: Record<
   mars:        50,     // 0.05 km
 };
 
-// Unified interpolation bars across Slice 2 (INV-008) and Slice 3 (INV-009).
+// INV-010 cutover bars in meters (km values from founding doc × 1000)
+export const INV010_BARS_M: Record<
+  'saturn' | 'titan' | 'rhea' | 'iapetus' | 'tethys' | 'dione' | 'mimas' | 'enceladus',
+  number
+> = {
+  saturn:      1_000,  // 1 km
+  titan:      20_000,  // 20 km
+  rhea:        5_000,  // 5 km
+  iapetus:     2_000,  // 2 km
+  tethys:      1_000,  // 1 km
+  dione:      50_000,  // 50 km
+  mimas:      20_000,  // 20 km
+  enceladus:   5_000,  // 5 km
+};
+
+export const SATURN_D_RING_INNER_RADIUS_M = 66_900_000;
+export const SATURN_C_RING_INNER_RADIUS_M = 74_491_000;
+export const SATURN_A_RING_OUTER_RADIUS_M = 136_780_000;
+export const SATURN_CASSINI_DIVISION_INNER_RADIUS_M = 117_500_000;
+export const SATURN_CASSINI_DIVISION_OUTER_RADIUS_M = 122_050_000;
+
+// Unified interpolation bars across Slice 2 (INV-008), Slice 3 (INV-009), and Slice 4 (INV-010).
 export const INTERPOLATION_ERROR_BARS_M: Record<BodyId, number> = {
   ...INV008_BARS_M,
   jupiter:   50_000,  // 50 km
@@ -68,6 +110,7 @@ export const INTERPOLATION_ERROR_BARS_M: Record<BodyId, number> = {
   europa:    20_000,  // 20 km
   ganymede:  20_000,  // 20 km
   callisto:  50_000,  // 50 km
+  ...INV010_BARS_M,
 };
 
 export const BODY_CADENCE_SECONDS: Record<BodyId, number> = {
@@ -82,6 +125,14 @@ export const BODY_CADENCE_SECONDS: Record<BodyId, number> = {
   europa:   10_800,
   ganymede: 21_600,
   callisto: 43_200,
+  saturn:   86_400,
+  titan:    43_200,
+  rhea:     10_800,
+  iapetus:  86_400,
+  tethys:    3_600,
+  dione:    10_800,
+  mimas:     3_600,
+  enceladus: 3_600,
 };
 
 export const BODY_INTERPOLATION_INVARIANTS: Record<BodyId, InterpolationInvariantId> = {
@@ -96,6 +147,14 @@ export const BODY_INTERPOLATION_INVARIANTS: Record<BodyId, InterpolationInvarian
   europa: 'INV-009',
   ganymede: 'INV-009',
   callisto: 'INV-009',
+  saturn: 'INV-010',
+  titan: 'INV-010',
+  rhea: 'INV-010',
+  iapetus: 'INV-010',
+  tethys: 'INV-010',
+  dione: 'INV-010',
+  mimas: 'INV-010',
+  enceladus: 'INV-010',
 };
 
 export function getBodyCadence(bodyId: BodyId): number {
