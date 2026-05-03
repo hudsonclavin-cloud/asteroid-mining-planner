@@ -289,9 +289,7 @@ test('Saturn ring substructure renderOrder keeps gaps below ringlets and preserv
   const module = await loadSaturnRingsModule();
   const {
     createSaturnRingsGroup,
-    SATURN_RING_CASSINI_RENDER_ORDER,
     SATURN_RING_GAP_RENDER_ORDER,
-    SATURN_RING_MAIN_RENDER_ORDER,
     SATURN_RING_RINGLET_RENDER_ORDER,
   } = module;
 
@@ -306,8 +304,8 @@ test('Saturn ring substructure renderOrder keeps gaps below ringlets and preserv
   const keelerGap = getRequiredObject(group, 'saturn-rings-keeler-gap');
   const rocheDivision = getRequiredObject(group, 'saturn-rings-roche-division');
 
-  assert.equal(main.renderOrder, SATURN_RING_MAIN_RENDER_ORDER);
-  assert.equal(cassini.renderOrder, SATURN_RING_CASSINI_RENDER_ORDER);
+  assert.equal(main.renderOrder, 0);
+  assert.equal(cassini.renderOrder, 0);
   assert.equal(huygensGap.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
   assert.equal(laplaceGap.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
   assert.equal(enckeGap.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
@@ -315,6 +313,9 @@ test('Saturn ring substructure renderOrder keeps gaps below ringlets and preserv
   assert.equal(rocheDivision.renderOrder, SATURN_RING_GAP_RENDER_ORDER);
   assert.equal(huygensRinglet.renderOrder, SATURN_RING_RINGLET_RENDER_ORDER);
   assert.equal(laplaceRinglet.renderOrder, SATURN_RING_RINGLET_RENDER_ORDER);
+  assert.ok(huygensGap.renderOrder >= 1);
+  assert.ok(rocheDivision.renderOrder >= 1);
+  assert.ok(huygensRinglet.renderOrder >= 1);
   assert.ok(huygensGap.renderOrder < huygensRinglet.renderOrder);
   assert.ok(laplaceGap.renderOrder < laplaceRinglet.renderOrder);
 });

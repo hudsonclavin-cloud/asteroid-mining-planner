@@ -68,8 +68,6 @@ export const SATURN_RING_LOCAL_PLANE_ROTATION_X_RAD = -Math.PI / 2;
 export const SATURN_RING_TEXTURE_SIZE = 256;
 export const SATURN_CASSINI_TEXTURE_SIZE = 128;
 export const SATURN_ROCHE_DIVISION_TEXTURE_SIZE = 128;
-export const SATURN_RING_MAIN_RENDER_ORDER = 0;
-export const SATURN_RING_CASSINI_RENDER_ORDER = 1;
 export const SATURN_RING_GAP_RENDER_ORDER = 2;
 export const SATURN_RING_RINGLET_RENDER_ORDER = 3;
 
@@ -435,7 +433,6 @@ export function createSaturnRingsGroup(
 
   const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
   ringMesh.name = 'saturn-rings-main';
-  ringMesh.renderOrder = SATURN_RING_MAIN_RENDER_ORDER;
   ringMesh.userData = {
     role: 'main-ring',
     innerRadiusM,
@@ -444,7 +441,6 @@ export function createSaturnRingsGroup(
 
   const cassiniMesh = new THREE.Mesh(cassiniGeometry, cassiniMaterial);
   cassiniMesh.name = 'saturn-rings-cassini-division';
-  cassiniMesh.renderOrder = SATURN_RING_CASSINI_RENDER_ORDER;
   cassiniMesh.userData = {
     role: 'cassini-division',
     innerRadiusM: SATURN_CASSINI_DIVISION_INNER_RADIUS_M,
