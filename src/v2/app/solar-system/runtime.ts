@@ -3,6 +3,7 @@ import {
   FRAME_GCRS_EARTH,
   FRAME_HELIO_J2000_ICRF,
   FRAME_JUPITER_J2000_ICRF,
+  FRAME_SATURN_J2000_ICRF,
   assertCanonicalState,
   configureFrameTransformHooks,
   interpolateBodyStateSeries,
@@ -13,18 +14,23 @@ import {
 import { BODY_CONSTANTS } from '../../core/constants/bodies.js';
 import type { BodyId } from '../../core/constants/bodies.js';
 import { createJupiterOblateMesh } from '../../render/jupiter-oblate.js';
+import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
+import { createSaturnRingsGroup } from '../../render/saturn-rings.js';
 import { HaloSystem } from '../../render/halos.js';
 import { loadSolarSystemStatesBrowser, SLICE3_EPOCH_TDB } from './loader.js';
 
 const AU_M = 149_597_870_700;
-const OVERVIEW_ORBIT_RADIUS_M = 7.5 * AU_M;
+const OVERVIEW_ORBIT_RADIUS_M = 7 * AU_M;
 const JUPITER_SYSTEM_OVERVIEW_RADIUS_M = 5_000_000_000;
+const SATURN_SYSTEM_OVERVIEW_RADIUS_M = 6_000_000_000;
 const MIN_CAMERA_DISTANCE_M = 1e9;
 const MAX_CAMERA_DISTANCE_M = 15 * AU_M;
 const ORBIT_SENSITIVITY = 0.005;
 const WHEEL_ZOOM_SENSITIVITY = 0.0015;
 const TIME_SCRUB_STEP_SECONDS = 3600;
 const FOCUS_TRANSITION_DURATION_MS = 650;
+const SATURN_RENDER_TILT_RAD = THREE.MathUtils.degToRad(26.7);
+const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
 
 const BODY_IDS: BodyId[] = [
   'sun',
@@ -38,13 +44,22 @@ const BODY_IDS: BodyId[] = [
   'europa',
   'ganymede',
   'callisto',
+  'saturn',
+  'titan',
+  'rhea',
+  'iapetus',
+  'tethys',
+  'dione',
+  'mimas',
+  'enceladus',
 ];
 
 /*
- * Slice 3 focus keymap:
+ * Slice 4 focus keymap:
  * 1 Sun, 2 Mercury, 3 Venus, 4 Earth, 5 Moon, 6 Mars,
  * 7 Jupiter, 8 Io, 9 Europa, 0 Ganymede, - Callisto,
- * = heliocentric overview.
+ * S Saturn, T Titan, R Rhea, I Iapetus, Y Tethys, D Dione,
+ * M Mimas, E Enceladus, = outer-system overview.
  */
 const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
   '1': 'sun',
@@ -58,9 +73,17 @@ const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
   '9': 'europa',
   '0': 'ganymede',
   '-': 'callisto',
+  s: 'saturn',
+  t: 'titan',
+  r: 'rhea',
+  i: 'iapetus',
+  y: 'tethys',
+  d: 'dione',
+  m: 'mimas',
+  e: 'enceladus',
 };
 
-type FocusBodyId = BodyId | null;
+type FocusTarget = BodyId | typeof OUTER_SYSTEM_OVERVIEW;
 type Position3 = CanonicalState['positionM'];
 
 function clamp(value: number, min: number, max: number): number {
@@ -103,6 +126,11 @@ function createBodyMesh(bodyId: BodyId): THREE.Mesh {
       material: new THREE.MeshLambertMaterial({ color: BODY_CONSTANTS.jupiter.vizColor }),
     });
   }
+  if (bodyId === 'saturn') {
+    return createSaturnOblateMesh({
+      material: new THREE.MeshLambertMaterial({ color: BODY_CONSTANTS.saturn.vizColor }),
+    });
+  }
 
   const constants = BODY_CONSTANTS[bodyId];
   const geometry = new THREE.SphereGeometry(constants.radiusM, 32, 32);
@@ -118,11 +146,14 @@ function getDefaultFocusRadius(bodyId: BodyId): number {
   if (bodyId === 'jupiter') {
     return JUPITER_SYSTEM_OVERVIEW_RADIUS_M;
   }
+  if (bodyId === 'saturn') {
+    return SATURN_SYSTEM_OVERVIEW_RADIUS_M;
+  }
   return Math.max(5 * BODY_CONSTANTS[bodyId].radiusM, BODY_CONSTANTS[bodyId].radiusM + 400_000);
 }
 
-function getMinOrbitRadiusForFocus(bodyId: FocusBodyId): number {
-  if (bodyId === null) {
+function getMinOrbitRadiusForFocus(bodyId: FocusTarget): number {
+  if (bodyId === OUTER_SYSTEM_OVERVIEW) {
     return MIN_CAMERA_DISTANCE_M;
   }
   return BODY_CONSTANTS[bodyId].radiusM + 400_000;
@@ -139,14 +170,16 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
     stateSeries.set(bodyId, samples.map((sample) => sample.state));
   }
-
   const earthSeries = stateSeries.get('earth')!;
   const jupiterSeries = stateSeries.get('jupiter')!;
-  const timeMin = Math.max(earthSeries[0].tdbSeconds, jupiterSeries[0].tdbSeconds);
-  const timeMax = Math.min(
-    earthSeries[earthSeries.length - 1].tdbSeconds,
-    jupiterSeries[jupiterSeries.length - 1].tdbSeconds,
-  );
+  const saturnSeries = stateSeries.get('saturn')!;
+
+  let timeMin = Number.NEGATIVE_INFINITY;
+  let timeMax = Number.POSITIVE_INFINITY;
+  for (const series of stateSeries.values()) {
+    timeMin = Math.max(timeMin, series[0].tdbSeconds);
+    timeMax = Math.min(timeMax, series[series.length - 1].tdbSeconds);
+  }
 
   configureFrameTransformHooks({
     earthHeliocentricStateProvider(tdbSeconds: number): CanonicalState {
@@ -154,6 +187,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     },
     jupiterHeliocentricStateProvider(tdbSeconds: number): CanonicalState {
       return interpolateBodyStateSeries('jupiter', jupiterSeries, tdbSeconds);
+    },
+    saturnHeliocentricStateProvider(tdbSeconds: number): CanonicalState {
+      return interpolateBodyStateSeries('saturn', saturnSeries, tdbSeconds);
     },
   });
 
@@ -171,11 +207,30 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     MAX_CAMERA_DISTANCE_M * 10,
   );
 
+  const renderRoots = new Map<BodyId, THREE.Object3D>();
   const meshes = new Map<BodyId, THREE.Mesh>();
+  const saturnTiltGroup = new THREE.Group();
+  saturnTiltGroup.name = 'saturn-tilt-group';
+  saturnTiltGroup.rotation.x = SATURN_RENDER_TILT_RAD;
+  const saturnSystemGroup = new THREE.Group();
+  saturnSystemGroup.name = 'saturn-system-group';
+  saturnSystemGroup.add(saturnTiltGroup);
+  const saturnRingsGroup = createSaturnRingsGroup();
   for (const bodyId of BODY_IDS) {
     const mesh = createBodyMesh(bodyId);
-    scene.add(mesh);
     meshes.set(bodyId, mesh);
+    if (bodyId === 'saturn') {
+      saturnTiltGroup.add(mesh, saturnRingsGroup);
+      saturnSystemGroup.userData = {
+        renderOnlyTiltDeg: 26.7,
+        focusAnchorBodyId: 'saturn',
+      };
+      scene.add(saturnSystemGroup);
+      renderRoots.set(bodyId, saturnSystemGroup);
+      continue;
+    }
+    scene.add(mesh);
+    renderRoots.set(bodyId, mesh);
   }
 
   const ambientLight = new THREE.AmbientLight(0x404060, 1.5);
@@ -186,11 +241,11 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const haloSystem = new HaloSystem(scene);
 
-  let orbitRadius = JUPITER_SYSTEM_OVERVIEW_RADIUS_M;
+  let orbitRadius = OVERVIEW_ORBIT_RADIUS_M;
   let orbitAzimuth = 0;
   let orbitPolar = Math.PI / 2;
-  let currentFocusBody: FocusBodyId = 'jupiter';
-  let targetFocusBody: FocusBodyId = 'jupiter';
+  let currentFocusBody: FocusTarget = OUTER_SYSTEM_OVERVIEW;
+  let targetFocusBody: FocusTarget = OUTER_SYSTEM_OVERVIEW;
   let focusTransitionStartMs = 0;
   let focusTransitionFromAnchor: Position3 | null = null;
   let currentTdbSeconds = timeMin;
@@ -233,12 +288,36 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       );
     }
 
+    if (nativeState.frame === FRAME_SATURN_J2000_ICRF) {
+      // INV-004 is asserted in unit tests on heliocentric-frame inputs where the bound is
+      // meaningful; asserting it on native-frame inputs would fail by floating-point
+      // cancellation inherent to translate-by-large-vector arithmetic, not by a transform bug.
+      return transformCanonicalState(
+        nativeState,
+        FRAME_SATURN_J2000_ICRF,
+        FRAME_HELIO_J2000_ICRF,
+        tdbSeconds,
+      );
+    }
+
     return nativeState;
   }
 
-  function getAnchorPosition(bodyId: FocusBodyId, tdbSeconds: number): Position3 | null {
-    if (bodyId === null) {
-      return getHeliocentricState('sun', tdbSeconds).positionM;
+  function getOuterSystemOverviewAnchor(tdbSeconds: number): Position3 {
+    const jupiter = getHeliocentricState('jupiter', tdbSeconds).positionM;
+    const saturn = getHeliocentricState('saturn', tdbSeconds).positionM;
+    // Slice 4 startup is an outer-system overview. Anchor the camera on the midpoint
+    // between Jupiter and Saturn so both planet systems stay in frame on first paint.
+    return {
+      x: (jupiter.x + saturn.x) / 2,
+      y: (jupiter.y + saturn.y) / 2,
+      z: (jupiter.z + saturn.z) / 2,
+    };
+  }
+
+  function getAnchorPosition(bodyId: FocusTarget, tdbSeconds: number): Position3 {
+    if (bodyId === OUTER_SYSTEM_OVERVIEW) {
+      return getOuterSystemOverviewAnchor(tdbSeconds);
     }
     return getHeliocentricState(bodyId, tdbSeconds).positionM;
   }
@@ -251,16 +330,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     );
   }
 
-  function getActiveFocusBody(nowMs: number): FocusBodyId {
+  function getActiveFocusBody(nowMs: number): FocusTarget {
     return hasActiveFocusTransition(nowMs) ? targetFocusBody : currentFocusBody;
   }
 
-  function getCurrentOrbitCenter(nowMs: number): Position3 | null {
+  function getCurrentOrbitCenter(nowMs: number): Position3 {
     const targetAnchor = getAnchorPosition(targetFocusBody, currentTdbSeconds);
-    if (!targetAnchor) {
-      return null;
-    }
-
     if (!hasActiveFocusTransition(nowMs) || focusTransitionFromAnchor === null) {
       if (targetFocusBody !== currentFocusBody) {
         currentFocusBody = targetFocusBody;
@@ -281,13 +356,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     return lerpPosition(focusTransitionFromAnchor, targetAnchor, progress);
   }
 
-  function startFocusTransition(nextFocusBody: FocusBodyId, nextOrbitRadius: number): void {
+  function startFocusTransition(nextFocusBody: FocusTarget, nextOrbitRadius: number): void {
     const nowMs = performance.now();
     const fromAnchor = getCurrentOrbitCenter(nowMs);
-    if (!fromAnchor) {
-      return;
-    }
-
     const activeFocusBody = getActiveFocusBody(nowMs);
     targetFocusBody = nextFocusBody;
     focusTransitionFromAnchor = fromAnchor;
@@ -308,8 +379,6 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   function updateVisibleState(nowMs = performance.now()): void {
     const anchorPosM = getCurrentOrbitCenter(nowMs);
-    if (!anchorPosM) return;
-
     const camLocal = sphericalToCartesian(orbitRadius, orbitPolar, orbitAzimuth);
 
     camera.near = Math.max(1, orbitRadius * 1e-4);
@@ -320,12 +389,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     const haloUpdates: Array<{ bodyId: BodyId; positionRelCam: THREE.Vector3; radiusM: number }> = [];
 
     for (const bodyId of BODY_IDS) {
-      const mesh = meshes.get(bodyId)!;
+      const root = renderRoots.get(bodyId)!;
       const helio = getHeliocentricState(bodyId, currentTdbSeconds);
       const relX = helio.positionM.x - anchorPosM.x;
       const relY = helio.positionM.y - anchorPosM.y;
       const relZ = helio.positionM.z - anchorPosM.z;
-      mesh.position.set(relX, relY, relZ);
+      root.position.set(relX, relY, relZ);
 
       const posRelCam = new THREE.Vector3(
         relX - camLocal.x,
@@ -406,9 +475,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   function onWheel(event: WheelEvent): void {
     event.preventDefault();
     const activeFocusBody = getActiveFocusBody(performance.now());
-    const minOrbitRadius = activeFocusBody === null
-      ? MIN_CAMERA_DISTANCE_M
-      : BODY_CONSTANTS[activeFocusBody].radiusM + 400_000;
+    const minOrbitRadius = getMinOrbitRadiusForFocus(activeFocusBody);
     orbitRadius = clamp(
       orbitRadius * Math.exp(event.deltaY * WHEEL_ZOOM_SENSITIVITY),
       minOrbitRadius,
@@ -441,19 +508,15 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     if (nextFocusBody) {
       const nowMs = performance.now();
       const activeFocusBody = getActiveFocusBody(nowMs);
-      const nextOrbitRadius = activeFocusBody === null
+      const nextOrbitRadius = activeFocusBody === OUTER_SYSTEM_OVERVIEW
         ? getDefaultFocusRadius(nextFocusBody)
-        : clamp(
-          orbitRadius,
-          getMinOrbitRadiusForFocus(nextFocusBody),
-          MAX_CAMERA_DISTANCE_M,
-        );
+        : clamp(orbitRadius, getMinOrbitRadiusForFocus(nextFocusBody), MAX_CAMERA_DISTANCE_M);
       startFocusTransition(nextFocusBody, nextOrbitRadius);
       return;
     }
 
     if (event.key === '=') {
-      startFocusTransition(null, OVERVIEW_ORBIT_RADIUS_M);
+      startFocusTransition(OUTER_SYSTEM_OVERVIEW, OVERVIEW_ORBIT_RADIUS_M);
     }
   }
 
@@ -492,6 +555,25 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     for (const mesh of meshes.values()) {
       mesh.geometry.dispose();
       (mesh.material as THREE.Material).dispose();
+    }
+    for (const child of saturnRingsGroup.children) {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose();
+        const material = child.material;
+        if (Array.isArray(material)) {
+          for (const entry of material) {
+            if ('map' in entry && entry.map) {
+              entry.map.dispose();
+            }
+            entry.dispose();
+          }
+        } else {
+          if ('map' in material && material.map) {
+            material.map.dispose();
+          }
+          material.dispose();
+        }
+      }
     }
   };
 }
