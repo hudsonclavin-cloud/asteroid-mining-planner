@@ -366,7 +366,7 @@ Slice 3 ships at `/v2/solar-system`. `/v2/inner-solar-system` permanently redire
 
 ### Slice 4: Saturn System Honest Mode
 
-Status: in implementation (clock starts at Slice 4 implementation dispatch).
+Status: shipped at `/v2/solar-system` on 2026-05-02.
 
 This slice extends honest mode to Saturn, seven major moons, and the ring system. It introduces `FRAME_SATURN_J2000_ICRF` as the second planet-centered inertial frame and validates the planet-frame pattern across multiple instances.
 
@@ -500,6 +500,29 @@ Note: The cutover bars are calibrated at 3-9× measured max with honest per-body
 - Saturn renders as oblate ellipsoid, ring system renders as tilted semi-transparent disk with Cassini Division visible.
 
 If those criteria are not met, the slice does not ship.
+
+### Slice 4 Measured Results
+
+Slice 4 cleared all eight per-body interpolation bars across the 90-day validation window with the following margins:
+
+| Body | Cutover bar | Measured max | Margin |
+|------|-------------|--------------|--------|
+| Saturn | 1 km | 0.202399 km | 4.9× |
+| Titan | 20 km | 6.034246 km | 3.3× |
+| Rhea | 5 km | 1.264611 km | 4.0× |
+| Iapetus | 2 km | 0.618783 km | 3.2× |
+| Tethys | 1 km | 0.284336 km | 3.5× |
+| Dione | 50 km | 6.777692 km | 7.4× |
+| Mimas | 20 km | 3.359336 km | 6.0× |
+| Enceladus | 5 km | 0.857091 km | 5.8× |
+
+Frame round-trip error: `FRAME_HELIO_J2000_ICRF` ↔ `FRAME_SATURN_J2000_ICRF` measured zero relative error across one round-trip and ten-chain — the transform is implemented as pure subtraction/addition of Saturn's heliocentric state with no intermediate matrix multiplications, mathematically reversible to floating-point precision. Moon-native chain measured `6.34e-13` relative error (within the `100·ε` bound; reflects translate-by-large-vector cancellation per the INV-004 scope clarification from Slice 3).
+
+INV-001 through INV-010 passed with zero violations across the validation window. Slice 1, 2, 3 cutover harnesses continue to pass (regression check).
+
+Manual browser verification on the target machine class (Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display) confirmed: Saturn renders as oblate ellipsoid with render-only `26.7°` tilt; ring system renders as tilted semi-transparent disk coplanar with Saturn's equator; Cassini Division resolved as darker band at sufficient zoom; all eight Saturn system bodies findable via focus keys (`s`, `t`, `r`, `i`, `y`, `d`, `m`, `e`); Jupiter system focus keys (`7`, `8`, `9`, `0`, `-`) regression-clean; continuous zoom from heliocentric overview through Saturn system to body close-up shows no precision artifacts. Default heliocentric framing correctly shows Saturn as a small body at honest scale, requiring focus key to resolve detail — this is by design per honest-mode policy.
+
+Note: The cutover bars are calibrated at 3-7× measured max with honest per-body margins (per `src/v2/core/invariants/INV-010.md`). Margins of 3-7× indicate substantial headroom; the bars are correctly calibrated, not artificially tight.
 
 ---
 
