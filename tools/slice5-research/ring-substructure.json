@@ -1,0 +1,228 @@
+{
+  "source_primary": "NASA PDS Ring-Moon Systems Node",
+  "source_url": "https://pds-rings.seti.org/saturn/saturn_rings_table.html",
+  "additional_sources": [
+    "NASA Cassini imaging archive",
+    "Cassini Division survey paper (Icarus/Science peer-reviewed)",
+    "Iess et al. 2019 Cassini gravity paper (Science 364, doi:10.1126/science.aat2965)"
+  ],
+  "fetch_date": "2026-05-03",
+  "in_slice5_scope": [
+    "Huygens Gap",
+    "Huygens Ringlet",
+    "Laplace Gap",
+    "Laplace Ringlet",
+    "Encke Gap",
+    "Keeler Gap",
+    "Roche Division"
+  ],
+  "deferred_to_polish": [
+    "Herschel Gap",
+    "Herschel Ringlet",
+    "Russell Gap",
+    "Jeffreys Gap",
+    "Kuiper Gap",
+    "Bessel Gap",
+    "Barnard Gap"
+  ],
+  "cassini_division_envelope": {
+    "inner_km": 117500,
+    "outer_km": 122050,
+    "note": "Slice 4 already renders this as a single darker band. Slice 5 keeps this as fallback when sub-features are not resolved at low zoom."
+  },
+  "cassini_division_subfeatures": [
+    {
+      "name": "Huygens Gap",
+      "type": "gap",
+      "inner_km": 117500,
+      "outer_km": 117930,
+      "width_km": 430,
+      "visual_significance": 2,
+      "visual_character": "Not empty; contains the Huygens Ringlet and is visibly dark elsewhere",
+      "contains_ringlet": "Huygens Ringlet",
+      "shepherd_moon": null,
+      "discovery": "Voyager-era; Cassini imaging confirmed",
+      "in_slice5_scope": true
+    },
+    {
+      "name": "Huygens Ringlet",
+      "type": "ringlet",
+      "inner_km": 117806,
+      "outer_km": 117824,
+      "width_km": 18,
+      "visual_significance": 3,
+      "visual_character": "Dense narrow ringlet within Huygens Gap",
+      "contains_ringlet": null,
+      "shepherd_moon": null,
+      "discovery": "Cassini imaging / Cassini Division survey literature",
+      "in_slice5_scope": true
+    },
+    {
+      "name": "Herschel Gap",
+      "type": "gap",
+      "inner_km": 118188,
+      "outer_km": 118284,
+      "width_km": 96,
+      "visual_significance": 4,
+      "visual_character": "Largely empty gap, adjacent to narrow Herschel Ringlet",
+      "contains_ringlet": "Herschel Ringlet",
+      "shepherd_moon": null,
+      "discovery": "Cassini Division survey literature",
+      "in_slice5_scope": false
+    },
+    {
+      "name": "Herschel Ringlet",
+      "type": "ringlet",
+      "inner_km": 118234,
+      "outer_km": 118263,
+      "width_km": 29,
+      "visual_significance": 4,
+      "visual_character": "Dense narrow ringlet inside Cassini Division",
+      "contains_ringlet": null,
+      "shepherd_moon": null,
+      "discovery": "Cassini Division survey literature",
+      "in_slice5_scope": false
+    },
+    {
+      "name": "Russell Gap",
+      "type": "gap",
+      "inner_km": 118590,
+      "outer_km": 118628,
+      "width_km": 38,
+      "visual_significance": 4,
+      "visual_character": "Essentially empty narrow gap",
+      "contains_ringlet": null,
+      "shepherd_moon": null,
+      "discovery": "Cassini Division survey literature",
+      "in_slice5_scope": false
+    },
+    {
+      "name": "Jeffreys Gap",
+      "type": "gap",
+      "inner_km": 118930,
+      "outer_km": 118967,
+      "width_km": 37,
+      "visual_significance": 4,
+      "visual_character": "Essentially empty narrow gap",
+      "contains_ringlet": null,
+      "shepherd_moon": null,
+      "discovery": "Cassini Division survey literature",
+      "in_slice5_scope": false
+    },
+    {
+      "name": "Kuiper Gap",
+      "type": "gap",
+      "inner_km": 119402,
+      "outer_km": 119406,
+      "width_km": 4,
+      "visual_significance": 5,
+      "visual_character": "Essentially empty, very narrow gap",
+      "contains_ringlet": null,
+      "shepherd_moon": null,
+      "discovery": "Cassini Division survey literature",
+      "in_slice5_scope": false
+    },
+    {
+      "name": "Laplace Gap",
+      "type": "gap",
+      "inner_km": 119845,
+      "outer_km": 120086,
+      "width_km": 241,
+      "visual_significance": 3,
+      "visual_character": "Not empty; contains Laplace Ringlet",
+      "contains_ringlet": "Laplace Ringlet",
+      "shepherd_moon": null,
+      "discovery": "Cassini imaging / Cassini Division survey literature",
+      "in_slice5_scope": true
+    },
+    {
+      "name": "Laplace Ringlet",
+      "type": "ringlet",
+      "inner_km": 120037,
+      "outer_km": 120078,
+      "width_km": 41,
+      "visual_significance": 3,
+      "visual_character": "Dense narrow ringlet inside Cassini Division",
+      "contains_ringlet": null,
+      "shepherd_moon": null,
+      "discovery": "Cassini imaging / Cassini Division survey literature",
+      "in_slice5_scope": true
+    },
+    {
+      "name": "Bessel Gap",
+      "type": "gap",
+      "inner_km": 120231,
+      "outer_km": 120244,
+      "width_km": 13,
+      "visual_significance": 4,
+      "visual_character": "Essentially empty narrow gap",
+      "contains_ringlet": null,
+      "shepherd_moon": null,
+      "discovery": "Cassini Division survey literature",
+      "in_slice5_scope": false
+    },
+    {
+      "name": "Barnard Gap",
+      "type": "gap",
+      "inner_km": 120304,
+      "outer_km": 120316,
+      "width_km": 12,
+      "visual_significance": 4,
+      "visual_character": "Essentially empty narrow gap",
+      "contains_ringlet": null,
+      "shepherd_moon": null,
+      "discovery": "Cassini Division survey literature",
+      "in_slice5_scope": false
+    }
+  ],
+  "a_ring_gaps": [
+    {
+      "name": "Encke Gap",
+      "type": "gap",
+      "inner_km": 133423,
+      "outer_km": 133745,
+      "width_km": 322,
+      "visual_significance": 2,
+      "visual_character": "Not empty; contains faint ringlets, maintained by shepherd moon Pan",
+      "contains_ringlet": null,
+      "shepherd_moon": "Pan",
+      "discovery": "Ground-based discovery; later detailed by Cassini",
+      "in_slice5_scope": true
+    },
+    {
+      "name": "Keeler Gap",
+      "type": "gap",
+      "inner_km": 136487,
+      "outer_km": 136522,
+      "width_km": 35,
+      "visual_significance": 4,
+      "visual_character": "Maintained by shepherd moon Daphnis; edges and moon-driven structures visible",
+      "contains_ringlet": null,
+      "shepherd_moon": "Daphnis",
+      "discovery": "Cassini imaging",
+      "in_slice5_scope": true
+    }
+  ],
+  "outer_features": [
+    {
+      "name": "Roche Division",
+      "type": "division",
+      "inner_km": 136770,
+      "outer_km": 139380,
+      "width_km": 2610,
+      "visual_significance": 2,
+      "visual_character": "Tenuous separation between A ring and F ring, not a clean empty gap",
+      "discovery": "Cassini-era ring inventory",
+      "in_slice5_scope": true,
+      "note": "F ring is out of Slice 5 scope; the Roche Division renders as the visual outer-edge transition where the main ring system fades"
+    }
+  ],
+  "deferred_features": [
+    "F ring",
+    "E ring",
+    "Spokes",
+    "Ring shadows",
+    "Anisotropic phase scattering",
+    "Particle-level dynamics"
+  ]
+}
