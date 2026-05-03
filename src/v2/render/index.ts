@@ -32,4 +32,24 @@ export {
   SATURN_POLAR_SCALE,
 } from './saturn-oblate.js';
 
+export {
+  createSaturnCassiniDivisionTexture,
+  createSaturnRingTexture,
+  createSaturnRingsGroup,
+  getSaturnRingInnerRadiusM,
+  sampleSaturnCassiniDivisionOpacity,
+  sampleSaturnRingOpacity,
+  SATURN_CASSINI_DIVISION_OPACITY,
+  SATURN_CASSINI_TEXTURE_SIZE,
+  SATURN_RING_A_INNER_RADIUS_M,
+  SATURN_RING_B_OUTER_RADIUS_M,
+  SATURN_RING_C_OUTER_RADIUS_M,
+  SATURN_RING_DEFAULT_INNER_RADIUS_M,
+  SATURN_RING_FALLBACK_INNER_RADIUS_M,
+  SATURN_RING_LOCAL_PLANE_ROTATION_X_RAD,
+  SATURN_RING_OUTER_RADIUS_M,
+  SATURN_RING_REGION_OPACITY,
+  SATURN_RING_TEXTURE_SIZE,
+} from './saturn-rings.js';
+
 export { mountEmptyViewportCanvas } from './empty-viewport.js';
