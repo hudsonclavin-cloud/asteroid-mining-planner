@@ -184,7 +184,7 @@ These constants extend the body table above for Slice 4. Physical radii remain `
 - Render policy reference: `src/v2/render/saturn-rings.md`
 - D ring inner radius: `66,900,000 m`
 - C ring inner radius: `74,491,000 m`
-- A ring outer radius: `136,780,000 m`
+- A ring outer radius: `136,770,000 m`
 - Cassini Division inner radius: `117,500,000 m`
 - Cassini Division outer radius: `122,050,000 m`
 - Frame note: Saturn's rings live in `FRAME_SATURN_J2000_ICRF`, axis-aligned with Saturn's equator

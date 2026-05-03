@@ -17,7 +17,7 @@ The radii below use the exact PDS table values rather than rounded secondary sum
 
 - D ring inner radius: `66,900,000 m` from Saturn center
 - C ring inner radius: `74,491,000 m` from Saturn center
-- A ring outer radius: `136,780,000 m` from Saturn center
+- A ring outer radius: `136,770,000 m` from Saturn center
 - Cassini Division inner radius: `117,500,000 m`
 - Cassini Division outer radius: `122,050,000 m`
 - Total ring system mass: `1.54e19 kg`
@@ -29,13 +29,13 @@ The radii below use the exact PDS table values rather than rounded secondary sum
 - Render as a single semi-transparent disk or annulus in `FRAME_SATURN_J2000_ICRF`
 - Implementation hint: Three.js `RingGeometry` or equivalent custom annulus geometry with the chosen inner radius and outer radius
 - Tilt the disk `26.7°` from the `FRAME_SATURN_J2000_ICRF` `Z` axis at the render layer so that the ring plane matches Saturn's equatorial plane
-- The preferred outer boundary is the A ring outer radius at `136,780,000 m`
+- The preferred outer boundary is the A ring outer radius at `136,770,000 m`
 - The preferred inner boundary is the D ring inner radius at `66,900,000 m`; using the C ring inner boundary at `74,491,000 m` is also acceptable if the faint D ring is intentionally omitted from the first-pass visual
 - Use an alpha gradient to encode broad radial density variation:
   - low alpha in the D ring if rendered (`66,900 km` to `74,491 km`)
   - low-to-medium alpha in the C ring (`74,491 km` to `91,975 km`)
   - high alpha in the B ring (`91,975 km` to `117,570 km`)
-  - medium alpha in the A ring (`122,050 km` to `136,780 km`)
+  - medium alpha in the A ring (`122,050 km` to `136,770 km`)
 - The gradient is a render-layer choice; it does not need to match exact optical-depth profiles so long as it preserves structural plausibility
 - Cassini Division must be rendered as an explicit darker band spanning `117,500,000 m` to `122,050,000 m`
 
