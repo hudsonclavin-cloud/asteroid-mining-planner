@@ -216,7 +216,7 @@ Slice 4 introduces `FRAME_SATURN_J2000_ICRF` as a child of `FRAME_HELIO_J2000_IC
 - All seven Saturnian moon states (Titan, Rhea, Iapetus, Tethys, Dione, Mimas, Enceladus) live in this frame.
 - Saturn's own state lives in the parent heliocentric frame.
 - Frame transform from Saturn-centered to heliocentric: add Saturn's heliocentric state vector. Inverse transform: subtract Saturn's heliocentric state.
-- Saturn's ring system also lives in `FRAME_SATURN_J2000_ICRF`, axis-aligned with Saturn's equatorial plane (Z-axis).
+- Saturn's ring system also lives in `FRAME_SATURN_J2000_ICRF`, with a render-only `26.7°` tilt from the frame `Z` axis so the rendered ring plane matches Saturn's equatorial plane.
 
 Slice 4 confirms that the planet-centered inertial frame pattern from §3.8 extends cleanly. The heliocentric root frame is now parent to two planet-centered frames (Jupiter, Saturn). Slice 5+ planet systems extend the same pattern.
 
@@ -715,7 +715,7 @@ The Slice 4 tripwire is **4 focused weekends from the start of the Slice 4 imple
 - **Body rotation animation** — deferred to a future visual-polish slice
 - **SPK ingestion** — Slice 4's three independent `1h`-cadence bodies validated per-body Hermite, but Mars-system Phobos at `7.65h` orbital period is predicted to require sub-hourly cadence (likely `30-minute` or denser). SPK ingestion remains a Slice 5+ candidate, with stronger pressure now that Slice 4 has shown fixture size growing 2-3× per slice (Slice 2 `~250 KB` → Slice 3 `~780 KB` → Slice 4 `~1.85 MB`).
 - **Uranus and Neptune rings** — both have ring systems (Uranus's rings discovered 1977, Neptune's confirmed by Voyager 2 in 1989). The `saturn-rings.md` pattern should generalize, but Uranus's rings are nearly opaque dark particles and Neptune's are partial arcs — different visual character from Saturn. Revisit at Slice 6+ planning.
-- **Ring tilt evolution rendering** — Saturn's rings cycle from edge-on to fully open over ~15 years from Earth's viewpoint. This is rendered correctly at any single epoch (rings are tilted to Saturn's equator, which is fixed in `FRAME_SATURN_J2000_ICRF`), but the visual cycle as Saturn moves through its heliocentric orbit is not animated. Honest at any snapshot; not animated across multi-year scrubs.
+- **Ring tilt evolution rendering** — Saturn's rings cycle from edge-on to fully open over ~15 years from Earth's viewpoint. This is rendered correctly at any single epoch (rings are tilted at the render layer so they match Saturn's equator while `FRAME_SATURN_J2000_ICRF` stays ICRF-aligned), but the visual cycle as Saturn moves through its heliocentric orbit is not animated. Honest at any snapshot; not animated across multi-year scrubs.
 
 ---
 
@@ -744,7 +744,7 @@ These are limitations of the shipped Slice 2 and Slice 3 deliverables, recorded 
 - Per-body fixture cadence with three independent `1h`-cadence bodies (Mimas, Enceladus, Tethys). Slice 2 and Slice 3 fixtures continue to work unchanged.
 - Saturn renders as oblate ellipsoid (~9.8% flattening); seven major moons render as spheres using each body's `a` axis. Mimas's triaxial spread (`208/197/191 km`, ~8% variation) is larger than Io's (~0.8%) and may be visibly noticeable at close zoom. Slice 4 ships with spherical Mimas as a deliberate simplification per Galilean precedent; revisit at Slice 4 polish if visual artifact reports surface.
 - Saturn rings render as a single semi-transparent disk with explicit Cassini Division at `117,500-122,050 km`. Substructure within the A and B rings, B-ring spokes, the E and F rings, ring shadows, and anisotropic phase scattering are all deferred.
-- Ring tilt is fixed to Saturn's equator in `FRAME_SATURN_J2000_ICRF`, structurally correct at any snapshot. The visual ring-opening / closing cycle observed from Earth over Saturn's ~29.5-year orbit is not animated.
+- Ring tilt is fixed to Saturn's equator by a render-only `26.7°` tilt from the `FRAME_SATURN_J2000_ICRF` `Z` axis, structurally correct at any snapshot. The visual ring-opening / closing cycle observed from Earth over Saturn's ~29.5-year orbit is not animated.
 - Body rotation (Saturn ~10.66h, tidal locks for moons) is not animated. Same deferral pattern as Slice 3.
 - Time scrubbing advances by the densest cadence in the current slice (1h for Slice 4, unchanged from Slice 3); Iapetus at `79d` barely moves per scrub step while Mimas sweeps visibly.
 - Fixture size growth is accelerating: Slice 2 `~250 KB`, Slice 3 `~780 KB`, Slice 4 `~1.85 MB`. Slice 5 (Mars system, predicted `30-minute` cadence for Phobos) may force the SPK ingestion path open.

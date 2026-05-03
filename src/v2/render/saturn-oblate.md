@@ -22,8 +22,8 @@ Source: `vendor/naif/pck00010.tpc`, line `3422`, confirmed by `tools/slice4-rese
 Slice 4 render policy:
 
 - Saturn uses all three axes in render geometry
-- The render is axis-aligned with `FRAME_SATURN_J2000_ICRF`
-- The rotational axis is the frame `Z` axis
+- The render is tilted `26.7°` from the `FRAME_SATURN_J2000_ICRF` `Z` axis at the render layer to align with Saturn's equatorial plane
+- The rotational axis remains a render-only tilt, not a `core/` frame mutation
 
 ## Implementation Hint
 
@@ -34,15 +34,15 @@ Pick the simplest correct path:
 - If a dedicated `EllipsoidGeometry` exists in the implementation context, it is also acceptable
 - A custom geometry is acceptable only if the simpler paths prove insufficient
 
-Whatever path is used, the result must place Saturn's rotational axis along the `FRAME_SATURN_J2000_ICRF` `Z` axis. No ad hoc local-axis convention should leak into `core/`.
+Whatever path is used, the result must place Saturn's rotational axis `26.7°` from the `FRAME_SATURN_J2000_ICRF` `Z` axis at the render layer. No ad hoc local-axis convention should leak into `core/`.
 
 ## Rotation
 
-- Saturn's oblate figure is axis-aligned with `FRAME_SATURN_J2000_ICRF`
+- Saturn's oblate figure is tilted `26.7°` from the `FRAME_SATURN_J2000_ICRF` `Z` axis at the render layer
 - No body-fixed rotation animation in Slice 4
 - No texture-spin system in Slice 4
 
-Body rotation rendering remains deferred. Slice 4 uses a static axis-aligned oblate figure only.
+Body rotation rendering remains deferred. Slice 4 uses a static render-only tilted oblate figure only.
 
 ## Sub-Pixel Implication
 

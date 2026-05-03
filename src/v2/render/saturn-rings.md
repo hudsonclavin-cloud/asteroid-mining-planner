@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Saturn's rings are the defining visible feature of the Saturn system at any zoom that resolves the planet. Slice 4 renders the rings as a render-layer artifact that lives in `FRAME_SATURN_J2000_ICRF`, axis-aligned with Saturn's equatorial plane.
+Saturn's rings are the defining visible feature of the Saturn system at any zoom that resolves the planet. Slice 4 renders the rings as a render-layer artifact that lives in `FRAME_SATURN_J2000_ICRF`, tilted `26.7°` from the frame `Z` axis at the render layer to align with Saturn's equatorial plane.
 
 The ring system is a visual truth artifact, not a physics participant. It must not mutate canonical state, affect interpolation, or alter any `core/` invariant.
 
@@ -21,14 +21,14 @@ The radii below use the exact PDS table values rather than rounded secondary sum
 - Cassini Division inner radius: `117,500,000 m`
 - Cassini Division outer radius: `122,050,000 m`
 - Total ring system mass: `1.54e19 kg`
-- Ring plane tilt: `26.7°` from Saturn's orbital plane, equivalent to alignment with Saturn's equator and therefore the `FRAME_SATURN_J2000_ICRF` `Z` axis
+- Ring plane tilt: `26.7°` from Saturn's orbital plane, applied as a render-only tilt from the `FRAME_SATURN_J2000_ICRF` `Z` axis so the ring plane matches Saturn's equator
 - Vertical thickness: `10-30 m`; a zero-thickness render is structurally accurate for Slice 4
 
 ## Render Policy
 
 - Render as a single semi-transparent disk or annulus in `FRAME_SATURN_J2000_ICRF`
 - Implementation hint: Three.js `RingGeometry` or equivalent custom annulus geometry with the chosen inner radius and outer radius
-- Tilt the disk to the `FRAME_SATURN_J2000_ICRF` `Z` axis so that the ring plane matches Saturn's equatorial plane
+- Tilt the disk `26.7°` from the `FRAME_SATURN_J2000_ICRF` `Z` axis at the render layer so that the ring plane matches Saturn's equatorial plane
 - The preferred outer boundary is the A ring outer radius at `136,780,000 m`
 - The preferred inner boundary is the D ring inner radius at `66,900,000 m`; using the C ring inner boundary at `74,491,000 m` is also acceptable if the faint D ring is intentionally omitted from the first-pass visual
 - Use an alpha gradient to encode broad radial density variation:
