@@ -160,6 +160,8 @@ INV-009 (Per-Body Interpolation Error Bound) is additive. INV-001 through INV-00
 
 INV-010 (Per-Body Interpolation Error Bound for Saturn system) is additive. INV-001 through INV-009 continue to apply unchanged. Slice 4's three independent `1h`-cadence bodies validate that the per-body cadence pattern from Slice 3 extends to multiple fast-orbit bodies in a single slice; SPK ingestion remains a Slice 5+ candidate per §12.
 
+Slice 5 introduces no new invariants. INV-001 through INV-010 continue to apply unchanged. Slice 5 is render-layer only and does not touch `core/` data, frames, or interpolation; the existing Slice 4 invariants fully cover the rendering work.
+
 See `src/v2/core/invariants/README.md` for INV-001 through INV-007 and `src/v2/core/invariants/INV-008.md` for the interpolation bound.
 
 ### 3.7 Interpolation Policy
@@ -408,6 +410,42 @@ Saturn is the smallest planet system that:
 - Introduces ring rendering as a new render-layer architectural concern, establishing the pattern for any future ringed-body work (Jupiter's faint rings, Uranus's rings, Neptune's rings)
 - Renders an oblate body more pronounced than Jupiter, validating that the oblate pattern (§3.8 sibling discussion in `src/v2/render/jupiter-oblate.md`) generalizes across flattening ratios
 
+### Slice 5: Saturn Ring Substructure Polish
+
+Status: in implementation (clock starts at Slice 5 implementation dispatch).
+
+This slice extends Slice 4's single-disk + Cassini Division band ring rendering with seven visible substructure features. It is render-layer only — no new frames, no new invariants, no new fixtures.
+
+#### Included
+
+- Huygens Gap and Huygens Ringlet (inside Cassini Division, significance `2/3`)
+- Laplace Gap and Laplace Ringlet (inside Cassini Division, significance `3/3`)
+- Encke Gap (inside A ring, shepherd moon Pan, significance `2`)
+- Keeler Gap (inside A ring near outer edge, shepherd moon Daphnis, significance `4` but visually distinctive)
+- Roche Division (between A ring outer and F ring inner, significance `2`, rendered as visual fade-out)
+- Each feature renders as a separate Three.js `RingGeometry` sibling mesh under the existing `saturnRingsGroup` (GPT-5 Option B pattern)
+- All features inherit the Slice 4 render-only `26.7°` tilt via the existing `saturnTiltGroup`
+- Route: `/v2/solar-system` extends; no new route
+
+#### Excluded
+
+- Herschel Gap, Herschel Ringlet, Russell Gap, Jeffreys Gap, Kuiper Gap, Bessel Gap, Barnard Gap (the narrow Cassini Division features — significance `4-5`, sub-pixel at moderate zoom, deferred to polish-of-polish)
+- F ring (separate ring beyond the A ring outer edge, deferred)
+- E ring (diffuse ring near Enceladus, deferred)
+- B ring spokes (transient radial features)
+- Ring shadows (Saturn onto rings, rings onto Saturn)
+- Anisotropic phase scattering (forward-scattering vs back-scattering)
+- Ring particle dynamics
+- All Slice 4 non-goals carry forward
+
+#### Why Slice 5
+
+Slice 5 is the smallest slice that:
+
+- Validates the GPT-5 Option B architectural pattern (multiple concentric `RingGeometry` instances) for ring substructure work, establishing the pattern Slice 6+ ring polish or Uranus/Neptune ring slices can reuse
+- Adds the highest-visual-significance features (significance `2-3`) that distinguish a moderately-zoomed Saturn from a low-zoom Saturn — Huygens Gap, Encke Gap, Roche Division
+- Refreshes Saturn rendering while Slice 4's render context is fresh in the codebase, before Slice 6's Mars + SPK ingestion architectural work shifts attention away from Saturn
+
 ---
 
 ## 6. Cutover Criteria
@@ -524,6 +562,24 @@ Manual browser verification on the target machine class (Apple Silicon Mac, inte
 
 Note: The cutover bars are calibrated at 3-7× measured max with honest per-body margins (per `src/v2/core/invariants/INV-010.md`). Margins of 3-7× indicate substantial headroom; the bars are correctly calibrated, not artificially tight.
 
+### Saturn Ring Substructure Slice Bar (Slice 5)
+
+- All seven Slice 5 features render as visible meshes under `saturnRingsGroup` at `/v2/solar-system`
+- Huygens Gap visible as a darker annular band within the Cassini Division at moderate zoom
+- Huygens Ringlet visible as a thin brighter annulus within the Huygens Gap at high zoom
+- Laplace Gap and Laplace Ringlet similarly visible (gap dark, ringlet bright)
+- Encke Gap visible as a thin dark line within the A ring at moderate zoom
+- Keeler Gap visible as a thin dark line near the A ring outer edge at high zoom
+- Roche Division visible as a faint outer-edge fade extending beyond the A ring outer boundary
+- All seven features sit in Saturn's equatorial plane at the existing Slice 4 render-only `26.7°` tilt; no rendering artifacts at the boundaries between sibling meshes
+- `60 fps` target on Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display
+- Continuous zoom from heliocentric overview through Saturn close-up to ring substructure detail shows no precision artifacts and no Z-fighting between sibling ring meshes
+- Development invariants INV-001 through INV-010 pass with zero violations (no new invariants introduced)
+- Slice 1, 2, 3, 4 cutover harnesses continue to pass (regression check)
+- Slice 5 ships at `/v2/solar-system`; existing redirects remain in place
+
+If those criteria are not met, the slice does not ship.
+
 ---
 
 ## 7. Validation Strategy
@@ -637,6 +693,17 @@ The orchestrator enforces the wall between `src/v2/` and legacy.
 | `economics` | Frozen |
 | orchestrator | Enforces v2 wall, reviews cutover, resolves cross-agent conflicts |
 
+### Slice 5 Ownership
+
+| Agent | Owns |
+|---|---|
+| `renderer` | Saturn ring substructure rendering, `saturn-ring-substructure.ts` module extension to `saturn-rings.ts`, sibling `RingGeometry` mesh hierarchy, per-feature material tuning, render order discipline, Z-fighting prevention |
+| `orbital-mechanics` | Frozen for Slice 5 (no `core/` changes) |
+| `data-layer` | Frozen for Slice 5 (no boundary changes; no new fixture) |
+| `ui-hud` | Frozen |
+| `economics` | Frozen |
+| orchestrator | Enforces v2 wall, reviews cutover, resolves cross-agent conflicts |
+
 ---
 
 ## 10. Non-Goals
@@ -693,6 +760,17 @@ All Slice 3 non-goals carry forward. Additionally:
 - Triaxial rendering of Saturnian moons — intentionally simplified to spherical (Galilean precedent), even where `pck00010` has measurable triaxiality
 - Uranus, Neptune systems
 
+### Non-Goals For Slice 5
+
+All Slice 4 non-goals carry forward. Additionally:
+
+- Herschel Gap and Herschel Ringlet (significance `4`, sub-pixel at moderate zoom)
+- Russell Gap, Jeffreys Gap, Kuiper Gap, Bessel Gap, Barnard Gap (the narrow Cassini Division features, significance `4-5`)
+- F ring (deferred until a future ring polish slice or as a Cassini-imaging-fidelity follow-up)
+- E ring, spokes, ring shadows, anisotropic phase scattering, particle-level dynamics (all consistent with Slice 4 deferrals)
+- Ring substructure render-layer optimization (LOD transitions, fade-out for distant Saturn views) — deferred until needed
+- Generalization to a `PlanetRings` primitive class (deferred until a second ringed-body slice for Uranus or Neptune actually needs it; Slice 5 extends `saturn-rings` module organically)
+
 ---
 
 ## 11. Failure Condition
@@ -715,6 +793,10 @@ The Slice 3 tripwire is **4 focused weekends from the start of the Slice 3 imple
 
 The Slice 4 tripwire is **4 focused weekends from the start of the Slice 4 implementation dispatch**. Weekend 1 is consumed when implementation begins. If all eight per-body INV-010 cutover bars are not met by end of weekend 4, the per-body cadence approach and Hermite interpolation are re-evaluated before Slice 5. SPK ingestion becomes a stronger candidate at that point. Slice 4 also tripwires the ring rendering architectural pattern: if the single-disk + Cassini-Division approach proves visually unacceptable at cutover review, the rendering scope is re-evaluated before declaring cutover.
 
+### Slice 5
+
+The Slice 5 tripwire is **2 focused weekends from the start of the Slice 5 implementation dispatch**. Weekend 1 is consumed when implementation begins. If all seven features are not rendering visually correctly by end of weekend 2, the multi-`RingGeometry` approach (GPT-5 Option B) is re-evaluated against the alternatives (Option A 1D radial density texture, Option C hybrid) before Slice 6. Slice 5 is intentionally smaller in tripwire window than Slice 4 (`4 weekends`) because the architectural surface is smaller — render-layer extension only, no `core/` work, no new invariants.
+
 ---
 
 ## 12. Open Questions
@@ -729,6 +811,11 @@ The Slice 4 tripwire is **4 focused weekends from the start of the Slice 4 imple
 - **Multi-instance planet-frame validation** — Slice 4 confirms the §3.8 pattern extends cleanly to a second planet-centered frame (Saturn), with three independent fast-orbit bodies pressure-testing per-body cadence.
 - **Ring rendering architectural pattern** — established in `src/v2/render/saturn-rings.md` as a separate render-layer module. Generalization to a `PlanetRing` primitive is deferred until a second ringed-body slice actually needs it.
 
+### Resolved at Slice 5 planning
+
+- **Multi-RingGeometry vs single-texture-with-detail** — Slice 5 commits to GPT-5 Option B (multiple sibling `RingGeometry` instances) for ring substructure work. Validated as the right choice for `~7-12` named ring features; if Slice 6+ ring work scales to dozens of features, the 1D density texture approach (Option A) becomes worth revisiting.
+- **Ring substructure architectural artifact location** — `saturn-ring-substructure.md` as a sibling to `saturn-rings.md`, both inside `src/v2/render/`. Generalization to a `PlanetRings` primitive deferred per §10.
+
 ### Open
 
 - **Star background** — deferred to a later visual-polish slice
@@ -739,12 +826,14 @@ The Slice 4 tripwire is **4 focused weekends from the start of the Slice 4 imple
 - **SPK ingestion** — Slice 4's three independent `1h`-cadence bodies validated per-body Hermite, but Mars-system Phobos at `7.65h` orbital period is predicted to require sub-hourly cadence (likely `30-minute` or denser). SPK ingestion remains a Slice 5+ candidate, with stronger pressure now that Slice 4 has shown fixture size growing 2-3× per slice (Slice 2 `~250 KB` → Slice 3 `~780 KB` → Slice 4 `~1.85 MB`).
 - **Uranus and Neptune rings** — both have ring systems (Uranus's rings discovered 1977, Neptune's confirmed by Voyager 2 in 1989). The `saturn-rings.md` pattern should generalize, but Uranus's rings are nearly opaque dark particles and Neptune's are partial arcs — different visual character from Saturn. Revisit at Slice 6+ planning.
 - **Ring tilt evolution rendering** — Saturn's rings cycle from edge-on to fully open over ~15 years from Earth's viewpoint. This is rendered correctly at any single epoch (rings are tilted at the render layer so they match Saturn's equator while `FRAME_SATURN_J2000_ICRF` stays ICRF-aligned), but the visual cycle as Saturn moves through its heliocentric orbit is not animated. Honest at any snapshot; not animated across multi-year scrubs.
+- **Ring shadows** — render-layer artifact (Saturn casting on rings, rings casting on Saturn) needs both light source position from heliocentric frame and screen-space shadow rendering. Architecturally separable from current ring substructure work; revisit at Slice 7+ or a polish slice.
+- **F ring rendering** — F ring is a thin outer ring with shepherd moons (Prometheus, Pandemos). Different visual character from the main ring system; could ship as a single thin `RingGeometry` sibling to the `saturnRingsGroup`. Deferred until needed.
 
 ---
 
 ## 13. Known Limitations
 
-These are limitations of the shipped Slice 1, 2, 3, and 4 deliverables, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
+These are limitations of the shipped Slice 1, 2, 3, and 4 deliverables and the planned Slice 5 deliverable, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
 
 - **Camera body focus:** the default camera orbits a fixed point in heliocentric space. There is currently no UI to retarget the camera to Mercury, Venus, Mars, or any specific body for close-up zoom. Earth and Moon are reachable from the default camera orientation. Body focus selection is planned as a Slice 2 polish commit.
 
@@ -771,3 +860,13 @@ These are limitations of the shipped Slice 1, 2, 3, and 4 deliverables, recorded
 - Body rotation (Saturn ~10.66h, tidal locks for moons) is not animated. Same deferral pattern as Slice 3.
 - Time scrubbing advances by the densest cadence in the current slice (1h for Slice 4, unchanged from Slice 3); Iapetus at `79d` barely moves per scrub step while Mimas sweeps visibly.
 - Fixture size growth is accelerating: Slice 2 `~250 KB`, Slice 3 `~780 KB`, Slice 4 `~1.85 MB`. Slice 5 (Mars system, predicted `30-minute` cadence for Phobos) may force the SPK ingestion path open.
+
+### Slice 5
+
+- Saturn rings now render seven additional substructure features (Huygens Gap, Huygens Ringlet, Laplace Gap, Laplace Ringlet, Encke Gap, Keeler Gap, Roche Division) as sibling `RingGeometry` meshes. Total ring-system mesh count: `~9-10` (existing C/B/A disk + Cassini Division band + 7 Slice 5 features).
+- Narrow Cassini Division gaps (Herschel, Russell, Jeffreys, Kuiper, Bessel, Barnard) and Herschel Ringlet remain rendered only as the broader Cassini Division dark band from Slice 4. They are sub-pixel at moderate zoom and deferred to polish-of-polish.
+- F ring is not rendered in Slice 5; Roche Division renders as the visual outer-edge fade where the main ring system terminates, with no F ring beyond it.
+- Ring substructure renders in the same plane as the rest of the Saturn ring system at Slice 4's render-only `26.7°` tilt. No per-feature tilt variation.
+- Render order is explicitly managed via Three.js `renderOrder` to prevent Z-fighting between sibling meshes at the same `Z` position. If Z-fighting artifacts surface at extreme zoom, the `renderOrder` discipline may need refinement.
+- No LOD transition for ring substructure: at very low zoom (Saturn small in viewport), all seven features render but are sub-pixel. Performance impact is negligible because each is a small `RingGeometry`, but visual benefit is also negligible at that zoom.
+- Shepherd moon dynamics (Pan in Encke Gap, Daphnis in Keeler Gap) are not rendered — moons are not in Slice 4's body set. Adding them is deferred to Slice 5 polish or a Saturn-system completeness slice.
