@@ -25,4 +25,11 @@ export {
   JUPITER_POLAR_SCALE,
 } from './jupiter-oblate.js';
 
+export {
+  createSaturnOblateMesh,
+  SATURN_EQUATORIAL_RADIUS_M,
+  SATURN_POLAR_RADIUS_M,
+  SATURN_POLAR_SCALE,
+} from './saturn-oblate.js';
+
 export { mountEmptyViewportCanvas } from './empty-viewport.js';
