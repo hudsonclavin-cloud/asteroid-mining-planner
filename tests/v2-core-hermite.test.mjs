@@ -39,7 +39,7 @@ const { interpolateBodyState } = await import(
 const { assertInterpolationError } = await import(
   pathToFileURL(path.join(tempOutDir, 'core', 'invariants', 'assertions.js')).href
 );
-const { configureInvariantRuntime, resetInvariantRuntime } = await import(
+const { AssertError, configureInvariantRuntime, resetInvariantRuntime } = await import(
   pathToFileURL(path.join(tempOutDir, 'core', 'invariants', 'runtime.js')).href
 );
 const { FRAME_HELIO_J2000_ICRF } = await import(
@@ -120,13 +120,14 @@ const s1 = {
     positionM: { x: 0, y: 0, z: 0 },
     velocityMps: { x: 0, y: 0, z: 0 },
   });
-  let threw = false;
+  let error = null;
   try {
     assertInterpolationError(estimate, truth, 'earth');
   } catch (e) {
-    threw = true;
+    error = e;
   }
-  assert(threw, 'assertInterpolationError throws for Earth error 1000 m (> 500 m bar)');
+  assert(error instanceof AssertError, 'assertInterpolationError throws AssertError for Earth error 1000 m (> 500 m bar)');
+  assert(error?.invariantId === 'INV-008', 'Earth interpolation overflow routes to INV-008', `got ${error?.invariantId}`);
   resetInvariantRuntime();
 }
 
@@ -152,6 +153,76 @@ const s1 = {
     threw = true;
   }
   assert(!threw, 'assertInterpolationError does not throw for Earth error 100 m (< 500 m bar)');
+  resetInvariantRuntime();
+}
+
+// Test 6: assertInterpolationError throws for Tethys error > 1 km and routes to INV-010.
+{
+  configureInvariantRuntime({ mode: 'throw' });
+  const estimate = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 0,
+    positionM: { x: 1_100, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+  const truth = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 0,
+    positionM: { x: 0, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+  let error = null;
+  try {
+    assertInterpolationError(estimate, truth, 'tethys');
+  } catch (e) {
+    error = e;
+  }
+  assert(error instanceof AssertError, 'assertInterpolationError throws AssertError for Tethys error 1100 m (> 1 km bar)');
+  assert(error?.invariantId === 'INV-010', 'Tethys interpolation overflow routes to INV-010', `got ${error?.invariantId}`);
+  assert(error?.details?.bodyId === 'tethys', 'Tethys overflow includes bodyId detail', `got ${JSON.stringify(error?.details)}`);
+  assert(error?.details?.measuredErrorKm === 1.1, 'Tethys overflow includes measuredErrorKm detail', `got ${JSON.stringify(error?.details)}`);
+  assert(error?.details?.barKm === 1, 'Tethys overflow includes barKm detail', `got ${JSON.stringify(error?.details)}`);
+  assert(error?.details?.expectedCadenceSeconds === 3600, 'Tethys overflow includes cadence from constants', `got ${JSON.stringify(error?.details)}`);
+  resetInvariantRuntime();
+}
+
+// Test 7: assertInterpolationError reports INV-010 violations in report mode without throwing.
+{
+  const violations = [];
+  configureInvariantRuntime({
+    mode: 'report',
+    onViolation(violation) {
+      violations.push(violation);
+    },
+  });
+  const estimate = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 123,
+    positionM: { x: 6_000, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+  const truth = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 123,
+    positionM: { x: 0, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+
+  let threw = false;
+  try {
+    assertInterpolationError(estimate, truth, 'enceladus');
+  } catch (e) {
+    threw = true;
+  }
+
+  assert(!threw, 'assertInterpolationError does not throw in report mode for Enceladus overflow');
+  assert(violations.length === 1, 'assertInterpolationError emits one report-mode violation for Enceladus overflow', `got ${violations.length}`);
+  assert(violations[0]?.invariantId === 'INV-010', 'Report-mode Enceladus overflow routes to INV-010', `got ${violations[0]?.invariantId}`);
+  assert(violations[0]?.details?.bodyId === 'enceladus', 'Report-mode Enceladus overflow includes bodyId detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  assert(violations[0]?.details?.measuredErrorKm === 6, 'Report-mode Enceladus overflow includes measuredErrorKm detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  assert(violations[0]?.details?.barKm === 5, 'Report-mode Enceladus overflow includes barKm detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  assert(violations[0]?.details?.tdbSeconds === 123, 'Report-mode Enceladus overflow includes tdbSeconds detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  assert(violations[0]?.details?.expectedCadenceSeconds === 3600, 'Report-mode Enceladus overflow includes cadence from constants', `got ${JSON.stringify(violations[0]?.details)}`);
   resetInvariantRuntime();
 }
 

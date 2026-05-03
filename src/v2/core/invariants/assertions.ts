@@ -2,6 +2,7 @@ import type { CanonicalState, InvariantId, Vec3F64 } from '../types.js';
 import { isFrameId } from '../frames/ids.js';
 import { failInvariant } from './runtime.js';
 import {
+  getBodyCadence,
   getInterpolationErrorBarM,
   getInterpolationInvariantId,
   type BodyId,
@@ -165,13 +166,15 @@ export function assertInterpolationError(
   const dz = estimateM.z - truthM.z;
   const errorM = Math.sqrt(dx * dx + dy * dy + dz * dz);
   const barM = getInterpolationErrorBarM(bodyId);
+  const expectedCadenceSeconds = getBodyCadence(bodyId);
 
   if (errorM > barM) {
     failInvariant(invariantId, `Interpolation error exceeded cutover bar for body '${bodyId}'`, {
-      errorM,
-      barM,
       bodyId,
+      measuredErrorKm: errorM / 1000,
+      barKm: barM / 1000,
       tdbSeconds: truth.tdbSeconds,
+      expectedCadenceSeconds,
     }, false);
   }
 }
