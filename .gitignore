@@ -8,3 +8,4 @@ worker/.dev.vars.*
 worker/.wrangler/
 node_modules/
 .tmp-tests/
+.obsidian/
