@@ -529,7 +529,7 @@ Note: The cutover bars are calibrated at 3-9× measured max with honest per-body
 ### Saturn System Slice Bar (Slice 4)
 
 - Per-body interpolated position error stays below the bars defined in §3.4 (Saturn `1 km` at `1d`, Titan `20 km` at `12h`, Rhea `5 km` at `3h`, Iapetus `2 km` at `1d`, Tethys `1 km` at `1h`, Dione `50 km` at `3h`, Mimas `20 km` at `1h`, Enceladus `5 km` at `1h`) across the full `2026-05-01` to `2026-07-30` validation window. Bars are codified as INV-010.
-- Default outer-system camera renders Saturn as visible oblate ellipsoid with ring system visible (Cassini Division resolved at sufficient zoom). All seven moons findable (visible directly or via halo).
+- Default outer-system camera shows Saturn at honest sub-pixel scale (Saturn's body apparent diameter is roughly `0.5 px` at `1080p` / `1 px` at `4K` from the overview position at `7 AU` from the Jupiter-Saturn midpoint anchor; rings are similarly sub-pixel). Halos make Saturn and all seven moons findable from default camera state. After user-driven focus on Saturn (key `s`) and zoom-in to Saturn-system view, Saturn renders as visible oblate ellipsoid with render-only `26.7°` tilt and ring system visible; Cassini Division resolves as a darker band at moderate zoom.
 - Continuous zoom from heliocentric overview through Saturn system to `400 km` altitude above any of Saturn, Titan, Rhea, Iapetus, Tethys, Dione, Mimas, Enceladus, no precision artifacts.
 - `60 fps` target on Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display.
 - Frame round-trips: `FRAME_HELIO_J2000_ICRF` ↔ `FRAME_SATURN_J2000_ICRF` stays below `10 × Number.EPSILON` for one round-trip and `100 × Number.EPSILON` across a chain of ten transforms. Slice 1, 2, 3 round-trip bounds remain in force.
@@ -558,7 +558,7 @@ Frame round-trip error: `FRAME_HELIO_J2000_ICRF` ↔ `FRAME_SATURN_J2000_ICRF` m
 
 INV-001 through INV-010 passed with zero violations across the validation window. Slice 1, 2, 3 cutover harnesses continue to pass (regression check).
 
-Manual browser verification on the target machine class (Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display) confirmed: Saturn renders as oblate ellipsoid with render-only `26.7°` tilt; ring system renders as tilted semi-transparent disk coplanar with Saturn's equator; Cassini Division resolved as darker band at sufficient zoom; all eight Saturn system bodies findable via focus keys (`s`, `t`, `r`, `i`, `y`, `d`, `m`, `e`); Jupiter system focus keys (`7`, `8`, `9`, `0`, `-`) regression-clean; continuous zoom from heliocentric overview through Saturn system to body close-up shows no precision artifacts. Default heliocentric framing correctly shows Saturn as a small body at honest scale, requiring focus key to resolve detail — this is by design per honest-mode policy.
+Manual browser verification on the target machine class (Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display) confirmed: Saturn renders as oblate ellipsoid with render-only `26.7°` tilt; ring system renders as tilted semi-transparent disk coplanar with Saturn's equator; Cassini Division resolved as darker band at sufficient zoom; all eight Saturn system bodies findable via focus keys (`s`, `t`, `r`, `i`, `y`, `d`, `m`, `e`); Jupiter system focus keys (`7`, `8`, `9`, `0`, `-`) regression-clean; continuous zoom from heliocentric overview through Saturn system to body close-up shows no precision artifacts. Default heliocentric framing correctly shows Saturn as a small body at honest scale, requiring focus key to resolve detail — this is by design per honest-mode policy. Note on default-camera verification: rings are not visible from the default outer-system overview camera at startup, because Saturn's apparent diameter from that distance (~`7 AU` from the Jupiter-Saturn midpoint anchor) is sub-pixel. Ring visibility verification requires user-driven focus on Saturn via the `s` key and zoom-in to Saturn-system view. This is consistent with honest-mode policy: bodies render at true scale and apparent-size halos make sub-pixel bodies findable, but ring substructure does not have a halo system.
 
 Note: The cutover bars are calibrated at 3-7× measured max with honest per-body margins (per `src/v2/core/invariants/INV-010.md`). Margins of 3-7× indicate substantial headroom; the bars are correctly calibrated, not artificially tight.
 
@@ -797,6 +797,15 @@ The Slice 4 tripwire is **4 focused weekends from the start of the Slice 4 imple
 
 The Slice 5 tripwire is **2 focused weekends from the start of the Slice 5 implementation dispatch**. Weekend 1 is consumed when implementation begins. If all seven features are not rendering visually correctly by end of weekend 2, the multi-`RingGeometry` approach (GPT-5 Option B) is re-evaluated against the alternatives (Option A 1D radial density texture, Option C hybrid) before Slice 6. Slice 5 is intentionally smaller in tripwire window than Slice 4 (`4 weekends`) because the architectural surface is smaller — render-layer extension only, no `core/` work, no new invariants.
 
+### Verification Protocol For All Future Slices
+
+Manual cutover verification must explicitly distinguish two camera states:
+
+1. Default camera state at page load (no user input). Criteria here are halo-findability for sub-pixel bodies and viewport composition (which bodies are framed). Ring substructure features and other sub-pixel-resolved geometry are **not** expected to be visible from this state at honest scale.
+2. User-focused camera state after pressing focus keys (`1-9`, `s`, `t`, etc.) and zooming in. Criteria here are direct-pixel visibility of the slice's resolved features (e.g. body geometry, oblate ellipsoid shape, ring substructure, Cassini Division).
+
+Each cutover criterion in §6 should specify which camera state it applies to. Cutover criteria that conflate the two states (e.g. claiming a sub-pixel feature is visible from default state) are not honest-mode-consistent and must be rewritten before cutover declaration.
+
 ---
 
 ## 12. Open Questions
@@ -860,6 +869,7 @@ These are limitations of the shipped Slice 1, 2, 3, and 4 deliverables and the p
 - Body rotation (Saturn ~10.66h, tidal locks for moons) is not animated. Same deferral pattern as Slice 3.
 - Time scrubbing advances by the densest cadence in the current slice (1h for Slice 4, unchanged from Slice 3); Iapetus at `79d` barely moves per scrub step while Mimas sweeps visibly.
 - Fixture size growth is accelerating: Slice 2 `~250 KB`, Slice 3 `~780 KB`, Slice 4 `~1.85 MB`. Slice 5 (Mars system, predicted `30-minute` cadence for Phobos) may force the SPK ingestion path open.
+- Verification protocol clarification: Slice 4 cutover was originally verified by the user after manual camera adjustment to view Saturn close-up. From the default outer-system overview camera at startup, Saturn's body is sub-pixel (apparent diameter ~`0.5 px` at `1080p`, ~`1 px` at `4K`) and the ring system is similarly sub-pixel. Saturn becomes findable from default state via halo overlay; ring system requires user-driven focus on Saturn (`s` key) and zoom-in to become visible. This is honest-mode rendering working as designed, not a rendering bug. Future slice cutover protocols (Slice 5 onward) explicitly require both default-camera state verification (where halo-findability is the criterion for sub-pixel features) and focused-camera state verification (where direct-pixel visibility is the criterion for resolved features). The original Slice 4 cutover declaration's language conflated these two states; the founding-doc text in §6 has been updated to be consistent with honest-mode behavior.
 
 ### Slice 5
 
