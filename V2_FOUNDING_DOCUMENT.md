@@ -412,7 +412,7 @@ Saturn is the smallest planet system that:
 
 ### Slice 5: Saturn Ring Substructure Polish
 
-Status: in implementation (clock starts at Slice 5 implementation dispatch).
+Status: shipped at `/v2/solar-system` on 2026-05-03.
 
 This slice extends Slice 4's single-disk + Cassini Division band ring rendering with seven visible substructure features. It is render-layer only — no new frames, no new invariants, no new fixtures.
 
@@ -579,6 +579,26 @@ Note: The cutover bars are calibrated at 3-7× measured max with honest per-body
 - Slice 5 ships at `/v2/solar-system`; existing redirects remain in place
 
 If those criteria are not met, the slice does not ship.
+
+### Slice 5 Measured Results
+
+Slice 5 cleared all visual cutover criteria with seven new ring substructure features rendering correctly:
+
+| Feature | Visual significance | Visibility verification |
+|---|---|---|
+| Encke Gap | 2 | Visible as thin dark line in outer A ring at Saturn-focused moderate zoom |
+| Roche Division | 2 | Visible as faint outer-edge fade beyond A ring outer boundary |
+| Huygens Gap | 2 | Visible as darker band within Cassini Division at Saturn-focused moderate zoom |
+| Laplace Gap | 3 | Visible as second darker band within outer Cassini Division |
+| Huygens Ringlet | 3 | Visible as thin bright line inside Huygens Gap at high zoom |
+| Laplace Ringlet | 3 | Visible as thin bright line inside Laplace Gap at high zoom |
+| Keeler Gap | 4 | Visible as thin dark line near A ring outer edge at high zoom |
+
+No new invariants introduced. INV-001 through INV-010 continue to pass with zero violations across the validation window. Slice 1, 2, 3, 4 cutover harnesses continue to pass (regression check). `npm test` at `51/51` passing.
+
+Manual browser verification on the target machine class (Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display) confirmed: all seven new substructure features visible from Saturn-focused camera state per the verification protocol established in §11. Rings appear coplanar with Saturn's equator at `26.7°` render-only tilt. No Z-fighting between sibling `RingGeometry` meshes at any zoom or viewing angle. Saturn system, Jupiter system, Earth-Moon, and time scrubbing all regression-clean.
+
+Architectural note: Slice 5 surfaced and resolved a default Saturn-focus camera bug (pre-existing in Slice 4 but undetected at that cutover) where the camera was positioned exactly edge-on to the tilted ring plane (`90.00°` between camera view direction and ring-plane normal, with floating-point error of `1.4e-14°`). The fix (commit `8f3c30e`) adjusted the default Saturn focus orbit angle to `π/3` polar to avoid edge-on viewing. This is the architectural lesson Slice 5 contributed: render-only tilt rotation about the X-axis interacts with default camera orbit positioned along the X-axis to produce mathematical edge-on coincidence; future render-only tilt slices (e.g. Mars `25°`, Uranus `98°`) must explicitly verify default focus camera angles are non-edge-on to the tilted plane.
 
 ---
 
