@@ -30,6 +30,7 @@ const WHEEL_ZOOM_SENSITIVITY = 0.0015;
 const TIME_SCRUB_STEP_SECONDS = 3600;
 const FOCUS_TRANSITION_DURATION_MS = 650;
 const SATURN_RENDER_TILT_RAD = THREE.MathUtils.degToRad(26.7);
+const SATURN_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
 
 const BODY_IDS: BodyId[] = [
@@ -368,6 +369,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       getMinOrbitRadiusForFocus(nextFocusBody),
       MAX_CAMERA_DISTANCE_M,
     );
+    if (nextFocusBody === 'saturn') {
+      // Saturn's rings are render-only tilted about +X; the global default orbit
+      // orientation (polar = π/2, azimuth = 0) lands exactly edge-on to that plane.
+      // Reset Saturn focus to a three-quarter view so rings are visible on focus.
+      orbitPolar = SATURN_FOCUS_ORBIT_POLAR_RAD;
+    }
 
     if (activeFocusBody === nextFocusBody) {
       currentFocusBody = nextFocusBody;
