@@ -202,6 +202,56 @@ These constants extend the body table above for Slice 4. Physical radii remain `
 - Keeler Gap: `136,487,000-136,522,000 m`, type `gap`, shepherd moon `Daphnis`
 - Roche Division: `136,770,000-139,380,000 m`, type `division`, transition from the A ring outer edge toward the out-of-scope F ring
 
+## Mars System Bodies (Slice 6)
+
+These constants extend the body table above for Slice 6. Physical radii come from `pck00010.tpc`; cadence policy belongs in `src/v2/boundary/slice6-fixture-spec.md`.
+
+### Mars
+
+- NAIF body ID: `499`
+- Equatorial radius: `3,396,190 m` (`a = b` axis from `BODY499_RADII`)
+- Polar radius: `3,376,200 m` (`c` axis from `BODY499_RADII`)
+- Flattening: about `0.59%`
+- Axial tilt to orbit: `25.19°`
+- `vizColor`: existing Slice 2 entry, unchanged (`0xC1440E`)
+- Source: `vendor/naif/pck00010.tpc`, `BODY499_RADII`, line `3390`
+
+### Phobos
+
+- NAIF body ID: `401`
+- `a` axis (canonical sphere radius): `13,000 m`
+- `b` axis: `11,400 m` (deferred from rendering)
+- `c` axis: `9,100 m` (deferred from rendering)
+- Triaxial spread: `30%` using `(a - c) / a`
+- Mass: `1.0659 × 10^16 kg`
+- Density: `1.872 g/cm³`
+- Orbital semi-major axis: `9,376 km` from Mars center
+- Orbital period: `7.65 hours`
+- `vizColor`: appropriate grey-brown for irregular cratered body
+- Source: `vendor/naif/pck00010.tpc` `BODY401_RADII`; JPL SSD physical parameters
+
+### Deimos
+
+- NAIF body ID: `402`
+- `a` axis (canonical sphere radius): `7,800 m`
+- `b` axis: `6,000 m` (deferred from rendering)
+- `c` axis: `5,100 m` (deferred from rendering)
+- Triaxial spread: `34.6%` using `(a - c) / a`
+- Mass: `1.4762 × 10^15 kg`
+- Density: `1.471 g/cm³`
+- Orbital semi-major axis: `23,460 km` from Mars center
+- Orbital period: `30.3 hours`
+- `vizColor`: appropriate grey for smaller smoother body
+- Source: `vendor/naif/pck00010.tpc` `BODY402_RADII`; JPL SSD physical parameters
+
+### Mars Ring Substructure (Not Applicable)
+
+Mars has no ring system. Slice 4's Saturn-ring constants and Slice 5's Saturn ring-substructure constants do not apply to Slice 6.
+
+### Cadence + Bars Cross-Reference
+
+Per-body cadence and INV-011 bars: see `src/v2/boundary/slice6-fixture-spec.md` and `src/v2/core/invariants/INV-011.md`.
+
 ## Rules for implementors
 
 1. Convert km → m by multiplying by 1000. Never store a km value in a `core/` export.
