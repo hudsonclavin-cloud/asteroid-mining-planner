@@ -1,0 +1,44 @@
+{
+  "phobos": {
+    "truth_cadence": "5m",
+    "validation_window_days": 90,
+    "measurements": [
+      {
+        "fixture_cadence": "15m",
+        "max_error_km": 0.03858874970517002,
+        "rms_error_km": 0.03443980523769044,
+        "truth_points_checked": 17280
+      },
+      {
+        "fixture_cadence": "30m",
+        "max_error_km": 0.7787715830870973,
+        "rms_error_km": 0.48601715486893415,
+        "truth_points_checked": 21600
+      },
+      {
+        "fixture_cadence": "1h",
+        "max_error_km": 12.320749362793007,
+        "rms_error_km": 7.346831788580027,
+        "truth_points_checked": 23760
+      }
+    ]
+  },
+  "deimos": {
+    "truth_cadence": "15m",
+    "validation_window_days": 90,
+    "measurements": [
+      {
+        "fixture_cadence": "30m",
+        "max_error_km": 0.007079070688065504,
+        "rms_error_km": 0.007059873043360256,
+        "truth_points_checked": 4320
+      },
+      {
+        "fixture_cadence": "1h",
+        "max_error_km": 0.11319505860795823,
+        "rms_error_km": 0.08328683543873142,
+        "truth_points_checked": 6480
+      }
+    ]
+  }
+}
