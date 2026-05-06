@@ -26,6 +26,13 @@ export {
 } from './jupiter-oblate.js';
 
 export {
+  createMarsOblateMesh,
+  MARS_EQUATORIAL_RADIUS_M,
+  MARS_POLAR_RADIUS_M,
+  MARS_POLAR_SCALE,
+} from './mars-oblate.js';
+
+export {
   createSaturnOblateMesh,
   SATURN_EQUATORIAL_RADIUS_M,
   SATURN_POLAR_RADIUS_M,
