@@ -226,6 +226,76 @@ const s1 = {
   resetInvariantRuntime();
 }
 
+// Test 8: assertInterpolationError throws for Phobos error > 5 km and routes to INV-011.
+{
+  configureInvariantRuntime({ mode: 'throw' });
+  const estimate = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 0,
+    positionM: { x: 5_100, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+  const truth = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 0,
+    positionM: { x: 0, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+  let error = null;
+  try {
+    assertInterpolationError(estimate, truth, 'phobos');
+  } catch (e) {
+    error = e;
+  }
+  assert(error instanceof AssertError, 'assertInterpolationError throws AssertError for Phobos error 5100 m (> 5 km bar)');
+  assert(error?.invariantId === 'INV-011', 'Phobos interpolation overflow routes to INV-011', `got ${error?.invariantId}`);
+  assert(error?.details?.bodyId === 'phobos', 'Phobos overflow includes bodyId detail', `got ${JSON.stringify(error?.details)}`);
+  assert(error?.details?.measuredErrorKm === 5.1, 'Phobos overflow includes measuredErrorKm detail', `got ${JSON.stringify(error?.details)}`);
+  assert(error?.details?.barKm === 5, 'Phobos overflow includes barKm detail', `got ${JSON.stringify(error?.details)}`);
+  assert(error?.details?.expectedCadenceSeconds === 1800, 'Phobos overflow includes 30-minute cadence detail', `got ${JSON.stringify(error?.details)}`);
+  resetInvariantRuntime();
+}
+
+// Test 9: assertInterpolationError reports INV-011 violations in report mode without throwing.
+{
+  const violations = [];
+  configureInvariantRuntime({
+    mode: 'report',
+    onViolation(violation) {
+      violations.push(violation);
+    },
+  });
+  const estimate = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 456,
+    positionM: { x: 600, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+  const truth = createCanonicalState({
+    frame: FRAME,
+    tdbSeconds: 456,
+    positionM: { x: 0, y: 0, z: 0 },
+    velocityMps: { x: 0, y: 0, z: 0 },
+  });
+
+  let threw = false;
+  try {
+    assertInterpolationError(estimate, truth, 'deimos');
+  } catch (e) {
+    threw = true;
+  }
+
+  assert(!threw, 'assertInterpolationError does not throw in report mode for Deimos overflow');
+  assert(violations.length === 1, 'assertInterpolationError emits one report-mode violation for Deimos overflow', `got ${violations.length}`);
+  assert(violations[0]?.invariantId === 'INV-011', 'Report-mode Deimos overflow routes to INV-011', `got ${violations[0]?.invariantId}`);
+  assert(violations[0]?.details?.bodyId === 'deimos', 'Report-mode Deimos overflow includes bodyId detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  assert(violations[0]?.details?.measuredErrorKm === 0.6, 'Report-mode Deimos overflow includes measuredErrorKm detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  assert(violations[0]?.details?.barKm === 0.5, 'Report-mode Deimos overflow includes barKm detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  assert(violations[0]?.details?.tdbSeconds === 456, 'Report-mode Deimos overflow includes tdbSeconds detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  assert(violations[0]?.details?.expectedCadenceSeconds === 3600, 'Report-mode Deimos overflow includes 1-hour cadence detail', `got ${JSON.stringify(violations[0]?.details)}`);
+  resetInvariantRuntime();
+}
+
 if (failures > 0) {
   console.error(`\n${failures} assertion(s) failed.`);
   process.exit(1);
