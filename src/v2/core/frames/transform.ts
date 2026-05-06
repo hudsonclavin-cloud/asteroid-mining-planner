@@ -3,6 +3,7 @@ import {
   FRAME_GCRS_EARTH,
   FRAME_HELIO_J2000_ICRF,
   FRAME_JUPITER_J2000_ICRF,
+  FRAME_MARS_J2000_ICRF,
   FRAME_SATURN_J2000_ICRF,
   type FrameId,
 } from './ids.js';
@@ -11,16 +12,19 @@ import { failInvariant } from '../invariants/runtime.js';
 
 export type EarthHeliocentricStateProvider = (tdbSeconds: number) => CanonicalState;
 export type JupiterHeliocentricStateProvider = (tdbSeconds: number) => CanonicalState;
+export type MarsHeliocentricStateProvider = (tdbSeconds: number) => CanonicalState;
 export type SaturnHeliocentricStateProvider = (tdbSeconds: number) => CanonicalState;
 
 export interface FrameTransformHooks {
   readonly earthHeliocentricStateProvider: EarthHeliocentricStateProvider;
   readonly jupiterHeliocentricStateProvider: JupiterHeliocentricStateProvider;
+  readonly marsHeliocentricStateProvider: MarsHeliocentricStateProvider;
   readonly saturnHeliocentricStateProvider: SaturnHeliocentricStateProvider;
 }
 
 let earthHeliocentricStateProvider: EarthHeliocentricStateProvider | null = null;
 let jupiterHeliocentricStateProvider: JupiterHeliocentricStateProvider | null = null;
+let marsHeliocentricStateProvider: MarsHeliocentricStateProvider | null = null;
 let saturnHeliocentricStateProvider: SaturnHeliocentricStateProvider | null = null;
 
 function subtractVec3(
@@ -46,12 +50,13 @@ function addVec3(
 }
 
 function resolveHeliocentricAnchorState(
-  label: 'Earth' | 'Jupiter' | 'Saturn',
+  label: 'Earth' | 'Jupiter' | 'Mars' | 'Saturn',
   frame: FrameId,
   tdbSeconds: number,
   provider:
     | EarthHeliocentricStateProvider
     | JupiterHeliocentricStateProvider
+    | MarsHeliocentricStateProvider
     | SaturnHeliocentricStateProvider
     | null
 ): CanonicalState {
@@ -94,6 +99,15 @@ function resolveJupiterHeliocentricState(tdbSeconds: number): CanonicalState {
   );
 }
 
+function resolveMarsHeliocentricState(tdbSeconds: number): CanonicalState {
+  return resolveHeliocentricAnchorState(
+    'Mars',
+    FRAME_MARS_J2000_ICRF,
+    tdbSeconds,
+    marsHeliocentricStateProvider
+  );
+}
+
 function resolveSaturnHeliocentricState(tdbSeconds: number): CanonicalState {
   return resolveHeliocentricAnchorState(
     'Saturn',
@@ -109,6 +123,8 @@ function assertSupportedTransform(from: FrameId, to: FrameId): void {
     (from === FRAME_GCRS_EARTH && to === FRAME_HELIO_J2000_ICRF) ||
     (from === FRAME_HELIO_J2000_ICRF && to === FRAME_JUPITER_J2000_ICRF) ||
     (from === FRAME_JUPITER_J2000_ICRF && to === FRAME_HELIO_J2000_ICRF) ||
+    (from === FRAME_HELIO_J2000_ICRF && to === FRAME_MARS_J2000_ICRF) ||
+    (from === FRAME_MARS_J2000_ICRF && to === FRAME_HELIO_J2000_ICRF) ||
     (from === FRAME_HELIO_J2000_ICRF && to === FRAME_SATURN_J2000_ICRF) ||
     (from === FRAME_SATURN_J2000_ICRF && to === FRAME_HELIO_J2000_ICRF);
 
@@ -126,6 +142,9 @@ export function configureFrameTransformHooks(
   if (hooks.jupiterHeliocentricStateProvider) {
     jupiterHeliocentricStateProvider = hooks.jupiterHeliocentricStateProvider;
   }
+  if (hooks.marsHeliocentricStateProvider) {
+    marsHeliocentricStateProvider = hooks.marsHeliocentricStateProvider;
+  }
   if (hooks.saturnHeliocentricStateProvider) {
     saturnHeliocentricStateProvider = hooks.saturnHeliocentricStateProvider;
   }
@@ -134,6 +153,7 @@ export function configureFrameTransformHooks(
 export function resetFrameTransformHooks(): void {
   earthHeliocentricStateProvider = null;
   jupiterHeliocentricStateProvider = null;
+  marsHeliocentricStateProvider = null;
   saturnHeliocentricStateProvider = null;
 }
 
@@ -147,6 +167,12 @@ export function getJupiterHeliocentricStateProvider():
   | JupiterHeliocentricStateProvider
   | null {
   return jupiterHeliocentricStateProvider;
+}
+
+export function getMarsHeliocentricStateProvider():
+  | MarsHeliocentricStateProvider
+  | null {
+  return marsHeliocentricStateProvider;
 }
 
 export function getSaturnHeliocentricStateProvider():
@@ -194,6 +220,10 @@ export function transformCanonicalState(
     fromFrame === FRAME_JUPITER_J2000_ICRF || toFrame === FRAME_JUPITER_J2000_ICRF
       ? resolveJupiterHeliocentricState(tdbSeconds)
       : null;
+  const marsState =
+    fromFrame === FRAME_MARS_J2000_ICRF || toFrame === FRAME_MARS_J2000_ICRF
+      ? resolveMarsHeliocentricState(tdbSeconds)
+      : null;
   const saturnState =
     fromFrame === FRAME_SATURN_J2000_ICRF || toFrame === FRAME_SATURN_J2000_ICRF
       ? resolveSaturnHeliocentricState(tdbSeconds)
@@ -223,6 +253,24 @@ export function transformCanonicalState(
       positionM: subtractVec3(state.positionM, jupiterState!.positionM),
       velocityMps: subtractVec3(state.velocityMps, jupiterState!.velocityMps),
       frame: FRAME_JUPITER_J2000_ICRF,
+    };
+  }
+
+  if (fromFrame === FRAME_HELIO_J2000_ICRF && toFrame === FRAME_MARS_J2000_ICRF) {
+    return {
+      ...state,
+      positionM: subtractVec3(state.positionM, marsState!.positionM),
+      velocityMps: subtractVec3(state.velocityMps, marsState!.velocityMps),
+      frame: FRAME_MARS_J2000_ICRF,
+    };
+  }
+
+  if (fromFrame === FRAME_MARS_J2000_ICRF && toFrame === FRAME_HELIO_J2000_ICRF) {
+    return {
+      ...state,
+      positionM: addVec3(state.positionM, marsState!.positionM),
+      velocityMps: addVec3(state.velocityMps, marsState!.velocityMps),
+      frame: FRAME_HELIO_J2000_ICRF,
     };
   }
 
