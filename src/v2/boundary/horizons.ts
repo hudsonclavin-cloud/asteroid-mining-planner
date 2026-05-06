@@ -2,6 +2,7 @@ import {
   FRAME_HELIO_J2000_ICRF,
   FRAME_GCRS_EARTH,
   FRAME_JUPITER_J2000_ICRF,
+  FRAME_MARS_J2000_ICRF,
   FRAME_SATURN_J2000_ICRF,
   J2000_ECLIPTIC_OBLIQUITY_RAD,
   assertCanonicalState,
@@ -137,6 +138,10 @@ export function inferCanonicalFrame(frameHint?: string, originHint?: string): Fr
     return FRAME_SATURN_J2000_ICRF;
   }
 
+  if (origin.includes('MARS-CENTERED')) {
+    return FRAME_MARS_J2000_ICRF;
+  }
+
   if (frame.includes('GCRS') || origin.includes('EARTH-CENTERED') || origin.includes('GEOCENTRIC')) {
     return FRAME_GCRS_EARTH;
   }
@@ -267,6 +272,14 @@ export function ingestSlice4Fixture(fixture: HorizonsFixture): Record<string, Ca
   const required = ['saturn', 'titan', 'rhea', 'iapetus', 'tethys', 'dione', 'mimas', 'enceladus'];
   for (const key of required) {
     if (!fixture.targets[key]) throw new Error(`Slice 4 fixture missing required body: ${key}`);
+  }
+  return ingestHorizonsFixture(fixture);
+}
+
+export function ingestSlice6Fixture(fixture: HorizonsFixture): Record<string, CanonicalStateSample[]> {
+  const required = ['mars', 'phobos', 'deimos'];
+  for (const key of required) {
+    if (!fixture.targets[key]) throw new Error(`Slice 6 fixture missing required body: ${key}`);
   }
   return ingestHorizonsFixture(fixture);
 }
