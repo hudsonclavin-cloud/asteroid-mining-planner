@@ -134,6 +134,21 @@ Bars validated at 15-minute (Mimas, Enceladus, Tethys) and 30-minute (others) Ho
 
 INV-008 (Slice 2 bars) and INV-009 (Slice 3 bars) remain in force unchanged. INV-010 is additive.
 
+#### INV-011: Per-Body Interpolation Error Bound (Slice 6)
+
+Slice 6 introduces `FRAME_MARS_J2000_ICRF` and per-body cadence for the Mars system. Phobos at `7.65-hour` orbital period requires the densest cadence in V2 to date (`30 minutes`). Interpolation error is bounded per body at each body's own cadence:
+
+| Body   | Cadence | Cutover bar |
+|---|---|---|
+| Phobos | 30m | 5 km |
+| Deimos | 1h | 0.5 km |
+
+Mars's INV-008 bar of `0.05 km` at `1d` carries forward unchanged.
+
+Bars validated at `5-minute` (Phobos) and `15-minute` (Deimos) Horizons truth cadence. See `src/v2/core/invariants/INV-011.md`.
+
+INV-008, INV-009, and INV-010 remain in force unchanged. INV-011 is additive.
+
 ### 3.5 Rendering Truth
 
 - Honest mode reads directly from canonical `core/` state
@@ -162,6 +177,8 @@ INV-010 (Per-Body Interpolation Error Bound for Saturn system) is additive. INV-
 
 Slice 5 introduces no new invariants. INV-001 through INV-010 continue to apply unchanged. Slice 5 is render-layer only and does not touch `core/` data, frames, or interpolation; the existing Slice 4 invariants fully cover the rendering work.
 
+INV-011 (Per-Body Interpolation Error Bound for Mars system) is additive. INV-001 through INV-010 continue to apply unchanged. Slice 6 introduces V2's densest cadence to date (Phobos at `30m`) and validates that the per-body Hermite + Horizons fixture pattern from Slices 3-4 extends to bodies with sub-10-hour orbital periods. SPK ingestion remains a Slice 7+ candidate, with empirical justification now provided by Slice 6's measured Phobos cadence margins (`6.4×` headroom against the `5 km` bar).
+
 See `src/v2/core/invariants/README.md` for INV-001 through INV-007 and `src/v2/core/invariants/INV-008.md` for the interpolation bound.
 
 ### 3.7 Interpolation Policy
@@ -172,9 +189,9 @@ Rules:
 
 - Linear interpolation is **forbidden** in any `core/` path
 - Linear interpolation is **allowed** in `render/` for screen-only effects (e.g., halo position smoothing between frames)
-- Per-body interpolation error must remain below the cutover bars in §3.4 when validated against Horizons truth at the cadence specified by each invariant: INV-008 at 6-hour cadence, INV-009 and INV-010 at 15-min or 30-min cadence depending on body
+- Per-body interpolation error must remain below the cutover bars in §3.4 when validated against Horizons truth at the cadence specified by each invariant: INV-008 at 6-hour cadence; INV-009, INV-010, and INV-011 at 5-min, 15-min, or 30-min cadence depending on body
 - The runtime assertion is `assertInterpolationError(estimate, truth, bodyId)` — throws in dev, structured log in prod
-- This policy is codified as INV-008 (Slice 2 bodies), INV-009 (Slice 3 bodies), and INV-010 (Slice 4 bodies). The runtime check signature is unified across all three invariants; per-body cadence is read from the constants module rather than passed at call time.
+- This policy is codified as INV-008 (Slice 2 bodies), INV-009 (Slice 3 bodies), INV-010 (Slice 4 bodies), and INV-011 (Slice 6 bodies). The runtime check signature is unified across all four invariants; per-body cadence is read from the constants module rather than passed at call time.
 
 ### 3.8 Frame Graph Extension (Slice 3)
 
@@ -221,6 +238,20 @@ Slice 4 introduces `FRAME_SATURN_J2000_ICRF` as a child of `FRAME_HELIO_J2000_IC
 - Saturn's ring system also lives in `FRAME_SATURN_J2000_ICRF`, with a render-only `26.7°` tilt from the frame `Z` axis so the rendered ring plane matches Saturn's equatorial plane.
 
 Slice 4 confirms that the planet-centered inertial frame pattern from §3.8 extends cleanly. The heliocentric root frame is now parent to two planet-centered frames (Jupiter, Saturn). Slice 5+ planet systems extend the same pattern.
+
+### 3.12 Frame Graph Extension (Slice 6)
+
+Slice 6 introduces `FRAME_MARS_J2000_ICRF` as a child of `FRAME_HELIO_J2000_ICRF`, mirroring the `FRAME_JUPITER_J2000_ICRF` (§3.8) and `FRAME_SATURN_J2000_ICRF` (§3.11) patterns.
+
+- Origin: Mars's center of mass.
+- Orientation: J2000/ICRF aligned (axes parallel to parent heliocentric frame).
+- Parent: `FRAME_HELIO_J2000_ICRF`.
+- Phobos and Deimos states live in this frame.
+- Mars's own state lives in the parent heliocentric frame.
+- Frame transform from Mars-centered to heliocentric: add Mars's heliocentric state vector. Inverse transform: subtract Mars's heliocentric state.
+- Pure subtraction transform; mathematically reversible to floating-point precision (matches Jupiter and Saturn frame round-trip behavior).
+
+Slice 6 confirms that the planet-centered inertial frame pattern from §3.8 extends to a third planet system. The heliocentric root frame is now parent to three planet-centered frames (Jupiter, Saturn, Mars).
 
 ---
 
@@ -446,6 +477,46 @@ Slice 5 is the smallest slice that:
 - Adds the highest-visual-significance features (significance `2-3`) that distinguish a moderately-zoomed Saturn from a low-zoom Saturn — Huygens Gap, Encke Gap, Roche Division
 - Refreshes Saturn rendering while Slice 4's render context is fresh in the codebase, before Slice 6's Mars + SPK ingestion architectural work shifts attention away from Saturn
 
+### Slice 6: Mars System Honest Mode
+
+Status: in implementation (clock starts at Slice 6 implementation dispatch).
+
+This slice extends honest mode to Mars (replacing Slice 2's simple spherical representation), Phobos, and Deimos. It introduces `FRAME_MARS_J2000_ICRF` as the third planet-centered inertial frame and validates the per-body Hermite cadence pattern at sub-hourly density (Phobos at `30m`).
+
+#### Included
+
+- Mars rendered as oblate ellipsoid (`a=b=3396.19km`, `c=3376.20km`, `~0.59%` flattening) with render-only `25.19°` axial tilt, replacing Slice 2 spherical Mars
+- Phobos rendered as sphere using `a=13km` axis, deliberate triaxial simplification per Galilean precedent
+- Deimos rendered as sphere using `a=7.8km` axis
+- `FRAME_MARS_J2000_ICRF`: new planet-centered inertial frame, child of `FRAME_HELIO_J2000_ICRF` (see §3.12)
+- Per-body fixture cadence: Mars `1d`, Phobos `30m`, Deimos `1h` (see §3.9 and `src/v2/boundary/slice6-fixture-spec.md`)
+- Cubic Hermite interpolation per body at its own cadence
+- Default outer-system overview camera unchanged (Mars now reachable via halo + focus key)
+- Default Mars focus camera at non-edge-on orbit angle per the §13 Slice 5 lesson
+- Time scrubbing densest cadence is now 30 minutes (Phobos), updated from Slice 5's 1 hour
+- Route: `/v2/solar-system` extends; no new route
+
+#### Excluded
+
+- Mars surface terrain (Olympus Mons, Valles Marineris, polar caps) — explicit non-goal
+- Mars atmosphere rendering — non-goal
+- Body-fixed rotation animation for Mars or moons — non-goal (consistent with Slice 3-5 deferrals)
+- Triaxial Phobos rendering — intentionally simplified despite `30%` triaxial spread
+- Triaxial Deimos rendering — same simplification despite `34.6%` spread
+- Mars's two minor satellites (Phobos and Deimos are the only known natural satellites; no minor moons exist)
+- SPK ingestion — explicitly deferred to Slice 7+ candidate
+- Asteroid rendering — Slice 7+ scope
+- All Slice 5 non-goals carry forward
+
+#### Why Slice 6
+
+Mars + Phobos/Deimos is the smallest planet system that:
+
+- Pressure-tests the per-body Hermite cadence pattern at sub-hourly density (Phobos's `7.65-hour` orbital period requires denser sampling than any prior V2 body)
+- Provides empirical measurement of Hermite interpolation accuracy at `30m` cadence, feeding the SPK-ingestion architectural decision in Slice 7+
+- Validates the planet-centered frame pattern across a third instance, with a planet whose tilt (`25.19°`) is more pronounced than Jupiter (`3.13°`) but less than Saturn (`26.7°`)
+- Adds a planet system whose moons have higher triaxial spread than any prior V2 body (Phobos `30%`, Deimos `34.6%`), establishing how V2 handles deliberately simplified spherical rendering at higher visual cost
+
 ---
 
 ## 6. Cutover Criteria
@@ -600,6 +671,21 @@ Manual browser verification on the target machine class (Apple Silicon Mac, inte
 
 Architectural note: Slice 5 surfaced and resolved a default Saturn-focus camera bug (pre-existing in Slice 4 but undetected at that cutover) where the camera was positioned exactly edge-on to the tilted ring plane (`90.00°` between camera view direction and ring-plane normal, with floating-point error of `1.4e-14°`). The fix (commit `8f3c30e`) adjusted the default Saturn focus orbit angle to `π/3` polar to avoid edge-on viewing. This is the architectural lesson Slice 5 contributed: render-only tilt rotation about the X-axis interacts with default camera orbit positioned along the X-axis to produce mathematical edge-on coincidence; future render-only tilt slices (e.g. Mars `25°`, Uranus `98°`) must explicitly verify default focus camera angles are non-edge-on to the tilted plane.
 
+### Mars System Slice Bar (Slice 6)
+
+- Per-body interpolated position error stays below the bars defined in §3.4 (Mars `0.05 km` at `1d` per INV-008 carry-forward, Phobos `5 km` at `30m`, Deimos `0.5 km` at `1h`) across the full `2026-05-01` to `2026-07-30` validation window. New Phobos and Deimos bars codified as INV-011.
+- Default outer-system overview camera shows Mars at honest sub-pixel scale (per §11 default-camera verification protocol; Mars's apparent diameter from `7 AU` is similar to Saturn's at the same distance). Halo makes Mars findable.
+- User-driven Mars focus camera at non-edge-on orbit angle shows Mars as visible oblate ellipsoid (oblateness barely visible at `0.59%` flattening; this is honest mode, not a bug).
+- Phobos and Deimos visible as halos initially when Mars is focused; resolved as small bodies at high zoom.
+- Continuous zoom from heliocentric overview through Mars system to `400 km` altitude above any of Mars, Phobos, Deimos shows no precision artifacts.
+- `60 fps` target on Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display.
+- Frame round-trips: `FRAME_HELIO_J2000_ICRF` ↔ `FRAME_MARS_J2000_ICRF` stays below `10 × Number.EPSILON` for one round-trip and `100 × Number.EPSILON` across a chain of ten transforms. Slice 1, 2, 3, 4 round-trip bounds remain in force.
+- Development invariants INV-001 through INV-011 pass with zero violations.
+- Slice 1, 2, 3, 4, 5 cutover harnesses continue passing (regression check).
+- Slice 6 ships at `/v2/solar-system`. Existing redirects remain in place.
+
+If those criteria are not met, the slice does not ship.
+
 ---
 
 ## 7. Validation Strategy
@@ -636,6 +722,14 @@ JPL Horizons vectors remain the truth authority. Slice 4 uses the API parameters
 `STEP_SIZE` values must be quoted (`'1 d'` not `1 D`) per the implementation note inherited from Slice 3.
 
 See `src/v2/boundary/slice4-fixture-spec.md` for the full fixture contract.
+
+### Slice 6 Truth Source
+
+JPL Horizons vectors remain the truth authority. Slice 6 uses the API parameters defined in `tools/slice6-research/fetch-horizons.mjs`. Phobos and Deimos queries use `CENTER='500@499'` (explicit Mars geocenter ID, mirroring Slice 3's `CENTER='500@599'` Galilean and Slice 4's `CENTER='500@699'` Saturnian patterns). Mars itself queried at `CENTER='500@10'` (heliocentric, matching Slice 2).
+
+`STEP_SIZE` values must be quoted (`'30 m'` not `30 M`) per the inheritance from Slices 3-5.
+
+See `src/v2/boundary/slice6-fixture-spec.md` for the full fixture contract.
 
 ### Minimum Automated Checks
 
@@ -724,6 +818,17 @@ The orchestrator enforces the wall between `src/v2/` and legacy.
 | `economics` | Frozen |
 | orchestrator | Enforces v2 wall, reviews cutover, resolves cross-agent conflicts |
 
+### Slice 6 Ownership
+
+| Agent | Owns |
+|---|---|
+| `orbital-mechanics` | INV-011, `FRAME_MARS_J2000_ICRF` transforms, interpolation extensions for Phobos `30m` and Deimos `1h` cadences, Mars system body constants |
+| `data-layer` | Horizons fetcher extension to Mars system, Slice 6 fixture ingestion (`ingestSlice6Fixture`), `mars-centered` frame inference |
+| `renderer` | Scene composition extension to Mars system, oblate Mars rendering per `src/v2/render/mars-oblate.md`, default Mars focus camera at non-edge-on orbit angle, halo continuity, replacement of Slice 2 simple Mars |
+| `ui-hud` | Frozen |
+| `economics` | Frozen |
+| orchestrator | Enforces v2 wall, reviews cutover, resolves cross-agent conflicts, enforces default-camera-state verification per §11 |
+
 ---
 
 ## 10. Non-Goals
@@ -791,6 +896,20 @@ All Slice 4 non-goals carry forward. Additionally:
 - Ring substructure render-layer optimization (LOD transitions, fade-out for distant Saturn views) — deferred until needed
 - Generalization to a `PlanetRings` primitive class (deferred until a second ringed-body slice for Uranus or Neptune actually needs it; Slice 5 extends `saturn-rings` module organically)
 
+### Non-Goals For Slice 6
+
+All Slice 5 non-goals carry forward. Additionally:
+
+- Mars surface terrain — Olympus Mons, Valles Marineris, polar ice caps; deferred to future polish slice or possibly a separate "surface rendering" architectural slice if that product direction is pursued
+- Mars atmosphere rendering — Mars has thin CO2 atmosphere; visible haze rendering deferred
+- Body-fixed rotation animation for Mars (`24h 37m` sidereal period) or moons (tidal locks)
+- Triaxial Phobos rendering — intentionally simplified despite `30%` triaxial spread
+- Triaxial Deimos rendering — same simplification
+- Mars satellite layer (no minor moons exist; explicit clarification only)
+- SPK ingestion — Slice 7+ candidate
+- Surface landing visualization (KSP-style) — explicitly out of scope; revisit as separate slice if pursued
+- Sub-30-minute cadence for any body — pre-research showed `30m` is sufficient for Phobos with `6.4×` margin
+
 ---
 
 ## 11. Failure Condition
@@ -816,6 +935,10 @@ The Slice 4 tripwire is **4 focused weekends from the start of the Slice 4 imple
 ### Slice 5
 
 The Slice 5 tripwire is **2 focused weekends from the start of the Slice 5 implementation dispatch**. Weekend 1 is consumed when implementation begins. If all seven features are not rendering visually correctly by end of weekend 2, the multi-`RingGeometry` approach (GPT-5 Option B) is re-evaluated against the alternatives (Option A 1D radial density texture, Option C hybrid) before Slice 6. Slice 5 is intentionally smaller in tripwire window than Slice 4 (`4 weekends`) because the architectural surface is smaller — render-layer extension only, no `core/` work, no new invariants.
+
+### Slice 6
+
+The Slice 6 tripwire is **3 focused weekends from the start of the Slice 6 implementation dispatch**. Slice 6 is intentionally tighter than Slice 4's `4-weekend` tripwire because the architectural pattern is now well-established (third planet-centered frame, third per-body cadence slice). If all three INV-011 cutover bars are not met by end of weekend 3, the per-body Hermite cadence approach is re-evaluated and SPK ingestion becomes a stronger candidate for Slice 7. Slice 6 also tripwires the default-camera verification protocol added in §11: default Mars focus camera must be confirmed non-edge-on at cutover. Manual verification per §11 must include both default-camera-state and focused-camera-state checks.
 
 ### Verification Protocol For All Future Slices
 
@@ -845,6 +968,11 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 - **Multi-RingGeometry vs single-texture-with-detail** — Slice 5 commits to GPT-5 Option B (multiple sibling `RingGeometry` instances) for ring substructure work. Validated as the right choice for `~7-12` named ring features; if Slice 6+ ring work scales to dozens of features, the 1D density texture approach (Option A) becomes worth revisiting.
 - **Ring substructure architectural artifact location** — `saturn-ring-substructure.md` as a sibling to `saturn-rings.md`, both inside `src/v2/render/`. Generalization to a `PlanetRings` primitive deferred per §10.
 
+### Resolved at Slice 6 planning
+
+- **Hermite-vs-SPK at sub-hourly cadence** — Slice 6 pre-research empirically validated Hermite at `30m` for Phobos with `6.4×` margin against `5 km` bar. SPK ingestion is not forced for Slice 6. Slice 7+ asteroid rendering remains the architectural forcing function for SPK consideration.
+- **Default focus camera edge-on coupling** — Slice 6 applies the §13 Slice 5 lesson (commit `8f3c30e` Saturn camera fix) preemptively to Mars focus orbit angles. The render-only `X`-axis tilt + camera-along-`X` coupling is now a documented constraint that future slices apply automatically rather than discover at cutover.
+
 ### Open
 
 - **Star background** — deferred to a later visual-polish slice
@@ -853,6 +981,8 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 - **Asterism overlays and planet orbit traces** — deferred until trajectory rendering slice
 - **Body rotation animation** — deferred to a future visual-polish slice
 - **SPK ingestion** — Slice 4's three independent `1h`-cadence bodies validated per-body Hermite, but Mars-system Phobos at `7.65h` orbital period is predicted to require sub-hourly cadence (likely `30-minute` or denser). SPK ingestion remains a Slice 5+ candidate, with stronger pressure now that Slice 4 has shown fixture size growing 2-3× per slice (Slice 2 `~250 KB` → Slice 3 `~780 KB` → Slice 4 `~1.85 MB`).
+- **Mars surface terrain rendering** — separate architectural slice if pursued. Surface-relative rendering at meter scale is architecturally supported by V2's camera-relative floating-origin pattern but not implemented. Decision deferred pending product direction (Aster mission planner thesis vs. KSP-style exploration product).
+- **Triaxial moon rendering** — Phobos's `30%` triaxial spread is the highest of any V2 body. Slice 6 ships spherical; if visual artifact reports surface, polish-of-polish triaxial Phobos is a candidate.
 - **Uranus and Neptune rings** — both have ring systems (Uranus's rings discovered 1977, Neptune's confirmed by Voyager 2 in 1989). The `saturn-rings.md` pattern should generalize, but Uranus's rings are nearly opaque dark particles and Neptune's are partial arcs — different visual character from Saturn. Revisit at Slice 6+ planning.
 - **Ring tilt evolution rendering** — Saturn's rings cycle from edge-on to fully open over ~15 years from Earth's viewpoint. This is rendered correctly at any single epoch (rings are tilted at the render layer so they match Saturn's equator while `FRAME_SATURN_J2000_ICRF` stays ICRF-aligned), but the visual cycle as Saturn moves through its heliocentric orbit is not animated. Honest at any snapshot; not animated across multi-year scrubs.
 - **Ring shadows** — render-layer artifact (Saturn casting on rings, rings casting on Saturn) needs both light source position from heliocentric frame and screen-space shadow rendering. Architecturally separable from current ring substructure work; revisit at Slice 7+ or a polish slice.
@@ -862,7 +992,7 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 
 ## 13. Known Limitations
 
-These are limitations of the shipped Slice 1, 2, 3, 4, and 5 deliverables, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
+These are limitations of the shipped Slice 1, 2, 3, 4, and 5 deliverables and the planned Slice 6 deliverable, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
 
 - **Camera body focus:** the default camera orbits a fixed point in heliocentric space. There is currently no UI to retarget the camera to Mercury, Venus, Mars, or any specific body for close-up zoom. Earth and Moon are reachable from the default camera orientation. Body focus selection is planned as a Slice 2 polish commit.
 
@@ -905,3 +1035,16 @@ These are limitations of the shipped Slice 1, 2, 3, 4, and 5 deliverables, recor
 - Material tuning is first-pass: Slice 5 ships with reasonable but not exhaustively tuned alpha values for the seven substructure features (gaps `~0.28-0.34`, ringlets `~0.62`, Roche Division gradient texture). If significance-3+ features prove difficult to find at typical zoom levels, the material tuning is the polish-of-polish lever.
 - Render-order discipline applies only to substructure overlays: the Slice 4 baseline meshes (main disk, Cassini Division band) explicitly do **not** use `renderOrder`, while the seven Slice 5 substructure meshes use `renderOrder ≥ 1`. This asymmetry was forced by a Three.js transparency-rendering quirk (commit `1aaa21f`) where setting explicit `renderOrder=0` on transparent baseline meshes caused them to fail to render. Future ring rendering work must preserve this asymmetry: baseline meshes default-`renderOrder`, overlays explicit-`renderOrder`.
 - Roche Division renders as visual outer-edge fade only: F ring is out of scope, so the Roche Division has no outer ring to terminate at; it just fades to transparent at its outer radius. This is structurally honest (the Roche Division is genuinely a tenuous transition zone) but visually ambiguous about what's beyond. F ring rendering is deferred per §10.
+
+### Slice 6
+
+- Phobos at `30-minute` fixture cadence is the densest cadence in V2 to date. Phobos fixture file is approximately `4,320` records over the `90-day` validation window, vs. `~2,160` for prior `1h`-cadence bodies. Total Slice 6 fixture estimated at `3-4 MB` (Slice 5 was `~2 MB`).
+- Phobos's `30%` triaxial spread (`13 / 11.4 / 9.1 km`) is the highest of any V2 body. Slice 6 ships spherical Phobos despite this; the visual simplification will be more noticeable at high zoom than for Saturn moons (Mimas's `8%` spread). Polish-of-polish triaxial Phobos rendering is a future candidate.
+- Deimos's `34.6%` triaxial spread is even higher in percentage terms but absolute body size is small (`~6 km` mean radius); spherical simplification is less visually impactful.
+- Mars's `0.59%` flattening is the lowest of any V2 body rendered as oblate ellipsoid. The visual difference between spherical and oblate Mars at typical zoom is barely distinguishable. Slice 6 maintains the architectural oblate-rendering pattern for consistency despite minimal visual payoff.
+- Time scrubbing densest cadence is now `30 minutes` (Phobos), down from Slice 5's `1 hour`. Slower-cadence bodies (Mars at `1d`, Deimos at `1h`) are interpolated to current scrub time per §3.10.
+- Default Mars focus camera applies the Slice 5 edge-on lesson (commit `8f3c30e`) preemptively. `orbitPolar` set to `π/3` (`60°`) or other non-edge-on value per the Saturn precedent; exact value chosen at implementation per the `saturnTiltGroup` precedent.
+- Phobos surface features (Stickney crater, groove fields) deferred. At `22 km` diameter and `~9.4` Mars radii orbital distance, Phobos is small enough that surface features would require very high zoom to resolve; deferred to future polish.
+- Deimos surface features deferred. Smaller and smoother than Phobos.
+- Mars rotation (`24h 37m` sidereal period) not animated. Same deferral pattern as Slices 3-5.
+- SPK ingestion remains deferred. Slice 6 pre-research empirically justified the deferral (Phobos at `30m` has `6.4×` margin against `5km` bar). Slice 7+ asteroid rendering at scale is the next architectural forcing function for SPK consideration.
