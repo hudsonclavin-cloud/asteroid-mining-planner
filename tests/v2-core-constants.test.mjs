@@ -40,6 +40,7 @@ const {
   INTERPOLATION_ERROR_BARS_M,
   INV008_BARS_M,
   INV010_BARS_M,
+  INV011_BARS_M,
   SATURN_A_RING_OUTER_RADIUS_M,
   SATURN_CASSINI_DIVISION_INNER_RADIUS_M,
   SATURN_CASSINI_DIVISION_OUTER_RADIUS_M,
@@ -64,9 +65,40 @@ const {
 );
 
 const SLICE2_BODY_IDS = ['sun', 'mercury', 'venus', 'earth', 'moon', 'mars'];
+const SLICE6_BODY_IDS = ['phobos', 'deimos'];
 const SLICE3_BODY_IDS = ['jupiter', 'io', 'europa', 'ganymede', 'callisto'];
 const SLICE4_BODY_IDS = ['saturn', 'titan', 'rhea', 'iapetus', 'tethys', 'dione', 'mimas', 'enceladus'];
-const EXPECTED_BODY_IDS = [...SLICE2_BODY_IDS, ...SLICE3_BODY_IDS, ...SLICE4_BODY_IDS];
+const EXPECTED_BODY_IDS = [...SLICE2_BODY_IDS, ...SLICE6_BODY_IDS, ...SLICE3_BODY_IDS, ...SLICE4_BODY_IDS];
+
+const EXPECTED_SLICE6_CONSTANTS = {
+  mars: {
+    naifId: 499,
+    radiusM: 3_396_190.0,
+    radiiM: { a: 3_396_190.0, b: 3_396_190.0, c: 3_376_200.0 },
+    vizColor: 0xC1440E,
+    cadenceSeconds: 86_400,
+    barM: 50,
+    invariantId: 'INV-008',
+  },
+  phobos: {
+    naifId: 401,
+    radiusM: 13_000.0,
+    radiiM: { a: 13_000.0, b: 11_400.0, c: 9_100.0 },
+    vizColor: 0x8A7B69,
+    cadenceSeconds: 1_800,
+    barM: 5_000,
+    invariantId: 'INV-011',
+  },
+  deimos: {
+    naifId: 402,
+    radiusM: 7_800.0,
+    radiiM: { a: 7_800.0, b: 6_000.0, c: 5_100.0 },
+    vizColor: 0x9EA3A8,
+    cadenceSeconds: 3_600,
+    barM: 500,
+    invariantId: 'INV-011',
+  },
+};
 
 const EXPECTED_SLICE3_CONSTANTS = {
   jupiter: {
@@ -302,6 +334,25 @@ for (const id of SLICE4_BODY_IDS) {
   );
 }
 
+// Verify all Slice 6 moon body IDs are present in INV011_BARS_M.
+for (const id of SLICE6_BODY_IDS) {
+  assert(
+    Object.prototype.hasOwnProperty.call(INV011_BARS_M, id),
+    `INV011_BARS_M has key '${id}'`,
+    `key '${id}' missing from INV011_BARS_M`
+  );
+}
+
+// Verify each INV011_BARS_M value > 0.
+for (const id of SLICE6_BODY_IDS) {
+  const val = INV011_BARS_M[id];
+  assert(
+    typeof val === 'number' && val > 0,
+    `INV011_BARS_M['${id}'] > 0`,
+    `got ${val}`
+  );
+}
+
 // Verify unified interpolation bars and cadence entries exist for all bodies.
 for (const id of EXPECTED_BODY_IDS) {
   assert(
@@ -337,6 +388,31 @@ for (const [id, expected] of Object.entries(EXPECTED_SLICE3_CONSTANTS)) {
         entry.radiiM?.b === expected.radiiM.b &&
         entry.radiiM?.c === expected.radiiM.c,
       `BODY_CONSTANTS['${id}'].radiiM matches README triaxial values`,
+      `got ${JSON.stringify(entry.radiiM)}`
+    );
+  }
+}
+
+// Verify Slice 6 Mars-system constants match the README and invariant specs.
+for (const [id, expected] of Object.entries(EXPECTED_SLICE6_CONSTANTS)) {
+  const entry = BODY_CONSTANTS[id];
+  assert(entry.naifId === expected.naifId, `BODY_CONSTANTS['${id}'].naifId matches Slice 6 docs`, `got ${entry.naifId}`);
+  assert(entry.radiusM === expected.radiusM, `BODY_CONSTANTS['${id}'].radiusM matches Slice 6 docs`, `got ${entry.radiusM}`);
+  assert(entry.vizColor === expected.vizColor, `BODY_CONSTANTS['${id}'].vizColor matches Slice 6 docs`, `got ${entry.vizColor}`);
+  assert(BODY_CADENCE_SECONDS[id] === expected.cadenceSeconds, `BODY_CADENCE_SECONDS['${id}'] matches Slice 6 cadence`, `got ${BODY_CADENCE_SECONDS[id]}`);
+  assert(INTERPOLATION_ERROR_BARS_M[id] === expected.barM, `INTERPOLATION_ERROR_BARS_M['${id}'] matches Slice 6 bar`, `got ${INTERPOLATION_ERROR_BARS_M[id]}`);
+  assert(BODY_INTERPOLATION_INVARIANTS[id] === expected.invariantId, `BODY_INTERPOLATION_INVARIANTS['${id}'] matches Slice 6 invariant`, `got ${BODY_INTERPOLATION_INVARIANTS[id]}`);
+
+  if (id === 'phobos' || id === 'deimos') {
+    assert(INV011_BARS_M[id] === expected.barM, `INV011_BARS_M['${id}'] matches Slice 6 bar`, `got ${INV011_BARS_M[id]}`);
+  }
+
+  if (expected.radiiM) {
+    assert(
+      entry.radiiM?.a === expected.radiiM.a &&
+        entry.radiiM?.b === expected.radiiM.b &&
+        entry.radiiM?.c === expected.radiiM.c,
+      `BODY_CONSTANTS['${id}'].radiiM matches Slice 6 triaxial values`,
       `got ${JSON.stringify(entry.radiiM)}`
     );
   }

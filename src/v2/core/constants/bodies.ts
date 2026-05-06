@@ -5,6 +5,8 @@ export type BodyId =
   | 'earth'
   | 'moon'
   | 'mars'
+  | 'phobos'
+  | 'deimos'
   | 'jupiter'
   | 'io'
   | 'europa'
@@ -25,7 +27,7 @@ export interface TriaxialRadiiM {
   c: number;
 }
 
-export type InterpolationInvariantId = 'INV-008' | 'INV-009' | 'INV-010';
+export type InterpolationInvariantId = 'INV-008' | 'INV-009' | 'INV-010' | 'INV-011';
 
 export interface BodyConstants {
   naifId: number;
@@ -40,7 +42,26 @@ export const BODY_CONSTANTS: Record<BodyId, BodyConstants> = {
   venus:     { naifId: 299, radiusM:   6_051_800.0, vizColor: 0xE8C98A },
   earth:     { naifId: 399, radiusM:   6_378_136.6, vizColor: 0x4B9CD3 },
   moon:      { naifId: 301, radiusM:   1_737_400.0, vizColor: 0xB0B0B0 },
-  mars:      { naifId: 499, radiusM:   3_396_190.0, vizColor: 0xC1440E },
+  mars:      {
+    naifId: 499,
+    radiusM:   3_396_190.0,
+    radiiM: { a: 3_396_190.0, b: 3_396_190.0, c: 3_376_200.0 },
+    vizColor: 0xC1440E,
+  },
+  // Slice 6 renders both Mars moons as spheres using the PCK a-axis radius by
+  // deliberate policy; b/c are retained here for future triaxial polish.
+  phobos:    {
+    naifId: 401,
+    radiusM:      13_000.0,
+    radiiM: { a: 13_000.0, b: 11_400.0, c: 9_100.0 },
+    vizColor: 0x8A7B69,
+  },
+  deimos:    {
+    naifId: 402,
+    radiusM:       7_800.0,
+    radiiM: { a: 7_800.0, b: 6_000.0, c: 5_100.0 },
+    vizColor: 0x9EA3A8,
+  },
   jupiter:   {
     naifId: 599,
     radiusM: 71_492_000.0,
@@ -96,6 +117,12 @@ export const INV010_BARS_M: Record<
   enceladus:   5_000,  // 5 km
 };
 
+// INV-011 cutover bars in meters (km values from founding doc × 1000)
+export const INV011_BARS_M: Record<'phobos' | 'deimos', number> = {
+  phobos: 5_000,  // 5 km
+  deimos:   500,  // 0.5 km
+};
+
 export const SATURN_D_RING_INNER_RADIUS_M = 66_900_000;
 export const SATURN_C_RING_INNER_RADIUS_M = 74_491_000;
 export const SATURN_A_RING_OUTER_RADIUS_M = 136_770_000;
@@ -118,9 +145,11 @@ export const SATURN_KEELER_GAP_OUTER_RADIUS_M = 136_522_000;
 export const SATURN_ROCHE_DIVISION_INNER_RADIUS_M = 136_770_000;
 export const SATURN_ROCHE_DIVISION_OUTER_RADIUS_M = 139_380_000;
 
-// Unified interpolation bars across Slice 2 (INV-008), Slice 3 (INV-009), and Slice 4 (INV-010).
+// Unified interpolation bars across Slice 2 (INV-008), Slice 3 (INV-009),
+// Slice 4 (INV-010), and Slice 6 (INV-011).
 export const INTERPOLATION_ERROR_BARS_M: Record<BodyId, number> = {
   ...INV008_BARS_M,
+  ...INV011_BARS_M,
   jupiter:   50_000,  // 50 km
   io:         5_000,  // 5 km
   europa:    20_000,  // 20 km
@@ -136,6 +165,8 @@ export const BODY_CADENCE_SECONDS: Record<BodyId, number> = {
   earth:    86_400,
   moon:     86_400,
   mars:     86_400,
+  phobos:    1_800,
+  deimos:    3_600,
   jupiter:  86_400,
   io:        3_600,
   europa:   10_800,
@@ -158,6 +189,8 @@ export const BODY_INTERPOLATION_INVARIANTS: Record<BodyId, InterpolationInvarian
   earth: 'INV-008',
   moon: 'INV-008',
   mars: 'INV-008',
+  phobos: 'INV-011',
+  deimos: 'INV-011',
   jupiter: 'INV-009',
   io: 'INV-009',
   europa: 'INV-009',
