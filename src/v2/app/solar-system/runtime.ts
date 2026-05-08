@@ -32,7 +32,7 @@ const ORBIT_SENSITIVITY = 0.005;
 const WHEEL_ZOOM_SENSITIVITY = 0.0015;
 const TIME_SCRUB_STEP_SECONDS = 1800;
 const FOCUS_TRANSITION_DURATION_MS = 650;
-const MARS_RENDER_TILT_RAD = THREE.MathUtils.degToRad(25.19);
+export const MARS_RENDER_TILT_RAD = THREE.MathUtils.degToRad(25.19);
 const MARS_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 const SATURN_RENDER_TILT_RAD = THREE.MathUtils.degToRad(26.7);
 const SATURN_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
@@ -163,6 +163,33 @@ function createBodyMesh(bodyId: BodyId): THREE.Mesh {
   return new THREE.Mesh(geometry, material);
 }
 
+export function createMarsSystemRenderGroups(): {
+  marsSystemGroup: THREE.Group;
+  marsTiltGroup: THREE.Group;
+  marsCenteredGroup: THREE.Group;
+} {
+  const marsTiltGroup = new THREE.Group();
+  marsTiltGroup.name = 'mars-tilt-group';
+  marsTiltGroup.rotation.x = MARS_RENDER_TILT_RAD;
+
+  const marsCenteredGroup = new THREE.Group();
+  marsCenteredGroup.name = 'mars-centered-group';
+
+  const marsSystemGroup = new THREE.Group();
+  marsSystemGroup.name = 'mars-system-group';
+  marsSystemGroup.add(marsTiltGroup);
+  // marsCenteredGroup is a SIBLING of marsTiltGroup, NOT a child.
+  // Render-only tilt applies to body geometry only, never to the child group
+  // containing other bodies in the same frame. Child bodies in mars-centered
+  // ICRF are already in canonical orientation; applying render tilt rotates
+  // them out of position and breaks focus-target agreement (Phase F, May 2026).
+  // This matches the Saturn precedent, where saturnTiltGroup contains Saturn
+  // body + rings only while Saturn moons remain siblings in the parent system.
+  marsSystemGroup.add(marsCenteredGroup);
+
+  return { marsSystemGroup, marsTiltGroup, marsCenteredGroup };
+}
+
 function getDefaultFocusRadius(bodyId: BodyId): number {
   if (bodyId === 'mars') {
     return MARS_SYSTEM_OVERVIEW_RADIUS_M;
@@ -257,15 +284,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const renderRoots = new Map<BodyId, THREE.Object3D>();
   const meshes = new Map<BodyId, THREE.Mesh>();
-  const marsTiltGroup = new THREE.Group();
-  marsTiltGroup.name = 'mars-tilt-group';
-  marsTiltGroup.rotation.x = MARS_RENDER_TILT_RAD;
-  const marsCenteredGroup = new THREE.Group();
-  marsCenteredGroup.name = 'mars-centered-group';
-  const marsSystemGroup = new THREE.Group();
-  marsSystemGroup.name = 'mars-system-group';
-  marsTiltGroup.add(marsCenteredGroup);
-  marsSystemGroup.add(marsTiltGroup);
+  const { marsSystemGroup, marsTiltGroup, marsCenteredGroup } = createMarsSystemRenderGroups();
   const saturnTiltGroup = new THREE.Group();
   saturnTiltGroup.name = 'saturn-tilt-group';
   saturnTiltGroup.rotation.x = SATURN_RENDER_TILT_RAD;

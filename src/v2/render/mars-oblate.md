@@ -12,10 +12,14 @@ Mars's axial tilt is `25.19°` relative to its orbital plane. Per the V2 archite
 
 ```text
 marsSystemGroup
-  └── marsTiltGroup // rotation.x = MARS_RENDER_TILT_RAD ≈ 0.4395 (25.19°)
-      ├── mars body mesh
-      └── marsCenteredGroup (children: Phobos, Deimos meshes)
+  ├── marsTiltGroup // rotation.x = MARS_RENDER_TILT_RAD ≈ 0.4395 (25.19°)
+  │   └── mars body mesh (oblate ellipsoid)
+  └── marsCenteredGroup
+      ├── phobos mesh (sphere)
+      └── deimos mesh (sphere)
 ```
+
+`marsCenteredGroup` is a sibling of `marsTiltGroup`, not a child. Phobos and Deimos states live in `FRAME_MARS_J2000_ICRF`, which is already canonically ICRF-aligned. Applying Mars's render-only axial tilt to the moon group would rotate moon positions out of their canonical ICRF orientation, causing the rendered moon positions to disagree with focus-target anchors computed via `getHeliocentricState`. The render-only tilt is geometry-presentation only, applied to Mars body mesh, not to other bodies in the Mars system. This matches the Saturn precedent (`saturnTiltGroup` contains Saturn body and rings only; Saturn moons are siblings).
 
 ## Geometry
 
