@@ -6,7 +6,7 @@ At heliocentric scales, physically honest body geometry falls below the pixel th
 
 ## Trigger (DEC-3)
 
-A halo appears when a body's apparent diameter drops below **3 pixels**.
+A halo is fully visible when a body's apparent diameter is below **1.5 pixels**. It then fades out linearly over the range **1.5 px to 4 px**, and is fully invisible above **4 px**.
 
 Apparent diameter in pixels:
 
@@ -14,7 +14,9 @@ Apparent diameter in pixels:
 apparent_diameter_px = 2 × arctan(body_radius_m / camera_distance_m) × (viewport_height_px / fov_rad)
 ```
 
-The 3-pixel threshold is uniform across all bodies. No per-body overrides.
+The transition zone is uniform across all bodies. No per-body overrides.
+
+This hysteresis band was added after Slice 6 manual verification surfaced a dead-zone for Phobos and Deimos: the old hard `3 px` cutoff could hide the halo at the same moment the body mesh was only barely perceptible. Keeping the halo partially visible until `4 px` removes that handoff gap without changing canonical body size.
 
 ## Architecture constraints
 
@@ -33,7 +35,7 @@ The 3-pixel threshold is uniform across all bodies. No per-body overrides.
 
 ## Sun interaction (DEC-2)
 
-The Sun uses a plain emissive sphere. No bloom, no post-processing pass. The Sun halo triggers at the same 3-pixel threshold as all other bodies and uses the same sprite mechanism.
+The Sun uses a plain emissive sphere. No bloom, no post-processing pass. The Sun halo uses the same `1.5 px -> 4 px` transition band as all other bodies and uses the same sprite mechanism.
 
 ## Performance constraint
 

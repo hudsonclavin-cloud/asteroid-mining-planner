@@ -3,11 +3,29 @@ import { BODY_CONSTANTS } from '../core/constants/bodies.js';
 import type { BodyId } from '../core/constants/bodies.js';
 
 export let HALOS_ENABLED = true;
+export const HALO_BASE_OPACITY = 0.85;
+export const HALO_FULL_VISIBILITY_MAX_DIAMETER_PX = 1.5;
+export const HALO_INVISIBLE_MIN_DIAMETER_PX = 4;
 
 interface HaloEntry {
   bodyId: BodyId;
   sprite: THREE.Sprite;
   material: THREE.SpriteMaterial;
+}
+
+export function getHaloOpacityForApparentDiameterPx(apparentDiameterPx: number): number {
+  if (apparentDiameterPx <= HALO_FULL_VISIBILITY_MAX_DIAMETER_PX) {
+    return HALO_BASE_OPACITY;
+  }
+
+  if (apparentDiameterPx >= HALO_INVISIBLE_MIN_DIAMETER_PX) {
+    return 0;
+  }
+
+  const fadeProgress =
+    (HALO_INVISIBLE_MIN_DIAMETER_PX - apparentDiameterPx) /
+    (HALO_INVISIBLE_MIN_DIAMETER_PX - HALO_FULL_VISIBILITY_MAX_DIAMETER_PX);
+  return fadeProgress * HALO_BASE_OPACITY;
 }
 
 export class HaloSystem {
@@ -23,7 +41,7 @@ export class HaloSystem {
       const material = new THREE.SpriteMaterial({
         color,
         transparent: true,
-        opacity: 0.85,
+        opacity: HALO_BASE_OPACITY,
         depthTest: false,
       });
       const sprite = new THREE.Sprite(material);
@@ -61,10 +79,12 @@ export class HaloSystem {
 
       const apparentDiameterPx =
         2 * Math.atan(radiusM / distM) * (viewport.height / fovRad);
+      const haloOpacity = getHaloOpacityForApparentDiameterPx(apparentDiameterPx);
 
-      if (apparentDiameterPx < 3) {
+      if (haloOpacity > 0) {
         // Show halo: position it at the body's camera-relative location
         entry.sprite.position.copy(positionRelCam);
+        entry.material.opacity = haloOpacity;
 
         // Size the sprite to a minimum visible size (8 px diameter), projected back to world units
         const haloPixels = Math.max(8, apparentDiameterPx);
@@ -74,6 +94,7 @@ export class HaloSystem {
         entry.sprite.scale.set(haloWorldSize, haloWorldSize, 1);
         entry.sprite.visible = true;
       } else {
+        entry.material.opacity = 0;
         entry.sprite.visible = false;
       }
     }
