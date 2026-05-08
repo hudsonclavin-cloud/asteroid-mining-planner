@@ -176,6 +176,26 @@ function getDefaultFocusRadius(bodyId: BodyId): number {
   return Math.max(5 * BODY_CONSTANTS[bodyId].radiusM, BODY_CONSTANTS[bodyId].radiusM + 400_000);
 }
 
+export function resolveFocusOrbitRadius(
+  activeFocusBody: FocusTarget,
+  nextFocusBody: BodyId,
+  currentOrbitRadius: number,
+): number {
+  if (activeFocusBody === OUTER_SYSTEM_OVERVIEW) {
+    return getDefaultFocusRadius(nextFocusBody);
+  }
+
+  if (activeFocusBody === nextFocusBody) {
+    return currentOrbitRadius;
+  }
+
+  // Slice 6 Phase E: cross-body focus transitions can span adversarial scale gaps
+  // (Mars at 60 Mm vs. Phobos at 413 km is ~145x). Reusing the previous body's
+  // orbit radius can strand the new target in the halo/body handoff zone, so a
+  // real body change always snaps to the target's default focus distance.
+  return getDefaultFocusRadius(nextFocusBody);
+}
+
 function getMinOrbitRadiusForFocus(bodyId: FocusTarget): number {
   if (bodyId === OUTER_SYSTEM_OVERVIEW) {
     return MIN_CAMERA_DISTANCE_M;
@@ -597,9 +617,11 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     if (nextFocusBody) {
       const nowMs = performance.now();
       const activeFocusBody = getActiveFocusBody(nowMs);
-      const nextOrbitRadius = activeFocusBody === OUTER_SYSTEM_OVERVIEW
-        ? getDefaultFocusRadius(nextFocusBody)
-        : clamp(orbitRadius, getMinOrbitRadiusForFocus(nextFocusBody), MAX_CAMERA_DISTANCE_M);
+      const nextOrbitRadius = resolveFocusOrbitRadius(
+        activeFocusBody,
+        nextFocusBody,
+        orbitRadius,
+      );
       startFocusTransition(nextFocusBody, nextOrbitRadius);
       return;
     }
