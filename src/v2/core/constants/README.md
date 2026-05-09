@@ -252,6 +252,50 @@ Mars has no ring system. Slice 4's Saturn-ring constants and Slice 5's Saturn ri
 
 Per-body cadence and INV-011 bars: see `src/v2/boundary/slice6-fixture-spec.md` and `src/v2/core/invariants/INV-011.md`.
 
+## Asteroid Catalog Bodies (Slice 7)
+
+Slice 7 extends `core/` from a fixed small body table to a catalog-scale body set. The asteroid catalog is not expanded inline here as `1,008` separate README entries; the contract is catalog-level.
+
+### Catalog Summary
+
+- Total bodies: `1,008`
+- Composition: Top `1,000` main-belt asteroids by `H` plus `8` curated famous NEAs
+- Main-belt cutoff: `H = 10.98`
+- Frame: all asteroid bodies live in `FRAME_HELIO_J2000_ICRF`
+- Propagation method: Keplerian two-body from a uniform Horizons anchor epoch
+- Invariant: `src/v2/core/invariants/INV-012.md`
+
+### Source Of Record
+
+- Selection + metadata: `tools/slice7-research/data/main-belt-top-1000.json` and `tools/slice7-research/data/famous-neas.json`
+- Uniform anchor states: `tools/slice7-research/data/horizons-anchors.json`
+- Architectural policy: `src/v2/core/asteroid-catalog.md`
+- Fixture contract: `src/v2/boundary/slice7-fixture-spec.md`
+
+### Metadata Fields Preserved In Core
+
+Each asteroid body constant / metadata entry should preserve:
+
+- designation
+- stable `BodyId` of the form `asteroid-<designation>`
+- display name when present
+- class (`MBA`, `APO`, `AMO`, `ATE`)
+- `neo` / `pha`
+- `H`
+- `G`
+- `condition_code`
+- `data_arc`
+
+### Anchor-State Discipline
+
+- Slice 7 does not propagate directly from SBDB's stored osculating elements
+- Propagation starts from one Horizons anchor state per asteroid at `2026-05-01 00:00:00 TDB`
+- Derived osculating elements from that anchor are the production propagation seed
+
+### Render-Radius Note
+
+Unlike planets and major moons, Slice 7 does not introduce a hand-maintained `BODY*_RADII`-style table for all `1,008` asteroids in this README. The catalog contract owns identity, photometry, class, and propagation seed; render-layer representation strategy is documented separately in `src/v2/render/asteroid-rendering.md`.
+
 ## Rules for implementors
 
 1. Convert km → m by multiplying by 1000. Never store a km value in a `core/` export.
