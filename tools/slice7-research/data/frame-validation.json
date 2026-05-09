@@ -1,0 +1,29 @@
+{
+  "generatedAtUtc": "2026-05-09T19:53:45.350Z",
+  "obliquity_arcsec": 84381.448,
+  "GM_sun_m3_s2": 132712440018000000000,
+  "target_residual_km": 1,
+  "critical_residual_km": 100,
+  "bodies": [
+    {
+      "designation": "433",
+      "name": "Eros",
+      "class": "AMO",
+      "epoch_tdb": 2461000.5,
+      "H": 10.39,
+      "residual_km": 0.6279029760157657,
+      "reference_header": "Reference frame : ICRF",
+      "status": "pass"
+    },
+    {
+      "designation": "4",
+      "name": "Vesta",
+      "class": "MBA",
+      "epoch_tdb": 2461000.5,
+      "H": 3.25,
+      "residual_km": 0.10165631957762147,
+      "reference_header": "Reference frame : ICRF",
+      "status": "pass"
+    }
+  ]
+}
