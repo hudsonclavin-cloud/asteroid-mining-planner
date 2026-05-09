@@ -156,3 +156,94 @@ The locked `100,000 km` DEC-5 target is not empirically validated across this sa
 - `tools/slice7-research/data/keplerian-accuracy.json`
 - `tools/slice7-research/data/frame-validation.json`
 - `tools/slice7-research/data/horizons-truth/*.json`
+
+## Round 2: Horizons-Anchored Re-Measurement
+
+### Why Round 2 Was Necessary
+
+Round 1 proved the two-body propagator and frame math were fundamentally sound, but it also exposed a source-data problem: SBDB epochs are heterogeneous. Bennu was the clearest failure mode. SBDB supplied Bennu's osculating elements at `JD 2455562.5` (`2011-01-01 TDB`), so a two-body propagation from 2011 to the 2026 validation window accumulated a completely non-representative visualization error. That was not the product question Slice 7 actually needs to answer.
+
+Round 2 changes only the anchor source:
+
+- SBDB remains the canonical source for body selection and metadata enrichment.
+- Horizons becomes the canonical source for propagation anchor state at a uniform recent epoch.
+
+This isolates the Slice 7 question correctly: given a recent heliocentric anchor state for each selected asteroid, how well does vanilla two-body Keplerian propagation hold over the 90-day validation window?
+
+### Refined Methodology
+
+- SBDB role:
+  - select the Top `1000` main-belt bodies after quality gates
+  - provide `H`, `G`, orbit class, `condition_code`, `data_arc`, and designation metadata
+- Horizons role:
+  - provide one heliocentric `ICRF` Cartesian anchor state per selected asteroid
+  - uniform anchor epoch: `JD 2461161.5` (`2026-05-01 00:00:00 TDB`)
+- Round 2 flow:
+  1. Fetch Cartesian anchor states for all `1008` selected bodies into `horizons-anchors.json`
+  2. Convert anchor state to osculating elements
+  3. Propagate forward with the existing `keplerian-propagate.mjs` unchanged
+  4. Compare against the existing round-1 Horizons truth window
+
+DEC-2 refinement for the founding doc:
+
+- SBDB is canonical for inventory and metadata.
+- Horizons is canonical for recent propagation anchor state.
+- Slice 7 therefore uses two ingestion sources with distinct purposes, not one source pretending to satisfy both.
+
+### Re-Measured Accuracy Table
+
+| Body | Class | H | Round 1 max (km) | Round 2 max (km) | Round 1 RMS (km) | Round 2 RMS (km) | Round 1 @90d (km) | Round 2 @90d (km) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Hygiea | MBA | 5.65 | 258,309.2 | 35,313.4 | 177,398.8 | 15,843.2 | 258,309.2 | 35,313.4 |
+| Psyche | MBA | 6.20 | 123,839.9 | 22,510.4 | 81,839.7 | 9,934.2 | 123,839.9 | 22,510.4 |
+| Laetitia | MBA | 5.97 | 143,909.3 | 13,853.8 | 104,710.3 | 6,299.1 | 143,909.3 | 13,853.8 |
+| Harmonia | MBA | 6.56 | 115,772.3 | 10,583.0 | 79,951.0 | 4,807.6 | 115,772.3 | 10,583.0 |
+| Wanda | MBA | 10.98 | 75,302.6 | 8,322.0 | 54,246.8 | 3,746.6 | 75,302.6 | 8,322.0 |
+| Geographos | APO | 15.26 | 24,690.3 | 4,411.3 | 22,839.0 | 1,731.1 | 21,966.7 | 4,411.3 |
+| Toutatis | APO | 15.29 | 28,847.5 | 4,390.6 | 19,975.7 | 1,992.6 | 28,847.5 | 4,390.6 |
+| Eunomia | MBA | 5.43 | 36,869.5 | 4,295.0 | 25,640.8 | 1,934.5 | 36,869.5 | 4,295.0 |
+| Bennu | APO | 20.21 | 8,363,734.8 | 4,236.4 | 7,507,255.9 | 1,827.0 | 6,739,443.6 | 4,236.4 |
+| Ryugu | APO | 19.55 | 6,497.9 | 4,122.0 | 4,907.9 | 1,708.7 | 6,497.9 | 4,122.0 |
+| Juno | MBA | 5.19 | 30,565.9 | 3,796.2 | 21,039.4 | 1,755.9 | 30,565.9 | 3,796.2 |
+| Pallas | MBA | 4.11 | 27,503.0 | 3,757.9 | 19,514.5 | 1,746.9 | 27,503.0 | 3,757.9 |
+| Ceres | MBA | 3.35 | 28,763.9 | 3,312.7 | 19,598.0 | 1,503.1 | 28,763.9 | 3,312.7 |
+| Eros | AMO | 10.39 | 47,340.7 | 3,277.4 | 33,001.5 | 1,431.1 | 47,340.7 | 3,277.4 |
+| Vesta | MBA | 3.25 | 24,762.4 | 3,210.8 | 17,276.6 | 1,496.2 | 24,762.4 | 3,210.8 |
+| Castalia | APO | 17.40 | 7,596.9 | 2,989.2 | 7,168.9 | 1,352.6 | 6,408.8 | 2,989.2 |
+| Itokawa | APO | 19.26 | 16,826.2 | 1,707.3 | 10,662.4 | 802.1 | 16,826.2 | 1,707.3 |
+| Apophis | ATE | 19.09 | 20,386.9 | 1,506.2 | 14,461.1 | 623.8 | 20,386.9 | 1,506.2 |
+
+### Side-by-Side Interpretation
+
+- Worst sampled round-1 body excluding Bennu:
+  - `10 Hygiea` at `258,309.2 km`
+- Worst sampled round-2 body:
+  - `10 Hygiea` at `35,313.4 km`
+- Bennu specifically:
+  - round 1 max: `8,363,734.8 km`
+  - round 2 max: `4,236.4 km`
+  - round 1 day-90: `6,739,443.6 km`
+  - round 2 day-90: `4,236.4 km`
+  - day-90 improvement: about `1591x`
+
+The Bennu result confirms the diagnosis from round 1. The catastrophic error was driven by stale anchor epoch, not by a deeper failure of two-body Kepler propagation over a 90-day visualization window.
+
+### Updated INV-012 Recommendation
+
+- Proposed bar:
+  - keep `INV-012 = 100,000 km` at `1d` cadence
+- Empirical support after round 2:
+  - worst sampled body: `35,313.4 km` (`10 Hygiea`)
+  - margin to `100,000 km`: `2.83x`
+- Interpretation:
+  - the locked `100,000 km` target is now empirically validated across the representative 18-body sample
+  - the round-2 anchor policy is a necessary precondition for that statement to remain honest
+
+### Round 2 Files Added
+
+- `tools/slice7-research/fetch-horizons-anchors.mjs`
+- `tools/slice7-research/state-to-elements.mjs`
+- `tools/slice7-research/test-state-to-elements.mjs`
+- `tools/slice7-research/measure-keplerian-anchored.mjs`
+- `tools/slice7-research/data/horizons-anchors.json`
+- `tools/slice7-research/data/keplerian-accuracy-anchored.json`
