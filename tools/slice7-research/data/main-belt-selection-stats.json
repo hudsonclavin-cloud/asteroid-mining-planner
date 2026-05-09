@@ -1,0 +1,15 @@
+{
+  "fetchedAtUtc": "2026-05-09T19:40:09.818Z",
+  "bulk_table_url": "https://ssd.jpl.nasa.gov/dat/ELEMENTS.NUMBR.gz",
+  "numbered_records_total": 887103,
+  "main_belt_orbital_pool": 846584,
+  "dropped_unknown_h_99": 0,
+  "candidate_scan_limit": 2500,
+  "enrichment_batches": 45,
+  "enriched_records_scanned": 1125,
+  "dropped_condition_code_9": 0,
+  "dropped_data_arc_lt_30d": 0,
+  "dropped_non_mba_class": 103,
+  "dropped_neo_flag": 0,
+  "accepted_main_belt_records": 1000
+}
