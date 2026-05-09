@@ -149,6 +149,18 @@ Bars validated at `5-minute` (Phobos) and `15-minute` (Deimos) Horizons truth ca
 
 INV-008, INV-009, and INV-010 remain in force unchanged. INV-011 is additive.
 
+#### INV-012: Keplerian Propagation Position Bound (Slice 7)
+
+Slice 7 introduces a second propagation method in `core/`: asteroid catalog bodies propagate via Keplerian two-body math from a uniform Horizons anchor epoch, while Slice 1-6 bodies continue using Hermite interpolation. Position error is bounded at visualization grade:
+
+| Body class | Cadence | Cutover bar |
+|---|---|---|
+| Asteroid | `1d` propagation | `100,000 km` |
+
+Bars were validated against daily Horizons truth across the `2026-05-01` to `2026-07-30` window for an `18-body` representative sample spanning the main belt and all `8` curated NEAs. Worst sampled round-2 body was Hygiea at `35,313 km`, leaving `2.83×` margin. See `src/v2/core/invariants/INV-012.md`.
+
+INV-008, INV-009, INV-010, and INV-011 remain in force unchanged. INV-012 is additive.
+
 ### 3.5 Rendering Truth
 
 - Honest mode reads directly from canonical `core/` state
@@ -177,21 +189,24 @@ INV-010 (Per-Body Interpolation Error Bound for Saturn system) is additive. INV-
 
 Slice 5 introduces no new invariants. INV-001 through INV-010 continue to apply unchanged. Slice 5 is render-layer only and does not touch `core/` data, frames, or interpolation; the existing Slice 4 invariants fully cover the rendering work.
 
-INV-011 (Per-Body Interpolation Error Bound for Mars system) is additive. INV-001 through INV-010 continue to apply unchanged. Slice 6 introduces V2's densest cadence to date (Phobos at `30m`) and validates that the per-body Hermite + Horizons fixture pattern from Slices 3-4 extends to bodies with sub-10-hour orbital periods. SPK ingestion remains a Slice 7+ candidate, with empirical justification now provided by Slice 6's measured Phobos cadence margins (`6.4×` headroom against the `5 km` bar).
+INV-011 (Per-Body Interpolation Error Bound for Mars system) is additive. INV-001 through INV-010 continue to apply unchanged. Slice 6 introduces V2's densest cadence to date (Phobos at `30m`) and validates that the per-body Hermite + Horizons fixture pattern from Slices 3-4 extends to bodies with sub-10-hour orbital periods. Slice 7 asteroid pre-research later confirmed that SPK ingestion was still not forced: Keplerian-from-anchor cleared the visualization-grade bar with measured margin.
+
+INV-012 (Keplerian Propagation Position Bound for asteroid catalog bodies) is additive. INV-001 through INV-011 continue to apply unchanged. Slice 7 is the first slice where `core/` supports two propagation methods in parallel: Hermite for sampled planetary and moon bodies, Keplerian for a many-body asteroid catalog anchored from uniform Horizons vectors. The frame graph remains unchanged; the architectural extension is propagation-method diversity plus the anchor-epoch discipline.
 
 See `src/v2/core/invariants/README.md` for INV-001 through INV-007 and `src/v2/core/invariants/INV-008.md` for the interpolation bound.
 
 ### 3.7 Interpolation Policy
 
-Cubic Hermite interpolation is the canonical method for recovering body state between fixture samples in `core/` paths. The implementation uses both position and velocity vectors provided by the JPL Horizons API to form the Hermite basis; no numerical differentiation is performed.
+Cubic Hermite interpolation remains the canonical method for recovering state between stored fixture samples for Slice 1-6 planetary and moon bodies. Slice 7 adds a parallel Keplerian propagation path for asteroid catalog bodies anchored from a recent Cartesian state. The Hermite path and the Keplerian path coexist; Slice 7 does not replace Hermite.
 
 Rules:
 
 - Linear interpolation is **forbidden** in any `core/` path
 - Linear interpolation is **allowed** in `render/` for screen-only effects (e.g., halo position smoothing between frames)
-- Per-body interpolation error must remain below the cutover bars in §3.4 when validated against Horizons truth at the cadence specified by each invariant: INV-008 at 6-hour cadence; INV-009, INV-010, and INV-011 at 5-min, 15-min, or 30-min cadence depending on body
-- The runtime assertion is `assertInterpolationError(estimate, truth, bodyId)` — throws in dev, structured log in prod
-- This policy is codified as INV-008 (Slice 2 bodies), INV-009 (Slice 3 bodies), INV-010 (Slice 4 bodies), and INV-011 (Slice 6 bodies). The runtime check signature is unified across all four invariants; per-body cadence is read from the constants module rather than passed at call time.
+- Hermite-using bodies must remain below the cutover bars in §3.4 when validated against Horizons truth at the cadence specified by each invariant: INV-008 at 6-hour cadence; INV-009, INV-010, and INV-011 at 5-min, 15-min, or 30-min cadence depending on body
+- Keplerian-using asteroid bodies must remain below the INV-012 cutover bar at `1d` truth cadence across the Slice 7 validation window
+- Runtime assertions are `assertInterpolationError(estimate, truth, bodyId)` for Hermite paths and `assertKeplerianError(estimate, truth, bodyId)` for asteroid Keplerian paths — both throw in dev and structured-log in prod
+- This policy is codified as INV-008 (Slice 2 bodies), INV-009 (Slice 3 bodies), INV-010 (Slice 4 bodies), INV-011 (Slice 6 bodies), and INV-012 (Slice 7 asteroid catalog). The Hermite path keeps per-body cadence in the constants module; the Keplerian path keeps a uniform anchor epoch plus derived osculating elements per asteroid.
 
 ### 3.8 Frame Graph Extension (Slice 3)
 
@@ -252,6 +267,21 @@ Slice 6 introduces `FRAME_MARS_J2000_ICRF` as a child of `FRAME_HELIO_J2000_ICRF
 - Pure subtraction transform; mathematically reversible to floating-point precision (matches Jupiter and Saturn frame round-trip behavior).
 
 Slice 6 confirms that the planet-centered inertial frame pattern from §3.8 extends to a third planet system. The heliocentric root frame is now parent to three planet-centered frames (Jupiter, Saturn, Mars).
+
+### 3.13 Asteroid Catalog Architecture (Slice 7)
+
+Slice 7 introduces the first many-body catalog in V2 and the first propagation method that does not depend on a stored time-series fixture per body.
+
+- Body set: `1,008` asteroids (`1,000` main-belt by `H` plus `8` curated famous NEAs)
+- Frame: all asteroid bodies remain in `FRAME_HELIO_J2000_ICRF`; Slice 7 introduces no new frame constant
+- Inventory source: JPL SBDB is canonical for body selection and metadata (`designation`, `name`, `H`, `G`, class, `condition_code`, `data_arc`, `neo`, `pha`)
+- Anchor source: JPL Horizons VECTORS is canonical for one recent Cartesian state per body at a uniform anchor epoch of `2026-05-01 00:00:00 TDB`
+- Propagation seed: each Horizons anchor state is converted to osculating elements, then propagated continuously via Keplerian two-body math
+- Render ownership: `render/` selects between Points, InstancedMesh, and focused Mesh representations; `core/` owns the propagated heliocentric truth state only
+
+The anchor-epoch discipline is part of the architecture, not an implementation convenience. Pre-research round 1 showed the failure mode directly: Bennu's stale SBDB epoch (`2011-01-01`) produced multi-million-kilometer drift across the Slice 7 window, while round 2's uniform Horizons anchor reduced Bennu's day-90 error to `4,236 km`. If the fixture window moves materially, Slice 7 anchors must be re-fetched at the new window start.
+
+See `src/v2/core/asteroid-catalog.md`, `src/v2/boundary/slice7-fixture-spec.md`, and `src/v2/render/asteroid-rendering.md`.
 
 ---
 
@@ -513,9 +543,50 @@ This slice extends honest mode to Mars (replacing Slice 2's simple spherical rep
 Mars + Phobos/Deimos is the smallest planet system that:
 
 - Pressure-tests the per-body Hermite cadence pattern at sub-hourly density (Phobos's `7.65-hour` orbital period requires denser sampling than any prior V2 body)
-- Provides empirical measurement of Hermite interpolation accuracy at `30m` cadence, feeding the SPK-ingestion architectural decision in Slice 7+
+- Provides empirical measurement of Hermite interpolation accuracy at `30m` cadence, feeding the propagation-method decision for the Slice 7 asteroid catalog
 - Validates the planet-centered frame pattern across a third instance, with a planet whose tilt (`25.19°`) is more pronounced than Jupiter (`3.13°`) but less than Saturn (`26.7°`)
 - Adds a planet system whose moons have higher triaxial spread than any prior V2 body (Phobos `30%`, Deimos `34.6%`), establishing how V2 handles deliberately simplified spherical rendering at higher visual cost
+
+### Slice 7: Asteroid Catalog Honest Mode
+
+Status: pre-research complete 2026-05-09. Founding-doc artifacts written; implementation pending.
+
+This slice adds a visualization-grade asteroid catalog to `/v2/solar-system`. It does not introduce a new frame. Instead, it introduces a second propagation path in `core/`: Keplerian two-body propagation from a uniform Horizons anchor epoch for `1,008` selected asteroids.
+
+#### Included
+
+- Hybrid asteroid set of `1,008` bodies:
+  - Top `1,000` main-belt asteroids by `H` after quality gating
+  - `8` curated famous NEAs (Bennu, Apophis, Eros, Itokawa, Ryugu, Toutatis, Geographos, Castalia)
+- SBDB as canonical inventory and metadata source
+- Horizons VECTORS as canonical anchor-state source at `2026-05-01 00:00:00 TDB`
+- Cartesian-to-elements conversion at ingestion, then continuous Keplerian propagation per frame
+- Existing `FRAME_HELIO_J2000_ICRF` reused; no new frame
+- Three render modes by apparent diameter:
+  - `THREE.Points` with additive soft-glow shader
+  - `THREE.InstancedMesh` for resolved non-focused bodies
+  - individual `Mesh` for the focused body
+- Click-to-focus only; route remains `/v2/solar-system`
+
+#### Excluded
+
+- Search UI
+- Asteroid labels or name overlays
+- Orbit traces
+- Full small-body population beyond the curated `1,008`
+- SPK ingestion
+- Non-gravitational forces and perturbation modeling beyond vanilla two-body propagation
+- Photoreal shape models, spin states, or mission-planning fidelity
+- All Slice 6 non-goals carry forward
+
+#### Why Slice 7
+
+Slice 7 is the smallest slice that:
+
+- Introduces a many-body catalog large enough to force a render-layer LOD architecture instead of one-mesh-per-body
+- Validates a second propagation method in `core/` without disturbing the Slice 1-6 Hermite path
+- Resolves the SBDB-vs-Horizons source split honestly: SBDB for inventory, Horizons for recent anchor state
+- Establishes the anchor-epoch discipline that future catalog rebuilds must follow
 
 ---
 
@@ -686,18 +757,48 @@ Architectural note: Slice 5 surfaced and resolved a default Saturn-focus camera 
 
 If those criteria are not met, the slice does not ship.
 
+### Asteroid Catalog Slice Bar (Slice 7)
+
+- Asteroid propagated position error stays below `100,000 km` across the full `2026-05-01` to `2026-07-30` validation window at `1d` cadence when compared against Horizons truth for the Slice 7 representative sample. This bar is codified as INV-012.
+- The hybrid catalog contains exactly `1,008` bodies: `1,000` main-belt asteroids plus the `8` curated famous NEAs.
+- Default heliocentric overview renders the catalog in Points mode without regressing planet and moon visibility or frame precision.
+- Click-to-focus on curated asteroids resolves to the same propagated heliocentric state used for rendering; render and focus targets may not diverge.
+- LOD transitions (Points → InstancedMesh → Mesh) are driven by apparent diameter and show no disappearance or obvious pop-through during continuous zoom.
+- `60 fps` target on Apple Silicon Mac, integrated GPU, Chrome stable, single 4K display.
+- Development invariants INV-001 through INV-012 pass with zero violations.
+- Slice 1, 2, 3, 4, 5, and 6 cutover harnesses continue passing (regression check).
+- Slice 7 ships at `/v2/solar-system`. Existing redirects remain in place.
+
+If those criteria are not met, the slice does not ship.
+
+### Slice 7 Measured Results
+
+Round-2 pre-research re-anchored the full catalog from Horizons at the Slice 7 window start and produced the following representative worst-case sample margins:
+
+| Body | Max error | RMS error | Margin to 100,000 km bar |
+|---|---:|---:|---:|
+| Hygiea | 35,313 km | 15,843 km | 2.83× |
+| Psyche | 22,510 km | 9,934 km | 4.44× |
+| Laetitia | 13,854 km | 6,299 km | 7.22× |
+| Harmonia | 10,583 km | 4,808 km | 9.45× |
+| Bennu | 4,236 km | 1,827 km | 23.60× |
+| Apophis | 1,506 km | 624 km | 66.39× |
+
+Worst sampled body was Hygiea at `35,313 km`. All eight curated NEAs remained below `5,000 km` at day 90 after the anchor correction. The locked INV-012 bar of `100,000 km` is therefore empirically supported with `2.83×` margin on the sample set.
+
 ---
 
 ## 7. Validation Strategy
 
 ### Truth Sources
 
-- JPL Horizons vectors are the primary truth source for all slices
+- JPL Horizons vectors are the primary truth source for validation across all slices
 - App-facing ingress uses `/api/horizons`
 - Upstream truth source is `https://ssd.jpl.nasa.gov/api/horizons.api`
 - Slice 1 fixtures are stored locally under `tests/fixtures/v2/horizons-earth-moon-30d.json`
 - NHATS/Asterank remain boundary data sources, not truth authorities
 - SPICE and SGP4 are explicitly deferred to Slice 2+
+- Slice 7 adds JPL SBDB as a canonical inventory and metadata source, but not as the propagation truth authority
 
 #### Slice 2 Truth Source
 
@@ -730,6 +831,21 @@ JPL Horizons vectors remain the truth authority. Slice 6 uses the API parameters
 `STEP_SIZE` values must be quoted (`'30 m'` not `30 M`) per the inheritance from Slices 3-5.
 
 See `src/v2/boundary/slice6-fixture-spec.md` for the full fixture contract.
+
+### Slice 7 Truth Source
+
+Slice 7 uses two upstream JPL sources with distinct responsibilities:
+
+- JPL SBDB:
+  - canonical for asteroid inventory selection and metadata
+  - source of `designation`, `name`, `H`, `G`, class, `condition_code`, `data_arc`, `neo`, `pha`
+- JPL Horizons VECTORS:
+  - canonical for propagation truth and anchor state
+  - anchor query parameters match `tools/slice7-research/fetch-horizons-anchors.mjs`: `CENTER='500@10'`, `REF_SYSTEM='ICRF'`, `REF_PLANE='FRAME'`, `TIME_TYPE='TDB'`, `OUT_UNITS='KM-S'`, `VEC_TABLE='2'`, `TLIST='2461161.5'`
+
+Round-2 pre-research established the refined DEC-2 split: SBDB is not used directly as the propagation anchor because epoch freshness is heterogeneous across bodies. The production propagation path derives osculating elements from Horizons anchor vectors at the uniform Slice 7 anchor epoch of `2026-05-01 00:00:00 TDB`.
+
+See `src/v2/boundary/slice7-fixture-spec.md` for the full fixture contract.
 
 ### Minimum Automated Checks
 
@@ -829,6 +945,17 @@ The orchestrator enforces the wall between `src/v2/` and legacy.
 | `economics` | Frozen |
 | orchestrator | Enforces v2 wall, reviews cutover, resolves cross-agent conflicts, enforces default-camera-state verification per §11 |
 
+### Slice 7 Ownership
+
+| Agent | Owns |
+|---|---|
+| `orbital-mechanics` | INV-012, Keplerian propagation path, Cartesian-state-to-elements conversion, asteroid catalog metadata contract, anchor-epoch discipline |
+| `data-layer` | SBDB selection ingestion, Horizons anchor ingestion, Slice 7 fixture contract and validation, dual-source boundary ownership |
+| `renderer` | Asteroid Points / InstancedMesh / focused Mesh LOD path, additive soft-glow shader, click-to-focus render/focus continuity |
+| `ui-hud` | Frozen |
+| `economics` | Frozen |
+| orchestrator | Enforces v2 wall, reviews cutover, resolves cross-agent conflicts, ensures SBDB-for-selection / Horizons-for-anchor split is preserved |
+
 ---
 
 ## 10. Non-Goals
@@ -907,8 +1034,22 @@ All Slice 5 non-goals carry forward. Additionally:
 - Triaxial Deimos rendering — same simplification
 - Mars satellite layer (no minor moons exist; explicit clarification only)
 - SPK ingestion — Slice 7+ candidate
+- Asteroid catalog — deferred to Slice 7
 - Surface landing visualization (KSP-style) — explicitly out of scope; revisit as separate slice if pursued
 - Sub-30-minute cadence for any body — pre-research showed `30m` is sufficient for Phobos with `6.4×` margin
+
+### Non-Goals For Slice 7
+
+All Slice 6 non-goals carry forward. Additionally:
+
+- asteroid search UI
+- asteroid labels or name overlays
+- orbit traces
+- full small-body catalog beyond the curated `1,008`
+- SPK ingestion
+- perturbation modeling beyond vanilla two-body propagation
+- detailed shape models, spin states, or photoreal surface rendering
+- mining gameplay or mission-planning fidelity
 
 ---
 
@@ -940,6 +1081,10 @@ The Slice 5 tripwire is **2 focused weekends from the start of the Slice 5 imple
 
 The Slice 6 tripwire is **3 focused weekends from the start of the Slice 6 implementation dispatch**. Slice 6 is intentionally tighter than Slice 4's `4-weekend` tripwire because the architectural pattern is now well-established (third planet-centered frame, third per-body cadence slice). If all three INV-011 cutover bars are not met by end of weekend 3, the per-body Hermite cadence approach is re-evaluated and SPK ingestion becomes a stronger candidate for Slice 7. Slice 6 also tripwires the default-camera verification protocol added in §11: default Mars focus camera must be confirmed non-edge-on at cutover. Manual verification per §11 must include both default-camera-state and focused-camera-state checks.
 
+### Slice 7
+
+The Slice 7 tripwire is **4 focused weekends from the start of the Slice 7 implementation dispatch**. Slice 7 reopens architectural surface area in both `core/` and `render/`: new propagation method, dual-source ingestion, many-body catalog LOD, and render/focus continuity for click targets. If INV-012 is not met, the catalog cannot maintain `60 fps`, or render/focus target agreement is not preserved by end of weekend 4, then the catalog size, propagation strategy, or LOD plan is re-evaluated before Slice 8. Slice 7 also tripwires the anchor-epoch discipline: if cutover requires stale anchors or per-body epoch exceptions, the architecture has failed its own honesty standard and the fixture rebuild strategy must be reconsidered before shipping.
+
 ### Verification Protocol For All Future Slices
 
 Manual cutover verification must explicitly distinguish two camera states:
@@ -970,8 +1115,14 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 
 ### Resolved at Slice 6 planning
 
-- **Hermite-vs-SPK at sub-hourly cadence** — Slice 6 pre-research empirically validated Hermite at `30m` for Phobos with `6.4×` margin against `5 km` bar. SPK ingestion is not forced for Slice 6. Slice 7+ asteroid rendering remains the architectural forcing function for SPK consideration.
+- **Hermite-vs-SPK at sub-hourly cadence** — Slice 6 pre-research empirically validated Hermite at `30m` for Phobos with `6.4×` margin against `5 km` bar. SPK ingestion was not forced for Slice 6, and Slice 7 later proceeded with Keplerian-from-anchor rather than SPK.
 - **Default focus camera edge-on coupling** — Slice 6 applies the §13 Slice 5 lesson (commit `8f3c30e` Saturn camera fix) preemptively to Mars focus orbit angles. The render-only `X`-axis tilt + camera-along-`X` coupling is now a documented constraint that future slices apply automatically rather than discover at cutover.
+
+### Resolved at Slice 7 planning
+
+- **SBDB-vs-Horizons source authority split** — resolved. SBDB is canonical for asteroid inventory and metadata only; Horizons is canonical for propagation anchor state and truth validation.
+- **Hermite-vs-Keplerian for asteroid catalog bodies** — resolved. Slice 7 uses Keplerian propagation from uniform Horizons anchors while preserving Hermite unchanged for Slice 1-6 bodies.
+- **INV-012 cutover bar** — resolved by round-2 pre-research at `100,000 km` with `2.83×` margin on the representative sample.
 
 ### Open
 
@@ -980,8 +1131,9 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 - **Light-time correction** — deferred until needed for precision astrometry
 - **Asterism overlays and planet orbit traces** — deferred until trajectory rendering slice
 - **Body rotation animation** — deferred to a future visual-polish slice
-- **SPK ingestion** — Slice 4's three independent `1h`-cadence bodies validated per-body Hermite, but Mars-system Phobos at `7.65h` orbital period is predicted to require sub-hourly cadence (likely `30-minute` or denser). SPK ingestion remains a Slice 5+ candidate, with stronger pressure now that Slice 4 has shown fixture size growing 2-3× per slice (Slice 2 `~250 KB` → Slice 3 `~780 KB` → Slice 4 `~1.85 MB`).
+- **SPK ingestion** — Slice 6 validated Hermite for sub-hourly moon cadence and Slice 7 validated Keplerian-from-anchor for a `1,008`-body asteroid catalog. SPK ingestion remains deferred. The next forcing function would be a substantially larger catalog, a longer validated propagation horizon, or higher-than-visualization-grade accuracy requirements.
 - **Mars surface terrain rendering** — separate architectural slice if pursued. Surface-relative rendering at meter scale is architecturally supported by V2's camera-relative floating-origin pattern but not implemented. Decision deferred pending product direction (Aster mission planner thesis vs. KSP-style exploration product).
+- **Asteroid search / browse UX** — Slice 7 is click-to-focus only. Whether Slice 9 should add search, curated lists, or richer discovery controls remains open.
 - **Triaxial moon rendering** — Phobos's `30%` triaxial spread is the highest of any V2 body. Slice 6 ships spherical; if visual artifact reports surface, polish-of-polish triaxial Phobos is a candidate.
 - **Uranus and Neptune rings** — both have ring systems (Uranus's rings discovered 1977, Neptune's confirmed by Voyager 2 in 1989). The `saturn-rings.md` pattern should generalize, but Uranus's rings are nearly opaque dark particles and Neptune's are partial arcs — different visual character from Saturn. Revisit at Slice 6+ planning.
 - **Ring tilt evolution rendering** — Saturn's rings cycle from edge-on to fully open over ~15 years from Earth's viewpoint. This is rendered correctly at any single epoch (rings are tilted at the render layer so they match Saturn's equator while `FRAME_SATURN_J2000_ICRF` stays ICRF-aligned), but the visual cycle as Saturn moves through its heliocentric orbit is not animated. Honest at any snapshot; not animated across multi-year scrubs.
@@ -992,7 +1144,7 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 
 ## 13. Known Limitations
 
-These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
+These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables plus the planned Slice 7 architecture, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
 
 - **Camera body focus:** the default camera orbits a fixed point in heliocentric space. There is currently no UI to retarget the camera to Mercury, Venus, Mars, or any specific body for close-up zoom. Earth and Moon are reachable from the default camera orientation. Body focus selection is planned as a Slice 2 polish commit.
 
@@ -1048,4 +1200,14 @@ These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables, re
 - Phobos surface features (Stickney crater, groove fields) deferred. At `22 km` diameter and `~9.4` Mars radii orbital distance, Phobos is small enough that surface features would require very high zoom to resolve; deferred to future polish.
 - Deimos surface features deferred. Smaller and smoother than Phobos.
 - Mars rotation (`24h 37m` sidereal period) not animated. Same deferral pattern as Slices 3-5.
-- SPK ingestion remains deferred. Slice 6 pre-research empirically justified the deferral (Phobos at `30m` has `6.4×` margin against `5km` bar). Slice 7+ asteroid rendering at scale is the next architectural forcing function for SPK consideration.
+- SPK ingestion remains deferred. Slice 6 pre-research empirically justified the deferral (Phobos at `30m` has `6.4×` margin against `5km` bar). Slice 7 later validated Keplerian-from-anchor for a `1,008`-body visualization-grade catalog, so the next SPK forcing function is now a larger catalog, longer propagation horizon, or higher-accuracy requirement.
+
+### Slice 7
+
+- The asteroid catalog is intentionally limited to `1,008` bodies (`1,000` main-belt + `8` curated NEAs). It is not a full small-body population view.
+- Slice 7 is visualization-grade. Asteroid propagation uses vanilla two-body Keplerian math with INV-012 bar of `100,000 km` across the validated `90-day` window, not mission-planning fidelity.
+- Anchor-epoch discipline is mandatory. The validated accuracy statement assumes anchors were fetched at the Slice 7 window start (`2026-05-01 00:00:00 TDB`). Reusing stale anchors across materially different windows is expected to drift.
+- Most asteroids will render in Points mode from heliocentric overview. This is honest-mode behavior, not a bug; the catalog is too dense and too small in apparent size to justify body meshes everywhere.
+- Click-to-focus is the only asteroid discovery path in Slice 7. Search, labels, and richer browse controls remain deferred.
+- Asteroid shapes, spin states, and photometric realism are deferred. Focused asteroids are still rendered through simplified geometry rather than mission-grade shape models.
+- Continuous per-frame propagation at `1,008` bodies is acceptable at Slice 7 scale. A future multi-10k-body slice may need GPU-assisted propagation or more aggressive batching; Slice 7 does not solve that future scale problem in advance.
