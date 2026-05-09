@@ -12,8 +12,16 @@ Every external value is converted at ingestion into canonical `core/` representa
 
 - position: meters
 - velocity: meters per second
-- frame: `FRAME_HELIO_J2000_ICRF` or `FRAME_GCRS_EARTH`
+- frame: one of the canonical inertial frames listed below
 - time: TDB seconds since J2000
+
+Current canonical frame targets emitted by `boundary/`:
+
+- `FRAME_HELIO_J2000_ICRF` — Slice 1+, all heliocentric origins
+- `FRAME_GCRS_EARTH` — Slice 1+, Earth-centered states
+- `FRAME_JUPITER_J2000_ICRF` — Slice 3+, `jupiter-centered` fixture origins
+- `FRAME_SATURN_J2000_ICRF` — Slice 4+, `saturn-centered` fixture origins
+- `FRAME_MARS_J2000_ICRF` — Slice 6+, `mars-centered` fixture origins
 
 ## Source Map
 
@@ -30,7 +38,14 @@ Every external value is converted at ingestion into canonical `core/` representa
 - convert `km` to `m`
 - convert `km/s` to `m/s`
 - convert TDB Julian Date to TDB seconds since J2000
-- tag frame as `FRAME_HELIO_J2000_ICRF` unless a different inertial source frame is explicitly declared and normalized
+- infer canonical frame from the fixture envelope `origin` tag
+- map `heliocentric` to `FRAME_HELIO_J2000_ICRF`
+- map `earth-centered` to `FRAME_GCRS_EARTH`
+- map `jupiter-centered` to `FRAME_JUPITER_J2000_ICRF`
+- map `saturn-centered` to `FRAME_SATURN_J2000_ICRF`
+- map `mars-centered` to `FRAME_MARS_J2000_ICRF`
+
+The fixture envelope `origin` tag is the boundary truth for target-frame inference. The canonical fixture contract is documented in [slice6-fixture-spec.md](./slice6-fixture-spec.md), which extends the same envelope pattern used by the earlier planet-system slices.
 
 ### Asterank
 

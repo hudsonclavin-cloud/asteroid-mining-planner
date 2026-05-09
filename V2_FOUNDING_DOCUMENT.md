@@ -475,11 +475,11 @@ Slice 5 is the smallest slice that:
 
 - Validates the GPT-5 Option B architectural pattern (multiple concentric `RingGeometry` instances) for ring substructure work, establishing the pattern Slice 6+ ring polish or Uranus/Neptune ring slices can reuse
 - Adds the highest-visual-significance features (significance `2-3`) that distinguish a moderately-zoomed Saturn from a low-zoom Saturn — Huygens Gap, Encke Gap, Roche Division
-- Refreshes Saturn rendering while Slice 4's render context is fresh in the codebase, before Slice 6's Mars + SPK ingestion architectural work shifts attention away from Saturn
+- Refreshes Saturn rendering while Slice 4's ring context is fresh in the codebase, validating the additive sibling-mesh pattern under `saturnRingsGroup` before introducing a new planet system in Slice 6
 
 ### Slice 6: Mars System Honest Mode
 
-Status: in implementation (clock starts at Slice 6 implementation dispatch).
+Status: shipped 2026-05-08. Cutover commit `481292d` (Phase G hierarchy fix). Six bug-find loops during cutover (Phases D, E, F, G, D-round-2) surfaced the cross-frame body rendering architectural class — see §13 Slice 6 limitations for codified lessons.
 
 This slice extends honest mode to Mars (replacing Slice 2's simple spherical representation), Phobos, and Deimos. It introduces `FRAME_MARS_J2000_ICRF` as the third planet-centered inertial frame and validates the per-body Hermite cadence pattern at sub-hourly density (Phobos at `30m`).
 
@@ -992,7 +992,7 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 
 ## 13. Known Limitations
 
-These are limitations of the shipped Slice 1, 2, 3, 4, and 5 deliverables and the planned Slice 6 deliverable, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
+These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
 
 - **Camera body focus:** the default camera orbits a fixed point in heliocentric space. There is currently no UI to retarget the camera to Mercury, Venus, Mars, or any specific body for close-up zoom. Earth and Moon are reachable from the default camera orientation. Body focus selection is planned as a Slice 2 polish commit.
 
@@ -1018,7 +1018,7 @@ These are limitations of the shipped Slice 1, 2, 3, 4, and 5 deliverables and th
 - Ring tilt is fixed to Saturn's equator by a render-only `26.7°` tilt from the `FRAME_SATURN_J2000_ICRF` `Z` axis, structurally correct at any snapshot. The visual ring-opening / closing cycle observed from Earth over Saturn's ~29.5-year orbit is not animated.
 - Body rotation (Saturn ~10.66h, tidal locks for moons) is not animated. Same deferral pattern as Slice 3.
 - Time scrubbing advances by the densest cadence in the current slice (1h for Slice 4, unchanged from Slice 3); Iapetus at `79d` barely moves per scrub step while Mimas sweeps visibly.
-- Fixture size growth is accelerating: Slice 2 `~250 KB`, Slice 3 `~780 KB`, Slice 4 `~1.85 MB`. Slice 5 (Mars system, predicted `30-minute` cadence for Phobos) may force the SPK ingestion path open.
+- Fixture size growth is accelerating: Slice 2 `~250 KB`, Slice 3 `~780 KB`, Slice 4 `~1.85 MB`. Slice 6's Mars system did push Phobos to `30-minute` cadence and total fixture size to `~3-4 MB`; SPK ingestion remains deferred but the pressure stays live for Slice 7+.
 - Verification protocol clarification: Slice 4 cutover was originally verified by the user after manual camera adjustment to view Saturn close-up. From the default outer-system overview camera at startup, Saturn's body is sub-pixel (apparent diameter ~`0.5 px` at `1080p`, ~`1 px` at `4K`) and the ring system is similarly sub-pixel. Saturn becomes findable from default state via halo overlay; ring system requires user-driven focus on Saturn (`s` key) and zoom-in to become visible. This is honest-mode rendering working as designed, not a rendering bug. Slice 5 and all future slice cutover protocols explicitly require both default-camera state verification (where halo-findability is the criterion for sub-pixel features) and focused-camera state verification (where direct-pixel visibility is the criterion for resolved features). The original Slice 4 cutover declaration's language conflated these two states; the founding-doc text in §6 has been updated to be consistent with honest-mode behavior.
 
 ### Slice 5
