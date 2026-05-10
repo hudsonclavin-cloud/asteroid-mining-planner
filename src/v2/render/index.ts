@@ -59,4 +59,22 @@ export {
   SATURN_RING_TEXTURE_SIZE,
 } from './saturn-rings.js';
 
+export type {
+  AsteroidRenderMode,
+  AsteroidRendererUpdateInput,
+  AsteroidRendererViewport,
+} from './asteroid-renderer.js';
+
+export {
+  ASTEROID_CURATED_NEA_COLOR_HEX,
+  ASTEROID_INSTANCE_TO_MESH_ENTER_DIAMETER_PX,
+  ASTEROID_INSTANCE_TO_MESH_EXIT_DIAMETER_PX,
+  ASTEROID_MAIN_BELT_COLOR_HEX,
+  ASTEROID_POINTS_TO_INSTANCE_ENTER_DIAMETER_PX,
+  ASTEROID_POINTS_TO_INSTANCE_EXIT_DIAMETER_PX,
+  AsteroidRenderer,
+  classifyAsteroidRenderMode,
+  computeApparentDiameterPx,
+} from './asteroid-renderer.js';
+
 export { mountEmptyViewportCanvas } from './empty-viewport.js';

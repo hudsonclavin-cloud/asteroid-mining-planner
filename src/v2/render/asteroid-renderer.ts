@@ -1,0 +1,359 @@
+import * as THREE from 'three';
+import type { AsteroidBody, AsteroidBodyId } from '../core/constants/asteroids.js';
+import { propagateKeplerianState } from '../core/propagators/keplerian.js';
+
+export const ASTEROID_POINTS_TO_INSTANCE_EXIT_DIAMETER_PX = 1.5;
+export const ASTEROID_POINTS_TO_INSTANCE_ENTER_DIAMETER_PX = 2;
+export const ASTEROID_INSTANCE_TO_MESH_EXIT_DIAMETER_PX = 28;
+export const ASTEROID_INSTANCE_TO_MESH_ENTER_DIAMETER_PX = 32;
+export const ASTEROID_MAIN_BELT_COLOR_HEX = 0x86a7d7;
+export const ASTEROID_CURATED_NEA_COLOR_HEX = 0xffb173;
+
+export type AsteroidRenderMode = 'points' | 'instanced' | 'mesh';
+
+export interface AsteroidRendererViewport {
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface AsteroidRendererUpdateInput {
+  readonly anchorPositionM: { x: number; y: number; z: number };
+  readonly camera: THREE.PerspectiveCamera;
+  readonly tdbSeconds: number;
+  readonly viewport: AsteroidRendererViewport;
+}
+
+function createFallbackPointsMaterial(): THREE.PointsMaterial {
+  return new THREE.PointsMaterial({
+    size: 1,
+    sizeAttenuation: true,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.35,
+    depthTest: true,
+    depthWrite: false,
+  });
+}
+
+function getAsteroidPointColor(body: AsteroidBody): THREE.Color {
+  return new THREE.Color(
+    body.isCuratedNea ? ASTEROID_CURATED_NEA_COLOR_HEX : ASTEROID_MAIN_BELT_COLOR_HEX,
+  );
+}
+
+export function computeApparentDiameterPx(
+  radiusM: number,
+  distanceM: number,
+  viewportHeightPx: number,
+  fovRad: number,
+): number {
+  if (!Number.isFinite(radiusM) || radiusM <= 0) {
+    throw new RangeError('radiusM must be a finite positive number');
+  }
+  if (!Number.isFinite(distanceM) || distanceM <= 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+  if (!Number.isFinite(viewportHeightPx) || viewportHeightPx <= 0) {
+    throw new RangeError('viewportHeightPx must be a finite positive number');
+  }
+  if (!Number.isFinite(fovRad) || fovRad <= 0) {
+    throw new RangeError('fovRad must be a finite positive number');
+  }
+
+  return 2 * Math.atan(radiusM / distanceM) * (viewportHeightPx / fovRad);
+}
+
+export function classifyAsteroidRenderMode(
+  apparentDiameterPx: number,
+  previousMode: AsteroidRenderMode | null,
+  isFocused: boolean,
+): AsteroidRenderMode {
+  if (isFocused) {
+    if (previousMode === 'mesh') {
+      return apparentDiameterPx >= ASTEROID_INSTANCE_TO_MESH_EXIT_DIAMETER_PX
+        ? 'mesh'
+        : 'instanced';
+    }
+    return apparentDiameterPx >= ASTEROID_INSTANCE_TO_MESH_ENTER_DIAMETER_PX
+      ? 'mesh'
+      : 'instanced';
+  }
+
+  if (previousMode === 'instanced') {
+    return apparentDiameterPx >= ASTEROID_POINTS_TO_INSTANCE_EXIT_DIAMETER_PX
+      ? 'instanced'
+      : 'points';
+  }
+
+  return apparentDiameterPx >= ASTEROID_POINTS_TO_INSTANCE_ENTER_DIAMETER_PX
+    ? 'instanced'
+    : 'points';
+}
+
+export class AsteroidRenderer {
+  readonly root = new THREE.Group();
+  readonly pointsGeometry: THREE.BufferGeometry;
+  readonly pointsMaterial: THREE.PointsMaterial;
+  readonly points: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
+  readonly instancedGeometry: THREE.SphereGeometry;
+  readonly instancedMaterial: THREE.MeshLambertMaterial;
+  readonly instancedMesh: THREE.InstancedMesh<THREE.SphereGeometry, THREE.MeshLambertMaterial>;
+  readonly focusedGeometry: THREE.SphereGeometry;
+  readonly focusedMaterial: THREE.MeshLambertMaterial;
+  readonly focusedMesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshLambertMaterial>;
+
+  private readonly asteroids: readonly AsteroidBody[];
+  private readonly asteroidById = new Map<AsteroidBodyId, AsteroidBody>();
+  private readonly modeByBodyId = new Map<AsteroidBodyId, AsteroidRenderMode>();
+  private readonly worldPositionByBodyId = new Map<AsteroidBodyId, THREE.Vector3>();
+  private readonly canonicalPositionByBodyId = new Map<
+    AsteroidBodyId,
+    { x: number; y: number; z: number }
+  >();
+  private readonly pointBodyIds: AsteroidBodyId[] = [];
+  private readonly instancedBodyIds: AsteroidBodyId[] = [];
+  private readonly pointPositions: Float32Array;
+  private readonly pointColors: Float32Array;
+  private readonly pointSizes: Float32Array;
+  private readonly pointPositionAttribute: THREE.BufferAttribute;
+  private readonly pointColorAttribute: THREE.BufferAttribute;
+  private readonly pointSizeAttribute: THREE.BufferAttribute;
+  private readonly pointsBoundingSphere = new THREE.Sphere(new THREE.Vector3(), Number.POSITIVE_INFINITY);
+  private readonly instanceMatrix = new THREE.Matrix4();
+  private readonly instancePosition = new THREE.Vector3();
+  private readonly instanceQuaternion = new THREE.Quaternion();
+  private readonly instanceScale = new THREE.Vector3();
+  private focusedAsteroidBodyId: AsteroidBodyId | null = null;
+  private focusedMeshBodyId: AsteroidBodyId | null = null;
+
+  constructor(asteroids: readonly AsteroidBody[]) {
+    if (asteroids.length === 0) {
+      throw new Error('AsteroidRenderer requires at least one asteroid body');
+    }
+
+    this.asteroids = asteroids.slice();
+    this.root.name = 'asteroid-renderer-root';
+
+    const maxBodies = asteroids.length;
+    this.pointPositions = new Float32Array(maxBodies * 3);
+    this.pointColors = new Float32Array(maxBodies * 3);
+    this.pointSizes = new Float32Array(maxBodies);
+
+    for (const asteroid of asteroids) {
+      this.asteroidById.set(asteroid.bodyId, asteroid);
+      this.modeByBodyId.set(asteroid.bodyId, 'points');
+      this.worldPositionByBodyId.set(asteroid.bodyId, new THREE.Vector3());
+      this.canonicalPositionByBodyId.set(asteroid.bodyId, { x: 0, y: 0, z: 0 });
+    }
+
+    this.pointsGeometry = new THREE.BufferGeometry();
+    this.pointPositionAttribute = new THREE.BufferAttribute(this.pointPositions, 3);
+    this.pointColorAttribute = new THREE.BufferAttribute(this.pointColors, 3);
+    this.pointSizeAttribute = new THREE.BufferAttribute(this.pointSizes, 1);
+    this.pointPositionAttribute.setUsage(THREE.DynamicDrawUsage);
+    this.pointColorAttribute.setUsage(THREE.DynamicDrawUsage);
+    this.pointSizeAttribute.setUsage(THREE.DynamicDrawUsage);
+    this.pointsGeometry.setAttribute('position', this.pointPositionAttribute);
+    this.pointsGeometry.setAttribute('color', this.pointColorAttribute);
+    this.pointsGeometry.setAttribute('aSize', this.pointSizeAttribute);
+    this.pointsGeometry.setDrawRange(0, 0);
+    this.pointsGeometry.boundingSphere = this.pointsBoundingSphere;
+    this.pointsMaterial = createFallbackPointsMaterial();
+    this.points = new THREE.Points(this.pointsGeometry, this.pointsMaterial);
+    this.points.name = 'asteroid-points-layer';
+    this.root.add(this.points);
+
+    this.instancedGeometry = new THREE.SphereGeometry(1, 16, 16);
+    this.instancedMaterial = new THREE.MeshLambertMaterial({
+      color: ASTEROID_MAIN_BELT_COLOR_HEX,
+    });
+    this.instancedMesh = new THREE.InstancedMesh(
+      this.instancedGeometry,
+      this.instancedMaterial,
+      maxBodies,
+    );
+    this.instancedMesh.name = 'asteroid-instanced-layer';
+    this.instancedMesh.count = 0;
+    this.root.add(this.instancedMesh);
+
+    this.focusedGeometry = new THREE.SphereGeometry(1, 24, 24);
+    this.focusedMaterial = new THREE.MeshLambertMaterial({
+      color: ASTEROID_CURATED_NEA_COLOR_HEX,
+    });
+    this.focusedMesh = new THREE.Mesh(this.focusedGeometry, this.focusedMaterial);
+    this.focusedMesh.name = 'asteroid-focused-mesh';
+    this.focusedMesh.visible = false;
+    this.root.add(this.focusedMesh);
+  }
+
+  setFocusedAsteroid(bodyId: AsteroidBodyId | null): void {
+    if (bodyId !== null && !this.asteroidById.has(bodyId)) {
+      throw new Error(`Unknown asteroid body id "${bodyId}"`);
+    }
+    this.focusedAsteroidBodyId = bodyId;
+  }
+
+  getFocusedAsteroidBodyId(): AsteroidBodyId | null {
+    return this.focusedAsteroidBodyId;
+  }
+
+  getFocusedMeshBodyId(): AsteroidBodyId | null {
+    return this.focusedMeshBodyId;
+  }
+
+  getAsteroidRenderMode(bodyId: AsteroidBodyId): AsteroidRenderMode {
+    const mode = this.modeByBodyId.get(bodyId);
+    if (!mode) {
+      throw new Error(`Unknown asteroid body id "${bodyId}"`);
+    }
+    return mode;
+  }
+
+  getAsteroidWorldPosition(bodyId: AsteroidBodyId): THREE.Vector3 {
+    const world = this.worldPositionByBodyId.get(bodyId);
+    if (!world) {
+      throw new Error(`Unknown asteroid body id "${bodyId}"`);
+    }
+    return world.clone();
+  }
+
+  getAsteroidCanonicalPosition(bodyId: AsteroidBodyId): { x: number; y: number; z: number } {
+    const position = this.canonicalPositionByBodyId.get(bodyId);
+    if (!position) {
+      throw new Error(`Unknown asteroid body id "${bodyId}"`);
+    }
+    return { ...position };
+  }
+
+  getPointBodyIds(): readonly AsteroidBodyId[] {
+    return this.pointBodyIds.slice();
+  }
+
+  getInstancedBodyIds(): readonly AsteroidBodyId[] {
+    return this.instancedBodyIds.slice();
+  }
+
+  getRaycastTargets(): readonly THREE.Object3D[] {
+    return [this.focusedMesh, this.instancedMesh, this.points];
+  }
+
+  resolveIntersection(intersection: THREE.Intersection): AsteroidBodyId | null {
+    if (intersection.object === this.focusedMesh) {
+      return this.focusedMeshBodyId;
+    }
+
+    if (intersection.object === this.instancedMesh && typeof intersection.instanceId === 'number') {
+      return this.instancedBodyIds[intersection.instanceId] ?? null;
+    }
+
+    if (intersection.object === this.points && typeof intersection.index === 'number') {
+      return this.pointBodyIds[intersection.index] ?? null;
+    }
+
+    return null;
+  }
+
+  update(input: AsteroidRendererUpdateInput): void {
+    const { anchorPositionM, camera, tdbSeconds, viewport } = input;
+    const fovRad = (camera.fov * Math.PI) / 180;
+    let pointCount = 0;
+    let instanceCount = 0;
+    let hasFocusedMesh = false;
+    this.pointBodyIds.length = 0;
+    this.instancedBodyIds.length = 0;
+
+    for (const asteroid of this.asteroids) {
+      const propagated = propagateKeplerianState(asteroid.elements, tdbSeconds, {
+        radiusM: asteroid.estimatedRadiusM,
+      });
+      const canonicalPosition = this.canonicalPositionByBodyId.get(asteroid.bodyId)!;
+      canonicalPosition.x = propagated.positionM.x;
+      canonicalPosition.y = propagated.positionM.y;
+      canonicalPosition.z = propagated.positionM.z;
+
+      const world = this.worldPositionByBodyId.get(asteroid.bodyId)!;
+      world.set(
+        propagated.positionM.x - anchorPositionM.x,
+        propagated.positionM.y - anchorPositionM.y,
+        propagated.positionM.z - anchorPositionM.z,
+      );
+
+      const distM = Math.hypot(
+        world.x - camera.position.x,
+        world.y - camera.position.y,
+        world.z - camera.position.z,
+      );
+      const apparentDiameterPx = computeApparentDiameterPx(
+        asteroid.estimatedRadiusM,
+        distM,
+        viewport.height,
+        fovRad,
+      );
+
+      const nextMode = classifyAsteroidRenderMode(
+        apparentDiameterPx,
+        this.modeByBodyId.get(asteroid.bodyId) ?? null,
+        asteroid.bodyId === this.focusedAsteroidBodyId,
+      );
+      this.modeByBodyId.set(asteroid.bodyId, nextMode);
+
+      if (nextMode === 'points') {
+        const pointBase = pointCount * 3;
+        const color = getAsteroidPointColor(asteroid);
+        this.pointPositions[pointBase] = Math.fround(world.x);
+        this.pointPositions[pointBase + 1] = Math.fround(world.y);
+        this.pointPositions[pointBase + 2] = Math.fround(world.z);
+        this.pointColors[pointBase] = color.r;
+        this.pointColors[pointBase + 1] = color.g;
+        this.pointColors[pointBase + 2] = color.b;
+        this.pointSizes[pointCount] = Math.max(1, Math.log10(asteroid.estimatedRadiusM + 10));
+        this.pointBodyIds[pointCount] = asteroid.bodyId;
+        pointCount += 1;
+        continue;
+      }
+
+      if (nextMode === 'instanced') {
+        this.instancePosition.copy(world);
+        this.instanceScale.setScalar(asteroid.estimatedRadiusM);
+        this.instanceMatrix.compose(
+          this.instancePosition,
+          this.instanceQuaternion,
+          this.instanceScale,
+        );
+        this.instancedMesh.setMatrixAt(instanceCount, this.instanceMatrix);
+        this.instancedBodyIds[instanceCount] = asteroid.bodyId;
+        instanceCount += 1;
+        continue;
+      }
+
+      this.focusedMesh.position.copy(world);
+      this.focusedMesh.scale.setScalar(asteroid.estimatedRadiusM);
+      this.focusedMesh.visible = true;
+      this.focusedMeshBodyId = asteroid.bodyId;
+      hasFocusedMesh = true;
+    }
+
+    this.pointsGeometry.setDrawRange(0, pointCount);
+    this.pointPositionAttribute.needsUpdate = true;
+    this.pointColorAttribute.needsUpdate = true;
+    this.pointSizeAttribute.needsUpdate = true;
+    this.instancedMesh.count = instanceCount;
+    this.instancedMesh.instanceMatrix.needsUpdate = true;
+
+    if (!hasFocusedMesh) {
+      this.focusedMesh.visible = false;
+      this.focusedMeshBodyId = null;
+    }
+
+    this.root.updateMatrixWorld(true);
+  }
+
+  dispose(): void {
+    this.pointsGeometry.dispose();
+    this.pointsMaterial.dispose();
+    this.instancedGeometry.dispose();
+    this.instancedMaterial.dispose();
+    this.focusedGeometry.dispose();
+    this.focusedMaterial.dispose();
+  }
+}
