@@ -5,6 +5,7 @@ import {
   ingestSlice6Fixture,
 } from '../../boundary/horizons.js';
 import type { CanonicalStateSample, HorizonsFixture } from '../../boundary/horizons.js';
+export { loadSlice7AsteroidCatalogFixture } from '../../boundary/slice7-asteroid-catalog.js';
 import type { BodyId } from '../../core/constants/bodies.js';
 
 export const SLICE3_EPOCH_TDB = 830_865_600;

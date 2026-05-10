@@ -76,3 +76,22 @@ test('re-focusing the same body preserves the current zoom radius', async () => 
   assert.equal(resolveFocusOrbitRadius('mars', 'mars', 12_345_678), 12_345_678);
   assert.equal(resolveFocusOrbitRadius('phobos', 'phobos', 987_654), 987_654);
 });
+
+test('asteroid focus uses the documented non-edge-on polar default', async () => {
+  const { ASTEROID_FOCUS_ORBIT_POLAR_RAD } = await loadRuntimeModule();
+
+  assert.equal(ASTEROID_FOCUS_ORBIT_POLAR_RAD, Math.PI / 3);
+});
+
+test('asteroid focus radius uses the honest-scale default radius rule', async () => {
+  const { getDefaultAsteroidFocusRadius, resolveFocusOrbitRadius } = await loadRuntimeModule();
+
+  assert.equal(getDefaultAsteroidFocusRadius(1_000), 5_000);
+  assert.equal(getDefaultAsteroidFocusRadius(50_000), 250_000);
+  assert.equal(
+    resolveFocusOrbitRadius('outer-system-overview', 'asteroid-101955', 7 * 149_597_870_700, {
+      estimatedRadiusM: 1_000,
+    }),
+    5_000,
+  );
+});

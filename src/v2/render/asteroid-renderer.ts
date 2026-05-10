@@ -27,6 +27,15 @@ export interface AsteroidRendererUpdateInput {
   readonly viewport: AsteroidRendererViewport;
 }
 
+export function propagateAsteroidBodyState(
+  asteroid: AsteroidBody,
+  tdbSeconds: number,
+): ReturnType<typeof propagateKeplerianState> {
+  return propagateKeplerianState(asteroid.elements, tdbSeconds, {
+    radiusM: asteroid.estimatedRadiusM,
+  });
+}
+
 export function computeApparentDiameterPx(
   radiusM: number,
   distanceM: number,
@@ -255,9 +264,7 @@ export class AsteroidRenderer {
     this.instancedBodyIds.length = 0;
 
     for (const asteroid of this.asteroids) {
-      const propagated = propagateKeplerianState(asteroid.elements, tdbSeconds, {
-        radiusM: asteroid.estimatedRadiusM,
-      });
+      const propagated = propagateAsteroidBodyState(asteroid, tdbSeconds);
       const canonicalPosition = this.canonicalPositionByBodyId.get(asteroid.bodyId)!;
       canonicalPosition.x = propagated.positionM.x;
       canonicalPosition.y = propagated.positionM.y;

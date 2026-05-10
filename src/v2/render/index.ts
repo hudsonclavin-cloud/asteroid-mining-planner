@@ -85,6 +85,7 @@ export {
   AsteroidRenderer,
   classifyAsteroidRenderMode,
   computeApparentDiameterPx,
+  propagateAsteroidBodyState,
 } from './asteroid-renderer.js';
 
 export { mountEmptyViewportCanvas } from './empty-viewport.js';

@@ -6,20 +6,34 @@ import {
   FRAME_MARS_J2000_ICRF,
   FRAME_SATURN_J2000_ICRF,
   assertCanonicalState,
+  createAsteroidCatalogIndex,
   configureFrameTransformHooks,
   interpolateBodyStateSeries,
+  isAsteroidBodyId,
   resetFrameTransformHooks,
   transformCanonicalState,
+  type AsteroidBody,
+  type AsteroidBodyId,
   type CanonicalState,
 } from '../../core/index.js';
 import { BODY_CONSTANTS } from '../../core/constants/bodies.js';
 import type { BodyId } from '../../core/constants/bodies.js';
+import {
+  AsteroidRenderer,
+  propagateAsteroidBodyState,
+  resolveAliasedPointSizeRange,
+  setAsteroidPointsMaxSize,
+} from '../../render/index.js';
 import { createJupiterOblateMesh } from '../../render/jupiter-oblate.js';
 import { createMarsOblateMesh } from '../../render/mars-oblate.js';
 import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
 import { createSaturnRingsGroup } from '../../render/saturn-rings.js';
 import { HaloSystem } from '../../render/halos.js';
-import { loadSolarSystemStatesBrowser, SLICE3_EPOCH_TDB } from './loader.js';
+import {
+  loadSlice7AsteroidCatalogFixture,
+  loadSolarSystemStatesBrowser,
+  SLICE3_EPOCH_TDB,
+} from './loader.js';
 
 const AU_M = 149_597_870_700;
 const OVERVIEW_ORBIT_RADIUS_M = 7 * AU_M;
@@ -32,10 +46,13 @@ const ORBIT_SENSITIVITY = 0.005;
 const WHEEL_ZOOM_SENSITIVITY = 0.0015;
 const TIME_SCRUB_STEP_SECONDS = 1800;
 const FOCUS_TRANSITION_DURATION_MS = 650;
+const POINTER_CLICK_THRESHOLD_PX = 4;
+const ASTEROID_POINT_RAYCAST_PIXEL_THRESHOLD = 8;
 export const MARS_RENDER_TILT_RAD = THREE.MathUtils.degToRad(25.19);
 const MARS_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 const SATURN_RENDER_TILT_RAD = THREE.MathUtils.degToRad(26.7);
 const SATURN_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
+export const ASTEROID_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
 
 const BODY_IDS: BodyId[] = [
@@ -99,7 +116,7 @@ const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
   e: 'enceladus',
 };
 
-type FocusTarget = BodyId | typeof OUTER_SYSTEM_OVERVIEW;
+type FocusTarget = BodyId | AsteroidBodyId | typeof OUTER_SYSTEM_OVERVIEW;
 type Position3 = CanonicalState['positionM'];
 
 function clamp(value: number, min: number, max: number): number {
@@ -163,6 +180,10 @@ function createBodyMesh(bodyId: BodyId): THREE.Mesh {
   return new THREE.Mesh(geometry, material);
 }
 
+function isAsteroidFocusTarget(bodyId: FocusTarget): bodyId is AsteroidBodyId {
+  return typeof bodyId === 'string' && isAsteroidBodyId(bodyId);
+}
+
 export function createMarsSystemRenderGroups(): {
   marsSystemGroup: THREE.Group;
   marsTiltGroup: THREE.Group;
@@ -190,7 +211,20 @@ export function createMarsSystemRenderGroups(): {
   return { marsSystemGroup, marsTiltGroup, marsCenteredGroup };
 }
 
-function getDefaultFocusRadius(bodyId: BodyId): number {
+export function getDefaultAsteroidFocusRadius(radiusM: number): number {
+  return Math.max(5 * radiusM, radiusM + 1_000);
+}
+
+function getDefaultFocusRadius(
+  bodyId: BodyId | AsteroidBodyId,
+  asteroidBody?: Pick<AsteroidBody, 'estimatedRadiusM'>,
+): number {
+  if (isAsteroidBodyId(bodyId)) {
+    if (!asteroidBody) {
+      throw new Error(`Missing asteroid metadata for focus target '${bodyId}'`);
+    }
+    return getDefaultAsteroidFocusRadius(asteroidBody.estimatedRadiusM);
+  }
   if (bodyId === 'mars') {
     return MARS_SYSTEM_OVERVIEW_RADIUS_M;
   }
@@ -205,11 +239,12 @@ function getDefaultFocusRadius(bodyId: BodyId): number {
 
 export function resolveFocusOrbitRadius(
   activeFocusBody: FocusTarget,
-  nextFocusBody: BodyId,
+  nextFocusBody: BodyId | AsteroidBodyId,
   currentOrbitRadius: number,
+  asteroidBody?: Pick<AsteroidBody, 'estimatedRadiusM'>,
 ): number {
   if (activeFocusBody === OUTER_SYSTEM_OVERVIEW) {
-    return getDefaultFocusRadius(nextFocusBody);
+    return getDefaultFocusRadius(nextFocusBody, asteroidBody);
   }
 
   if (activeFocusBody === nextFocusBody) {
@@ -220,19 +255,33 @@ export function resolveFocusOrbitRadius(
   // (Mars at 60 Mm vs. Phobos at 413 km is ~145x). Reusing the previous body's
   // orbit radius can strand the new target in the halo/body handoff zone, so a
   // real body change always snaps to the target's default focus distance.
-  return getDefaultFocusRadius(nextFocusBody);
+  return getDefaultFocusRadius(nextFocusBody, asteroidBody);
 }
 
-function getMinOrbitRadiusForFocus(bodyId: FocusTarget): number {
+function getMinOrbitRadiusForFocus(
+  bodyId: FocusTarget,
+  asteroidBody?: Pick<AsteroidBody, 'estimatedRadiusM'>,
+): number {
   if (bodyId === OUTER_SYSTEM_OVERVIEW) {
     return MIN_CAMERA_DISTANCE_M;
+  }
+  if (isAsteroidFocusTarget(bodyId)) {
+    if (!asteroidBody) {
+      throw new Error(`Missing asteroid metadata for focus target '${bodyId}'`);
+    }
+    return asteroidBody.estimatedRadiusM + 1_000;
   }
   return BODY_CONSTANTS[bodyId].radiusM + 400_000;
 }
 
 export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> {
-  const allStates = await loadSolarSystemStatesBrowser();
+  const [allStates, asteroidCatalog] = await Promise.all([
+    loadSolarSystemStatesBrowser(),
+    loadSlice7AsteroidCatalogFixture(),
+  ]);
   const stateSeries = new Map<BodyId, CanonicalState[]>();
+  const asteroidBodies = Object.values(asteroidCatalog.asteroids);
+  const asteroidIndex = createAsteroidCatalogIndex(asteroidBodies);
 
   for (const bodyId of BODY_IDS) {
     const samples = allStates[bodyId];
@@ -273,6 +322,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 1);
   mount.replaceChildren(renderer.domElement);
+  renderer.domElement.style.cursor = 'grab';
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
@@ -331,6 +381,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   sunLight.target = sunLightTarget;
 
   const haloSystem = new HaloSystem(scene);
+  const asteroidRenderer = new AsteroidRenderer(asteroidBodies);
+  scene.add(asteroidRenderer.root);
+  if (asteroidRenderer.pointsMaterial instanceof THREE.ShaderMaterial) {
+    const [, maxPointSize] = resolveAliasedPointSizeRange(renderer.getContext());
+    setAsteroidPointsMaxSize(asteroidRenderer.pointsMaterial, maxPointSize);
+  }
 
   let orbitRadius = OVERVIEW_ORBIT_RADIUS_M;
   let orbitAzimuth = 0;
@@ -342,9 +398,14 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   let currentTdbSeconds = timeMin;
   let disposed = false;
   let pointerActive = false;
+  let pointerDragged = false;
+  let pointerDownX = 0;
+  let pointerDownY = 0;
   let lastPointerX = 0;
   let lastPointerY = 0;
   let animationHandle = 0;
+  const raycaster = new THREE.Raycaster();
+  const pointerNdc = new THREE.Vector2();
 
   function getNativeState(bodyId: BodyId, tdbSeconds: number): CanonicalState {
     const state = interpolateBodyStateSeries(bodyId, stateSeries.get(bodyId)!, tdbSeconds);
@@ -406,6 +467,18 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     return nativeState;
   }
 
+  function getAsteroidBody(bodyId: AsteroidBodyId): AsteroidBody {
+    const asteroid = asteroidIndex.byBodyId.get(bodyId);
+    if (!asteroid) {
+      throw new Error(`Unknown asteroid focus target '${bodyId}'`);
+    }
+    return asteroid;
+  }
+
+  function getAsteroidHeliocentricState(bodyId: AsteroidBodyId, tdbSeconds: number): CanonicalState {
+    return propagateAsteroidBodyState(getAsteroidBody(bodyId), tdbSeconds);
+  }
+
   function getOuterSystemOverviewAnchor(tdbSeconds: number): Position3 {
     const jupiter = getHeliocentricState('jupiter', tdbSeconds).positionM;
     const saturn = getHeliocentricState('saturn', tdbSeconds).positionM;
@@ -421,6 +494,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   function getAnchorPosition(bodyId: FocusTarget, tdbSeconds: number): Position3 {
     if (bodyId === OUTER_SYSTEM_OVERVIEW) {
       return getOuterSystemOverviewAnchor(tdbSeconds);
+    }
+    if (isAsteroidFocusTarget(bodyId)) {
+      return getAsteroidHeliocentricState(bodyId, tdbSeconds).positionM;
     }
     return getHeliocentricState(bodyId, tdbSeconds).positionM;
   }
@@ -463,22 +539,26 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     const nowMs = performance.now();
     const fromAnchor = getCurrentOrbitCenter(nowMs);
     const activeFocusBody = getActiveFocusBody(nowMs);
+    const nextAsteroid = isAsteroidFocusTarget(nextFocusBody)
+      ? getAsteroidBody(nextFocusBody)
+      : undefined;
     targetFocusBody = nextFocusBody;
     focusTransitionFromAnchor = fromAnchor;
     focusTransitionStartMs = nowMs;
     orbitRadius = clamp(
       nextOrbitRadius,
-      getMinOrbitRadiusForFocus(nextFocusBody),
+      getMinOrbitRadiusForFocus(nextFocusBody, nextAsteroid),
       MAX_CAMERA_DISTANCE_M,
     );
-    if (nextFocusBody === 'mars') {
+    if (isAsteroidFocusTarget(nextFocusBody)) {
+      orbitPolar = ASTEROID_FOCUS_ORBIT_POLAR_RAD;
+    } else if (nextFocusBody === 'mars') {
       // Slice 5 lesson applied preemptively: render-only +X-axis tilt coupled
       // with the global default orbit (azimuth=0, polar=π/2) produces a
       // mathematically edge-on view. Mars uses the Saturn precedent from
       // commit 8f3c30e and resets focus to a three-quarter view at π/3.
       orbitPolar = MARS_FOCUS_ORBIT_POLAR_RAD;
-    }
-    if (nextFocusBody === 'saturn') {
+    } else if (nextFocusBody === 'saturn') {
       // Saturn's rings are render-only tilted about +X; the global default orbit
       // orientation (polar = π/2, azimuth = 0) lands exactly edge-on to that plane.
       // Reset Saturn focus to a three-quarter view so rings are visible on focus.
@@ -496,6 +576,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   function updateVisibleState(nowMs = performance.now()): void {
     const anchorPosM = getCurrentOrbitCenter(nowMs);
     const camLocal = sphericalToCartesian(orbitRadius, orbitPolar, orbitAzimuth);
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
 
     camera.near = Math.max(1, orbitRadius * 1e-4);
     camera.far = Math.max(orbitRadius * 10, 5e8);
@@ -556,8 +637,18 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     haloSystem.update(
       haloUpdates,
       camera,
-      { width: window.innerWidth, height: window.innerHeight },
+      viewport,
     );
+    const activeFocusBody = getActiveFocusBody(nowMs);
+    asteroidRenderer.setFocusedAsteroid(
+      isAsteroidFocusTarget(activeFocusBody) ? activeFocusBody : null,
+    );
+    asteroidRenderer.update({
+      anchorPositionM: anchorPosM,
+      camera,
+      tdbSeconds: currentTdbSeconds,
+      viewport,
+    });
 
     const epochStep = Math.round((currentTdbSeconds - SLICE3_EPOCH_TDB) / TIME_SCRUB_STEP_SECONDS);
     document.title = `Aster V2 — Solar System — step ${epochStep}`;
@@ -574,36 +665,118 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     updateVisibleState();
   }
 
+  function setCursor(style: string): void {
+    renderer.domElement.style.cursor = style;
+  }
+
+  function updateRaycasterFromClient(clientX: number, clientY: number): void {
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointerNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    pointerNdc.y = -(((clientY - rect.top) / rect.height) * 2 - 1);
+    raycaster.setFromCamera(pointerNdc, camera);
+    const worldUnitsPerPixel =
+      (2 * orbitRadius * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(rect.height, 1);
+    raycaster.params.Points.threshold = Math.max(
+      1_000,
+      worldUnitsPerPixel * ASTEROID_POINT_RAYCAST_PIXEL_THRESHOLD,
+    );
+  }
+
+  function pickAsteroidAt(clientX: number, clientY: number): AsteroidBodyId | null {
+    updateRaycasterFromClient(clientX, clientY);
+    const intersections = raycaster.intersectObjects(
+      asteroidRenderer
+        .getRaycastTargets()
+        .filter((target) => target.visible !== false || target === asteroidRenderer.points),
+      false,
+    );
+    for (const intersection of intersections) {
+      const asteroidBodyId = asteroidRenderer.resolveIntersection(intersection);
+      if (asteroidBodyId) {
+        return asteroidBodyId;
+      }
+    }
+    return null;
+  }
+
+  function updatePointerCursor(clientX: number, clientY: number): void {
+    if (pointerActive && pointerDragged) {
+      setCursor('grabbing');
+      return;
+    }
+    const asteroidBodyId = pickAsteroidAt(clientX, clientY);
+    setCursor(asteroidBodyId ? 'pointer' : pointerActive ? 'grabbing' : 'grab');
+  }
+
   function onPointerDown(event: PointerEvent): void {
     pointerActive = true;
+    pointerDragged = false;
+    pointerDownX = event.clientX;
+    pointerDownY = event.clientY;
     lastPointerX = event.clientX;
     lastPointerY = event.clientY;
+    setCursor('grabbing');
     renderer.domElement.setPointerCapture(event.pointerId);
   }
 
   function onPointerMove(event: PointerEvent): void {
-    if (!pointerActive) return;
+    if (!pointerActive) {
+      updatePointerCursor(event.clientX, event.clientY);
+      return;
+    }
     const dx = event.clientX - lastPointerX;
     const dy = event.clientY - lastPointerY;
     lastPointerX = event.clientX;
     lastPointerY = event.clientY;
 
+    if (
+      !pointerDragged &&
+      Math.hypot(event.clientX - pointerDownX, event.clientY - pointerDownY) >= POINTER_CLICK_THRESHOLD_PX
+    ) {
+      pointerDragged = true;
+    }
+
+    if (!pointerDragged) {
+      return;
+    }
+
     orbitAzimuth -= dx * ORBIT_SENSITIVITY;
     orbitPolar = clamp(orbitPolar + dy * ORBIT_SENSITIVITY, 0.001, Math.PI - 0.001);
     updateVisibleState();
+    setCursor('grabbing');
   }
 
   function onPointerUp(event: PointerEvent): void {
+    if (!pointerDragged) {
+      const asteroidBodyId = pickAsteroidAt(event.clientX, event.clientY);
+      if (asteroidBodyId) {
+        const nowMs = performance.now();
+        const activeFocusBody = getActiveFocusBody(nowMs);
+        const asteroidBody = getAsteroidBody(asteroidBodyId);
+        const nextOrbitRadius = resolveFocusOrbitRadius(
+          activeFocusBody,
+          asteroidBodyId,
+          orbitRadius,
+          asteroidBody,
+        );
+        startFocusTransition(asteroidBodyId, nextOrbitRadius);
+      }
+    }
     pointerActive = false;
+    pointerDragged = false;
     if (renderer.domElement.hasPointerCapture(event.pointerId)) {
       renderer.domElement.releasePointerCapture(event.pointerId);
     }
+    updatePointerCursor(event.clientX, event.clientY);
   }
 
   function onWheel(event: WheelEvent): void {
     event.preventDefault();
     const activeFocusBody = getActiveFocusBody(performance.now());
-    const minOrbitRadius = getMinOrbitRadiusForFocus(activeFocusBody);
+    const minOrbitRadius = getMinOrbitRadiusForFocus(
+      activeFocusBody,
+      isAsteroidFocusTarget(activeFocusBody) ? getAsteroidBody(activeFocusBody) : undefined,
+    );
     orbitRadius = clamp(
       orbitRadius * Math.exp(event.deltaY * WHEEL_ZOOM_SENSITIVITY),
       minOrbitRadius,
@@ -680,6 +853,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKeyDown);
     haloSystem.dispose();
+    asteroidRenderer.dispose();
     renderer.dispose();
     renderer.domElement.remove();
     for (const mesh of meshes.values()) {
