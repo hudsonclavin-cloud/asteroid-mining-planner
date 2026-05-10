@@ -7,6 +7,12 @@ import {
   getInterpolationInvariantId,
   type BodyId,
 } from '../constants/bodies.js';
+import {
+  ASTEROID_KEPLERIAN_ERROR_BAR_M,
+  ASTEROID_PROPAGATION_CADENCE_SECONDS,
+  ASTEROID_PROPAGATION_INVARIANT_ID,
+  type AsteroidBodyId,
+} from '../constants/asteroids.js';
 
 const FORBIDDEN_UNIT_KEYS = new Set([
   'positionKm',
@@ -176,5 +182,36 @@ export function assertInterpolationError(
       tdbSeconds: truth.tdbSeconds,
       expectedCadenceSeconds,
     }, false);
+  }
+}
+
+export function assertKeplerianError(
+  estimate: CanonicalState,
+  truth: CanonicalState,
+  bodyId: AsteroidBodyId,
+): void {
+  assertCanonicalState(estimate);
+  assertCanonicalState(truth);
+
+  const estimateM = estimate.positionM;
+  const truthM = truth.positionM;
+  const dx = estimateM.x - truthM.x;
+  const dy = estimateM.y - truthM.y;
+  const dz = estimateM.z - truthM.z;
+  const errorM = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+  if (errorM > ASTEROID_KEPLERIAN_ERROR_BAR_M) {
+    failInvariant(
+      ASTEROID_PROPAGATION_INVARIANT_ID,
+      `Keplerian propagation error exceeded cutover bar for asteroid '${bodyId}'`,
+      {
+        bodyId,
+        measuredErrorKm: errorM / 1000,
+        barKm: ASTEROID_KEPLERIAN_ERROR_BAR_M / 1000,
+        tdbSeconds: truth.tdbSeconds,
+        expectedCadenceSeconds: ASTEROID_PROPAGATION_CADENCE_SECONDS,
+      },
+      false,
+    );
   }
 }

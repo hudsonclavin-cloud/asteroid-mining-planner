@@ -58,3 +58,4 @@ export type {
 export * from './constants/index.js';
 export * from './interpolators/index.js';
 export * from './invariants/index.js';
+export * from './propagators/index.js';

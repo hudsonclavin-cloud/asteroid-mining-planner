@@ -4,6 +4,7 @@ export {
   assertFiniteState,
   assertFrameTag,
   assertInterpolationError,
+  assertKeplerianError,
   assertPhysicalTruthOnly,
 } from './assertions.js';
 
