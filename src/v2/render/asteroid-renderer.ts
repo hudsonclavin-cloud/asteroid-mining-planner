@@ -1,13 +1,17 @@
 import * as THREE from 'three';
 import type { AsteroidBody, AsteroidBodyId } from '../core/constants/asteroids.js';
 import { propagateKeplerianState } from '../core/propagators/keplerian.js';
+import {
+  ASTEROID_CURATED_NEA_COLOR_HEX,
+  ASTEROID_MAIN_BELT_COLOR_HEX,
+  createAsteroidPointsShaderMaterial,
+  getAsteroidPointColor,
+} from './asteroid-points-shader.js';
 
 export const ASTEROID_POINTS_TO_INSTANCE_EXIT_DIAMETER_PX = 1.5;
 export const ASTEROID_POINTS_TO_INSTANCE_ENTER_DIAMETER_PX = 2;
 export const ASTEROID_INSTANCE_TO_MESH_EXIT_DIAMETER_PX = 28;
 export const ASTEROID_INSTANCE_TO_MESH_ENTER_DIAMETER_PX = 32;
-export const ASTEROID_MAIN_BELT_COLOR_HEX = 0x86a7d7;
-export const ASTEROID_CURATED_NEA_COLOR_HEX = 0xffb173;
 
 export type AsteroidRenderMode = 'points' | 'instanced' | 'mesh';
 
@@ -21,24 +25,6 @@ export interface AsteroidRendererUpdateInput {
   readonly camera: THREE.PerspectiveCamera;
   readonly tdbSeconds: number;
   readonly viewport: AsteroidRendererViewport;
-}
-
-function createFallbackPointsMaterial(): THREE.PointsMaterial {
-  return new THREE.PointsMaterial({
-    size: 1,
-    sizeAttenuation: true,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.35,
-    depthTest: true,
-    depthWrite: false,
-  });
-}
-
-function getAsteroidPointColor(body: AsteroidBody): THREE.Color {
-  return new THREE.Color(
-    body.isCuratedNea ? ASTEROID_CURATED_NEA_COLOR_HEX : ASTEROID_MAIN_BELT_COLOR_HEX,
-  );
 }
 
 export function computeApparentDiameterPx(
@@ -93,8 +79,8 @@ export function classifyAsteroidRenderMode(
 export class AsteroidRenderer {
   readonly root = new THREE.Group();
   readonly pointsGeometry: THREE.BufferGeometry;
-  readonly pointsMaterial: THREE.PointsMaterial;
-  readonly points: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
+  pointsMaterial: THREE.Material;
+  readonly points: THREE.Points<THREE.BufferGeometry, THREE.Material>;
   readonly instancedGeometry: THREE.SphereGeometry;
   readonly instancedMaterial: THREE.MeshLambertMaterial;
   readonly instancedMesh: THREE.InstancedMesh<THREE.SphereGeometry, THREE.MeshLambertMaterial>;
@@ -158,7 +144,7 @@ export class AsteroidRenderer {
     this.pointsGeometry.setAttribute('aSize', this.pointSizeAttribute);
     this.pointsGeometry.setDrawRange(0, 0);
     this.pointsGeometry.boundingSphere = this.pointsBoundingSphere;
-    this.pointsMaterial = createFallbackPointsMaterial();
+    this.pointsMaterial = createAsteroidPointsShaderMaterial();
     this.points = new THREE.Points(this.pointsGeometry, this.pointsMaterial);
     this.points.name = 'asteroid-points-layer';
     this.root.add(this.points);
@@ -235,6 +221,12 @@ export class AsteroidRenderer {
 
   getRaycastTargets(): readonly THREE.Object3D[] {
     return [this.focusedMesh, this.instancedMesh, this.points];
+  }
+
+  setPointsMaterial(material: THREE.Material): void {
+    this.points.material = material;
+    this.pointsMaterial.dispose();
+    this.pointsMaterial = material;
   }
 
   resolveIntersection(intersection: THREE.Intersection): AsteroidBodyId | null {

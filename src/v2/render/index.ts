@@ -59,6 +59,18 @@ export {
   SATURN_RING_TEXTURE_SIZE,
 } from './saturn-rings.js';
 
+export {
+  ASTEROID_CURATED_NEA_COLOR_HEX,
+  ASTEROID_MAIN_BELT_COLOR_HEX,
+  ASTEROID_POINTS_DEFAULT_OPACITY,
+  ASTEROID_POINTS_DEFAULT_SCALE,
+  ASTEROID_POINTS_FALLBACK_MAX_SIZE_PX,
+  createAsteroidPointsShaderMaterial,
+  getAsteroidPointColor,
+  resolveAliasedPointSizeRange,
+  setAsteroidPointsMaxSize,
+} from './asteroid-points-shader.js';
+
 export type {
   AsteroidRenderMode,
   AsteroidRendererUpdateInput,
@@ -66,10 +78,8 @@ export type {
 } from './asteroid-renderer.js';
 
 export {
-  ASTEROID_CURATED_NEA_COLOR_HEX,
   ASTEROID_INSTANCE_TO_MESH_ENTER_DIAMETER_PX,
   ASTEROID_INSTANCE_TO_MESH_EXIT_DIAMETER_PX,
-  ASTEROID_MAIN_BELT_COLOR_HEX,
   ASTEROID_POINTS_TO_INSTANCE_ENTER_DIAMETER_PX,
   ASTEROID_POINTS_TO_INSTANCE_EXIT_DIAMETER_PX,
   AsteroidRenderer,
