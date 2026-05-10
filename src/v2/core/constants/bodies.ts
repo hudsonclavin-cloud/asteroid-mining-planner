@@ -1,3 +1,5 @@
+import { isAsteroidBodyId, type AsteroidBodyId, type BodyClass } from './asteroids.js';
+
 export type BodyId =
   | 'sun'
   | 'mercury'
@@ -206,6 +208,30 @@ export const BODY_INTERPOLATION_INVARIANTS: Record<BodyId, InterpolationInvarian
   enceladus: 'INV-010',
 };
 
+export const BODY_CLASSES: Record<BodyId, Exclude<BodyClass, 'asteroid'>> = {
+  sun: 'star',
+  mercury: 'planet',
+  venus: 'planet',
+  earth: 'planet',
+  moon: 'moon',
+  mars: 'planet',
+  phobos: 'moon',
+  deimos: 'moon',
+  jupiter: 'planet',
+  io: 'moon',
+  europa: 'moon',
+  ganymede: 'moon',
+  callisto: 'moon',
+  saturn: 'planet',
+  titan: 'moon',
+  rhea: 'moon',
+  iapetus: 'moon',
+  tethys: 'moon',
+  dione: 'moon',
+  mimas: 'moon',
+  enceladus: 'moon',
+};
+
 export function getBodyCadence(bodyId: BodyId): number {
   return BODY_CADENCE_SECONDS[bodyId];
 }
@@ -216,4 +242,11 @@ export function getInterpolationErrorBarM(bodyId: BodyId): number {
 
 export function getInterpolationInvariantId(bodyId: BodyId): InterpolationInvariantId {
   return BODY_INTERPOLATION_INVARIANTS[bodyId];
+}
+
+export function getBodyClass(bodyId: BodyId | AsteroidBodyId): BodyClass {
+  if (isAsteroidBodyId(bodyId)) {
+    return 'asteroid';
+  }
+  return BODY_CLASSES[bodyId];
 }

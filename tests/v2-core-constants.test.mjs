@@ -34,7 +34,11 @@ if (tscResult.status !== 0) {
 console.log('PASS tsc compilation');
 
 const {
+  ASTEROID_DEFAULT_ALBEDO,
+  createAsteroidCatalogIndex,
+  deriveAsteroidRadiusMFromAbsoluteMagnitude,
   BODY_CADENCE_SECONDS,
+  BODY_CLASSES,
   BODY_CONSTANTS,
   BODY_INTERPOLATION_INVARIANTS,
   INTERPOLATION_ERROR_BARS_M,
@@ -60,8 +64,11 @@ const {
   SATURN_LAPLACE_RINGLET_OUTER_RADIUS_M,
   SATURN_ROCHE_DIVISION_INNER_RADIUS_M,
   SATURN_ROCHE_DIVISION_OUTER_RADIUS_M,
+  getAsteroidByDesignation,
+  getAsteroidBySpkId,
+  getBodyClass,
 } = await import(
-  pathToFileURL(path.join(tempOutDir, 'core', 'constants', 'bodies.js')).href
+  pathToFileURL(path.join(tempOutDir, 'core', 'index.js')).href
 );
 
 const SLICE2_BODY_IDS = ['sun', 'mercury', 'venus', 'earth', 'moon', 'mars'];
@@ -237,6 +244,23 @@ const EXPECTED_SATURN_RING_SUBSTRUCTURE_RADII = {
   SATURN_ROCHE_DIVISION_OUTER_RADIUS_M: 139_380_000,
 };
 
+const ASTEROID_FIXTURE_PATH = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'asteroid-catalog-slice7.json');
+const ASTEROID_FIXTURE = JSON.parse(fs.readFileSync(ASTEROID_FIXTURE_PATH, 'utf8'));
+const CURATED_NEA_FIXTURE = JSON.parse(
+  fs.readFileSync(path.join(repoRoot, 'tools', 'slice7-research', 'data', 'famous-neas.json'), 'utf8')
+);
+const CURATED_NEA_SET = new Set(CURATED_NEA_FIXTURE.map((asteroid) => asteroid.designation));
+const ASTEROID_ENTRIES = Object.entries(ASTEROID_FIXTURE.asteroids).map(([bodyId, asteroid]) => ({
+  bodyId,
+  bodyClass: 'asteroid',
+  ...asteroid,
+  isCuratedNea: asteroid.isCuratedNea ?? CURATED_NEA_SET.has(asteroid.designation),
+  estimatedRadiusM: asteroid.estimatedRadiusM ?? asteroid.estimatedRadiusKm * 1000,
+  elementsFrame: asteroid.elementsFrame ?? 'FRAME_HELIO_J2000_ICRF',
+}));
+const ASTEROID_INDEX = createAsteroidCatalogIndex(ASTEROID_ENTRIES);
+const CURATED_NEA_DESIGNATIONS = ['101955', '99942', '433', '25143', '162173', '4179', '1620', '4769'];
+
 let failures = 0;
 
 function pass(label) {
@@ -372,6 +396,20 @@ for (const id of EXPECTED_BODY_IDS) {
   );
 }
 
+assert(
+  BODY_CLASSES.sun === 'star' &&
+    BODY_CLASSES.mars === 'planet' &&
+    BODY_CLASSES.phobos === 'moon' &&
+    getBodyClass('asteroid-101955') === 'asteroid',
+  'body-class tagging covers fixed bodies and asteroid ids',
+  `got ${JSON.stringify({
+    sun: BODY_CLASSES.sun,
+    mars: BODY_CLASSES.mars,
+    phobos: BODY_CLASSES.phobos,
+    asteroid: getBodyClass('asteroid-101955'),
+  })}`
+);
+
 // Verify Slice 3 Jupiter-system constants match the README values.
 for (const [id, expected] of Object.entries(EXPECTED_SLICE3_CONSTANTS)) {
   const entry = BODY_CONSTANTS[id];
@@ -490,6 +528,49 @@ for (const [name, expectedValue] of Object.entries(EXPECTED_SATURN_RING_SUBSTRUC
     `got ${actualValue}`
   );
 }
+
+assert(
+  ASTEROID_INDEX.byBodyId.size === 1008,
+  'createAsteroidCatalogIndex ingests all 1008 asteroid records',
+  `got ${ASTEROID_INDEX.byBodyId.size}`
+);
+
+assert(
+  ASTEROID_INDEX.curatedNeas.length === 8,
+  'createAsteroidCatalogIndex identifies the 8 curated NEAs',
+  `got ${ASTEROID_INDEX.curatedNeas.length}`
+);
+
+for (const designation of CURATED_NEA_DESIGNATIONS) {
+  const asteroid = getAsteroidByDesignation(ASTEROID_INDEX, designation);
+  assert(
+    asteroid?.isCuratedNea === true,
+    `curated NEA designation ${designation} remains flagged`,
+    `got ${asteroid ? asteroid.isCuratedNea : 'missing'}`
+  );
+}
+
+const bennuByDesignation = getAsteroidByDesignation(ASTEROID_INDEX, '101955');
+const bennuBySpkId = getAsteroidBySpkId(ASTEROID_INDEX, 101955);
+assert(
+  bennuByDesignation?.bodyId === 'asteroid-101955' &&
+    bennuBySpkId?.bodyId === 'asteroid-101955',
+  'asteroid lookup works by designation and SPK id for Bennu',
+  `got ${JSON.stringify({
+    byDesignation: bennuByDesignation?.bodyId ?? null,
+    bySpkId: bennuBySpkId?.bodyId ?? null,
+  })}`
+);
+
+const expectedBennuRadiusM = deriveAsteroidRadiusMFromAbsoluteMagnitude(
+  bennuByDesignation.H,
+  ASTEROID_DEFAULT_ALBEDO
+);
+assert(
+  Math.abs(expectedBennuRadiusM - bennuByDesignation.estimatedRadiusM) <= 1e-6,
+  'estimatedRadiusM matches the H-derived default-albedo formula for Bennu',
+  `got ${bennuByDesignation.estimatedRadiusM}, expected ${expectedBennuRadiusM}`
+);
 
 if (failures > 0) {
   console.error(`\n${failures} assertion(s) failed.`);
