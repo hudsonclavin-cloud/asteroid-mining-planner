@@ -99,6 +99,9 @@ test('asteroid points shader material constructs with additive soft-glow setting
   assert.equal(material.transparent, true);
   assert.equal(material.depthTest, true);
   assert.equal(material.depthWrite, false);
+  assert.equal(material.uniforms.uOpacity.value, shader.ASTEROID_POINTS_DEFAULT_OPACITY);
+  assert.equal(material.uniforms.uScale.value, shader.ASTEROID_POINTS_DEFAULT_SCALE);
+  assert.equal(material.uniforms.uMinPointSize.value, shader.ASTEROID_POINTS_MIN_SIZE_PX);
   assert.ok(typeof material.vertexShader === 'string' && material.vertexShader.includes('gl_PointSize'));
   assert.ok(typeof material.fragmentShader === 'string' && material.fragmentShader.includes('gl_PointCoord'));
 });
@@ -148,4 +151,27 @@ test('per-point color attribute distinguishes curated NEAs from main-belt astero
   assertVectorApprox(colorByBodyId.get(mainBelt.bodyId), [expectedMain.r, expectedMain.g, expectedMain.b]);
   assertVectorApprox(colorByBodyId.get(curatedNea.bodyId), [expectedNea.r, expectedNea.g, expectedNea.b]);
   assert.notDeepEqual(colorByBodyId.get(mainBelt.bodyId), colorByBodyId.get(curatedNea.bodyId));
+});
+
+test('overview points stay above the one-pixel invisibility floor', async () => {
+  const { renderer, shader, core, THREE } = await loadModules();
+  const asteroid = createMockAsteroid(core, '4', false);
+  const asteroidRenderer = new renderer.AsteroidRenderer([asteroid]);
+  asteroidRenderer.update({
+    anchorPositionM: { x: 0, y: 0, z: 0 },
+    camera: { fov: 45, position: { x: 1_047_185_094_900, y: 0, z: 0 } },
+    tdbSeconds: 0,
+    viewport: { width: 1440, height: 900 },
+  });
+
+  const sizeAttribute = asteroidRenderer.pointsGeometry.attributes.aSize;
+  const material = asteroidRenderer.pointsMaterial;
+  assert.equal(asteroidRenderer.pointsGeometry.drawRange.count, 1);
+  assert.ok(material instanceof THREE.ShaderMaterial);
+  const computedPointSize = Math.min(
+    Math.max(sizeAttribute.getX(0) * material.uniforms.uScale.value, material.uniforms.uMinPointSize.value),
+    material.uniforms.uMaxPointSize.value,
+  );
+  assert.ok(computedPointSize >= shader.ASTEROID_POINTS_MIN_SIZE_PX);
+  assert.ok(computedPointSize > 1);
 });

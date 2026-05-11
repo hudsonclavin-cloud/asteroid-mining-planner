@@ -2,8 +2,9 @@ import * as THREE from 'three';
 import type { AsteroidBody } from '../core/constants/asteroids.js';
 
 export const ASTEROID_POINTS_DEFAULT_OPACITY = 0.08;
-export const ASTEROID_POINTS_DEFAULT_SCALE = 320;
+export const ASTEROID_POINTS_DEFAULT_SCALE = 0.75;
 export const ASTEROID_POINTS_FALLBACK_MAX_SIZE_PX = 64;
+export const ASTEROID_POINTS_MIN_SIZE_PX = 2;
 export const ASTEROID_MAIN_BELT_COLOR_HEX = 0x86a7d7;
 export const ASTEROID_CURATED_NEA_COLOR_HEX = 0xffb173;
 
@@ -11,6 +12,7 @@ const VERTEX_SHADER = `
 attribute float aSize;
 
 uniform float uScale;
+uniform float uMinPointSize;
 uniform float uMaxPointSize;
 
 varying vec3 vColor;
@@ -18,8 +20,7 @@ varying vec3 vColor;
 void main() {
   vColor = color;
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-  float safeDepth = max(-mvPosition.z, 1.0);
-  float pointSize = clamp(aSize * uScale / safeDepth, 1.0, uMaxPointSize);
+  float pointSize = clamp(aSize * uScale, uMinPointSize, uMaxPointSize);
   gl_PointSize = pointSize;
   gl_Position = projectionMatrix * mvPosition;
 }
@@ -53,6 +54,7 @@ export interface PointSizeRangeReader {
 export interface AsteroidPointsShaderOptions {
   readonly opacity?: number;
   readonly scale?: number;
+  readonly minPointSize?: number;
   readonly maxPointSize?: number;
 }
 
@@ -95,6 +97,7 @@ export function createAsteroidPointsShaderMaterial(
 ): THREE.ShaderMaterial {
   const opacity = options.opacity ?? ASTEROID_POINTS_DEFAULT_OPACITY;
   const scale = options.scale ?? ASTEROID_POINTS_DEFAULT_SCALE;
+  const minPointSize = options.minPointSize ?? ASTEROID_POINTS_MIN_SIZE_PX;
   const maxPointSize = options.maxPointSize ?? ASTEROID_POINTS_FALLBACK_MAX_SIZE_PX;
 
   return new THREE.ShaderMaterial({
@@ -108,6 +111,7 @@ export function createAsteroidPointsShaderMaterial(
     uniforms: {
       uOpacity: { value: opacity },
       uScale: { value: scale },
+      uMinPointSize: { value: minPointSize },
       uMaxPointSize: { value: maxPointSize },
     },
   });
