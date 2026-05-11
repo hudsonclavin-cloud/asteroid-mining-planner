@@ -9,7 +9,6 @@ export const ASTEROID_CURATED_NEA_COLOR_HEX = 0xffb173;
 
 const VERTEX_SHADER = `
 attribute float aSize;
-attribute vec3 color;
 
 uniform float uScale;
 uniform float uMaxPointSize;
