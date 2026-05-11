@@ -101,7 +101,7 @@ test('asteroid points shader material constructs with additive soft-glow setting
   assert.equal(material.depthWrite, false);
   assert.equal(material.uniforms.uOpacity.value, shader.ASTEROID_POINTS_DEFAULT_OPACITY);
   assert.equal(material.uniforms.uScale.value, shader.ASTEROID_POINTS_DEFAULT_SCALE);
-  assert.equal(material.uniforms.uMinPointSize.value, shader.ASTEROID_POINTS_MIN_SIZE_PX);
+  assert.equal(material.uniforms.uMaxPointSize.value, shader.ASTEROID_POINTS_FALLBACK_MAX_SIZE_PX);
   assert.ok(typeof material.vertexShader === 'string' && material.vertexShader.includes('gl_PointSize'));
   assert.ok(typeof material.fragmentShader === 'string' && material.fragmentShader.includes('gl_PointCoord'));
 });
@@ -153,13 +153,17 @@ test('per-point color attribute distinguishes curated NEAs from main-belt astero
   assert.notDeepEqual(colorByBodyId.get(mainBelt.bodyId), colorByBodyId.get(curatedNea.bodyId));
 });
 
-test('overview points stay above the one-pixel invisibility floor', async () => {
+test('overview Vesta-sized points land in the tuned 4-8 px visibility band', async () => {
   const { renderer, shader, core, THREE } = await loadModules();
   const asteroid = createMockAsteroid(core, '4', false);
   const asteroidRenderer = new renderer.AsteroidRenderer([asteroid]);
+  const camera = new THREE.PerspectiveCamera(45, 1440 / 900, 1, 1e15);
+  camera.position.set(1_047_185_094_900, 0, 0);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld(true);
   asteroidRenderer.update({
     anchorPositionM: { x: 0, y: 0, z: 0 },
-    camera: { fov: 45, position: { x: 1_047_185_094_900, y: 0, z: 0 } },
+    camera,
     tdbSeconds: 0,
     viewport: { width: 1440, height: 900 },
   });
@@ -168,10 +172,20 @@ test('overview points stay above the one-pixel invisibility floor', async () => 
   const material = asteroidRenderer.pointsMaterial;
   assert.equal(asteroidRenderer.pointsGeometry.drawRange.count, 1);
   assert.ok(material instanceof THREE.ShaderMaterial);
+  const positionAttribute = asteroidRenderer.pointsGeometry.attributes.position;
+  const worldPosition = [
+    positionAttribute.getX(0),
+    positionAttribute.getY(0),
+    positionAttribute.getZ(0),
+  ];
+  const mvPosition = new THREE.Vector4(worldPosition[0], worldPosition[1], worldPosition[2], 1).applyMatrix4(
+    camera.matrixWorldInverse,
+  );
+  const depth = Math.max(1e-6, -mvPosition.z);
   const computedPointSize = Math.min(
-    Math.max(sizeAttribute.getX(0) * material.uniforms.uScale.value, material.uniforms.uMinPointSize.value),
+    Math.max((sizeAttribute.getX(0) * material.uniforms.uScale.value) / depth, 1),
     material.uniforms.uMaxPointSize.value,
   );
-  assert.ok(computedPointSize >= shader.ASTEROID_POINTS_MIN_SIZE_PX);
-  assert.ok(computedPointSize > 1);
+  assert.ok(computedPointSize >= 4);
+  assert.ok(computedPointSize <= 8);
 });
