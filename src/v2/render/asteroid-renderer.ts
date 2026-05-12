@@ -118,6 +118,7 @@ export class AsteroidRenderer {
   private readonly instancedBodyIds: AsteroidBodyId[] = [];
   private readonly pointPositions: Float32Array;
   private readonly pointColors: Float32Array;
+  private readonly pointBaseColors: Float32Array;
   private readonly pointSizes: Float32Array;
   private readonly pointPositionAttribute: THREE.BufferAttribute;
   private readonly pointColorAttribute: THREE.BufferAttribute;
@@ -146,13 +147,20 @@ export class AsteroidRenderer {
     const maxBodies = asteroids.length;
     this.pointPositions = new Float32Array(maxBodies * 3);
     this.pointColors = new Float32Array(maxBodies * 3);
+    this.pointBaseColors = new Float32Array(maxBodies * 3);
     this.pointSizes = new Float32Array(maxBodies);
 
-    for (const asteroid of asteroids) {
+    for (const [asteroidIndex, asteroid] of asteroids.entries()) {
       this.asteroidById.set(asteroid.bodyId, asteroid);
       this.modeByBodyId.set(asteroid.bodyId, 'points');
       this.worldPositionByBodyId.set(asteroid.bodyId, new THREE.Vector3());
       this.canonicalPositionByBodyId.set(asteroid.bodyId, { x: 0, y: 0, z: 0 });
+
+      const color = getAsteroidPointColor(asteroid);
+      const colorBase = asteroidIndex * 3;
+      this.pointBaseColors[colorBase] = color.r;
+      this.pointBaseColors[colorBase + 1] = color.g;
+      this.pointBaseColors[colorBase + 2] = color.b;
     }
 
     this.pointsGeometry = new THREE.BufferGeometry();
@@ -287,7 +295,7 @@ export class AsteroidRenderer {
     this.pointBodyIds.length = 0;
     this.instancedBodyIds.length = 0;
 
-    for (const asteroid of this.asteroids) {
+    for (const [asteroidIndex, asteroid] of this.asteroids.entries()) {
       const propagated = propagateAsteroidBodyState(asteroid, tdbSeconds);
       const canonicalPosition = this.canonicalPositionByBodyId.get(asteroid.bodyId)!;
       canonicalPosition.x = propagated.positionM.x;
@@ -326,13 +334,13 @@ export class AsteroidRenderer {
 
       if (nextMode === 'points') {
         const pointBase = pointCount * 3;
-        const color = getAsteroidPointColor(asteroid);
+        const sourceBase = asteroidIndex * 3;
         this.pointPositions[pointBase] = Math.fround(world.x);
         this.pointPositions[pointBase + 1] = Math.fround(world.y);
         this.pointPositions[pointBase + 2] = Math.fround(world.z);
-        this.pointColors[pointBase] = color.r;
-        this.pointColors[pointBase + 1] = color.g;
-        this.pointColors[pointBase + 2] = color.b;
+        this.pointColors[pointBase] = this.pointBaseColors[sourceBase];
+        this.pointColors[pointBase + 1] = this.pointBaseColors[sourceBase + 1];
+        this.pointColors[pointBase + 2] = this.pointBaseColors[sourceBase + 2];
         this.pointSizes[pointCount] = Math.max(1, Math.log10(asteroid.estimatedRadiusM + 10));
         this.pointBodyIds[pointCount] = asteroid.bodyId;
         pointCount += 1;
