@@ -61,7 +61,7 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
-function toCoreElements(raw) {
+function toCoreElements(core, raw) {
   return {
     aM: raw.elements.aKm * 1000,
     e: raw.elements.e,
@@ -69,7 +69,7 @@ function toCoreElements(raw) {
     omRad: raw.elements.omRad,
     wRad: raw.elements.wRad,
     maRad: raw.elements.maRad,
-    epochTdbSeconds: raw.elements.epochTdbJd,
+    epochTdbSeconds: core.jdTdbToSecondsSinceJ2000(raw.elements.epochTdbJd),
   };
 }
 
@@ -112,10 +112,9 @@ test('propagateKeplerianStateVectors reproduces the fixture anchor state within 
   const core = await loadCore();
   const fixture = readJson(fixturePath);
   const rawVesta = fixture.asteroids['asteroid-4'];
-  const elements = toCoreElements(rawVesta);
+  const elements = toCoreElements(core, rawVesta);
   const anchorSeconds = core.jdTdbToSecondsSinceJ2000(rawVesta.anchor.epochTdbJd);
 
-  elements.epochTdbSeconds = anchorSeconds;
   const propagated = core.propagateKeplerianStateVectors(elements, anchorSeconds);
   const anchorPositionM = {
     x: rawVesta.anchor.positionKm[0] * 1000,
@@ -131,9 +130,8 @@ test('forward 30d epoch shift then backward propagation returns to the initial s
   const core = await loadCore();
   const fixture = readJson(fixturePath);
   const rawVesta = fixture.asteroids['asteroid-4'];
-  const elements = toCoreElements(rawVesta);
+  const elements = toCoreElements(core, rawVesta);
   const anchorSeconds = core.jdTdbToSecondsSinceJ2000(rawVesta.anchor.epochTdbJd);
-  elements.epochTdbSeconds = anchorSeconds;
   const initial = core.propagateKeplerianStateVectors(elements, anchorSeconds);
   const shifted = shiftEpoch(core, elements, 30 * 86400);
   const propagatedBack = core.propagateKeplerianStateVectors(shifted, anchorSeconds);
@@ -146,9 +144,8 @@ test('angular momentum and specific orbital energy remain conserved over 90 days
   const core = await loadCore();
   const fixture = readJson(fixturePath);
   const rawVesta = fixture.asteroids['asteroid-4'];
-  const elements = toCoreElements(rawVesta);
+  const elements = toCoreElements(core, rawVesta);
   const anchorSeconds = core.jdTdbToSecondsSinceJ2000(rawVesta.anchor.epochTdbJd);
-  elements.epochTdbSeconds = anchorSeconds;
   const checkpoints = [0, 30, 60, 90].map((days) =>
     core.propagateKeplerianStateVectors(elements, anchorSeconds + days * 86400),
   );
@@ -185,8 +182,7 @@ test('production Keplerian port matches the round-2 Vesta day-90 research residu
   const truth = readJson(vestaTruthPath);
   const anchoredAccuracy = readJson(anchoredAccuracyPath);
   const rawVesta = fixture.asteroids['asteroid-4'];
-  const elements = toCoreElements(rawVesta);
-  elements.epochTdbSeconds = core.jdTdbToSecondsSinceJ2000(rawVesta.anchor.epochTdbJd);
+  const elements = toCoreElements(core, rawVesta);
   const finalTruth = truth.samples[truth.samples.length - 1];
   const expected = anchoredAccuracy.asteroids.find((entry) => entry.designation === '4');
 
