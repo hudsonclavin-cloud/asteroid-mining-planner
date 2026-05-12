@@ -1,0 +1,31 @@
+{
+  "generatedAtUtc": "2026-05-12T04:14:55.904Z",
+  "sourcePath": "tools/slice8-research/data/main-belt-top-10000.json",
+  "bodyCount": 10000,
+  "cheapPathThreshold": {
+    "jdTdb": 2460311.5,
+    "label": "2024-01-01 TDB"
+  },
+  "histogramByYear": {
+    "2025": 10000
+  },
+  "counts": {
+    "cheapPath": 10000,
+    "horizonsPath": 0,
+    "total": 10000
+  },
+  "summary": {
+    "meanEpochJdTdb": 2461000.5,
+    "meanEpochDateUtc": "2025-11-21",
+    "medianEpochJdTdb": 2461000.5,
+    "medianEpochDateUtc": "2025-11-21",
+    "p05EpochJdTdb": 2461000.5,
+    "p95EpochJdTdb": 2461000.5,
+    "oldestEpochJdTdb": 2461000.5,
+    "oldestEpochDateUtc": "2025-11-21",
+    "oldestDesignation": "4",
+    "newestEpochJdTdb": 2461000.5,
+    "newestEpochDateUtc": "2025-11-21",
+    "newestDesignation": "4"
+  }
+}
