@@ -33,6 +33,11 @@ export interface PropagatedKeplerianStateVectors {
   readonly metadata: KeplerianPropagationMetadata;
 }
 
+export interface OrbitSamplePoint extends Vec3F64 {
+  readonly trueAnomalyRad: number;
+  readonly orbitalRadiusM: number;
+}
+
 function assertFiniteNumber(label: string, value: number): void {
   if (!Number.isFinite(value)) {
     throw new RangeError(`${label} must be finite`);
@@ -127,6 +132,63 @@ export function solveKeplerEquation(
   throw new Error(`Kepler solver failed to converge for e=${eccentricity} M=${meanAnomalyRad}`);
 }
 
+function rotatePerifocalPositionToCanonicalFrame(
+  perifocalPositionM: Vec3F64,
+  elements: KeplerianElements,
+): Vec3F64 {
+  const cosOm = Math.cos(elements.omRad);
+  const sinOm = Math.sin(elements.omRad);
+  const cosI = Math.cos(elements.iRad);
+  const sinI = Math.sin(elements.iRad);
+  const cosW = Math.cos(elements.wRad);
+  const sinW = Math.sin(elements.wRad);
+
+  const eclipticPositionM = rotatePerifocalToEquatorial(
+    perifocalPositionM,
+    cosOm,
+    sinOm,
+    cosI,
+    sinI,
+    cosW,
+    sinW,
+  );
+  return rotateEclipticToEquatorial(eclipticPositionM);
+}
+
+export function sampleOrbitEllipse(
+  elements: KeplerianElements,
+  segmentCount: number,
+): OrbitSamplePoint[] {
+  validateKeplerianElements(elements);
+  assertFiniteNumber('segmentCount', segmentCount);
+  if (!Number.isInteger(segmentCount) || segmentCount < 3) {
+    throw new RangeError('segmentCount must be an integer >= 3');
+  }
+
+  const semiLatusRectumM = elements.aM * (1 - elements.e * elements.e);
+  const samples: OrbitSamplePoint[] = [];
+
+  for (let segmentIndex = 0; segmentIndex <= segmentCount; segmentIndex += 1) {
+    const trueAnomalyRad = (segmentIndex / segmentCount) * TWO_PI;
+    const orbitalRadiusM = semiLatusRectumM / (1 + elements.e * Math.cos(trueAnomalyRad));
+    const perifocalPositionM = {
+      x: orbitalRadiusM * Math.cos(trueAnomalyRad),
+      y: orbitalRadiusM * Math.sin(trueAnomalyRad),
+      z: 0,
+    };
+    const canonicalPositionM = rotatePerifocalPositionToCanonicalFrame(perifocalPositionM, elements);
+    samples.push({
+      x: canonicalPositionM.x,
+      y: canonicalPositionM.y,
+      z: canonicalPositionM.z,
+      trueAnomalyRad,
+      orbitalRadiusM,
+    });
+  }
+
+  return samples;
+}
+
 export function propagateKeplerianStateVectors(
   elements: KeplerianElements,
   targetTdbSeconds: number,
@@ -170,15 +232,7 @@ export function propagateKeplerianStateVectors(
   const cosW = Math.cos(elements.wRad);
   const sinW = Math.sin(elements.wRad);
 
-  const eclipticPositionM = rotatePerifocalToEquatorial(
-    perifocalPositionM,
-    cosOm,
-    sinOm,
-    cosI,
-    sinI,
-    cosW,
-    sinW,
-  );
+  const canonicalPositionM = rotatePerifocalPositionToCanonicalFrame(perifocalPositionM, elements);
   const eclipticVelocityMps = rotatePerifocalToEquatorial(
     perifocalVelocityMps,
     cosOm,
@@ -190,7 +244,7 @@ export function propagateKeplerianStateVectors(
   );
 
   return {
-    positionM: rotateEclipticToEquatorial(eclipticPositionM),
+    positionM: canonicalPositionM,
     velocityMps: rotateEclipticToEquatorial(eclipticVelocityMps),
     metadata: {
       orbitalRadiusM,
