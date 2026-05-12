@@ -11,6 +11,7 @@ Specifies the JSON envelope contract for Slice 7 asteroid catalog fixtures. Slic
 - Window the pre-research bars were validated against: `2026-05-01` to `2026-07-30`
 - Propagation method: continuous per-frame Keplerian two-body propagation
 - Storage location (when created): `tests/fixtures/v2/asteroid-catalog-slice7.json`
+- Runtime loader path: `src/v2/app/solar-system/loader.ts` fetches this same fixture artifact directly
 - Format: single JSON envelope with one catalog entry per asteroid
 - New architectural fact: the fixture is an anchor-and-elements catalog, not a sampled time series
 

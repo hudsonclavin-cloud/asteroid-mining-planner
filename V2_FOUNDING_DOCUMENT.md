@@ -205,7 +205,7 @@ Rules:
 - Linear interpolation is **allowed** in `render/` for screen-only effects (e.g., halo position smoothing between frames)
 - Hermite-using bodies must remain below the cutover bars in §3.4 when validated against Horizons truth at the cadence specified by each invariant: INV-008 at 6-hour cadence; INV-009, INV-010, and INV-011 at 5-min, 15-min, or 30-min cadence depending on body
 - Keplerian-using asteroid bodies must remain below the INV-012 cutover bar at `1d` truth cadence across the Slice 7 validation window
-- Runtime assertions are `assertInterpolationError(estimate, truth, bodyId)` for Hermite paths and `assertKeplerianError(estimate, truth, bodyId)` for asteroid Keplerian paths — both throw in dev and structured-log in prod
+- Assertion helpers are `assertInterpolationError(estimate, truth, bodyId)` for Hermite paths and `assertKeplerianError(estimate, truth, bodyId)` for asteroid Keplerian paths. They are exercised where truth is available (tests, cutover harnesses, report-mode validation), not inside Slice 7's runtime hot propagation path.
 - This policy is codified as INV-008 (Slice 2 bodies), INV-009 (Slice 3 bodies), INV-010 (Slice 4 bodies), INV-011 (Slice 6 bodies), and INV-012 (Slice 7 asteroid catalog). The Hermite path keeps per-body cadence in the constants module; the Keplerian path keeps a uniform anchor epoch plus derived osculating elements per asteroid.
 
 ### 3.8 Frame Graph Extension (Slice 3)
