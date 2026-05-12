@@ -382,6 +382,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const haloSystem = new HaloSystem(scene);
   const asteroidRenderer = new AsteroidRenderer(asteroidBodies);
+  // Slice 7 Phase H: asteroidRenderer.root now owns the full browse stack for
+  // the catalog: orbit-line batch, points layer, instanced bodies, and focused
+  // body/orbit highlight. Runtime still mounts a single sibling system under
+  // the shared heliocentric scene graph.
   scene.add(asteroidRenderer.root);
   if (asteroidRenderer.pointsMaterial instanceof THREE.ShaderMaterial) {
     const [, maxPointSize] = resolveAliasedPointSizeRange(renderer.getContext());

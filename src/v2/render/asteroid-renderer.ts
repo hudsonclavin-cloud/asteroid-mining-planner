@@ -7,11 +7,19 @@ import {
   createAsteroidPointsShaderMaterial,
   getAsteroidPointColor,
 } from './asteroid-points-shader.js';
+import {
+  ASTEROID_ORBIT_BASE_OPACITY,
+  createAsteroidOrbitBatch,
+  createFocusedAsteroidOrbitLine,
+  type AsteroidOrbitBatch,
+} from './asteroid-orbits.js';
 
 export const ASTEROID_POINTS_TO_INSTANCE_EXIT_DIAMETER_PX = 1.5;
 export const ASTEROID_POINTS_TO_INSTANCE_ENTER_DIAMETER_PX = 2;
 export const ASTEROID_INSTANCE_TO_MESH_EXIT_DIAMETER_PX = 28;
 export const ASTEROID_INSTANCE_TO_MESH_ENTER_DIAMETER_PX = 32;
+export const ASTEROID_ORBIT_FADE_START_DIAMETER_PX = ASTEROID_INSTANCE_TO_MESH_ENTER_DIAMETER_PX;
+export const ASTEROID_ORBIT_FADE_END_DIAMETER_PX = 100;
 
 export type AsteroidRenderMode = 'points' | 'instanced' | 'mesh';
 
@@ -87,6 +95,7 @@ export function classifyAsteroidRenderMode(
 
 export class AsteroidRenderer {
   readonly root = new THREE.Group();
+  readonly orbitBatch: AsteroidOrbitBatch;
   readonly pointsGeometry: THREE.BufferGeometry;
   pointsMaterial: THREE.Material;
   readonly points: THREE.Points<THREE.BufferGeometry, THREE.Material>;
@@ -120,6 +129,8 @@ export class AsteroidRenderer {
   private readonly instanceScale = new THREE.Vector3();
   private focusedAsteroidBodyId: AsteroidBodyId | null = null;
   private focusedMeshBodyId: AsteroidBodyId | null = null;
+  private focusedOrbitLine: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial> | null = null;
+  private focusedOrbitBodyId: AsteroidBodyId | null = null;
 
   constructor(asteroids: readonly AsteroidBody[]) {
     if (asteroids.length === 0) {
@@ -128,6 +139,9 @@ export class AsteroidRenderer {
 
     this.asteroids = asteroids.slice();
     this.root.name = 'asteroid-renderer-root';
+    this.orbitBatch = createAsteroidOrbitBatch(this.asteroids);
+    this.orbitBatch.lineSegments.frustumCulled = false;
+    this.root.add(this.orbitBatch.lineSegments);
 
     const maxBodies = asteroids.length;
     this.pointPositions = new Float32Array(maxBodies * 3);
@@ -196,6 +210,14 @@ export class AsteroidRenderer {
     return this.focusedMeshBodyId;
   }
 
+  getFocusedOrbitBodyId(): AsteroidBodyId | null {
+    return this.focusedOrbitBodyId;
+  }
+
+  getMainOrbitOpacity(): number {
+    return this.orbitBatch.material.opacity;
+  }
+
   getAsteroidRenderMode(bodyId: AsteroidBodyId): AsteroidRenderMode {
     const mode = this.modeByBodyId.get(bodyId);
     if (!mode) {
@@ -260,6 +282,8 @@ export class AsteroidRenderer {
     let pointCount = 0;
     let instanceCount = 0;
     let hasFocusedMesh = false;
+    let focusedApparentDiameterPx = 0;
+    let focusedRenderMode: AsteroidRenderMode | null = null;
     this.pointBodyIds.length = 0;
     this.instancedBodyIds.length = 0;
 
@@ -295,6 +319,10 @@ export class AsteroidRenderer {
         asteroid.bodyId === this.focusedAsteroidBodyId,
       );
       this.modeByBodyId.set(asteroid.bodyId, nextMode);
+      if (asteroid.bodyId === this.focusedAsteroidBodyId) {
+        focusedApparentDiameterPx = apparentDiameterPx;
+        focusedRenderMode = nextMode;
+      }
 
       if (nextMode === 'points') {
         const pointBase = pointCount * 3;
@@ -344,10 +372,42 @@ export class AsteroidRenderer {
       this.focusedMeshBodyId = null;
     }
 
+    this.orbitBatch.lineSegments.position.set(-anchorPositionM.x, -anchorPositionM.y, -anchorPositionM.z);
+    const orbitOpacity =
+      focusedRenderMode === 'mesh'
+        ? ASTEROID_ORBIT_BASE_OPACITY * (1 - clamp01(
+          (focusedApparentDiameterPx - ASTEROID_ORBIT_FADE_START_DIAMETER_PX) /
+            (ASTEROID_ORBIT_FADE_END_DIAMETER_PX - ASTEROID_ORBIT_FADE_START_DIAMETER_PX),
+        ))
+        : ASTEROID_ORBIT_BASE_OPACITY;
+    this.orbitBatch.material.opacity = orbitOpacity;
+    this.orbitBatch.lineSegments.visible = orbitOpacity > 0;
+
+    if (this.focusedAsteroidBodyId !== this.focusedOrbitBodyId) {
+      this.disposeFocusedOrbitLine();
+      if (this.focusedAsteroidBodyId) {
+        const asteroid = this.asteroidById.get(this.focusedAsteroidBodyId)!;
+        const range = this.orbitBatch.rangesByBodyId.get(this.focusedAsteroidBodyId)!;
+        const focusedOrbitColor = getAsteroidPointColor(asteroid);
+        this.focusedOrbitLine = createFocusedAsteroidOrbitLine(asteroid, range, focusedOrbitColor);
+        this.focusedOrbitLine.frustumCulled = false;
+        this.root.add(this.focusedOrbitLine);
+        this.focusedOrbitBodyId = this.focusedAsteroidBodyId;
+      }
+    }
+
+    if (this.focusedOrbitLine) {
+      this.focusedOrbitLine.position.set(-anchorPositionM.x, -anchorPositionM.y, -anchorPositionM.z);
+      this.focusedOrbitLine.visible = true;
+    }
+
     this.root.updateMatrixWorld(true);
   }
 
   dispose(): void {
+    this.disposeFocusedOrbitLine();
+    this.orbitBatch.geometry.dispose();
+    this.orbitBatch.material.dispose();
     this.pointsGeometry.dispose();
     this.pointsMaterial.dispose();
     this.instancedGeometry.dispose();
@@ -355,4 +415,24 @@ export class AsteroidRenderer {
     this.focusedGeometry.dispose();
     this.focusedMaterial.dispose();
   }
+
+  private disposeFocusedOrbitLine(): void {
+    if (!this.focusedOrbitLine) {
+      this.focusedOrbitBodyId = null;
+      return;
+    }
+
+    this.root.remove(this.focusedOrbitLine);
+    this.focusedOrbitLine.geometry.dispose();
+    this.focusedOrbitLine.material.dispose();
+    this.focusedOrbitLine = null;
+    this.focusedOrbitBodyId = null;
+  }
+}
+
+function clamp01(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.min(1, Math.max(0, value));
 }

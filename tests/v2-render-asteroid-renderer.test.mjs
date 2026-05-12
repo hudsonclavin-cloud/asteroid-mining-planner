@@ -176,3 +176,27 @@ test('Points, InstancedMesh, and focused Mesh agree on world position', async ()
   assert.ok(instancedDraw.distanceTo(instancedWorld) <= 1e-3);
   assert.ok(focusedDraw.distanceTo(focusedWorld) <= 1e-3);
 });
+
+test('focused asteroid gets a highlighted orbit while the main orbit batch stays visible in browse-scale focus', async () => {
+  const { asteroidRenderer, asteroid } = await buildRendererWithCamera(2.5, {
+    designation: '404',
+    focused: true,
+  });
+
+  assert.equal(asteroidRenderer.getAsteroidRenderMode(asteroid.bodyId), 'instanced');
+  assert.equal(asteroidRenderer.getFocusedOrbitBodyId(), asteroid.bodyId);
+  assert.equal(asteroidRenderer.orbitBatch.lineSegments.visible, true);
+  assert.equal(asteroidRenderer.getMainOrbitOpacity(), 0.12);
+});
+
+test('main orbit batch fades out when the focused asteroid reaches close-inspection mesh mode', async () => {
+  const { asteroidRenderer, asteroid } = await buildRendererWithCamera(120, {
+    designation: '405',
+    focused: true,
+  });
+
+  assert.equal(asteroidRenderer.getAsteroidRenderMode(asteroid.bodyId), 'mesh');
+  assert.equal(asteroidRenderer.getFocusedOrbitBodyId(), asteroid.bodyId);
+  assert.equal(asteroidRenderer.getMainOrbitOpacity(), 0);
+  assert.equal(asteroidRenderer.orbitBatch.lineSegments.visible, false);
+});
