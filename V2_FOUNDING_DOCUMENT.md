@@ -549,7 +549,7 @@ Mars + Phobos/Deimos is the smallest planet system that:
 
 ### Slice 7: Asteroid Catalog Honest Mode
 
-Status: pre-research complete 2026-05-09. Founding-doc artifacts written; implementation pending.
+Status: SHIPPED 2026-05-11. Cutover declared after Phase D round 4 manual verification; Phase H's orbit-line MVP produced the belt-band visual between Mars and Jupiter without reopening the Slice 7 scope.
 
 This slice adds a visualization-grade asteroid catalog to `/v2/solar-system`. It does not introduce a new frame. Instead, it introduces a second propagation path in `core/`: Keplerian two-body propagation from a uniform Horizons anchor epoch for `1,008` selected asteroids.
 
@@ -566,6 +566,11 @@ This slice adds a visualization-grade asteroid catalog to `/v2/solar-system`. It
   - `THREE.Points` with additive soft-glow shader
   - `THREE.InstancedMesh` for resolved non-focused bodies
   - individual `Mesh` for the focused body
+- Phase H orbit-line MVP:
+  - orbit ellipse sampler in `core/`
+  - batched orbit geometry in one `THREE.LineSegments` draw (`130,048` vertices)
+  - focus-state LOD fade for browse vs. close-inspection camera states
+  - focused-orbit highlight on click-to-focus
 - Click-to-focus only; route remains `/v2/solar-system`
 
 #### Excluded
@@ -1083,7 +1088,9 @@ The Slice 6 tripwire is **3 focused weekends from the start of the Slice 6 imple
 
 ### Slice 7
 
-The Slice 7 tripwire is **4 focused weekends from the start of the Slice 7 implementation dispatch**. Slice 7 reopens architectural surface area in both `core/` and `render/`: new propagation method, dual-source ingestion, many-body catalog LOD, and render/focus continuity for click targets. If INV-012 is not met, the catalog cannot maintain `60 fps`, or render/focus target agreement is not preserved by end of weekend 4, then the catalog size, propagation strategy, or LOD plan is re-evaluated before Slice 8. Slice 7 also tripwires the anchor-epoch discipline: if cutover requires stale anchors or per-body epoch exceptions, the architecture has failed its own honesty standard and the fixture rebuild strategy must be reconsidered before shipping.
+The Slice 7 tripwire is **4 focused weekends from the start of the Slice 7 implementation dispatch**. Slice 7 reopens architectural surface area in both `core/` and `render/`: new propagation method, dual-source ingestion, many-body catalog LOD, render/focus continuity for click targets, and the Phase H orbit-line MVP that produces the belt-band visual. If INV-012 is not met, the catalog cannot maintain `60 fps`, or render/focus target agreement is not preserved by end of weekend 4, then the catalog size, propagation strategy, or LOD plan is re-evaluated before Slice 8. Slice 7 also tripwires the anchor-epoch discipline: if cutover requires stale anchors or per-body epoch exceptions, the architecture has failed its own honesty standard and the fixture rebuild strategy must be reconsidered before shipping.
+
+Actual result: cutover declared on `2026-05-11`, within weekend 1 of the 4-weekend window, leaving roughly 3 focused weekends of headroom against the tripwire.
 
 ### Verification Protocol For All Future Slices
 
@@ -1208,6 +1215,9 @@ These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables plu
 - Slice 7 is visualization-grade. Asteroid propagation uses vanilla two-body Keplerian math with INV-012 bar of `100,000 km` across the validated `90-day` window, not mission-planning fidelity.
 - Anchor-epoch discipline is mandatory. The validated accuracy statement assumes anchors were fetched at the Slice 7 window start (`2026-05-01 00:00:00 TDB`). Reusing stale anchors across materially different windows is expected to drift.
 - Most asteroids will render in Points mode from heliocentric overview. This is honest-mode behavior, not a bug; the catalog is too dense and too small in apparent size to justify body meshes everywhere.
+- Orbit-line MVP uses `THREE.LineSegments` with normal blending and low-opacity `LineBasicMaterial` per Deep Research recommendation. Additive blending, wide-line shader / `Line2`, and any stronger glow polish are explicitly deferred to Slice `7.5`.
 - Click-to-focus is the only asteroid discovery path in Slice 7. Search, labels, and richer browse controls remain deferred.
 - Asteroid shapes, spin states, and photometric realism are deferred. Focused asteroids are still rendered through simplified geometry rather than mission-grade shape models.
 - Continuous per-frame propagation at `1,008` bodies is acceptable at Slice 7 scale. A future multi-10k-body slice may need GPU-assisted propagation or more aggressive batching; Slice 7 does not solve that future scale problem in advance.
+- The stored orbit-element frame label drift from Slice 7 cutover (`FRAME_HELIO_J2000_ICRF` label on ecliptic-derived classical elements) is acknowledged here and resolved immediately in Slice `7.1` cleanup Commit 2.
+- Runtime click-to-focus integration is verified by manual cutover and code inspection, but there is not yet an end-to-end automated test for Points and InstancedMesh raycasting. Adding that coverage is recommended for Slice `7.5` or Slice `8`.
