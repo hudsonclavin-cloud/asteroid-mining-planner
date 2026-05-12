@@ -65,7 +65,7 @@ function createMockAsteroid(core, designation, overrides = {}) {
     H: overrides.H ?? 10,
     G: overrides.G ?? 0.15,
     estimatedRadiusM,
-    elementsFrame: core.FRAME_HELIO_J2000_ICRF,
+    elementsFrame: core.FRAME_HELIO_J2000_ECLIPTIC,
     anchorState: core.createCanonicalState({
       frame: core.FRAME_HELIO_J2000_ICRF,
       tdbSeconds: epochTdbSeconds,

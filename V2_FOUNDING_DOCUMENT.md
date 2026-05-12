@@ -273,10 +273,10 @@ Slice 6 confirms that the planet-centered inertial frame pattern from §3.8 exte
 Slice 7 introduces the first many-body catalog in V2 and the first propagation method that does not depend on a stored time-series fixture per body.
 
 - Body set: `1,008` asteroids (`1,000` main-belt by `H` plus `8` curated famous NEAs)
-- Frame: all asteroid bodies remain in `FRAME_HELIO_J2000_ICRF`; Slice 7 introduces no new frame constant
+- Frame: all propagated asteroid states remain in `FRAME_HELIO_J2000_ICRF`; stored classical elements are labeled `FRAME_HELIO_J2000_ECLIPTIC`; Slice 7 introduces no new scene-graph frame constant
 - Inventory source: JPL SBDB is canonical for body selection and metadata (`designation`, `name`, `H`, `G`, class, `condition_code`, `data_arc`, `neo`, `pha`)
 - Anchor source: JPL Horizons VECTORS is canonical for one recent Cartesian state per body at a uniform anchor epoch of `2026-05-01 00:00:00 TDB`
-- Propagation seed: each Horizons anchor state is converted to osculating elements, then propagated continuously via Keplerian two-body math
+- Propagation seed: each Horizons anchor state is converted to ecliptic-derived osculating elements, then propagated continuously via Keplerian two-body math and rotated into canonical heliocentric ICRF
 - Render ownership: `render/` selects between Points, InstancedMesh, and focused Mesh representations; `core/` owns the propagated heliocentric truth state only
 
 The anchor-epoch discipline is part of the architecture, not an implementation convenience. Pre-research round 1 showed the failure mode directly: Bennu's stale SBDB epoch (`2011-01-01`) produced multi-million-kilometer drift across the Slice 7 window, while round 2's uniform Horizons anchor reduced Bennu's day-90 error to `4,236 km`. If the fixture window moves materially, Slice 7 anchors must be re-fetched at the new window start.
@@ -848,7 +848,7 @@ Slice 7 uses two upstream JPL sources with distinct responsibilities:
   - canonical for propagation truth and anchor state
   - anchor query parameters match `tools/slice7-research/fetch-horizons-anchors.mjs`: `CENTER='500@10'`, `REF_SYSTEM='ICRF'`, `REF_PLANE='FRAME'`, `TIME_TYPE='TDB'`, `OUT_UNITS='KM-S'`, `VEC_TABLE='2'`, `TLIST='2461161.5'`
 
-Round-2 pre-research established the refined DEC-2 split: SBDB is not used directly as the propagation anchor because epoch freshness is heterogeneous across bodies. The production propagation path derives osculating elements from Horizons anchor vectors at the uniform Slice 7 anchor epoch of `2026-05-01 00:00:00 TDB`.
+Round-2 pre-research established the refined DEC-2 split: SBDB is not used directly as the propagation anchor because epoch freshness is heterogeneous across bodies. The production propagation path derives osculating elements from Horizons anchor vectors at the uniform Slice 7 anchor epoch of `2026-05-01 00:00:00 TDB`, stores those classical elements in heliocentric J2000 ecliptic orientation, then rotates propagated states into canonical heliocentric ICRF for rendering and focus.
 
 See `src/v2/boundary/slice7-fixture-spec.md` for the full fixture contract.
 

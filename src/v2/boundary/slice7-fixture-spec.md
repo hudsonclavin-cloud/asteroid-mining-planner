@@ -10,7 +10,7 @@ Specifies the JSON envelope contract for Slice 7 asteroid catalog fixtures. Slic
 - Composition: Top `1,000` main-belt asteroids by `H` plus `8` curated famous NEAs
 - Window the pre-research bars were validated against: `2026-05-01` to `2026-07-30`
 - Propagation method: continuous per-frame Keplerian two-body propagation
-- Storage location (when created): `tests/fixtures/v2/horizons-asteroid-catalog.json`
+- Storage location (when created): `tests/fixtures/v2/asteroid-catalog-slice7.json`
 - Format: single JSON envelope with one catalog entry per asteroid
 - New architectural fact: the fixture is an anchor-and-elements catalog, not a sampled time series
 
@@ -133,8 +133,9 @@ Each asteroid entry must preserve:
   - `elements.wRad`
   - `elements.maRad`
   - `elements.epochTdbJd`
+  - `elementsFrame = FRAME_HELIO_J2000_ECLIPTIC`
 
-The production propagation path uses the derived equatorial elements, not raw SBDB ecliptic elements.
+The production propagation path uses derived ecliptic-oriented classical elements plus a runtime ecliptic-to-equatorial rotation, not raw SBDB bulk-table elements.
 
 ## Frame Assignment After Ingestion
 
@@ -162,8 +163,9 @@ These conversions happen in `src/v2/boundary/` at ingestion time. No km, km/s, o
 
 - SBDB-published osculating elements are J2000 ecliptic and require the DEC-7 ecliptic-to-equatorial rotation if used directly.
 - Slice 7's production path does not use SBDB elements directly for propagation.
-- Horizons anchor vectors are fetched with `REF_PLANE='FRAME'`, so the derived elements are already in J2000 equatorial orientation.
-- Therefore no additional ecliptic-to-equatorial rotation is applied to the production anchor-derived elements during ingestion.
+- Horizons anchor vectors are fetched with `REF_PLANE='FRAME'`, so the anchor state itself is J2000 equatorial / ICRF.
+- The committed Slice 7 fixture stores classical elements in heliocentric J2000 ecliptic orientation.
+- Runtime propagation rotates the propagated ecliptic result into the canonical heliocentric ICRF scene frame via the DEC-7 obliquity transform.
 
 ## Validation
 
@@ -188,7 +190,7 @@ The anchor epoch is part of the fixture contract, not an incidental implementati
 1. validates the `1,008`-body hybrid catalog shape
 2. preserves SBDB metadata for labeling and filtering
 3. converts a single Horizons anchor state per body into canonical metric units
-4. preserves the derived osculating elements for continuous runtime propagation
+4. preserves the derived ecliptic-oriented osculating elements for continuous runtime propagation
 5. assigns every asteroid to `FRAME_HELIO_J2000_ICRF`
 
 The runtime then propagates each asteroid continuously from the shared anchor epoch rather than interpolating between stored samples.

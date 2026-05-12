@@ -1,4 +1,5 @@
 import {
+  FRAME_HELIO_J2000_ECLIPTIC,
   FRAME_HELIO_J2000_ICRF,
   FRAME_GCRS_EARTH,
   FRAME_JUPITER_J2000_ICRF,
@@ -456,9 +457,9 @@ function ingestSlice7Asteroid(
     `${bodyIdKey}.anchor.velocityKmPerS`,
   );
   const elementsFrame = assertNonEmptyString(asteroid.elementsFrame, `${bodyIdKey}.elementsFrame`);
-  if (elementsFrame !== FRAME_HELIO_J2000_ICRF) {
+  if (elementsFrame !== FRAME_HELIO_J2000_ECLIPTIC) {
     throw new Error(
-      `Slice 7 elementsFrame for "${bodyIdKey}" must be ${FRAME_HELIO_J2000_ICRF}; received ${elementsFrame}`,
+      `Slice 7 elementsFrame for "${bodyIdKey}" must be ${FRAME_HELIO_J2000_ECLIPTIC}; received ${elementsFrame}`,
     );
   }
 
@@ -505,7 +506,7 @@ function ingestSlice7Asteroid(
       maRad: assertFiniteNumber(asteroid.elements?.maRad, `${bodyIdKey}.elements.maRad`),
       epochTdbSeconds: jdTdbToSecondsSinceJ2000(elementsEpoch),
     },
-    elementsFrame: FRAME_HELIO_J2000_ICRF,
+    elementsFrame: FRAME_HELIO_J2000_ECLIPTIC,
   };
 }
 

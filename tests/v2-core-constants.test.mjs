@@ -256,7 +256,7 @@ const ASTEROID_ENTRIES = Object.entries(ASTEROID_FIXTURE.asteroids).map(([bodyId
   ...asteroid,
   isCuratedNea: asteroid.isCuratedNea ?? CURATED_NEA_SET.has(asteroid.designation),
   estimatedRadiusM: asteroid.estimatedRadiusM ?? asteroid.estimatedRadiusKm * 1000,
-  elementsFrame: asteroid.elementsFrame ?? 'FRAME_HELIO_J2000_ICRF',
+  elementsFrame: asteroid.elementsFrame ?? 'FRAME_HELIO_J2000_ECLIPTIC',
 }));
 const ASTEROID_INDEX = createAsteroidCatalogIndex(ASTEROID_ENTRIES);
 const CURATED_NEA_DESIGNATIONS = ['101955', '99942', '433', '25143', '162173', '4179', '1620', '4769'];

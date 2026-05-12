@@ -73,7 +73,7 @@ Keplerian does not replace Hermite. The two paths coexist in `core/`, selected b
 
 ## Element Derivation
 
-The production propagation path does not use SBDB's ecliptic osculating elements directly.
+The production propagation path does not use SBDB's bulk-table osculating elements directly.
 
 Instead:
 
@@ -81,11 +81,12 @@ Instead:
 2. derive osculating elements from that Cartesian state
 3. propagate from those derived elements
 
-The derived elements are therefore aligned to J2000 equatorial / ICRF because the anchor state was fetched with `REF_PLANE='FRAME'`.
+The committed Slice 7 fixture stores those derived classical elements in heliocentric J2000 ecliptic orientation. Runtime propagation then applies the DEC-7 ecliptic-to-equatorial rotation so returned states remain aligned to canonical heliocentric ICRF.
 
 ## Frame Policy
 
-- all Slice 7 asteroids live in `FRAME_HELIO_J2000_ICRF`
+- all propagated Slice 7 asteroid states live in `FRAME_HELIO_J2000_ICRF`
+- stored asteroid classical elements are labeled `FRAME_HELIO_J2000_ECLIPTIC`
 - Slice 7 introduces no new frame id
 - asteroid propagation is heliocentric from the start; no planet-centered asteroid subframe is created
 

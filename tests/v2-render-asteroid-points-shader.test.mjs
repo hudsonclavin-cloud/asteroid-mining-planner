@@ -64,7 +64,7 @@ function createMockAsteroid(core, designation, isCuratedNea) {
     H: isCuratedNea ? 18 : 9,
     G: 0.15,
     estimatedRadiusM: 8000,
-    elementsFrame: core.FRAME_HELIO_J2000_ICRF,
+    elementsFrame: core.FRAME_HELIO_J2000_ECLIPTIC,
     anchorState: core.createCanonicalState({
       frame: core.FRAME_HELIO_J2000_ICRF,
       tdbSeconds: 0,

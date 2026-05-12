@@ -61,7 +61,7 @@ function validateKeplerianElements(elements: KeplerianElements): void {
   }
 }
 
-function rotatePerifocalToEquatorial(
+function rotatePerifocalToEcliptic(
   vector: Vec3F64,
   cosOm: number,
   sinOm: number,
@@ -143,7 +143,10 @@ function rotatePerifocalPositionToCanonicalFrame(
   const cosW = Math.cos(elements.wRad);
   const sinW = Math.sin(elements.wRad);
 
-  const eclipticPositionM = rotatePerifocalToEquatorial(
+  // Slice 7 stores classical elements in heliocentric J2000 ecliptic orientation.
+  // Propagation returns canonical heliocentric ICRF by rotating the ecliptic result
+  // through the J2000 obliquity exactly once.
+  const eclipticPositionM = rotatePerifocalToEcliptic(
     perifocalPositionM,
     cosOm,
     sinOm,
@@ -233,7 +236,7 @@ export function propagateKeplerianStateVectors(
   const sinW = Math.sin(elements.wRad);
 
   const canonicalPositionM = rotatePerifocalPositionToCanonicalFrame(perifocalPositionM, elements);
-  const eclipticVelocityMps = rotatePerifocalToEquatorial(
+  const eclipticVelocityMps = rotatePerifocalToEcliptic(
     perifocalVelocityMps,
     cosOm,
     sinOm,

@@ -1,4 +1,4 @@
-import { FRAME_HELIO_J2000_ICRF, type FrameId } from '../frames/ids.js';
+import { FRAME_HELIO_J2000_ECLIPTIC, type FrameId } from '../frames/ids.js';
 import type { CanonicalState } from '../types.js';
 
 export type AsteroidBodyId = `asteroid-${string}`;
@@ -100,9 +100,9 @@ export function createAsteroidCatalogIndex<T extends AsteroidBodyIdentity>(
         `Asteroid body id "${asteroid.bodyId}" does not match designation "${asteroid.designation}"`,
       );
     }
-    if (asteroid.elementsFrame !== FRAME_HELIO_J2000_ICRF) {
+    if (asteroid.elementsFrame !== FRAME_HELIO_J2000_ECLIPTIC) {
       throw new Error(
-        `Asteroid "${asteroid.bodyId}" must use ${FRAME_HELIO_J2000_ICRF}; received ${asteroid.elementsFrame}`,
+        `Asteroid "${asteroid.bodyId}" must use ${FRAME_HELIO_J2000_ECLIPTIC}; received ${asteroid.elementsFrame}`,
       );
     }
     assertFinitePositive(asteroid.estimatedRadiusM, `${asteroid.bodyId}.estimatedRadiusM`);

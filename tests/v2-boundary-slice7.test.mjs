@@ -120,7 +120,7 @@ test('Slice 7 boundary spot-checks preserve Vesta, Bennu, and Apophis metadata a
   assert.equal(vesta.class, 'MBA');
   assert.equal(vesta.isCuratedNea, false);
   assert.equal(vesta.H, 3.25);
-  assert.equal(vesta.elementsFrame, core.FRAME_HELIO_J2000_ICRF);
+  assert.equal(vesta.elementsFrame, core.FRAME_HELIO_J2000_ECLIPTIC);
   assert.equal(vesta.anchorState.frame, core.FRAME_HELIO_J2000_ICRF);
 
   assert.equal(bennu.class, 'APO');

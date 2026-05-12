@@ -261,7 +261,7 @@ Slice 7 extends `core/` from a fixed small body table to a catalog-scale body se
 - Total bodies: `1,008`
 - Composition: Top `1,000` main-belt asteroids by `H` plus `8` curated famous NEAs
 - Main-belt cutoff: `H = 10.98`
-- Frame: all asteroid bodies live in `FRAME_HELIO_J2000_ICRF`
+- Frame: propagated asteroid states live in `FRAME_HELIO_J2000_ICRF`; stored classical elements are labeled `FRAME_HELIO_J2000_ECLIPTIC`
 - Propagation method: Keplerian two-body from a uniform Horizons anchor epoch
 - Invariant: `src/v2/core/invariants/INV-012.md`
 
