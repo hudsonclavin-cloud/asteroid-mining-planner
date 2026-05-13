@@ -1,0 +1,676 @@
+{
+  "generatedAtUtc": "2026-05-13T04:00:10.817Z",
+  "bodies": [
+    {
+      "designation": "431",
+      "name": "Nephele",
+      "cohort": "worst",
+      "h": 9.08,
+      "eccentricity": 0.17173596,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 49040.522342192446,
+          "rmsErrorKm": 21908.556799739523
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 49051.58050489397,
+          "rmsErrorKm": 21914.28237720267
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 408194.93825707305,
+          "rmsErrorKm": 285003.5810715954
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 48760.29003235132,
+          "rmsErrorKm": 22035.97525614951
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9997745605220524,
+        "windowRatio": 8.3236254175433,
+        "bestCaseConsistencyRatio": 1.005973928218011
+      }
+    },
+    {
+      "designation": "11232",
+      "name": "1999 JA77",
+      "cohort": "worst",
+      "h": 12.56,
+      "eccentricity": 0.06582051,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 42024.45871049038,
+          "rmsErrorKm": 18864.19113798467
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 42036.95489485858,
+          "rmsErrorKm": 18874.94412963746
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 334148.7526524797,
+          "rmsErrorKm": 234969.30830634214
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 33896.64379866058,
+          "rmsErrorKm": 15403.579458153017
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9997027333592678,
+        "windowRatio": 7.9512922451769175,
+        "bestCaseConsistencyRatio": 1.240150946640908
+      }
+    },
+    {
+      "designation": "6410",
+      "name": "Fujiwara",
+      "cohort": "worst",
+      "h": 12.8,
+      "eccentricity": 0.225733,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 32836.94054478314,
+          "rmsErrorKm": 14874.721913797954
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 32840.571076823915,
+          "rmsErrorKm": 14877.376964688507
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 233037.80854557717,
+          "rmsErrorKm": 168011.72450193317
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 23548.49189493854,
+          "rmsErrorKm": 10703.42273242631
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9998894497896433,
+        "windowRatio": 7.096818542755509,
+        "bestCaseConsistencyRatio": 1.3945933872683625
+      }
+    },
+    {
+      "designation": "76347",
+      "name": "2000 ET158",
+      "cohort": "worst",
+      "h": 13.46,
+      "eccentricity": 0.10551714,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 33178.591924081295,
+          "rmsErrorKm": 15130.591448889709
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 33229.556746679715,
+          "rmsErrorKm": 15166.653064199467
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 219053.2193663315,
+          "rmsErrorKm": 160224.83184117905
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 19977.498618499758,
+          "rmsErrorKm": 9109.505832346917
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9984662803964873,
+        "windowRatio": 6.6022458055955315,
+        "bestCaseConsistencyRatio": 1.6633492201024684
+      }
+    },
+    {
+      "designation": "5959",
+      "name": "Shaklan",
+      "cohort": "worst",
+      "h": 12.43,
+      "eccentricity": 0.09345834,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 22259.492009930334,
+          "rmsErrorKm": 9862.961352884413
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 22233.04102515315,
+          "rmsErrorKm": 9842.853635097168
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 207023.20974023076,
+          "rmsErrorKm": 140836.12691362703
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 34941.479629318506,
+          "rmsErrorKm": 15521.757068075436
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.0011897151067755,
+        "windowRatio": 9.300446283674138,
+        "bestCaseConsistencyRatio": 1.5716014552299786
+      }
+    },
+    {
+      "designation": "71680",
+      "name": "2000 EJ201",
+      "cohort": "worst",
+      "h": 13.42,
+      "eccentricity": 0.07263047,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 26214.605954488514,
+          "rmsErrorKm": 11769.355740781168
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 26221.127119672496,
+          "rmsErrorKm": 11771.939624756544
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 200423.64372033326,
+          "rmsErrorKm": 142659.78892717848
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 19192.005540173966,
+          "rmsErrorKm": 8736.654689496188
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9997513011109622,
+        "windowRatio": 7.645495189524921,
+        "bestCaseConsistencyRatio": 1.366252581825527
+      }
+    },
+    {
+      "designation": "9653",
+      "name": "1996 AL2",
+      "cohort": "worst",
+      "h": 13.36,
+      "eccentricity": 0.13008148,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 22891.11985881392,
+          "rmsErrorKm": 10217.579206033533
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 22874.07893463572,
+          "rmsErrorKm": 10201.305572469917
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 197113.57067091737,
+          "rmsErrorKm": 136021.74608678548
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 19509.08166538088,
+          "rmsErrorKm": 8845.159939884878
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.0007449884310924,
+        "windowRatio": 8.610918639483748,
+        "bestCaseConsistencyRatio": 1.1724836323396026
+      }
+    },
+    {
+      "designation": "393",
+      "name": "Lampetia",
+      "cohort": "worst",
+      "h": 8.37,
+      "eccentricity": 0.33290621,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 28714.857506855948,
+          "rmsErrorKm": 13060.586045557671
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 28731.589293809964,
+          "rmsErrorKm": 13072.92011912912
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 196389.95537396707,
+          "rmsErrorKm": 142547.81891295803
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 20941.846113836968,
+          "rmsErrorKm": 9510.173750448335
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9994176518819438,
+        "windowRatio": 6.839314989707927,
+        "bestCaseConsistencyRatio": 1.3719702235241837
+      }
+    },
+    {
+      "designation": "51998",
+      "name": "2001 TR174",
+      "cohort": "worst",
+      "h": 13.44,
+      "eccentricity": 0.07460308,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 26467.916581589652,
+          "rmsErrorKm": 11984.463808212078
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 26454.125493463733,
+          "rmsErrorKm": 11972.35905368317
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 189141.57394203503,
+          "rmsErrorKm": 136138.57831279756
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 19507.861101827297,
+          "rmsErrorKm": 8864.412295970142
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.0005213208854449,
+        "windowRatio": 7.146069595579603,
+        "bestCaseConsistencyRatio": 1.3560751409587277
+      }
+    },
+    {
+      "designation": "4202",
+      "name": "Minitti",
+      "cohort": "worst",
+      "h": 12.03,
+      "eccentricity": 0.08254342,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 19051.86041082133,
+          "rmsErrorKm": 8408.909219858955
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 19102.655625534644,
+          "rmsErrorKm": 8447.780400870657
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 179008.5653575041,
+          "rmsErrorKm": 121541.26248430523
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 29316.93201560816,
+          "rmsErrorKm": 13031.819164430091
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9973409343858235,
+        "windowRatio": 9.395857490947625,
+        "bestCaseConsistencyRatio": 1.5347045243500084
+      }
+    },
+    {
+      "designation": "6331",
+      "name": "1992 FZ1",
+      "cohort": "best",
+      "h": 13.28,
+      "eccentricity": 0.13421101,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 2629.162255527333,
+          "rmsErrorKm": 1200.3104965957937
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 2666.884617136586,
+          "rmsErrorKm": 1223.14923571432
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 19701.304960362366,
+          "rmsErrorKm": 14407.045146127673
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 2585.099418170575,
+          "rmsErrorKm": 1232.7250909935635
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9858552704654485,
+        "windowRatio": 7.493377374844012,
+        "bestCaseConsistencyRatio": 1.0316371580880586
+      }
+    },
+    {
+      "designation": "17006",
+      "name": "1999 CH63",
+      "cohort": "best",
+      "h": 13.36,
+      "eccentricity": 0.18736567,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 2695.1082245063776,
+          "rmsErrorKm": 1234.5200314456704
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 2702.9334239740233,
+          "rmsErrorKm": 1239.4620650776478
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 20572.723826412403,
+          "rmsErrorKm": 14810.414933923941
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 2932.691783940291,
+          "rmsErrorKm": 1382.886805711299
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9971049233406051,
+        "windowRatio": 7.633357220814537,
+        "bestCaseConsistencyRatio": 1.0850033367186906
+      }
+    },
+    {
+      "designation": "3059",
+      "name": "Pryor",
+      "cohort": "best",
+      "h": 13.49,
+      "eccentricity": 0.12918248,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 2859.300728127824,
+          "rmsErrorKm": 1337.9540706758273
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 2818.6744258796934,
+          "rmsErrorKm": 1308.6423284251362
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 20692.017647743058,
+          "rmsErrorKm": 14705.630123990775
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 3410.4129441996447,
+          "rmsErrorKm": 1570.9659865245903
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.014413265283539,
+        "windowRatio": 7.236740593316852,
+        "bestCaseConsistencyRatio": 1.2099350364436903
+      }
+    },
+    {
+      "designation": "19340",
+      "name": "1997 AV4",
+      "cohort": "best",
+      "h": 13.45,
+      "eccentricity": 0.05602129,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 2944.856110447219,
+          "rmsErrorKm": 1367.0112346615301
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 2943.950902952062,
+          "rmsErrorKm": 1366.3193436074273
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 21512.055848338834,
+          "rmsErrorKm": 15281.103143946166
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 3472.7363833342365,
+          "rmsErrorKm": 1598.3230583045413
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.0003074804998444,
+        "windowRatio": 7.3049599170643065,
+        "bestCaseConsistencyRatio": 1.1796176287627393
+      }
+    },
+    {
+      "designation": "1643",
+      "name": "Brown",
+      "cohort": "best",
+      "h": 12.44,
+      "eccentricity": 0.20181561,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 2867.8980206724145,
+          "rmsErrorKm": 1314.6017730845008
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 2872.5278270479985,
+          "rmsErrorKm": 1317.5062387135392
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 21599.831954244542,
+          "rmsErrorKm": 15805.613477476898
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 2541.5442294098148,
+          "rmsErrorKm": 1217.6674469626994
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9983882466404714,
+        "windowRatio": 7.531589965385238,
+        "bestCaseConsistencyRatio": 1.1302293282202855
+      }
+    },
+    {
+      "designation": "21996",
+      "name": "1999 XP31",
+      "cohort": "best",
+      "h": 13.01,
+      "eccentricity": 0.13816734,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 3100.5665755691402,
+          "rmsErrorKm": 1454.0110535754002
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 3043.700107364568,
+          "rmsErrorKm": 1412.0573284237603
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 22003.748258357726,
+          "rmsErrorKm": 15741.781533015479
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 3431.421622483355,
+          "rmsErrorKm": 1581.8466962541288
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.0186833348223032,
+        "windowRatio": 7.096686273965498,
+        "bestCaseConsistencyRatio": 1.127384926714906
+      }
+    },
+    {
+      "designation": "19750",
+      "name": "2000 CM62",
+      "cohort": "best",
+      "h": 13.4,
+      "eccentricity": 0.11663126,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 3032.1269775635105,
+          "rmsErrorKm": 1408.7490303114516
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 3025.979668070036,
+          "rmsErrorKm": 1403.9649511930338
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 22045.89147681729,
+          "rmsErrorKm": 15704.658281555503
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 3454.6917421478875,
+          "rmsErrorKm": 1593.9261567775245
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.0020315105082631,
+        "windowRatio": 7.270767893280129,
+        "bestCaseConsistencyRatio": 1.141677116539016
+      }
+    },
+    {
+      "designation": "4434",
+      "name": "Nikulin",
+      "cohort": "best",
+      "h": 13.21,
+      "eccentricity": 0.1329616,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 2990.1229851128837,
+          "rmsErrorKm": 1386.948185900201
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 2990.818029959192,
+          "rmsErrorKm": 1387.219215295047
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 22201.198506952678,
+          "rmsErrorKm": 15717.819390268889
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 3433.034790746594,
+          "rmsErrorKm": 1585.094693457073
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 0.9997676071097119,
+        "windowRatio": 7.424844602542171,
+        "bestCaseConsistencyRatio": 1.1478581299021513
+      }
+    },
+    {
+      "designation": "16270",
+      "name": "2000 JH48",
+      "cohort": "best",
+      "h": 12.97,
+      "eccentricity": 0.06564079,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 2993.7036258254775,
+          "rmsErrorKm": 1387.30842773861
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 2992.288847899133,
+          "rmsErrorKm": 1386.3088043787975
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 22330.30879625469,
+          "rmsErrorKm": 15807.641513549397
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 3579.6097752342043,
+          "rmsErrorKm": 1647.038454656385
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.000472807940095,
+        "windowRatio": 7.45909134211553,
+        "bestCaseConsistencyRatio": 1.1962781526748079
+      }
+    },
+    {
+      "designation": "2528",
+      "name": "Mohler",
+      "cohort": "best",
+      "h": 12.38,
+      "eccentricity": 0.16969815,
+      "sbdbEpochTdbJd": 2461000.5,
+      "measurements": {
+        "m1_sbdb_direct_same_epoch": {
+          "maxErrorKm": 2838.0703399802155,
+          "rmsErrorKm": 1303.0419322565544
+        },
+        "m2_horizons_anchored_same_epoch": {
+          "maxErrorKm": 2827.094361557297,
+          "rmsErrorKm": 1294.8649517983372
+        },
+        "m3_sbdb_direct_long_window": {
+          "maxErrorKm": 22359.686001815084,
+          "rmsErrorKm": 15853.50791074117
+        },
+        "m4_horizons_anchored_2026": {
+          "maxErrorKm": 2851.2089237608843,
+          "rmsErrorKm": 1347.0317198825594
+        }
+      },
+      "diagnosis": "window-dominant",
+      "diagnosisMetrics": {
+        "label": "window-dominant",
+        "sourceRatio": 1.003882423796025,
+        "windowRatio": 7.878481969538131,
+        "bestCaseConsistencyRatio": 1.0085298044987447
+      }
+    }
+  ],
+  "summary": {
+    "diagnosisCounts": {
+      "window-dominant": 20
+    },
+    "medianSourceRatio": 0.9998320051558478,
+    "medianWindowRatio": 7.47623435847977,
+    "interpretation_a_evidence": "Median window-length ratio m3/m1 = 7.48; 20 bodies classified window-dominant.",
+    "interpretation_b_evidence": "Median source ratio m1/m2 = 1.00; 0 bodies classified data-source-dominant.",
+    "combined_evidence": "Measurement-window length is the dominant effect.",
+    "recommended_dec2_revision": "Keep SBDB for metadata only and re-anchor at 2026-05-01 TDB for propagation."
+  }
+}
