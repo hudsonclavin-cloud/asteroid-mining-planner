@@ -296,6 +296,47 @@ Each asteroid body constant / metadata entry should preserve:
 
 Unlike planets and major moons, Slice 7 does not introduce a hand-maintained `BODY*_RADII`-style table for all `1,008` asteroids in this README. The catalog contract owns identity, photometry, class, and propagation seed; render-layer representation strategy is documented separately in `src/v2/render/asteroid-rendering.md`.
 
+## Asteroid Catalog Bodies (Slice 8)
+
+Slice 8 scales the asteroid catalog from `1,008` to `10,008` bodies while preserving the Slice 7 contract that asteroid metadata is catalog-driven rather than expanded as one README row per body.
+
+### Catalog Summary
+
+- Total bodies: `10,008`
+- Composition: Top `10,000` main-belt asteroids by `H` plus the `8` curated NEAs carried forward from Slice 7
+- Main-belt cutoff: `H = 13.52`
+- Slice 7 subset continuity: the existing `1,008`-body Slice 7 catalog remains an exact subset of the Slice 8 inventory
+- Stored classical elements: `FRAME_HELIO_J2000_ECLIPTIC`
+- Runtime propagated state frame: `FRAME_HELIO_J2000_ICRF`
+- Propagation anchor epoch: `2026-05-01 00:00:00 TDB`
+
+### Eccentricity Band Population
+
+- Band A (`e < 0.1`): `3,384` bodies
+- Band B (`0.1 ≤ e < 0.2`): `5,118` bodies
+- Band C (`0.2 ≤ e < 0.3`): `1,382` bodies
+- Band D (`e ≥ 0.3`): `116` bodies
+
+These counts come from `tools/slice8-research/round3-synthesis-report.md` and are the empirical basis for INV-013's stratified asteroid bars.
+
+### Orbit-Line Threshold
+
+- Orbit lines are enabled for bodies with `H < 10.98`
+- This preserves the Slice 7 belt-band visual by keeping orbit lines on the brightest `~1,000` bodies instead of on all `10,008`
+
+### Data Path
+
+- Selection and metadata: SBDB
+- Propagation anchor state: Horizons VECTORS at `2026-05-01 TDB`
+- Production propagation seed: derived ecliptic-oriented classical elements from the Horizons anchor
+
+### Source Of Record
+
+- Inventory: `tools/slice8-research/data/main-belt-top-10000.json`
+- Architectural policy: `src/v2/core/asteroid-catalog.md`
+- Fixture contract: `src/v2/boundary/slice8-fixture-spec.md`
+- Invariant: `src/v2/core/invariants/INV-013.md`
+
 ## Rules for implementors
 
 1. Convert km → m by multiplying by 1000. Never store a km value in a `core/` export.
