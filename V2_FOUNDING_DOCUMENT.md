@@ -159,13 +159,27 @@ Slice 7 introduces a second propagation method in `core/`: asteroid catalog bodi
 
 Bars were validated against daily Horizons truth across the `2026-05-01` to `2026-07-30` window for an `18-body` representative sample spanning the main belt and all `8` curated NEAs. Worst sampled round-2 body was Hygiea at `35,313 km`, leaving `2.83×` margin. See `src/v2/core/invariants/INV-012.md`.
 
-INV-008, INV-009, INV-010, and INV-011 remain in force unchanged. INV-012 is additive.
+INV-008, INV-009, INV-010, and INV-011 remain in force unchanged. INV-012 is additive for Slice 7 and remains the historical Slice 7 asteroid cutover artifact after Slice 8.
+
+#### INV-013: Stratified Keplerian Propagation Position Bound (Slice 8)
+
+Slice 8 extends the asteroid catalog from `1,008` to `10,008` bodies and replaces Slice 7's single asteroid bar with eccentricity-stratified bars derived from a re-anchored `200`-body sample:
+
+| Eccentricity band | Cadence | Cutover bar |
+|---|---|---:|
+| Band A (`e < 0.1`) | `1d` propagation | `35,612.872 km` |
+| Band B (`0.1 ≤ e < 0.2`) | `1d` propagation | `52,970.092 km` |
+| Band C (`0.2 ≤ e < 0.3`) | `1d` propagation | `37,688.076 km` |
+| Band D (`e ≥ 0.3`) | `1d` propagation | `43,757.550 km` |
+
+These bars come from Slice 8 pre-research Round 3 (`tools/slice8-research/round3-synthesis-report.md` and `tools/slice8-research/data/inv-013-band-bars.json`). INV-013 supersedes INV-012 for asteroid bodies starting in Slice 8. All `18` Slice 7 sampled bodies remain backward-compatible under INV-013; Hygiea is the tightest case at `0.6667×` its Band B bar. See `src/v2/core/invariants/INV-013.md`.
 
 ### 3.5 Rendering Truth
 
 - Honest mode reads directly from canonical `core/` state
 - Readable mode is a one-way visual transform applied at render time
 - A readable transform may not leak back into `core/` or `mission/`
+- Slice 8 extends asteroid rendering by adding spatial-index-driven visibility culling; this remains a render-only optimization and may not alter propagated truth state
 
 #### Halo Overlay Policy
 
@@ -191,22 +205,24 @@ Slice 5 introduces no new invariants. INV-001 through INV-010 continue to apply 
 
 INV-011 (Per-Body Interpolation Error Bound for Mars system) is additive. INV-001 through INV-010 continue to apply unchanged. Slice 6 introduces V2's densest cadence to date (Phobos at `30m`) and validates that the per-body Hermite + Horizons fixture pattern from Slices 3-4 extends to bodies with sub-10-hour orbital periods. Slice 7 asteroid pre-research later confirmed that SPK ingestion was still not forced: Keplerian-from-anchor cleared the visualization-grade bar with measured margin.
 
-INV-012 (Keplerian Propagation Position Bound for asteroid catalog bodies) is additive. INV-001 through INV-011 continue to apply unchanged. Slice 7 is the first slice where `core/` supports two propagation methods in parallel: Hermite for sampled planetary and moon bodies, Keplerian for a many-body asteroid catalog anchored from uniform Horizons vectors. The frame graph remains unchanged; the architectural extension is propagation-method diversity plus the anchor-epoch discipline.
+INV-012 (Keplerian Propagation Position Bound for asteroid catalog bodies) is additive for Slice 7. INV-001 through INV-011 continue to apply unchanged. Slice 7 is the first slice where `core/` supports two propagation methods in parallel: Hermite for sampled planetary and moon bodies, Keplerian for a many-body asteroid catalog anchored from uniform Horizons vectors.
+
+INV-013 (Stratified Keplerian Propagation Position Bound for catalog-scale asteroid bodies) supersedes INV-012 for asteroid bodies starting in Slice 8. The frame graph remains unchanged; the architectural extension from Slice 7 to Slice 8 is scale, culling architecture, and per-eccentricity validation bars, not a new propagation method.
 
 See `src/v2/core/invariants/README.md` for INV-001 through INV-007 and `src/v2/core/invariants/INV-008.md` for the interpolation bound.
 
 ### 3.7 Interpolation Policy
 
-Cubic Hermite interpolation remains the canonical method for recovering state between stored fixture samples for Slice 1-6 planetary and moon bodies. Slice 7 adds a parallel Keplerian propagation path for asteroid catalog bodies anchored from a recent Cartesian state. The Hermite path and the Keplerian path coexist; Slice 7 does not replace Hermite.
+Cubic Hermite interpolation remains the canonical method for recovering state between stored fixture samples for Slice 1-6 planetary and moon bodies. Slice 7 adds a parallel Keplerian propagation path for asteroid catalog bodies anchored from a recent Cartesian state. Slice 8 retains that Keplerian path but drops the attempted smart-staleness shortcut: all asteroid propagation anchors are Horizons re-anchors at `2026-05-01 TDB`. The Hermite path and the Keplerian path coexist; asteroid work does not replace Hermite.
 
 Rules:
 
 - Linear interpolation is **forbidden** in any `core/` path
 - Linear interpolation is **allowed** in `render/` for screen-only effects (e.g., halo position smoothing between frames)
 - Hermite-using bodies must remain below the cutover bars in §3.4 when validated against Horizons truth at the cadence specified by each invariant: INV-008 at 6-hour cadence; INV-009, INV-010, and INV-011 at 5-min, 15-min, or 30-min cadence depending on body
-- Keplerian-using asteroid bodies must remain below the INV-012 cutover bar at `1d` truth cadence across the Slice 7 validation window
+- Keplerian-using asteroid bodies must remain below the applicable cutover bar at `1d` truth cadence: INV-012 for Slice 7's `1,008`-body catalog, INV-013 for Slice 8's `10,008`-body catalog
 - Assertion helpers are `assertInterpolationError(estimate, truth, bodyId)` for Hermite paths and `assertKeplerianError(estimate, truth, bodyId)` for asteroid Keplerian paths. They are exercised where truth is available (tests, cutover harnesses, report-mode validation), not inside Slice 7's runtime hot propagation path.
-- This policy is codified as INV-008 (Slice 2 bodies), INV-009 (Slice 3 bodies), INV-010 (Slice 4 bodies), INV-011 (Slice 6 bodies), and INV-012 (Slice 7 asteroid catalog). The Hermite path keeps per-body cadence in the constants module; the Keplerian path keeps a uniform anchor epoch plus derived osculating elements per asteroid.
+- This policy is codified as INV-008 (Slice 2 bodies), INV-009 (Slice 3 bodies), INV-010 (Slice 4 bodies), INV-011 (Slice 6 bodies), INV-012 (Slice 7 asteroid catalog), and INV-013 (Slice 8 catalog-scale asteroid bars). The Hermite path keeps per-body cadence in the constants module; the Keplerian path keeps a uniform anchor epoch plus derived osculating elements per asteroid.
 
 ### 3.8 Frame Graph Extension (Slice 3)
 
@@ -282,6 +298,16 @@ Slice 7 introduces the first many-body catalog in V2 and the first propagation m
 The anchor-epoch discipline is part of the architecture, not an implementation convenience. Pre-research round 1 showed the failure mode directly: Bennu's stale SBDB epoch (`2011-01-01`) produced multi-million-kilometer drift across the Slice 7 window, while round 2's uniform Horizons anchor reduced Bennu's day-90 error to `4,236 km`. If the fixture window moves materially, Slice 7 anchors must be re-fetched at the new window start.
 
 See `src/v2/core/asteroid-catalog.md`, `src/v2/boundary/slice7-fixture-spec.md`, and `src/v2/render/asteroid-rendering.md`.
+
+Slice 8 extends this architecture without changing its truth model:
+
+- Catalog scale increases from `1,008` to `10,008` bodies
+- Anchor policy hardens to "always Horizons re-anchor at `2026-05-01 TDB`" after Slice 8 Round 2 invalidated smart-staleness
+- INV-012's single asteroid bar is replaced by INV-013's eccentricity-stratified bars
+- Orbit-line rendering becomes adaptive with threshold `H < 10.98`, preserving the Slice 7 belt-band visual for the brightest `~1,000` bodies inside the larger catalog
+- Spatial indexing is added for frustum culling and click-to-focus broad-phase, while Points / InstancedMesh / focused Mesh remain the same render modes
+
+See `src/v2/core/invariants/INV-013.md`, `src/v2/boundary/slice8-fixture-spec.md`, `src/v2/render/asteroid-instancing.md`, and `src/v2/render/spatial-index.md`.
 
 ---
 
@@ -593,6 +619,46 @@ Slice 7 is the smallest slice that:
 - Resolves the SBDB-vs-Horizons source split honestly: SBDB for inventory, Horizons for recent anchor state
 - Establishes the anchor-epoch discipline that future catalog rebuilds must follow
 
+### Slice 8: Catalog-Scale Asteroid Rendering
+
+Status: scoped, pre-research complete `2026-05-13`.
+
+Slice 8 scales the asteroid catalog from `1,008` to `10,008` bodies while preserving the Slice 7 truth architecture. It is a scale-and-performance slice, not a propagation-method reboot.
+
+#### Included
+
+- Top `10,000` main-belt asteroids by `H` magnitude
+- the existing `8` curated NEAs carried forward from Slice 7
+- always-Horizons re-anchor at `2026-05-01 00:00:00 TDB`
+- GPU instancing at catalog scale
+- frustum culling and spatial indexing bundled as one rendering architecture decision
+- INV-013 stratified asteroid bars by eccentricity band
+- adaptive orbit-line threshold `H < 10.98`
+- minimal `ui-hud` unfreeze limited to focused-body text in the screen corner
+- Slice 7 carry-forward architecture:
+  - Keplerian propagation
+  - ecliptic-derived stored elements
+  - three-mode LOD
+  - anchor-epoch discipline
+
+#### Excluded
+
+- NEA catalog expansion beyond the carried-forward `8`
+- mission planner integration
+- economics work
+- search / filter UI
+- per-asteroid metadata panels
+- wide-line shader or additive orbit-line blending polish
+
+#### Why Slice 8
+
+Slice 8 is the smallest slice that:
+
+- pressure-tests whether the Slice 7 asteroid architecture survives a `10×` population increase without reopening `core/`
+- replaces the single visualization-grade asteroid bar with data-derived stratified bars
+- bundles the first explicit broad-phase visibility structure into V2 render architecture
+- measures whether catalog-scale asteroid rendering can still hold `60 fps` on the target hardware class
+
 ---
 
 ## 6. Cutover Criteria
@@ -791,6 +857,28 @@ Round-2 pre-research re-anchored the full catalog from Horizons at the Slice 7 w
 
 Worst sampled body was Hygiea at `35,313 km`. All eight curated NEAs remained below `5,000 km` at day 90 after the anchor correction. The locked INV-012 bar of `100,000 km` is therefore empirically supported with `2.83×` margin on the sample set.
 
+### Catalog-Scale Asteroid Slice Bar (Slice 8)
+
+- INV-001 through INV-011 continue to pass unchanged for their existing body classes
+- INV-013 replaces INV-012 for asteroid bodies:
+  - Band A (`e < 0.1`): `35,612.872 km`
+  - Band B (`0.1 ≤ e < 0.2`): `52,970.092 km`
+  - Band C (`0.2 ≤ e < 0.3`): `37,688.076 km`
+  - Band D (`e ≥ 0.3`): `43,757.550 km`
+- Slice 7's `18` sampled asteroid bodies continue to pass their corresponding INV-013 band bars (regression preservation)
+- The Slice 8 catalog contains exactly `10,008` bodies: `10,000` main-belt asteroids plus the carried-forward `8` curated NEAs
+- `60 fps` holds at:
+  - outer-system overview
+  - focused close-zoom
+  - time-scrub
+- Spatial index culls off-screen cells correctly and achieves at least `90%` culling efficiency at outer-system overview based on the chosen cell geometry
+- Click-to-focus retargets correctly in Points, InstancedMesh, and focused Mesh modes
+- Orbit-line thresholding preserves the Slice 7 belt-band visual while keeping orbit lines limited to bodies with `H < 10.98`
+- `ui-hud` minimal crack behaves correctly: focused-body designation/class text appears on focus and disappears on overview
+- Slice 8 ships at `/v2/solar-system`; existing redirects remain in place
+
+If those criteria are not met, the slice does not ship.
+
 ---
 
 ## 7. Validation Strategy
@@ -851,6 +939,18 @@ Slice 7 uses two upstream JPL sources with distinct responsibilities:
 Round-2 pre-research established the refined DEC-2 split: SBDB is not used directly as the propagation anchor because epoch freshness is heterogeneous across bodies. The production propagation path derives osculating elements from Horizons anchor vectors at the uniform Slice 7 anchor epoch of `2026-05-01 00:00:00 TDB`, stores those classical elements in heliocentric J2000 ecliptic orientation, then rotates propagated states into canonical heliocentric ICRF for rendering and focus.
 
 See `src/v2/boundary/slice7-fixture-spec.md` for the full fixture contract.
+
+### Slice 8 Truth Source
+
+Slice 8 preserves the Slice 7 source split but revises DEC-2 to the stricter final rule: always Horizons re-anchor at `2026-05-01 00:00:00 TDB`.
+
+- JPL SBDB remains canonical for inventory selection and metadata only
+- JPL Horizons VECTORS is canonical for every propagation anchor state
+- no Slice 8 body uses SBDB-direct propagation elements
+
+Phase A ingestion reuses the existing Slice 7 `1,008` anchors and fetches the remaining `9,000` main-belt anchors from Horizons. At the enforced `3s` rate limit from pre-research, that remaining work implies an `~8.5 hour` ingestion floor before retries and file-write overhead. Slice 8 accepts this cost explicitly rather than masking it behind stale-anchor exceptions.
+
+See `tools/slice8-research/round2-methodology-report.md`, `tools/slice8-research/round3-synthesis-report.md`, and `src/v2/boundary/slice8-fixture-spec.md`.
 
 ### Minimum Automated Checks
 
@@ -961,6 +1061,18 @@ The orchestrator enforces the wall between `src/v2/` and legacy.
 | `economics` | Frozen |
 | orchestrator | Enforces v2 wall, reviews cutover, resolves cross-agent conflicts, ensures SBDB-for-selection / Horizons-for-anchor split is preserved |
 
+### Slice 8 Ownership
+
+| Agent | Owns |
+|---|---|
+| `orbital-mechanics` | INV-013 cutover logic, eccentricity-band policy, Slice 8 cutover harness |
+| `data-layer` | Slice 8 fixture ingestion, `10,008`-body inventory assembly, Horizons anchor reuse + extension strategy |
+| `renderer` | asteroid renderer extensions, spatial-index module, frustum-culling integration, adaptive orbit-line thresholding, picking continuity |
+| `ui-hud` | minimal unfreeze only: focused-body designation/class text in screen corner |
+| `economics` | Frozen |
+| `mission` | Frozen |
+| orchestrator | Enforces v2 wall, freezes `keplerian.ts` and the Slice 7 fixture, reviews the final spatial-index choice, enforces the 60 fps cutover requirement |
+
 ---
 
 ## 10. Non-Goals
@@ -1056,6 +1168,21 @@ All Slice 6 non-goals carry forward. Additionally:
 - detailed shape models, spin states, or photoreal surface rendering
 - mining gameplay or mission-planning fidelity
 
+### Non-Goals For Slice 8
+
+All Slice 7 non-goals carry forward. Additionally:
+
+- NEA catalog expansion beyond the carried-forward `8` curated bodies
+- mission planner integration
+- economics work
+- search / filter UI
+- per-asteroid metadata panels
+- 3D floating labels
+- additive blending on orbit lines
+- wide-line shader / `Line2`
+- changes to `src/v2/core/propagators/keplerian.ts`
+- changes to `tests/fixtures/v2/asteroid-catalog-slice7.json`
+
 ---
 
 ## 11. Failure Condition
@@ -1091,6 +1218,14 @@ The Slice 6 tripwire is **3 focused weekends from the start of the Slice 6 imple
 The Slice 7 tripwire is **4 focused weekends from the start of the Slice 7 implementation dispatch**. Slice 7 reopens architectural surface area in both `core/` and `render/`: new propagation method, dual-source ingestion, many-body catalog LOD, render/focus continuity for click targets, and the Phase H orbit-line MVP that produces the belt-band visual. If INV-012 is not met, the catalog cannot maintain `60 fps`, or render/focus target agreement is not preserved by end of weekend 4, then the catalog size, propagation strategy, or LOD plan is re-evaluated before Slice 8. Slice 7 also tripwires the anchor-epoch discipline: if cutover requires stale anchors or per-body epoch exceptions, the architecture has failed its own honesty standard and the fixture rebuild strategy must be reconsidered before shipping.
 
 Actual result: cutover declared on `2026-05-11`, within weekend 1 of the 4-weekend window, leaving roughly 3 focused weekends of headroom against the tripwire.
+
+### Slice 8
+
+The Slice 8 tripwire is **5 focused weekends from the start of the Slice 8 implementation dispatch**. Slice 8 is a scale-and-performance slice: `10,008` bodies, `10,000` Horizons re-anchors, INV-013 band enforcement, adaptive orbit-line thresholding, and spatial-index-driven culling / picking. If cutover is not reached by end of weekend 5, scope drops rather than bleeding forward indefinitely. Fallback options are:
+
+- reduce body count to `5,000`
+- defer spatial indexing to Slice 9
+- accept slower-than-`60 fps` outer-system overview as an explicit descoping decision instead of an unspoken failure
 
 ### Verification Protocol For All Future Slices
 
@@ -1131,6 +1266,16 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 - **Hermite-vs-Keplerian for asteroid catalog bodies** — resolved. Slice 7 uses Keplerian propagation from uniform Horizons anchors while preserving Hermite unchanged for Slice 1-6 bodies.
 - **INV-012 cutover bar** — resolved by round-2 pre-research at `100,000 km` with `2.83×` margin on the representative sample.
 
+### Resolved at Slice 8 planning
+
+- **Smart-staleness optimization** — resolved and rejected. Round 2 methodology investigation showed the apparent benefit was window-dominant rather than source-dominant; Slice 8 always re-anchors at `2026-05-01 TDB`.
+- **INV-013 asteroid bars** — resolved by Round 3 with eccentricity-stratified exact values:
+  - Band A (`e < 0.1`): `35,612.872 km`
+  - Band B (`0.1 ≤ e < 0.2`): `52,970.092 km`
+  - Band C (`0.2 ≤ e < 0.3`): `37,688.076 km`
+  - Band D (`e ≥ 0.3`): `43,757.550 km`
+- **Adaptive orbit-line threshold** — resolved at `H < 10.98`, preserving the Slice 7 belt-band visual for the brightest `~1,000` bodies inside the Slice 8 catalog.
+
 ### Open
 
 - **Star background** — deferred to a later visual-polish slice
@@ -1141,6 +1286,9 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 - **SPK ingestion** — Slice 6 validated Hermite for sub-hourly moon cadence and Slice 7 validated Keplerian-from-anchor for a `1,008`-body asteroid catalog. SPK ingestion remains deferred. The next forcing function would be a substantially larger catalog, a longer validated propagation horizon, or higher-than-visualization-grade accuracy requirements.
 - **Mars surface terrain rendering** — separate architectural slice if pursued. Surface-relative rendering at meter scale is architecturally supported by V2's camera-relative floating-origin pattern but not implemented. Decision deferred pending product direction (Aster mission planner thesis vs. KSP-style exploration product).
 - **Asteroid search / browse UX** — Slice 7 is click-to-focus only. Whether Slice 9 should add search, curated lists, or richer discovery controls remains open.
+- **Final spatial-index implementation choice** — Slice 8 will choose between a uniform grid and a loose octree in Phase A based on implementation cost and measured frame time.
+- **Per-instance repack vs whole-cell visibility submission** — Slice 8 pre-research and docs define both as plausible; Phase A measures which pattern is simpler while still clearing `60 fps`.
+- **10,008-body performance on target Apple Silicon integrated GPU** — this is a cutover question, not a pre-research question. Phase A must measure it directly.
 - **Triaxial moon rendering** — Phobos's `30%` triaxial spread is the highest of any V2 body. Slice 6 ships spherical; if visual artifact reports surface, polish-of-polish triaxial Phobos is a candidate.
 - **Uranus and Neptune rings** — both have ring systems (Uranus's rings discovered 1977, Neptune's confirmed by Voyager 2 in 1989). The `saturn-rings.md` pattern should generalize, but Uranus's rings are nearly opaque dark particles and Neptune's are partial arcs — different visual character from Saturn. Revisit at Slice 6+ planning.
 - **Ring tilt evolution rendering** — Saturn's rings cycle from edge-on to fully open over ~15 years from Earth's viewpoint. This is rendered correctly at any single epoch (rings are tilted at the render layer so they match Saturn's equator while `FRAME_SATURN_J2000_ICRF` stays ICRF-aligned), but the visual cycle as Saturn moves through its heliocentric orbit is not animated. Honest at any snapshot; not animated across multi-year scrubs.
@@ -1221,3 +1369,12 @@ These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables plu
 - Continuous per-frame propagation at `1,008` bodies is acceptable at Slice 7 scale. A future multi-10k-body slice may need GPU-assisted propagation or more aggressive batching; Slice 7 does not solve that future scale problem in advance.
 - The stored orbit-element frame label drift from Slice 7 cutover (`FRAME_HELIO_J2000_ICRF` label on ecliptic-derived classical elements) is acknowledged here and resolved immediately in Slice `7.1` cleanup Commit 2.
 - Runtime click-to-focus integration is verified by manual cutover and code inspection, but there is not yet an end-to-end automated test for Points and InstancedMesh raycasting. Adding that coverage is recommended for Slice `7.5` or Slice `8`.
+
+### Slice 8
+
+- INV-013 supersedes INV-012 for asteroid bodies. INV-012 remains the Slice 7 historical artifact; Slice 8 cutover uses the stratified band bars only.
+- Smart-staleness (`DEC-2` v1) is abandoned. No Slice 8 body uses SBDB-direct propagation elements.
+- Phase A ingestion is slow by design: `9,000` new Horizons re-anchors at `3s` minimum interval implies roughly `8.5 hours` before retries and file-write overhead.
+- The spatial index is intentionally coarse rather than adaptive perfection. Slice 8 prefers the simplest structure that clears `60 fps`, not the most abstractly elegant one.
+- Orbit-line rendering remains visually important but intentionally limited to `H < 10.98`; the other `~9,000` bodies rely on Points / InstancedMesh only.
+- `ui-hud` remains mostly frozen. Slice 8 permits only focused-body designation/class text; richer overlays and 3D floating labels remain Slice 9 scope.
