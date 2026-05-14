@@ -1,0 +1,190 @@
+{
+  "generatedAtUtc": "2026-05-14T00:36:36.850Z",
+  "methodology": "derived_bar_km = max(p95_error_km * 2, slice7_constraint_max_error_km * 1.5)",
+  "bands": {
+    "A": {
+      "band": "A",
+      "bandLabel": "e < 0.1",
+      "count": 50,
+      "min_error_km": 2626.0233034245657,
+      "median_error_km": 3695.024145610535,
+      "max_error_km": 31177.77628598686,
+      "p50_error_km": 3695.024145610535,
+      "p75_error_km": 3940.3721538522914,
+      "p95_error_km": 17806.436163135906,
+      "p99_error_km": 28401.197787188004,
+      "slice7_constraint_bodies_in_band": [
+        {
+          "designation": "40",
+          "name": "Harmonia",
+          "max_error_km": 10582.950158306785,
+          "eccentricity": 0.0465842644979206
+        },
+        {
+          "designation": "1",
+          "name": "Ceres",
+          "max_error_km": 3312.7499532346737,
+          "eccentricity": 0.0796728897242162
+        },
+        {
+          "designation": "4",
+          "name": "Vesta",
+          "max_error_km": 3210.7578637535908,
+          "eccentricity": 0.09019090883117112
+        }
+      ],
+      "slice7_constraint_max_error_km": 10582.950158306785,
+      "slice7_constraint_lower_bound_km": 15874.425237460178,
+      "p95_times_2_km": 35612.87232627181,
+      "derived_bar_km": 35612.87232627181,
+      "recommendation": "Numerically similar to an adjacent band, but keep separate for now because Slice 7 backward-compat constraints differ by band."
+    },
+    "B": {
+      "band": "B",
+      "bandLabel": "0.1 ≤ e < 0.2",
+      "count": 50,
+      "min_error_km": 2521.1737076965314,
+      "median_error_km": 3788.7408031415684,
+      "max_error_km": 17850.929444783105,
+      "p50_error_km": 3788.7408031415684,
+      "p75_error_km": 6222.254138014694,
+      "p95_error_km": 15158.259237390463,
+      "p99_error_km": 16891.269363009542,
+      "slice7_constraint_bodies_in_band": [
+        {
+          "designation": "10",
+          "name": "Hygiea",
+          "max_error_km": 35313.39449438389,
+          "eccentricity": 0.10696864540310135
+        },
+        {
+          "designation": "16",
+          "name": "Psyche",
+          "max_error_km": 22510.437018146848,
+          "eccentricity": 0.13480307799518057
+        },
+        {
+          "designation": "39",
+          "name": "Laetitia",
+          "max_error_km": 13853.81519574893,
+          "eccentricity": 0.11364060142073974
+        },
+        {
+          "designation": "15",
+          "name": "Eunomia",
+          "max_error_km": 4295.03772810092,
+          "eccentricity": 0.18778467294907386
+        },
+        {
+          "designation": "162173",
+          "name": "Ryugu",
+          "max_error_km": 4121.988501940954,
+          "eccentricity": 0.1910896899679328
+        },
+        {
+          "designation": "99942",
+          "name": "Apophis",
+          "max_error_km": 1506.1975620143414,
+          "eccentricity": 0.19114292963930402
+        }
+      ],
+      "slice7_constraint_max_error_km": 35313.39449438389,
+      "slice7_constraint_lower_bound_km": 52970.09174157583,
+      "p95_times_2_km": 30316.518474780925,
+      "derived_bar_km": 52970.09174157583,
+      "recommendation": "Current sample supports a sub-75,000 km bar with margin."
+    },
+    "C": {
+      "band": "C",
+      "bandLabel": "0.2 ≤ e < 0.3",
+      "count": 50,
+      "min_error_km": 1980.45280302079,
+      "median_error_km": 4275.150896777181,
+      "max_error_km": 77488.9261375636,
+      "p50_error_km": 4275.150896777181,
+      "p75_error_km": 10012.48636040835,
+      "p95_error_km": 18844.03805521238,
+      "p99_error_km": 53743.02496991858,
+      "slice7_constraint_bodies_in_band": [
+        {
+          "designation": "1057",
+          "name": "Wanda",
+          "max_error_km": 8322.007642985223,
+          "eccentricity": 0.2491620790132538
+        },
+        {
+          "designation": "101955",
+          "name": "Bennu",
+          "max_error_km": 4236.441416379041,
+          "eccentricity": 0.20369784790713552
+        },
+        {
+          "designation": "3",
+          "name": "Juno",
+          "max_error_km": 3796.1899400499647,
+          "eccentricity": 0.2557265946289615
+        },
+        {
+          "designation": "2",
+          "name": "Pallas",
+          "max_error_km": 3757.8643158205728,
+          "eccentricity": 0.2306949796018607
+        },
+        {
+          "designation": "433",
+          "name": "Eros",
+          "max_error_km": 3277.433928972805,
+          "eccentricity": 0.22288929294611265
+        },
+        {
+          "designation": "25143",
+          "name": "Itokawa",
+          "max_error_km": 1707.318428627896,
+          "eccentricity": 0.2801712626947607
+        }
+      ],
+      "slice7_constraint_max_error_km": 8322.007642985223,
+      "slice7_constraint_lower_bound_km": 12483.011464477835,
+      "p95_times_2_km": 37688.07611042476,
+      "derived_bar_km": 37688.07611042476,
+      "recommendation": "Keep separate: upper-tail error distribution is materially broader than the band core."
+    },
+    "D": {
+      "band": "D",
+      "bandLabel": "e ≥ 0.3",
+      "count": 50,
+      "min_error_km": 2113.6492375846874,
+      "median_error_km": 4210.162720854414,
+      "max_error_km": 29163.66746184851,
+      "p50_error_km": 4210.162720854414,
+      "p75_error_km": 9277.300128147053,
+      "p95_error_km": 21878.774858036242,
+      "p99_error_km": 27161.27061878307,
+      "slice7_constraint_bodies_in_band": [
+        {
+          "designation": "1620",
+          "name": "Geographos",
+          "max_error_km": 4411.328196490532,
+          "eccentricity": 0.3354942295162486
+        },
+        {
+          "designation": "4179",
+          "name": "Toutatis",
+          "max_error_km": 4390.632921823773,
+          "eccentricity": 0.6246581466602363
+        },
+        {
+          "designation": "4769",
+          "name": "Castalia",
+          "max_error_km": 2989.236042051984,
+          "eccentricity": 0.48319188512451405
+        }
+      ],
+      "slice7_constraint_max_error_km": 4411.328196490532,
+      "slice7_constraint_lower_bound_km": 6616.992294735797,
+      "p95_times_2_km": 43757.549716072484,
+      "derived_bar_km": 43757.549716072484,
+      "recommendation": "Current sample supports a sub-75,000 km bar with margin."
+    }
+  }
+}
