@@ -4,11 +4,13 @@ import type { CanonicalState } from '../types.js';
 export type AsteroidBodyId = `asteroid-${string}`;
 export type BodyClass = 'star' | 'planet' | 'moon' | 'asteroid';
 export type AsteroidOrbitClass = 'MBA' | 'APO' | 'ATE' | 'AMO' | (string & {});
+export type AsteroidEccentricityBand = 'A' | 'B' | 'C' | 'D';
 
 export const ASTEROID_DEFAULT_ALBEDO = 0.14;
 export const ASTEROID_PROPAGATION_CADENCE_SECONDS = 86_400;
 export const ASTEROID_KEPLERIAN_ERROR_BAR_M = 100_000_000;
 export const ASTEROID_PROPAGATION_INVARIANT_ID = 'INV-012' as const;
+export const ASTEROID_ORBIT_LINE_THRESHOLD_H = 10.98;
 
 export interface AsteroidOrbitalElements {
   readonly aM: number;
@@ -34,6 +36,8 @@ export interface AsteroidBodyIdentity {
   readonly G: number | null;
   readonly estimatedRadiusM: number;
   readonly elementsFrame: FrameId;
+  readonly eccentricityBand?: AsteroidEccentricityBand;
+  readonly hasOrbitLine?: boolean;
 }
 
 export interface AsteroidBody extends AsteroidBodyIdentity {
@@ -83,6 +87,29 @@ export function deriveAsteroidRadiusMFromAbsoluteMagnitude(
   return deriveAsteroidDiameterKmFromAbsoluteMagnitude(absoluteMagnitude, albedo) * 500;
 }
 
+export function eccentricityBandForBody(eccentricity: number): AsteroidEccentricityBand {
+  if (!Number.isFinite(eccentricity) || eccentricity < 0) {
+    throw new Error('Asteroid eccentricity must be a finite non-negative number');
+  }
+  if (eccentricity < 0.1) {
+    return 'A';
+  }
+  if (eccentricity < 0.2) {
+    return 'B';
+  }
+  if (eccentricity < 0.3) {
+    return 'C';
+  }
+  return 'D';
+}
+
+export function hasOrbitLineForBody(absoluteMagnitude: number): boolean {
+  if (!Number.isFinite(absoluteMagnitude)) {
+    throw new Error('Asteroid absolute magnitude H must be finite');
+  }
+  return absoluteMagnitude < ASTEROID_ORBIT_LINE_THRESHOLD_H;
+}
+
 export function createAsteroidCatalogIndex<T extends AsteroidBodyIdentity>(
   asteroids: Iterable<T>,
 ): AsteroidCatalogIndex<T> {
@@ -106,6 +133,21 @@ export function createAsteroidCatalogIndex<T extends AsteroidBodyIdentity>(
       );
     }
     assertFinitePositive(asteroid.estimatedRadiusM, `${asteroid.bodyId}.estimatedRadiusM`);
+    const orbitalEccentricity = (asteroid as { readonly elements?: { readonly e: number } }).elements?.e;
+    if (typeof orbitalEccentricity === 'number') {
+      const expectedBand = eccentricityBandForBody(orbitalEccentricity);
+      if (typeof asteroid.eccentricityBand !== 'undefined' && asteroid.eccentricityBand !== expectedBand) {
+        throw new Error(
+          `Asteroid "${asteroid.bodyId}" eccentricityBand mismatch: expected ${expectedBand}, received ${asteroid.eccentricityBand}`,
+        );
+      }
+    }
+    const expectedHasOrbitLine = hasOrbitLineForBody(asteroid.H);
+    if (typeof asteroid.hasOrbitLine !== 'undefined' && asteroid.hasOrbitLine !== expectedHasOrbitLine) {
+      throw new Error(
+        `Asteroid "${asteroid.bodyId}" hasOrbitLine mismatch: expected ${expectedHasOrbitLine}, received ${asteroid.hasOrbitLine}`,
+      );
+    }
 
     if (byBodyId.has(asteroid.bodyId)) {
       throw new Error(`Duplicate asteroid body id "${asteroid.bodyId}"`);

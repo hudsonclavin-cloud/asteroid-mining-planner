@@ -70,6 +70,10 @@ const {
 } = await import(
   pathToFileURL(path.join(tempOutDir, 'core', 'index.js')).href
 );
+const {
+  eccentricityBandForBody,
+  hasOrbitLineForBody,
+} = await import(pathToFileURL(path.join(tempOutDir, 'core', 'constants', 'asteroids.js')).href);
 
 const SLICE2_BODY_IDS = ['sun', 'mercury', 'venus', 'earth', 'moon', 'mars'];
 const SLICE6_BODY_IDS = ['phobos', 'deimos'];
@@ -257,6 +261,8 @@ const ASTEROID_ENTRIES = Object.entries(ASTEROID_FIXTURE.asteroids).map(([bodyId
   isCuratedNea: asteroid.isCuratedNea ?? CURATED_NEA_SET.has(asteroid.designation),
   estimatedRadiusM: asteroid.estimatedRadiusM ?? asteroid.estimatedRadiusKm * 1000,
   elementsFrame: asteroid.elementsFrame ?? 'FRAME_HELIO_J2000_ECLIPTIC',
+  eccentricityBand: eccentricityBandForBody(asteroid.elements.e),
+  hasOrbitLine: hasOrbitLineForBody(asteroid.H),
 }));
 const ASTEROID_INDEX = createAsteroidCatalogIndex(ASTEROID_ENTRIES);
 const CURATED_NEA_DESIGNATIONS = ['101955', '99942', '433', '25143', '162173', '4179', '1620', '4769'];
@@ -541,6 +547,33 @@ assert(
   `got ${ASTEROID_INDEX.curatedNeas.length}`
 );
 
+for (const [eccentricity, expectedBand] of [
+  [0.0999, 'A'],
+  [0.1, 'B'],
+  [0.1999, 'B'],
+  [0.2, 'C'],
+  [0.2999, 'C'],
+  [0.3, 'D'],
+]) {
+  assert(
+    eccentricityBandForBody(eccentricity) === expectedBand,
+    `eccentricityBandForBody(${eccentricity}) returns ${expectedBand}`,
+    `got ${eccentricityBandForBody(eccentricity)}`
+  );
+}
+
+for (const [absoluteMagnitude, expectedHasOrbitLine] of [
+  [10.97, true],
+  [10.98, false],
+  [10.99, false],
+]) {
+  assert(
+    hasOrbitLineForBody(absoluteMagnitude) === expectedHasOrbitLine,
+    `hasOrbitLineForBody(${absoluteMagnitude}) returns ${expectedHasOrbitLine}`,
+    `got ${hasOrbitLineForBody(absoluteMagnitude)}`
+  );
+}
+
 for (const designation of CURATED_NEA_DESIGNATIONS) {
   const asteroid = getAsteroidByDesignation(ASTEROID_INDEX, designation);
   assert(
@@ -570,6 +603,18 @@ assert(
   Math.abs(expectedBennuRadiusM - bennuByDesignation.estimatedRadiusM) <= 1e-6,
   'estimatedRadiusM matches the H-derived default-albedo formula for Bennu',
   `got ${bennuByDesignation.estimatedRadiusM}, expected ${expectedBennuRadiusM}`
+);
+
+assert(
+  bennuByDesignation.eccentricityBand === eccentricityBandForBody(bennuByDesignation.elements.e) &&
+    bennuByDesignation.hasOrbitLine === hasOrbitLineForBody(bennuByDesignation.H),
+  'Slice 7 asteroid fixture entries can be extended with Slice 8 band and orbit-line metadata',
+  `got ${JSON.stringify({
+    eccentricityBand: bennuByDesignation.eccentricityBand,
+    expectedBand: eccentricityBandForBody(bennuByDesignation.elements.e),
+    hasOrbitLine: bennuByDesignation.hasOrbitLine,
+    expectedHasOrbitLine: hasOrbitLineForBody(bennuByDesignation.H),
+  })}`
 );
 
 if (failures > 0) {
