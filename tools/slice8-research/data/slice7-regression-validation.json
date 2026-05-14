@@ -1,0 +1,217 @@
+{
+  "generatedAtUtc": "2026-05-14T00:38:11.565Z",
+  "sampleCount": 18,
+  "rows": [
+    {
+      "designation": "10",
+      "name": "Hygiea",
+      "band": "B",
+      "eccentricity": 0.10696864540310135,
+      "slice7_max_error_km": 35313.39449438389,
+      "round3_band_bar_km": 52970.09174157583,
+      "ratio_to_bar": 0.6666666666666666,
+      "passes": true
+    },
+    {
+      "designation": "16",
+      "name": "Psyche",
+      "band": "B",
+      "eccentricity": 0.13480307799518057,
+      "slice7_max_error_km": 22510.437018146848,
+      "round3_band_bar_km": 52970.09174157583,
+      "ratio_to_bar": 0.4249650374020133,
+      "passes": true
+    },
+    {
+      "designation": "39",
+      "name": "Laetitia",
+      "band": "B",
+      "eccentricity": 0.11364060142073974,
+      "slice7_max_error_km": 13853.81519574893,
+      "round3_band_bar_km": 52970.09174157583,
+      "ratio_to_bar": 0.2615403285185397,
+      "passes": true
+    },
+    {
+      "designation": "40",
+      "name": "Harmonia",
+      "band": "A",
+      "eccentricity": 0.0465842644979206,
+      "slice7_max_error_km": 10582.950158306785,
+      "round3_band_bar_km": 35612.87232627181,
+      "ratio_to_bar": 0.2971664307599161,
+      "passes": true
+    },
+    {
+      "designation": "1057",
+      "name": "Wanda",
+      "band": "C",
+      "eccentricity": 0.2491620790132538,
+      "slice7_max_error_km": 8322.007642985223,
+      "round3_band_bar_km": 37688.07611042476,
+      "ratio_to_bar": 0.22081274774021442,
+      "passes": true
+    },
+    {
+      "designation": "1620",
+      "name": "Geographos",
+      "band": "D",
+      "eccentricity": 0.3354942295162486,
+      "slice7_max_error_km": 4411.328196490532,
+      "round3_band_bar_km": 43757.549716072484,
+      "ratio_to_bar": 0.10081296199430968,
+      "passes": true
+    },
+    {
+      "designation": "4179",
+      "name": "Toutatis",
+      "band": "D",
+      "eccentricity": 0.6246581466602363,
+      "slice7_max_error_km": 4390.632921823773,
+      "round3_band_bar_km": 43757.549716072484,
+      "ratio_to_bar": 0.10034000875992972,
+      "passes": true
+    },
+    {
+      "designation": "15",
+      "name": "Eunomia",
+      "band": "B",
+      "eccentricity": 0.18778467294907386,
+      "slice7_max_error_km": 4295.03772810092,
+      "round3_band_bar_km": 52970.09174157583,
+      "ratio_to_bar": 0.08108420406472086,
+      "passes": true
+    },
+    {
+      "designation": "101955",
+      "name": "Bennu",
+      "band": "C",
+      "eccentricity": 0.20369784790713552,
+      "slice7_max_error_km": 4236.441416379041,
+      "round3_band_bar_km": 37688.07611042476,
+      "ratio_to_bar": 0.11240800416467038,
+      "passes": true
+    },
+    {
+      "designation": "162173",
+      "name": "Ryugu",
+      "band": "B",
+      "eccentricity": 0.1910896899679328,
+      "slice7_max_error_km": 4121.988501940954,
+      "round3_band_bar_km": 52970.09174157583,
+      "ratio_to_bar": 0.07781728077895013,
+      "passes": true
+    },
+    {
+      "designation": "3",
+      "name": "Juno",
+      "band": "C",
+      "eccentricity": 0.2557265946289615,
+      "slice7_max_error_km": 3796.1899400499647,
+      "round3_band_bar_km": 37688.07611042476,
+      "ratio_to_bar": 0.10072655152062578,
+      "passes": true
+    },
+    {
+      "designation": "2",
+      "name": "Pallas",
+      "band": "C",
+      "eccentricity": 0.2306949796018607,
+      "slice7_max_error_km": 3757.8643158205728,
+      "round3_band_bar_km": 37688.07611042476,
+      "ratio_to_bar": 0.09970963507954507,
+      "passes": true
+    },
+    {
+      "designation": "1",
+      "name": "Ceres",
+      "band": "A",
+      "eccentricity": 0.0796728897242162,
+      "slice7_max_error_km": 3312.7499532346737,
+      "round3_band_bar_km": 35612.87232627181,
+      "ratio_to_bar": 0.0930211391792411,
+      "passes": true
+    },
+    {
+      "designation": "433",
+      "name": "Eros",
+      "band": "C",
+      "eccentricity": 0.22288929294611265,
+      "slice7_max_error_km": 3277.433928972805,
+      "round3_band_bar_km": 37688.07611042476,
+      "ratio_to_bar": 0.0869620916538705,
+      "passes": true
+    },
+    {
+      "designation": "4",
+      "name": "Vesta",
+      "band": "A",
+      "eccentricity": 0.09019090883117112,
+      "slice7_max_error_km": 3210.7578637535908,
+      "round3_band_bar_km": 35612.87232627181,
+      "ratio_to_bar": 0.09015722838466464,
+      "passes": true
+    },
+    {
+      "designation": "4769",
+      "name": "Castalia",
+      "band": "D",
+      "eccentricity": 0.48319188512451405,
+      "slice7_max_error_km": 2989.236042051984,
+      "round3_band_bar_km": 43757.549716072484,
+      "ratio_to_bar": 0.06831360671354078,
+      "passes": true
+    },
+    {
+      "designation": "25143",
+      "name": "Itokawa",
+      "band": "C",
+      "eccentricity": 0.2801712626947607,
+      "slice7_max_error_km": 1707.318428627896,
+      "round3_band_bar_km": 37688.07611042476,
+      "ratio_to_bar": 0.04530128902376211,
+      "passes": true
+    },
+    {
+      "designation": "99942",
+      "name": "Apophis",
+      "band": "B",
+      "eccentricity": 0.19114292963930402,
+      "slice7_max_error_km": 1506.1975620143414,
+      "round3_band_bar_km": 52970.09174157583,
+      "ratio_to_bar": 0.02843486791305929,
+      "passes": true
+    }
+  ],
+  "summary": {
+    "failingCount": 0,
+    "worstMarginBody": {
+      "designation": "10",
+      "name": "Hygiea",
+      "band": "B",
+      "eccentricity": 0.10696864540310135,
+      "slice7_max_error_km": 35313.39449438389,
+      "round3_band_bar_km": 52970.09174157583,
+      "ratio_to_bar": 0.6666666666666666,
+      "passes": true
+    },
+    "byBand": {
+      "B": {
+        "count": 6,
+        "max_ratio_to_bar": 0.6666666666666666
+      },
+      "A": {
+        "count": 3,
+        "max_ratio_to_bar": 0.2971664307599161
+      },
+      "C": {
+        "count": 6,
+        "max_ratio_to_bar": 0.22081274774021442
+      },
+      "D": {
+        "count": 3,
+        "max_ratio_to_bar": 0.10081296199430968
+      }
+    }
+  }
+}
