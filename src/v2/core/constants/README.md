@@ -21,7 +21,7 @@ The hex colors in this table are `render/` defaults. They are honest approximati
 | 10      | Sun     | 3313     | 696000.0    | 696000.0    | 696000.0    | 696000.0                    | 696 000 000.0              | `0xFFF5E0` | SSB-relative (`CENTER='@ssb'`) — heliocentric origin at Solar System Barycenter |
 | 199     | Mercury | 3328     | 2439.7      | 2439.7      | 2439.7      | 2439.7                      | 2 439 700.0                | `0xB5B5B5` | Heliocentric ICRF J2000 (`CENTER='@sun'`) |
 | 299     | Venus   | 3343     | 6051.8      | 6051.8      | 6051.8      | 6051.8                      | 6 051 800.0                | `0xE8C98A` | Heliocentric ICRF J2000 (`CENTER='@sun'`) |
-| 399     | Earth   | 3362     | 6378.1366   | 6378.1366   | 6356.7519   | 6378.1366                   | 6 378 136.6                | `0x4B9CD3` | Heliocentric ICRF J2000 (`CENTER='@sun'`) |
+| 399     | Earth   | 3362     | 6378.1366   | 6378.1366   | 6356.7519   | 6378.1366                   | 6 378 136.6                | `0x2255AA` | Heliocentric ICRF J2000 (`CENTER='@sun'`) |
 | 301     | Moon    | 3497     | 1737.4      | 1737.4      | 1737.4      | 1737.4                      | 1 737 400.0                | `0xB0B0B0` | Geocentric GCRS (`CENTER='500@399'`)      |
 | 499     | Mars    | 3390     | 3396.19     | 3396.19     | 3376.20     | 3396.19                     | 3 396 190.0                | `0xC1440E` | Heliocentric ICRF J2000 (`CENTER='@sun'`) |
 
