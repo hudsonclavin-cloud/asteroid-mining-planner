@@ -8,10 +8,13 @@ import {
   J2000_ECLIPTIC_OBLIQUITY_RAD,
   assertCanonicalState,
   createCanonicalState,
+  eccentricityBandForBody,
+  hasOrbitLineForBody,
   jdTdbToSecondsSinceJ2000,
   kilometersPerSecondToMetersPerSecond,
   kilometersToMeters,
   type AsteroidBody,
+  type AsteroidEccentricityBand,
   type AsteroidBodyId,
   type CanonicalState,
   type FrameId,
@@ -101,6 +104,11 @@ export interface Slice7AsteroidFixtureRecord {
   elementsFrame: string;
 }
 
+export interface Slice8AsteroidFixtureRecord extends Slice7AsteroidFixtureRecord {
+  eccentricityBand: AsteroidEccentricityBand;
+  hasOrbitLine: boolean;
+}
+
 export interface Slice7CatalogSummaryFixture {
   totalBodies: number;
   mainBeltCount: number;
@@ -131,6 +139,28 @@ export interface Slice7Fixture {
   asteroids: Record<string, Slice7AsteroidFixtureRecord>;
 }
 
+export interface Slice8CatalogSummaryFixture extends Slice7CatalogSummaryFixture {
+  orbitLineThresholdH: number;
+}
+
+export interface Slice8Fixture {
+  selectionSource?: string;
+  anchorSource?: string;
+  frame?: string;
+  timeScale?: string;
+  units?: {
+    anchorPosition?: string;
+    anchorVelocity?: string;
+    anchorTime?: string;
+    semiMajorAxis?: string;
+    estimatedRadius?: string;
+    angles?: string;
+  };
+  propagation: Slice7PropagationFixture;
+  catalog: Slice8CatalogSummaryFixture;
+  asteroids: Record<string, Slice8AsteroidFixtureRecord>;
+}
+
 export type Slice7BodyId = AsteroidBodyId;
 
 export interface Slice7CanonicalFixture {
@@ -143,6 +173,11 @@ export interface Slice7CanonicalFixture {
     anchorEpochTdbSeconds: number;
   };
   catalog: Slice7CatalogSummaryFixture;
+  asteroids: Record<Slice7BodyId, AsteroidBody>;
+}
+
+export interface Slice8CanonicalFixture extends Slice7CanonicalFixture {
+  catalog: Slice8CatalogSummaryFixture;
   asteroids: Record<Slice7BodyId, AsteroidBody>;
 }
 
@@ -419,6 +454,35 @@ function assertSlice7FixtureShape(fixture: Slice7Fixture): void {
   }
 }
 
+function assertSlice8FixtureShape(fixture: Slice8Fixture): void {
+  if (!fixture || typeof fixture !== 'object') {
+    throw new Error('Slice 8 fixture must be an object');
+  }
+  if (!fixture.catalog || typeof fixture.catalog !== 'object') {
+    throw new Error('Slice 8 fixture must define catalog summary');
+  }
+  if (!fixture.propagation || typeof fixture.propagation !== 'object') {
+    throw new Error('Slice 8 fixture must define propagation metadata');
+  }
+  if (!fixture.asteroids || typeof fixture.asteroids !== 'object') {
+    throw new Error('Slice 8 fixture must define asteroids');
+  }
+
+  const asteroidCount = Object.keys(fixture.asteroids).length;
+  if (asteroidCount !== 10008) {
+    throw new Error(`Slice 8 fixture must define exactly 10008 asteroids; received ${asteroidCount}`);
+  }
+  if (fixture.catalog.totalBodies !== 10008) {
+    throw new Error(`Slice 8 catalog.totalBodies must equal 10008; received ${fixture.catalog.totalBodies}`);
+  }
+  if (fixture.catalog.mainBeltCount !== 10000) {
+    throw new Error(`Slice 8 catalog.mainBeltCount must equal 10000; received ${fixture.catalog.mainBeltCount}`);
+  }
+  if (fixture.catalog.curatedNeaCount !== 8) {
+    throw new Error(`Slice 8 catalog.curatedNeaCount must equal 8; received ${fixture.catalog.curatedNeaCount}`);
+  }
+}
+
 function ingestSlice7Asteroid(
   bodyIdKey: string,
   asteroid: Slice7AsteroidFixtureRecord,
@@ -543,6 +607,77 @@ export function ingestSlice7Fixture(fixture: Slice7Fixture): Slice7CanonicalFixt
       mainBeltCutoffH: assertFiniteNumber(
         fixture.catalog.mainBeltCutoffH,
         'slice7.catalog.mainBeltCutoffH',
+      ),
+    },
+    asteroids,
+  };
+}
+
+function ingestSlice8Asteroid(
+  bodyIdKey: string,
+  asteroid: Slice8AsteroidFixtureRecord,
+  anchorEpochTdbJd: number,
+): AsteroidBody {
+  const canonical = ingestSlice7Asteroid(bodyIdKey, asteroid, anchorEpochTdbJd);
+  const expectedBand = eccentricityBandForBody(canonical.elements.e);
+  const expectedHasOrbitLine = hasOrbitLineForBody(canonical.H);
+
+  if (asteroid.eccentricityBand !== expectedBand) {
+    throw new Error(
+      `Slice 8 eccentricityBand mismatch for "${bodyIdKey}": expected ${expectedBand}, received ${asteroid.eccentricityBand}`,
+    );
+  }
+
+  if (asteroid.hasOrbitLine !== expectedHasOrbitLine) {
+    throw new Error(
+      `Slice 8 hasOrbitLine mismatch for "${bodyIdKey}": expected ${expectedHasOrbitLine}, received ${asteroid.hasOrbitLine}`,
+    );
+  }
+
+  return {
+    ...canonical,
+    eccentricityBand: asteroid.eccentricityBand,
+    hasOrbitLine: asteroid.hasOrbitLine,
+  };
+}
+
+export function ingestSlice8Fixture(fixture: Slice8Fixture): Slice8CanonicalFixture {
+  assertSlice8FixtureShape(fixture);
+
+  const anchorEpochTdbJd = assertFiniteNumber(
+    fixture.propagation.anchorEpochTdbJd,
+    'slice8.propagation.anchorEpochTdbJd',
+  );
+  const asteroids = Object.fromEntries(
+    Object.entries(fixture.asteroids).map(([bodyId, asteroid]) => [
+      bodyId,
+      ingestSlice8Asteroid(bodyId, asteroid, anchorEpochTdbJd),
+    ]),
+  ) as Record<Slice7BodyId, AsteroidBody>;
+
+  return {
+    selectionSource: fixture.selectionSource ?? null,
+    anchorSource: fixture.anchorSource ?? null,
+    frame: FRAME_HELIO_J2000_ICRF,
+    timeScale: fixture.timeScale ?? null,
+    propagation: {
+      method: assertNonEmptyString(fixture.propagation.method, 'slice8.propagation.method'),
+      anchorEpochTdbSeconds: jdTdbToSecondsSinceJ2000(anchorEpochTdbJd),
+    },
+    catalog: {
+      totalBodies: assertFiniteNumber(fixture.catalog.totalBodies, 'slice8.catalog.totalBodies'),
+      mainBeltCount: assertFiniteNumber(fixture.catalog.mainBeltCount, 'slice8.catalog.mainBeltCount'),
+      curatedNeaCount: assertFiniteNumber(
+        fixture.catalog.curatedNeaCount,
+        'slice8.catalog.curatedNeaCount',
+      ),
+      mainBeltCutoffH: assertFiniteNumber(
+        fixture.catalog.mainBeltCutoffH,
+        'slice8.catalog.mainBeltCutoffH',
+      ),
+      orbitLineThresholdH: assertFiniteNumber(
+        fixture.catalog.orbitLineThresholdH,
+        'slice8.catalog.orbitLineThresholdH',
       ),
     },
     asteroids,
