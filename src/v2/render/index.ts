@@ -88,4 +88,15 @@ export {
   propagateAsteroidBodyState,
 } from './asteroid-renderer.js';
 
+export type { SpatialGridCellIndex } from './spatial-grid.js';
+
+export {
+  SPATIAL_GRID_BOUNDS_AU,
+  SPATIAL_GRID_CELL_SIZE_AU,
+  cellBoundsKmForIndex,
+  cellIndexForPositionKm,
+  cellKeyForIndex,
+  iterateAllPossibleCells,
+} from './spatial-grid.js';
+
 export { mountEmptyViewportCanvas } from './empty-viewport.js';
