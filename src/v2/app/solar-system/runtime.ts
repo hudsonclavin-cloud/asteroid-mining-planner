@@ -30,7 +30,7 @@ import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
 import { createSaturnRingsGroup } from '../../render/saturn-rings.js';
 import { HaloSystem } from '../../render/halos.js';
 import {
-  loadSlice7AsteroidCatalogFixture,
+  loadSlice8AsteroidCatalogFixture,
   loadSolarSystemStatesBrowser,
   SLICE3_EPOCH_TDB,
 } from './loader.js';
@@ -277,7 +277,7 @@ function getMinOrbitRadiusForFocus(
 export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> {
   const [allStates, asteroidCatalog] = await Promise.all([
     loadSolarSystemStatesBrowser(),
-    loadSlice7AsteroidCatalogFixture(),
+    loadSlice8AsteroidCatalogFixture(),
   ]);
   const stateSeries = new Map<BodyId, CanonicalState[]>();
   const asteroidBodies = Object.values(asteroidCatalog.asteroids);
@@ -322,7 +322,25 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 1);
   mount.replaceChildren(renderer.domElement);
+  mount.style.position = 'relative';
   renderer.domElement.style.cursor = 'grab';
+
+  const focusedAsteroidHud = document.createElement('div');
+  focusedAsteroidHud.setAttribute('data-testid', 'focused-asteroid-hud');
+  focusedAsteroidHud.style.position = 'absolute';
+  focusedAsteroidHud.style.top = '16px';
+  focusedAsteroidHud.style.left = '16px';
+  focusedAsteroidHud.style.padding = '8px 10px';
+  focusedAsteroidHud.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
+  focusedAsteroidHud.style.fontSize = '16px';
+  focusedAsteroidHud.style.lineHeight = '1.3';
+  focusedAsteroidHud.style.color = '#ffffff';
+  focusedAsteroidHud.style.background = 'rgba(0, 0, 0, 0.28)';
+  focusedAsteroidHud.style.border = '1px solid rgba(255, 255, 255, 0.16)';
+  focusedAsteroidHud.style.borderRadius = '8px';
+  focusedAsteroidHud.style.pointerEvents = 'none';
+  focusedAsteroidHud.style.display = 'none';
+  mount.appendChild(focusedAsteroidHud);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
@@ -481,6 +499,18 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   function getAsteroidHeliocentricState(bodyId: AsteroidBodyId, tdbSeconds: number): CanonicalState {
     return propagateAsteroidBodyState(getAsteroidBody(bodyId), tdbSeconds);
+  }
+
+  function updateFocusedAsteroidHud(bodyId: FocusTarget): void {
+    if (!isAsteroidFocusTarget(bodyId)) {
+      focusedAsteroidHud.textContent = '';
+      focusedAsteroidHud.style.display = 'none';
+      return;
+    }
+
+    const asteroid = getAsteroidBody(bodyId);
+    focusedAsteroidHud.textContent = `${asteroid.designation} · ${asteroid.class}`;
+    focusedAsteroidHud.style.display = 'block';
   }
 
   function getOuterSystemOverviewAnchor(tdbSeconds: number): Position3 {
@@ -653,6 +683,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       tdbSeconds: currentTdbSeconds,
       viewport,
     });
+    updateFocusedAsteroidHud(activeFocusBody);
 
     const epochStep = Math.round((currentTdbSeconds - SLICE3_EPOCH_TDB) / TIME_SCRUB_STEP_SECONDS);
     document.title = `Aster V2 — Solar System — step ${epochStep}`;
@@ -700,7 +731,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
         return asteroidBodyId;
       }
     }
-    return null;
+    return asteroidRenderer.raycastIntersectCells(raycaster.ray);
   }
 
   function updatePointerCursor(clientX: number, clientY: number): void {

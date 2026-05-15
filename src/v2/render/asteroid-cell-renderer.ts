@@ -343,6 +343,13 @@ export class AsteroidCellRenderer {
     return this.occupiedCells.map((cell) => cell.key);
   }
 
+  getPrimaryMesh(): THREE.InstancedMesh<THREE.SphereGeometry, THREE.MeshLambertMaterial> {
+    if (this.occupiedCells.length === 0) {
+      throw new Error('AsteroidCellRenderer has no occupied cells');
+    }
+    return this.occupiedCells[0].mesh;
+  }
+
   dispose(): void {
     for (const cell of this.occupiedCells) {
       this.root.remove(cell.mesh);

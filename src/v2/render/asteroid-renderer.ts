@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import type { AsteroidBody, AsteroidBodyId } from '../core/constants/asteroids.js';
 import { propagateKeplerianState } from '../core/propagators/keplerian.js';
+import { AsteroidCellRenderer, type AsteroidCellStats } from './asteroid-cell-renderer.js';
 import {
   ASTEROID_CURATED_NEA_COLOR_HEX,
-  ASTEROID_MAIN_BELT_COLOR_HEX,
   createAsteroidPointsShaderMaterial,
   getAsteroidPointColor,
 } from './asteroid-points-shader.js';
@@ -99,9 +99,7 @@ export class AsteroidRenderer {
   readonly pointsGeometry: THREE.BufferGeometry;
   pointsMaterial: THREE.Material;
   readonly points: THREE.Points<THREE.BufferGeometry, THREE.Material>;
-  readonly instancedGeometry: THREE.SphereGeometry;
-  readonly instancedMaterial: THREE.MeshLambertMaterial;
-  readonly instancedMesh: THREE.InstancedMesh<THREE.SphereGeometry, THREE.MeshLambertMaterial>;
+  readonly cellRenderer: AsteroidCellRenderer;
   readonly focusedGeometry: THREE.SphereGeometry;
   readonly focusedMaterial: THREE.MeshLambertMaterial;
   readonly focusedMesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshLambertMaterial>;
@@ -124,10 +122,7 @@ export class AsteroidRenderer {
   private readonly pointColorAttribute: THREE.BufferAttribute;
   private readonly pointSizeAttribute: THREE.BufferAttribute;
   private readonly pointsBoundingSphere = new THREE.Sphere(new THREE.Vector3(), Number.POSITIVE_INFINITY);
-  private readonly instanceMatrix = new THREE.Matrix4();
-  private readonly instancePosition = new THREE.Vector3();
-  private readonly instanceQuaternion = new THREE.Quaternion();
-  private readonly instanceScale = new THREE.Vector3();
+  private readonly canonicalPositionsM: THREE.Vector3[] = [];
   private focusedAsteroidBodyId: AsteroidBodyId | null = null;
   private focusedMeshBodyId: AsteroidBodyId | null = null;
   private focusedOrbitLine: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial> | null = null;
@@ -180,18 +175,8 @@ export class AsteroidRenderer {
     this.points.name = 'asteroid-points-layer';
     this.root.add(this.points);
 
-    this.instancedGeometry = new THREE.SphereGeometry(1, 16, 16);
-    this.instancedMaterial = new THREE.MeshLambertMaterial({
-      color: ASTEROID_MAIN_BELT_COLOR_HEX,
-    });
-    this.instancedMesh = new THREE.InstancedMesh(
-      this.instancedGeometry,
-      this.instancedMaterial,
-      maxBodies,
-    );
-    this.instancedMesh.name = 'asteroid-instanced-layer';
-    this.instancedMesh.count = 0;
-    this.root.add(this.instancedMesh);
+    this.cellRenderer = new AsteroidCellRenderer(this.asteroids);
+    this.root.add(this.cellRenderer.getRootGroup());
 
     this.focusedGeometry = new THREE.SphereGeometry(1, 24, 24);
     this.focusedMaterial = new THREE.MeshLambertMaterial({
@@ -220,6 +205,10 @@ export class AsteroidRenderer {
 
   getFocusedOrbitBodyId(): AsteroidBodyId | null {
     return this.focusedOrbitBodyId;
+  }
+
+  get instancedMesh(): THREE.InstancedMesh<THREE.SphereGeometry, THREE.MeshLambertMaterial> {
+    return this.cellRenderer.getPrimaryMesh();
   }
 
   getMainOrbitOpacity(): number {
@@ -258,8 +247,12 @@ export class AsteroidRenderer {
     return this.instancedBodyIds.slice();
   }
 
+  getCellStats(): AsteroidCellStats {
+    return this.cellRenderer.getCellStats();
+  }
+
   getRaycastTargets(): readonly THREE.Object3D[] {
-    return [this.focusedMesh, this.instancedMesh, this.points];
+    return [this.focusedMesh, this.points];
   }
 
   setPointsMaterial(material: THREE.Material): void {
@@ -273,15 +266,19 @@ export class AsteroidRenderer {
       return this.focusedMeshBodyId;
     }
 
-    if (intersection.object === this.instancedMesh && typeof intersection.instanceId === 'number') {
-      return this.instancedBodyIds[intersection.instanceId] ?? null;
-    }
-
     if (intersection.object === this.points && typeof intersection.index === 'number') {
       return this.pointBodyIds[intersection.index] ?? null;
     }
 
     return null;
+  }
+
+  raycastIntersectCells(ray: THREE.Ray): AsteroidBodyId | null {
+    const hit = this.cellRenderer.raycastIntersectCells(ray);
+    if (!hit) {
+      return null;
+    }
+    return this.asteroids[hit.bodyIndex]?.bodyId ?? null;
   }
 
   update(input: AsteroidRendererUpdateInput): void {
@@ -292,11 +289,20 @@ export class AsteroidRenderer {
     let hasFocusedMesh = false;
     let focusedApparentDiameterPx = 0;
     let focusedRenderMode: AsteroidRenderMode | null = null;
+    const instancedBodyIndices: number[] = [];
     this.pointBodyIds.length = 0;
     this.instancedBodyIds.length = 0;
 
     for (const [asteroidIndex, asteroid] of this.asteroids.entries()) {
       const propagated = propagateAsteroidBodyState(asteroid, tdbSeconds);
+      if (!this.canonicalPositionsM[asteroidIndex]) {
+        this.canonicalPositionsM[asteroidIndex] = new THREE.Vector3();
+      }
+      this.canonicalPositionsM[asteroidIndex].set(
+        propagated.positionM.x,
+        propagated.positionM.y,
+        propagated.positionM.z,
+      );
       const canonicalPosition = this.canonicalPositionByBodyId.get(asteroid.bodyId)!;
       canonicalPosition.x = propagated.positionM.x;
       canonicalPosition.y = propagated.positionM.y;
@@ -348,15 +354,8 @@ export class AsteroidRenderer {
       }
 
       if (nextMode === 'instanced') {
-        this.instancePosition.copy(world);
-        this.instanceScale.setScalar(asteroid.estimatedRadiusM);
-        this.instanceMatrix.compose(
-          this.instancePosition,
-          this.instanceQuaternion,
-          this.instanceScale,
-        );
-        this.instancedMesh.setMatrixAt(instanceCount, this.instanceMatrix);
         this.instancedBodyIds[instanceCount] = asteroid.bodyId;
+        instancedBodyIndices[instanceCount] = asteroidIndex;
         instanceCount += 1;
         continue;
       }
@@ -372,8 +371,10 @@ export class AsteroidRenderer {
     this.pointPositionAttribute.needsUpdate = true;
     this.pointColorAttribute.needsUpdate = true;
     this.pointSizeAttribute.needsUpdate = true;
-    this.instancedMesh.count = instanceCount;
-    this.instancedMesh.instanceMatrix.needsUpdate = true;
+    this.instancedBodyIds.length = instanceCount;
+    this.cellRenderer.setAnchorPositionM(anchorPositionM);
+    this.cellRenderer.setInstancedBodyIndices(instancedBodyIndices);
+    this.cellRenderer.update(this.canonicalPositionsM, camera, viewport);
 
     if (!hasFocusedMesh) {
       this.focusedMesh.visible = false;
@@ -418,8 +419,7 @@ export class AsteroidRenderer {
     this.orbitBatch.material.dispose();
     this.pointsGeometry.dispose();
     this.pointsMaterial.dispose();
-    this.instancedGeometry.dispose();
-    this.instancedMaterial.dispose();
+    this.cellRenderer.dispose();
     this.focusedGeometry.dispose();
     this.focusedMaterial.dispose();
   }
