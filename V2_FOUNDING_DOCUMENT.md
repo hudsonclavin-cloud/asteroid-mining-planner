@@ -621,7 +621,7 @@ Slice 7 is the smallest slice that:
 
 ### Slice 8: Catalog-Scale Asteroid Rendering
 
-Status: scoped, pre-research complete `2026-05-13`.
+Status: SHIPPED `2026-05-15`. Cutover declared after Phase D round 2 manual verification confirmed the `10,008`-body cell-as-mesh architecture, preserved belt visual density, and held Slice 1-7 regressions.
 
 Slice 8 scales the asteroid catalog from `1,008` to `10,008` bodies while preserving the Slice 7 truth architecture. It is a scale-and-performance slice, not a propagation-method reboot.
 
@@ -632,9 +632,15 @@ Slice 8 scales the asteroid catalog from `1,008` to `10,008` bodies while preser
 - always-Horizons re-anchor at `2026-05-01 00:00:00 TDB`
 - GPU instancing at catalog scale
 - frustum culling and spatial indexing bundled as one rendering architecture decision
+- `1 AU` uniform spatial grid with `178` occupied cells across the shipped `10,008`-body fixture
+- cell-as-mesh frustum culling with hysteresis margin; close-zoom measurement shows `14 / 178` cells visible (`~92%` culled)
 - INV-013 stratified asteroid bars by eccentricity band
 - adaptive orbit-line threshold `H < 10.98`
 - minimal `ui-hud` unfreeze limited to focused-body text in the screen corner
+- shipped execution split:
+  - Phase A1: data foundation, fixture build, boundary ingestion, INV-013 harness
+  - Phase A2: spatial grid, cell-as-mesh culling, picking integration, minimal HUD
+  - Phase D round 2: flicker reduction, orbit-line contract enforcement, startup camera tilt, Earth/Jupiter color polish
 - Slice 7 carry-forward architecture:
   - Keplerian propagation
   - ecliptic-derived stored elements
@@ -1258,6 +1264,8 @@ The Slice 8 tripwire is **5 focused weekends from the start of the Slice 8 imple
 - defer spatial indexing to Slice 9
 - accept slower-than-`60 fps` outer-system overview as an explicit descoping decision instead of an unspoken failure
 
+Actual result: Slice 8 implementation started Thursday `2026-05-14` and cutover was declared Friday `2026-05-15`, well inside weekend 1 of the 5-weekend window and leaving essentially the full remaining budget untouched.
+
 ### Verification Protocol For All Future Slices
 
 Manual cutover verification must explicitly distinguish two camera states:
@@ -1409,3 +1417,8 @@ These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables plu
 - The spatial index is intentionally coarse rather than adaptive perfection. Slice 8 prefers the simplest structure that clears `60 fps`, not the most abstractly elegant one.
 - Orbit-line rendering remains visually important but intentionally limited to `H < 10.98`; the other `~9,000` bodies rely on Points / InstancedMesh only.
 - `ui-hud` remains mostly frozen. Slice 8 permits only focused-body designation/class text; richer overlays and 3D floating labels remain Slice 9 scope.
+- Cell-boundary flicker was substantially reduced by the Phase D hysteresis margin, but aggressive zoom can still surface residual oscillation. This is acceptable at Slice 8 cutover and a candidate for Slice `8.5` polish.
+- Body-to-cell reassignment still uses a coarse cadence in the shipped MVP; Slice `8.1` is the candidate cleanup pass for boundary-triggered updates.
+- Picking currently inherits some assumptions from render visibility in the shipped MVP; Slice `8.1` is the candidate cleanup pass for decoupling the broad phase.
+- `src/v2/render/asteroid-instancing.md` and `src/v2/render/spatial-index.md` require post-cutover drift cleanup to match the shipped cell-as-mesh implementation.
+- Slice 8 automated picking coverage is still thinner than the manual verification surface; Points-mode picking and Bennu-specific coverage are post-cutover cleanup items for Slice `8.1`.
