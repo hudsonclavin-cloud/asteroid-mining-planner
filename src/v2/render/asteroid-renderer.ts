@@ -8,11 +8,15 @@ import {
   getAsteroidPointColor,
 } from './asteroid-points-shader.js';
 import {
+  ASTEROID_ORBIT_HIGH_DETAIL_SEGMENTS,
+  ASTEROID_ORBIT_MAIN_BELT_SEGMENTS,
   ASTEROID_ORBIT_BASE_OPACITY,
   createAsteroidOrbitBatch,
   createFocusedAsteroidOrbitLine,
   type AsteroidOrbitBatch,
+  type AsteroidOrbitRange,
 } from './asteroid-orbits.js';
+import { sampleOrbitEllipse } from '../core/propagators/keplerian.js';
 
 export const ASTEROID_POINTS_TO_INSTANCE_EXIT_DIAMETER_PX = 1.5;
 export const ASTEROID_POINTS_TO_INSTANCE_ENTER_DIAMETER_PX = 2;
@@ -135,7 +139,7 @@ export class AsteroidRenderer {
 
     this.asteroids = asteroids.slice();
     this.root.name = 'asteroid-renderer-root';
-    this.orbitBatch = createAsteroidOrbitBatch(this.asteroids);
+    this.orbitBatch = createAsteroidOrbitBatch(this.asteroids.filter((asteroid) => asteroid.hasOrbitLine));
     this.orbitBatch.lineSegments.frustumCulled = false;
     this.root.add(this.orbitBatch.lineSegments);
 
@@ -396,7 +400,8 @@ export class AsteroidRenderer {
       this.disposeFocusedOrbitLine();
       if (this.focusedAsteroidBodyId) {
         const asteroid = this.asteroidById.get(this.focusedAsteroidBodyId)!;
-        const range = this.orbitBatch.rangesByBodyId.get(this.focusedAsteroidBodyId)!;
+        const range = this.orbitBatch.rangesByBodyId.get(this.focusedAsteroidBodyId)
+          ?? buildFocusedOrbitRange(asteroid);
         const focusedOrbitColor = getAsteroidPointColor(asteroid);
         this.focusedOrbitLine = createFocusedAsteroidOrbitLine(asteroid, range, focusedOrbitColor);
         this.focusedOrbitLine.frustumCulled = false;
@@ -443,4 +448,18 @@ function clamp01(value: number): number {
     return 0;
   }
   return Math.min(1, Math.max(0, value));
+}
+
+function buildFocusedOrbitRange(asteroid: AsteroidBody): AsteroidOrbitRange {
+  const segmentCount = asteroid.isCuratedNea || asteroid.elements.e >= 0.35
+    ? ASTEROID_ORBIT_HIGH_DETAIL_SEGMENTS
+    : ASTEROID_ORBIT_MAIN_BELT_SEGMENTS;
+  const samples = sampleOrbitEllipse(asteroid.elements, segmentCount);
+  return {
+    bodyId: asteroid.bodyId,
+    vertexOffset: 0,
+    vertexCount: segmentCount * 2,
+    segmentCount,
+    samples,
+  };
 }

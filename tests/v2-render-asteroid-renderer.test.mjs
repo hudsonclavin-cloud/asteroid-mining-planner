@@ -82,6 +82,8 @@ function createMockAsteroid(core, designation, overrides = {}) {
       maRad: 0,
       epochTdbSeconds,
     },
+    eccentricityBand: overrides.eccentricityBand ?? 'A',
+    hasOrbitLine: overrides.hasOrbitLine ?? true,
   };
 }
 
@@ -187,6 +189,7 @@ test('focused asteroid gets a highlighted orbit while the main orbit batch stays
   assert.equal(asteroidRenderer.getFocusedOrbitBodyId(), asteroid.bodyId);
   assert.equal(asteroidRenderer.orbitBatch.lineSegments.visible, true);
   assert.equal(asteroidRenderer.getMainOrbitOpacity(), 0.12);
+  assert.equal(asteroidRenderer.orbitBatch.rangesByBodyId.size, 1);
 });
 
 test('main orbit batch fades out when the focused asteroid reaches close-inspection mesh mode', async () => {
@@ -199,4 +202,26 @@ test('main orbit batch fades out when the focused asteroid reaches close-inspect
   assert.equal(asteroidRenderer.getFocusedOrbitBodyId(), asteroid.bodyId);
   assert.equal(asteroidRenderer.getMainOrbitOpacity(), 0);
   assert.equal(asteroidRenderer.orbitBatch.lineSegments.visible, false);
+});
+
+test('main orbit batch excludes asteroids below the hasOrbitLine threshold while focused orbit highlight still works', async () => {
+  const { renderer, core, THREE } = await loadModules();
+  const bright = createMockAsteroid(core, '406', { hasOrbitLine: true });
+  const dim = createMockAsteroid(core, '407', { hasOrbitLine: false, isCuratedNea: true, class: 'APO' });
+  const asteroidRenderer = new renderer.AsteroidRenderer([bright, dim]);
+  const camera = new THREE.PerspectiveCamera(45, 1280 / 720, 1, 1e15);
+  camera.position.set(0, 0, 5_000_000);
+
+  asteroidRenderer.setFocusedAsteroid(dim.bodyId);
+  asteroidRenderer.update({
+    anchorPositionM: dim.anchorState.positionM,
+    camera,
+    tdbSeconds: dim.elements.epochTdbSeconds,
+    viewport: { width: 1280, height: 720 },
+  });
+
+  assert.equal(asteroidRenderer.orbitBatch.rangesByBodyId.size, 1);
+  assert.equal(asteroidRenderer.orbitBatch.rangesByBodyId.has(bright.bodyId), true);
+  assert.equal(asteroidRenderer.orbitBatch.rangesByBodyId.has(dim.bodyId), false);
+  assert.equal(asteroidRenderer.getFocusedOrbitBodyId(), dim.bodyId);
 });
