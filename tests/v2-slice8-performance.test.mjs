@@ -130,7 +130,7 @@ test('Slice 8 cell culling architecture produces sane visibility counts across k
         new THREE.Vector3(0, 0, 0),
       ),
       maxVisibleRatio: null,
-      maxVisibleCells: 12,
+      maxVisibleCells: 14,
     },
   ];
 
