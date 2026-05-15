@@ -119,6 +119,13 @@ const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
 type FocusTarget = BodyId | AsteroidBodyId | typeof OUTER_SYSTEM_OVERVIEW;
 type Position3 = CanonicalState['positionM'];
 
+export interface FocusedAsteroidHudElement {
+  textContent: string;
+  style: {
+    display: string;
+  };
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -182,6 +189,20 @@ function createBodyMesh(bodyId: BodyId): THREE.Mesh {
 
 function isAsteroidFocusTarget(bodyId: FocusTarget): bodyId is AsteroidBodyId {
   return typeof bodyId === 'string' && isAsteroidBodyId(bodyId);
+}
+
+export function renderFocusedAsteroidHud(
+  element: FocusedAsteroidHudElement,
+  asteroid: Pick<AsteroidBody, 'designation' | 'class'> | null,
+): void {
+  if (!asteroid) {
+    element.textContent = '';
+    element.style.display = 'none';
+    return;
+  }
+
+  element.textContent = `${asteroid.designation} · ${asteroid.class}`;
+  element.style.display = 'block';
 }
 
 export function createMarsSystemRenderGroups(): {
@@ -502,15 +523,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   }
 
   function updateFocusedAsteroidHud(bodyId: FocusTarget): void {
-    if (!isAsteroidFocusTarget(bodyId)) {
-      focusedAsteroidHud.textContent = '';
-      focusedAsteroidHud.style.display = 'none';
-      return;
-    }
-
-    const asteroid = getAsteroidBody(bodyId);
-    focusedAsteroidHud.textContent = `${asteroid.designation} · ${asteroid.class}`;
-    focusedAsteroidHud.style.display = 'block';
+    renderFocusedAsteroidHud(
+      focusedAsteroidHud,
+      isAsteroidFocusTarget(bodyId) ? getAsteroidBody(bodyId) : null,
+    );
   }
 
   function getOuterSystemOverviewAnchor(tdbSeconds: number): Position3 {

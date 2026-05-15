@@ -36,6 +36,15 @@ function formatBandSummary(band, summary) {
   return `${band} count=${summary.count} max=${summary.maxErrorKm.toFixed(6)} km bar=${summary.barKm.toFixed(6)} km rms=${summary.rmsErrorKm.toFixed(6)} km`;
 }
 
+function createPerspectiveCamera(THREE, position, lookAt, aspect = 16 / 9) {
+  const camera = new THREE.PerspectiveCamera(45, aspect, 1, 1e15);
+  camera.position.copy(position);
+  camera.lookAt(lookAt);
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
+  return camera;
+}
+
 console.log('Compiling v2 core and boundary for Slice 8 cutover...');
 fs.rmSync(tempOutDir, { recursive: true, force: true });
 fs.mkdirSync(tempOutDir, { recursive: true });
@@ -53,6 +62,8 @@ const tscResult = spawnSync(
     '--isolatedModules', 'true',
     path.join(repoRoot, 'src', 'v2', 'core', 'index.ts'),
     path.join(repoRoot, 'src', 'v2', 'boundary', 'horizons.ts'),
+    path.join(repoRoot, 'src', 'v2', 'render', 'index.ts'),
+    path.join(repoRoot, 'src', 'v2', 'app', 'solar-system', 'runtime.ts'),
   ],
   { cwd: repoRoot, encoding: 'utf8' },
 );
@@ -66,14 +77,18 @@ console.log('PASS tsc compilation\n');
 
 assert.ok(fs.existsSync(truthPath), `Missing Slice 8 truth cache at ${truthPath}. Run node tools/slice8-ingestion/fetch-cutover-truth.mjs first.`);
 
-const [core, horizons] = await Promise.all([
+const [core, horizons, render, runtime, THREE] = await Promise.all([
   import(pathToFileURL(path.join(tempOutDir, 'core', 'index.js')).href),
   import(pathToFileURL(path.join(tempOutDir, 'boundary', 'horizons.js')).href),
+  import(pathToFileURL(path.join(tempOutDir, 'render', 'index.js')).href),
+  import(pathToFileURL(path.join(tempOutDir, 'app', 'solar-system', 'runtime.js')).href),
+  import('three'),
 ]);
 
 const fixture = readJson(fixturePath);
 const truth = readJson(truthPath);
 const catalog = horizons.ingestSlice8Fixture(fixture);
+const asteroidBodies = Object.values(catalog.asteroids);
 const sample = buildSlice8CutoverSample(fixture.asteroids);
 const truthByBodyId = new Map((truth.bodies ?? []).map((body) => [body.bodyId, body]));
 const expectedSlice7 = readJson(slice7ExpectedAccuracyPath);
@@ -180,4 +195,108 @@ for (const band of ['A', 'B', 'C', 'D']) {
   assert.equal(summary.count, SLICE8_CUTOVER_PER_BAND_COUNT, `Band ${band} should contribute 50 sampled bodies`);
 }
 console.log('');
+const bodyIndexById = new Map(asteroidBodies.map((asteroid, index) => [asteroid.bodyId, index]));
+const anchorPositions = asteroidBodies.map((asteroid) => new THREE.Vector3(
+  asteroid.anchorState.positionM.x,
+  asteroid.anchorState.positionM.y,
+  asteroid.anchorState.positionM.z,
+));
+
+const cellRenderer = new render.AsteroidCellRenderer(asteroidBodies);
+const occupiedCellKeys = cellRenderer.getOccupiedCellKeys();
+const totalBodiesInCells = occupiedCellKeys.reduce(
+  (sum, key) => sum + cellRenderer.getCellAtKey(key).bodyIndices.length,
+  0,
+);
+assert.equal(totalBodiesInCells, asteroidBodies.length, 'cell-as-mesh partition must account for all 10,008 bodies');
+
+cellRenderer.setAnchorPositionM({ x: 0, y: 0, z: 0 });
+cellRenderer.setInstancedBodyIndices(asteroidBodies.map((_, index) => index));
+const cullingCamera = createPerspectiveCamera(
+  THREE,
+  new THREE.Vector3(0, 0, 4 * 149_597_870_700),
+  new THREE.Vector3(2.8 * 149_597_870_700, 0, 0),
+);
+cellRenderer.update(anchorPositions, cullingCamera, { width: 1600, height: 900 });
+
+for (const key of occupiedCellKeys) {
+  const cell = cellRenderer.getCellAtKey(key);
+  assert.ok(cell.mesh.count <= cell.bodyIndices.length, `cell ${key} instance count exceeded its assigned bodies`);
+  assert.equal(cell.mesh.count, cell.visibleBodyIndices.length, `cell ${key} visible-body mapping should match mesh.count`);
+}
+
+for (const expected of expectedSlice7.asteroids) {
+  const asteroid = catalog.asteroids[`asteroid-${expected.designation}`];
+  const bodyIndex = bodyIndexById.get(asteroid.bodyId);
+  const cellIndex = render.cellIndexForPositionKm(new THREE.Vector3(
+    asteroid.anchorState.positionM.x / 1000,
+    asteroid.anchorState.positionM.y / 1000,
+    asteroid.anchorState.positionM.z / 1000,
+  ));
+  assert.ok(cellIndex, `Slice 7 regression asteroid ${expected.designation} should remain inside the Slice 8 spatial grid`);
+  const cell = cellRenderer.getCellAtKey(render.cellKeyForIndex(cellIndex));
+  assert.ok(cell?.bodyIndices.includes(bodyIndex), `Slice 7 regression asteroid ${expected.designation} should remain assigned to its spatial cell`);
+}
+
+const focusedSubset = [
+  catalog.asteroids['asteroid-4'],
+  catalog.asteroids['asteroid-101955'],
+];
+const subsetRenderer = new render.AsteroidRenderer(focusedSubset);
+const vesta = focusedSubset[0];
+const focusCamera = createPerspectiveCamera(
+  THREE,
+  new THREE.Vector3(0, 0, 5_000_000),
+  new THREE.Vector3(0, 0, 0),
+);
+subsetRenderer.update({
+  anchorPositionM: vesta.anchorState.positionM,
+  camera: focusCamera,
+  tdbSeconds: vesta.elements.epochTdbSeconds,
+  viewport: { width: 1280, height: 720 },
+});
+
+const rayDirection = new THREE.Vector3(0, 0, 0).sub(focusCamera.position).normalize();
+const directCellHit = subsetRenderer.raycastIntersectCells(new THREE.Ray(focusCamera.position.clone(), rayDirection));
+assert.equal(directCellHit, vesta.bodyId, 'cell ray-march should resolve Vesta in the focused subset');
+
+const raycaster = new THREE.Raycaster();
+raycaster.ray.origin.copy(focusCamera.position);
+raycaster.ray.direction.copy(rayDirection);
+let resolvedByRuntimePath = null;
+const intersections = raycaster.intersectObjects(subsetRenderer.getRaycastTargets(), false);
+for (const intersection of intersections) {
+  resolvedByRuntimePath = subsetRenderer.resolveIntersection(intersection);
+  if (resolvedByRuntimePath) {
+    break;
+  }
+}
+if (!resolvedByRuntimePath) {
+  resolvedByRuntimePath = subsetRenderer.raycastIntersectCells(raycaster.ray);
+}
+assert.equal(resolvedByRuntimePath, vesta.bodyId, 'runtime picking path should resolve Vesta through the cell renderer');
+
+subsetRenderer.setFocusedAsteroid(resolvedByRuntimePath);
+subsetRenderer.update({
+  anchorPositionM: vesta.anchorState.positionM,
+  camera: focusCamera,
+  tdbSeconds: vesta.elements.epochTdbSeconds,
+  viewport: { width: 1280, height: 720 },
+});
+assert.equal(subsetRenderer.getFocusedAsteroidBodyId(), vesta.bodyId);
+assert.equal(subsetRenderer.getFocusedMeshBodyId(), vesta.bodyId);
+
+const hud = {
+  textContent: '',
+  style: {
+    display: 'none',
+  },
+};
+runtime.renderFocusedAsteroidHud(hud, vesta);
+assert.equal(hud.textContent, `${vesta.designation} · ${vesta.class}`);
+assert.equal(hud.style.display, 'block');
+runtime.renderFocusedAsteroidHud(hud, null);
+assert.equal(hud.textContent, '');
+assert.equal(hud.style.display, 'none');
+
 console.log('Slice 8 cutover harness passed with zero runtime invariant violations and all Slice 7 regression bodies preserved.');
