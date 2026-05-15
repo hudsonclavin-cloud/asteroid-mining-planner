@@ -39,9 +39,11 @@ interface AsteroidCellEntry {
 
 const SPATIAL_GRID_TOTAL_CELLS =
   ((SPATIAL_GRID_BOUNDS_AU * 2) / SPATIAL_GRID_CELL_SIZE_AU) ** 3;
+const AU_M = 149_597_870_700;
 const GRID_MIN_KM = -SPATIAL_GRID_BOUNDS_AU * 149_597_870.7;
 const GRID_MAX_KM = SPATIAL_GRID_BOUNDS_AU * 149_597_870.7;
 const REASSIGNMENT_INTERVAL_FRAMES = 60;
+const FRUSTUM_CULL_MARGIN_M = SPATIAL_GRID_CELL_SIZE_AU * AU_M * 0.05;
 
 function isIndexWithinGrid(index: SpatialGridCellIndex): boolean {
   const minIndex = -SPATIAL_GRID_BOUNDS_AU / SPATIAL_GRID_CELL_SIZE_AU;
@@ -180,7 +182,10 @@ export class AsteroidCellRenderer {
     let visibleBodies = 0;
 
     for (const cell of this.occupiedCells) {
-      cell.boundsRelativeM.copy(cell.boundsCanonicalM).translate(this.frustumTranslation);
+      cell.boundsRelativeM
+        .copy(cell.boundsCanonicalM)
+        .translate(this.frustumTranslation)
+        .expandByScalar(FRUSTUM_CULL_MARGIN_M);
       const inFrustum = canFrustumCull ? this.frustum.intersectsBox(cell.boundsRelativeM) : true;
       if (!inFrustum) {
         cell.mesh.visible = false;

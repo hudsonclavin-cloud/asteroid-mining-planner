@@ -190,7 +190,41 @@ test('focused close-zoom keeps visible cells in a small local neighborhood', asy
   const stats = renderer.getCellStats();
 
   assert.ok(stats.visibleCells > 0);
-  assert.ok(stats.visibleCells <= 12, `expected a tightly bounded close-zoom neighborhood, received ${stats.visibleCells} visible cells`);
+  assert.ok(stats.visibleCells <= 14, `expected a tightly bounded close-zoom neighborhood, received ${stats.visibleCells} visible cells`);
+});
+
+test('cells near the frustum edge stay visible across a +/-0.5 degree camera sweep', async () => {
+  const { cellRenderer, core, THREE } = await loadModules();
+  const distanceM = 5 * AU_M;
+  const edgeAngleDeg = 36.5;
+  const theta = THREE.MathUtils.degToRad(edgeAngleDeg);
+  const mockBodies = [
+    createMockAsteroid(core, 'edge', {
+      x: distanceM * Math.sin(theta),
+      y: 0,
+      z: distanceM * Math.cos(theta),
+    }),
+  ];
+  const renderer = new cellRenderer.AsteroidCellRenderer(mockBodies);
+  const positions = createAnchorPositions(THREE, mockBodies);
+  renderer.setAnchorPositionM({ x: 0, y: 0, z: 0 });
+  renderer.setInstancedBodyIndices([0]);
+
+  for (const yawDeg of [-0.5, 0, 0.5]) {
+    const yaw = THREE.MathUtils.degToRad(yawDeg);
+    const camera = createCamera(
+      THREE,
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)),
+    );
+    renderer.update(positions, camera, { width: 1600, height: 900 });
+    const stats = renderer.getCellStats();
+    assert.equal(
+      stats.visibleCells,
+      1,
+      `expected the edge cell to remain visible at yaw ${yawDeg} degrees`,
+    );
+  }
 });
 
 test('raycastIntersectCells returns null for misses, hits the expected body, and reassigns across cells after position changes', async () => {
