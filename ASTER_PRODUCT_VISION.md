@@ -1,6 +1,6 @@
 # Aster — Product Vision
 
-*Written 2026-05-15 at 11:00 PM. Personal clarity doc.*
+*Written 2026-05-15. Personal clarity doc.*
 
 ## What this is
 
