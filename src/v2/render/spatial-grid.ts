@@ -17,11 +17,14 @@ const AU_KM = 149_597_870.7;
 const SPATIAL_GRID_CELL_SIZE_KM = SPATIAL_GRID_CELL_SIZE_AU * AU_KM;
 const SPATIAL_GRID_BOUNDS_KM = SPATIAL_GRID_BOUNDS_AU * AU_KM;
 const SPATIAL_GRID_DIMENSION = (SPATIAL_GRID_BOUNDS_AU * 2) / SPATIAL_GRID_CELL_SIZE_AU;
-const SPATIAL_GRID_MIN_INDEX = -(SPATIAL_GRID_DIMENSION - 1) / 2;
-const SPATIAL_GRID_MAX_INDEX = (SPATIAL_GRID_DIMENSION - 1) / 2;
+const SPATIAL_GRID_MIN_INDEX = -SPATIAL_GRID_BOUNDS_AU / SPATIAL_GRID_CELL_SIZE_AU;
+const SPATIAL_GRID_MAX_INDEX = SPATIAL_GRID_MIN_INDEX + SPATIAL_GRID_DIMENSION - 1;
 
 if (!Number.isInteger(SPATIAL_GRID_DIMENSION) || SPATIAL_GRID_DIMENSION <= 0) {
   throw new Error('Spatial grid dimensions must resolve to a positive integer');
+}
+if (!Number.isInteger(SPATIAL_GRID_MIN_INDEX) || !Number.isInteger(SPATIAL_GRID_MAX_INDEX)) {
+  throw new Error('Spatial grid index bounds must resolve to integers');
 }
 
 function coordinateToIndex(coordinateKm: number): number | null {
