@@ -29,12 +29,7 @@ Slice 8 needs a coarse structure whose update cost is stable and predictable.
 
 ## Recommended Approach
 
-The final implementation choice is intentionally deferred to Phase A between:
-
-- uniform grid
-- loose octree
-
-The default recommended starting point is the uniform grid because it is simpler to reason about, simpler to debug, and better aligned to Slice 8's hard time box.
+Phase A measurement locked the implementation to a uniform grid. The original Thursday planning guess used `8 AU` cells, but the real `10,008`-body fixture showed that choice was useless for culling: `10,007` bodies collapsed into the central cell. The production Slice 8 baseline is therefore a `1 AU` uniform grid over the same heliocentric cube.
 
 ## Uniform Grid Baseline
 
@@ -42,9 +37,21 @@ The default recommended starting point is the uniform grid because it is simpler
 
 - heliocentric coordinate space
 - approximately `50 AU` cube covering the inner system, the main belt, and the near-Jupiter range relevant to the visible catalog
-- fixed cell size on the order of `5-10 AU`
+- fixed `1 AU` cell size
 
 This yields a small coarse set of bins rather than a deep adaptive hierarchy.
+
+### Measurement-Grounded Cell Size Revision
+
+Measured against the real Slice 8 fixture:
+
+- `8 AU`: `2` occupied cells, rejected because culling is effectively useless
+- `4 AU`: `9` occupied cells, rejected as too coarse
+- `2 AU`: `47` occupied cells, rejected because culling leverage is still weak
+- `1 AU`: `178` occupied cells, max `368` bodies per cell, chosen
+- `0.5 AU`: `773` occupied cells, rejected due to scene-graph overhead risk
+
+The original Thursday planning assumption was wrong. Slice 8 corrects it before cell-as-mesh renderer implementation rather than carrying a broken partition into A2.
 
 ### Per-Cell State
 
@@ -94,14 +101,13 @@ This makes the spatial index dual-purpose instead of maintaining separate cullin
 
 ## Performance Estimate
 
-Planning estimate from pre-research:
+Measured occupancy from the real fixture:
 
-- `~250` cells for a coarse uniform grid covering the relevant heliocentric volume
-- `~40` bodies per cell average
-- `~5-10` cells visible at typical outer-system overview
-- therefore `~200-400` resolved candidates actually submitted or tested in a typical visible set
+- `178` occupied cells at `1 AU`
+- worst occupied cell contains `368` bodies
+- average occupied cell contains `~56` bodies
 
-These are planning numbers, not guaranteed measurements. Phase A implementation must confirm the real visible-cell counts on target hardware.
+Per-camera visible-cell counts remain a Phase A runtime measurement question, but the production partition is now grounded in the actual `10,008`-body data rather than pre-research guesses.
 
 ## Tradeoffs
 
@@ -145,7 +151,12 @@ Cons:
 
 ## Phase A Decision Boundary
 
-Phase A decides between uniform grid and loose octree based on measured implementation cost and observed frame time on the target machine. Slice 8 does not need the globally optimal structure. It needs the simplest structure that actually clears the `60 fps` cutover bar.
+Phase A has already resolved the high-level structure choice and the cell size:
+
+- keep the simpler uniform grid
+- use `1 AU` cells
+
+The remaining question is whether that measured partition actually clears the `60 fps` cutover bar on target hardware.
 
 ## Relationship To Slice 8 Cutover
 

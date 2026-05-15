@@ -6,7 +6,11 @@ export interface SpatialGridCellIndex {
   readonly z: number;
 }
 
-export const SPATIAL_GRID_CELL_SIZE_AU = 8;
+// Phase A2.0 (May 2026): the original 8 AU planning guess collapsed 10,007 of
+// the 10,008 Slice 8 asteroids into one central cell. The real fixture needed
+// a finer grid before cell-as-mesh culling had any leverage, so the measured
+// production choice is 1 AU cells over the same +-28 AU heliocentric cube.
+export const SPATIAL_GRID_CELL_SIZE_AU = 1;
 export const SPATIAL_GRID_BOUNDS_AU = 28;
 
 const AU_KM = 149_597_870.7;

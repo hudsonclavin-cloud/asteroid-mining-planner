@@ -50,7 +50,7 @@ function loadFixture() {
   return JSON.parse(fs.readFileSync(slice8FixturePath, 'utf8'));
 }
 
-test('Vesta and Bennu anchor positions land in the expected central cell', async () => {
+test('Vesta and Bennu anchor positions land in the measured 1 AU cells', async () => {
   const { grid, THREE } = await loadModules();
   const fixture = loadFixture();
   const vesta = fixture.asteroids['asteroid-4'];
@@ -59,16 +59,16 @@ test('Vesta and Bennu anchor positions land in the expected central cell', async
   const vestaIndex = grid.cellIndexForPositionKm(new THREE.Vector3(...vesta.anchor.positionKm));
   const bennuIndex = grid.cellIndexForPositionKm(new THREE.Vector3(...bennu.anchor.positionKm));
 
-  assert.deepEqual(vestaIndex, { x: 0, y: 0, z: 0 });
-  assert.deepEqual(bennuIndex, { x: 0, y: 0, z: 0 });
+  assert.deepEqual(vestaIndex, { x: 2, y: -1, z: -1 });
+  assert.deepEqual(bennuIndex, { x: -1, y: 0, z: 0 });
 });
 
-test('cellBoundsKmForIndex returns an 8 AU box anchored to the configured grid', async () => {
+test('cellBoundsKmForIndex returns a 1 AU box anchored to the configured grid', async () => {
   const { grid } = await loadModules();
   const bounds = grid.cellBoundsKmForIndex({ x: 0, y: 0, z: 0 });
   const size = bounds.getSize(bounds.min.clone());
   const expectedCellSizeKm = grid.SPATIAL_GRID_CELL_SIZE_AU * 149_597_870.7;
-  const expectedMinKm = -4 * 149_597_870.7;
+  const expectedMinKm = 0;
 
   assert.ok(Math.abs(bounds.min.x - expectedMinKm) < 1e-6);
   assert.ok(Math.abs(bounds.min.y - expectedMinKm) < 1e-6);
@@ -95,10 +95,27 @@ test('cellIndexForPositionKm round-trips into a containing cell bounds box', asy
   assert.equal(bounds.containsPoint(position), true);
 });
 
-test('iterateAllPossibleCells covers the full 7x7x7 grid', async () => {
+test('iterateAllPossibleCells covers the full 56x56x56 grid', async () => {
   const { grid } = await loadModules();
   const allCells = [...grid.iterateAllPossibleCells()];
-  assert.equal(allCells.length, 343);
-  assert.deepEqual(allCells[0], { x: -3, y: -3, z: -3 });
-  assert.deepEqual(allCells.at(-1), { x: 3, y: 3, z: 3 });
+  assert.equal(allCells.length, 175_616);
+  assert.deepEqual(allCells[0], { x: -28, y: -28, z: -28 });
+  assert.deepEqual(allCells.at(-1), { x: 27, y: 27, z: 27 });
+});
+
+test('Slice 8 fixture occupies the measured ~178 cells at 1 AU resolution', async () => {
+  const { grid, THREE } = await loadModules();
+  const fixture = loadFixture();
+  const occupied = new Set();
+
+  for (const asteroid of Object.values(fixture.asteroids)) {
+    const index = grid.cellIndexForPositionKm(new THREE.Vector3(...asteroid.anchor.positionKm));
+    assert.ok(index, 'All Slice 8 asteroids should remain inside the configured grid');
+    occupied.add(grid.cellKeyForIndex(index));
+  }
+
+  assert.ok(
+    occupied.size >= 173 && occupied.size <= 183,
+    `Expected occupied cell count near 178 at 1 AU resolution, received ${occupied.size}`,
+  );
 });
