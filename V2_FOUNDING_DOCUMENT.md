@@ -1183,6 +1183,37 @@ All Slice 7 non-goals carry forward. Additionally:
 - changes to `src/v2/core/propagators/keplerian.ts`
 - changes to `tests/fixtures/v2/asteroid-catalog-slice7.json`
 
+#### Rendering Fidelity Non-Goals (Slices 8-10)
+
+Slices 8 through 10 explicitly prioritize architectural foundation (catalog scale, frustum culling, spatial indexing) and mission-planner integration (Δv analysis, transfer trajectories, economic modeling) over rendering fidelity. The following features are deferred to Slice 11.5+ polish phase or out of scope entirely:
+
+Deferred to Slice 11.5+ polish (if shipped at all):
+
+- PBR shaders for planets (`MeshPhysicalMaterial`, `8K` textures, normal/displacement maps)
+- Procedural asteroid shape generation (noise-driven mesh deformation, irregular shapes per radar models)
+- Wide-line shaders (`Line2` / `LineMaterial`) for orbit-line thickness
+- Additive blending experiments on orbit-line layer
+- Sun glow (volumetric god rays, raymarching shaders)
+- Earth atmospheric scattering (Rayleigh / Mie shader)
+- Saturn ring particle system with Cassini Division substructure modeling
+- Jupiter cloud bands and storm rendering
+- Body rotation animation (sidereal periods, axial precession, libration)
+- 3D body labels (deferred to Slice 9 `ui-hud` unfreeze)
+
+Out of scope for Aster v1:
+
+- Non-spherical gravity perturbations (`J2` oblateness for Earth / Mars)
+- Yarkovsky / solar radiation pressure perturbations on NEA trajectories
+- True n-body integration (`REBOUND`, Barnes-Hut) — two-body Keplerian is sufficient for mission-planning resolution
+- Collision detection / handling between bodies
+- Light-time delay corrections (sub-second at solar-system scale, irrelevant to mission planning)
+- Tidal locking dynamics, libration modeling
+- Relativistic effects: frame-dragging, Shapiro delay, gravitational lensing, Mercury precession
+- Doppler-shifted colors, relativistic aberration
+- Spacetime curvature visualization
+
+Rationale: Aster's product thesis is asteroid mining mission planning, not visualization fidelity. NASA Eyes on Asteroids, JPL Solar System Visualizer, and similar professional tools do not implement most of these features either. Pursuing rendering completeness would consume months on cosmetic improvements while the mission-planner thesis remains unbuilt. After Slice 11 ships the mission-planner core, Slice 11.5 may revisit selected polish items from this deferral list.
+
 ---
 
 ## 11. Failure Condition
