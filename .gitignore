@@ -9,3 +9,7 @@ worker/.wrangler/
 node_modules/
 .tmp-tests/
 .obsidian/
+tools/slice8-ingestion/checkpoint.json
+tools/slice8-ingestion/full-run.log
+tools/slice8-ingestion/caffeinate.log
+tools/slice8-ingestion/full-run.pid
