@@ -163,8 +163,13 @@ export class AsteroidCellRenderer {
       this.rebuildCellsIfAssignmentsChanged(propagatedPositionsM);
     }
 
-    this.projectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-    this.frustum.setFromProjectionMatrix(this.projectionMatrix);
+    const canFrustumCull =
+      camera.projectionMatrix instanceof THREE.Matrix4 &&
+      camera.matrixWorldInverse instanceof THREE.Matrix4;
+    if (canFrustumCull) {
+      this.projectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+      this.frustum.setFromProjectionMatrix(this.projectionMatrix);
+    }
     this.frustumTranslation.set(
       -this.currentAnchorPositionM.x,
       -this.currentAnchorPositionM.y,
@@ -176,7 +181,7 @@ export class AsteroidCellRenderer {
 
     for (const cell of this.occupiedCells) {
       cell.boundsRelativeM.copy(cell.boundsCanonicalM).translate(this.frustumTranslation);
-      const inFrustum = this.frustum.intersectsBox(cell.boundsRelativeM);
+      const inFrustum = canFrustumCull ? this.frustum.intersectsBox(cell.boundsRelativeM) : true;
       if (!inFrustum) {
         cell.mesh.visible = false;
         cell.mesh.count = 0;
