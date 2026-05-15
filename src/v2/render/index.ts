@@ -99,4 +99,12 @@ export {
   iterateAllPossibleCells,
 } from './spatial-grid.js';
 
+export type {
+  AsteroidCellIntersection,
+  AsteroidCellRendererViewport,
+  AsteroidCellStats,
+} from './asteroid-cell-renderer.js';
+
+export { AsteroidCellRenderer } from './asteroid-cell-renderer.js';
+
 export { mountEmptyViewportCanvas } from './empty-viewport.js';
