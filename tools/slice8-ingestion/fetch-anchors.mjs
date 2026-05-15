@@ -16,6 +16,7 @@ const ANCHOR_EPOCH_TDB_JD = 2461161.5;
 const ANCHOR_TIME_LABEL = '2026-05-01 00:00:00 TDB';
 const DEFAULT_RATE_MS = 3_000;
 const DEFAULT_CHUNK_SIZE = 1_000;
+const DEFAULT_CHECKPOINT_INTERVAL = 25;
 const RETRY_DELAYS_MS = [3_000, 10_000, 30_000];
 
 const MIN_POSITION_MAGNITUDE_KM = 170_000_000;
@@ -118,6 +119,14 @@ async function readJson(filePath) {
 async function writeJson(filePath, document) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   await fs.writeFile(filePath, `${JSON.stringify(document, null, 2)}\n`, 'utf8');
+}
+
+async function writeJsonAtomic(filePath, document) {
+  const directory = path.dirname(filePath);
+  const tempPath = `${filePath}.tmp`;
+  await fs.mkdir(directory, { recursive: true });
+  await fs.writeFile(tempPath, `${JSON.stringify(document, null, 2)}\n`, 'utf8');
+  await fs.rename(tempPath, filePath);
 }
 
 function buildDeltaInventory(mainBelt, existingAnchorDocument, requestedLimit) {
@@ -283,6 +292,7 @@ function createOutputDocument(inventory, options) {
     reusedExistingAnchorCount: 1008,
     newAnchorCountExpected: inventory.length,
     chunkSize: options.chunkSize,
+    checkpointInterval: options.checkpointInterval,
     rateLimitMs: options.rateMs,
     bodies: [],
   };
@@ -295,8 +305,10 @@ function createCheckpointDocument(options, inventoryLength, state, status) {
     anchorEpochTdbJd: ANCHOR_EPOCH_TDB_JD,
     requestedLimit: options.limit,
     chunkSize: options.chunkSize,
+    checkpointInterval: options.checkpointInterval,
     rateLimitMs: options.rateMs,
     outputPath: options.outputPath,
+    lastCompletedIndex: Math.max(-1, state.nextFetchIndex - 1),
     nextFetchIndex: state.nextFetchIndex,
     fetchedCount: state.fetchedCount,
     expectedCount: inventoryLength,
@@ -309,8 +321,8 @@ function createCheckpointDocument(options, inventoryLength, state, status) {
 
 async function saveProgress(outputPath, outputDocument, checkpointPath, checkpointDocument) {
   outputDocument.generatedAtUtc = new Date().toISOString();
-  await writeJson(outputPath, outputDocument);
-  await writeJson(checkpointPath, checkpointDocument);
+  await writeJsonAtomic(outputPath, outputDocument);
+  await writeJsonAtomic(checkpointPath, checkpointDocument);
 }
 
 function ensureResumeConsistency(checkpoint, options, inventoryLength) {
@@ -325,12 +337,21 @@ function ensureResumeConsistency(checkpoint, options, inventoryLength) {
   if (checkpoint.expectedCount !== inventoryLength) {
     throw new Error(`Checkpoint inventory length mismatch: expected ${inventoryLength}, found ${checkpoint.expectedCount}`);
   }
+  if (
+    typeof checkpoint.checkpointInterval !== 'undefined' &&
+    checkpoint.checkpointInterval !== options.checkpointInterval
+  ) {
+    throw new Error(
+      `Checkpoint interval mismatch: expected ${options.checkpointInterval}, found ${checkpoint.checkpointInterval}`,
+    );
+  }
 }
 
 async function main() {
   const options = {
     limit: parseIntegerFlag('limit', null),
     chunkSize: parseIntegerFlag('chunk-size', DEFAULT_CHUNK_SIZE),
+    checkpointInterval: parseIntegerFlag('checkpoint-interval', DEFAULT_CHECKPOINT_INTERVAL),
     rateMs: parseIntegerFlag('rate-ms', DEFAULT_RATE_MS),
     stopAfter: parseIntegerFlag('stop-after', null),
     outputPath: path.resolve(repoRoot, parseStringFlag('output', path.relative(repoRoot, DEFAULT_OUTPUT_PATH))),
@@ -366,6 +387,7 @@ async function main() {
   let lastFetchStartedAt = 0;
   let chunkBodies = [];
   let fetchedThisRun = 0;
+  let fetchedSinceCheckpoint = 0;
 
   for (let index = state.nextFetchIndex; index < inventory.length; index += 1) {
     const record = inventory[index];
@@ -395,6 +417,7 @@ async function main() {
     state.fetchedCount = bodyMap.size;
     state.lastCompletedDesignation = record.designation;
     fetchedThisRun += 1;
+    fetchedSinceCheckpoint += 1;
 
     outputDocument.bodies = inventory
       .map((inventoryRecord) => bodyMap.get(inventoryRecord.designation))
@@ -403,14 +426,21 @@ async function main() {
     if (chunkBodies.length === options.chunkSize) {
       validateChunk(chunkBodies, options.chunkSize);
       state.completedChunks += 1;
+      console.log(`validated chunk ${state.completedChunks} (${chunkBodies.length} bodies)`);
+      chunkBodies = [];
+    }
+
+    if (fetchedSinceCheckpoint >= options.checkpointInterval) {
+      if (chunkBodies.length > 0) {
+        validateChunk(chunkBodies, options.chunkSize);
+      }
       await saveProgress(
         options.outputPath,
         outputDocument,
         options.checkpointPath,
         createCheckpointDocument(options, inventory.length, state, 'running'),
       );
-      console.log(`validated chunk ${state.completedChunks} (${chunkBodies.length} bodies)`);
-      chunkBodies = [];
+      fetchedSinceCheckpoint = 0;
     }
 
     if (options.stopAfter !== null && fetchedThisRun >= options.stopAfter) {

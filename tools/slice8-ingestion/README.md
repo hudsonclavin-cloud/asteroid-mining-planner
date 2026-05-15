@@ -56,6 +56,8 @@ Full run:
 node tools/slice8-ingestion/fetch-anchors.mjs
 ```
 
+Default checkpoint cadence is every `25` fetched bodies. Override with `--checkpoint-interval=<n>` if needed.
+
 50-body validation run:
 
 ```bash
@@ -86,7 +88,7 @@ node tools/slice8-ingestion/fetch-anchors.mjs \
 
 ## Checkpoint Format
 
-Checkpoint files are JSON and are written after every chunk flush and at intentional stop points:
+Checkpoint files are JSON and are written atomically (`.tmp` write then rename) after every `25` fetched bodies by default, at chunk-validation boundaries, and at intentional stop points:
 
 ```json
 {
@@ -95,7 +97,9 @@ Checkpoint files are JSON and are written after every chunk flush and at intenti
   "anchorEpochTdbJd": 2461161.5,
   "requestedLimit": 50,
   "chunkSize": 1000,
+  "checkpointInterval": 25,
   "outputPath": "/abs/path/to/output.json",
+  "lastCompletedIndex": 24,
   "nextFetchIndex": 25,
   "fetchedCount": 25,
   "expectedCount": 50,
@@ -108,9 +112,10 @@ Checkpoint files are JSON and are written after every chunk flush and at intenti
 
 Checkpoint semantics:
 
+- `lastCompletedIndex`: last successfully persisted inventory index
 - `nextFetchIndex`: index in the filtered `9,000`-body delta inventory to fetch next
 - `fetchedCount`: number of bodies already written to the output document
 - `completedChunks`: fully validated chunk count
 - `status`: `running`, `complete`, or `stopped`
 
-Resume correctness depends on keeping the same `--limit`, `--output`, and filtered inventory source.
+Resume correctness depends on keeping the same `--limit`, `--output`, `--checkpoint-interval`, and filtered inventory source.
