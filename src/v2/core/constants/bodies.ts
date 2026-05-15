@@ -68,7 +68,7 @@ export const BODY_CONSTANTS: Record<BodyId, BodyConstants> = {
     naifId: 599,
     radiusM: 71_492_000.0,
     radiiM: { a: 71_492_000.0, b: 71_492_000.0, c: 66_854_000.0 },
-    vizColor: 0xD9C3A3,
+    vizColor: 0xC4A878,
   },
   // Io and Europa are mildly triaxial in pck00010, but Slice 3 renders all
   // Galileans as spheres using their a-axis radius by deliberate policy.

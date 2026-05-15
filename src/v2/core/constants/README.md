@@ -51,7 +51,7 @@ These constants extend the body table above for Slice 3. Physical radii remain `
 - Mean equatorial radius for sphere mesh reference: `71,492,000 m`
 - Render note: Jupiter render uses all three axes per `src/v2/render/jupiter-oblate.md`; the `a` value is not sufficient for the honest Jupiter mesh
 - `pck00010` line: `3406`
-- Color reference: `0xD9C3A3` — tan / cream banded, intentionally muted
+- Color reference: `0xC4A878` — warmer tan / ochre banded for clearer Jupiter readability under current lighting
 - Source: `vendor/naif/pck00010.tpc`, downloaded 2026-04
 
 ### Io

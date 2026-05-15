@@ -116,7 +116,7 @@ const EXPECTED_SLICE3_CONSTANTS = {
     naifId: 599,
     radiusM: 71_492_000.0,
     radiiM: { a: 71_492_000.0, b: 71_492_000.0, c: 66_854_000.0 },
-    vizColor: 0xD9C3A3,
+    vizColor: 0xC4A878,
     cadenceSeconds: 86_400,
     barM: 50_000,
     invariantId: 'INV-009',
