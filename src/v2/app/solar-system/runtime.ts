@@ -53,6 +53,7 @@ const MARS_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 const SATURN_RENDER_TILT_RAD = THREE.MathUtils.degToRad(26.7);
 const SATURN_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 export const ASTEROID_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
+const OVERVIEW_ORBIT_POLAR_RAD = Math.PI / 3;
 const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
 
 const BODY_IDS: BodyId[] = [
@@ -433,7 +434,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   let orbitRadius = OVERVIEW_ORBIT_RADIUS_M;
   let orbitAzimuth = 0;
-  let orbitPolar = Math.PI / 2;
+  let orbitPolar = OVERVIEW_ORBIT_POLAR_RAD;
   let currentFocusBody: FocusTarget = OUTER_SYSTEM_OVERVIEW;
   let targetFocusBody: FocusTarget = OUTER_SYSTEM_OVERVIEW;
   let focusTransitionStartMs = 0;
@@ -602,6 +603,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     );
     if (isAsteroidFocusTarget(nextFocusBody)) {
       orbitPolar = ASTEROID_FOCUS_ORBIT_POLAR_RAD;
+    } else if (nextFocusBody === OUTER_SYSTEM_OVERVIEW) {
+      orbitPolar = OVERVIEW_ORBIT_POLAR_RAD;
     } else if (nextFocusBody === 'mars') {
       // Slice 5 lesson applied preemptively: render-only +X-axis tilt coupled
       // with the global default orbit (azimuth=0, polar=π/2) produces a
