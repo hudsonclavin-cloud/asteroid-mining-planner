@@ -1,5 +1,9 @@
 import * as THREE from 'three';
-import type { AsteroidBody, AsteroidBodyId } from '../core/constants/asteroids.js';
+import {
+  hasOrbitLineForBody,
+  type AsteroidBody,
+  type AsteroidBodyId,
+} from '../core/constants/asteroids.js';
 import { propagateKeplerianState } from '../core/propagators/keplerian.js';
 import { AsteroidCellRenderer, type AsteroidCellStats } from './asteroid-cell-renderer.js';
 import {
@@ -139,7 +143,9 @@ export class AsteroidRenderer {
 
     this.asteroids = asteroids.slice();
     this.root.name = 'asteroid-renderer-root';
-    this.orbitBatch = createAsteroidOrbitBatch(this.asteroids.filter((asteroid) => asteroid.hasOrbitLine));
+    this.orbitBatch = createAsteroidOrbitBatch(
+      this.asteroids.filter((asteroid) => asteroid.hasOrbitLine ?? hasOrbitLineForBody(asteroid.H)),
+    );
     this.orbitBatch.lineSegments.frustumCulled = false;
     this.root.add(this.orbitBatch.lineSegments);
 
