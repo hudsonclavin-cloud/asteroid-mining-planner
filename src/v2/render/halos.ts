@@ -6,6 +6,13 @@ export let HALOS_ENABLED = true;
 export const HALO_BASE_OPACITY = 0.85;
 export const HALO_FULL_VISIBILITY_MAX_DIAMETER_PX = 1.5;
 export const HALO_INVISIBLE_MIN_DIAMETER_PX = 4;
+export const DEFAULT_MIN_HALO_DIAMETER_PX = 8;
+export const SATURN_MOON_MIN_HALO_BASE_PX = 6;
+
+const SATURN_MOON_IDS: BodyId[] = ['titan', 'rhea', 'iapetus', 'tethys', 'dione', 'mimas', 'enceladus'];
+const SMALLEST_SATURN_MOON_RADIUS_M = Math.min(
+  ...SATURN_MOON_IDS.map((bodyId) => BODY_CONSTANTS[bodyId].radiusM),
+);
 
 interface HaloEntry {
   bodyId: BodyId;
@@ -26,6 +33,15 @@ export function getHaloOpacityForApparentDiameterPx(apparentDiameterPx: number):
     (HALO_INVISIBLE_MIN_DIAMETER_PX - apparentDiameterPx) /
     (HALO_INVISIBLE_MIN_DIAMETER_PX - HALO_FULL_VISIBILITY_MAX_DIAMETER_PX);
   return fadeProgress * HALO_BASE_OPACITY;
+}
+
+export function getMinimumHaloDiameterPx(bodyId: BodyId): number {
+  if (!SATURN_MOON_IDS.includes(bodyId)) {
+    return DEFAULT_MIN_HALO_DIAMETER_PX;
+  }
+
+  const radiusRatio = BODY_CONSTANTS[bodyId].radiusM / SMALLEST_SATURN_MOON_RADIUS_M;
+  return SATURN_MOON_MIN_HALO_BASE_PX * Math.sqrt(radiusRatio);
 }
 
 export class HaloSystem {
@@ -87,7 +103,7 @@ export class HaloSystem {
         entry.material.opacity = haloOpacity;
 
         // Size the sprite to a minimum visible size (8 px diameter), projected back to world units
-        const haloPixels = Math.max(8, apparentDiameterPx);
+        const haloPixels = Math.max(getMinimumHaloDiameterPx(bodyId), apparentDiameterPx);
         // world units per pixel at that distance (pinhole approximation)
         const worldUnitsPerPixel = (2 * distM * Math.tan(fovRad / 2)) / viewport.height;
         const haloWorldSize = haloPixels * worldUnitsPerPixel;

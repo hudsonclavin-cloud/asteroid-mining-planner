@@ -88,3 +88,25 @@ test('halo opacity reaches zero at and above the invisible threshold', async () 
   );
   assert.equal(getHaloOpacityForApparentDiameterPx(5), 0);
 });
+
+test('Saturn moon halo floors vary by moon size with Titan at least 3x Mimas', async () => {
+  const { getMinimumHaloDiameterPx } = await loadHalosModule();
+
+  const titanHaloPx = getMinimumHaloDiameterPx('titan');
+  const mimasHaloPx = getMinimumHaloDiameterPx('mimas');
+  const saturnMoonHaloPx = [
+    getMinimumHaloDiameterPx('titan'),
+    getMinimumHaloDiameterPx('rhea'),
+    getMinimumHaloDiameterPx('iapetus'),
+    getMinimumHaloDiameterPx('tethys'),
+    getMinimumHaloDiameterPx('dione'),
+    getMinimumHaloDiameterPx('mimas'),
+    getMinimumHaloDiameterPx('enceladus'),
+  ];
+
+  assert.ok(titanHaloPx / mimasHaloPx > 3, `expected Titan/Mimas halo ratio > 3, got ${titanHaloPx / mimasHaloPx}`);
+  assert.ok(
+    saturnMoonHaloPx.every((haloPx) => haloPx > 0),
+    'expected all Saturn moon halo floors to stay positive',
+  );
+});
