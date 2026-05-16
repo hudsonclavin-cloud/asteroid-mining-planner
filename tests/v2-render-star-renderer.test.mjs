@@ -70,6 +70,14 @@ test('constructor builds THREE.Points geometry with expected star attributes', a
     assert.equal(starRenderer.material.uniforms.uPixelRatio.value, 2);
     assert.ok(starRenderer.material.vertexShader.includes('mat3(viewMatrix)'));
     assert.ok(starRenderer.material.fragmentShader.includes('gl_PointCoord'));
+    assert.match(
+      starRenderer.material.vertexShader,
+      /gl_PointSize = pointSizePx \* uPixelRatio;/,
+    );
+    assert.doesNotMatch(
+      starRenderer.material.vertexShader,
+      /gl_PointSize\s*=.*(clipPosition|rotatedDirection|uDistanceScale|position|viewMatrix)/,
+    );
   } finally {
     starRenderer.dispose();
   }

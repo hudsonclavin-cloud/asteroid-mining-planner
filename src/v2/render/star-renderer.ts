@@ -24,8 +24,10 @@ void main() {
   vec4 clipPosition = projectionMatrix * vec4(rotatedDirection * uDistanceScale, 1.0);
   gl_Position = vec4(clipPosition.xy, clipPosition.w, clipPosition.w);
 
-  float sizeFromMagnitude = clamp(uBasePointSizePx + (2.5 - magnitude) * 0.35, 1.0, uMaxPointSizePx);
-  gl_PointSize = clamp(sizeFromMagnitude * uPixelRatio, 1.0, uMaxPointSizePx * uPixelRatio);
+  // Stars are rendered at infinity, so point size must stay in screen pixels and
+  // never depend on camera distance or view-space depth.
+  float pointSizePx = clamp(uBasePointSizePx + (2.5 - magnitude) * 0.35, 1.0, uMaxPointSizePx);
+  gl_PointSize = pointSizePx * uPixelRatio;
 }
 `;
 
