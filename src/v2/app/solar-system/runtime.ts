@@ -138,6 +138,13 @@ export interface FocusedAsteroidHudElement {
   };
 }
 
+export interface DateHudElement {
+  textContent: string;
+}
+
+const J2000_TDB_JULIAN_DAY = 2451545;
+const TDB_MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 export interface CameraPreset {
   key: string;
   focusBody: FocusTarget;
@@ -246,6 +253,32 @@ export function renderFocusedAsteroidHud(
 
   element.textContent = `${asteroid.designation} · ${asteroid.class}`;
   element.style.display = 'block';
+}
+
+function julianDayToGregorianDate(julianDay: number): { year: number; monthIndex: number; day: number } {
+  const shiftedJulianDay = julianDay + 0.5;
+  const z = Math.floor(shiftedJulianDay);
+  const fractionalDay = shiftedJulianDay - z;
+  const alpha = Math.floor((z - 1867216.25) / 36524.25);
+  const a = z + 1 + alpha - Math.floor(alpha / 4);
+  const b = a + 1524;
+  const c = Math.floor((b - 122.1) / 365.25);
+  const d = Math.floor(365.25 * c);
+  const e = Math.floor((b - d) / 30.6001);
+  const day = Math.floor(b - d - Math.floor(30.6001 * e) + fractionalDay);
+  const month = e < 14 ? e - 1 : e - 13;
+  const year = month > 2 ? c - 4716 : c - 4715;
+  return { year, monthIndex: month - 1, day };
+}
+
+export function formatTdbDateLabel(tdbSeconds: number): string {
+  const julianDay = J2000_TDB_JULIAN_DAY + tdbSeconds / 86_400;
+  const { year, monthIndex, day } = julianDayToGregorianDate(julianDay);
+  return `${year} ${TDB_MONTH_LABELS[monthIndex]} ${String(day).padStart(2, '0')} TDB`;
+}
+
+export function renderDateHud(element: DateHudElement, tdbSeconds: number): void {
+  element.textContent = formatTdbDateLabel(tdbSeconds);
 }
 
 export function createMarsSystemRenderGroups(): {
@@ -410,6 +443,22 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   focusedAsteroidHud.style.pointerEvents = 'none';
   focusedAsteroidHud.style.display = 'none';
   mount.appendChild(focusedAsteroidHud);
+
+  const dateHud = document.createElement('div');
+  dateHud.setAttribute('data-testid', 'date-hud');
+  dateHud.style.position = 'absolute';
+  dateHud.style.top = '16px';
+  dateHud.style.right = '16px';
+  dateHud.style.padding = '8px 10px';
+  dateHud.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
+  dateHud.style.fontSize = '15px';
+  dateHud.style.lineHeight = '1.3';
+  dateHud.style.color = '#ffffff';
+  dateHud.style.background = 'rgba(0, 0, 0, 0.28)';
+  dateHud.style.border = '1px solid rgba(255, 255, 255, 0.16)';
+  dateHud.style.borderRadius = '8px';
+  dateHud.style.pointerEvents = 'none';
+  mount.appendChild(dateHud);
 
   const scene = new THREE.Scene();
   const starRenderer = new StarRenderer(starCatalog, renderer.getPixelRatio());
@@ -764,6 +813,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       viewport,
     });
     updateFocusedAsteroidHud(activeFocusBody);
+    renderDateHud(dateHud, currentTdbSeconds);
 
     const epochStep = Math.round((currentTdbSeconds - SLICE3_EPOCH_TDB) / TIME_SCRUB_STEP_SECONDS);
     document.title = `Aster V2 — Solar System — step ${epochStep}`;
@@ -996,6 +1046,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKeyDown);
     focusedAsteroidHud.remove();
+    dateHud.remove();
     starRenderer.dispose();
     haloSystem.dispose();
     asteroidRenderer.dispose();
