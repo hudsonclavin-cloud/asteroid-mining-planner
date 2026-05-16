@@ -59,7 +59,8 @@ Each cell tracks:
 
 - its fixed AABB in heliocentric coordinates
 - the asteroid ids currently assigned to it
-- any precomputed indexing metadata needed for visible-instance repacking
+- the cell-local `InstancedMesh` used by the renderer
+- any precomputed indexing metadata needed for picking and transform writes
 
 Cells themselves are static. Only body-to-cell membership changes.
 
@@ -67,14 +68,14 @@ Cells themselves are static. Only body-to-cell membership changes.
 
 Asteroid positions move every frame, but cell membership changes rarely relative to render cadence.
 
-Recommended flow:
+The shipped MVP flow is:
 
 1. propagate positions
 2. test whether a body has crossed its current cell boundary
-3. only when it has crossed, remove from old cell and append to new cell
-4. leave all other memberships untouched
+3. if no body crossed, keep the existing occupied-cell map
+4. if any body crossed, rebuild the occupied-cell mesh map from the latest propagated positions
 
-This is cheaper than treating the entire structure as rebuildable every frame.
+This keeps steady-state frames cheap while avoiding the stale `60`-frame reassignment lag from the earlier MVP. It is still simpler than a fully incremental remove-and-append cell update path, which remains a future polish option.
 
 ## Frustum Culling
 
@@ -83,8 +84,8 @@ Broad-phase culling runs at the cell level:
 1. build camera frustum from the active camera
 2. test each cell AABB against the frustum
 3. reject cells wholly outside
-4. gather only bodies from intersecting cells
-5. repack visible resolved asteroids into the front of the instancing buffer
+4. for intersecting cells, update only that cell mesh's visible instance transforms
+5. leave off-screen cell meshes hidden with zero submitted instances
 
 The goal is not mathematically minimal visibility. The goal is to skip obviously off-screen work with a coarse, cheap test.
 
@@ -94,7 +95,7 @@ Click-to-focus reuses the same structure:
 
 1. cast the picking ray in heliocentric scene space
 2. traverse candidate cells intersected by the ray
-3. test only bodies assigned to those cells
+3. test only bodies assigned to those cells against propagated truth positions
 4. resolve the nearest hit into asteroid identity
 
 This makes the spatial index dual-purpose instead of maintaining separate culling and picking structures.

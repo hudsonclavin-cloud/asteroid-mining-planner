@@ -26,27 +26,28 @@ Rendering all `10,008` bodies every frame with naive instance submission is the 
 
 ## Core Primitive
 
-Slice 8 stays with `THREE.InstancedMesh` for resolved asteroids.
+Slice 8 stays with `THREE.InstancedMesh` for resolved asteroids, but not as one global mesh.
 
 - one shared low-poly sphere geometry
 - one or a small number of shared materials
-- one instance transform per currently visible resolved asteroid
-- one draw per batch rather than one draw per asteroid
+- one `THREE.InstancedMesh` per occupied spatial-grid cell
+- one instance transform per resolved asteroid assigned to that cell
+- one draw per occupied visible cell rather than one draw per asteroid
 
-This is the same primitive that already worked in Slice 7. The change is that Slice 8 does not submit every resolved asteroid every frame.
+This is the same primitive that already worked in Slice 7. The change is that Slice 8 no longer treats the resolved-body population as one monolithic batch.
 
 ## Visibility Pipeline
 
-Per Perplexity research, the canonical Slice 8 resolved-body flow is:
+The shipped Slice 8 resolved-body flow is:
 
 1. propagate asteroid truth positions from the shared anchor epoch
-2. update or confirm each asteroid's cell/bin membership in a coarse spatial index
-3. test cells against the camera frustum
-4. gather only bodies from visible cells
-5. repack visible instances into the front of the instance buffer
-6. set `instancedMesh.count` to the visible-body count
+2. detect whether any asteroid crossed a `1 AU` cell boundary
+3. rebuild the occupied-cell mesh map only when a boundary crossing is detected
+4. test each occupied cell AABB against the camera frustum
+5. for visible cells only, write transforms into that cell's `InstancedMesh`
+6. set each cell mesh's `count` to the number of visible instanced asteroids inside that cell
 
-This replaces "submit all `10,008` instances every frame" with "submit only the visible subset."
+This replaces "submit all `10,008` instances every frame" with "submit only the visible occupied-cell subset."
 
 ## LOD Modes At Scale
 
@@ -58,8 +59,8 @@ Slice 8 preserves Slice 7's representation rules:
 
 What changes is the resolved-body path:
 
-- Slice 7: all resolved asteroids could be submitted directly
-- Slice 8: resolved asteroids must pass spatial-index-driven culling before they enter the visible instance range
+- Slice 7: all resolved asteroids could be submitted directly through one shared instancing path
+- Slice 8: resolved asteroids are first partitioned into occupied cells, then only visible cells submit instance transforms that frame
 
 Points mode still absorbs the unresolved majority. Focused Mesh mode still owns only one asteroid at a time.
 
@@ -70,7 +71,7 @@ Each visible resolved asteroid contributes:
 - position from per-frame Keplerian propagation
 - color from precomputed RGB triples
 - scale derived from `estimatedRadiusM`
-- optional instance id / lookup mapping for click-to-focus resolution
+- instance index within its occupied cell, which maps back to asteroid identity
 
 Low-polygon sphere geometry (`12-16` segments) remains the honest default. Slice 8 is not a shape-model slice.
 
@@ -79,8 +80,8 @@ Low-polygon sphere geometry (`12-16` segments) remains the honest default. Slice
 Slice 8's renderer does not do per-instance frustum tests in isolation. The spatial index owns visibility broad-phase:
 
 - cells are tested first
-- only bodies in visible cells are considered for submission
-- off-screen cells imply zero instance work for their contents
+- only bodies in visible occupied cells get transform writes
+- off-screen cells imply zero transform writes and zero submitted instances for their contents
 
 The renderer therefore depends on a static coarse spatial index rather than ad hoc instance-by-instance culling.
 
@@ -88,8 +89,9 @@ The renderer therefore depends on a static coarse spatial index rather than ad h
 
 The same spatial index that accelerates frustum culling also becomes the broad-phase for picking:
 
-- Points-mode hit tests can restrict candidates to cells intersected by the ray
-- InstancedMesh hit tests can map `instanceId` back to asteroid identity
+- Points-mode hit tests still own unresolved-asteroid picking
+- InstancedMesh broad-phase traverses occupied cells intersected by the ray
+- cell-local narrow phase resolves nearest body hit from propagated truth positions
 - Focused Mesh continues using the straightforward single-body path
 
 This avoids maintaining two unrelated acceleration structures for the same moving population.
@@ -103,6 +105,12 @@ Slice 8 is explicitly performance-constrained:
 - `60 fps` while time-scrubbing
 
 These are cutover criteria, not aspirations. The instancing architecture exists to meet them without abandoning the Slice 7 visual model.
+
+Measured shipped occupancy at `1 AU`:
+
+- `178` occupied cells
+- `368` bodies in the most-populated cell
+- close-zoom measurement: `14 / 178` visible cells (`~92%` culled)
 
 ## Orbit-Line Continuity
 
