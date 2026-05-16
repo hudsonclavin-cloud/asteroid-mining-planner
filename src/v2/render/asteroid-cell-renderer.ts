@@ -42,7 +42,6 @@ const SPATIAL_GRID_TOTAL_CELLS =
 const AU_M = 149_597_870_700;
 const GRID_MIN_KM = -SPATIAL_GRID_BOUNDS_AU * 149_597_870.7;
 const GRID_MAX_KM = SPATIAL_GRID_BOUNDS_AU * 149_597_870.7;
-const REASSIGNMENT_INTERVAL_FRAMES = 60;
 const FRUSTUM_CULL_MARGIN_M = SPATIAL_GRID_CELL_SIZE_AU * AU_M * 0.05;
 
 function isIndexWithinGrid(index: SpatialGridCellIndex): boolean {
@@ -114,7 +113,6 @@ export class AsteroidCellRenderer {
   private readonly traversalPositionKm = new THREE.Vector3();
   private readonly lastCanonicalPositionsM: THREE.Vector3[];
   private readonly cellKeyByBodyIndex: string[];
-  private frameCounter = 0;
   private visibleCells = 0;
   private visibleBodies = 0;
 
@@ -160,9 +158,8 @@ export class AsteroidCellRenderer {
       );
     }
 
-    this.frameCounter += 1;
-    if (this.frameCounter % REASSIGNMENT_INTERVAL_FRAMES === 0) {
-      this.rebuildCellsIfAssignmentsChanged(propagatedPositionsM);
+    if (this.assignmentsChanged(propagatedPositionsM)) {
+      this.rebuildCells(propagatedPositionsM);
     }
 
     const canFrustumCull =
@@ -370,8 +367,7 @@ export class AsteroidCellRenderer {
     this.instancedMaterial.dispose();
   }
 
-  private rebuildCellsIfAssignmentsChanged(positionsM: readonly THREE.Vector3[]): void {
-    let changed = false;
+  private assignmentsChanged(positionsM: readonly THREE.Vector3[]): boolean {
     for (let bodyIndex = 0; bodyIndex < positionsM.length; bodyIndex += 1) {
       const positionKm = positionsM[bodyIndex].clone().divideScalar(METERS_PER_KILOMETER);
       const nextIndex = cellIndexForPositionKm(positionKm);
@@ -379,16 +375,13 @@ export class AsteroidCellRenderer {
         throw new Error(`Asteroid ${this.asteroids[bodyIndex].bodyId} propagated outside the configured Slice 8 grid`);
       }
       this.lastCanonicalPositionsM[bodyIndex].copy(positionsM[bodyIndex]);
-      const currentCell = this.findCellForBodyIndex(bodyIndex);
       const nextKey = cellKeyForIndex(nextIndex);
-      if (currentCell !== nextKey) {
-        changed = true;
+      if (this.cellKeyByBodyIndex[bodyIndex] !== nextKey) {
+        return true;
       }
     }
 
-    if (changed) {
-      this.rebuildCells(positionsM);
-    }
+    return false;
   }
 
   private rebuildCells(positionsM: readonly THREE.Vector3[]): void {
@@ -446,9 +439,5 @@ export class AsteroidCellRenderer {
       this.occupiedCells.push(cell);
       this.root.add(mesh);
     }
-  }
-
-  private findCellForBodyIndex(bodyIndex: number): string | null {
-    return this.cellKeyByBodyIndex[bodyIndex] ?? null;
   }
 }
