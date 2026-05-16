@@ -13,3 +13,4 @@ tools/slice8-ingestion/checkpoint.json
 tools/slice8-ingestion/full-run.log
 tools/slice8-ingestion/caffeinate.log
 tools/slice8-ingestion/full-run.pid
+tools/slice8-5-research/data/*
