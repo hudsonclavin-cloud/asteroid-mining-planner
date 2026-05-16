@@ -665,6 +665,40 @@ Slice 8 is the smallest slice that:
 - bundles the first explicit broad-phase visibility structure into V2 render architecture
 - measures whether catalog-scale asteroid rendering can still hold `60 fps` on the target hardware class
 
+### Slice 8.5: UX Polish
+
+Status: SHIPPED `2026-05-15`. Cutover declared after Slice 8 manual verification plus the follow-on Slice 8.5 polish pass closed the first-impression UX issues that were intentionally deferred out of the architectural slice.
+
+Slice 8.5 is a polish slice, not a new truth-architecture slice. It layers starfield context, a clearer overview camera affordance, lightweight HTML overlays, and body-framing fixes on top of the shipped Slice 8 architecture.
+
+#### Included
+
+- Tycho-2-based star background with `10,000` magnitude-limited stars from the shipped binary asset
+- camera-relative star rendering so stars stay effectively at infinity under the floating-origin pipeline
+- top-down ecliptic preset on key `t`
+- Earth focus radius widened so the Moon is visible from default Earth focus
+- asteroid focus radius adjusted for less aggressive close framing
+- Saturn moon halo floors scaled by moon size for better distinguishability
+- always-visible date / epoch HUD text overlay
+- planet hover tooltips for the currently rendered planet set through Saturn
+- `ui-hud` freeze expanded only for lightweight HTML overlays; no 3D labels, search, or panels
+
+#### Excluded
+
+- asteroid hover labels
+- 3D billboard planet labels
+- proper motion or epoch drift in the star background
+- lighting overhaul / photoreal material work
+- residual frustum-edge flicker fine-tuning
+
+#### Why Slice 8.5
+
+Slice 8.5 is the smallest slice that:
+
+- improves the deployed URL's first impression without reopening Slice 8 core architecture
+- adds spatial orientation context (stars + top-down preset) before Slice 9 scale-up
+- cracks `ui-hud` only as far as needed for usability, while preserving Slice 9 ownership of the full UI unfreeze
+
 ---
 
 ## 6. Cutover Criteria
@@ -1266,6 +1300,12 @@ The Slice 8 tripwire is **5 focused weekends from the start of the Slice 8 imple
 
 Actual result: Slice 8 implementation started Thursday `2026-05-14` and cutover was declared Friday `2026-05-15`, well inside weekend 1 of the 5-weekend window and leaving essentially the full remaining budget untouched.
 
+### Slice 8.5
+
+The Slice 8.5 tripwire is **2 focused weekends from the start of the Slice 8.5 implementation dispatch**. Slice 8.5 is intentionally constrained to render-layer and lightweight `ui-hud` polish. If the full seven-item scope does not ship by end of weekend 2, the slice decomposes by keeping the star background and body-framing fixes, while pushing tooltip/HUD niceties to Slice 9.
+
+Actual result: Slice 8.5 implementation started and shipped on `2026-05-15`, within the first focused day of the 2-weekend window.
+
 ### Verification Protocol For All Future Slices
 
 Manual cutover verification must explicitly distinguish two camera states:
@@ -1338,7 +1378,7 @@ Each cutover criterion in §6 should specify which camera state it applies to. C
 
 ## 13. Known Limitations
 
-These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables plus the planned Slice 7 architecture, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
+These are limitations of the shipped Slice 1 through Slice 8.5 deliverables, recorded for transparency and to inform future-slice scoping. They are not bugs and do not affect cutover.
 
 - **Camera body focus:** the default camera orbits a fixed point in heliocentric space. There is currently no UI to retarget the camera to Mercury, Venus, Mars, or any specific body for close-up zoom. Earth and Moon are reachable from the default camera orientation. Body focus selection is planned as a Slice 2 polish commit.
 
@@ -1418,7 +1458,10 @@ These are limitations of the shipped Slice 1, 2, 3, 4, 5, and 6 deliverables plu
 - Orbit-line rendering remains visually important but intentionally limited to `H < 10.98`; the other `~9,000` bodies rely on Points / InstancedMesh only.
 - `ui-hud` remains mostly frozen. Slice 8 permits only focused-body designation/class text; richer overlays and 3D floating labels remain Slice 9 scope.
 - Cell-boundary flicker was substantially reduced by the Phase D hysteresis margin, but aggressive zoom can still surface residual oscillation. This is acceptable at Slice 8 cutover and a candidate for Slice `8.5` polish.
-- Body-to-cell reassignment still uses a coarse cadence in the shipped MVP; Slice `8.1` is the candidate cleanup pass for boundary-triggered updates.
-- Picking currently inherits some assumptions from render visibility in the shipped MVP; Slice `8.1` is the candidate cleanup pass for decoupling the broad phase.
-- `src/v2/render/asteroid-instancing.md` and `src/v2/render/spatial-index.md` require post-cutover drift cleanup to match the shipped cell-as-mesh implementation.
-- Slice 8 automated picking coverage is still thinner than the manual verification surface; Points-mode picking and Bennu-specific coverage are post-cutover cleanup items for Slice `8.1`.
+
+### Slice 8.5
+
+- The Tycho-2 background is frozen at J2000. No proper motion, parallax, or epoch drift is modeled in v1.
+- Planet hover tooltips cover the currently rendered planet set through Saturn only. Moons, asteroids, and star hover remain out of scope.
+- Planet hover UI is HTML-overlay only. 3D billboard labels remain deferred to Slice 9.
+- Residual frustum-edge flicker is reduced but not fully eliminated; deeper tuning is deferred to Slice 9's larger revisit of asteroid rendering scale and interaction.

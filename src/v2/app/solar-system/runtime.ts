@@ -434,7 +434,6 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     loadSlice8AsteroidCatalogFixture(),
     loadStarCatalog(),
   ]);
-  console.log(`[slice8.5] loaded Tycho-2 star catalog (${starCatalog.count} stars)`);
   const stateSeries = new Map<BodyId, CanonicalState[]>();
   const asteroidBodies = Object.values(asteroidCatalog.asteroids);
   const asteroidIndex = createAsteroidCatalogIndex(asteroidBodies);
@@ -532,7 +531,6 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const scene = new THREE.Scene();
   const starRenderer = new StarRenderer(starCatalog, renderer.getPixelRatio());
-  console.log('[slice8.5] StarRenderer constructed');
   const camera = new THREE.PerspectiveCamera(
     45,
     window.innerWidth / window.innerHeight,
@@ -540,7 +538,6 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     MAX_CAMERA_DISTANCE_M * 10,
   );
   scene.add(starRenderer.getMesh());
-  console.log('[slice8.5] StarRenderer mesh added to scene');
 
   const renderRoots = new Map<BodyId, THREE.Object3D>();
   const meshes = new Map<BodyId, THREE.Mesh>();
