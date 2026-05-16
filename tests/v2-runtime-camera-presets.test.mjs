@@ -79,6 +79,7 @@ test('camera tween locks controls during animation and releases them on completi
   const finalSample = tween.sampleCameraOrbitTween(orbitTween, 1_100);
   assert.ok(finalSample.completed);
   assert.ok(Math.abs(finalSample.state.polarRad - runtime.TOP_DOWN_ORBIT_POLAR_RAD) < 1e-9);
+  assert.ok(finalSample.state.polarRad <= 0.05);
   assert.ok(Math.abs(finalSample.state.radiusM - runtime.TOP_DOWN_ORBIT_RADIUS_M) < 1e-3);
 });
 

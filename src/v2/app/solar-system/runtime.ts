@@ -61,10 +61,14 @@ const SATURN_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 export const ASTEROID_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 const OVERVIEW_ORBIT_POLAR_RAD = Math.PI / 3;
 export const TOP_DOWN_PRESET_KEY = 't';
-export const TOP_DOWN_ORBIT_POLAR_RAD = 0.01;
+export const TOP_DOWN_ORBIT_POLAR_RAD = 0.0001;
 export const TOP_DOWN_ORBIT_AZIMUTH_RAD = 0;
 export const TOP_DOWN_ORBIT_RADIUS_M = 8 * AU_M;
 export const TOP_DOWN_PRESET_DURATION_MS = 1_000;
+export const INTERACTIVE_MIN_ORBIT_POLAR_RAD = 0.001;
+export const INTERACTIVE_MAX_ORBIT_POLAR_RAD = Math.PI - INTERACTIVE_MIN_ORBIT_POLAR_RAD;
+export const PRESET_MIN_ORBIT_POLAR_RAD = 0.0001;
+export const PRESET_MAX_ORBIT_POLAR_RAD = Math.PI - PRESET_MIN_ORBIT_POLAR_RAD;
 const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
 
 const BODY_IDS: BodyId[] = [
@@ -180,7 +184,7 @@ export function getCameraPresetForKey(key: string): CameraPreset | null {
       focusBody: 'sun',
       orbitState: {
         radiusM: TOP_DOWN_ORBIT_RADIUS_M,
-        polarRad: TOP_DOWN_ORBIT_POLAR_RAD,
+        polarRad: clamp(TOP_DOWN_ORBIT_POLAR_RAD, PRESET_MIN_ORBIT_POLAR_RAD, PRESET_MAX_ORBIT_POLAR_RAD),
         azimuthRad: TOP_DOWN_ORBIT_AZIMUTH_RAD,
       },
       durationMs: TOP_DOWN_PRESET_DURATION_MS,
@@ -1027,7 +1031,11 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
 
     orbitAzimuth -= dx * ORBIT_SENSITIVITY;
-    orbitPolar = clamp(orbitPolar + dy * ORBIT_SENSITIVITY, 0.001, Math.PI - 0.001);
+    orbitPolar = clamp(
+      orbitPolar + dy * ORBIT_SENSITIVITY,
+      INTERACTIVE_MIN_ORBIT_POLAR_RAD,
+      INTERACTIVE_MAX_ORBIT_POLAR_RAD,
+    );
     updateVisibleState();
     setCursor('grabbing');
     hidePlanetHoverTooltip();
