@@ -139,25 +139,78 @@ This is the `OQ-1` input. It does **not** decide uniform grid vs octree / BVH. I
 
 ## Task 3 — INV-014 Stratified Accuracy Sample
 
-Status: **INCOMPLETE — PARKED**
+Status: **COMPLETE**
 
-The bounded Task 3 run hit its designed STOP condition:
+The resumed Task 3 run completed incrementally from the committed caches:
 
-- `measure-inv014-sample.mjs` failed on a Horizons network fetch
-- no substitute data was fabricated
-- no tier boundary was inferred from partial evidence
+- resume start: `908` CAD classification flags and `59` Horizons truth windows already on disk
+- resume end: completed `inv014-sample-results.json`
+- no cached CAD flags or truth windows were cleared or refetched unnecessarily
 
-What completed before the stop:
+### Sample size and shape
 
-- `908` CAD classification flags written to `tools/slice9-research/data/cad-flags.json`
-- `59` Horizons truth windows written to `tools/slice9-research/data/inv014-truth.json`
+Final bounded sample size: `67`
 
-What remains unanswered:
+This is below the original rough `150-250` planning target, but it is still informative because the encounter-positive rows were much rarer than expected inside the bounded first-pass stratum scan (`80` candidates per stratum max, or the whole stratum if smaller). The sample therefore answers the key comparison, even though it is not a balanced matrix.
 
-- whether encounter-flagged bodies cleanly predict qualitatively bad Keplerian behavior
-- the evidence basis for future INV-014 tier boundaries
+### Key comparison — encounter flag vs. Keplerian failure
 
-So `OQ-6` is **not closed** by this dispatch.
+Encounter-flagged split:
+
+- count: `6`
+- median max error: `1,340,189.7 km`
+- p90: `6,695,807.4 km`
+- p95: `7,321,680.8 km`
+- max: `7,947,554.1 km`
+
+Not-flagged split:
+
+- count: `61`
+- median max error: `2,415.5 km`
+- p90: `7,876.6 km`
+- p95: `12,715.5 km`
+- max: `38,866.6 km`
+
+This is a clean qualitative separation. In this bounded sample, encounter-in-window strongly predicts catastrophic Keplerian error relative to the non-flagged set.
+
+### Stratified distribution notes
+
+- Every encounter-flagged sampled body landed in an `APO` or `ATE` stratum.
+- No `AMO` or `IEO` sampled body was encounter-flagged within the bounded scan window.
+- The encounter-positive rows dominate the worst-error tail by orders of magnitude.
+- The non-flagged rows remain in a much tighter visualization-grade regime: tens of thousands of km at the extreme, low-thousands km in the median case.
+
+### Worst-error bodies
+
+Top six worst-error sampled bodies:
+
+| Designation | Class | E-band | Encounter-flagged | Max error km |
+| --- | --- | --- | --- | ---: |
+| `2026 JB2` | `ATE` | `>0.7` | yes | `7,947,554.1` |
+| `2026 JV3` | `APO` | `0.3-0.5` | yes | `5,444,060.6` |
+| `2026 JA` | `ATE` | `e<0.3` | yes | `1,915,307.1` |
+| `2026 JQ3` | `APO` | `e<0.3` | yes | `765,072.4` |
+| `2026 JB` | `APO` | `0.5-0.7` | yes | `730,590.4` |
+| `2026 JW` | `ATE` | `0.3-0.5` | yes | `192,118.4` |
+
+The worst non-flagged body in the completed sample was:
+
+- `2001 HL31` (`APO`, `>0.7`) at `38,866.6 km`
+
+### Evidence for future INV-014 boundary derivation
+
+This dispatch still decides nothing, but the evidence now supports a clear scoping statement:
+
+- an encounter-in-window flag is a strong predictor of "not Kepler-safe" behavior in this sample
+- the future visual-grade tier should be derived from the non-flagged error distribution, not from the encounter-positive tail
+- the encounter-positive set should be treated as its own caution / exclusion / special-handling tier candidate during scoping
+
+Plainly:
+
+- the data suggests the "viz-tier" regime is in the low-thousands to low-tens-of-thousands of km for non-flagged bodies
+- the data suggests encounter-flagged bodies belong in a qualitatively different tier, with errors exploding into the hundreds-of-thousands to multi-million-km range
+
+The numeric INV-014 boundaries are still Hudson's scoping decision.
 
 ## OPEN — FOR SCOPING
 
@@ -177,14 +230,20 @@ Current evidence leans toward: uniform-grid assumptions should be treated skepti
 
 ### OQ-6
 
-Blocked.
+Data is now in hand.
 
-Task 3 must be resumed incrementally from the cached:
+The completed bounded sample gives real evidence for how INV-014 should be derived:
 
-- `tools/slice9-research/data/cad-flags.json`
-- `tools/slice9-research/data/inv014-truth.json`
+- non-flagged bodies form one coherent lower-error population
+- encounter-flagged bodies form a sharply separated catastrophic-error population
 
-Do **not** set INV-014 numbers from this partial state.
+What remains open is not the evidence, but the decision:
+
+- exact numeric INV-014 tier boundaries
+- whether encounter-flag maps to an exclusion tier, a warning tier, or both
+- whether additional sample widening is worth doing before locking the final bars
+
+Those are Slice 9 scoping decisions, not outcomes of this data pass.
 
 ### New open question surfaced
 
@@ -196,6 +255,6 @@ The live NEO count is `41,902`, not `~32k`. Any Slice 9 sizing, batching, or run
 
 ## Notes
 
-- This partial commit intentionally preserves the resume-safe caches so Task 3 can continue later without redoing the CAD pass or the first `59` Horizons truth windows.
+- This research commit preserves the CAD and Horizons caches so any future widening pass can continue incrementally rather than starting from zero.
 - The large raw dump `sbdb-nea-raw.json` remains gitignored.
-- This report decides nothing. It preserves completed measurement output and records exactly what remains blocked.
+- This report decides nothing. It preserves the measured Task 1 / Task 2 / Task 3 evidence and leaves the actual Slice 9 architecture and INV-014 tier numbers to scoping.
