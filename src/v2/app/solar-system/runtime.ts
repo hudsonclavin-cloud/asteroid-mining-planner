@@ -906,6 +906,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     renderer.domElement.removeEventListener('wheel', onWheel);
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKeyDown);
+    focusedAsteroidHud.remove();
     haloSystem.dispose();
     asteroidRenderer.dispose();
     renderer.dispose();
