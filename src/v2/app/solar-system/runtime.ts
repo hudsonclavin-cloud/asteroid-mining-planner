@@ -23,7 +23,10 @@ import {
   propagateAsteroidBodyState,
   resolveAliasedPointSizeRange,
   StarRenderer,
+  sampleCameraOrbitTween,
   setAsteroidPointsMaxSize,
+  type CameraOrbitState,
+  type CameraOrbitTween,
 } from '../../render/index.js';
 import { loadStarCatalog } from '../../boundary/star-catalog-tycho2.js';
 import { createJupiterOblateMesh } from '../../render/jupiter-oblate.js';
@@ -56,6 +59,11 @@ const SATURN_RENDER_TILT_RAD = THREE.MathUtils.degToRad(26.7);
 const SATURN_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 export const ASTEROID_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 const OVERVIEW_ORBIT_POLAR_RAD = Math.PI / 3;
+export const TOP_DOWN_PRESET_KEY = 't';
+export const TOP_DOWN_ORBIT_POLAR_RAD = 0.01;
+export const TOP_DOWN_ORBIT_AZIMUTH_RAD = 0;
+export const TOP_DOWN_ORBIT_RADIUS_M = 8 * AU_M;
+export const TOP_DOWN_PRESET_DURATION_MS = 1_000;
 const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
 
 const BODY_IDS: BodyId[] = [
@@ -87,12 +95,13 @@ const BODY_IDS: BodyId[] = [
  * 1 Sun, 2 Mercury, 3 Venus, 4 Earth, 5 Moon, 6 Mars (legacy), M Mars,
  * P Phobos, X Deimos,
  * 7 Jupiter, 8 Io, 9 Europa, 0 Ganymede, - Callisto,
- * S Saturn, T Titan, R Rhea, I Iapetus, Y Tethys, D Dione,
+ * S Saturn, R Rhea, I Iapetus, Y Tethys, D Dione,
  * N Mimas, E Enceladus, = outer-system overview.
  *
  * Mars claims 'm' so the default Slice 6 manual verification path can press
  * 'm' from overview without remembering the older numeric alias. Mimas moves to
  * 'n'; Saturn focus itself remains on 's' for the Slice 4-5 regression path.
+ * Slice 8.5 repurposes 't' for the top-down preset.
  */
 const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
   '1': 'sun',
@@ -110,7 +119,6 @@ const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
   '0': 'ganymede',
   '-': 'callisto',
   s: 'saturn',
-  t: 'titan',
   r: 'rhea',
   i: 'iapetus',
   y: 'tethys',
@@ -127,6 +135,37 @@ export interface FocusedAsteroidHudElement {
   style: {
     display: string;
   };
+}
+
+export interface CameraPreset {
+  key: string;
+  focusBody: FocusTarget;
+  orbitState: CameraOrbitState;
+  durationMs: number;
+}
+
+export function getCameraPresetForKey(key: string): CameraPreset | null {
+  if (key === TOP_DOWN_PRESET_KEY) {
+    return {
+      key,
+      focusBody: 'sun',
+      orbitState: {
+        radiusM: TOP_DOWN_ORBIT_RADIUS_M,
+        polarRad: TOP_DOWN_ORBIT_POLAR_RAD,
+        azimuthRad: TOP_DOWN_ORBIT_AZIMUTH_RAD,
+      },
+      durationMs: TOP_DOWN_PRESET_DURATION_MS,
+    };
+  }
+
+  return null;
+}
+
+export function isCameraControlsLocked(tween: CameraOrbitTween | null, nowMs: number): boolean {
+  if (!tween) {
+    return false;
+  }
+  return nowMs - tween.startMs < tween.durationMs;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -447,6 +486,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   let targetFocusBody: FocusTarget = OUTER_SYSTEM_OVERVIEW;
   let focusTransitionStartMs = 0;
   let focusTransitionFromAnchor: Position3 | null = null;
+  let orbitTween: CameraOrbitTween | null = null;
   let currentTdbSeconds = timeMin;
   let disposed = false;
   let pointerActive = false;
@@ -636,6 +676,15 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   function updateVisibleState(nowMs = performance.now()): void {
     const anchorPosM = getCurrentOrbitCenter(nowMs);
+    if (orbitTween) {
+      const sample = sampleCameraOrbitTween(orbitTween, nowMs);
+      orbitRadius = sample.state.radiusM;
+      orbitPolar = sample.state.polarRad;
+      orbitAzimuth = sample.state.azimuthRad;
+      if (sample.completed) {
+        orbitTween = null;
+      }
+    }
     const camLocal = sphericalToCartesian(orbitRadius, orbitPolar, orbitAzimuth);
     const viewport = { width: window.innerWidth, height: window.innerHeight };
 
@@ -772,6 +821,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   }
 
   function onPointerDown(event: PointerEvent): void {
+    if (isCameraControlsLocked(orbitTween, performance.now())) {
+      return;
+    }
     pointerActive = true;
     pointerDragged = false;
     pointerDownX = event.clientX;
@@ -783,6 +835,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   }
 
   function onPointerMove(event: PointerEvent): void {
+    if (isCameraControlsLocked(orbitTween, performance.now())) {
+      return;
+    }
     if (!pointerActive) {
       updatePointerCursor(event.clientX, event.clientY);
       return;
@@ -834,6 +889,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   }
 
   function onWheel(event: WheelEvent): void {
+    if (isCameraControlsLocked(orbitTween, performance.now())) {
+      return;
+    }
     event.preventDefault();
     const activeFocusBody = getActiveFocusBody(performance.now());
     const minOrbitRadius = getMinOrbitRadiusForFocus(
@@ -878,6 +936,24 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
         orbitRadius,
       );
       startFocusTransition(nextFocusBody, nextOrbitRadius);
+      return;
+    }
+
+    const preset = getCameraPresetForKey(event.key);
+    if (preset) {
+      const nowMs = performance.now();
+      startFocusTransition(preset.focusBody, preset.orbitState.radiusM);
+      orbitTween = {
+        from: {
+          radiusM: orbitRadius,
+          polarRad: orbitPolar,
+          azimuthRad: orbitAzimuth,
+        },
+        to: preset.orbitState,
+        startMs: nowMs,
+        durationMs: preset.durationMs,
+      };
+      updateVisibleState(nowMs);
       return;
     }
 
