@@ -1,0 +1,211 @@
+{
+  "generatedAtUtc": "2026-05-16T23:12:35.496Z",
+  "vizEnvelopeKm": 50000,
+  "sampleCounts": {
+    "notFlagged": 61,
+    "flagged": 6,
+    "notFlaggedOverEnvelope": 21,
+    "notFlaggedWithinEnvelope": 40
+  },
+  "q1": {
+    "correlations": {
+      "epochStalenessDays": {
+        "n": 61,
+        "rho": 0.6113927219578366
+      },
+      "dataArcDays": {
+        "n": 61,
+        "rho": -0.19197969222678588
+      },
+      "conditionCode": {
+        "n": 60,
+        "rho": 0.20647539602602183
+      },
+      "eccentricity": {
+        "n": 61,
+        "rho": 0.3872554204124802
+      }
+    },
+    "overEnvelopeSummary": {
+      "count": 21,
+      "min": 50217.5696328491,
+      "median": 102597.38991915321,
+      "p90": 2386247.805836652,
+      "p95": 10686957.72753936,
+      "max": 15421337.426359402
+    },
+    "withinEnvelopeSummary": {
+      "count": 40,
+      "min": 6510.4604403453395,
+      "median": 20952.29789212375,
+      "p90": 35771.50579705326,
+      "p95": 42136.36655998642,
+      "max": 46324.355904505916
+    }
+  },
+  "q2": {
+    "reanchorTargets": [
+      {
+        "designation": "2009 DN45",
+        "orbitClass": "AMO",
+        "epochStalenessDays": 6267,
+        "conditionCode": 8,
+        "dataArcDays": 18,
+        "eccentricity": 0.4746598476257746,
+        "methodAErrorKm": 15421337.426359402,
+        "methodBErrorKm": 3627.9519266042075,
+        "collapseFactor": 4250.70059866915
+      },
+      {
+        "designation": "2010 FS",
+        "orbitClass": "ATE",
+        "epochStalenessDays": 5885,
+        "conditionCode": 8,
+        "dataArcDays": 13,
+        "eccentricity": 0.3175218261023758,
+        "methodAErrorKm": 10686957.72753936,
+        "methodBErrorKm": 1247.6574117980106,
+        "collapseFactor": 8565.618755983895
+      },
+      {
+        "designation": "2024 AL6",
+        "orbitClass": "APO",
+        "epochStalenessDays": 833,
+        "conditionCode": 8,
+        "dataArcDays": 12,
+        "eccentricity": 0.8266405306942357,
+        "methodAErrorKm": 2386247.805836652,
+        "methodBErrorKm": 4739.704796354636,
+        "collapseFactor": 503.45916219760016
+      },
+      {
+        "designation": "2005 HC4",
+        "orbitClass": "APO",
+        "epochStalenessDays": 7668,
+        "conditionCode": 9,
+        "dataArcDays": 11,
+        "eccentricity": 0.961391156721277,
+        "methodAErrorKm": 678551.3925739396,
+        "methodBErrorKm": 4737.754618479768,
+        "collapseFactor": 143.22214787723019
+      },
+      {
+        "designation": "2018 GZ7",
+        "orbitClass": "AMO",
+        "epochStalenessDays": 561,
+        "conditionCode": 9,
+        "dataArcDays": 1,
+        "eccentricity": 0.8511342,
+        "methodAErrorKm": 356021.1174004039,
+        "methodBErrorKm": 7240.082045494635,
+        "collapseFactor": 49.173630238340884
+      },
+      {
+        "designation": "2022 WB6",
+        "orbitClass": "AMO",
+        "epochStalenessDays": 1262,
+        "conditionCode": 8,
+        "dataArcDays": 26,
+        "eccentricity": 0.4041619013312741,
+        "methodAErrorKm": 315111.1809548725,
+        "methodBErrorKm": 3452.5803605564893,
+        "collapseFactor": 91.26831182694983
+      },
+      {
+        "designation": "2014 HF124",
+        "orbitClass": "APO",
+        "epochStalenessDays": 4386,
+        "conditionCode": 8,
+        "dataArcDays": 8,
+        "eccentricity": 0.4655905534213267,
+        "methodAErrorKm": 274821.08808156033,
+        "methodBErrorKm": 1737.5466225490443,
+        "collapseFactor": 158.16616631465564
+      },
+      {
+        "designation": "2024 G8",
+        "orbitClass": "AMO",
+        "epochStalenessDays": 752,
+        "conditionCode": null,
+        "dataArcDays": 55,
+        "eccentricity": 0.9918755792128897,
+        "methodAErrorKm": 247904.52843768682,
+        "methodBErrorKm": 6602.147128322377,
+        "collapseFactor": 37.54907662905719
+      }
+    ]
+  },
+  "q3": {
+    "ingestionAudit": [
+      {
+        "designation": "2009 DN45",
+        "rawEpochTdbJd": 2454894.5,
+        "fixtureEpochTdbJd": 2454894.5,
+        "rawSemiMajorAxisAu": 1.949632705771709,
+        "fixtureSemiMajorAxisAu": 1.949632705771709,
+        "rawInclinationDeg": 8.531691304842822,
+        "fixtureInclinationDeg": 8.531691304842822,
+        "rawAscendingNodeDeg": 350.4144208653481,
+        "fixtureAscendingNodeDeg": 350.4144208653481,
+        "rawArgumentOfPerihelionDeg": 174.3900451289692,
+        "fixtureArgumentOfPerihelionDeg": 174.3900451289692,
+        "rawMeanAnomalyDeg": 359.4988785356425,
+        "fixtureMeanAnomalyDeg": 359.4988785356425,
+        "anchorRecomputePositionErrorKm": 0
+      },
+      {
+        "designation": "2024 AL6",
+        "rawEpochTdbJd": 2460328.5,
+        "fixtureEpochTdbJd": 2460328.5,
+        "rawSemiMajorAxisAu": 2.478277529365954,
+        "fixtureSemiMajorAxisAu": 2.478277529365954,
+        "rawInclinationDeg": 3.734531602303085,
+        "fixtureInclinationDeg": 3.7345316023030857,
+        "rawAscendingNodeDeg": 116.5941766229507,
+        "fixtureAscendingNodeDeg": 116.59417662295073,
+        "rawArgumentOfPerihelionDeg": 110.2136639476013,
+        "fixtureArgumentOfPerihelionDeg": 110.2136639476013,
+        "rawMeanAnomalyDeg": 347.9236642888268,
+        "fixtureMeanAnomalyDeg": 347.9236642888268,
+        "anchorRecomputePositionErrorKm": 0
+      },
+      {
+        "designation": "433",
+        "rawEpochTdbJd": 2461000.5,
+        "fixtureEpochTdbJd": 2461000.5,
+        "rawSemiMajorAxisAu": 1.458120998474684,
+        "fixtureSemiMajorAxisAu": 1.458120998474684,
+        "rawInclinationDeg": 10.82846651399785,
+        "fixtureInclinationDeg": 10.828466513997848,
+        "rawAscendingNodeDeg": 304.2701025753316,
+        "fixtureAscendingNodeDeg": 304.2701025753316,
+        "rawArgumentOfPerihelionDeg": 178.9297536744151,
+        "fixtureArgumentOfPerihelionDeg": 178.9297536744151,
+        "rawMeanAnomalyDeg": 310.5543277370992,
+        "fixtureMeanAnomalyDeg": 310.5543277370992,
+        "anchorRecomputePositionErrorKm": 0
+      }
+    ]
+  },
+  "q4": {
+    "populationImpact": {
+      "stalenessDays": {
+        ">180": 11804,
+        ">365": 11259,
+        ">730": 9968,
+        ">1460": 7924
+      },
+      "conditionCode": {
+        ">=5": 29293,
+        ">=7": 21746,
+        ">=8": 12213
+      },
+      "dataArcDays": {
+        "<30": 23172,
+        "<100": 28858,
+        "<365": 30521
+      }
+    }
+  },
+  "verdict": "a"
+}
