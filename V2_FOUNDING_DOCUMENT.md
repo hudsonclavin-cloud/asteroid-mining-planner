@@ -667,20 +667,20 @@ Slice 8 is the smallest slice that:
 
 ### Slice 8.5: UX Polish
 
-Status: SHIPPED `2026-05-15`. Cutover declared after Slice 8 manual verification plus the follow-on Slice 8.5 polish pass closed the first-impression UX issues that were intentionally deferred out of the architectural slice.
+Status: SHIPPED `2026-05-16`. Cutover declared after Slice 8 manual verification plus the follow-on Slice 8.5 polish pass closed the first-impression UX issues that were intentionally deferred out of the architectural slice.
 
 Slice 8.5 is a polish slice, not a new truth-architecture slice. It layers starfield context, a clearer overview camera affordance, lightweight HTML overlays, and body-framing fixes on top of the shipped Slice 8 architecture.
 
 #### Included
 
 - Tycho-2-based star background with `10,000` magnitude-limited stars from the shipped binary asset
-- camera-relative star rendering so stars stay effectively at infinity under the floating-origin pipeline
-- top-down ecliptic preset on key `t`
+- camera-relative star rendering so stars stay effectively at infinity under the floating-origin pipeline, with constant screen-size stars and baked B-V-derived color
+- top-down ecliptic preset on key `t`, targeted to the ecliptic normal in the scene's ICRF frame
+- planet hover tooltips through the currently rendered planet set
 - Earth focus radius widened so the Moon is visible from default Earth focus
 - asteroid focus radius adjusted for less aggressive close framing
 - Saturn moon halo floors scaled by moon size for better distinguishability
-- always-visible date / epoch HUD text overlay
-- planet hover tooltips for the currently rendered planet set through Saturn
+- always-visible date / epoch HUD text overlay with sub-day granularity
 - `ui-hud` freeze expanded only for lightweight HTML overlays; no 3D labels, search, or panels
 
 #### Excluded
@@ -1304,7 +1304,7 @@ Actual result: Slice 8 implementation started Thursday `2026-05-14` and cutover 
 
 The Slice 8.5 tripwire is **2 focused weekends from the start of the Slice 8.5 implementation dispatch**. Slice 8.5 is intentionally constrained to render-layer and lightweight `ui-hud` polish. If the full seven-item scope does not ship by end of weekend 2, the slice decomposes by keeping the star background and body-framing fixes, while pushing tooltip/HUD niceties to Slice 9.
 
-Actual result: Slice 8.5 implementation started and shipped on `2026-05-15`, within the first focused day of the 2-weekend window.
+Actual result: Slice 8.5 implementation started Friday `2026-05-15` and shipped Saturday `2026-05-16`, well inside the 2-weekend budget and after an explicit localhost-only verification gate for the star-size and top-down camera fixes.
 
 ### Verification Protocol For All Future Slices
 
@@ -1465,3 +1465,9 @@ These are limitations of the shipped Slice 1 through Slice 8.5 deliverables, rec
 - Planet hover tooltips cover the currently rendered planet set through Saturn only. Moons, asteroids, and star hover remain out of scope.
 - Planet hover UI is HTML-overlay only. 3D billboard labels remain deferred to Slice 9.
 - Residual frustum-edge flicker is reduced but not fully eliminated; deeper tuning is deferred to Slice 9's larger revisit of asteroid rendering scale and interaction.
+- Top-down preset (`t`) required three implementation passes. Commit `61f4a61` shipped the original preset, commit `4452abc` targeted the wrong layer and produced no visible behavior change, and commit `10f0af3` fixed the real frame mismatch. The root cause was that the preset drove `orbitPolar -> 0` in the runtime's raw spherical basis (`+Y` / ICRF north), while the belt renders in the ecliptic frame rotated into ICRF. The visual miss was therefore the obliquity of the ecliptic (`~23.4°`), not an animation or clamp bug. The final camera math derives from `J2000_ECLIPTIC_OBLIQUITY_RAD` in `src/v2/core/units.ts`, the same source used by the propagator's ecliptic-to-equatorial rotation, so the camera and belt frames now share one source of truth.
+- The top-down preset should render the belt ring-like and no longer globally tilted, but not as a perfect circle. The orbit layer is a batch of real Kepler ellipses, not a circular ring primitive. This behavior is correct and should not be re-reported as a camera bug.
+- The original green test for top-down was insufficient because it asserted an intermediate spherical variable, not the rendered camera-forward vector. The final regression test now asserts the camera-forward direction against the ICRF-transformed ecliptic normal within `2°`.
+- Earth still reads as a saturated blue under the current lighting model. A principled fix is a lighting/material question, not another color-constant tweak; defer to a future render-lighting slice.
+- Saturn moon distinguishability improved from roughly `3-4` visible moons to about `5` at default framing. The remainder are still sub-pixel or glow-merged and remain a future polish candidate.
+- Reports that stars were inflating into blobs during close asteroid focus were a mixed diagnosis. The real star size-attenuation bug fixed by commit `0c2e355` was valid and remains fixed; some large glowing blobs seen during close asteroid shots were simply near asteroids rendering large at honest close camera range.
