@@ -22,8 +22,10 @@ import {
   AsteroidRenderer,
   propagateAsteroidBodyState,
   resolveAliasedPointSizeRange,
+  StarRenderer,
   setAsteroidPointsMaxSize,
 } from '../../render/index.js';
+import { loadStarCatalog } from '../../boundary/star-catalog-tycho2.js';
 import { createJupiterOblateMesh } from '../../render/jupiter-oblate.js';
 import { createMarsOblateMesh } from '../../render/mars-oblate.js';
 import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
@@ -297,10 +299,12 @@ function getMinOrbitRadiusForFocus(
 }
 
 export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> {
-  const [allStates, asteroidCatalog] = await Promise.all([
+  const [allStates, asteroidCatalog, starCatalog] = await Promise.all([
     loadSolarSystemStatesBrowser(),
     loadSlice8AsteroidCatalogFixture(),
+    loadStarCatalog(),
   ]);
+  console.log(`[slice8.5] loaded Tycho-2 star catalog (${starCatalog.count} stars)`);
   const stateSeries = new Map<BodyId, CanonicalState[]>();
   const asteroidBodies = Object.values(asteroidCatalog.asteroids);
   const asteroidIndex = createAsteroidCatalogIndex(asteroidBodies);
@@ -365,12 +369,16 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   mount.appendChild(focusedAsteroidHud);
 
   const scene = new THREE.Scene();
+  const starRenderer = new StarRenderer(starCatalog, renderer.getPixelRatio());
+  console.log('[slice8.5] StarRenderer constructed');
   const camera = new THREE.PerspectiveCamera(
     45,
     window.innerWidth / window.innerHeight,
     1,
     MAX_CAMERA_DISTANCE_M * 10,
   );
+  scene.add(starRenderer.getMesh());
+  console.log('[slice8.5] StarRenderer mesh added to scene');
 
   const renderRoots = new Map<BodyId, THREE.Object3D>();
   const meshes = new Map<BodyId, THREE.Mesh>();
@@ -712,6 +720,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    starRenderer.setPixelRatio(renderer.getPixelRatio());
   }
 
   function scrubTime(deltaSeconds: number): void {
@@ -907,6 +916,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKeyDown);
     focusedAsteroidHud.remove();
+    starRenderer.dispose();
     haloSystem.dispose();
     asteroidRenderer.dispose();
     renderer.dispose();

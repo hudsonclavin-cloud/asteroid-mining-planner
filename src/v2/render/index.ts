@@ -107,4 +107,6 @@ export type {
 
 export { AsteroidCellRenderer } from './asteroid-cell-renderer.js';
 
+export { StarRenderer } from './star-renderer.js';
+
 export { mountEmptyViewportCanvas } from './empty-viewport.js';
