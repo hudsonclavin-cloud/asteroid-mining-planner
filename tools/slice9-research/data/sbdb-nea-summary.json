@@ -1,0 +1,94 @@
+{
+  "generatedAtUtc": "2026-05-16T16:53:30.163Z",
+  "source": "https://ssd-api.jpl.nasa.gov/sbdb_query.api",
+  "count": 41902,
+  "fields": [
+    "spkid",
+    "pdes",
+    "full_name",
+    "class",
+    "e",
+    "a",
+    "i",
+    "om",
+    "w",
+    "ma",
+    "epoch",
+    "condition_code",
+    "data_arc",
+    "n_obs_used",
+    "H",
+    "sigma_a",
+    "sigma_e"
+  ],
+  "classDistribution": {
+    "AMO": 14514,
+    "APO": 23755,
+    "ATE": 3387,
+    "ETC": 6,
+    "HTC": 36,
+    "IEO": 38,
+    "JFC": 166
+  },
+  "conditionCodeHistogram": {
+    "0": 8470,
+    "1": 1705,
+    "2": 651,
+    "3": 477,
+    "4": 1189,
+    "5": 2468,
+    "6": 5110,
+    "7": 9585,
+    "8": 8957,
+    "9": 3280,
+    "missing": 10
+  },
+  "dataArcBucketHistogram": {
+    "<7d": 10965,
+    ">1000d": 10242,
+    "7-30d": 12310,
+    "30-100d": 5689,
+    "100-1000d": 2279,
+    "missing": 417
+  },
+  "missingOrDegenerateCount": 0,
+  "missingHCount": 210,
+  "candidateQualityThresholds": [
+    {
+      "maxConditionCode": 3,
+      "minDataArcDays": 7,
+      "keptCount": 11273,
+      "excludedCount": 30629
+    },
+    {
+      "maxConditionCode": 3,
+      "minDataArcDays": 30,
+      "keptCount": 11171,
+      "excludedCount": 30731
+    },
+    {
+      "maxConditionCode": 5,
+      "minDataArcDays": 7,
+      "keptCount": 14630,
+      "excludedCount": 27272
+    },
+    {
+      "maxConditionCode": 5,
+      "minDataArcDays": 30,
+      "keptCount": 14109,
+      "excludedCount": 27793
+    },
+    {
+      "maxConditionCode": 7,
+      "minDataArcDays": 7,
+      "keptCount": 24942,
+      "excludedCount": 16960
+    },
+    {
+      "maxConditionCode": 7,
+      "minDataArcDays": 30,
+      "keptCount": 18077,
+      "excludedCount": 23825
+    }
+  ]
+}

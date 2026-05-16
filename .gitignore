@@ -14,3 +14,8 @@ tools/slice8-ingestion/full-run.log
 tools/slice8-ingestion/caffeinate.log
 tools/slice8-ingestion/full-run.pid
 tools/slice8-5-research/data/*
+tools/slice9-research/data/*
+!tools/slice9-research/data/cad-flags.json
+!tools/slice9-research/data/inv014-truth.json
+!tools/slice9-research/data/occupancy-summary.json
+!tools/slice9-research/data/sbdb-nea-summary.json

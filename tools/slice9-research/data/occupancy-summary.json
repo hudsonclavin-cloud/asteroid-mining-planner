@@ -1,0 +1,58 @@
+{
+  "generatedAtUtc": "2026-05-16T16:53:41.857Z",
+  "commonEpochTdbJd": 2461161.5,
+  "commonEpochLabel": "2026-05-01 TDB",
+  "totalRows": 41902,
+  "propagatableRowCount": 41902,
+  "excludedRowCount": 0,
+  "occupancyTable": [
+    {
+      "cellSizeAu": 0.25,
+      "occupiedCellCount": 6893,
+      "maxBodiesPerCell": 264,
+      "medianBodiesPerCell": 2,
+      "p90BodiesPerCell": 13,
+      "fractionOfBodiesInDensestTenCells": 0.044317693666173455
+    },
+    {
+      "cellSizeAu": 0.5,
+      "occupiedCellCount": 2060,
+      "maxBodiesPerCell": 1177,
+      "medianBodiesPerCell": 2,
+      "p90BodiesPerCell": 44,
+      "fractionOfBodiesInDensestTenCells": 0.16082764545845066
+    },
+    {
+      "cellSizeAu": 1,
+      "occupiedCellCount": 540,
+      "maxBodiesPerCell": 2652,
+      "medianBodiesPerCell": 4,
+      "p90BodiesPerCell": 149.10000000000002,
+      "fractionOfBodiesInDensestTenCells": 0.44596916614958715
+    },
+    {
+      "cellSizeAu": 2,
+      "occupiedCellCount": 171,
+      "maxBodiesPerCell": 7267,
+      "medianBodiesPerCell": 2,
+      "p90BodiesPerCell": 358,
+      "fractionOfBodiesInDensestTenCells": 0.7878621545510954
+    }
+  ],
+  "heliocentricDistanceKm": {
+    "count": 41902,
+    "min": 19884771.737316735,
+    "median": 254338922.14032775,
+    "p90": 511250558.20155233,
+    "p95": 577639045.9402419,
+    "max": 9472492439.2133
+  },
+  "axisExtentKm": {
+    "minXKm": -7382152187.090482,
+    "maxXKm": 4738628067.265706,
+    "minYKm": -7590324910.042451,
+    "maxYKm": 4521519458.93619,
+    "minZKm": -5645848745.803224,
+    "maxZKm": 3096820623.3738656
+  }
+}
