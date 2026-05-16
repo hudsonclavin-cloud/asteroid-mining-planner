@@ -45,6 +45,40 @@ function createPerspectiveCamera(THREE, position, lookAt, aspect = 16 / 9) {
   return camera;
 }
 
+function cameraDistanceForDiameterPx(radiusM, targetDiameterPx, viewportHeightPx, fovRad) {
+  const angularDiameter = targetDiameterPx * (fovRad / viewportHeightPx);
+  return radiusM / Math.tan(angularDiameter / 2);
+}
+
+function buildSingleAsteroidRendererAtDiameter({
+  asteroid,
+  catalogBodies = [asteroid],
+  targetDiameterPx,
+  focused = false,
+  viewport = { width: 1280, height: 720 },
+}) {
+  const asteroidRenderer = new render.AsteroidRenderer(catalogBodies);
+  const camera = new THREE.PerspectiveCamera(45, viewport.width / viewport.height, 1, 1e15);
+  const distance = cameraDistanceForDiameterPx(
+    asteroid.estimatedRadiusM,
+    targetDiameterPx,
+    viewport.height,
+    (camera.fov * Math.PI) / 180,
+  );
+  camera.position.set(0, 0, distance);
+  camera.lookAt(0, 0, 0);
+  camera.updateProjectionMatrix();
+  camera.updateMatrixWorld(true);
+  asteroidRenderer.setFocusedAsteroid(focused ? asteroid.bodyId : null);
+  asteroidRenderer.update({
+    anchorPositionM: asteroid.anchorState.positionM,
+    camera,
+    tdbSeconds: asteroid.elements.epochTdbSeconds,
+    viewport,
+  });
+  return { asteroidRenderer, camera };
+}
+
 console.log('Compiling v2 core and boundary for Slice 8 cutover...');
 fs.rmSync(tempOutDir, { recursive: true, force: true });
 fs.mkdirSync(tempOutDir, { recursive: true });
@@ -276,6 +310,60 @@ if (!resolvedByRuntimePath) {
 }
 assert.equal(resolvedByRuntimePath, vesta.bodyId, 'runtime picking path should resolve Vesta through the cell renderer');
 
+const { asteroidRenderer: pointsRenderer, camera: pointsCamera } = buildSingleAsteroidRendererAtDiameter({
+  asteroid: catalog.asteroids['asteroid-4'],
+  targetDiameterPx: 1.2,
+});
+assert.equal(pointsRenderer.getAsteroidRenderMode('asteroid-4'), 'points');
+const pointsRaycaster = new THREE.Raycaster();
+pointsRaycaster.ray.origin.copy(pointsCamera.position);
+pointsRaycaster.ray.direction.set(0, 0, 0).sub(pointsCamera.position).normalize();
+const pointHits = pointsRaycaster.intersectObject(pointsRenderer.points, false);
+assert.ok(pointHits.length > 0, 'Points-mode picking should intersect a sub-pixel asteroid');
+assert.equal(
+  pointsRenderer.resolveIntersection(pointHits[0]),
+  'asteroid-4',
+  'Points-mode picking should resolve the targeted asteroid body id',
+);
+
+const bennu = catalog.asteroids['asteroid-101955'];
+const { asteroidRenderer: bennuRenderer, camera: bennuCamera } = buildSingleAsteroidRendererAtDiameter({
+  asteroid: bennu,
+  catalogBodies: [vesta, bennu],
+  targetDiameterPx: 2.5,
+});
+assert.equal(bennuRenderer.getAsteroidRenderMode(bennu.bodyId), 'instanced');
+const bennuRay = new THREE.Ray(
+  bennuCamera.position.clone(),
+  new THREE.Vector3(0, 0, 0).sub(bennuCamera.position).normalize(),
+);
+assert.equal(
+  bennuRenderer.raycastIntersectCells(bennuRay),
+  bennu.bodyId,
+  'Bennu should remain pickable through the instanced cell renderer path',
+);
+
+const vestaWorld = subsetRenderer.getAsteroidWorldPosition(vesta.bodyId);
+const vestaCellIndex = render.cellIndexForPositionKm(new THREE.Vector3(
+  vesta.anchorState.positionM.x / 1000,
+  vesta.anchorState.positionM.y / 1000,
+  vesta.anchorState.positionM.z / 1000,
+));
+assert.ok(vestaCellIndex, 'Vesta should remain inside the Slice 8 spatial grid');
+const vestaCell = subsetRenderer.cellRenderer.getCellAtKey(render.cellKeyForIndex(vestaCellIndex));
+assert.ok(vestaCell, 'Vesta should resolve to an occupied Slice 8 cell');
+const vestaSubsetIndex = focusedSubset.findIndex((asteroid) => asteroid.bodyId === vesta.bodyId);
+assert.notEqual(vestaSubsetIndex, -1, 'Vesta should exist in the focused subset');
+const vestaInstanceId = vestaCell.visibleBodyIndices.indexOf(vestaSubsetIndex);
+assert.notEqual(vestaInstanceId, -1, 'Vesta should be visible inside its occupied cell');
+const vestaInstancedMatrix = new THREE.Matrix4();
+vestaCell.mesh.getMatrixAt(vestaInstanceId, vestaInstancedMatrix);
+const vestaInstancedDraw = new THREE.Vector3().setFromMatrixPosition(vestaInstancedMatrix);
+assert.ok(
+  vestaInstancedDraw.distanceTo(vestaWorld) <= 1e-3,
+  'Instanced render position must match Vesta world position before focus',
+);
+
 subsetRenderer.setFocusedAsteroid(resolvedByRuntimePath);
 subsetRenderer.update({
   anchorPositionM: vesta.anchorState.positionM,
@@ -285,6 +373,26 @@ subsetRenderer.update({
 });
 assert.equal(subsetRenderer.getFocusedAsteroidBodyId(), vesta.bodyId);
 assert.equal(subsetRenderer.getFocusedMeshBodyId(), vesta.bodyId);
+const focusedDraw = new THREE.Vector3();
+subsetRenderer.focusedMesh.getWorldPosition(focusedDraw);
+assert.ok(
+  focusedDraw.distanceTo(subsetRenderer.getAsteroidWorldPosition(vesta.bodyId)) <= 1e-3,
+  'Focused mesh position must match Vesta world position after focus',
+);
+
+const bennuFocused = buildSingleAsteroidRendererAtDiameter({
+  asteroid: bennu,
+  catalogBodies: [vesta, bennu],
+  targetDiameterPx: 40,
+  focused: true,
+});
+assert.equal(bennuFocused.asteroidRenderer.getFocusedMeshBodyId(), bennu.bodyId);
+const bennuFocusedDraw = new THREE.Vector3();
+bennuFocused.asteroidRenderer.focusedMesh.getWorldPosition(bennuFocusedDraw);
+assert.ok(
+  bennuFocusedDraw.distanceTo(bennuFocused.asteroidRenderer.getAsteroidWorldPosition(bennu.bodyId)) <= 1e-3,
+  'Focused mesh position must match Bennu world position in a different spatial cell',
+);
 
 const hud = {
   textContent: '',
