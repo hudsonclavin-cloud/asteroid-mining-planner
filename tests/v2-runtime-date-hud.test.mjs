@@ -52,8 +52,9 @@ async function loadRuntimeModule() {
 test('date HUD label formats TDB seconds into a readable date string', async () => {
   const { formatTdbDateLabel } = await loadRuntimeModule();
 
-  assert.equal(formatTdbDateLabel(830_865_600), '2026 May 01 TDB');
-  assert.equal(formatTdbDateLabel(830_952_000), '2026 May 02 TDB');
+  assert.equal(formatTdbDateLabel(830_865_600), '2026 May 01 00:00 TDB');
+  assert.equal(formatTdbDateLabel(830_887_200), '2026 May 01 06:00 TDB');
+  assert.equal(formatTdbDateLabel(830_952_000), '2026 May 02 00:00 TDB');
 });
 
 test('date HUD text updates from the current simulated TDB time', async () => {
@@ -61,10 +62,13 @@ test('date HUD text updates from the current simulated TDB time', async () => {
   const element = { textContent: '' };
 
   renderDateHud(element, 830_865_600);
-  assert.equal(element.textContent, '2026 May 01 TDB');
+  assert.equal(element.textContent, '2026 May 01 00:00 TDB');
+
+  renderDateHud(element, 830_887_200);
+  assert.equal(element.textContent, '2026 May 01 06:00 TDB');
 
   renderDateHud(element, 830_952_000);
-  assert.equal(element.textContent, '2026 May 02 TDB');
+  assert.equal(element.textContent, '2026 May 02 00:00 TDB');
 });
 
 test('runtime creates and removes the date HUD element symmetrically', () => {

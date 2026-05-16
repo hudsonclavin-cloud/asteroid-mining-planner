@@ -280,7 +280,13 @@ export function renderFocusedAsteroidHud(
   element.style.display = 'block';
 }
 
-function julianDayToGregorianDate(julianDay: number): { year: number; monthIndex: number; day: number } {
+function julianDayToGregorianDate(julianDay: number): {
+  year: number;
+  monthIndex: number;
+  day: number;
+  hour: number;
+  minute: number;
+} {
   const shiftedJulianDay = julianDay + 0.5;
   const z = Math.floor(shiftedJulianDay);
   const fractionalDay = shiftedJulianDay - z;
@@ -293,13 +299,18 @@ function julianDayToGregorianDate(julianDay: number): { year: number; monthIndex
   const day = Math.floor(b - d - Math.floor(30.6001 * e) + fractionalDay);
   const month = e < 14 ? e - 1 : e - 13;
   const year = month > 2 ? c - 4716 : c - 4715;
-  return { year, monthIndex: month - 1, day };
+
+  const totalMinutes = Math.floor(fractionalDay * 1_440);
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+
+  return { year, monthIndex: month - 1, day, hour, minute };
 }
 
 export function formatTdbDateLabel(tdbSeconds: number): string {
   const julianDay = J2000_TDB_JULIAN_DAY + tdbSeconds / 86_400;
-  const { year, monthIndex, day } = julianDayToGregorianDate(julianDay);
-  return `${year} ${TDB_MONTH_LABELS[monthIndex]} ${String(day).padStart(2, '0')} TDB`;
+  const { year, monthIndex, day, hour, minute } = julianDayToGregorianDate(julianDay);
+  return `${year} ${TDB_MONTH_LABELS[monthIndex]} ${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} TDB`;
 }
 
 export function renderDateHud(element: DateHudElement, tdbSeconds: number): void {
