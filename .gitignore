@@ -20,3 +20,4 @@ tools/slice9-research/data/*
 !tools/slice9-research/data/inv014-sample-results.json
 !tools/slice9-research/data/occupancy-summary.json
 !tools/slice9-research/data/sbdb-nea-summary.json
+tools/slice9-ingestion/data/*
