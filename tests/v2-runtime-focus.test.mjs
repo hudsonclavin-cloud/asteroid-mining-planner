@@ -53,6 +53,10 @@ test('focus from overview snaps to the target default radius', async () => {
   const { resolveFocusOrbitRadius } = await loadRuntimeModule();
 
   assert.equal(
+    resolveFocusOrbitRadius('outer-system-overview', 'earth', 7 * 149_597_870_700),
+    400_000_000,
+  );
+  assert.equal(
     resolveFocusOrbitRadius('outer-system-overview', 'phobos', 7 * 149_597_870_700),
     413_000,
   );
@@ -65,6 +69,7 @@ test('focus from overview snaps to the target default radius', async () => {
 test('cross-body focus snaps to the new target default radius', async () => {
   const { resolveFocusOrbitRadius } = await loadRuntimeModule();
 
+  assert.equal(resolveFocusOrbitRadius('mars', 'earth', 60_000_000), 400_000_000);
   assert.equal(resolveFocusOrbitRadius('mars', 'phobos', 60_000_000), 413_000);
   assert.equal(resolveFocusOrbitRadius('mars', 'deimos', 60_000_000), 407_800);
   assert.equal(resolveFocusOrbitRadius('phobos', 'mars', 413_000), 60_000_000);

@@ -45,6 +45,7 @@ const OVERVIEW_ORBIT_RADIUS_M = 7 * AU_M;
 const JUPITER_SYSTEM_OVERVIEW_RADIUS_M = 5_000_000_000;
 const MARS_SYSTEM_OVERVIEW_RADIUS_M = 60_000_000;
 const SATURN_SYSTEM_OVERVIEW_RADIUS_M = 6_000_000_000;
+const EARTH_FOCUS_RADIUS_M = 400_000_000;
 const MIN_CAMERA_DISTANCE_M = 1e9;
 const MAX_CAMERA_DISTANCE_M = 15 * AU_M;
 const ORBIT_SENSITIVITY = 0.005;
@@ -296,6 +297,9 @@ function getDefaultFocusRadius(
   }
   if (bodyId === 'saturn') {
     return SATURN_SYSTEM_OVERVIEW_RADIUS_M;
+  }
+  if (bodyId === 'earth') {
+    return EARTH_FOCUS_RADIUS_M;
   }
   return Math.max(5 * BODY_CONSTANTS[bodyId].radiusM, BODY_CONSTANTS[bodyId].radiusM + 400_000);
 }
