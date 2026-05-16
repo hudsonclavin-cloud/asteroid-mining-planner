@@ -276,7 +276,7 @@ export function createMarsSystemRenderGroups(): {
 }
 
 export function getDefaultAsteroidFocusRadius(radiusM: number): number {
-  return Math.max(5 * radiusM, radiusM + 1_000);
+  return Math.max(20 * radiusM, radiusM + 5_000);
 }
 
 function getDefaultFocusRadius(

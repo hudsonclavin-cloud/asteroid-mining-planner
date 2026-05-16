@@ -91,12 +91,13 @@ test('asteroid focus uses the documented non-edge-on polar default', async () =>
 test('asteroid focus radius uses the honest-scale default radius rule', async () => {
   const { getDefaultAsteroidFocusRadius, resolveFocusOrbitRadius } = await loadRuntimeModule();
 
-  assert.equal(getDefaultAsteroidFocusRadius(1_000), 5_000);
-  assert.equal(getDefaultAsteroidFocusRadius(50_000), 250_000);
+  assert.equal(getDefaultAsteroidFocusRadius(1_000), 20_000);
+  assert.equal(getDefaultAsteroidFocusRadius(50_000), 1_000_000);
+  assert.equal(getDefaultAsteroidFocusRadius(100), 5_100);
   assert.equal(
     resolveFocusOrbitRadius('outer-system-overview', 'asteroid-101955', 7 * 149_597_870_700, {
       estimatedRadiusM: 1_000,
     }),
-    5_000,
+    20_000,
   );
 });
