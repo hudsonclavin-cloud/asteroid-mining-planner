@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {
   FRAME_GCRS_EARTH,
   FRAME_HELIO_J2000_ICRF,
+  J2000_ECLIPTIC_OBLIQUITY_RAD,
   FRAME_JUPITER_J2000_ICRF,
   FRAME_MARS_J2000_ICRF,
   FRAME_SATURN_J2000_ICRF,
@@ -61,14 +62,10 @@ const SATURN_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 export const ASTEROID_FOCUS_ORBIT_POLAR_RAD = Math.PI / 3;
 const OVERVIEW_ORBIT_POLAR_RAD = Math.PI / 3;
 export const TOP_DOWN_PRESET_KEY = 't';
-export const TOP_DOWN_ORBIT_POLAR_RAD = 0.0001;
-export const TOP_DOWN_ORBIT_AZIMUTH_RAD = 0;
 export const TOP_DOWN_ORBIT_RADIUS_M = 8 * AU_M;
 export const TOP_DOWN_PRESET_DURATION_MS = 1_000;
 export const INTERACTIVE_MIN_ORBIT_POLAR_RAD = 0.001;
 export const INTERACTIVE_MAX_ORBIT_POLAR_RAD = Math.PI - INTERACTIVE_MIN_ORBIT_POLAR_RAD;
-export const PRESET_MIN_ORBIT_POLAR_RAD = 0.0001;
-export const PRESET_MAX_ORBIT_POLAR_RAD = Math.PI - PRESET_MIN_ORBIT_POLAR_RAD;
 const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
 
 const BODY_IDS: BodyId[] = [
@@ -177,16 +174,34 @@ export interface CameraPreset {
   durationMs: number;
 }
 
+export interface Direction3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export function rotateEclipticDirectionToIcrf(direction: Direction3): Direction3 {
+  const cosObliquity = Math.cos(J2000_ECLIPTIC_OBLIQUITY_RAD);
+  const sinObliquity = Math.sin(J2000_ECLIPTIC_OBLIQUITY_RAD);
+  return {
+    x: direction.x,
+    y: direction.y * cosObliquity - direction.z * sinObliquity,
+    z: direction.y * sinObliquity + direction.z * cosObliquity,
+  };
+}
+
+export const TOP_DOWN_ECLIPTIC_NORMAL_ICRF = rotateEclipticDirectionToIcrf({
+  x: 0,
+  y: 0,
+  z: 1,
+});
+
 export function getCameraPresetForKey(key: string): CameraPreset | null {
   if (key === TOP_DOWN_PRESET_KEY) {
     return {
       key,
       focusBody: 'sun',
-      orbitState: {
-        radiusM: TOP_DOWN_ORBIT_RADIUS_M,
-        polarRad: clamp(TOP_DOWN_ORBIT_POLAR_RAD, PRESET_MIN_ORBIT_POLAR_RAD, PRESET_MAX_ORBIT_POLAR_RAD),
-        azimuthRad: TOP_DOWN_ORBIT_AZIMUTH_RAD,
-      },
+      orbitState: TOP_DOWN_ORBIT_STATE,
       durationMs: TOP_DOWN_PRESET_DURATION_MS,
     };
   }
@@ -234,6 +249,44 @@ function sphericalToCartesian(
     z: radius * sinPolar * Math.sin(azimuth),
   };
 }
+
+export function orbitStateToCameraDirection(
+  orbitState: Pick<CameraOrbitState, 'polarRad' | 'azimuthRad'>,
+): Direction3 {
+  const cartesian = sphericalToCartesian(1, orbitState.polarRad, orbitState.azimuthRad);
+  return {
+    x: cartesian.x,
+    y: cartesian.y,
+    z: cartesian.z,
+  };
+}
+
+function directionToOrbitState(direction: Direction3, radiusM: number): CameraOrbitState {
+  const magnitude = Math.hypot(direction.x, direction.y, direction.z);
+  if (!Number.isFinite(magnitude) || magnitude <= 0) {
+    throw new RangeError('direction must be a finite non-zero vector');
+  }
+
+  const normalized = {
+    x: direction.x / magnitude,
+    y: direction.y / magnitude,
+    z: direction.z / magnitude,
+  };
+
+  return {
+    radiusM,
+    polarRad: Math.acos(clamp(normalized.y, -1, 1)),
+    azimuthRad: Math.atan2(normalized.z, normalized.x),
+  };
+}
+
+const TOP_DOWN_ORBIT_STATE = directionToOrbitState(
+  TOP_DOWN_ECLIPTIC_NORMAL_ICRF,
+  TOP_DOWN_ORBIT_RADIUS_M,
+);
+
+export const TOP_DOWN_ORBIT_POLAR_RAD = TOP_DOWN_ORBIT_STATE.polarRad;
+export const TOP_DOWN_ORBIT_AZIMUTH_RAD = TOP_DOWN_ORBIT_STATE.azimuthRad;
 
 function createBodyMesh(bodyId: BodyId): THREE.Mesh {
   if (bodyId === 'jupiter') {

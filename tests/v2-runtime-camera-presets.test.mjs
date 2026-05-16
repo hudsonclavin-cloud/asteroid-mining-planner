@@ -58,6 +58,15 @@ test('pressing t resolves to the top-down preset with the expected final orbit s
   assert.equal(preset.orbitState.azimuthRad, runtime.TOP_DOWN_ORBIT_AZIMUTH_RAD);
   assert.equal(preset.orbitState.radiusM, runtime.TOP_DOWN_ORBIT_RADIUS_M);
   assert.equal(preset.durationMs, runtime.TOP_DOWN_PRESET_DURATION_MS);
+
+  const presetDirection = runtime.orbitStateToCameraDirection(preset.orbitState);
+  const expectedDirection = runtime.TOP_DOWN_ECLIPTIC_NORMAL_ICRF;
+  const dot =
+    presetDirection.x * expectedDirection.x +
+    presetDirection.y * expectedDirection.y +
+    presetDirection.z * expectedDirection.z;
+  const maxAngleErrorRad = 2 * Math.PI / 180;
+  assert.ok(dot >= Math.cos(maxAngleErrorRad), `preset direction misaligned by more than 2 deg (dot=${dot})`);
 });
 
 test('camera tween locks controls during animation and releases them on completion', async () => {
@@ -78,9 +87,16 @@ test('camera tween locks controls during animation and releases them on completi
 
   const finalSample = tween.sampleCameraOrbitTween(orbitTween, 1_100);
   assert.ok(finalSample.completed);
-  assert.ok(Math.abs(finalSample.state.polarRad - runtime.TOP_DOWN_ORBIT_POLAR_RAD) < 1e-9);
-  assert.ok(finalSample.state.polarRad <= 0.05);
   assert.ok(Math.abs(finalSample.state.radiusM - runtime.TOP_DOWN_ORBIT_RADIUS_M) < 1e-3);
+
+  const finalDirection = runtime.orbitStateToCameraDirection(finalSample.state);
+  const expectedDirection = runtime.TOP_DOWN_ECLIPTIC_NORMAL_ICRF;
+  const dot =
+    finalDirection.x * expectedDirection.x +
+    finalDirection.y * expectedDirection.y +
+    finalDirection.z * expectedDirection.z;
+  const maxAngleErrorRad = 2 * Math.PI / 180;
+  assert.ok(dot >= Math.cos(maxAngleErrorRad), `final camera direction misaligned by more than 2 deg (dot=${dot})`);
 });
 
 test('existing regression shortcuts remain intact while t is no longer mapped to Titan focus', async () => {
