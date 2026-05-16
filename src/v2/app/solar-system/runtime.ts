@@ -142,8 +142,29 @@ export interface DateHudElement {
   textContent: string;
 }
 
+export interface PlanetHoverTooltipElement {
+  textContent: string;
+  style: {
+    display: string;
+    left: string;
+    top: string;
+  };
+}
+
 const J2000_TDB_JULIAN_DAY = 2451545;
 const TDB_MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const PLANET_HOVER_TOOLTIP_OFFSET_PX = 12;
+const PLANET_HOVER_TOOLTIP_THROTTLE_MS = 33;
+
+export const PLANET_HOVER_TOOLTIP_BODY_IDS: BodyId[] = [
+  'sun',
+  'mercury',
+  'venus',
+  'earth',
+  'mars',
+  'jupiter',
+  'saturn',
+];
 
 export interface CameraPreset {
   key: string;
@@ -279,6 +300,39 @@ export function formatTdbDateLabel(tdbSeconds: number): string {
 
 export function renderDateHud(element: DateHudElement, tdbSeconds: number): void {
   element.textContent = formatTdbDateLabel(tdbSeconds);
+}
+
+export function getBodyLabel(bodyId: BodyId): string {
+  return bodyId.charAt(0).toUpperCase() + bodyId.slice(1);
+}
+
+export function projectWorldPositionToViewport(
+  worldPosition: THREE.Vector3,
+  camera: THREE.Camera,
+  viewport: { width: number; height: number },
+): { x: number; y: number } {
+  const ndc = worldPosition.clone().project(camera);
+  return {
+    x: (ndc.x + 1) * 0.5 * viewport.width,
+    y: (1 - ndc.y) * 0.5 * viewport.height,
+  };
+}
+
+export function renderPlanetHoverTooltip(
+  element: PlanetHoverTooltipElement,
+  label: string | null,
+  screenPosition?: { x: number; y: number },
+): void {
+  if (!label || !screenPosition) {
+    element.textContent = '';
+    element.style.display = 'none';
+    return;
+  }
+
+  element.textContent = label;
+  element.style.left = `${Math.round(screenPosition.x + PLANET_HOVER_TOOLTIP_OFFSET_PX)}px`;
+  element.style.top = `${Math.round(screenPosition.y + PLANET_HOVER_TOOLTIP_OFFSET_PX)}px`;
+  element.style.display = 'block';
 }
 
 export function createMarsSystemRenderGroups(): {
@@ -460,6 +514,22 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   dateHud.style.pointerEvents = 'none';
   mount.appendChild(dateHud);
 
+  const planetHoverTooltip = document.createElement('div');
+  planetHoverTooltip.setAttribute('data-testid', 'planet-hover-tooltip');
+  planetHoverTooltip.className = 'planet-hover-tooltip';
+  planetHoverTooltip.style.position = 'absolute';
+  planetHoverTooltip.style.padding = '4px 6px';
+  planetHoverTooltip.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
+  planetHoverTooltip.style.fontSize = '13px';
+  planetHoverTooltip.style.lineHeight = '1.2';
+  planetHoverTooltip.style.color = '#ffffff';
+  planetHoverTooltip.style.background = 'rgba(0, 0, 0, 0.72)';
+  planetHoverTooltip.style.border = '1px solid rgba(255, 255, 255, 0.16)';
+  planetHoverTooltip.style.borderRadius = '4px';
+  planetHoverTooltip.style.pointerEvents = 'none';
+  planetHoverTooltip.style.display = 'none';
+  mount.appendChild(planetHoverTooltip);
+
   const scene = new THREE.Scene();
   const starRenderer = new StarRenderer(starCatalog, renderer.getPixelRatio());
   console.log('[slice8.5] StarRenderer constructed');
@@ -551,6 +621,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   let animationHandle = 0;
   const raycaster = new THREE.Raycaster();
   const pointerNdc = new THREE.Vector2();
+  const hoverTargetToBodyId = new Map<THREE.Object3D, BodyId>();
+  let lastPlanetHoverUpdateMs = Number.NEGATIVE_INFINITY;
 
   function getNativeState(bodyId: BodyId, tdbSeconds: number): CanonicalState {
     const state = interpolateBodyStateSeries(bodyId, stateSeries.get(bodyId)!, tdbSeconds);
@@ -629,6 +701,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       focusedAsteroidHud,
       isAsteroidFocusTarget(bodyId) ? getAsteroidBody(bodyId) : null,
     );
+  }
+
+  function hidePlanetHoverTooltip(): void {
+    renderPlanetHoverTooltip(planetHoverTooltip, null);
   }
 
   function getOuterSystemOverviewAnchor(tdbSeconds: number): Position3 {
@@ -865,6 +941,45 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     return asteroidRenderer.raycastIntersectCells(raycaster.ray);
   }
 
+  const hoverTargets = PLANET_HOVER_TOOLTIP_BODY_IDS
+    .map((bodyId) => {
+      const mesh = meshes.get(bodyId);
+      if (!mesh) {
+        return null;
+      }
+      hoverTargetToBodyId.set(mesh, bodyId);
+      return mesh;
+    })
+    .filter((mesh): mesh is THREE.Mesh => mesh !== null);
+
+  function updatePlanetHoverTooltip(clientX: number, clientY: number, nowMs = performance.now()): void {
+    if (nowMs - lastPlanetHoverUpdateMs < PLANET_HOVER_TOOLTIP_THROTTLE_MS) {
+      return;
+    }
+    lastPlanetHoverUpdateMs = nowMs;
+    updateRaycasterFromClient(clientX, clientY);
+    const intersections = raycaster.intersectObjects(hoverTargets, false);
+    const hovered = intersections[0];
+
+    if (!hovered) {
+      hidePlanetHoverTooltip();
+      return;
+    }
+
+    const bodyId = hoverTargetToBodyId.get(hovered.object);
+    if (!bodyId) {
+      hidePlanetHoverTooltip();
+      return;
+    }
+
+    const worldPosition = hovered.object.getWorldPosition(new THREE.Vector3());
+    const screenPosition = projectWorldPositionToViewport(worldPosition, camera, {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+    renderPlanetHoverTooltip(planetHoverTooltip, getBodyLabel(bodyId), screenPosition);
+  }
+
   function updatePointerCursor(clientX: number, clientY: number): void {
     if (pointerActive && pointerDragged) {
       setCursor('grabbing');
@@ -884,6 +999,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     pointerDownY = event.clientY;
     lastPointerX = event.clientX;
     lastPointerY = event.clientY;
+    hidePlanetHoverTooltip();
     setCursor('grabbing');
     renderer.domElement.setPointerCapture(event.pointerId);
   }
@@ -894,6 +1010,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
     if (!pointerActive) {
       updatePointerCursor(event.clientX, event.clientY);
+      updatePlanetHoverTooltip(event.clientX, event.clientY);
       return;
     }
     const dx = event.clientX - lastPointerX;
@@ -916,6 +1033,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     orbitPolar = clamp(orbitPolar + dy * ORBIT_SENSITIVITY, 0.001, Math.PI - 0.001);
     updateVisibleState();
     setCursor('grabbing');
+    hidePlanetHoverTooltip();
   }
 
   function onPointerUp(event: PointerEvent): void {
@@ -940,6 +1058,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       renderer.domElement.releasePointerCapture(event.pointerId);
     }
     updatePointerCursor(event.clientX, event.clientY);
+    updatePlanetHoverTooltip(event.clientX, event.clientY);
   }
 
   function onWheel(event: WheelEvent): void {
@@ -1047,6 +1166,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     window.removeEventListener('keydown', onKeyDown);
     focusedAsteroidHud.remove();
     dateHud.remove();
+    planetHoverTooltip.remove();
     starRenderer.dispose();
     haloSystem.dispose();
     asteroidRenderer.dispose();
