@@ -88,6 +88,28 @@ function intersectRayWithGridKm(ray: THREE.Ray): { tMin: number; tMax: number } 
   return { tMin, tMax };
 }
 
+function intersectRaySphereDistanceM(
+  ray: THREE.Ray,
+  sphereCenterM: THREE.Vector3,
+  sphereRadiusM: number,
+): number | null {
+  const offset = sphereCenterM.clone().sub(ray.origin);
+  const projectedDistance = offset.dot(ray.direction);
+  const centerDistanceSquared = offset.lengthSq() - projectedDistance ** 2;
+  const radiusSquared = sphereRadiusM ** 2;
+  if (centerDistanceSquared > radiusSquared) {
+    return null;
+  }
+
+  const halfChord = Math.sqrt(radiusSquared - centerDistanceSquared);
+  const nearDistance = projectedDistance - halfChord;
+  const farDistance = projectedDistance + halfChord;
+  if (farDistance < 0) {
+    return null;
+  }
+  return nearDistance >= 0 ? nearDistance : farDistance;
+}
+
 export class AsteroidCellRenderer {
   private readonly asteroids: readonly AsteroidBody[];
   private readonly root = new THREE.Group();
@@ -109,8 +131,8 @@ export class AsteroidCellRenderer {
   private readonly canonicalRay = new THREE.Ray();
   private readonly canonicalRayOriginKm = new THREE.Vector3();
   private readonly canonicalRayDirectionKm = new THREE.Vector3();
-  private readonly raycastHelper = new THREE.Raycaster();
   private readonly traversalPositionKm = new THREE.Vector3();
+  private readonly pickCanonicalRay = new THREE.Ray();
   private readonly lastCanonicalPositionsM: THREE.Vector3[];
   private readonly cellKeyByBodyIndex: string[];
   private visibleCells = 0;
@@ -266,24 +288,30 @@ export class AsteroidCellRenderer {
     const tDeltaY = stepY === 0 ? Number.POSITIVE_INFINITY : (SPATIAL_GRID_CELL_SIZE_AU * 149_597_870.7) / Math.abs(this.canonicalRayDirectionKm.y);
     const tDeltaZ = stepZ === 0 ? Number.POSITIVE_INFINITY : (SPATIAL_GRID_CELL_SIZE_AU * 149_597_870.7) / Math.abs(this.canonicalRayDirectionKm.z);
 
-    this.raycastHelper.ray.copy(ray);
+    this.pickCanonicalRay.origin.copy(this.canonicalRayOriginKm).multiplyScalar(METERS_PER_KILOMETER);
+    this.pickCanonicalRay.direction.copy(ray.direction);
 
     for (let steps = 0; steps < SPATIAL_GRID_TOTAL_CELLS && currentT <= intersectionRange.tMax; steps += 1) {
       const cell = this.cellsByKey.get(cellKeyForIndex(currentIndex));
-      if (cell && cell.mesh.visible && cell.mesh.count > 0) {
-        const intersections = this.raycastHelper.intersectObject(cell.mesh, false);
-        for (const intersection of intersections) {
-          if (typeof intersection.instanceId !== 'number') {
+      if (cell) {
+        for (const bodyIndex of cell.bodyIndices) {
+          if (!this.instancedBodyMask[bodyIndex]) {
             continue;
           }
-          const bodyIndex = cell.visibleBodyIndices[intersection.instanceId];
-          if (typeof bodyIndex !== 'number') {
+
+          const hitDistance = intersectRaySphereDistanceM(
+            this.pickCanonicalRay,
+            this.lastCanonicalPositionsM[bodyIndex],
+            this.asteroids[bodyIndex].estimatedRadiusM,
+          );
+          if (hitDistance === null) {
             continue;
           }
-          if (!bestHit || intersection.distance < bestHit.distance) {
+
+          if (!bestHit || hitDistance < bestHit.distance) {
             bestHit = {
               bodyIndex,
-              distance: intersection.distance,
+              distance: hitDistance,
             };
           }
         }
