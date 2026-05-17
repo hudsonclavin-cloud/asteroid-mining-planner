@@ -31,7 +31,19 @@ NOT the reactive graph. Reference convergence: kepler.gl, Spoke, CesiumJS.
 DEC-3 — Ingestion: SBDB bulk filtered query (sb-group=neo). Horizons demoted to
 validation-only. Quality fields inline (condition_code, data_arc, n_obs_used,
 sigma_a, sigma_e). Live count pulled at build time. Per-object Horizons anchoring
-(Slice 7/8 pattern) is the WRONG mechanism at 42k scale.
+(Slice 7/8 pattern) is the WRONG mechanism at 42k scale. AMENDED Sun 2026-05-17
+(post Phase-A.3 diagnostic, commit c5ca25b): SBDB bulk remains the source for
+catalog MEMBERSHIP and METADATA at 42k scale (DEC-3's volume reasoning holds).
+However, SBDB osculating ELEMENTS carry an epoch-staleness accuracy hole —
+bodies with old element epochs propagate to million-km errors despite being
+dynamically quiet. RESOLUTION: HYBRID ingestion. SBDB bulk for membership/
+metadata/fresh-element bodies; Horizons RE-ANCHOR for the stale subset (element
+epoch staleness beyond threshold T, T set in OQ-6 amendment); second-gate as
+honest backstop for any stale body that cannot be re-anchored. This does not
+overturn DEC-3 — it adds the Horizons-anchored accuracy layer that Slices 7/8
+already established as the project's accuracy foundation, applied only where
+staleness demands it. Bounded re-anchor (~12k bodies at >180d, not all 42k)
+uses the Slice 8 9k-ingestion fail-closed/resume-safe/overnight pattern.
 
 DEC-4 — Quality: ingest all, visually down-rank / flag low-confidence. NEAs are
 disproportionately short-arc/uncertain. Matches the honest-astronomy thesis.
@@ -115,11 +127,49 @@ LOCKED TIER STRUCTURE:
 Architectural note: primary classifier is the encounter-flag (categorical); the
 km benchmark is validation + backstop, NOT the primary bar.
 
+AMENDED Sun 2026-05-17 — STALENESS AXIS (orthogonal second failure mode).
+Phase A.3 validated the encounter-flag classifier on the production fixture:
+6/6 encounter-flagged → not-Kepler-safe, zero mis-tiered. The encounter-flag
+classifier STANDS for dynamical failure. BUT 21 of 67 not-flagged sample bodies
+exceeded the 50,000 km viz envelope (worst 15.4M km) — a ~400× discrepancy vs
+Task 3 (which Horizons-anchored its sample). Diagnostic verdict (commit c5ca25b):
+root cause (a) SBDB-epoch/quality gap, NOT non-Keplerian dynamics, NOT an
+ingestion bug (Q3 audit clean). Q2 reproduction was decisive: Horizons re-anchor
+collapses every worst offender to Task-3-regime error.
+- Q1 separator: epoch staleness, Spearman rho 0.611 vs error (clearest; ecc
+  0.387, condition_code 0.206, data_arc -0.192). Not perfectly disjoint like
+  the encounter-flag was, but the clearest single predictor.
+- Q4 population impact (full 41,775 viz-tier): staleness >180d: 11,804;
+  >365d: 11,259; >730d: 9,968; >1460d: 7,924.
+REVISED OQ-6 TIER STRUCTURE — TWO orthogonal gates, both must pass for viz-tier:
+* Gate 1 (dynamical, UNCHANGED): NOT CAD encounter-flagged. Flagged →
+  not-Kepler-safe. (Validated 6/6 on production fixture.)
+* Gate 2 (data freshness, NEW): element epoch staleness within threshold T,
+  OR the body was Horizons re-anchored during ingestion (hybrid path). Stale-
+  and-not-re-anchored → not-Kepler-safe (the second-gate backstop).
+* visualization-tier = passes BOTH gates.
+* planning-tier: unchanged (named UI/policy label, semantics deferred to S10).
+STALENESS THRESHOLD T: set at 180 days as the working value (Q1 within-envelope
+max was 46,324 km; the clean ~40 bodies cluster below ~180d staleness; >180d is
+where the over-envelope population concentrates). T is the re-anchor trigger AND
+the second-gate trigger. T is revisitable if Phase A re-anchor measurement shows
+a cleaner cut, same measure-then-confirm discipline as every other threshold.
+The ~50,000 km benchmark remains a VALIDATION backstop in the cutover harness
+(post-re-anchor, the re-anchored bodies must fall within it — that's how the
+harness proves the hybrid worked), NOT a primary per-body classifier.
+
 ## §4 Phase structure
 
-- Phase A — NEA catalog: SBDB bulk ingestion (41,902), quality fields, fixture
-  build, INV-014 cutover harness (encounter-flag-primary tier assignment +
-  ~50k km viz backstop).
+- Phase A — NEA catalog, HYBRID ingestion: (A.1 SBDB bulk pull — DONE, commit
+  5620669) → (A.2 fixture builder — DONE, commit 72793d8, reused as-is) →
+  (A.2b NEW: Horizons re-anchor the stale subset, staleness >T=180d, fail-closed/
+  resume-safe/overnight per Slice 8 9k pattern; re-anchored elements replace SBDB
+  elements in the fixture; non-stale bodies keep SBDB elements) → (A.3 cutover
+  harness, REVISED: validates BOTH OQ-6 gates — every encounter-flagged →
+  not-Kepler-safe AND every viz-tier body (post-re-anchor) within the 50k km
+  envelope AND every stale-not-re-anchored body → not-Kepler-safe). A.3 was
+  blocked by the OQ-6 invalidation; it unblocks once A.2b lands and the revised
+  harness is written against the two-gate structure.
 - Phase B — Spatial index at 42k: ONE measurement pass evaluating uniform 0.5 AU
   vs coarse+sub-partition hybrid AND main-thread vs Web-Worker propagation;
   then rendering integration on whichever the data selects.
@@ -151,3 +201,9 @@ on uncertainty visualization (out of Slice 9 scope).
 SLICE 9 SCOPING COMPLETE. Every DEC and OQ resolved with data behind each. Next:
 Phase A/B/C implementation dispatches written against this contract. Phase A
 first (catalog + fixture + INV-014 cutover harness).
+
+Sun 2026-05-17: OQ-6 amended (staleness axis, two-gate structure). DEC-3
+amended (hybrid ingestion). Phase A.1/A.2 valid and committed. Phase A.2b
+(Horizons re-anchor stale subset) is the next implementation dispatch. A.3
+unblocks after A.2b. Scoping is complete again — the amendment resolves the
+only open item (the A.3 OQ-6 invalidation).
