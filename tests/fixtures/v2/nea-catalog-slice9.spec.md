@@ -7,6 +7,7 @@ It captures the full JPL SBDB `sb-group=neo` catalog as of build time, with:
 
 - per-object osculating elements from SBDB
 - anchor state derived by propagating those SBDB elements at the element epoch
+- optional Horizons re-anchor replacement for stale-element bodies
 - inline quality metadata
 - CAD-window-backed `inv014Tier` assignment
 
@@ -99,7 +100,9 @@ This fixture is data only. It does not choose renderer, spatial-index, or ui-hud
   "sigmaA": 1e-9,
   "sigmaE": 1e-9,
   "inv014Tier": "visualization-tier",
-  "qualityRank": 0.972341
+  "qualityRank": 0.972341,
+  "anchorSource": "sbdb",
+  "reanchorEpochTdbJd": null
 }
 ```
 
@@ -125,6 +128,22 @@ The fixture does **not** numerically assign the future `planning-tier`.
 
 The ~50,000 km visualization envelope is validated by the Slice 9 cutover harness, not recomputed per body at fixture-build time.
 
+## Hybrid anchor semantics
+
+Slice 9 A.2b amends the original SBDB-only anchor policy with a stale-body re-anchor pass.
+
+- `anchorSource: "sbdb"`
+  - body kept its original SBDB osculating elements and anchor
+  - expected for fresh bodies (`staleness <= T`) and any non-stale anomaly-tail body
+- `anchorSource: "horizons-reanchor"`
+  - body exceeded the stale threshold and was refreshed from a recent Horizons state
+  - `reanchorEpochTdbJd` must be present
+  - `anchor.epochTdbJd`, `elements.epochTdbJd`, and `reanchorEpochTdbJd` must all match
+- `anchorSource: "stale-unanchored"`
+  - body exceeded the stale threshold but Horizons could not resolve a replacement anchor
+  - body must be tagged `inv014Tier = "not-kepler-safe"`
+  - `reanchorEpochTdbJd` must be `null`
+
 ## qualityRank
 
 `qualityRank` is a documented scalar for future Slice 9 Phase C down-ranking. It does **not** prescribe UI visuals.
@@ -145,8 +164,17 @@ Interpretation:
 
 ## Anchor semantics
 
-Unlike Slice 7/8, Slice 9 does **not** use a common Horizons anchor epoch.
+Slice 9 supports two anchor paths:
 
-- `anchor` is derived by propagating each body's own SBDB osculating elements at that body's own `elements.epochTdbJd`
+- SBDB path
+  - `anchor` is derived by propagating each body's own SBDB osculating elements at that body's own `elements.epochTdbJd`
+  - `anchorSource` is `sbdb`
+- Horizons re-anchor path
+  - stale bodies are refreshed from a Horizons state at a common re-anchor epoch
+  - refreshed elements are derived from that state and replace the stale SBDB elements in the fixture
+  - `anchorSource` is `horizons-reanchor`
+
+For both paths:
+
 - `anchor.epochTdbJd` must equal `elements.epochTdbJd`
 - anchor vectors are stored in heliocentric ICRF/J2000 kilometers and km/s

@@ -15,6 +15,7 @@ import {
 } from '../core/index.js';
 
 export type Slice9Inv014Tier = 'visualization-tier' | 'planning-tier' | 'not-kepler-safe';
+export type Slice9AnchorSource = 'sbdb' | 'horizons-reanchor' | 'stale-unanchored';
 
 export interface Slice9AsteroidAnchorFixture {
   epochTdbJd: number;
@@ -55,6 +56,8 @@ export interface Slice9AsteroidFixtureRecord {
   sigmaE: number | null;
   inv014Tier: Slice9Inv014Tier;
   qualityRank: number;
+  anchorSource?: Slice9AnchorSource;
+  reanchorEpochTdbJd?: number | null;
 }
 
 export interface Slice9CatalogSummaryFixture {
@@ -124,6 +127,8 @@ export interface Slice9NeaBody {
   readonly sigmaE: number | null;
   readonly inv014Tier: Slice9Inv014Tier;
   readonly qualityRank: number;
+  readonly anchorSource: Slice9AnchorSource;
+  readonly reanchorEpochTdbJd: number | null;
   readonly anchorState: CanonicalState;
   readonly elements: {
     readonly aM: number;
@@ -201,6 +206,13 @@ function assertInv014Tier(value: unknown, label: string): Slice9Inv014Tier {
     value !== 'planning-tier' &&
     value !== 'not-kepler-safe'
   ) {
+    throw new Error(`Slice 9 ingestion expected valid ${label}; received ${String(value)}`);
+  }
+  return value;
+}
+
+function assertAnchorSource(value: unknown, label: string): Slice9AnchorSource {
+  if (value !== 'sbdb' && value !== 'horizons-reanchor' && value !== 'stale-unanchored') {
     throw new Error(`Slice 9 ingestion expected valid ${label}; received ${String(value)}`);
   }
   return value;
@@ -297,6 +309,22 @@ function ingestSlice9Asteroid(bodyIdKey: string, asteroid: Slice9AsteroidFixture
   if (qualityRank < 0 || qualityRank > 1) {
     throw new Error(`Slice 9 qualityRank for "${bodyIdKey}" must be within [0, 1]`);
   }
+  const anchorSource = assertAnchorSource(
+    asteroid.anchorSource ?? 'sbdb',
+    `${bodyIdKey}.anchorSource`,
+  );
+  const reanchorEpochTdbJd = assertFiniteNullableNumber(
+    asteroid.reanchorEpochTdbJd ?? null,
+    `${bodyIdKey}.reanchorEpochTdbJd`,
+  );
+  if (anchorSource === 'horizons-reanchor' && reanchorEpochTdbJd === null) {
+    throw new Error(`Slice 9 re-anchored body "${bodyIdKey}" must define reanchorEpochTdbJd`);
+  }
+  if (anchorSource !== 'horizons-reanchor' && reanchorEpochTdbJd !== null) {
+    throw new Error(
+      `Slice 9 body "${bodyIdKey}" must not define reanchorEpochTdbJd unless anchorSource is horizons-reanchor`,
+    );
+  }
 
   const estimatedRadiusM = assertFiniteNullableNumber(
     asteroid.estimatedRadiusM,
@@ -332,6 +360,8 @@ function ingestSlice9Asteroid(bodyIdKey: string, asteroid: Slice9AsteroidFixture
     sigmaE: assertFiniteNullableNumber(asteroid.sigmaE, `${bodyIdKey}.sigmaE`),
     inv014Tier: assertInv014Tier(asteroid.inv014Tier, `${bodyIdKey}.inv014Tier`),
     qualityRank,
+    anchorSource,
+    reanchorEpochTdbJd,
     anchorState: createCanonicalState({
       frame: FRAME_HELIO_J2000_ICRF,
       tdbSeconds: jdTdbToSecondsSinceJ2000(anchorEpoch),

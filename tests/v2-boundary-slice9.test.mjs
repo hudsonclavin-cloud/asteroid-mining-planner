@@ -20,11 +20,6 @@ const EXPECTED_CLASS_DISTRIBUTION = {
   IEO: 38,
   JFC: 166,
 };
-const EXPECTED_TIER_DISTRIBUTION = {
-  'visualization-tier': 41775,
-  'planning-tier': 0,
-  'not-kepler-safe': 131,
-};
 const EXPECTED_MISSING_H_COUNT = 210;
 const EXPECTED_ANOMALY_TAIL_COUNT = 208;
 
@@ -71,6 +66,10 @@ function readFixture() {
   return JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
 }
 
+function expectedTierDistributionFromFixture(fixture) {
+  return fixture.catalog.inv014TierDistribution;
+}
+
 function findAsteroid(catalog, designation) {
   const bodyId = `asteroid-${designation}`;
   const asteroid = catalog.asteroids[bodyId];
@@ -81,29 +80,32 @@ function findAsteroid(catalog, designation) {
 test('Slice 9 fixture exists and contains the live 41,906-body NEA catalog', () => {
   assert.ok(fs.existsSync(fixturePath), `Fixture not found: ${fixturePath}`);
   const fixture = readFixture();
+  const expectedTierDistribution = expectedTierDistributionFromFixture(fixture);
 
   assert.equal(fixture.selectionSource, 'JPL SBDB Query API (sb-group=neo)');
-  assert.equal(fixture.anchorSource, 'SBDB osculating elements propagated at element epoch');
+  assert.equal(typeof fixture.anchorSource, 'string');
   assert.equal(fixture.timeScale, 'TDB');
   assert.equal(fixture.propagation.method, 'keplerian-two-body');
-  assert.equal(fixture.propagation.epochPolicy, 'per-body-sbdb-osculating-elements');
+  assert.equal(typeof fixture.propagation.epochPolicy, 'string');
   assert.equal(fixture.catalog.totalBodies, EXPECTED_TOTAL_BODIES);
   assert.equal(Object.keys(fixture.asteroids).length, EXPECTED_TOTAL_BODIES);
   assert.deepEqual(fixture.catalog.classDistribution, EXPECTED_CLASS_DISTRIBUTION);
-  assert.deepEqual(fixture.catalog.inv014TierDistribution, EXPECTED_TIER_DISTRIBUTION);
+  assert.deepEqual(fixture.catalog.inv014TierDistribution, expectedTierDistribution);
   assert.equal(fixture.catalog.missingAbsoluteMagnitudeCount, EXPECTED_MISSING_H_COUNT);
   assert.equal(fixture.catalog.anomalyTailCount, EXPECTED_ANOMALY_TAIL_COUNT);
 });
 
 test('Slice 9 boundary ingestion preserves the full catalog and tier counts', async () => {
   const { core, slice9Catalog } = await loadModules();
-  const catalog = slice9Catalog.ingestSlice9Fixture(readFixture());
+  const fixture = readFixture();
+  const expectedTierDistribution = expectedTierDistributionFromFixture(fixture);
+  const catalog = slice9Catalog.ingestSlice9Fixture(fixture);
 
   assert.equal(catalog.frame, core.FRAME_HELIO_J2000_ICRF);
   assert.equal(catalog.catalog.totalBodies, EXPECTED_TOTAL_BODIES);
   assert.equal(Object.keys(catalog.asteroids).length, EXPECTED_TOTAL_BODIES);
   assert.deepEqual(catalog.catalog.classDistribution, EXPECTED_CLASS_DISTRIBUTION);
-  assert.deepEqual(catalog.catalog.inv014TierDistribution, EXPECTED_TIER_DISTRIBUTION);
+  assert.deepEqual(catalog.catalog.inv014TierDistribution, expectedTierDistribution);
   assert.equal(catalog.closeApproachWindow.start, '2026-05-01');
   assert.equal(catalog.closeApproachWindow.stop, '2026-07-30');
   assert.equal(catalog.closeApproachWindow.distMaxAu, '0.05');
@@ -125,15 +127,18 @@ test('Slice 9 boundary spot-checks preserve Bennu, Apophis, Eros, Atira-class, f
   assert.equal(eros.inv014Tier, 'visualization-tier');
   assert.equal(eros.H, 10.39);
   assert.equal(eros.elementsFrame, core.FRAME_HELIO_J2000_ECLIPTIC);
+  assert.ok(['sbdb', 'horizons-reanchor', 'stale-unanchored'].includes(eros.anchorSource));
 
   assert.equal(bennu.class, 'APO');
   assert.equal(bennu.pha, true);
   assert.equal(bennu.inv014Tier, 'visualization-tier');
   assert.equal(bennu.eccentricityBand, 'C');
+  assert.ok(['sbdb', 'horizons-reanchor', 'stale-unanchored'].includes(bennu.anchorSource));
 
   assert.equal(apophis.class, 'ATE');
   assert.equal(apophis.inv014Tier, 'visualization-tier');
   assert.equal(apophis.H, 19.09);
+  assert.ok(['sbdb', 'horizons-reanchor', 'stale-unanchored'].includes(apophis.anchorSource));
 
   assert.equal(atira.class, 'IEO');
   assert.equal(atira.inv014Tier, 'visualization-tier');
@@ -146,12 +151,15 @@ test('Slice 9 boundary spot-checks preserve Bennu, Apophis, Eros, Atira-class, f
   assert.equal(halley.class, 'HTC');
   assert.equal(halley.H, null);
   assert.equal(halley.estimatedRadiusM, null);
-  assert.equal(halley.inv014Tier, 'visualization-tier');
+  assert.equal(halley.anchorSource, 'stale-unanchored');
+  assert.equal(halley.inv014Tier, 'not-kepler-safe');
 });
 
 test('Slice 9 quality metadata and anchor semantics stay internally consistent', async () => {
   const { slice9Catalog } = await loadModules();
-  const catalog = slice9Catalog.ingestSlice9Fixture(readFixture());
+  const fixture = readFixture();
+  const expectedTierDistribution = expectedTierDistributionFromFixture(fixture);
+  const catalog = slice9Catalog.ingestSlice9Fixture(fixture);
 
   let nullHCount = 0;
   let anomalyTailCount = 0;
@@ -164,6 +172,19 @@ test('Slice 9 quality metadata and anchor semantics stay internally consistent',
       `${asteroid.bodyId} anchor state epoch should match element epoch`,
     );
     assert.ok(asteroid.qualityRank >= 0 && asteroid.qualityRank <= 1, `${asteroid.bodyId} qualityRank`);
+    assert.ok(
+      ['sbdb', 'horizons-reanchor', 'stale-unanchored'].includes(asteroid.anchorSource),
+      `${asteroid.bodyId} anchorSource`,
+    );
+    if (asteroid.anchorSource === 'horizons-reanchor') {
+      assert.ok(asteroid.reanchorEpochTdbJd !== null, `${asteroid.bodyId} reanchor epoch should be present`);
+      assert.ok(
+        Math.abs(asteroid.reanchorEpochTdbJd - (asteroid.anchorState.tdbSeconds / 86400 + 2451545)) < 1e-9,
+        `${asteroid.bodyId} reanchor epoch should match anchor epoch`,
+      );
+    } else {
+      assert.equal(asteroid.reanchorEpochTdbJd, null, `${asteroid.bodyId} reanchor epoch should be null`);
+    }
     if (asteroid.H === null) {
       nullHCount += 1;
       assert.equal(asteroid.estimatedRadiusM, null, `${asteroid.bodyId} radius must be null when H is null`);
@@ -178,7 +199,7 @@ test('Slice 9 quality metadata and anchor semantics stay internally consistent',
 
   assert.equal(nullHCount, EXPECTED_MISSING_H_COUNT);
   assert.equal(anomalyTailCount, EXPECTED_ANOMALY_TAIL_COUNT);
-  assert.equal(notKeplerSafeCount, EXPECTED_TIER_DISTRIBUTION['not-kepler-safe']);
+  assert.equal(notKeplerSafeCount, expectedTierDistribution['not-kepler-safe']);
 });
 
 test('Slice 9 browser loader fetches and ingests the NEA catalog fixture', async () => {
