@@ -307,3 +307,34 @@ amended (hybrid ingestion). Phase A.1/A.2 valid and committed. Phase A.2b
 (Horizons re-anchor stale subset) is the next implementation dispatch. A.3
 unblocks after A.2b. Scoping is complete again — the amendment resolves the
 only open item (the A.3 OQ-6 invalidation).
+
+Wed 2026-05-20: PHASE A CLOSED.
+Path A executed (29,792/29,792 re-anchored, zero unresolved).
+Anomaly-tail Gate 3 applied (208 cometary bodies → not-Kepler-safe).
+Phase A.3 three-gate cutover harness committed, all gates passing.
+Viz-tier contract redefined per third amendment as three-gate pass +
+documented statistical residual (1/61 = 1.6% envelope exceedance in the
+committed cutover sample, quality-driven and predominantly APO).
+
+Final inv014Tier distribution across 41,906 NEAs (from committed
+post-swap fixture):
+- visualization-tier: 41,558 (99.17%)
+- not-Kepler-safe: 348 (0.83%)
+  * encounter-flagged: 131
+  * stale-unanchored: 58 (A.2b residue, all from initial run; A.2b-extension had 0)
+  * anomaly-tail: 208
+- planning-tier: 0 (UI/policy label, semantics deferred to S10)
+
+Measured residual envelope-exceedance rate (viz-tier sample):
+1/61 = 1.6% (2026 GG at 91,315 km; APO, conditionCode=8, dataArcDays=13).
+This is documented per the third amendment as a known limitation rather than
+a fourth classifier gate.
+
+By-class staleness/quality sensitivity insight (for Slice 10 reference):
+APO is the most quality-sensitive class along both axes (72% over-envelope at
+90-180d staleness; 3.4% over-envelope in the quality-risk sample). Slice 10
+mission-target scoring should treat APO conditionCode + dataArc as targeting
+risk signals even though they don't affect rendering tier.
+
+Phase A is closed. Ready for Phase B implementation against the committed
+Phase B spec (c444609).
