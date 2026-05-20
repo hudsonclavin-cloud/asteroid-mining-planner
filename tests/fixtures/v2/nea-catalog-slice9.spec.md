@@ -120,8 +120,12 @@ The fixture does **not** numerically assign the future `planning-tier`.
 - `not-kepler-safe`
   - body has at least one CAD close approach within the standard validation window
   - window is recorded in `closeApproachWindow`
+  - OR body is anomaly-tail / cometary (`orbitClass` in `{ETC, HTC, JFC}`)
+  - OR body is stale-unanchored (`anchorSource = "stale-unanchored"`)
 - `visualization-tier`
   - body is **not** CAD-flagged in that window
+  - AND body is **not** anomaly-tail / cometary
+  - AND body is not stale-unanchored
 - `planning-tier`
   - reserved product/policy label for Slice 10 consumption
   - distribution is expected to remain `0` in the Slice 9 fixture

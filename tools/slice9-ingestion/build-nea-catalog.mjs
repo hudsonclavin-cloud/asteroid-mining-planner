@@ -32,6 +32,7 @@ const CAD_DIST_MAX_AU = '0.05';
 const CAD_BODIES = ['Earth', 'Venus'];
 const QUALITY_RANK_FORMULA =
   'qualityRank = clamp01(0.6 * (condition_code == null ? 0 : 1 - condition_code / 9) + 0.4 * (data_arc_days == null ? 0 : log10(1 + data_arc_days) / log10(1001)))';
+const ANOMALY_TAIL_CLASSES = new Set(['ETC', 'HTC', 'JFC']);
 
 const SBDB_FIELDS = [
   'spkid',
@@ -184,13 +185,15 @@ function buildFixture(rows, cadWindow) {
 
   for (const row of rows) {
     const flaggedBodies = cadWindow.flaggedByDesignation.get(row.designation) ?? [];
-    const inv014Tier = flaggedBodies.length > 0 ? 'not-kepler-safe' : 'visualization-tier';
+    const isAnomalyTail = ANOMALY_TAIL_CLASSES.has(row.orbitClass);
+    const inv014Tier =
+      flaggedBodies.length > 0 || isAnomalyTail ? 'not-kepler-safe' : 'visualization-tier';
     const estimatedRadiusM =
       row.hAbsMag === null ? null : deriveAsteroidRadiusMFromAbsoluteMagnitude(row.hAbsMag);
     if (row.hAbsMag === null) {
       missingAbsoluteMagnitudeCount += 1;
     }
-    if (!['AMO', 'APO', 'ATE', 'IEO'].includes(row.orbitClass)) {
+    if (isAnomalyTail) {
       anomalyTailCount += 1;
     }
 

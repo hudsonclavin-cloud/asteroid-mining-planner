@@ -159,6 +159,7 @@ const slice9NeaCatalogFixtureUrl = new URL(
   '../../../tests/fixtures/v2/nea-catalog-slice9.json',
   import.meta.url,
 );
+const SLICE9_ANOMALY_TAIL_CLASSES = new Set(['ETC', 'HTC', 'JFC']);
 
 function assertFiniteNumber(value: unknown, label: string): number {
   const numeric = Number(value);
@@ -337,6 +338,14 @@ function ingestSlice9Asteroid(bodyIdKey: string, asteroid: Slice9AsteroidFixture
   const hAbsMag = assertFiniteNullableNumber(asteroid.H, `${bodyIdKey}.H`);
   const gSlope = assertFiniteNullableNumber(asteroid.G, `${bodyIdKey}.G`);
 
+  const orbitClass = assertNonEmptyString(asteroid.orbitClass, `${bodyIdKey}.orbitClass`) as AsteroidOrbitClass;
+  const inv014Tier = assertInv014Tier(asteroid.inv014Tier, `${bodyIdKey}.inv014Tier`);
+  if (SLICE9_ANOMALY_TAIL_CLASSES.has(orbitClass) && inv014Tier !== 'not-kepler-safe') {
+    throw new Error(
+      `Slice 9 anomaly-tail body "${bodyIdKey}" must be tagged not-kepler-safe; received ${inv014Tier}`,
+    );
+  }
+
   return {
     bodyId: expectedBodyId,
     bodyClass: 'asteroid',
@@ -344,7 +353,7 @@ function ingestSlice9Asteroid(bodyIdKey: string, asteroid: Slice9AsteroidFixture
     spkId: assertFiniteNumber(asteroid.spkId, `${bodyIdKey}.spkId`),
     name: asteroid.name ?? null,
     class: assertNonEmptyString(asteroid.class, `${bodyIdKey}.class`) as AsteroidOrbitClass,
-    orbitClass: assertNonEmptyString(asteroid.orbitClass, `${bodyIdKey}.orbitClass`) as AsteroidOrbitClass,
+    orbitClass,
     isCuratedNea: assertBoolean(asteroid.isCuratedNea, `${bodyIdKey}.isCuratedNea`),
     neo: assertBoolean(asteroid.neo, `${bodyIdKey}.neo`),
     pha: assertBoolean(asteroid.pha, `${bodyIdKey}.pha`),
@@ -358,7 +367,7 @@ function ingestSlice9Asteroid(bodyIdKey: string, asteroid: Slice9AsteroidFixture
     nObsUsed: assertFiniteNullableNumber(asteroid.nObsUsed, `${bodyIdKey}.nObsUsed`),
     sigmaA: assertFiniteNullableNumber(asteroid.sigmaA, `${bodyIdKey}.sigmaA`),
     sigmaE: assertFiniteNullableNumber(asteroid.sigmaE, `${bodyIdKey}.sigmaE`),
-    inv014Tier: assertInv014Tier(asteroid.inv014Tier, `${bodyIdKey}.inv014Tier`),
+    inv014Tier,
     qualityRank,
     anchorSource,
     reanchorEpochTdbJd,
