@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { cartesianToElements } from '../slice7-research/state-to-elements.mjs';
 import { parseSingleState } from '../slice8-research/horizons.mjs';
@@ -14,6 +15,7 @@ import {
   writeJsonAtomic,
 } from '../slice9-research/common.mjs';
 import { propagateKeplerian } from '../slice9-research/keplerian-offline.mjs';
+import { recomputeDerivedFields } from './derived-fields.mjs';
 
 const INGESTION_ROOT = path.dirname(new URL(import.meta.url).pathname);
 const DATA_DIR = path.join(INGESTION_ROOT, 'data');
@@ -262,7 +264,7 @@ async function fetchReanchorState(record) {
   };
 }
 
-function applyReanchor(record, fetchedState) {
+export function applyReanchor(record, fetchedState) {
   const elements = cartesianToElements(fetchedState.state);
   record.anchor = {
     epochTdbJd: fetchedState.state.epoch_tdb_jd,
@@ -280,6 +282,7 @@ function applyReanchor(record, fetchedState) {
   };
   record.anchorSource = 'horizons-reanchor';
   record.reanchorEpochTdbJd = fetchedState.state.epoch_tdb_jd;
+  recomputeDerivedFields(record);
 }
 
 function markStaleUnanchored(record) {
@@ -512,24 +515,30 @@ async function main() {
   );
 }
 
-main().catch(async (error) => {
-  try {
-    const fixture = await readJson(FIXTURE_PATH);
-    normalizeFixtureMetadata(fixture);
-    const checkpoint = (await loadCheckpoint()) ?? {};
-    const inventoryBodyIds = checkpoint.inventoryBodyIds ?? listOriginalStaleBodyIds(fixture);
-    const state = {
-      nextFetchIndex: checkpoint.nextFetchIndex ?? 0,
-      reanchoredCount: checkpoint.reanchoredCount ?? 0,
-      staleUnanchoredCount: checkpoint.staleUnanchoredCount ?? 0,
-      lastCompletedDesignation: checkpoint.lastCompletedDesignation ?? null,
-      status: 'failed',
-    };
-    const unresolvedBodies = Array.isArray(checkpoint.unresolvedBodies) ? checkpoint.unresolvedBodies : [];
-    await saveProgress(fixture, inventoryBodyIds, state, unresolvedBodies);
-  } catch {
-    // Best effort only; preserve the original failure below.
-  }
-  console.error(error instanceof Error ? error.stack : String(error));
-  process.exitCode = 1;
-});
+const isDirectRun =
+  typeof process.argv[1] === 'string' &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  main().catch(async (error) => {
+    try {
+      const fixture = await readJson(FIXTURE_PATH);
+      normalizeFixtureMetadata(fixture);
+      const checkpoint = (await loadCheckpoint()) ?? {};
+      const inventoryBodyIds = checkpoint.inventoryBodyIds ?? listOriginalStaleBodyIds(fixture);
+      const state = {
+        nextFetchIndex: checkpoint.nextFetchIndex ?? 0,
+        reanchoredCount: checkpoint.reanchoredCount ?? 0,
+        staleUnanchoredCount: checkpoint.staleUnanchoredCount ?? 0,
+        lastCompletedDesignation: checkpoint.lastCompletedDesignation ?? null,
+        status: 'failed',
+      };
+      const unresolvedBodies = Array.isArray(checkpoint.unresolvedBodies) ? checkpoint.unresolvedBodies : [];
+      await saveProgress(fixture, inventoryBodyIds, state, unresolvedBodies);
+    } catch {
+      // Best effort only; preserve the original failure below.
+    }
+    console.error(error instanceof Error ? error.stack : String(error));
+    process.exitCode = 1;
+  });
+}

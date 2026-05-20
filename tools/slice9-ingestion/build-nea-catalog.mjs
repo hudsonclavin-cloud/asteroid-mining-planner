@@ -15,6 +15,11 @@ import {
   writeJsonAtomic,
 } from '../slice9-research/common.mjs';
 import { propagateKeplerian } from '../slice9-research/keplerian-offline.mjs';
+import {
+  deriveAsteroidRadiusMFromAbsoluteMagnitude,
+  eccentricityBandForBody,
+  qualityRankForRecord,
+} from './derived-fields.mjs';
 
 const INGESTION_ROOT = path.dirname(new URL(import.meta.url).pathname);
 const DATA_DIR = path.join(INGESTION_ROOT, 'data');
@@ -53,47 +58,14 @@ function degreesToRadians(value) {
   return (value * Math.PI) / 180;
 }
 
-function clamp01(value) {
-  return Math.min(1, Math.max(0, value));
-}
-
-function round6(value) {
-  return Math.round(value * 1_000_000) / 1_000_000;
-}
-
 function normalizeSbdbClass(value) {
   const code = String(value ?? '').trim().toUpperCase();
   return code || 'missing';
 }
 
-function eccentricityBandForBody(eccentricity) {
-  if (eccentricity < 0.1) return 'A';
-  if (eccentricity < 0.2) return 'B';
-  if (eccentricity < 0.3) return 'C';
-  return 'D';
-}
-
-function deriveAsteroidDiameterKmFromAbsoluteMagnitude(absoluteMagnitude, albedo = 0.14) {
-  return (1329 / Math.sqrt(albedo)) * 10 ** (-absoluteMagnitude / 5);
-}
-
-function deriveAsteroidRadiusMFromAbsoluteMagnitude(absoluteMagnitude, albedo = 0.14) {
-  return deriveAsteroidDiameterKmFromAbsoluteMagnitude(absoluteMagnitude, albedo) * 500;
-}
-
 function parsePhaFlag(value) {
   const code = String(value ?? '').trim().toUpperCase();
   return code === 'Y' || code === 'T' || code === 'TRUE';
-}
-
-function qualityRankForRow(row) {
-  const conditionScore =
-    row.conditionCode === null ? 0 : clamp01(1 - row.conditionCode / 9);
-  const dataArcScore =
-    row.dataArcDays === null
-      ? 0
-      : clamp01(Math.log10(1 + row.dataArcDays) / Math.log10(1001));
-  return round6(0.6 * conditionScore + 0.4 * dataArcScore);
 }
 
 function normalizeSbdbRowsWithPha(payload) {
@@ -258,7 +230,10 @@ function buildFixture(rows, cadWindow) {
       sigmaA: row.sigmaA,
       sigmaE: row.sigmaE,
       inv014Tier,
-      qualityRank: qualityRankForRow(row),
+      qualityRank: qualityRankForRecord({
+        conditionCode: row.conditionCode,
+        dataArcDays: row.dataArcDays,
+      }),
     };
   }
 
