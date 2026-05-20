@@ -199,6 +199,58 @@ structure, three orthogonal classifiers now):
 - visualization-tier = passes ALL THREE gates.
 - planning-tier: unchanged (named UI/policy label, semantics deferred to S10).
 
+AMENDED Wed 2026-05-20 — THIRD AMENDMENT (post Phase A.3 cutover-sample
+validation + quality-axis diagnostic 6f26d23).
+
+Finding: Phase A.3 cutover-sample re-check after Path A re-anchor surfaced
+ONE viz-tier failure (2026 GG: APO, sbdb, 25d staleness, conditionCode=8,
+dataArcDays=13, max error 91,315 km). The three existing gates all pass it
+through; the body propagates badly anyway. Hypothesis was a fourth gate by
+orbit-determination quality (condition_code + data_arc, DEC-4's named risk
+axis).
+
+Diagnostic 6f26d23 result: graded distribution, NOT a clean cliff.
+- 168-body stratified sample across the quality-risk subpopulation
+- 2/168 (1.2%) over the 50k km envelope
+- Median 3,110 km, p90 10,903 km, p95 14,952 km, max 91,315 km
+- Every candidate Gate 4 threshold would crater viz-tier from 99.35% to
+  47-75% to capture only 2-5% measured in-band over-envelope rate
+- APO is the most quality-sensitive class (2/59, 3.4%); other classes
+  showed zero in-sample over-envelope failures
+- No million-km failures; no fifth orthogonal failure mode
+
+RESOLUTION: accept-and-document, NOT Gate 4. Gate 4 at any candidate
+threshold would impose massive coverage loss for a small measured capture
+rate — the residual quality-driven failure is graded and rare enough that
+it cannot be classified without curve-fit thresholds that under-deliver the
+full-catalog thesis worse than the residual itself does.
+
+REDEFINED viz-tier CONTRACT (replacing the prior "every viz-tier body has
+max propagation error within 50k km" assertion):
+
+viz-tier = body passes all three orthogonal classifier gates:
+  Gate 1: NOT CAD encounter-flagged (dynamical)
+  Gate 2: element-epoch staleness <= T=90d OR anchorSource ==
+          "horizons-reanchor" (freshness)
+  Gate 3: orbital class NOT in {ETC, HTC, JFC} (non-cometary)
+
+The three-gate pass is the contract. The 50,000 km propagation envelope
+is now a STATISTICAL EXPECTATION over the viz-tier population, not a
+per-body assertion. The measured residual envelope-exceedance rate from
+quality-driven failures is ~1-2% of viz-tier population, documented
+here as a known limitation. This is honest given the alternative is
+pretending the catalog is more accurate than it is, or excluding ~25%+
+of the catalog to chase a 1-2% residual.
+
+Affected bodies are disproportionately APO class with conditionCode >= 7
+and dataArcDays < 30 (recently-discovered or poorly-observed Earth-crossers).
+Slice 10 mission-target heuristics SHOULD consider these quality fields
+as targeting risk signals even if they don't affect rendering tier.
+
+This third amendment is the LAST. The classifier-based INV-014 architecture
+has converged: three gates capture the dominant failure modes, residual is
+measured and small. Further "gates" would be curve-fit and net-negative.
+
 ## §4 Phase structure
 
 - Phase A — NEA catalog, HYBRID ingestion: (A.1 SBDB bulk pull — DONE, commit
@@ -214,6 +266,10 @@ structure, three orthogonal classifiers now):
   Tue 2026-05-19 second amendment tightened T 180d→90d; A.2b re-anchor
   extended via incremental run to cover the 90-180d subset on top of existing
   180d+ coverage.
+  Wed 2026-05-20 third amendment redefined viz-tier contract as three-gate
+  pass + documented statistical residual. The A.3 harness asserts gate-pass
+  classifications hard; the 50k km envelope is asserted as a population-level
+  expectation with documented residual rate, not as a per-body STOP condition.
 - Phase B — Spatial index at 42k: ONE measurement pass evaluating uniform 0.5 AU
   vs coarse+sub-partition hybrid AND main-thread vs Web-Worker propagation;
   then rendering integration on whichever the data selects.
