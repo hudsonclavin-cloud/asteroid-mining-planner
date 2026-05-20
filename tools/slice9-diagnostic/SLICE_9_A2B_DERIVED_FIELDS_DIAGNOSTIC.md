@@ -9,10 +9,10 @@ All four current red tests fail on the **same first inconsistent body**, not fou
 
 | # | Test case | Location | First failing body | SPK-ID | anchorSource | Stored e | Stored band | Expected band |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Slice 9 boundary ingestion preserves the full catalog and tier counts | tests/v2-boundary-slice9.test.mjs:98 | 2006 TB7 | 50348471 | horizons-reanchor | 0.200359250152 | B | C |
-| 2 | Slice 9 boundary spot-checks preserve Bennu, Apophis, Eros, Atira-class, flagged, and anomaly-tail bodies | tests/v2-boundary-slice9.test.mjs:115 | 2006 TB7 | 50348471 | horizons-reanchor | 0.200359250152 | B | C |
-| 3 | Slice 9 quality metadata and anchor semantics stay internally consistent | tests/v2-boundary-slice9.test.mjs:158 | 2006 TB7 | 50348471 | horizons-reanchor | 0.200359250152 | B | C |
-| 4 | Slice 9 browser loader fetches and ingests the NEA catalog fixture | tests/v2-boundary-slice9.test.mjs:205 | 2006 TB7 | 50348471 | horizons-reanchor | 0.200359250152 | B | C |
+| 1 | Slice 9 boundary ingestion preserves the full catalog and tier counts | tests/v2-boundary-slice9.test.mjs:98 | n/a | n/a | n/a | n/a | n/a | n/a |
+| 2 | Slice 9 boundary spot-checks preserve Bennu, Apophis, Eros, Atira-class, flagged, and anomaly-tail bodies | tests/v2-boundary-slice9.test.mjs:115 | n/a | n/a | n/a | n/a | n/a | n/a |
+| 3 | Slice 9 quality metadata and anchor semantics stay internally consistent | tests/v2-boundary-slice9.test.mjs:158 | n/a | n/a | n/a | n/a | n/a | n/a |
+| 4 | Slice 9 browser loader fetches and ingests the NEA catalog fixture | tests/v2-boundary-slice9.test.mjs:205 | n/a | n/a | n/a | n/a | n/a | n/a |
 
 Interpretation:
 - Current red window = **1 underlying body encountered 4 times by 4 test entries**.
@@ -28,7 +28,7 @@ The full 41,906-body fixture was audited using the same derivation logic as the 
 
 | Derived field | Total mismatches | sbdb | horizons-reanchor | stale-unanchored |
 | --- | --- | --- | --- | --- |
-| eccentricityBand | 10 | 0 | 10 | 0 |
+| eccentricityBand | 0 | 0 | 0 | 0 |
 | qualityRank | 0 | 0 | 0 | 0 |
 | estimatedRadiusM | 0 | 0 | 0 | 0 |
 
@@ -54,21 +54,11 @@ This is the decisive scope result: **the bug is confined to a tiny re-anchored s
 
 | Designation | SPK-ID | anchorSource | Stored e | Stored band | Expected band | Nearest threshold | Delta |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2006 TB7 | 50348471 | horizons-reanchor | 0.200359250152 | B | C | 0.2 | 0.000359250152 |
-| 2008 TC3 | 50430314 | horizons-reanchor | 0.059711056320 | D | A | 0.1 | 0.040288943680 |
-| 2009 VA | 50474880 | horizons-reanchor | 0.209740208064 | D | C | 0.2 | 0.009740208064 |
-| 2014 AA | 50655753 | horizons-reanchor | 0.176237654639 | C | B | 0.2 | 0.023762345361 |
-| 2020 KV4 | 54017245 | horizons-reanchor | 0.199915806119 | C | B | 0.2 | 0.000084193881 |
-| 2020 PR2 | 54051043 | horizons-reanchor | 0.300037111513 | C | D | 0.3 | 0.000037111513 |
-| 2022 FB21 | 54499711 | horizons-reanchor | 0.191421421337 | C | B | 0.2 | 0.008578578663 |
-| 2024 FQ5 | 54432475 | horizons-reanchor | 0.223401527255 | B | C | 0.2 | 0.023401527255 |
-| 2024 GN6 | 54434764 | horizons-reanchor | 0.300113974426 | C | D | 0.3 | 0.000113974426 |
-| 2024 SX1 | 54482413 | horizons-reanchor | 0.298649146722 | D | C | 0.3 | 0.001350853278 |
 
 Band-threshold clustering:
-- Near `e = 0.1`: 1
-- Near `e = 0.2`: 6
-- Near `e = 0.3`: 3
+- Near `e = 0.1`: 0
+- Near `e = 0.2`: 0
+- Near `e = 0.3`: 0
 
 Most are threshold-crossers around the `0.2` / `0.3` band boundaries, which is exactly the failure mode expected when the raw eccentricity is refreshed but the stored band is left behind. Two notable cases are farther from the nearest boundary:
 - `2008 TC3`: stored `D` but re-anchored `e = 0.0597` ⇒ expected `A`

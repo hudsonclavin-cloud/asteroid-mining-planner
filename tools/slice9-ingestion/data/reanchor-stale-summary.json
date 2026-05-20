@@ -1,24 +1,24 @@
 {
-  "generatedAtUtc": "2026-05-18T00:02:01.971Z",
+  "generatedAtUtc": "2026-05-18T05:47:59.230Z",
   "staleThresholdDays": 180,
   "commonEpochTdbJd": 2461161.5,
   "commonEpochLabel": "2026-05-01 TDB",
   "totalBodies": 41906,
   "totalStaleBodies": 11805,
-  "nextFetchIndex": 100,
-  "remainingCount": 11705,
-  "reanchoredCount": 86,
-  "staleUnanchoredCount": 14,
-  "status": "partial",
+  "nextFetchIndex": 11805,
+  "remainingCount": 0,
+  "reanchoredCount": 11747,
+  "staleUnanchoredCount": 58,
+  "status": "completed",
   "anchorSourceDistribution": {
-    "sbdb": 41806,
-    "horizons-reanchor": 86,
-    "stale-unanchored": 14
+    "sbdb": 30101,
+    "horizons-reanchor": 11747,
+    "stale-unanchored": 58
   },
   "inv014TierDistribution": {
-    "visualization-tier": 41761,
+    "visualization-tier": 41717,
     "planning-tier": 0,
-    "not-kepler-safe": 145
+    "not-kepler-safe": 189
   },
   "unresolvedBodies": [
     {
@@ -104,26 +104,290 @@
       "designation": "141P-D",
       "spkId": 1000279,
       "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-27P",
+      "designation": "27P",
+      "spkId": 1000016,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-73P-B",
+      "designation": "73P-B",
+      "spkId": 1000320,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-85D",
+      "designation": "85D",
+      "spkId": 1000004,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-79P",
+      "designation": "79P",
+      "spkId": 1000022,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-8P",
+      "designation": "8P",
+      "spkId": 1000099,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-73P-C",
+      "designation": "73P-C",
+      "spkId": 1000081,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-26P",
+      "designation": "26P",
+      "spkId": 1000034,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-217P",
+      "designation": "217P",
+      "spkId": 1000345,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-181P",
+      "designation": "181P",
+      "spkId": 1000136,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-66P",
+      "designation": "66P",
+      "spkId": 1000021,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-185P",
+      "designation": "185P",
+      "spkId": 1000349,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-103P",
+      "designation": "103P",
+      "spkId": 1000041,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-7P",
+      "designation": "7P",
+      "spkId": 1000069,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-72P",
+      "designation": "72P",
+      "spkId": 1000020,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-67P",
+      "designation": "67P",
+      "spkId": 1000012,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-15P",
+      "designation": "15P",
+      "spkId": 1000027,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-252P",
+      "designation": "252P",
+      "spkId": 1000298,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-41P",
+      "designation": "41P",
+      "spkId": 1000100,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-96P",
+      "designation": "96P",
+      "spkId": 1000061,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-45P",
+      "designation": "45P",
+      "spkId": 1000045,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-218P",
+      "designation": "218P",
+      "spkId": 1000437,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-21P",
+      "designation": "21P",
+      "spkId": 1000032,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-300P",
+      "designation": "300P",
+      "spkId": 1000567,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2018 LA",
+      "designation": "2018 LA",
+      "spkId": 50825081,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-46P",
+      "designation": "46P",
+      "spkId": 1000109,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2019 MO",
+      "designation": "2019 MO",
+      "spkId": 50842948,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-141P",
+      "designation": "141P",
+      "spkId": 1003394,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-289P",
+      "designation": "289P",
+      "spkId": 1000750,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-157P",
+      "designation": "157P",
+      "spkId": 1000096,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-13P",
+      "designation": "13P",
+      "spkId": 1000066,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-73P",
+      "designation": "73P",
+      "spkId": 1000394,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-323P",
+      "designation": "323P",
+      "spkId": 1002073,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-104P",
+      "designation": "104P",
+      "spkId": 1000056,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2022 EB5",
+      "designation": "2022 EB5",
+      "spkId": 54254967,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2P",
+      "designation": "2P",
+      "spkId": 1000025,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2022 WJ1",
+      "designation": "2022 WJ1",
+      "spkId": 54327740,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2023 CX1",
+      "designation": "2023 CX1",
+      "spkId": 54341522,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-24P",
+      "designation": "24P",
+      "spkId": 1000077,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-12P",
+      "designation": "12P",
+      "spkId": 1000068,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2024 BX1",
+      "designation": "2024 BX1",
+      "spkId": 54421651,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2024 RW1",
+      "designation": "2024 RW1",
+      "spkId": 54468267,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-210P",
+      "designation": "210P",
+      "spkId": 1000440,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2024 UQ",
+      "designation": "2024 UQ",
+      "spkId": 54494469,
+      "reason": "Horizons response did not include a vectors block"
+    },
+    {
+      "bodyId": "asteroid-2024 XA1",
+      "designation": "2024 XA1",
+      "spkId": 54502870,
+      "reason": "Horizons response did not include a vectors block"
     }
   ],
   "offenderSpotChecks": [
     {
       "designation": "2009 DN45",
-      "anchorSource": "sbdb",
-      "epochTdbJd": 2454894.5,
-      "maxErrorKm": 15421337.426359402
+      "anchorSource": "horizons-reanchor",
+      "epochTdbJd": 2461161.5,
+      "maxErrorKm": 3627.9519266042075
     },
     {
       "designation": "2010 FS",
-      "anchorSource": "sbdb",
-      "epochTdbJd": 2455276.5,
-      "maxErrorKm": 10686957.72753936
+      "anchorSource": "horizons-reanchor",
+      "epochTdbJd": 2461161.5,
+      "maxErrorKm": 1247.6574117980106
     },
     {
       "designation": "2024 AL6",
-      "anchorSource": "sbdb",
-      "epochTdbJd": 2460328.5,
-      "maxErrorKm": 2386247.805836652
+      "anchorSource": "horizons-reanchor",
+      "epochTdbJd": 2461161.5,
+      "maxErrorKm": 4739.704796354636
     }
   ]
 }
