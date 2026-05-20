@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slice 9 Phase B Perf Harness</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="panel">
+        <header class="panel-header">
+          <p class="eyebrow">Dev-Only</p>
+          <h1>Slice 9 Phase B Browser Perf Harness</h1>
+          <p class="subtitle">
+            Observational only. Hudson reads frame-time numbers here; the page decides nothing.
+          </p>
+        </header>
+
+        <section class="control-group">
+          <h2>Partition Mode</h2>
+          <div id="partition-modes" class="option-list"></div>
+        </section>
+
+        <section class="control-group">
+          <h2>Camera State</h2>
+          <div id="camera-states" class="button-grid"></div>
+        </section>
+
+        <section class="control-group">
+          <h2>Propagation</h2>
+          <label class="toggle-row">
+            <input id="worker-toggle" type="checkbox" />
+            <span>Browser Worker propagation</span>
+          </label>
+        </section>
+
+        <section class="control-group">
+          <h2>Frame Time</h2>
+          <dl class="metric-grid">
+            <div><dt>Current</dt><dd id="metric-current">--</dd></div>
+            <div><dt>Median</dt><dd id="metric-median">--</dd></div>
+            <div><dt>P95</dt><dd id="metric-p95">--</dd></div>
+            <div><dt>FPS</dt><dd id="metric-fps">--</dd></div>
+          </dl>
+          <div id="target-indicator" class="target-indicator target-red">No data</div>
+        </section>
+
+        <section class="control-group">
+          <h2>Status</h2>
+          <dl class="status-grid">
+            <div><dt>Visible Cells</dt><dd id="status-visible-cells">--</dd></div>
+            <div><dt>Visible Bodies</dt><dd id="status-visible-bodies">--</dd></div>
+            <div><dt>Partition Summary</dt><dd id="status-partition-summary">--</dd></div>
+            <div><dt>Worker</dt><dd id="status-worker">--</dd></div>
+            <div><dt>Fallback Bodies</dt><dd id="status-fallback">--</dd></div>
+          </dl>
+        </section>
+
+        <section class="control-group">
+          <h2>Session Log</h2>
+          <div class="log-actions">
+            <button id="log-result-button" type="button">Log Result</button>
+            <button id="copy-log-button" type="button">Copy Session Log</button>
+          </div>
+          <div id="log-copy-status" class="copy-status"></div>
+          <pre id="session-log" class="session-log">No results logged yet.</pre>
+        </section>
+      </aside>
+
+      <main class="viewport-shell">
+        <canvas id="perf-canvas"></canvas>
+      </main>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+  </html>
