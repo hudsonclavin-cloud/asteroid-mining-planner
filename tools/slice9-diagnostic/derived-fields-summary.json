@@ -1,0 +1,227 @@
+{
+  "generatedAtUtc": "2026-05-20T00:28:14.140Z",
+  "totalBodies": 41906,
+  "anchorSourceDistribution": {
+    "sbdb": 30101,
+    "horizons-reanchor": 11747,
+    "stale-unanchored": 58
+  },
+  "failingTestCases": [
+    {
+      "testName": "Slice 9 boundary ingestion preserves the full catalog and tier counts",
+      "location": "tests/v2-boundary-slice9.test.mjs:98",
+      "firstFailingBody": {
+        "bodyId": "asteroid-2006 TB7",
+        "designation": "2006 TB7",
+        "spkId": 50348471,
+        "anchorSource": "horizons-reanchor",
+        "storedBand": "B",
+        "expectedBand": "C",
+        "eccentricity": 0.20035925015210318,
+        "nearestThreshold": 0.2,
+        "thresholdDelta": 0.0003592501521031688
+      }
+    },
+    {
+      "testName": "Slice 9 boundary spot-checks preserve Bennu, Apophis, Eros, Atira-class, flagged, and anomaly-tail bodies",
+      "location": "tests/v2-boundary-slice9.test.mjs:115",
+      "firstFailingBody": {
+        "bodyId": "asteroid-2006 TB7",
+        "designation": "2006 TB7",
+        "spkId": 50348471,
+        "anchorSource": "horizons-reanchor",
+        "storedBand": "B",
+        "expectedBand": "C",
+        "eccentricity": 0.20035925015210318,
+        "nearestThreshold": 0.2,
+        "thresholdDelta": 0.0003592501521031688
+      }
+    },
+    {
+      "testName": "Slice 9 quality metadata and anchor semantics stay internally consistent",
+      "location": "tests/v2-boundary-slice9.test.mjs:158",
+      "firstFailingBody": {
+        "bodyId": "asteroid-2006 TB7",
+        "designation": "2006 TB7",
+        "spkId": 50348471,
+        "anchorSource": "horizons-reanchor",
+        "storedBand": "B",
+        "expectedBand": "C",
+        "eccentricity": 0.20035925015210318,
+        "nearestThreshold": 0.2,
+        "thresholdDelta": 0.0003592501521031688
+      }
+    },
+    {
+      "testName": "Slice 9 browser loader fetches and ingests the NEA catalog fixture",
+      "location": "tests/v2-boundary-slice9.test.mjs:205",
+      "firstFailingBody": {
+        "bodyId": "asteroid-2006 TB7",
+        "designation": "2006 TB7",
+        "spkId": 50348471,
+        "anchorSource": "horizons-reanchor",
+        "storedBand": "B",
+        "expectedBand": "C",
+        "eccentricity": 0.20035925015210318,
+        "nearestThreshold": 0.2,
+        "thresholdDelta": 0.0003592501521031688
+      }
+    }
+  ],
+  "fieldCounts": {
+    "eccentricityBand": {
+      "total": 10,
+      "byAnchorSource": {
+        "sbdb": 0,
+        "horizons-reanchor": 10,
+        "stale-unanchored": 0
+      }
+    },
+    "qualityRank": {
+      "total": 0,
+      "byAnchorSource": {
+        "sbdb": 0,
+        "horizons-reanchor": 0,
+        "stale-unanchored": 0
+      }
+    },
+    "estimatedRadiusM": {
+      "total": 0,
+      "byAnchorSource": {
+        "sbdb": 0,
+        "horizons-reanchor": 0,
+        "stale-unanchored": 0
+      }
+    }
+  },
+  "bandMismatches": [
+    {
+      "bodyId": "asteroid-2006 TB7",
+      "designation": "2006 TB7",
+      "spkId": 50348471,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "B",
+      "expectedBand": "C",
+      "eccentricity": 0.20035925015210318,
+      "nearestThreshold": 0.2,
+      "thresholdDelta": 0.0003592501521031688
+    },
+    {
+      "bodyId": "asteroid-2008 TC3",
+      "designation": "2008 TC3",
+      "spkId": 50430314,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "D",
+      "expectedBand": "A",
+      "eccentricity": 0.059711056319944396,
+      "nearestThreshold": 0.1,
+      "thresholdDelta": 0.04028894368005561
+    },
+    {
+      "bodyId": "asteroid-2009 VA",
+      "designation": "2009 VA",
+      "spkId": 50474880,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "D",
+      "expectedBand": "C",
+      "eccentricity": 0.2097402080642336,
+      "nearestThreshold": 0.2,
+      "thresholdDelta": 0.009740208064233591
+    },
+    {
+      "bodyId": "asteroid-2014 AA",
+      "designation": "2014 AA",
+      "spkId": 50655753,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "C",
+      "expectedBand": "B",
+      "eccentricity": 0.17623765463937963,
+      "nearestThreshold": 0.2,
+      "thresholdDelta": 0.023762345360620385
+    },
+    {
+      "bodyId": "asteroid-2020 KV4",
+      "designation": "2020 KV4",
+      "spkId": 54017245,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "C",
+      "expectedBand": "B",
+      "eccentricity": 0.19991580611865237,
+      "nearestThreshold": 0.2,
+      "thresholdDelta": 0.00008419388134764394
+    },
+    {
+      "bodyId": "asteroid-2020 PR2",
+      "designation": "2020 PR2",
+      "spkId": 54051043,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "C",
+      "expectedBand": "D",
+      "eccentricity": 0.30003711151291823,
+      "nearestThreshold": 0.3,
+      "thresholdDelta": 0.000037111512918241996
+    },
+    {
+      "bodyId": "asteroid-2022 FB21",
+      "designation": "2022 FB21",
+      "spkId": 54499711,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "C",
+      "expectedBand": "B",
+      "eccentricity": 0.19142142133696957,
+      "nearestThreshold": 0.2,
+      "thresholdDelta": 0.00857857866303044
+    },
+    {
+      "bodyId": "asteroid-2024 FQ5",
+      "designation": "2024 FQ5",
+      "spkId": 54432475,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "B",
+      "expectedBand": "C",
+      "eccentricity": 0.22340152725534018,
+      "nearestThreshold": 0.2,
+      "thresholdDelta": 0.02340152725534017
+    },
+    {
+      "bodyId": "asteroid-2024 GN6",
+      "designation": "2024 GN6",
+      "spkId": 54434764,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "C",
+      "expectedBand": "D",
+      "eccentricity": 0.30011397442559234,
+      "nearestThreshold": 0.3,
+      "thresholdDelta": 0.00011397442559235582
+    },
+    {
+      "bodyId": "asteroid-2024 SX1",
+      "designation": "2024 SX1",
+      "spkId": 54482413,
+      "anchorSource": "horizons-reanchor",
+      "storedBand": "D",
+      "expectedBand": "C",
+      "eccentricity": 0.2986491467217435,
+      "nearestThreshold": 0.3,
+      "thresholdDelta": 0.0013508532782565141
+    }
+  ],
+  "boundaryCrossers": {
+    "near-0.1": 1,
+    "near-0.2": 6,
+    "near-0.3": 3
+  },
+  "rootCauseVerdict": "A.2b re-anchor bypassed derived-field recomputation for eccentricityBand only.",
+  "fixScopeRecommendation": {
+    "bodiesImpactedByBandDrift": 10,
+    "impactedAnchorSource": "horizons-reanchor",
+    "impactedFields": [
+      "eccentricityBand"
+    ],
+    "unaffectedDerivedFields": [
+      "qualityRank",
+      "estimatedRadiusM"
+    ],
+    "recommendedFixShape": "Backfill the completed fixture for the affected re-anchored bodies and patch the A.2b runner so future re-runs recompute derived fields after replacing elements; do not re-run the 10h Horizons fetch."
+  }
+}
