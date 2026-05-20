@@ -23,6 +23,10 @@ function round6(value) {
   return Math.round(value * 1_000_000) / 1_000_000;
 }
 
+function nearlyEqual(left, right, tolerance = 1e-9) {
+  return Math.abs(left - right) <= tolerance;
+}
+
 function qualityRankForRecord(record) {
   const conditionScore =
     record.conditionCode === null ? 0 : clamp01(1 - record.conditionCode / 9);
@@ -148,7 +152,7 @@ async function main() {
       }
     } else {
       const expectedRadiusM = deriveAsteroidRadiusMFromAbsoluteMagnitude(record.H);
-      if (record.estimatedRadiusM !== expectedRadiusM) {
+      if (!nearlyEqual(record.estimatedRadiusM, expectedRadiusM)) {
         fieldCounts.estimatedRadiusM.total += 1;
         fieldCounts.estimatedRadiusM.byAnchorSource[anchorSource] += 1;
         pushExample(examples.estimatedRadiusM, {

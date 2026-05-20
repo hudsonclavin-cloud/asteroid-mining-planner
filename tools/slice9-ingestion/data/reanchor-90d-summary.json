@@ -1,0 +1,25 @@
+{
+  "generatedAtUtc": "2026-05-20T21:12:51.604Z",
+  "minStaleThresholdDays": 90,
+  "maxStaleThresholdDays": 180,
+  "commonEpochTdbJd": 2461161.5,
+  "commonEpochLabel": "2026-05-01 TDB",
+  "totalBodies": 41906,
+  "totalCandidateBodies": 29792,
+  "nextFetchIndex": 29792,
+  "remainingCount": 0,
+  "reanchoredCount": 29792,
+  "staleUnanchoredCount": 0,
+  "status": "completed",
+  "anchorSourceDistribution": {
+    "sbdb": 309,
+    "horizons-reanchor": 41539,
+    "stale-unanchored": 58
+  },
+  "inv014TierDistribution": {
+    "visualization-tier": 41717,
+    "planning-tier": 0,
+    "not-kepler-safe": 189
+  },
+  "unresolvedBodies": []
+}
