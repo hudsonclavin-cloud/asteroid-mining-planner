@@ -158,6 +158,47 @@ The ~50,000 km benchmark remains a VALIDATION backstop in the cutover harness
 (post-re-anchor, the re-anchored bodies must fall within it — that's how the
 harness proves the hybrid worked), NOT a primary per-body classifier.
 
+AMENDED Tue 2026-05-19 — SECOND AMENDMENT (post Phase A.3 cutover-sample validation).
+Phase A.3 cutover harness construction surfaced two specific failure modes the
+hybrid (first amendment) did not catch on production-scale stratified sampling.
+
+Finding 1 — T=180d is too lenient.
+162-body stratified sample (commit 8c33760 fixture): 12 of 15 viz-tier
+backstop failures were sbdb-source bodies at 161d staleness (just under the
+180d gate), errors 50k–690k km. The cliff is below 180d.
+RESOLUTION: tighten T to 90d (working value, half of the original threshold,
+clearly below the observed failure cluster). The stale subset expands
+accordingly; bodies between 90d and 180d are now re-anchor candidates.
+Same measure-then-confirm posture as every threshold this session — T=90d is
+the working value, revisitable if Phase A.3 surfaces a cleaner cut.
+
+Finding 2 — anomaly-tail bodies are not Keplerian-safe by class.
+3 of 15 viz-tier failures were JFC bodies (Jupiter-family comets), all
+horizons-reanchor at 0d staleness, errors 55–80k km. The two-body Keplerian
+approximation does not model non-gravitational forces (outgassing, jets,
+YORP/Yarkovsky-amplified for cometary nuclei) that affect cometary bodies
+over any meaningful window. The anomaly tail (ETC + HTC + JFC, 208 bodies
+per A.1 ingestion) is dynamically distinct from asteroid NEAs and the 50k km
+envelope was derived from asteroid Task 3 data, not comet data.
+RESOLUTION: classify ALL 208 anomaly-tail bodies (orbital class in
+{ETC, HTC, JFC}) as not-Kepler-safe, regardless of encounter-flag or
+freshness. A third orthogonal classifier, by CLASS. This is physics-grounded
+(cometary dynamics), not curve-fit. The anomaly tail was already excluded
+from default UI view per the OQ resolution; this aligns the INV-014 tier
+with the UI exclusion — neither the renderer nor the planner should treat
+these as Keplerian-safe.
+
+REVISED OQ-6 TIER STRUCTURE (replacing the first amendment's two-gate
+structure, three orthogonal classifiers now):
+- Gate 1 (dynamical, UNCHANGED): NOT CAD encounter-flagged. Flagged →
+  not-Kepler-safe.
+- Gate 2 (freshness, AMENDED): staleness within T=90d OR anchorSource ==
+  "horizons-reanchor". Stale-not-re-anchored → not-Kepler-safe.
+- Gate 3 (class, NEW): orbital class NOT in {ETC, HTC, JFC}. Anomaly-tail
+  cometary body → not-Kepler-safe.
+- visualization-tier = passes ALL THREE gates.
+- planning-tier: unchanged (named UI/policy label, semantics deferred to S10).
+
 ## §4 Phase structure
 
 - Phase A — NEA catalog, HYBRID ingestion: (A.1 SBDB bulk pull — DONE, commit
@@ -170,6 +211,9 @@ harness proves the hybrid worked), NOT a primary per-body classifier.
   envelope AND every stale-not-re-anchored body → not-Kepler-safe). A.3 was
   blocked by the OQ-6 invalidation; it unblocks once A.2b lands and the revised
   harness is written against the two-gate structure.
+  Tue 2026-05-19 second amendment tightened T 180d→90d; A.2b re-anchor
+  extended via incremental run to cover the 90-180d subset on top of existing
+  180d+ coverage.
 - Phase B — Spatial index at 42k: ONE measurement pass evaluating uniform 0.5 AU
   vs coarse+sub-partition hybrid AND main-thread vs Web-Worker propagation;
   then rendering integration on whichever the data selects.
