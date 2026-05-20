@@ -63,3 +63,13 @@ the currently-running A.2b — the run is healthy (~97% re-anchor rate), the
 checkpoint makes it recoverable, and stopping a working unattended job to
 re-architect its write path carries more risk than accepting the documented
 red window.
+
+## FENCE LIFTED — 2026-05-19 (Tuesday)
+
+A.2b completed Mon 2026-05-18: 11,805 stale total, 11,747 re-anchored, 58 unresolved.
+Three-offender spot check passed (2009 DN45: 3,628 km / 2010 FS: 1,248 km / 2024 AL6: 4,740 km — all within Task-3-regime, hybrid confirmed solving OQ-6 staleness invalidation on production fixture).
+Derived-field staleness bug surfaced + diagnosed (commit 8fca03d): 10 re-anchored bodies' eccentricityBand was stale (qualityRank clean — the consequential audit passed).
+Backfilled (commit 54aa9cf) and runner patched (commit 6ee95f5) so future re-runs cannot reproduce the bug.
+npm test green on whole fixture (150/150). Repo invariant restored.
+Phase A is CLOSED. Final inv014Tier split across 41,906 NEAs: visualization-tier 41,717 (99.549%), not-Kepler-safe 189 (0.451%), planning-tier 0.
+Phase A.3 (revised two-gate cutover harness) is the next dispatch.
