@@ -1,0 +1,196 @@
+{
+  "population": {
+    "total": 29792,
+    "anomalyTailCount": 0,
+    "preexistingReanchored": 0,
+    "flaggedCount": 105,
+    "vizCount": 29687
+  },
+  "sampleSummary": {
+    "total": 317,
+    "roleCounts": {
+      "viz-tier-sample": 212,
+      "flagged-validation-sample": 105
+    },
+    "stratumCounts": {
+      "AMO | >0.7 | 150-180d | not-flagged": 9,
+      "AMO | 0.3-0.5 | 120-150d | not-flagged": 7,
+      "AMO | 0.3-0.5 | 150-180d | encounter-flagged": 2,
+      "AMO | 0.3-0.5 | 150-180d | not-flagged": 7,
+      "AMO | 0.3-0.5 | 90-120d | not-flagged": 5,
+      "AMO | 0.5-0.7 | 120-150d | not-flagged": 7,
+      "AMO | 0.5-0.7 | 150-180d | not-flagged": 9,
+      "AMO | 0.5-0.7 | 90-120d | not-flagged": 5,
+      "AMO | e<0.3 | 120-150d | not-flagged": 7,
+      "AMO | e<0.3 | 150-180d | encounter-flagged": 1,
+      "AMO | e<0.3 | 150-180d | not-flagged": 7,
+      "AMO | e<0.3 | 90-120d | not-flagged": 7,
+      "APO | >0.7 | 120-150d | not-flagged": 7,
+      "APO | >0.7 | 150-180d | not-flagged": 8,
+      "APO | >0.7 | 90-120d | not-flagged": 7,
+      "APO | 0.3-0.5 | 120-150d | not-flagged": 7,
+      "APO | 0.3-0.5 | 150-180d | encounter-flagged": 24,
+      "APO | 0.3-0.5 | 150-180d | not-flagged": 7,
+      "APO | 0.3-0.5 | 90-120d | not-flagged": 7,
+      "APO | 0.5-0.7 | 120-150d | not-flagged": 7,
+      "APO | 0.5-0.7 | 150-180d | encounter-flagged": 23,
+      "APO | 0.5-0.7 | 150-180d | not-flagged": 7,
+      "APO | 0.5-0.7 | 90-120d | not-flagged": 7,
+      "APO | e<0.3 | 120-150d | not-flagged": 7,
+      "APO | e<0.3 | 150-180d | encounter-flagged": 25,
+      "APO | e<0.3 | 150-180d | not-flagged": 8,
+      "APO | e<0.3 | 90-120d | not-flagged": 6,
+      "ATE | >0.7 | 150-180d | not-flagged": 7,
+      "ATE | 0.3-0.5 | 150-180d | encounter-flagged": 15,
+      "ATE | 0.3-0.5 | 150-180d | not-flagged": 9,
+      "ATE | 0.3-0.5 | 90-120d | not-flagged": 1,
+      "ATE | 0.5-0.7 | 120-150d | not-flagged": 3,
+      "ATE | 0.5-0.7 | 150-180d | encounter-flagged": 1,
+      "ATE | 0.5-0.7 | 150-180d | not-flagged": 8,
+      "ATE | e<0.3 | 120-150d | not-flagged": 2,
+      "ATE | e<0.3 | 150-180d | encounter-flagged": 14,
+      "ATE | e<0.3 | 150-180d | not-flagged": 8,
+      "IEO | >0.7 | 150-180d | not-flagged": 2,
+      "IEO | 0.3-0.5 | 150-180d | not-flagged": 7,
+      "IEO | 0.5-0.7 | 150-180d | not-flagged": 3,
+      "IEO | e<0.3 | 150-180d | not-flagged": 7
+    }
+  },
+  "results": {
+    "overallStats": {
+      "count": 317,
+      "min": 4894.698646756039,
+      "p25": 25608.016552106386,
+      "median": 62190.480130450575,
+      "p75": 216215.8296300509,
+      "p90": 674245.9655124954,
+      "p95": 1333948.0553395513,
+      "p99": 5590044.685595762,
+      "max": 24184328.102465715
+    },
+    "histogram": {
+      "<1k": 0,
+      "1k-10k": 15,
+      "10k-50k": 128,
+      "50k-100k": 51,
+      "100k-1M": 99,
+      "1M-10M": 23,
+      "10M+": 1
+    },
+    "byStalenessBand": {
+      "120-150d": {
+        "total": 54,
+        "over": 26,
+        "fraction": 0.48148148148148145
+      },
+      "150-180d": {
+        "total": 218,
+        "over": 123,
+        "fraction": 0.5642201834862385
+      },
+      "90-120d": {
+        "total": 45,
+        "over": 25,
+        "fraction": 0.5555555555555556
+      }
+    },
+    "byOrbitClass": {
+      "AMO": {
+        "total": 73,
+        "over": 25,
+        "fraction": 0.3424657534246575
+      },
+      "APO": {
+        "total": 157,
+        "over": 113,
+        "fraction": 0.7197452229299363
+      },
+      "ATE": {
+        "total": 68,
+        "over": 33,
+        "fraction": 0.4852941176470588
+      },
+      "IEO": {
+        "total": 19,
+        "over": 3,
+        "fraction": 0.15789473684210525
+      }
+    },
+    "byEccentricityBand": {
+      ">0.7": {
+        "total": 40,
+        "over": 12,
+        "fraction": 0.3
+      },
+      "0.3-0.5": {
+        "total": 98,
+        "over": 54,
+        "fraction": 0.5510204081632653
+      },
+      "0.5-0.7": {
+        "total": 80,
+        "over": 46,
+        "fraction": 0.575
+      },
+      "e<0.3": {
+        "total": 99,
+        "over": 62,
+        "fraction": 0.6262626262626263
+      }
+    },
+    "shape": {
+      "code": "b",
+      "rationale": "graded: large over-envelope share without clean separation"
+    },
+    "cutoverClusterWithinExpected": true
+  },
+  "pathAnalysis": {
+    "pathA": {
+      "candidateCount": 29792,
+      "empiricalA2bUnresolvedRate": 0.0049131723845828035,
+      "minimumHoursAt1050msPerBody": 8.689333333333334,
+      "expectedUnresolved": 146,
+      "expectedFinalViz": 41412,
+      "expectedFinalVizFraction": 0.9882117119266931,
+      "expectedFinalNotSafe": 494
+    },
+    "pathCThresholds": [
+      {
+        "threshold": 30,
+        "staleCount": 29993,
+        "finalViz": 11565,
+        "finalVizFraction": 0.27597480074452346,
+        "finalNotSafe": 30341,
+        "finalNotSafeFraction": 0.7240251992554766
+      },
+      {
+        "threshold": 60,
+        "staleCount": 29869,
+        "finalViz": 11689,
+        "finalVizFraction": 0.27893380422851144,
+        "finalNotSafe": 30217,
+        "finalNotSafeFraction": 0.7210661957714886
+      },
+      {
+        "threshold": 90,
+        "staleCount": 29792,
+        "finalViz": 11766,
+        "finalVizFraction": 0.2807712499403427,
+        "finalNotSafe": 30140,
+        "finalNotSafeFraction": 0.7192287500596574
+      }
+    ],
+    "pathD": {
+      "description": "T = 180d for e<0.3, T = 90d for e>=0.3",
+      "staleCount": 21524,
+      "finalViz": 20034,
+      "finalVizFraction": 0.47806996611463753,
+      "finalNotSafe": 21872,
+      "finalNotSafeFraction": 0.5219300338853625
+    }
+  },
+  "recommendation": {
+    "path": "A",
+    "reasoning": "The measured band is graded rather than cleanly separable, and the no-Horizons alternatives collapse honest viz-tier coverage to 28-48% of the catalog. Re-anchoring the band is the only path that preserves the full-catalog thesis."
+  }
+}
