@@ -20,6 +20,12 @@ tools/slice9-research/data/*
 !tools/slice9-research/data/inv014-sample-results.json
 !tools/slice9-research/data/occupancy-summary.json
 !tools/slice9-research/data/sbdb-nea-summary.json
+!tools/slice9-diagnostic/data/staleness-distribution-cad.json
+!tools/slice9-diagnostic/data/staleness-distribution-truth.json
+!tools/slice9-diagnostic/data/staleness-distribution-results.json
+!tools/slice9-diagnostic/data/staleness-distribution-sample.json
+!tools/slice9-diagnostic/data/staleness-distribution-summary.json
 tools/slice9-ingestion/data/*
 !tools/slice9-ingestion/data/reanchor-stale-checkpoint.json
 !tools/slice9-ingestion/data/reanchor-stale-summary.json
+tests/fixtures/v2/nea-catalog-slice9.json.tmp
