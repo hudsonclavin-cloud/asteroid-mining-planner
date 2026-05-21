@@ -58,7 +58,8 @@ export class HaloSystem {
         color,
         transparent: true,
         opacity: HALO_BASE_OPACITY,
-        depthTest: false,
+        depthTest: true,
+        depthWrite: false,
       });
       const sprite = new THREE.Sprite(material);
       sprite.visible = false;

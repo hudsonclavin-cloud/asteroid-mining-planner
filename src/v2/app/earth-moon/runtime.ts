@@ -31,6 +31,11 @@ interface RenderSample {
   readonly moonGcrs: CanonicalState;
 }
 
+interface ViewportSize {
+  width: number;
+  height: number;
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -42,6 +47,34 @@ function sphericalToCartesian(radius: number, polar: number, azimuth: number): C
     y: radius * Math.cos(polar),
     z: radius * sinPolar * Math.sin(azimuth),
   };
+}
+
+function resolveViewportSize(
+  measuredWidth: number,
+  measuredHeight: number,
+  fallbackWidth = window.innerWidth,
+  fallbackHeight = window.innerHeight,
+): ViewportSize {
+  const width = Number.isFinite(measuredWidth) && measuredWidth > 0 ? measuredWidth : fallbackWidth;
+  const height = Number.isFinite(measuredHeight) && measuredHeight > 0 ? measuredHeight : fallbackHeight;
+  return { width, height };
+}
+
+function getViewportSizeForMount(mount: HTMLElement): ViewportSize {
+  const rect = mount.getBoundingClientRect();
+  return resolveViewportSize(rect.width, rect.height);
+}
+
+function isEditableKeyboardTarget(target: EventTarget | null): boolean {
+  if (!target || typeof target !== 'object') {
+    return false;
+  }
+  const candidate = target as { tagName?: unknown; isContentEditable?: unknown };
+  if (candidate.isContentEditable === true) {
+    return true;
+  }
+  const tagName = typeof candidate.tagName === 'string' ? candidate.tagName.toLowerCase() : '';
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select';
 }
 
 function applyProjectedPosition(
@@ -69,15 +102,16 @@ function createBodyMesh(radiusM: number, color: number): THREE.Mesh {
 }
 
 function createViewportRenderer(mount: HTMLElement) {
+  const viewport = getViewportSizeForMount(mount);
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(viewport.width, viewport.height);
   renderer.setClearColor(0x000000, 1);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
     45,
-    window.innerWidth / window.innerHeight,
+    viewport.width / viewport.height,
     1,
     CAMERA_FAR_M,
   );
@@ -188,9 +222,11 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
   }
 
   function onResize(): void {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const viewport = getViewportSizeForMount(mount);
+    camera.aspect = viewport.width / viewport.height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(viewport.width, viewport.height);
   }
 
   function scrubSamples(delta: number): void {
@@ -229,6 +265,16 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
     }
   }
 
+  function onPointerLeave(event: PointerEvent): void {
+    if (!pointerActive) {
+      return;
+    }
+    pointerActive = false;
+    if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+      renderer.domElement.releasePointerCapture(event.pointerId);
+    }
+  }
+
   function onWheel(event: WheelEvent): void {
     event.preventDefault();
     orbitRadius = clamp(
@@ -240,6 +286,9 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
   }
 
   function onKeyDown(event: KeyboardEvent): void {
+    if (isEditableKeyboardTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
     if (event.key === 'ArrowRight') {
       scrubSamples(event.shiftKey ? TIME_SCRUB_FAST_STEP : TIME_SCRUB_STEP);
       return;
@@ -267,7 +316,7 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
   renderer.domElement.addEventListener('pointerdown', onPointerDown);
   renderer.domElement.addEventListener('pointermove', onPointerMove);
   renderer.domElement.addEventListener('pointerup', onPointerUp);
-  renderer.domElement.addEventListener('pointerleave', onPointerUp);
+  renderer.domElement.addEventListener('pointerleave', onPointerLeave);
   renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeyDown);
@@ -288,7 +337,7 @@ export async function mountEarthMoonHonestMode(mount: HTMLElement): Promise<() =
     renderer.domElement.removeEventListener('pointerdown', onPointerDown);
     renderer.domElement.removeEventListener('pointermove', onPointerMove);
     renderer.domElement.removeEventListener('pointerup', onPointerUp);
-    renderer.domElement.removeEventListener('pointerleave', onPointerUp);
+    renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
     renderer.domElement.removeEventListener('wheel', onWheel);
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKeyDown);

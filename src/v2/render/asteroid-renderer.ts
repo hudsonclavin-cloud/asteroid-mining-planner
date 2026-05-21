@@ -284,11 +284,23 @@ export class AsteroidRenderer {
   }
 
   raycastIntersectCells(ray: THREE.Ray): AsteroidBodyId | null {
+    const hit = this.raycastIntersectCellsDetailed(ray);
+    return hit?.bodyId ?? null;
+  }
+
+  raycastIntersectCellsDetailed(ray: THREE.Ray): { bodyId: AsteroidBodyId; distance: number } | null {
     const hit = this.cellRenderer.raycastIntersectCells(ray);
     if (!hit) {
       return null;
     }
-    return this.asteroids[hit.bodyIndex]?.bodyId ?? null;
+    const bodyId = this.asteroids[hit.bodyIndex]?.bodyId ?? null;
+    if (!bodyId) {
+      return null;
+    }
+    return {
+      bodyId,
+      distance: hit.distance,
+    };
   }
 
   update(input: AsteroidRendererUpdateInput): void {

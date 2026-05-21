@@ -37,6 +37,11 @@ const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
 type FocusBodyId = BodyId | null;
 type Position3 = CanonicalState['positionM'];
 
+interface ViewportSize {
+  width: number;
+  height: number;
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -64,6 +69,45 @@ function sphericalToCartesian(radius: number, polar: number, azimuth: number): {
     x: radius * sinPolar * Math.cos(azimuth),
     y: radius * Math.cos(polar),
     z: radius * sinPolar * Math.sin(azimuth),
+  };
+}
+
+function resolveViewportSize(
+  measuredWidth: number,
+  measuredHeight: number,
+  fallbackWidth = window.innerWidth,
+  fallbackHeight = window.innerHeight,
+): ViewportSize {
+  const width = Number.isFinite(measuredWidth) && measuredWidth > 0 ? measuredWidth : fallbackWidth;
+  const height = Number.isFinite(measuredHeight) && measuredHeight > 0 ? measuredHeight : fallbackHeight;
+  return { width, height };
+}
+
+function getViewportSizeForMount(mount: HTMLElement): ViewportSize {
+  const rect = mount.getBoundingClientRect();
+  return resolveViewportSize(rect.width, rect.height);
+}
+
+function isEditableKeyboardTarget(target: EventTarget | null): boolean {
+  if (!target || typeof target !== 'object') {
+    return false;
+  }
+  const candidate = target as { tagName?: unknown; isContentEditable?: unknown };
+  if (candidate.isContentEditable === true) {
+    return true;
+  }
+  const tagName = typeof candidate.tagName === 'string' ? candidate.tagName.toLowerCase() : '';
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+}
+
+function resolveSunLightPosition(relativePosition: Position3, sunRadiusM: number): Position3 {
+  if (Math.hypot(relativePosition.x, relativePosition.y, relativePosition.z) >= 1) {
+    return relativePosition;
+  }
+  return {
+    x: sunRadiusM,
+    y: sunRadiusM * 0.3,
+    z: sunRadiusM * 0.2,
   };
 }
 
@@ -126,9 +170,10 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
   });
 
   // --- Three.js setup ---
+  const initialViewport = getViewportSizeForMount(mount);
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(initialViewport.width, initialViewport.height);
   renderer.setClearColor(0x000000, 1);
   mount.replaceChildren(renderer.domElement);
 
@@ -136,7 +181,7 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
 
   const camera = new THREE.PerspectiveCamera(
     45,
-    window.innerWidth / window.innerHeight,
+    initialViewport.width / initialViewport.height,
     1,
     MAX_CAMERA_DISTANCE_M * 10,
   );
@@ -312,16 +357,15 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
     // direction so directional lighting remains well-defined.
     const sunHelio = getHeliocentricState('sun');
     if (sunHelio) {
-      let sunRelX = sunHelio.positionM.x - anchorPosM.x;
-      let sunRelY = sunHelio.positionM.y - anchorPosM.y;
-      let sunRelZ = sunHelio.positionM.z - anchorPosM.z;
-      if (Math.hypot(sunRelX, sunRelY, sunRelZ) < 1) {
-        sunRelX = BODY_CONSTANTS.sun.radiusM;
-        sunRelY = BODY_CONSTANTS.sun.radiusM * 0.3;
-        sunRelZ = BODY_CONSTANTS.sun.radiusM * 0.2;
-      }
+      const sunRelX = sunHelio.positionM.x - anchorPosM.x;
+      const sunRelY = sunHelio.positionM.y - anchorPosM.y;
+      const sunRelZ = sunHelio.positionM.z - anchorPosM.z;
+      const sunLightPosition = resolveSunLightPosition(
+        { x: sunRelX, y: sunRelY, z: sunRelZ },
+        BODY_CONSTANTS.sun.radiusM,
+      );
       const sunMesh = meshes.get('sun')!;
-      sunLight.position.set(sunRelX, sunRelY, sunRelZ);
+      sunLight.position.set(sunLightPosition.x, sunLightPosition.y, sunLightPosition.z);
       sunLightTarget.position.set(0, 0, 0);
       sunMesh.position.set(sunRelX, sunRelY, sunRelZ);
     }
@@ -334,7 +378,7 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
     haloSystem.update(
       haloUpdates,
       camera,
-      { width: window.innerWidth, height: window.innerHeight },
+      getViewportSizeForMount(mount),
     );
 
     const epochDay = Math.round((tdbSeconds - SLICE2_EPOCH_TDB) / 86400);
@@ -342,9 +386,11 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
   }
 
   function onResize(): void {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const viewport = getViewportSizeForMount(mount);
+    camera.aspect = viewport.width / viewport.height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(viewport.width, viewport.height);
   }
 
   function scrubSamples(delta: number): void {
@@ -378,6 +424,16 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
     }
   }
 
+  function onPointerLeave(event: PointerEvent): void {
+    if (!pointerActive) {
+      return;
+    }
+    pointerActive = false;
+    if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+      renderer.domElement.releasePointerCapture(event.pointerId);
+    }
+  }
+
   function onWheel(event: WheelEvent): void {
     event.preventDefault();
     const activeFocusBody = getActiveFocusBody(performance.now());
@@ -404,6 +460,9 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
    * Arrow/Home/End retain time scrubbing behavior.
    */
   function onKeyDown(event: KeyboardEvent): void {
+    if (isEditableKeyboardTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
     if (event.key === 'ArrowRight') {
       scrubSamples(event.shiftKey ? TIME_SCRUB_FAST_STEP : TIME_SCRUB_STEP);
       return;
@@ -453,7 +512,7 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
   renderer.domElement.addEventListener('pointerdown', onPointerDown);
   renderer.domElement.addEventListener('pointermove', onPointerMove);
   renderer.domElement.addEventListener('pointerup', onPointerUp);
-  renderer.domElement.addEventListener('pointerleave', onPointerUp);
+  renderer.domElement.addEventListener('pointerleave', onPointerLeave);
   renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeyDown);
@@ -468,7 +527,7 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
     renderer.domElement.removeEventListener('pointerdown', onPointerDown);
     renderer.domElement.removeEventListener('pointermove', onPointerMove);
     renderer.domElement.removeEventListener('pointerup', onPointerUp);
-    renderer.domElement.removeEventListener('pointerleave', onPointerUp);
+    renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
     renderer.domElement.removeEventListener('wheel', onWheel);
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKeyDown);

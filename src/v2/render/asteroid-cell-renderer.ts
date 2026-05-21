@@ -316,7 +316,11 @@ export class AsteroidCellRenderer {
           }
         }
         if (bestHit) {
-          return bestHit;
+          const nextBoundaryDistanceM =
+            Math.min(tMaxX, tMaxY, tMaxZ) * METERS_PER_KILOMETER;
+          if (!Number.isFinite(nextBoundaryDistanceM) || bestHit.distance <= nextBoundaryDistanceM) {
+            return bestHit;
+          }
         }
       }
 

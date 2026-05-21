@@ -36,7 +36,7 @@ import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
 import { createSaturnRingsGroup } from '../../render/saturn-rings.js';
 import { HaloSystem } from '../../render/halos.js';
 import { mountPhaseCOverlay } from '../ui-overlay/index.js';
-import { readSelectedBody, subscribeToFocusRequests } from '../ui-store/index.js';
+import { readSelectedBody, selectBody, subscribeToFocusRequests } from '../ui-store/index.js';
 import {
   loadSlice8AsteroidCatalogFixture,
   loadSolarSystemStatesBrowser,
@@ -182,6 +182,11 @@ export interface Direction3 {
   z: number;
 }
 
+interface ViewportSize {
+  width: number;
+  height: number;
+}
+
 export function rotateEclipticDirectionToIcrf(direction: Direction3): Direction3 {
   const cosObliquity = Math.cos(J2000_ECLIPTIC_OBLIQUITY_RAD);
   const sinObliquity = Math.sin(J2000_ECLIPTIC_OBLIQUITY_RAD);
@@ -189,6 +194,53 @@ export function rotateEclipticDirectionToIcrf(direction: Direction3): Direction3
     x: direction.x,
     y: direction.y * cosObliquity - direction.z * sinObliquity,
     z: direction.y * sinObliquity + direction.z * cosObliquity,
+  };
+}
+
+export function resolveViewportSize(
+  measuredWidth: number,
+  measuredHeight: number,
+  fallbackWidth = window.innerWidth,
+  fallbackHeight = window.innerHeight,
+): ViewportSize {
+  const width = Number.isFinite(measuredWidth) && measuredWidth > 0
+    ? measuredWidth
+    : fallbackWidth;
+  const height = Number.isFinite(measuredHeight) && measuredHeight > 0
+    ? measuredHeight
+    : fallbackHeight;
+  return { width, height };
+}
+
+export function isEditableKeyboardTarget(target: EventTarget | null): boolean {
+  if (!target || typeof target !== 'object') {
+    return false;
+  }
+
+  const candidate = target as {
+    tagName?: unknown;
+    isContentEditable?: unknown;
+  };
+  if (candidate.isContentEditable === true) {
+    return true;
+  }
+
+  const tagName = typeof candidate.tagName === 'string' ? candidate.tagName.toLowerCase() : '';
+  return tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+}
+
+export function resolveSunLightPosition(
+  sunRelativePosition: Position3,
+  sunRadiusM: number,
+): Position3 {
+  if (Math.hypot(sunRelativePosition.x, sunRelativePosition.y, sunRelativePosition.z) >= 1) {
+    return sunRelativePosition;
+  }
+
+  return {
+    x: sunRadiusM,
+    y: sunRadiusM * 0.3,
+    z: sunRadiusM * 0.2,
   };
 }
 
@@ -436,6 +488,11 @@ export function getDefaultAsteroidFocusRadius(radiusM: number): number {
   return Math.max(20 * radiusM, radiusM + 5_000);
 }
 
+function getViewportSizeForMount(mount: HTMLElement): ViewportSize {
+  const rect = mount.getBoundingClientRect();
+  return resolveViewportSize(rect.width, rect.height);
+}
+
 function getDefaultFocusRadius(
   bodyId: BodyId | AsteroidBodyId,
   asteroidBody?: Pick<AsteroidBody, 'estimatedRadiusM'>,
@@ -542,9 +599,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     },
   });
 
+  const initialViewport = getViewportSizeForMount(mount);
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(initialViewport.width, initialViewport.height);
   renderer.setClearColor(0x000000, 1);
   mount.replaceChildren(renderer.domElement);
   mount.style.position = 'relative';
@@ -604,7 +662,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   const starRenderer = new StarRenderer(starCatalog, renderer.getPixelRatio());
   const camera = new THREE.PerspectiveCamera(
     45,
-    window.innerWidth / window.innerHeight,
+    initialViewport.width / initialViewport.height,
     1,
     MAX_CAMERA_DISTANCE_M * 10,
   );
@@ -686,6 +744,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   let pointerDownY = 0;
   let lastPointerX = 0;
   let lastPointerY = 0;
+  let hasPointerSample = false;
   let animationHandle = 0;
   const raycaster = new THREE.Raycaster();
   const pointerNdc = new THREE.Vector2();
@@ -820,6 +879,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     return getHeliocentricState(bodyId, tdbSeconds).positionM;
   }
 
+  function syncStoreSelectionForFocus(bodyId: FocusTarget): void {
+    selectBody(isAsteroidFocusTarget(bodyId) ? bodyId : null);
+  }
+
   function hasActiveFocusTransition(nowMs: number): boolean {
     return (
       focusTransitionFromAnchor !== null &&
@@ -891,6 +954,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       focusTransitionFromAnchor = null;
     }
 
+    syncStoreSelectionForFocus(nextFocusBody);
     updateVisibleState(nowMs);
   }
 
@@ -906,7 +970,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       }
     }
     const camLocal = sphericalToCartesian(orbitRadius, orbitPolar, orbitAzimuth);
-    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const viewport = getViewportSizeForMount(mount);
 
     camera.near = Math.max(1, orbitRadius * 1e-4);
     camera.far = Math.max(orbitRadius * 10, 5e8);
@@ -948,16 +1012,15 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
 
     const sunHelio = getHeliocentricState('sun', currentTdbSeconds);
-    let sunRelX = sunHelio.positionM.x - anchorPosM.x;
-    let sunRelY = sunHelio.positionM.y - anchorPosM.y;
-    let sunRelZ = sunHelio.positionM.z - anchorPosM.z;
-    if (Math.hypot(sunRelX, sunRelY, sunRelZ) < 1) {
-      sunRelX = BODY_CONSTANTS.sun.radiusM;
-      sunRelY = BODY_CONSTANTS.sun.radiusM * 0.3;
-      sunRelZ = BODY_CONSTANTS.sun.radiusM * 0.2;
-    }
+    const sunRelX = sunHelio.positionM.x - anchorPosM.x;
+    const sunRelY = sunHelio.positionM.y - anchorPosM.y;
+    const sunRelZ = sunHelio.positionM.z - anchorPosM.z;
+    const sunLightPosition = resolveSunLightPosition(
+      { x: sunRelX, y: sunRelY, z: sunRelZ },
+      BODY_CONSTANTS.sun.radiusM,
+    );
     const sunMesh = meshes.get('sun')!;
-    sunLight.position.set(sunRelX, sunRelY, sunRelZ);
+    sunLight.position.set(sunLightPosition.x, sunLightPosition.y, sunLightPosition.z);
     sunLightTarget.position.set(0, 0, 0);
     sunMesh.position.set(sunRelX, sunRelY, sunRelZ);
 
@@ -987,9 +1050,11 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   }
 
   function onResize(): void {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const viewport = getViewportSizeForMount(mount);
+    camera.aspect = viewport.width / viewport.height;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(viewport.width, viewport.height);
     starRenderer.setPixelRatio(renderer.getPixelRatio());
   }
 
@@ -1036,8 +1101,18 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     );
   }
 
+  function getNearestOpaqueBodyDistance(): number | null {
+    const opaqueTargets = [...meshes.values()].filter((mesh) => mesh.visible !== false);
+    const bodyIntersection = raycaster.intersectObjects(opaqueTargets, false)[0];
+    return bodyIntersection?.distance ?? null;
+  }
+
   function pickAsteroidAt(clientX: number, clientY: number): AsteroidBodyId | null {
     updateRaycasterFromClient(clientX, clientY);
+    const occluderDistance = getNearestOpaqueBodyDistance();
+    let nearestAsteroidBodyId: AsteroidBodyId | null = null;
+    let nearestAsteroidDistance = Number.POSITIVE_INFINITY;
+
     const intersections = raycaster.intersectObjects(
       asteroidRenderer
         .getRaycastTargets()
@@ -1046,11 +1121,24 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     );
     for (const intersection of intersections) {
       const asteroidBodyId = asteroidRenderer.resolveIntersection(intersection);
-      if (asteroidBodyId) {
-        return asteroidBodyId;
+      if (asteroidBodyId && intersection.distance < nearestAsteroidDistance) {
+        nearestAsteroidBodyId = asteroidBodyId;
+        nearestAsteroidDistance = intersection.distance;
       }
     }
-    return asteroidRenderer.raycastIntersectCells(raycaster.ray);
+    const cellHit = asteroidRenderer.raycastIntersectCellsDetailed(raycaster.ray);
+    if (cellHit && cellHit.distance < nearestAsteroidDistance) {
+      nearestAsteroidBodyId = cellHit.bodyId;
+      nearestAsteroidDistance = cellHit.distance;
+    }
+
+    if (!nearestAsteroidBodyId) {
+      return null;
+    }
+    if (occluderDistance !== null && occluderDistance <= nearestAsteroidDistance) {
+      return null;
+    }
+    return nearestAsteroidBodyId;
   }
 
   const hoverTargets = PLANET_HOVER_TOOLTIP_BODY_IDS
@@ -1085,10 +1173,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
 
     const worldPosition = hovered.object.getWorldPosition(new THREE.Vector3());
-    const screenPosition = projectWorldPositionToViewport(worldPosition, camera, {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    });
+    const viewport = getViewportSizeForMount(mount);
+    const screenPosition = projectWorldPositionToViewport(worldPosition, camera, viewport);
     renderPlanetHoverTooltip(planetHoverTooltip, getBodyLabel(bodyId), screenPosition);
   }
 
@@ -1111,6 +1197,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     pointerDownY = event.clientY;
     lastPointerX = event.clientX;
     lastPointerY = event.clientY;
+    hasPointerSample = true;
     hidePlanetHoverTooltip();
     setCursor('grabbing');
     renderer.domElement.setPointerCapture(event.pointerId);
@@ -1120,7 +1207,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     if (isCameraControlsLocked(orbitTween, performance.now())) {
       return;
     }
+    hasPointerSample = true;
     if (!pointerActive) {
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
       updatePointerCursor(event.clientX, event.clientY);
       updatePlanetHoverTooltip(event.clientX, event.clientY);
       return;
@@ -1152,7 +1242,18 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     hidePlanetHoverTooltip();
   }
 
+  function resetPointerInteraction(pointerId?: number): void {
+    pointerActive = false;
+    pointerDragged = false;
+    if (typeof pointerId === 'number' && renderer.domElement.hasPointerCapture(pointerId)) {
+      renderer.domElement.releasePointerCapture(pointerId);
+    }
+  }
+
   function onPointerUp(event: PointerEvent): void {
+    if (!pointerActive) {
+      return;
+    }
     if (!pointerDragged) {
       const asteroidBodyId = pickAsteroidAt(event.clientX, event.clientY);
       if (asteroidBodyId) {
@@ -1168,13 +1269,23 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
         startFocusTransition(asteroidBodyId, nextOrbitRadius);
       }
     }
-    pointerActive = false;
-    pointerDragged = false;
-    if (renderer.domElement.hasPointerCapture(event.pointerId)) {
-      renderer.domElement.releasePointerCapture(event.pointerId);
-    }
+    resetPointerInteraction(event.pointerId);
     updatePointerCursor(event.clientX, event.clientY);
     updatePlanetHoverTooltip(event.clientX, event.clientY);
+  }
+
+  function onPointerLeave(event: PointerEvent): void {
+    if (pointerActive) {
+      resetPointerInteraction(event.pointerId);
+    }
+    hidePlanetHoverTooltip();
+    setCursor('grab');
+  }
+
+  function onPointerCancel(event: PointerEvent): void {
+    resetPointerInteraction(event.pointerId);
+    hidePlanetHoverTooltip();
+    setCursor('grab');
   }
 
   function onWheel(event: WheelEvent): void {
@@ -1196,20 +1307,33 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   }
 
   function onKeyDown(event: KeyboardEvent): void {
+    if (isEditableKeyboardTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+
+    const nowMs = performance.now();
+    const cancelCameraTween = () => {
+      orbitTween = null;
+    };
+
     if (event.key === 'ArrowRight') {
+      cancelCameraTween();
       scrubTime(TIME_SCRUB_STEP_SECONDS);
       return;
     }
     if (event.key === 'ArrowLeft') {
+      cancelCameraTween();
       scrubTime(-TIME_SCRUB_STEP_SECONDS);
       return;
     }
     if (event.key === 'Home') {
+      cancelCameraTween();
       currentTdbSeconds = timeMin;
       updateVisibleState();
       return;
     }
     if (event.key === 'End') {
+      cancelCameraTween();
       currentTdbSeconds = timeMax;
       updateVisibleState();
       return;
@@ -1217,7 +1341,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
     const nextFocusBody = FOCUS_KEY_TO_BODY[event.key];
     if (nextFocusBody) {
-      const nowMs = performance.now();
+      cancelCameraTween();
       const activeFocusBody = getActiveFocusBody(nowMs);
       const nextOrbitRadius = resolveFocusOrbitRadius(
         activeFocusBody,
@@ -1230,14 +1354,14 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
     const preset = getCameraPresetForKey(event.key);
     if (preset) {
-      const nowMs = performance.now();
+      const previousOrbitState = {
+        radiusM: orbitRadius,
+        polarRad: orbitPolar,
+        azimuthRad: orbitAzimuth,
+      };
       startFocusTransition(preset.focusBody, preset.orbitState.radiusM);
       orbitTween = {
-        from: {
-          radiusM: orbitRadius,
-          polarRad: orbitPolar,
-          azimuthRad: orbitAzimuth,
-        },
+        from: previousOrbitState,
         to: preset.orbitState,
         startMs: nowMs,
         durationMs: preset.durationMs,
@@ -1247,6 +1371,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
 
     if (event.key === '=') {
+      cancelCameraTween();
       startFocusTransition(OUTER_SYSTEM_OVERVIEW, OVERVIEW_ORBIT_RADIUS_M);
     }
   }
@@ -1254,6 +1379,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   function renderFrame(): void {
     if (disposed) return;
     updateVisibleState();
+    if (!pointerActive && hasPointerSample) {
+      updatePlanetHoverTooltip(lastPointerX, lastPointerY, performance.now());
+    }
     renderer.render(scene, camera);
     animationHandle = window.requestAnimationFrame(renderFrame);
   }
@@ -1261,7 +1389,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   renderer.domElement.addEventListener('pointerdown', onPointerDown);
   renderer.domElement.addEventListener('pointermove', onPointerMove);
   renderer.domElement.addEventListener('pointerup', onPointerUp);
-  renderer.domElement.addEventListener('pointerleave', onPointerUp);
+  renderer.domElement.addEventListener('pointerleave', onPointerLeave);
+  renderer.domElement.addEventListener('pointercancel', onPointerCancel);
   renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeyDown);
@@ -1278,7 +1407,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     renderer.domElement.removeEventListener('pointerdown', onPointerDown);
     renderer.domElement.removeEventListener('pointermove', onPointerMove);
     renderer.domElement.removeEventListener('pointerup', onPointerUp);
-    renderer.domElement.removeEventListener('pointerleave', onPointerUp);
+    renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
+    renderer.domElement.removeEventListener('pointercancel', onPointerCancel);
     renderer.domElement.removeEventListener('wheel', onWheel);
     window.removeEventListener('resize', onResize);
     window.removeEventListener('keydown', onKeyDown);
