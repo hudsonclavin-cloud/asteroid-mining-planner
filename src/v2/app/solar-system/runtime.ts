@@ -35,6 +35,8 @@ import { createMarsOblateMesh } from '../../render/mars-oblate.js';
 import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
 import { createSaturnRingsGroup } from '../../render/saturn-rings.js';
 import { HaloSystem } from '../../render/halos.js';
+import { mountPhaseCOverlay } from '../ui-overlay/index.js';
+import { readSelectedBody, subscribeToFocusRequests } from '../ui-store/index.js';
 import {
   loadSlice8AsteroidCatalogFixture,
   loadSolarSystemStatesBrowser,
@@ -547,6 +549,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   mount.replaceChildren(renderer.domElement);
   mount.style.position = 'relative';
   renderer.domElement.style.cursor = 'grab';
+  const disposePhaseCOverlay = mountPhaseCOverlay(mount);
 
   const focusedAsteroidHud = document.createElement('div');
   focusedAsteroidHud.setAttribute('data-testid', 'focused-asteroid-hud');
@@ -759,6 +762,29 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   function getAsteroidHeliocentricState(bodyId: AsteroidBodyId, tdbSeconds: number): CanonicalState {
     return propagateAsteroidBodyState(getAsteroidBody(bodyId), tdbSeconds);
+  }
+
+  function resolveStoreSelectedAsteroidBodyId(selectedBody: string | null): AsteroidBodyId | null {
+    if (!selectedBody) {
+      return null;
+    }
+
+    const byBodyId = asteroidIndex.byBodyId.get(selectedBody as AsteroidBodyId);
+    if (byBodyId) {
+      return byBodyId.bodyId;
+    }
+
+    const byDesignation = asteroidIndex.byDesignation.get(selectedBody);
+    if (byDesignation) {
+      return byDesignation.bodyId;
+    }
+
+    const spkId = Number(selectedBody);
+    if (Number.isInteger(spkId)) {
+      return asteroidIndex.bySpkId.get(spkId)?.bodyId ?? null;
+    }
+
+    return null;
   }
 
   function updateFocusedAsteroidHud(bodyId: FocusTarget): void {
@@ -975,6 +1001,27 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   function setCursor(style: string): void {
     renderer.domElement.style.cursor = style;
   }
+
+  // Phase C.1 bridge: UI dispatches requestFocus() into the external store.
+  // The scene controller reacts here by reading selectedBody and reusing the
+  // existing imperative focus path. Camera tween state remains scene-local.
+  const disposeUiFocusBridge = subscribeToFocusRequests(() => {
+    const nextBodyId = resolveStoreSelectedAsteroidBodyId(readSelectedBody());
+    if (!nextBodyId) {
+      return;
+    }
+
+    const nowMs = performance.now();
+    const activeFocusBody = getActiveFocusBody(nowMs);
+    const asteroidBody = getAsteroidBody(nextBodyId);
+    const nextOrbitRadius = resolveFocusOrbitRadius(
+      activeFocusBody,
+      nextBodyId,
+      orbitRadius,
+      asteroidBody,
+    );
+    startFocusTransition(nextBodyId, nextOrbitRadius);
+  });
 
   function updateRaycasterFromClient(clientX: number, clientY: number): void {
     const rect = renderer.domElement.getBoundingClientRect();
@@ -1224,6 +1271,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   return () => {
     disposed = true;
+    disposeUiFocusBridge();
+    disposePhaseCOverlay();
     resetFrameTransformHooks();
     window.cancelAnimationFrame(animationHandle);
     renderer.domElement.removeEventListener('pointerdown', onPointerDown);
