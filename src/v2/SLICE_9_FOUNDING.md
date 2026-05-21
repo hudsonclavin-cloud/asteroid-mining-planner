@@ -75,6 +75,42 @@ propagation. Fold into the OQ-1 measurement harness: same harness measures
 main-thread vs Web-Worker propagation cost at 42k. Do not pre-decide worker
 offload; instrument it. GPU transform-feedback explicitly out (high variance).
 
+**OQ-1 + OQ-2 Phase B DECISION (Wed 2026-05-20):**
+
+Partition: Hybrid D=200 (coarse 1.0 AU + sub-partition cells >200 bodies into
+0.25 AU sub-grid). Confirmed by Phase B measurement:
+- Node-side structural: 4× max-cell-per-draw reduction (uniform 0.5 AU max 1,178
+  → hybrid D=200 max 266), body conservation passing, occupancy reproduction
+  matches Task 2 baseline within 0.08%. Commit f2fb78d.
+- Browser-side (Apple Silicon headless): vsync-capped at 16.7ms median across
+  all 32 cells, scene not GPU-stressed, partition could not differentiate in
+  median. Hybrid locked on structural argument for hardware-tier variance
+  Apple Silicon cannot directly measure. Implementation cost already paid
+  (commit 1b59edf).
+
+Threading: Web Worker propagation. Direct measured evidence from browser-side
+p95: worker mode cut p95 from ~33ms to ~17ms on non-overview camera states
+(Near-Earth Focus, Single-Asteroid Close, Mid-Zoom Transit). Worker decouples
+42k-body propagation from the render loop, removing periodic main-thread
+hitches. Message-passing overhead ~1ms (Node measurement). The clearest
+single signal in Phase B's full measurement run.
+
+Phase C renderer integration consumes Hybrid D=200 + Worker as the canonical
+pipeline. The uniform 0.5 AU partition and main-thread propagation paths
+remain in the codebase as alternates (committed in 1b59edf / f2fb78d) but
+are not the production rendering path.
+
+Phase B measurement caveats documented for forward reference:
+- Browser measurement environment was vsync-capped; absolute frame times
+  (16.7ms median across all cells) are display-refresh artifacts not
+  render-cost measurements.
+- Apple Silicon is best-case hardware. Production users on weaker hardware
+  (older Intel, integrated GPUs, mid-range Windows) may stress the GPU
+  enough that partition mode differentiates in median. The Hybrid D=200
+  lock optimizes for that variance.
+- Worker p95 win was the load-bearing observable signal even within the
+  vsync-capped environment.
+
 OQ-3 — Quality-flag UI treatment. RESOLVED. Color/opacity down-rank in the 3D
 scene (low condition_code / short data_arc → visually de-emphasized) AND quality
 badge in the result-list row. Visible everywhere, not list-only — list-only
@@ -338,3 +374,14 @@ risk signals even though they don't affect rendering tier.
 
 Phase A is closed. Ready for Phase B implementation against the committed
 Phase B spec (c444609).
+
+Wed 2026-05-20: PHASE B COMPLETE.
+Partition: Hybrid D=200 locked (structural argument + Node max-cell evidence).
+Threading: Web Worker propagation locked (direct p95 measurement).
+Both implementations committed (1b59edf, f2fb78d, 19054dc). Founding doc
+amended to record the decision and the measurement caveats.
+
+Slice 9 status: Phase A closed (commits 5946467 through f11ab65), Phase B
+closed (this commit). Ready for Phase C — the ui-hud unfreeze, Aster's
+first real interactive UI. Phase C consumes the Phase B canonical pipeline
+(Hybrid D=200 + Worker) for catalog rendering.
