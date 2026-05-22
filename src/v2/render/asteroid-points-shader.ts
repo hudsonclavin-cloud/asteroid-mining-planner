@@ -6,7 +6,7 @@ import type { AsteroidBody } from '../core/constants/asteroids.js';
 // directly. At outer-system overview, a main-belt body sits around 1.37e12 m
 // from the camera; this scale targets a 4-8 px point sprite for large
 // main-belt asteroids so the soft-glow fragment shader can actually register.
-export const ASTEROID_POINTS_DEFAULT_OPACITY = 0.28;
+export const ASTEROID_POINTS_DEFAULT_OPACITY = 0.4;
 export const ASTEROID_POINTS_DEFAULT_SCALE = 1.5e12;
 export const ASTEROID_POINTS_FALLBACK_MAX_SIZE_PX = 64;
 export const ASTEROID_MAIN_BELT_COLOR_HEX = 0x86a7d7;
