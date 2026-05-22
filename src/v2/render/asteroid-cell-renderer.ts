@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { METERS_PER_KILOMETER, type AsteroidBody } from '../core/index.js';
 import { ASTEROID_MAIN_BELT_COLOR_HEX } from './asteroid-points-shader.js';
+import { partitionSlice9HybridPositions } from './slice9-spatial-partition.js';
 import {
   SPATIAL_GRID_BOUNDS_AU,
   SPATIAL_GRID_CELL_SIZE_AU,
@@ -27,8 +28,17 @@ export interface AsteroidCellStats {
   readonly visibleBodies: number;
 }
 
+export interface AsteroidCellRendererOptions {
+  readonly partitionStrategy?: 'slice8-uniform' | 'slice9-hybrid';
+  readonly slice9HybridConfig?: {
+    readonly coarseCellSizeAu: number;
+    readonly fineCellSizeAu: number;
+    readonly densityTrigger: number;
+  };
+}
+
 interface AsteroidCellEntry {
-  readonly index: SpatialGridCellIndex;
+  readonly index: SpatialGridCellIndex | null;
   readonly key: string;
   readonly mesh: THREE.InstancedMesh<THREE.SphereGeometry, THREE.MeshLambertMaterial>;
   readonly boundsCanonicalM: THREE.Box3;
@@ -112,6 +122,8 @@ function intersectRaySphereDistanceM(
 
 export class AsteroidCellRenderer {
   private readonly asteroids: readonly AsteroidBody[];
+  private readonly partitionStrategy: 'slice8-uniform' | 'slice9-hybrid';
+  private readonly slice9HybridConfig: Required<NonNullable<AsteroidCellRendererOptions['slice9HybridConfig']>> | null;
   private readonly root = new THREE.Group();
   private readonly instancedGeometry = new THREE.SphereGeometry(1, 16, 16);
   private readonly instancedMaterial = new THREE.MeshLambertMaterial({
@@ -137,13 +149,22 @@ export class AsteroidCellRenderer {
   private readonly cellKeyByBodyIndex: string[];
   private visibleCells = 0;
   private visibleBodies = 0;
+  private lastPartitionRevision: number | null = null;
 
-  constructor(catalogBodies: readonly AsteroidBody[]) {
+  constructor(catalogBodies: readonly AsteroidBody[], options: AsteroidCellRendererOptions = {}) {
     if (catalogBodies.length === 0) {
       throw new Error('AsteroidCellRenderer requires at least one asteroid body');
     }
 
     this.asteroids = catalogBodies.slice();
+    this.partitionStrategy = options.partitionStrategy ?? 'slice8-uniform';
+    this.slice9HybridConfig = this.partitionStrategy === 'slice9-hybrid'
+      ? {
+          coarseCellSizeAu: options.slice9HybridConfig?.coarseCellSizeAu ?? 1,
+          fineCellSizeAu: options.slice9HybridConfig?.fineCellSizeAu ?? 0.25,
+          densityTrigger: options.slice9HybridConfig?.densityTrigger ?? 200,
+        }
+      : null;
     this.root.name = 'asteroid-cell-renderer-root';
     this.instancedBodyMask = new Array(catalogBodies.length).fill(true);
     this.cellKeyByBodyIndex = new Array(catalogBodies.length).fill('');
@@ -173,6 +194,7 @@ export class AsteroidCellRenderer {
     propagatedPositionsM: readonly THREE.Vector3[],
     camera: THREE.Camera,
     _viewport: AsteroidCellRendererViewport,
+    partitionRevision?: number,
   ): void {
     if (propagatedPositionsM.length !== this.asteroids.length) {
       throw new Error(
@@ -180,8 +202,21 @@ export class AsteroidCellRenderer {
       );
     }
 
-    if (this.assignmentsChanged(propagatedPositionsM)) {
+    const hasRevision = typeof partitionRevision === 'number';
+    const revisionChanged = hasRevision && partitionRevision !== this.lastPartitionRevision;
+    if (this.partitionStrategy === 'slice9-hybrid') {
+      if (revisionChanged || this.occupiedCells.length === 0) {
+        this.rebuildCells(propagatedPositionsM);
+      } else {
+        for (let bodyIndex = 0; bodyIndex < propagatedPositionsM.length; bodyIndex += 1) {
+          this.lastCanonicalPositionsM[bodyIndex].copy(propagatedPositionsM[bodyIndex]);
+        }
+      }
+    } else if (revisionChanged || this.assignmentsChanged(propagatedPositionsM)) {
       this.rebuildCells(propagatedPositionsM);
+    }
+    if (hasRevision) {
+      this.lastPartitionRevision = partitionRevision;
     }
 
     const canFrustumCull =
@@ -253,6 +288,10 @@ export class AsteroidCellRenderer {
   }
 
   raycastIntersectCells(ray: THREE.Ray): AsteroidCellIntersection | null {
+    if (this.partitionStrategy === 'slice9-hybrid') {
+      return this.raycastHybridCells(ray);
+    }
+
     const anchorKm = this.currentAnchorPositionM.clone().divideScalar(METERS_PER_KILOMETER);
     this.canonicalRayOriginKm.copy(ray.origin).divideScalar(METERS_PER_KILOMETER).add(anchorKm);
     this.canonicalRayDirectionKm.copy(ray.direction);
@@ -357,7 +396,7 @@ export class AsteroidCellRenderer {
     readonly visibleBodyIndices: readonly number[];
   } | undefined {
     const cell = this.cellsByKey.get(key);
-    if (!cell) {
+    if (!cell || !cell.index) {
       return undefined;
     }
 
@@ -371,7 +410,9 @@ export class AsteroidCellRenderer {
 
   getCellStats(): AsteroidCellStats {
     return {
-      totalCells: SPATIAL_GRID_TOTAL_CELLS,
+      totalCells: this.partitionStrategy === 'slice8-uniform'
+        ? SPATIAL_GRID_TOTAL_CELLS
+        : this.occupiedCells.length,
       occupiedCells: this.occupiedCells.length,
       visibleCells: this.visibleCells,
       visibleBodies: this.visibleBodies,
@@ -417,6 +458,11 @@ export class AsteroidCellRenderer {
   }
 
   private rebuildCells(positionsM: readonly THREE.Vector3[]): void {
+    if (this.partitionStrategy === 'slice9-hybrid') {
+      this.rebuildSlice9HybridCells(positionsM);
+      return;
+    }
+
     for (const cell of this.occupiedCells) {
       this.root.remove(cell.mesh);
     }
@@ -471,5 +517,95 @@ export class AsteroidCellRenderer {
       this.occupiedCells.push(cell);
       this.root.add(mesh);
     }
+  }
+
+  private rebuildSlice9HybridCells(positionsM: readonly THREE.Vector3[]): void {
+    for (const cell of this.occupiedCells) {
+      this.root.remove(cell.mesh);
+    }
+    this.cellsByKey.clear();
+    this.occupiedCells.length = 0;
+
+    const positionsKm = positionsM.map((position) => ({
+      x: position.x / METERS_PER_KILOMETER,
+      y: position.y / METERS_PER_KILOMETER,
+      z: position.z / METERS_PER_KILOMETER,
+    }));
+    const hybrid = partitionSlice9HybridPositions(positionsKm, this.slice9HybridConfig!);
+
+    for (let bodyIndex = 0; bodyIndex < positionsM.length; bodyIndex += 1) {
+      this.lastCanonicalPositionsM[bodyIndex].copy(positionsM[bodyIndex]);
+    }
+
+    for (const leafCell of hybrid.leafCells) {
+      const mesh = new THREE.InstancedMesh(
+        this.instancedGeometry,
+        this.instancedMaterial,
+        leafCell.bodyIndices.length,
+      );
+      mesh.name = `asteroid-cell-${leafCell.key}`;
+      mesh.count = 0;
+      mesh.frustumCulled = false;
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+      const boundsCanonicalM = new THREE.Box3(
+        new THREE.Vector3(
+          leafCell.boundsKm.min.x * METERS_PER_KILOMETER,
+          leafCell.boundsKm.min.y * METERS_PER_KILOMETER,
+          leafCell.boundsKm.min.z * METERS_PER_KILOMETER,
+        ),
+        new THREE.Vector3(
+          leafCell.boundsKm.max.x * METERS_PER_KILOMETER,
+          leafCell.boundsKm.max.y * METERS_PER_KILOMETER,
+          leafCell.boundsKm.max.z * METERS_PER_KILOMETER,
+        ),
+      );
+
+      const cell: AsteroidCellEntry = {
+        index: null,
+        key: leafCell.key,
+        mesh,
+        boundsCanonicalM,
+        boundsRelativeM: boundsCanonicalM.clone(),
+        bodyIndices: leafCell.bodyIndices.slice(),
+        visibleBodyIndices: [],
+      };
+      for (const bodyIndex of leafCell.bodyIndices) {
+        this.cellKeyByBodyIndex[bodyIndex] = leafCell.key;
+      }
+      this.cellsByKey.set(cell.key, cell);
+      this.occupiedCells.push(cell);
+      this.root.add(mesh);
+    }
+  }
+
+  private raycastHybridCells(ray: THREE.Ray): AsteroidCellIntersection | null {
+    const anchorM = this.currentAnchorPositionM;
+    this.pickCanonicalRay.origin.copy(ray.origin).add(anchorM);
+    this.pickCanonicalRay.direction.copy(ray.direction);
+
+    let bestHit: AsteroidCellIntersection | null = null;
+    for (const cell of this.occupiedCells) {
+      if (!ray.intersectsBox(cell.boundsRelativeM)) {
+        continue;
+      }
+      for (const bodyIndex of cell.bodyIndices) {
+        if (!this.instancedBodyMask[bodyIndex]) {
+          continue;
+        }
+        const hitDistance = intersectRaySphereDistanceM(
+          this.pickCanonicalRay,
+          this.lastCanonicalPositionsM[bodyIndex],
+          this.asteroids[bodyIndex].estimatedRadiusM,
+        );
+        if (hitDistance === null) {
+          continue;
+        }
+        if (!bestHit || hitDistance < bestHit.distance) {
+          bestHit = { bodyIndex, distance: hitDistance };
+        }
+      }
+    }
+    return bestHit;
   }
 }

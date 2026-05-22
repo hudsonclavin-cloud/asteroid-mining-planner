@@ -41,6 +41,12 @@ export interface AsteroidRendererUpdateInput {
   readonly camera: THREE.PerspectiveCamera;
   readonly tdbSeconds: number;
   readonly viewport: AsteroidRendererViewport;
+  readonly canonicalPositionsM?: readonly THREE.Vector3[];
+  readonly partitionRevision?: number;
+}
+
+export interface AsteroidRendererOptions {
+  readonly cellRenderer?: ConstructorParameters<typeof AsteroidCellRenderer>[1];
 }
 
 export function propagateAsteroidBodyState(
@@ -136,7 +142,7 @@ export class AsteroidRenderer {
   private focusedOrbitLine: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial> | null = null;
   private focusedOrbitBodyId: AsteroidBodyId | null = null;
 
-  constructor(asteroids: readonly AsteroidBody[]) {
+  constructor(asteroids: readonly AsteroidBody[], options: AsteroidRendererOptions = {}) {
     if (asteroids.length === 0) {
       throw new Error('AsteroidRenderer requires at least one asteroid body');
     }
@@ -185,7 +191,7 @@ export class AsteroidRenderer {
     this.points.name = 'asteroid-points-layer';
     this.root.add(this.points);
 
-    this.cellRenderer = new AsteroidCellRenderer(this.asteroids);
+    this.cellRenderer = new AsteroidCellRenderer(this.asteroids, options.cellRenderer);
     this.root.add(this.cellRenderer.getRootGroup());
 
     this.focusedGeometry = new THREE.SphereGeometry(1, 24, 24);
@@ -304,7 +310,7 @@ export class AsteroidRenderer {
   }
 
   update(input: AsteroidRendererUpdateInput): void {
-    const { anchorPositionM, camera, tdbSeconds, viewport } = input;
+    const { anchorPositionM, camera, tdbSeconds, viewport, canonicalPositionsM, partitionRevision } = input;
     const fovRad = (camera.fov * Math.PI) / 180;
     let pointCount = 0;
     let instanceCount = 0;
@@ -315,8 +321,16 @@ export class AsteroidRenderer {
     this.pointBodyIds.length = 0;
     this.instancedBodyIds.length = 0;
 
+    if (canonicalPositionsM && canonicalPositionsM.length !== this.asteroids.length) {
+      throw new Error(
+        `AsteroidRenderer expected ${this.asteroids.length} canonical positions, received ${canonicalPositionsM.length}`,
+      );
+    }
+
     for (const [asteroidIndex, asteroid] of this.asteroids.entries()) {
-      const propagated = propagateAsteroidBodyState(asteroid, tdbSeconds);
+      const propagated = canonicalPositionsM
+        ? { positionM: canonicalPositionsM[asteroidIndex] }
+        : propagateAsteroidBodyState(asteroid, tdbSeconds);
       if (!this.canonicalPositionsM[asteroidIndex]) {
         this.canonicalPositionsM[asteroidIndex] = new THREE.Vector3();
       }
@@ -396,7 +410,7 @@ export class AsteroidRenderer {
     this.instancedBodyIds.length = instanceCount;
     this.cellRenderer.setAnchorPositionM(anchorPositionM);
     this.cellRenderer.setInstancedBodyIndices(instancedBodyIndices);
-    this.cellRenderer.update(this.canonicalPositionsM, camera, viewport);
+    this.cellRenderer.update(this.canonicalPositionsM, camera, viewport, partitionRevision);
 
     if (!hasFocusedMesh) {
       this.focusedMesh.visible = false;
