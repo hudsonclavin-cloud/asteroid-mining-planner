@@ -44,6 +44,7 @@ import {
 } from './loader.js';
 import {
   buildSlice9RuntimePropagationBodies,
+  isSlice9RuntimeEllipticBody,
   normalizeSlice9BodyForRuntime,
 } from './slice9-runtime-asteroids.js';
 
@@ -500,11 +501,18 @@ function buildAsteroidCanonicalPositions(
   tdbSeconds: number,
 ): THREE.Vector3[] {
   return asteroidBodies.map((asteroid) => {
-    const propagated = propagateAsteroidBodyState(asteroid, tdbSeconds);
+    if (isSlice9RuntimeEllipticBody({ elements: asteroid.elements })) {
+      const propagated = propagateAsteroidBodyState(asteroid, tdbSeconds);
+      return new THREE.Vector3(
+        propagated.positionM.x,
+        propagated.positionM.y,
+        propagated.positionM.z,
+      );
+    }
     return new THREE.Vector3(
-      propagated.positionM.x,
-      propagated.positionM.y,
-      propagated.positionM.z,
+      asteroid.anchorState.positionM.x,
+      asteroid.anchorState.positionM.y,
+      asteroid.anchorState.positionM.z,
     );
   });
 }

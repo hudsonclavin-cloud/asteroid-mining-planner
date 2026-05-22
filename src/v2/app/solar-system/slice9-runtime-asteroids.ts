@@ -77,6 +77,18 @@ export interface Slice9RuntimePropagationBody {
   readonly elements: AsteroidBody['elements'];
 }
 
+export function isSlice9RuntimeEllipticBody(
+  body: Pick<Slice9RuntimePropagationBody, 'elements'>,
+): boolean {
+  return (
+    Number.isFinite(body.elements.aM) &&
+    body.elements.aM > 0 &&
+    Number.isFinite(body.elements.e) &&
+    body.elements.e >= 0 &&
+    body.elements.e < 1
+  );
+}
+
 export function buildSlice9RuntimePropagationBodies(
   asteroidBodies: readonly AsteroidBody[],
 ): Slice9RuntimePropagationBody[] {

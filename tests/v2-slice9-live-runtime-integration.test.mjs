@@ -58,6 +58,7 @@ test('slice9 runtime normalization preserves finite render-critical asteroid fie
     normalizeSlice9BodyForRuntime,
     resolveSlice9RuntimeRadiusM,
     resolveSlice9RuntimeAbsoluteMagnitudeH,
+    isSlice9RuntimeEllipticBody,
   } = await loadHelperModule();
 
   assert.equal(resolveSlice9RuntimeRadiusM({ estimatedRadiusM: 123, H: null }), 123);
@@ -67,6 +68,18 @@ test('slice9 runtime normalization preserves finite render-critical asteroid fie
   assert.equal(resolveSlice9RuntimeAbsoluteMagnitudeH({ estimatedRadiusM: null, H: 19.5 }), 19.5);
   assert.ok(Number.isFinite(resolveSlice9RuntimeAbsoluteMagnitudeH({ estimatedRadiusM: 500, H: null })));
   assert.equal(resolveSlice9RuntimeAbsoluteMagnitudeH({ estimatedRadiusM: null, H: null }), 99);
+  assert.equal(
+    isSlice9RuntimeEllipticBody({
+      elements: { aM: 1, e: 0.2, iRad: 0, omRad: 0, wRad: 0, maRad: 0, epochTdbSeconds: 0 },
+    }),
+    true,
+  );
+  assert.equal(
+    isSlice9RuntimeEllipticBody({
+      elements: { aM: 0, e: 1.1, iRad: 0, omRad: 0, wRad: 0, maRad: 0, epochTdbSeconds: 0 },
+    }),
+    false,
+  );
 
   const normalized = normalizeSlice9BodyForRuntime({
     bodyId: 'asteroid-2026 GG',

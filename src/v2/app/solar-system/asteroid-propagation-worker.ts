@@ -1,17 +1,10 @@
 import { propagateKeplerianStateVectors } from '../../core/propagators/keplerian.js';
-import type { Slice9RuntimePropagationBody } from './slice9-runtime-asteroids.js';
+import {
+  isSlice9RuntimeEllipticBody,
+  type Slice9RuntimePropagationBody,
+} from './slice9-runtime-asteroids.js';
 
 let bodies: readonly Slice9RuntimePropagationBody[] = [];
-
-function isEllipticBody(body: Slice9RuntimePropagationBody): boolean {
-  return (
-    Number.isFinite(body.elements.aM) &&
-    body.elements.aM > 0 &&
-    Number.isFinite(body.elements.e) &&
-    body.elements.e >= 0 &&
-    body.elements.e < 1
-  );
-}
 
 self.addEventListener('message', (event) => {
   const message = event.data;
@@ -32,7 +25,7 @@ self.addEventListener('message', (event) => {
     for (let bodyIndex = 0; bodyIndex < bodies.length; bodyIndex += 1) {
       const body = bodies[bodyIndex];
       const offset = bodyIndex * 3;
-      if (isEllipticBody(body)) {
+      if (isSlice9RuntimeEllipticBody(body)) {
         const propagated = propagateKeplerianStateVectors(body.elements, targetTdbSeconds, {
           radiusM: body.renderRadiusM,
         });
