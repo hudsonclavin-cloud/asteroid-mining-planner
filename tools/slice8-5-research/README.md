@@ -6,11 +6,11 @@ Offline preprocessing for the Slice 8.5 Tycho-2 star background asset.
 
 - Catalog: Tycho-2 main catalog (`I/259/tyc2`) via VizieR/CDS
 - Query fields: `TYC1`, `TYC2`, `TYC3`, `HIP`, `VTmag`, `BTmag`, `_RAJ2000`, `_DEJ2000`
-- Magnitude filter at acquisition: `VTmag <= 7.5`
+- Magnitude filter at acquisition for the current shipped asset: `VTmag <= 8.1`
 
 ## Important note
 
-The `VT <= 7.5` VizieR subset returns about `20,000` rows, which is materially larger than the rough scoping estimate in the Slice 8.5 founding doc. The shipped asset therefore keeps the brightest `10,000` stars after the `VT <= 7.5` filter so the runtime asset stays within the intended startup budget while preserving the visual thesis of a magnitude-limited bright-star background.
+The current shipped asset keeps the brightest `40,000` stars after a complete `VT <= 8.1` acquisition filter. The fixture filename remains `star-catalog-tycho2-mag75.bin` for compatibility even though the current subset is deeper than the original Slice 8.5 `mag75` asset.
 
 ## Raw source acquisition
 
@@ -19,10 +19,10 @@ Raw Tycho-2 source files are transient and intentionally ignored:
 ```bash
 mkdir -p tools/slice8-5-research/data
 curl -L --fail \
-  'https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/259/tyc2&-out=TYC1,TYC2,TYC3,HIP,VTmag,BTmag,_RAJ2000,_DEJ2000&VTmag=<7.5&-out.max=20000' \
+  'https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/259/tyc2&-out=TYC1,TYC2,TYC3,HIP,VTmag,BTmag,_RAJ2000,_DEJ2000&VTmag=<8.1&-out.max=50000' \
   -o tools/slice8-5-research/data/tycho2-mag75.tsv
 curl -L --fail \
-  'https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/259/suppl_1&-out=TYC1,TYC2,TYC3,HIP,VTmag,BTmag,_RAJ2000,_DEJ2000&VTmag=<7.5&-out.max=20000' \
+  'https://vizier.cds.unistra.fr/viz-bin/asu-tsv?-source=I/259/suppl_1&-out=TYC1,TYC2,TYC3,HIP,VTmag,BTmag,_RAJ2000,_DEJ2000&VTmag=<8.1&-out.max=50000' \
   -o tools/slice8-5-research/data/tycho2-suppl1-mag75.tsv
 ```
 
@@ -55,6 +55,11 @@ Validation checks:
 - magnitude and RGB value ranges
 - Polaris present at the expected polar direction
 - Sirius present and sorted first as the brightest star
+
+Notes:
+
+- `VT <= 8.2` and above hit VizieR row truncation in this acquisition shape, so
+  `VT <= 8.1` is the deepest complete all-sky subset used for the current asset.
 
 ## Binary format
 

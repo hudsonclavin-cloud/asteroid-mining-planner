@@ -9,10 +9,25 @@ const DEFAULT_INPUT_PATH = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'star-
 const HEADER_MAGIC = 'TYC2BIN0';
 const HEADER_SIZE_BYTES = 16;
 const RECORD_SIZE_BYTES = 28;
+const DEFAULT_MIN_COUNT = 38_000;
+const DEFAULT_MAX_COUNT = 42_000;
+const DEFAULT_MAX_MAGNITUDE = 8.2;
 
 function parseStringFlag(name, fallback) {
   const arg = process.argv.find((entry) => entry.startsWith(`--${name}=`));
   return arg ? arg.slice(name.length + 3) : fallback;
+}
+
+function parseNumberFlag(name, fallback) {
+  const arg = process.argv.find((entry) => entry.startsWith(`--${name}=`));
+  if (!arg) {
+    return fallback;
+  }
+  const parsed = Number(arg.slice(name.length + 3));
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`--${name} must be a finite number`);
+  }
+  return parsed;
 }
 
 function raDecDegToUnitVector(raDeg, decDeg) {
@@ -74,6 +89,9 @@ function findNearestStar(stars, expectedDirection) {
 
 async function main() {
   const inputPath = path.resolve(parseStringFlag('input', DEFAULT_INPUT_PATH));
+  const minCount = parseNumberFlag('min-count', DEFAULT_MIN_COUNT);
+  const maxCount = parseNumberFlag('max-count', DEFAULT_MAX_COUNT);
+  const maxMagnitude = parseNumberFlag('max-magnitude', DEFAULT_MAX_MAGNITUDE);
   const buffer = await fs.readFile(inputPath);
   const catalog = parseBinaryCatalog(buffer);
 
@@ -81,8 +99,8 @@ async function main() {
     throw new Error(`Header magic mismatch: expected ${HEADER_MAGIC}, found ${catalog.magic}`);
   }
 
-  if (catalog.count < 6_000 || catalog.count > 12_000) {
-    throw new Error(`Star count ${catalog.count} is outside expected range 6000-12000`);
+  if (catalog.count < minCount || catalog.count > maxCount) {
+    throw new Error(`Star count ${catalog.count} is outside expected range ${minCount}-${maxCount}`);
   }
 
   let nonUnitCount = 0;
@@ -91,7 +109,7 @@ async function main() {
     if (Math.abs(magnitude - 1) > 1e-4) {
       nonUnitCount += 1;
     }
-    if (star.magnitude < -2 || star.magnitude > 8) {
+    if (star.magnitude < -2 || star.magnitude > maxMagnitude) {
       throw new Error(`Magnitude out of range: ${star.magnitude}`);
     }
     if (star.color.some((component) => component < 0 || component > 1)) {

@@ -29,9 +29,21 @@ Each star record is `28` bytes, little-endian:
 - source catalogs:
   - Tycho-2 main catalog (`I/259/tyc2`)
   - Tycho-2 supplement-1 (`I/259/suppl_1`) for very bright stars omitted from the main table
-- acquisition filter: `V_T <= 7.5`
-- runtime asset subset: brightest `10,000` stars after the magnitude filter
+- acquisition filter: `V_T <= 8.1`
+- runtime asset subset: brightest `40,000` stars after the magnitude filter
 - sort order: ascending `V_T` (brightest first)
+
+## Current asset facts
+
+- star count: `40,000`
+- file size: `1,120,016` bytes
+- brightest star: Sirius (`V_T = -1.088`)
+- validation spot checks: Sirius and Polaris present within angular tolerance
+
+## Compatibility note
+
+- The filename still contains `mag75` for import stability, but the current
+  shipped subset is deeper than the original Slice 8.5 `V_T <= 7.5` asset.
 
 ## Coordinate frame
 

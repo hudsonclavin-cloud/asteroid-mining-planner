@@ -14,8 +14,8 @@ const DEFAULT_OUTPUT_PATH = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'star
 
 const HEADER_MAGIC = 'TYC2BIN0';
 const VERSION = 1;
-const MAGNITUDE_LIMIT = 7.5;
-const MAX_STAR_COUNT = 10_000;
+const DEFAULT_MAGNITUDE_LIMIT = 8.1;
+const DEFAULT_MAX_STAR_COUNT = 40_000;
 const DEFAULT_RGB = [1.0, 0.95, 0.9];
 const RECORD_SIZE_BYTES = 28;
 const HEADER_SIZE_BYTES = 16;
@@ -36,6 +36,18 @@ function parseNumber(value) {
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseNumberFlag(name, fallback) {
+  const arg = process.argv.find((entry) => entry.startsWith(`--${name}=`));
+  if (!arg) {
+    return fallback;
+  }
+  const parsed = Number(arg.slice(name.length + 3));
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`--${name} must be a finite number`);
+  }
+  return parsed;
 }
 
 function kelvinToRgb(temperatureKelvin) {
@@ -119,7 +131,7 @@ function parseTsvRows(rawText) {
   return rows;
 }
 
-function buildCatalogRows(rawRows) {
+function buildCatalogRows(rawRows, { magnitudeLimit, maxStarCount }) {
   const filtered = [];
   let skippedMissingFields = 0;
 
@@ -129,7 +141,7 @@ function buildCatalogRows(rawRows) {
     const raDeg = parseNumber(row._RAJ2000);
     const decDeg = parseNumber(row._DEJ2000);
 
-    if (!Number.isFinite(vtMagnitude) || vtMagnitude > MAGNITUDE_LIMIT) {
+    if (!Number.isFinite(vtMagnitude) || vtMagnitude > magnitudeLimit) {
       continue;
     }
 
@@ -153,7 +165,7 @@ function buildCatalogRows(rawRows) {
   }
 
   filtered.sort((left, right) => left.vtMagnitude - right.vtMagnitude);
-  const selected = filtered.slice(0, MAX_STAR_COUNT);
+  const selected = filtered.slice(0, maxStarCount);
 
   return {
     selected,
@@ -165,6 +177,8 @@ function buildCatalogRows(rawRows) {
 async function main() {
   const inputPaths = parseStringListFlag('inputs', DEFAULT_INPUT_PATHS).map((entry) => path.resolve(entry));
   const outputPath = path.resolve(parseStringFlag('output', DEFAULT_OUTPUT_PATH));
+  const magnitudeLimit = parseNumberFlag('magnitude-limit', DEFAULT_MAGNITUDE_LIMIT);
+  const maxStarCount = parseNumberFlag('max-star-count', DEFAULT_MAX_STAR_COUNT);
 
   const allRawRows = [];
   for (const inputPath of inputPaths) {
@@ -185,7 +199,10 @@ async function main() {
     dedupedRows.push(row);
   }
 
-  const { selected, skippedMissingFields, availableAfterMagnitudeFilter } = buildCatalogRows(dedupedRows);
+  const { selected, skippedMissingFields, availableAfterMagnitudeFilter } = buildCatalogRows(dedupedRows, {
+    magnitudeLimit,
+    maxStarCount,
+  });
 
   const buffer = Buffer.alloc(HEADER_SIZE_BYTES + selected.length * RECORD_SIZE_BYTES);
   buffer.write(HEADER_MAGIC, 0, 'ascii');
@@ -216,6 +233,8 @@ async function main() {
         availableAfterMagnitudeFilter,
         skippedMissingFields,
         selectedCount: selected.length,
+        magnitudeLimit,
+        maxStarCount,
         inputPaths,
         outputPath,
         rawSizeBytes: buffer.byteLength,

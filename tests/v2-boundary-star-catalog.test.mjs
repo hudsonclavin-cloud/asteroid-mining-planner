@@ -100,7 +100,7 @@ test('load succeeds, count matches header, and Sirius sorts first', async () => 
 
   try {
     const catalog = await starCatalog.loadStarCatalog();
-    assert.equal(catalog.count, 10_000);
+    assert.equal(catalog.count, 40_000);
     assert.equal(catalog.positions.length, catalog.count * 3);
     assert.equal(catalog.magnitudes.length, catalog.count);
     assert.equal(catalog.colors.length, catalog.count * 3);
@@ -126,7 +126,7 @@ test('positions are unit vectors, magnitudes are sane, and colors stay in range'
       catalog.positions[positionOffset + 2],
     );
     assert.ok(Math.abs(magnitude - 1) <= 1e-4);
-    assert.ok(catalog.magnitudes[index] >= -2 && catalog.magnitudes[index] <= 8);
+    assert.ok(catalog.magnitudes[index] >= -2 && catalog.magnitudes[index] <= 8.2);
     assert.ok(
       catalog.colors[positionOffset] >= 0 && catalog.colors[positionOffset] <= 1 &&
       catalog.colors[positionOffset + 1] >= 0 && catalog.colors[positionOffset + 1] <= 1 &&

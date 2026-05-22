@@ -75,7 +75,7 @@ test('catalog binary loads without error and advertises the expected header', ()
 
 test('star count is in the expected runtime range', () => {
   const catalog = loadCatalog();
-  assert.ok(catalog.count >= 6_000 && catalog.count <= 12_000, `unexpected star count ${catalog.count}`);
+  assert.equal(catalog.count, 40_000, `unexpected star count ${catalog.count}`);
 });
 
 test('Sirius is the brightest record and lands at the expected direction', () => {
