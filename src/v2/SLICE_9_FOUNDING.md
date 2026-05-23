@@ -385,3 +385,37 @@ Slice 9 status: Phase A closed (commits 5946467 through f11ab65), Phase B
 closed (this commit). Ready for Phase C — the ui-hud unfreeze, Aster's
 first real interactive UI. Phase C consumes the Phase B canonical pipeline
 (Hybrid D=200 + Worker) for catalog rendering.
+
+## Phase D close — visual polish verified
+
+**Date:** 2026-05-22
+**Verification:** localhost, single dev server from origin/main HEAD = 3bc86b5
+
+**Commits:**
+- 6df54a0 — Tycho-2 star catalog densified 10,000 → 40,000 stars at V_T ≤ 8.1
+  (highest complete all-sky subset clearing 40k; 9.25 was VizieR-truncated and
+  not usable). Binary 273 KB → 1.12 MB. Sirius + Polaris validated. Filename
+  `star-catalog-tycho2-mag75.bin` retained for import stability; mismatch
+  documented in spec/README.
+- 3bc86b5 — Asteroid points opacity 0.28 → 0.40. Size model and fallback-radius
+  logic unchanged (fallback-radius population is 210/41,906, too small to
+  justify adapter changes; faintness was population-density, not size-model).
+
+**Verification result:**
+- Star fill: previously-sparse zones now densely filled, calibrated against
+  real Tycho-2 V_T magnitudes
+- Asteroid population: reads as present at 0.40 opacity, planets remain
+  dominant scene elements, no overcorrection
+- Slice 8.5 regression sweep: 11/11 pass (top-down ecliptic, date HUD,
+  star size, hover tooltips, Sun focus, pointerleave, keyboard scoping,
+  asteroid picker NEA designation, mount-relative viewport,
+  occlusion-aware picking, halo depth-test)
+- 177/177 tests pass; npm run build clean; console clean
+
+**Status:** Phase A live-runtime integration genuinely closed against
+production runtime. Slice 9 visualization tier is shippable.
+
+**Deferred (off critical path):**
+- Star catalog filename rename (mag75.bin → containing 40k @ V_T ≤ 8.1)
+- Phase C.2 catalog list UI (next slice work)
+- Phase C.3 quality down-rank visual treatment (next slice work)
