@@ -148,7 +148,7 @@ For each: compare our min-Δv-trajectory C3 and arrival v∞ against NHATS API's
 
 ### OQ-3 — PyKEP GPL licensing surface for WASM-compiled solver
 
-**Status: CLOSED 2026-05-23.**
+**Status: REOPENED 2026-05-23 (same day). RE-CLOSED 2026-05-23.**
 
 **Question (original):** When we compile PyKEP's GPL-2.0-or-later Lambert C++ source to WASM and ship it embedded in the Aster v2 repo, what licensing obligations does that create?
 
@@ -169,6 +169,31 @@ For each: compare our min-Δv-trajectory C3 and arrival v∞ against NHATS API's
 - Forks of Aster v2 inherit GPL-2.0-or-later for the combined work.
 - Deployed bundle (docs/) must make source available; the GitHub repo URL satisfies this.
 - Future trajectory-layer dependencies should prefer GPL-compatible or more-permissive licenses; nothing more restrictive than GPL can be added without re-evaluation.
+
+---
+
+**REOPEN NOTE (2026-05-23):** During Slice 10 implementation work (Dispatch 6, PyKEP source vendoring), the actual PyKEP v3.0.0 source files were found to carry `SPDX-License-Identifier: MPL-2.0`, not GPL-2.0-or-later as assumed during the original OQ-3 close. The original close was made on incorrect license information. OQ-3 reopened to reconcile.
+
+**Corrected resolution:**
+
+- **PyKEP v3.0.0 is licensed under MPL-2.0**, not GPL-2.0-or-later. PyKEP relicensed between earlier versions (which were GPL) and v3.0.0 (which is MPL).
+- **MPL-2.0 is file-level copyleft, not project-level.** Vendored PyKEP files retain MPL-2.0 license; the rest of Aster v2 is free to be a different license.
+- **Aster v2 relicensed to MIT.** Maximum permissiveness, standard for open-source research projects, preserves all forward options including dual-licensing and downstream commercialization.
+- **The vendored PyKEP subdirectory (src/v2/vendor/pykep-lambert/) is documented as an MPL-2.0 island within the otherwise-MIT Aster v2 repository.** This is permitted: MPL files require source disclosure for modifications to those specific files, but do not impose licensing constraints on the broader project.
+
+**Actions taken in the reopen:**
+- LICENSE file rewritten from GPL-2.0-or-later to MIT.
+- NOTICE file rewritten to correctly document PyKEP as MPL-2.0, plus Tycho-2, JPL SBDB, JPL Horizons attributions.
+- src/v2/vendor/pykep-lambert/UPSTREAM.md will be updated in a subsequent dispatch to reflect MPL-2.0 (currently in stash from Dispatch 6 attempt).
+
+**Engineering discipline note:**
+The original OQ-3 close was based on documentation that referenced older PyKEP versions (GPL-licensed). Verifying license directly from the v3.0.0 source — which Dispatch 6 did — surfaced the discrepancy. This reopen-and-re-close cycle is an instance of the OQ-6 discipline applied to project decisions: when new information arrives that contradicts a prior close, reopen with the corrected facts rather than silently editing the prior text. The original close text above is preserved verbatim as a record of what was decided based on what was known at the time.
+
+**Downstream implications (corrected):**
+- Forks of Aster v2 inherit MIT for the project as a whole; the vendored PyKEP subdirectory is separately MPL-2.0.
+- Modifications to vendored PyKEP files must be made available under MPL-2.0 (source disclosure of those specific files).
+- No constraint on the rest of Aster v2 source code from PyKEP's license.
+- Future trajectory-layer dependencies can be added under any MIT-compatible license without further reconciliation.
 
 ### OQ-4 — Validation tolerance for INV-015
 

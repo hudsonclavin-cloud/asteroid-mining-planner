@@ -1,25 +1,37 @@
 # Aster v2 — License
 
-Aster v2 is licensed under the GNU General Public License, version 2.0 or any later version (GPL-2.0-or-later).
+Aster v2 is licensed under the MIT License.
 
-SPDX-License-Identifier: GPL-2.0-or-later
+SPDX-License-Identifier: MIT
 
-The full text of the GNU General Public License version 2 is available at:
-  https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+Copyright (c) 2026 Hudson Clavin
 
-The full text of any later version of the GPL applies as published by the Free Software Foundation; see:
-  https://www.gnu.org/licenses/
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-## Why GPL
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Aster v2's trajectory layer (Slice 10 onward) incorporates the Lambert problem solver from PyKEP (https://github.com/esa/pykep), which is licensed under GPL-2.0-or-later. The PyKEP Lambert solver is compiled to WebAssembly and embedded in the Aster v2 deployment bundle. Under GPL terms, this creates a derivative work, so the combined Aster v2 codebase distributes under GPL-2.0-or-later.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-## What this means for you
+## Vendored third-party code
 
-If you use Aster v2's code or fork the repository:
-- You may use, modify, and redistribute the code under GPL-2.0-or-later.
-- Modifications you distribute must also be under GPL-2.0-or-later.
-- You must preserve copyright notices and license information.
-- You must make source code available alongside any binary distribution.
+The directory src/v2/vendor/pykep-lambert/ contains source files vendored from
+the PyKEP project (https://github.com/esa/pykep), which is licensed under the
+Mozilla Public License version 2.0 (MPL-2.0). Those files retain their
+upstream MPL-2.0 license. See src/v2/vendor/pykep-lambert/UPSTREAM.md and the
+repository NOTICE file for details.
 
-See NOTICE for attribution of third-party components.
+MPL-2.0 is a file-level copyleft license: modifications to the vendored
+PyKEP files themselves must remain under MPL-2.0 and source must be made
+available, but the rest of Aster v2 remains under MIT.

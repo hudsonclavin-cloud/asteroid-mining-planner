@@ -5,12 +5,18 @@ This project incorporates the following third-party components.
 ## PyKEP — ESA's scientific library for spacecraft trajectory analysis
 
 - Repository: https://github.com/esa/pykep
-- Component used: Lambert problem solver (src/lambert_problem.cpp)
+- Component used: Lambert problem solver (lambert_problem.cpp and supporting headers)
 - Algorithm: Izzo 2014, "Revisiting Lambert's Problem" (arXiv:1403.2705)
-- License: GPL-2.0-or-later
-- Usage: The Lambert solver C++ source is compiled to WebAssembly and used for Earth-departure screening in Slice 10 of Aster v2's trajectory layer.
+- Version pinned: v3.0.0 (commit e01667f61be6c9dcc24db813e57d760ffd7f7810)
+- License: Mozilla Public License version 2.0 (MPL-2.0)
+- SPDX-License-Identifier: MPL-2.0
+- Usage: The Lambert solver C++ source is vendored at src/v2/vendor/pykep-lambert/, compiled to WebAssembly, and used for Earth-departure screening in Slice 10 of Aster v2's trajectory layer.
 
-The PyKEP project copyright is held by its upstream contributors. See the PyKEP repository for full copyright and license information.
+The PyKEP project copyright is held by its upstream contributors. The vendored
+files preserve their original MPL-2.0 copyright headers verbatim. Modifications
+to vendored files are documented in src/v2/vendor/pykep-lambert/UPSTREAM.md.
+
+MPL-2.0 full text: https://www.mozilla.org/en-US/MPL/2.0/
 
 ## Tycho-2 star catalog
 
@@ -24,3 +30,11 @@ The PyKEP project copyright is held by its upstream contributors. See the PyKEP 
 - Source: NASA Jet Propulsion Laboratory, Small-Body Database (SBDB)
 - URL: https://ssd-api.jpl.nasa.gov/sbdb_query.api
 - Usage: NEA orbital elements ingested for the 41,906-body catalog. See Slice 9 founding doc for full ingestion methodology.
+
+## Solar system body ephemerides
+
+- Source: NASA Jet Propulsion Laboratory, Horizons System
+- URL: https://ssd.jpl.nasa.gov/horizons/
+- Component used: Tabulated state vectors (position, velocity) for Sun, Mercury, Venus, Earth, Moon, Mars across 2026-2040 at daily cadence
+- Distribution: tests/fixtures/v2/horizons-inner-solar-system-2026-2040.json
+- Generator: tools/slice10-research/extend-horizons-fixture.mjs
