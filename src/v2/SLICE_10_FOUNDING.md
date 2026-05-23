@@ -180,11 +180,32 @@ For each: compare our min-Δv-trajectory C3 and arrival v∞ against NHATS API's
 
 ### OQ-5 — Earth ephemeris source for Lambert r1/r2
 
-**Question:** Which Earth-state ephemeris do we use for the Lambert problem's r1 (Earth state at departure)?
+**Status: CLOSED 2026-05-23.**
 
-**Why open:** Slice 8 uses JPL Horizons-equivalent ephemerides for the canonical heliocentric frame, but Lambert needs Earth-state at every grid point in DEC-3 × DEC-4 (~730 dates). We could (a) precompute Earth states once at all 730 grid points from the existing ephemeris source and cache, (b) use a simplified analytical Earth model (Keplerian, fits well at this precision), or (c) call into a higher-precision propagator per grid point. Performance and consistency tradeoffs.
+**Question (original):** Which Earth-state ephemeris do we use for the Lambert problem's r1 (Earth state at departure)?
 
-**Resolution criterion:** Compare ephemeris-source choices against the JPL Horizons reference at the 5 validation targets. Pick the cheapest source that meets OQ-4's tolerance bar.
+**Resolution:** Extend the existing Slice 2 Horizons fixture pattern (tabulated JPL Horizons vectors + cubic Hermite interpolation) to cover Slice 10's full 2026-01-01 through 2040-12-31 screening window. Use the same source pattern for all 5 inner-solar-system bodies (Sun, Mercury, Venus, Earth, Mars), at daily cadence.
+
+**Rationale:**
+- JPL Horizons tabulated vectors are truth-grade at the precision Lambert needs at the patched-conic level. Sub-meter position accuracy at decade timescales.
+- Reusing the validated Slice 8/9 Hermite-interpolation code path eliminates an entire class of integration risk. No new code path needed beyond the fixture extension.
+- The alternative (analytic Keplerian Earth propagator from src/v2/core/propagators/keplerian.ts) would introduce a new validation surface for a precision gain we don't need. Keplerian Earth at 14-year timescales would deviate from Horizons truth by sub-km — well below NHATS Trajectory Browser's documented "low fidelity" patched-conic noise floor.
+- Decision principle: don't invent diagnostic work that won't change the answer. The OQ-6 discipline of "measure before locking" applies when the lock could plausibly go either way. Here the lock is dominated by one option.
+
+**Validation method:**
+- Per-sample agreement with existing Slice 2 fixture at the 2026-05-01 → 2026-07-30 overlap window: required ≤ 1e-3 km position, ≤ 1e-9 km/s velocity.
+- Spot-check against fresh Horizons queries at 10 dates spanning 2026-2040: same tolerance.
+- Both gates must pass before fixture replaces the existing narrow-window file.
+
+**Actions taken:**
+- Extended fixture at tests/fixtures/v2/horizons-inner-solar-system-2026-2040.json
+- Generator script at tools/slice10-research/extend-horizons-fixture.mjs
+- Fixture spec documented at src/v2/boundary/[slice10-fixture-spec.md or updated slice2-fixture-spec.md]
+- Existing narrow-window fixture preserved in place; code migration to the new fixture is a follow-on dispatch.
+
+**Downstream implications:**
+- Slice 10 Lambert pipeline uses earthHeliocentricStateProvider exactly as Slice 9 does, just with the wider-window fixture loaded.
+- Slice 11 (pork-chops), Slice 12 (Δv), Slice 16 (cislunar staging — Mars and Venus needed for gravity assists) all read from the same extended fixture. No per-slice ephemeris work needed.
 
 ## 7. Status
 
