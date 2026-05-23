@@ -184,7 +184,7 @@ For each: compare our min-Δv-trajectory C3 and arrival v∞ against NHATS API's
 
 **Question (original):** Which Earth-state ephemeris do we use for the Lambert problem's r1 (Earth state at departure)?
 
-**Resolution:** Extend the existing Slice 2 Horizons fixture pattern (tabulated JPL Horizons vectors + cubic Hermite interpolation) to cover Slice 10's full 2026-01-01 through 2040-12-31 screening window. Use the same source pattern for all 5 inner-solar-system bodies (Sun, Mercury, Venus, Earth, Mars), at daily cadence.
+**Resolution:** Extend the existing Slice 2 Horizons fixture pattern (tabulated JPL Horizons vectors + cubic Hermite interpolation) to cover Slice 10's full 2026-01-01 through 2040-12-31 screening window. Use the same source pattern for all 6 inner-solar-system bodies (Sun, Mercury, Venus, Earth, Moon, Mars), at daily cadence. Moon is tracked separately from Earth because Earth and Moon do not share a single barycentric state vector; each is independently sampled relative to the heliocentric frame. This matches the existing Slice 2 schema.
 
 **Rationale:**
 - JPL Horizons tabulated vectors are truth-grade at the precision Lambert needs at the patched-conic level. Sub-meter position accuracy at decade timescales.
@@ -205,7 +205,7 @@ For each: compare our min-Δv-trajectory C3 and arrival v∞ against NHATS API's
 
 **Downstream implications:**
 - Slice 10 Lambert pipeline uses earthHeliocentricStateProvider exactly as Slice 9 does, just with the wider-window fixture loaded.
-- Slice 11 (pork-chops), Slice 12 (Δv), Slice 16 (cislunar staging — Mars and Venus needed for gravity assists) all read from the same extended fixture. No per-slice ephemeris work needed.
+- Slice 11 (pork-chops), Slice 12 (Δv), Slice 16 (cislunar staging — Mars and Venus needed for gravity assists; Moon needed for lunar-flyby capture sequences) all read from the same extended fixture. No per-slice ephemeris work needed.
 
 ## 7. Status
 
