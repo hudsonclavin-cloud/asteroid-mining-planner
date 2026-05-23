@@ -148,11 +148,27 @@ For each: compare our min-Δv-trajectory C3 and arrival v∞ against NHATS API's
 
 ### OQ-3 — PyKEP GPL licensing surface for WASM-compiled solver
 
-**Question:** When we compile PyKEP's GPL-2.0-or-later Lambert C++ source to WASM and ship it embedded in the Aster v2 repo, what licensing obligations does that create? Specifically: does it force the Aster repo to become GPL?
+**Status: CLOSED 2026-05-23.**
 
-**Why open:** Licensing isn't trivial. GPL is viral in some configurations; the question is whether shipping a WASM artifact compiled from GPL source counts as derivative work under the GPL terms.
+**Question (original):** When we compile PyKEP's GPL-2.0-or-later Lambert C++ source to WASM and ship it embedded in the Aster v2 repo, what licensing obligations does that create?
 
-**Resolution criterion:** Read the PyKEP license file directly. Consult the GPL FAQ on dynamic linking and on compiled-and-shipped artifacts. If GPL-viral, alternatives: (a) re-implement Izzo from the paper (not from PyKEP source) and license freely; (b) accept GPL for Aster v2; (c) use poliastro's MIT-licensed Izzo implementation instead. This is a real decision that affects the project's license going forward.
+**Resolution:** GPL-2.0-or-later accepted for the Aster v2 repository. PyKEP's Lambert solver is compiled to WebAssembly and embedded; the combined work distributes under GPL-2.0-or-later.
+
+**Rationale:**
+- PyKEP is the closest open-source implementation of Izzo 2014 to the reference paper, with battle-tested edge-case handling.
+- Re-implementing Izzo clean-room or porting poliastro's MIT-licensed Python implementation to TypeScript is achievable but adds engineering work and lifetime maintenance burden without proportionate benefit at this project's scale.
+- Aster v2 is an open-source research project where GPL is a normal and accepted license. The Cornell LOCI / Anthropic Fellows narrative is unaffected.
+- Hudson (sole copyright holder of Aster v2's original contributions) retains the ability to dual-license his own work in the future if commercialization arises.
+
+**Actions taken:**
+- LICENSE file added at repo root declaring GPL-2.0-or-later.
+- NOTICE file added at repo root attributing PyKEP (and Tycho-2, NEA catalog from JPL).
+- This OQ closed as resolved.
+
+**Downstream implications:**
+- Forks of Aster v2 inherit GPL-2.0-or-later for the combined work.
+- Deployed bundle (docs/) must make source available; the GitHub repo URL satisfies this.
+- Future trajectory-layer dependencies should prefer GPL-compatible or more-permissive licenses; nothing more restrictive than GPL can be added without re-evaluation.
 
 ### OQ-4 — Validation tolerance for INV-015
 

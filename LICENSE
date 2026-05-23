@@ -1,0 +1,25 @@
+# Aster v2 — License
+
+Aster v2 is licensed under the GNU General Public License, version 2.0 or any later version (GPL-2.0-or-later).
+
+SPDX-License-Identifier: GPL-2.0-or-later
+
+The full text of the GNU General Public License version 2 is available at:
+  https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+
+The full text of any later version of the GPL applies as published by the Free Software Foundation; see:
+  https://www.gnu.org/licenses/
+
+## Why GPL
+
+Aster v2's trajectory layer (Slice 10 onward) incorporates the Lambert problem solver from PyKEP (https://github.com/esa/pykep), which is licensed under GPL-2.0-or-later. The PyKEP Lambert solver is compiled to WebAssembly and embedded in the Aster v2 deployment bundle. Under GPL terms, this creates a derivative work, so the combined Aster v2 codebase distributes under GPL-2.0-or-later.
+
+## What this means for you
+
+If you use Aster v2's code or fork the repository:
+- You may use, modify, and redistribute the code under GPL-2.0-or-later.
+- Modifications you distribute must also be under GPL-2.0-or-later.
+- You must preserve copyright notices and license information.
+- You must make source code available alongside any binary distribution.
+
+See NOTICE for attribution of third-party components.
