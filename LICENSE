@@ -24,14 +24,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## Vendored third-party code
+## Third-party data attributions
 
-The directory src/v2/vendor/pykep-lambert/ contains source files vendored from
-the PyKEP project (https://github.com/esa/pykep), which is licensed under the
-Mozilla Public License version 2.0 (MPL-2.0). Those files retain their
-upstream MPL-2.0 license. See src/v2/vendor/pykep-lambert/UPSTREAM.md and the
-repository NOTICE file for details.
-
-MPL-2.0 is a file-level copyleft license: modifications to the vendored
-PyKEP files themselves must remain under MPL-2.0 and source must be made
-available, but the rest of Aster v2 remains under MIT.
+This project incorporates data and methods from several third-party sources.
+None impose copyleft or licensing obligations on Aster v2's source code. See
+the NOTICE file for full attribution details:
+- Tycho-2 star catalog (ESO/VizieR)
+- NEA orbital elements (NASA JPL Small-Body Database)
+- Solar system body ephemerides (NASA JPL Horizons System)
+- Lambert problem algorithm reference (Izzo 2014, arXiv:1403.2705)
+- Lambert validation test vectors (poliastro project, MIT-licensed)

@@ -1,40 +1,49 @@
 # Aster v2 — Attribution
 
-This project incorporates the following third-party components.
+This project incorporates data, methods, and algorithmic references from the
+following third-party sources. None impose copyleft or licensing obligations
+on Aster v2's MIT-licensed source code.
 
-## PyKEP — ESA's scientific library for spacecraft trajectory analysis
+## Lambert problem algorithm
 
-- Repository: https://github.com/esa/pykep
-- Component used: Lambert problem solver (lambert_problem.cpp and supporting headers)
-- Algorithm: Izzo 2014, "Revisiting Lambert's Problem" (arXiv:1403.2705)
-- Version pinned: v3.0.0 (commit e01667f61be6c9dcc24db813e57d760ffd7f7810)
-- License: Mozilla Public License version 2.0 (MPL-2.0)
-- SPDX-License-Identifier: MPL-2.0
-- Usage: The Lambert solver C++ source is vendored at src/v2/vendor/pykep-lambert/, compiled to WebAssembly, and used for Earth-departure screening in Slice 10 of Aster v2's trajectory layer.
-
-The PyKEP project copyright is held by its upstream contributors. The vendored
-files preserve their original MPL-2.0 copyright headers verbatim. Modifications
-to vendored files are documented in src/v2/vendor/pykep-lambert/UPSTREAM.md.
-
-MPL-2.0 full text: https://www.mozilla.org/en-US/MPL/2.0/
+- Algorithm: Izzo 2014, "Revisiting Lambert's Problem"
+- Paper: arXiv:1403.2705 (https://arxiv.org/abs/1403.2705)
+- Usage: Aster v2 implements Izzo's Lambert algorithm in TypeScript, drawing
+  the mathematical formulation from the original paper. The implementation
+  is clean-room (no vendored upstream source). See
+  src/v2/core/lambert/ for the implementation when it lands.
+- Validation reference: the poliastro project (https://github.com/poliastro/poliastro,
+  MIT-licensed) provides high-quality test vectors that Aster v2's Lambert
+  implementation must match within numerical tolerance.
 
 ## Tycho-2 star catalog
 
 - Source: VizieR, ESO
 - Component used: V_T <= 8.1 all-sky subset (40,000 stars) for visualization background
-- Citation: Hog, E. et al. 2000, "The Tycho-2 Catalogue of the 2.5 Million Brightest Stars," Astronomy & Astrophysics 355, L27
-- Distribution: This subset is included in the Aster v2 repository at tests/fixtures/v2/star-catalog-tycho2-mag75.bin
+- Citation: Hog, E. et al. 2000, "The Tycho-2 Catalogue of the 2.5 Million Brightest Stars,"
+  Astronomy & Astrophysics 355, L27
+- Distribution: This subset is included in the Aster v2 repository at
+  tests/fixtures/v2/star-catalog-tycho2-mag75.bin
 
 ## NEA catalog data
 
 - Source: NASA Jet Propulsion Laboratory, Small-Body Database (SBDB)
 - URL: https://ssd-api.jpl.nasa.gov/sbdb_query.api
-- Usage: NEA orbital elements ingested for the 41,906-body catalog. See Slice 9 founding doc for full ingestion methodology.
+- Usage: NEA orbital elements ingested for the 41,906-body catalog.
+  See Slice 9 founding doc for full ingestion methodology.
 
 ## Solar system body ephemerides
 
 - Source: NASA Jet Propulsion Laboratory, Horizons System
 - URL: https://ssd.jpl.nasa.gov/horizons/
-- Component used: Tabulated state vectors (position, velocity) for Sun, Mercury, Venus, Earth, Moon, Mars across 2026-2040 at daily cadence
+- Component used: Tabulated state vectors (position, velocity) for Sun, Mercury,
+  Venus, Earth, Moon, Mars across 2026-2040 at daily cadence
 - Distribution: tests/fixtures/v2/horizons-inner-solar-system-2026-2040.json
 - Generator: tools/slice10-research/extend-horizons-fixture.mjs
+
+## Historical reference: PyKEP vendor attempt (abandoned)
+
+A vendoring attempt of PyKEP's C++ Lambert solver was investigated and
+abandoned in favor of clean-room TypeScript implementation. See
+src/v2/research/slice-10-lambert/pykep-vendor-attempt-postmortem.md
+for the engineering record.

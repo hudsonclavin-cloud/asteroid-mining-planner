@@ -66,6 +66,30 @@ Every per-body departure-C3 or arrival-Δv value computed by Slice 10's Lambert 
 
 **Caveat:** PyKEP is GPL; we need to confirm the licensing surface for shipping WASM-compiled code embedded in our MIT/BSD-style repo. OQ-3 below.
 
+---
+
+**REVISION 2 (2026-05-23): clean-room TypeScript implementation.**
+
+The original DEC-1 (and its Revision 1 corrected for MPL-2.0) specified vendoring PyKEP's Lambert solver C++ source and compiling to WASM. Implementation work in Dispatches 6 and 7c surfaced that PyKEP v3.0.0 depends on xtensor and xtensor-blas — heavy header-only tensor libraries. Stubbing them is not viable; the Lambert algorithm's internals use xtensor array operations throughout.
+
+**Revised decision:** Implement Izzo 2014 (arXiv:1403.2705) in TypeScript, clean-room from the paper's math, with poliastro's `core/iod.py` providing high-quality reference values for validation testing. No third-party C++ code vendored. No WASM compilation. No external math library dependencies — the algorithm uses scalar and 3-vector operations expressible directly in TypeScript.
+
+**Rationale:**
+- The Lambert algorithm is ~300-500 lines of straightforward math: norms, dot products, cross products, Householder iteration, Stumpff series, Gauss hypergeometric.
+- Performance: 40k Lambert solves catalog-wide finish in seconds at TypeScript speeds. WASM speedup is not required at our scale.
+- Licensing: Aster v2 is MIT throughout. No copyleft islands. No third-party attribution requirements beyond the citation of Izzo 2014 itself.
+- Discipline alignment: matches the project's pattern of owning the math core (own Keplerian propagator, own binary catalog format, own everything that needs to be defensibly correct).
+- Validation surface: poliastro publishes test vectors; we match within tolerance to validate correctness.
+
+**Why three revisions on DEC-1:**
+- Revision 0 (original): "Izzo via PyKEP, GPL accepted" — based on outdated license docs
+- Revision 1: "Izzo via PyKEP, MPL-2.0 island in MIT repo" — corrected license, same path
+- Revision 2 (this): "Clean-room TypeScript Izzo, MIT throughout" — fundamental path change, surfaced by dependency-tree discovery
+
+The revisions are preserved verbatim above as engineering record. Each was a defensible decision based on what was known at the time. Each was revised when new information arrived. This is the OQ-6 discipline applied to design decisions: surface, document, revise — do not silently overwrite.
+
+**Implementation note:** the actual TypeScript implementation will live at `src/v2/core/lambert/izzo.ts` (or similar) with tests at `tests/v2-lambert-izzo.test.mjs`. Test vectors imported from poliastro's `tests/test_iod.py` for cross-validation. This work is the next dispatch after this revision lands.
+
 ### DEC-2 — Single-revolution only for Slice 10
 
 **Decision:** Slice 10 uses single-revolution Lambert (M=0). Multi-revolution branches are not computed.
@@ -148,7 +172,7 @@ For each: compare our min-Δv-trajectory C3 and arrival v∞ against NHATS API's
 
 ### OQ-3 — PyKEP GPL licensing surface for WASM-compiled solver
 
-**Status: REOPENED 2026-05-23 (same day). RE-CLOSED 2026-05-23.**
+**Status: REOPENED twice (2026-05-23). RE-CLOSED 2026-05-23 (final).**
 
 **Question (original):** When we compile PyKEP's GPL-2.0-or-later Lambert C++ source to WASM and ship it embedded in the Aster v2 repo, what licensing obligations does that create?
 
@@ -194,6 +218,19 @@ The original OQ-3 close was based on documentation that referenced older PyKEP v
 - Modifications to vendored PyKEP files must be made available under MPL-2.0 (source disclosure of those specific files).
 - No constraint on the rest of Aster v2 source code from PyKEP's license.
 - Future trajectory-layer dependencies can be added under any MIT-compatible license without further reconciliation.
+
+---
+
+**SECOND REOPEN (2026-05-23):** DEC-1 was revised again (see DEC-1 Revision 2) to clean-room TypeScript Izzo, eliminating the PyKEP vendor dependency entirely. With no third-party C++ code vendored, the MPL-2.0 island concern no longer applies.
+
+**Final resolution:** Aster v2 is MIT-licensed throughout. No third-party copyleft files. LICENSE and NOTICE updated to remove the MPL-2.0 vendored-PyKEP carve-out.
+
+The repository licensing arc:
+- Original close: GPL-2.0-or-later for Aster v2 (based on outdated PyKEP license info)
+- First reopen (same day): MIT for Aster v2, MPL-2.0 for vendored PyKEP files
+- Second reopen (same day, this entry): MIT throughout — no PyKEP vendored
+
+**Engineering record:** all three license configurations are preserved verbatim above. Each was correct given what was known at the time of decision. Each was revised when new constraints surfaced. This is the OQ-6 discipline applied to project licensing: surface, document, revise.
 
 ### OQ-4 — Validation tolerance for INV-015
 
