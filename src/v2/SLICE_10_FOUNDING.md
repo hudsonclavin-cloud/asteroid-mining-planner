@@ -172,11 +172,54 @@ For each: compare our min-Δv-trajectory C3 and arrival v∞ against NHATS API's
 
 ### OQ-2 — Lambert convergence failure population
 
-**Question:** What fraction of the 41,906 NEA catalog fails Lambert convergence under DEC-1 + DEC-3 + DEC-4 + DEC-5 settings? Is the failure population systematic (e.g., specific orbit classes) or random?
+**Status: CLOSED 2026-05-27.**
 
-**Why open:** Required for honest accept-and-document treatment per DEC-8. Need to measure before locking how to handle. The OQ-6 discipline applied here: do a pre-research diagnostic pass before deciding whether to extend the solver, drop the bodies, or just tag them.
+**Question (original):** What fraction of the 41,906 NEA catalog fails Lambert convergence under DEC-1 + DEC-3 + DEC-4 + DEC-5 settings? Is the failure population systematic or random?
 
-**Resolution criterion:** Run the screening pass on the full catalog, characterize the failure population by orbit class and by failure mode (e.g., near-180° transfer, parabolic, max-iter exceeded). Document. Then decide.
+**Resolution:** Measured via catalog-wide diagnostic ([tools/slice10-research/lambert-failure-population.mjs](/Users/hudsonclavin/asteroid-mining-planner/tools/slice10-research/lambert-failure-population.mjs)).
+
+**Measurement parameters:**
+- Departure date: 2030-01-01 UTC (mid-window of Slice 10 2026-2040 screening range)
+- TOF sweep: 182-1826 days (0.5-5.0 years) at 30-day step → 55 TOFs per body
+- Catalog: 41,906 NEAs from Slice 9 with osculating elements at epoch 2026-04-30
+- Total solver calls: 2,304,830
+
+**Aggregate convergence:**
+- Successful Lambert solves: 2,304,775 (99.998%)
+- Failed solves: 55 (0.002%)
+
+**Failure mode breakdown:**
+- no_convergence: 0
+- invalid_geometry: 0
+- propagator_error: 55
+
+**Per-body classification:**
+- All TOFs converge: 41,905 bodies (99.998%)
+- Mixed (some OK, some failed): 0 bodies
+- No TOFs converge (all-failed): 1 body (0.002%)
+- High-failure-rate (>50% fail but some OK): 0 bodies
+
+**Orbit-class distribution of all-failed bodies:**
+- JFC: 1
+
+**Findings:**
+
+The Lambert solver is effectively fully robust across the Slice 10 catalog window. There were zero true Lambert failures: no `no_convergence` cases and no `invalid_geometry` cases across 2.30 million solves. The only all-failed body was 2015 D1 (SOHO), a JFC cometary object with `a < 0`, `e > 1`, `maRad = null`, and Slice 9 tier `not-kepler-safe`; it fails in the Keplerian propagator before Lambert is even called.
+
+So OQ-2 resolves cleanly: the failure population is not a solver problem. DEC-8's `lambert-unconvergeable` tag remains a valid rare-edge-case handler, but the measured baseline says it is effectively dormant under the current catalog and screening window. The practical exclusion path today is the pre-existing Slice 9 `not-kepler-safe` / anomaly-tail gating, not Lambert non-convergence.
+
+**Implications for Phase C integration:**
+
+- DEC-8 `lambert-unconvergeable` tag is adequate as a defensive edge-case handler; no refinement is required from this measurement.
+- Web Worker pipeline (Phase C.1) handles true Lambert failures by tagging them if they ever occur; propagator-domain failures remain covered by Slice 9's existing `not-kepler-safe` treatment.
+- UI display (Phase C.3) does not need a common visible class for Lambert failure. If such a body ever appears, surface it explicitly; otherwise the category should be operationally invisible.
+
+**Engineering record:**
+
+Detailed per-body statistics archived at:
+- [tools/slice10-research/lambert-failure-population-detail.json](/Users/hudsonclavin/asteroid-mining-planner/tools/slice10-research/lambert-failure-population-detail.json)
+
+This data forms the baseline for future regression checks. If a solver change shifts the failure population materially from this near-zero baseline, that is a real signal.
 
 ### OQ-3 — PyKEP GPL licensing surface for WASM-compiled solver
 
@@ -336,11 +379,9 @@ This is Phase B diagnostic work that does not block Slice 10 deployment. Slice 1
 
 **Phase A (research):** COMPLETE. Research library at src/v2/research/slice-10-lambert/ and adjacent slice folders. DECs 1-8 locked from research synthesis where evidence is clear. OQs 1-5 surfaced for pre-implementation diagnostic.
 
-**Phase B (pre-implementation diagnostic):** PENDING.
-- Resolve OQ-3 (PyKEP licensing) before any code is written that depends on the choice.
-- Resolve OQ-5 (Earth ephemeris source) via a measurement pass.
-- Resolve OQ-2 (Lambert convergence failure population) via a screening diagnostic on the full catalog (can run with a placeholder Earth model; the failure population is intrinsic to the solver, not to ephemeris precision).
-- Resolve OQ-4 (validation tolerance) via the 5-target NHATS comparison once Earth ephemeris is locked.
+**Phase B (pre-implementation diagnostic):** COMPLETE for Slice 10 blocking work.
+- Closed OQ-3 (licensing), OQ-5 (Earth ephemeris source), OQ-4 (NHATS validation tolerance), and OQ-2 (catalog-wide Lambert failure population).
+- OQ-7 remains open as a non-blocking long-tail diagnostic for Slice 16+ architecture.
 
 **Phase C (implementation):** PENDING.
 - Solver integration (PyKEP WASM build into the v2 toolchain).
