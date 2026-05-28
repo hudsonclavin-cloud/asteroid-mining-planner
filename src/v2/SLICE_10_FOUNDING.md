@@ -403,17 +403,17 @@ The 89 NHATS records outside the Earth ephemeris window are not a blocker for Sl
 
 ## 7. Status
 
-**Phase A (research):** COMPLETE. Research library at src/v2/research/slice-10-lambert/ and adjacent slice folders. DECs 1-8 locked from research synthesis where evidence is clear. OQs 1-5 surfaced for pre-implementation diagnostic.
+**Phase A (research):** COMPLETE. Research library at src/v2/research/slice-10-lambert/ and adjacent slice folders. DECs 1-8 locked from research synthesis where evidence is clear. OQs 1-5 surfaced for pre-implementation diagnostic; OQ-7 added during Phase B as a measured residual surfaced by OQ-4.
 
 **Phase B (pre-implementation diagnostic):** COMPLETE for Slice 10 blocking work.
 - Closed OQ-3 (licensing), OQ-5 (Earth ephemeris source), OQ-4 (NHATS validation tolerance), OQ-2 (catalog-wide Lambert failure population), and OQ-7 (co-orbital drift population).
 - OQ-1 remains open as a Phase C UI-surface decision, not a measurement blocker.
 
-**Phase C (implementation):** PENDING.
-- Solver integration (PyKEP WASM build into the v2 toolchain).
-- Earth-departure screening pipeline (Web Worker, parallel across the catalog).
-- Catalog list UI integration: per-body badges, feasibility tag, fidelity tag per INV-016.
-- Honesty-layer UI surfacing per OQ-1 resolution.
+**Phase C (implementation):** IN PROGRESS.
+- Solver integration: DONE. Clean-room TypeScript Izzo at src/v2/core/lambert/ (commits 70a97fa, 864993b, 4f5d847, bc57304, 569a6d8). Validation harness at tools/slice10-research/nhats-validation.mjs (commit 7347b88). DEC-1 Revision 2 replaced the original PyKEP/WASM path with clean-room TypeScript; see DEC-1 history above.
+- Earth-departure screening pipeline (Web Worker, parallel across the catalog): PENDING.
+- Catalog list UI integration: per-body badges, feasibility tag, fidelity tag per INV-016: PENDING.
+- Honesty-layer UI surfacing per OQ-1 resolution: PENDING.
 
 **Phase D (verification):** PENDING.
 - INV-015 validation harness against 5 reference targets within OQ-4 tolerance.
