@@ -1,0 +1,67 @@
+{
+  "des": "2008 EA9",
+  "max_size": "22",
+  "signature": {
+    "version": "1.3",
+    "source": "NASA/JPL NHATS Data API"
+  },
+  "obs_mag": "23.28",
+  "radar_snr_g": null,
+  "h": "27.7",
+  "computed": "2021-04-19",
+  "obs_end": "2034-07-26",
+  "obs_start": "2034-07-08",
+  "radar_obs_a": null,
+  "min_dur": {
+    "dur": 74,
+    "dv": "11.649"
+  },
+  "min_dv": {
+    "dv": "4.601",
+    "dur": 410
+  },
+  "obs_flag": "S",
+  "fullname": "       (2008 EA9)",
+  "radar_obs_g": null,
+  "orbit_id": "20",
+  "min_dur_traj": {
+    "vrel_arr_neo": "3.654",
+    "dur_out": 25,
+    "dv_total": "11.649",
+    "dec_dep": "-15.588",
+    "dur_at": 8,
+    "v_arr_earth": "11.572",
+    "launch": "2020-01-05",
+    "dec_arr": "17.495",
+    "dur_ret": 41,
+    "tid": 384,
+    "v_dep_earth": "4.932",
+    "dur_total": 74,
+    "c3": "24.324",
+    "vrel_dep_neo": "3.750",
+    "dv_dep_park": "4.245",
+    "vrel_arr_earth": "0.000"
+  },
+  "min_dv_traj": {
+    "dv_dep_park": "3.306",
+    "vrel_dep_neo": "0.849",
+    "vrel_arr_earth": "0.000",
+    "c3": "2.827",
+    "dur_total": 410,
+    "v_dep_earth": "1.681",
+    "tid": 108447,
+    "dur_ret": 241,
+    "dec_arr": "-17.545",
+    "v_arr_earth": "11.513",
+    "dur_at": 8,
+    "dec_dep": "-11.314",
+    "launch": "2020-03-25",
+    "dur_out": 161,
+    "dv_total": "4.601",
+    "vrel_arr_neo": "0.446"
+  },
+  "occ": "6",
+  "n_via_traj": 876805,
+  "min_size": "5.0",
+  "radar_snr_a": null
+}

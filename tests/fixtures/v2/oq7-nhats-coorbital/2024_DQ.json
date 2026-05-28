@@ -1,0 +1,67 @@
+{
+  "min_dv_traj": {
+    "c3": "6.353",
+    "dur_total": 362,
+    "v_dep_earth": "2.520",
+    "vrel_arr_earth": "0.000",
+    "dv_dep_park": "3.465",
+    "vrel_dep_neo": "0.268",
+    "dec_arr": "-51.792",
+    "tid": 746887,
+    "dur_ret": 97,
+    "dv_total": "4.041",
+    "dur_out": 257,
+    "vrel_arr_neo": "0.307",
+    "launch": "2023-04-11",
+    "v_arr_earth": "11.350",
+    "dur_at": 8,
+    "dec_dep": "-51.863"
+  },
+  "min_dur_traj": {
+    "dec_arr": "-33.104",
+    "tid": 1148400,
+    "dur_ret": 9,
+    "c3": "5.534",
+    "v_dep_earth": "2.352",
+    "dur_total": 34,
+    "vrel_arr_earth": "0.000",
+    "dv_dep_park": "3.429",
+    "vrel_dep_neo": "3.949",
+    "vrel_arr_neo": "4.580",
+    "dur_out": 17,
+    "dv_total": "11.958",
+    "launch": "2024-03-04",
+    "dur_at": 8,
+    "v_arr_earth": "11.529",
+    "dec_dep": "54.368"
+  },
+  "fullname": "       (2024 DQ)",
+  "radar_obs_g": null,
+  "orbit_id": "11",
+  "min_dv": {
+    "dv": "4.041",
+    "dur": 362
+  },
+  "obs_flag": " ",
+  "radar_snr_a": null,
+  "min_size": "18",
+  "n_via_traj": 1308809,
+  "occ": "5",
+  "radar_snr_g": null,
+  "h": "24.9",
+  "obs_mag": null,
+  "signature": {
+    "version": "1.3",
+    "source": "NASA/JPL NHATS Data API"
+  },
+  "max_size": "83",
+  "des": "2024 DQ",
+  "min_dur": {
+    "dv": "11.958",
+    "dur": 34
+  },
+  "radar_obs_a": null,
+  "obs_start": null,
+  "computed": "2024-03-23",
+  "obs_end": null
+}

@@ -1,0 +1,67 @@
+{
+  "n_via_traj": 1848181,
+  "min_size": "5.8",
+  "radar_snr_a": "20",
+  "occ": "3",
+  "min_dv_traj": {
+    "tid": 1133599,
+    "dur_ret": 105,
+    "dec_arr": "49.903",
+    "dv_dep_park": "3.220",
+    "vrel_dep_neo": "0.517",
+    "vrel_arr_earth": "0.000",
+    "c3": "0.945",
+    "dur_total": 386,
+    "v_dep_earth": "0.972",
+    "v_arr_earth": "11.092",
+    "dur_at": 8,
+    "dec_dep": "35.672",
+    "launch": "2041-04-04",
+    "dur_out": 273,
+    "dv_total": "4.379",
+    "vrel_arr_neo": "0.643"
+  },
+  "obs_flag": " ",
+  "min_dv": {
+    "dv": "4.379",
+    "dur": 386
+  },
+  "fullname": "       (2012 TF79)",
+  "orbit_id": "18",
+  "radar_obs_g": null,
+  "min_dur_traj": {
+    "dec_dep": "-19.781",
+    "v_arr_earth": "11.664",
+    "dur_at": 8,
+    "launch": "2027-01-08",
+    "dv_total": "11.725",
+    "dur_out": 17,
+    "vrel_arr_neo": "4.500",
+    "vrel_dep_neo": "3.354",
+    "dv_dep_park": "3.871",
+    "vrel_arr_earth": "0.000",
+    "dur_total": 42,
+    "v_dep_earth": "3.944",
+    "c3": "15.554",
+    "dur_ret": 17,
+    "tid": 667648,
+    "dec_arr": "20.828"
+  },
+  "min_dur": {
+    "dv": "11.725",
+    "dur": 42
+  },
+  "obs_end": "2027-05-11",
+  "computed": "2021-04-19",
+  "obs_start": "2026-11-12",
+  "radar_obs_a": "2027-03-23",
+  "obs_mag": "20.92",
+  "radar_snr_g": null,
+  "h": "27.4",
+  "des": "2012 TF79",
+  "signature": {
+    "version": "1.3",
+    "source": "NASA/JPL NHATS Data API"
+  },
+  "max_size": "26"
+}

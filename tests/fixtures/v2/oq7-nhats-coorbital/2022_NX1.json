@@ -1,0 +1,67 @@
+{
+  "occ": "1",
+  "radar_snr_a": null,
+  "des": "2022 NX1",
+  "obs_flag": " ",
+  "radar_snr_g": null,
+  "obs_end": null,
+  "min_size": "4.2",
+  "min_dur_traj": {
+    "vrel_arr_earth": "0.000",
+    "v_dep_earth": "4.236",
+    "v_arr_earth": "11.621",
+    "tid": 1721338,
+    "vrel_dep_neo": "2.856",
+    "dur_out": 9,
+    "dv_dep_park": "3.974",
+    "dv_total": "11.878",
+    "dur_total": 26,
+    "dur_ret": 9,
+    "vrel_arr_neo": "5.047",
+    "launch": "2022-04-24",
+    "c3": "17.945",
+    "dur_at": 8,
+    "dec_dep": "32.780",
+    "dec_arr": "-29.095"
+  },
+  "signature": {
+    "source": "NASA/JPL NHATS Data API",
+    "version": "1.3"
+  },
+  "n_via_traj": 2707341,
+  "radar_obs_a": null,
+  "orbit_id": "15",
+  "radar_obs_g": null,
+  "h": "28.1",
+  "obs_mag": null,
+  "min_dv": {
+    "dur": 362,
+    "dv": "3.613"
+  },
+  "max_size": "19",
+  "obs_start": null,
+  "fullname": "       (2022 NX1)",
+  "computed": "2022-11-22",
+  "min_dv_traj": {
+    "v_arr_earth": "11.092",
+    "tid": 1445884,
+    "vrel_dep_neo": "0.339",
+    "vrel_arr_earth": "0.000",
+    "v_dep_earth": "0.716",
+    "dv_total": "3.613",
+    "dur_out": 201,
+    "dv_dep_park": "3.200",
+    "dur_total": 362,
+    "dur_ret": 153,
+    "vrel_arr_neo": "0.074",
+    "dur_at": 8,
+    "dec_arr": "-44.660",
+    "dec_dep": "-76.612",
+    "launch": "2022-01-10",
+    "c3": "0.513"
+  },
+  "min_dur": {
+    "dur": 26,
+    "dv": "11.878"
+  }
+}

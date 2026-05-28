@@ -1,0 +1,67 @@
+{
+  "min_dv_traj": {
+    "dur_total": 450,
+    "v_dep_earth": "0.391",
+    "c3": "0.153",
+    "vrel_arr_earth": "0.000",
+    "dv_dep_park": "3.183",
+    "vrel_dep_neo": "0.503",
+    "dec_arr": "24.992",
+    "dur_ret": 281,
+    "tid": 2184792,
+    "vrel_arr_neo": "0.151",
+    "dur_out": 161,
+    "dv_total": "3.838",
+    "launch": "2043-10-19",
+    "dec_dep": "58.758",
+    "dur_at": 8,
+    "v_arr_earth": "11.121"
+  },
+  "min_dv": {
+    "dv": "3.838",
+    "dur": 450
+  },
+  "obs_flag": " ",
+  "min_dur_traj": {
+    "dec_arr": "-10.821",
+    "dur_ret": 9,
+    "tid": 2067747,
+    "dur_total": 34,
+    "v_dep_earth": "2.699",
+    "c3": "7.286",
+    "vrel_arr_earth": "0.068",
+    "dv_dep_park": "3.507",
+    "vrel_dep_neo": "4.450",
+    "dv_total": "11.347",
+    "dur_out": 17,
+    "vrel_arr_neo": "3.322",
+    "launch": "2043-09-09",
+    "dec_dep": "7.026",
+    "v_arr_earth": "12.000",
+    "dur_at": 8
+  },
+  "radar_obs_g": null,
+  "orbit_id": "54",
+  "fullname": "       (2006 RH120)",
+  "n_via_traj": 2767215,
+  "radar_snr_a": null,
+  "min_size": "2.2",
+  "occ": "2",
+  "obs_mag": "23.95",
+  "h": "29.5",
+  "radar_snr_g": null,
+  "des": "2006 RH120",
+  "signature": {
+    "version": "1.3",
+    "source": "NASA/JPL NHATS Data API"
+  },
+  "max_size": "10",
+  "min_dur": {
+    "dv": "11.347",
+    "dur": 34
+  },
+  "obs_start": "2028-09-22",
+  "obs_end": "2028-09-29",
+  "computed": "2025-05-21",
+  "radar_obs_a": null
+}

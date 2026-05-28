@@ -1,0 +1,67 @@
+{
+  "min_dur": {
+    "dur": 74,
+    "dv": "11.843"
+  },
+  "radar_obs_a": null,
+  "obs_start": "2039-05-10",
+  "computed": "2023-11-23",
+  "obs_end": "2039-06-22",
+  "radar_snr_g": null,
+  "h": "28.3",
+  "obs_mag": "22.47",
+  "signature": {
+    "version": "1.3",
+    "source": "NASA/JPL NHATS Data API"
+  },
+  "max_size": "17",
+  "des": "1991 VG",
+  "radar_snr_a": null,
+  "min_size": "3.8",
+  "n_via_traj": 1307785,
+  "occ": "0",
+  "min_dv_traj": {
+    "dur_total": 386,
+    "v_dep_earth": "1.728",
+    "c3": "2.985",
+    "dv_dep_park": "3.313",
+    "vrel_dep_neo": "0.521",
+    "vrel_arr_earth": "0.000",
+    "dec_arr": "-48.075",
+    "dur_ret": 225,
+    "tid": 993669,
+    "dv_total": "4.425",
+    "dur_out": 129,
+    "vrel_arr_neo": "0.591",
+    "dec_dep": "-40.228",
+    "dur_at": 32,
+    "v_arr_earth": "11.188",
+    "launch": "2039-05-01"
+  },
+  "min_dur_traj": {
+    "launch": "2039-03-22",
+    "dec_dep": "-13.388",
+    "dur_at": 8,
+    "v_arr_earth": "11.910",
+    "vrel_arr_neo": "4.205",
+    "dur_out": 41,
+    "dv_total": "11.843",
+    "vrel_arr_earth": "0.000",
+    "vrel_dep_neo": "4.015",
+    "dv_dep_park": "3.622",
+    "dur_total": 74,
+    "v_dep_earth": "3.140",
+    "c3": "9.862",
+    "dur_ret": 25,
+    "tid": 914490,
+    "dec_arr": "15.021"
+  },
+  "fullname": "       (1991 VG)",
+  "radar_obs_g": null,
+  "orbit_id": "14",
+  "min_dv": {
+    "dv": "4.425",
+    "dur": 386
+  },
+  "obs_flag": " "
+}

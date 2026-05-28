@@ -1,0 +1,67 @@
+{
+  "obs_end": null,
+  "radar_snr_g": null,
+  "des": "2008 EL68",
+  "radar_snr_a": null,
+  "occ": "9",
+  "obs_flag": " ",
+  "fullname": "       (2008 EL68)",
+  "min_dv_traj": {
+    "launch": "2045-12-11",
+    "c3": "0.518",
+    "dec_dep": "21.353",
+    "dur_at": 8,
+    "dec_arr": "-24.313",
+    "dur_total": 450,
+    "dur_ret": 225,
+    "vrel_arr_neo": "0.968",
+    "dv_dep_park": "3.200",
+    "dur_out": 217,
+    "dv_total": "4.375",
+    "v_dep_earth": "0.720",
+    "vrel_arr_earth": "0.000",
+    "tid": 484994,
+    "vrel_dep_neo": "0.207",
+    "v_arr_earth": "11.203"
+  },
+  "min_dur": {
+    "dur": 106,
+    "dv": "11.927"
+  },
+  "computed": "2021-04-19",
+  "obs_start": null,
+  "max_size": "22",
+  "radar_obs_g": null,
+  "obs_mag": null,
+  "h": "27.7",
+  "min_dv": {
+    "dur": 450,
+    "dv": "4.375"
+  },
+  "radar_obs_a": null,
+  "orbit_id": "18",
+  "signature": {
+    "source": "NASA/JPL NHATS Data API",
+    "version": "1.3"
+  },
+  "n_via_traj": 513205,
+  "min_dur_traj": {
+    "vrel_arr_earth": "0.000",
+    "v_dep_earth": "2.496",
+    "v_arr_earth": "11.669",
+    "tid": 488081,
+    "vrel_dep_neo": "3.450",
+    "dur_out": 65,
+    "dv_dep_park": "3.460",
+    "dv_total": "11.927",
+    "dur_total": 106,
+    "dur_ret": 33,
+    "vrel_arr_neo": "5.017",
+    "launch": "2045-12-19",
+    "c3": "6.228",
+    "dur_at": 8,
+    "dec_dep": "-10.452",
+    "dec_arr": "17.908"
+  },
+  "min_size": "5.0"
+}

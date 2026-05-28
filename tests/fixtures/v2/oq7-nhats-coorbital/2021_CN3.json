@@ -1,0 +1,67 @@
+{
+  "obs_flag": "S",
+  "radar_snr_a": null,
+  "des": "2021 CN3",
+  "occ": "6",
+  "obs_end": "2040-03-20",
+  "radar_snr_g": null,
+  "orbit_id": "9",
+  "radar_obs_a": null,
+  "signature": {
+    "source": "NASA/JPL NHATS Data API",
+    "version": "1.3"
+  },
+  "n_via_traj": 1277153,
+  "min_size": "10",
+  "min_dur_traj": {
+    "v_arr_earth": "11.328",
+    "tid": 231201,
+    "vrel_dep_neo": "5.513",
+    "vrel_arr_earth": "0.000",
+    "v_dep_earth": "1.793",
+    "dv_total": "11.990",
+    "dv_dep_park": "3.324",
+    "dur_out": 33,
+    "dur_total": 74,
+    "vrel_arr_neo": "3.154",
+    "dur_ret": 33,
+    "dec_dep": "-59.714",
+    "dur_at": 8,
+    "dec_arr": "57.221",
+    "launch": "2021-02-08",
+    "c3": "3.213"
+  },
+  "min_dur": {
+    "dv": "11.990",
+    "dur": 74
+  },
+  "min_dv_traj": {
+    "dv_total": "4.477",
+    "dv_dep_park": "3.568",
+    "dur_out": 97,
+    "vrel_dep_neo": "0.592",
+    "tid": 264709,
+    "v_arr_earth": "11.345",
+    "v_dep_earth": "2.940",
+    "vrel_arr_earth": "0.000",
+    "dec_dep": "-44.497",
+    "dur_at": 8,
+    "dec_arr": "-51.287",
+    "c3": "8.641",
+    "launch": "2021-02-24",
+    "vrel_arr_neo": "0.318",
+    "dur_ret": 257,
+    "dur_total": 362
+  },
+  "computed": "2021-04-19",
+  "fullname": "       (2021 CN3)",
+  "max_size": "44",
+  "obs_start": "2040-02-01",
+  "obs_mag": "22.41",
+  "radar_obs_g": null,
+  "h": "26.2",
+  "min_dv": {
+    "dur": 362,
+    "dv": "4.477"
+  }
+}

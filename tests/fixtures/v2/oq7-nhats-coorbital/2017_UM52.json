@@ -1,0 +1,67 @@
+{
+  "radar_obs_a": null,
+  "obs_start": null,
+  "obs_end": null,
+  "computed": "2023-09-14",
+  "min_dur": {
+    "dur": 34,
+    "dv": "11.948"
+  },
+  "signature": {
+    "version": "1.3",
+    "source": "NASA/JPL NHATS Data API"
+  },
+  "max_size": "10",
+  "des": "2017 UM52",
+  "h": "29.5",
+  "radar_snr_g": null,
+  "obs_mag": null,
+  "occ": "7",
+  "radar_snr_a": null,
+  "min_size": "2.2",
+  "n_via_traj": 685545,
+  "min_dur_traj": {
+    "c3": "4.565",
+    "dur_total": 34,
+    "v_dep_earth": "2.137",
+    "vrel_arr_earth": "0.000",
+    "vrel_dep_neo": "5.022",
+    "dv_dep_park": "3.385",
+    "dec_arr": "36.639",
+    "tid": 121473,
+    "dur_ret": 9,
+    "dur_out": 17,
+    "vrel_arr_neo": "3.540",
+    "dv_total": "11.948",
+    "launch": "2020-04-02",
+    "dur_at": 8,
+    "v_arr_earth": "11.786",
+    "dec_dep": "-13.746"
+  },
+  "orbit_id": "3",
+  "radar_obs_g": null,
+  "fullname": "       (2017 UM52)",
+  "min_dv": {
+    "dv": "4.077",
+    "dur": 370
+  },
+  "obs_flag": " ",
+  "min_dv_traj": {
+    "dur_out": 121,
+    "vrel_arr_neo": "0.338",
+    "dv_total": "4.077",
+    "launch": "2020-04-26",
+    "dur_at": 8,
+    "v_arr_earth": "11.442",
+    "dec_dep": "-42.114",
+    "c3": "5.979",
+    "v_dep_earth": "2.445",
+    "dur_total": 370,
+    "vrel_arr_earth": "0.000",
+    "vrel_dep_neo": "0.291",
+    "dv_dep_park": "3.449",
+    "dec_arr": "-36.245",
+    "tid": 183143,
+    "dur_ret": 241
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "obs_flag": " ",
+  "radar_snr_a": null,
+  "des": "2014 WU200",
+  "occ": "3",
+  "radar_snr_g": null,
+  "obs_end": "2040-06-20",
+  "n_via_traj": 1389066,
+  "signature": {
+    "source": "NASA/JPL NHATS Data API",
+    "version": "1.3"
+  },
+  "min_size": "2.6",
+  "min_dur_traj": {
+    "dur_ret": 17,
+    "vrel_arr_neo": "4.020",
+    "dur_total": 50,
+    "dur_at": 8,
+    "dec_dep": "-8.910",
+    "dec_arr": "13.461",
+    "c3": "11.471",
+    "launch": "2039-12-03",
+    "v_arr_earth": "11.930",
+    "vrel_dep_neo": "3.671",
+    "tid": 886267,
+    "vrel_arr_earth": "0.000",
+    "v_dep_earth": "3.387",
+    "dv_total": "11.384",
+    "dv_dep_park": "3.693",
+    "dur_out": 25
+  },
+  "orbit_id": "17",
+  "radar_obs_a": null,
+  "max_size": "12",
+  "obs_start": "2040-06-16",
+  "min_dv": {
+    "dv": "4.354",
+    "dur": 378
+  },
+  "radar_obs_g": null,
+  "h": "29.1",
+  "obs_mag": "23.48",
+  "min_dv_traj": {
+    "dv_dep_park": "3.375",
+    "dur_out": 137,
+    "dv_total": "4.354",
+    "v_dep_earth": "2.084",
+    "vrel_arr_earth": "0.000",
+    "tid": 1173947,
+    "vrel_dep_neo": "0.490",
+    "v_arr_earth": "11.357",
+    "launch": "2040-05-11",
+    "c3": "4.345",
+    "dur_at": 8,
+    "dec_dep": "1.555",
+    "dec_arr": "-4.400",
+    "dur_total": 378,
+    "dur_ret": 233,
+    "vrel_arr_neo": "0.489"
+  },
+  "min_dur": {
+    "dv": "11.384",
+    "dur": 50
+  },
+  "computed": "2023-03-08",
+  "fullname": "       (2014 WU200)"
+}

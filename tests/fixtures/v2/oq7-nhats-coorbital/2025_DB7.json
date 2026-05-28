@@ -1,0 +1,67 @@
+{
+  "occ": "5",
+  "n_via_traj": 3145556,
+  "min_size": "6.1",
+  "radar_snr_a": null,
+  "min_dv": {
+    "dv": "4.508",
+    "dur": 394
+  },
+  "obs_flag": " ",
+  "fullname": "       (2025 DB7)",
+  "radar_obs_g": null,
+  "orbit_id": "5",
+  "min_dur_traj": {
+    "dur_out": 17,
+    "dv_total": "11.868",
+    "vrel_arr_neo": "5.063",
+    "launch": "2025-02-11",
+    "dec_dep": "54.553",
+    "dur_at": 8,
+    "v_arr_earth": "11.372",
+    "dur_total": 42,
+    "v_dep_earth": "3.016",
+    "c3": "9.095",
+    "vrel_arr_earth": "0.000",
+    "dv_dep_park": "3.588",
+    "vrel_dep_neo": "3.217",
+    "dec_arr": "-59.049",
+    "dur_ret": 17,
+    "tid": 858036
+  },
+  "min_dv_traj": {
+    "dec_arr": "1.225",
+    "dur_ret": 265,
+    "tid": 2913568,
+    "v_dep_earth": "2.393",
+    "dur_total": 394,
+    "c3": "5.727",
+    "vrel_dep_neo": "0.443",
+    "dv_dep_park": "3.437",
+    "vrel_arr_earth": "0.000",
+    "dv_total": "4.508",
+    "dur_out": 121,
+    "vrel_arr_neo": "0.628",
+    "dec_dep": "-1.731",
+    "dur_at": 8,
+    "v_arr_earth": "11.669",
+    "launch": "2029-08-17"
+  },
+  "obs_end": "2026-12-26",
+  "computed": "2025-03-09",
+  "obs_start": "2026-12-15",
+  "radar_obs_a": null,
+  "min_dur": {
+    "dur": 42,
+    "dv": "11.868"
+  },
+  "des": "2025 DB7",
+  "signature": {
+    "version": "1.3",
+    "source": "NASA/JPL NHATS Data API"
+  },
+  "max_size": "27",
+  "obs_mag": "23.35",
+  "radar_snr_g": null,
+  "h": "27.3"
+}

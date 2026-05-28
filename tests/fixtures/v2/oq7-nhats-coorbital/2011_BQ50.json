@@ -1,0 +1,67 @@
+{
+  "min_dur_traj": {
+    "dv_total": "11.886",
+    "dur_out": 33,
+    "dv_dep_park": "3.834",
+    "tid": 788835,
+    "vrel_dep_neo": "3.645",
+    "v_arr_earth": "12.000",
+    "v_dep_earth": "3.833",
+    "vrel_arr_earth": "0.140",
+    "dur_at": 8,
+    "dec_dep": "21.563",
+    "dec_arr": "-21.105",
+    "launch": "2035-09-27",
+    "c3": "14.688",
+    "dur_total": 66,
+    "dur_ret": 25,
+    "vrel_arr_neo": "4.268"
+  },
+  "min_size": "4.4",
+  "signature": {
+    "source": "NASA/JPL NHATS Data API",
+    "version": "1.3"
+  },
+  "n_via_traj": 1013382,
+  "radar_obs_a": null,
+  "orbit_id": "10",
+  "radar_obs_g": null,
+  "h": "28.0",
+  "obs_mag": "22.15",
+  "min_dv": {
+    "dv": "4.799",
+    "dur": 450
+  },
+  "obs_start": "2035-11-22",
+  "max_size": "20",
+  "fullname": "       (2011 BQ50)",
+  "computed": "2021-04-19",
+  "min_dv_traj": {
+    "dv_dep_park": "3.587",
+    "dur_out": 121,
+    "dv_total": "4.799",
+    "v_dep_earth": "3.013",
+    "vrel_arr_earth": "0.000",
+    "tid": 881411,
+    "vrel_dep_neo": "0.630",
+    "v_arr_earth": "11.601",
+    "launch": "2035-12-08",
+    "c3": "9.076",
+    "dec_dep": "13.312",
+    "dur_at": 8,
+    "dec_arr": "-9.468",
+    "dur_total": 450,
+    "vrel_arr_neo": "0.581",
+    "dur_ret": 321
+  },
+  "min_dur": {
+    "dur": 66,
+    "dv": "11.886"
+  },
+  "occ": "6",
+  "des": "2011 BQ50",
+  "radar_snr_a": null,
+  "obs_flag": "S",
+  "radar_snr_g": null,
+  "obs_end": "2036-01-06"
+}

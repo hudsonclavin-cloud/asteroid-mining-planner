@@ -1,0 +1,990 @@
+{
+  "metadata": {
+    "catalog_size": 41906,
+    "coorbital_count": 130,
+    "criteria": {
+      "e_max": 0.1,
+      "i_max_rad": 0.08726646259971647,
+      "a_delta_km": 7479893.535
+    },
+    "timestamp": "2026-05-28T00:34:50.121Z"
+  },
+  "summary": {
+    "compared_count": 36,
+    "not_in_nhats_count": 5,
+    "outside_earth_ephemeris_range_count": 89,
+    "error_count": 0,
+    "median_abs_dev_km_s": 0.0487153194815525,
+    "max_abs_dev_km_s": 1.1250267425870566,
+    "above_0_1_count": 6,
+    "above_1_0_count": 1,
+    "above_2_0_count": 0
+  },
+  "orbit_class_distribution": {
+    "APO": 84,
+    "ATE": 43,
+    "AMO": 3
+  },
+  "results": [
+    {
+      "designation": "459872",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-01-21"
+    },
+    {
+      "designation": "1991 VG",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2039-05-01",
+      "tof_days": 129,
+      "nhats_v_inf_dep": 1.728,
+      "our_v_inf_dep": 2.004704508665038,
+      "abs_dev_km_s": 0.27670450866503793,
+      "nhats_c3": 2.985
+    },
+    {
+      "designation": "2000 SG344",
+      "orbitClass": "ATE",
+      "status": "compared",
+      "launch": "2029-10-12",
+      "tof_days": 201,
+      "nhats_v_inf_dep": 1.227,
+      "our_v_inf_dep": 2.3520267425870567,
+      "abs_dev_km_s": 1.1250267425870566,
+      "nhats_c3": 1.507
+    },
+    {
+      "designation": "2001 GP2",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2040-10-10",
+      "tof_days": 153,
+      "nhats_v_inf_dep": 2.492,
+      "our_v_inf_dep": 2.5694533250844453,
+      "abs_dev_km_s": 0.07745332508444536,
+      "nhats_c3": 6.211
+    },
+    {
+      "designation": "2003 YN107",
+      "orbitClass": "ATE",
+      "status": "not_in_nhats",
+      "our_v_inf_dep": 17.35612323549304
+    },
+    {
+      "designation": "2006 BZ147",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2035-02-15",
+      "tof_days": 113,
+      "nhats_v_inf_dep": 2.92,
+      "our_v_inf_dep": 2.922481413025878,
+      "abs_dev_km_s": 0.002481413025877899,
+      "nhats_c3": 8.525
+    },
+    {
+      "designation": "2006 JY26",
+      "orbitClass": "APO",
+      "status": "not_in_nhats",
+      "our_v_inf_dep": 6.9697051846695715
+    },
+    {
+      "designation": "2006 QQ56",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2045-12-27"
+    },
+    {
+      "designation": "2006 RH120",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2043-10-19"
+    },
+    {
+      "designation": "2007 UN12",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-05-28"
+    },
+    {
+      "designation": "2007 VU6",
+      "orbitClass": "ATE",
+      "status": "compared",
+      "launch": "2035-03-19",
+      "tof_days": 233,
+      "nhats_v_inf_dep": 2.184,
+      "our_v_inf_dep": 2.1136025530130866,
+      "abs_dev_km_s": 0.07039744698691353,
+      "nhats_c3": 4.771
+    },
+    {
+      "designation": "2008 EA9",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-03-25"
+    },
+    {
+      "designation": "2008 EL68",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2045-12-11"
+    },
+    {
+      "designation": "2008 KT",
+      "orbitClass": "APO",
+      "status": "not_in_nhats",
+      "our_v_inf_dep": 7.994990301365925
+    },
+    {
+      "designation": "2008 UA202",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2028-11-18",
+      "tof_days": 241,
+      "nhats_v_inf_dep": 1.594,
+      "our_v_inf_dep": 1.645194156679765,
+      "abs_dev_km_s": 0.0511941566797649,
+      "nhats_c3": 2.54
+    },
+    {
+      "designation": "2010 JW34",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2045-05-01"
+    },
+    {
+      "designation": "2010 VQ98",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2039-05-09",
+      "tof_days": 233,
+      "nhats_v_inf_dep": 1.465,
+      "our_v_inf_dep": 1.5133678609301722,
+      "abs_dev_km_s": 0.04836786093017209,
+      "nhats_c3": 2.146
+    },
+    {
+      "designation": "2011 BL45",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2029-02-06",
+      "tof_days": 169,
+      "nhats_v_inf_dep": 1.35,
+      "our_v_inf_dep": 1.416728141632709,
+      "abs_dev_km_s": 0.06672814163270901,
+      "nhats_c3": 1.823
+    },
+    {
+      "designation": "2011 BQ50",
+      "orbitClass": "ATE",
+      "status": "compared",
+      "launch": "2035-12-08",
+      "tof_days": 121,
+      "nhats_v_inf_dep": 3.013,
+      "our_v_inf_dep": 3.2004967467854932,
+      "abs_dev_km_s": 0.18749674678549333,
+      "nhats_c3": 9.076
+    },
+    {
+      "designation": "2011 UD21",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2042-04-07"
+    },
+    {
+      "designation": "2011 UX275",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2030-10-31",
+      "tof_days": 217,
+      "nhats_v_inf_dep": 2.675,
+      "our_v_inf_dep": 2.68092365771243,
+      "abs_dev_km_s": 0.005923657712429975,
+      "nhats_c3": 7.158
+    },
+    {
+      "designation": "2011 WE",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2044-08-18"
+    },
+    {
+      "designation": "2012 FC71",
+      "orbitClass": "ATE",
+      "status": "not_in_nhats",
+      "our_v_inf_dep": 20.937513959790802
+    },
+    {
+      "designation": "2012 LA",
+      "orbitClass": "AMO",
+      "status": "compared",
+      "launch": "2029-11-13",
+      "tof_days": 145,
+      "nhats_v_inf_dep": 2.165,
+      "our_v_inf_dep": 2.233298076123852,
+      "abs_dev_km_s": 0.06829807612385208,
+      "nhats_c3": 4.688
+    },
+    {
+      "designation": "2012 TF79",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2041-04-04"
+    },
+    {
+      "designation": "2013 BS45",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-01-05"
+    },
+    {
+      "designation": "2013 RZ53",
+      "orbitClass": "APO",
+      "status": "not_in_nhats",
+      "our_v_inf_dep": 7.637585089240534
+    },
+    {
+      "designation": "2014 DJ80",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2041-09-03"
+    },
+    {
+      "designation": "2014 KF39",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2031-11-11",
+      "tof_days": 129,
+      "nhats_v_inf_dep": 3.475,
+      "our_v_inf_dep": 3.4579800964877276,
+      "abs_dev_km_s": 0.01701990351227245,
+      "nhats_c3": 12.075
+    },
+    {
+      "designation": "2014 QD364",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-01-05"
+    },
+    {
+      "designation": "2014 WU200",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2040-05-11",
+      "tof_days": 137,
+      "nhats_v_inf_dep": 2.084,
+      "our_v_inf_dep": 1.8224228435942158,
+      "abs_dev_km_s": 0.2615771564057843,
+      "nhats_c3": 4.345
+    },
+    {
+      "designation": "2014 WX202",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2034-05-19",
+      "tof_days": 169,
+      "nhats_v_inf_dep": 1.098,
+      "our_v_inf_dep": 1.1148911418172367,
+      "abs_dev_km_s": 0.01689114181723661,
+      "nhats_c3": 1.205
+    },
+    {
+      "designation": "2014 WA366",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2033-05-16",
+      "tof_days": 233,
+      "nhats_v_inf_dep": 3.379,
+      "our_v_inf_dep": 3.400327070046126,
+      "abs_dev_km_s": 0.021327070046126106,
+      "nhats_c3": 11.42
+    },
+    {
+      "designation": "2015 XZ378",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-06-13"
+    },
+    {
+      "designation": "2016 ES85",
+      "orbitClass": "ATE",
+      "status": "compared",
+      "launch": "2036-03-29",
+      "tof_days": 241,
+      "nhats_v_inf_dep": 2.61,
+      "our_v_inf_dep": 2.5858212491161767,
+      "abs_dev_km_s": 0.024178750883823152,
+      "nhats_c3": 6.81
+    },
+    {
+      "designation": "2016 GK135",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-07-15"
+    },
+    {
+      "designation": "2016 NP56",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2035-01-14",
+      "tof_days": 145,
+      "nhats_v_inf_dep": 2.932,
+      "our_v_inf_dep": 3.0135462990116983,
+      "abs_dev_km_s": 0.08154629901169841,
+      "nhats_c3": 8.598
+    },
+    {
+      "designation": "2016 RD34",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2031-03-08",
+      "tof_days": 209,
+      "nhats_v_inf_dep": 1.297,
+      "our_v_inf_dep": 1.309487703442333,
+      "abs_dev_km_s": 0.012487703442332965,
+      "nhats_c3": 1.683
+    },
+    {
+      "designation": "2016 YR",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2043-06-21"
+    },
+    {
+      "designation": "2017 BN93",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2032-07-16",
+      "tof_days": 57,
+      "nhats_v_inf_dep": 1.832,
+      "our_v_inf_dep": 1.7974159056343,
+      "abs_dev_km_s": 0.03458409436570009,
+      "nhats_c3": 3.356
+    },
+    {
+      "designation": "2017 FT102",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2035-10-05",
+      "tof_days": 177,
+      "nhats_v_inf_dep": 2.015,
+      "our_v_inf_dep": 2.0968072668738427,
+      "abs_dev_km_s": 0.08180726687384254,
+      "nhats_c3": 4.059
+    },
+    {
+      "designation": "2017 HU49",
+      "orbitClass": "ATE",
+      "status": "compared",
+      "launch": "2038-11-06",
+      "tof_days": 201,
+      "nhats_v_inf_dep": 1.427,
+      "our_v_inf_dep": 1.4245027334037337,
+      "abs_dev_km_s": 0.0024972665962663676,
+      "nhats_c3": 2.036
+    },
+    {
+      "designation": "2017 UM52",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-04-26"
+    },
+    {
+      "designation": "2018 BC",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2032-07-24",
+      "tof_days": 169,
+      "nhats_v_inf_dep": 1.717,
+      "our_v_inf_dep": 1.7174552814812545,
+      "abs_dev_km_s": 0.00045528148125439927,
+      "nhats_c3": 2.947
+    },
+    {
+      "designation": "2018 FM3",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-02-14"
+    },
+    {
+      "designation": "2018 PK21",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-01-05"
+    },
+    {
+      "designation": "2018 PN22",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-01-31"
+    },
+    {
+      "designation": "2018 PU23",
+      "orbitClass": "ATE",
+      "status": "compared",
+      "launch": "2035-02-15",
+      "tof_days": 177,
+      "nhats_v_inf_dep": 0.796,
+      "our_v_inf_dep": 0.845062778032933,
+      "abs_dev_km_s": 0.04906277803293291,
+      "nhats_c3": 0.633
+    },
+    {
+      "designation": "2018 PM28",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2043-06-05"
+    },
+    {
+      "designation": "2018 VT7",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-10-19"
+    },
+    {
+      "designation": "2018 WV1",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2035-05-30",
+      "tof_days": 201,
+      "nhats_v_inf_dep": 2.141,
+      "our_v_inf_dep": 2.1613485291372885,
+      "abs_dev_km_s": 0.020348529137288462,
+      "nhats_c3": 4.583
+    },
+    {
+      "designation": "2019 GF1",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-03-25"
+    },
+    {
+      "designation": "2019 KM2",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2038-06-23",
+      "tof_days": 145,
+      "nhats_v_inf_dep": 3.081,
+      "our_v_inf_dep": 3.1335316256742147,
+      "abs_dev_km_s": 0.052531625674214766,
+      "nhats_c3": 9.49
+    },
+    {
+      "designation": "2019 PO1",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2038-02-15",
+      "tof_days": 97,
+      "nhats_v_inf_dep": 1.635,
+      "our_v_inf_dep": 1.6423297749609957,
+      "abs_dev_km_s": 0.0073297749609957386,
+      "nhats_c3": 2.675
+    },
+    {
+      "designation": "2019 TF2",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2035-09-11",
+      "tof_days": 185,
+      "nhats_v_inf_dep": 2.254,
+      "our_v_inf_dep": 2.2642720937960448,
+      "abs_dev_km_s": 0.010272093796044768,
+      "nhats_c3": 5.082
+    },
+    {
+      "designation": "2019 UB4",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2036-04-06",
+      "tof_days": 217,
+      "nhats_v_inf_dep": 4.319,
+      "our_v_inf_dep": 4.326171807730458,
+      "abs_dev_km_s": 0.007171807730458113,
+      "nhats_c3": 18.65
+    },
+    {
+      "designation": "2020 CD3",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-01-13"
+    },
+    {
+      "designation": "2020 FA1",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2045-03-14"
+    },
+    {
+      "designation": "2020 GE",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-09-26"
+    },
+    {
+      "designation": "2020 HF4",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-04-26"
+    },
+    {
+      "designation": "2020 HO5",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-04-26"
+    },
+    {
+      "designation": "2020 MU1",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-06-29"
+    },
+    {
+      "designation": "2020 PJ6",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-07-31"
+    },
+    {
+      "designation": "2020 RB4",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2037-03-08",
+      "tof_days": 121,
+      "nhats_v_inf_dep": 1.695,
+      "our_v_inf_dep": 1.7191192011385,
+      "abs_dev_km_s": 0.024119201138499857,
+      "nhats_c3": 2.875
+    },
+    {
+      "designation": "2020 RR8",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2036-09-13",
+      "tof_days": 257,
+      "nhats_v_inf_dep": 2.576,
+      "our_v_inf_dep": 2.5806194163416567,
+      "abs_dev_km_s": 0.004619416341656635,
+      "nhats_c3": 6.637
+    },
+    {
+      "designation": "2020 UO4",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-10-19"
+    },
+    {
+      "designation": "2020 VN1",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-11-04"
+    },
+    {
+      "designation": "2020 WY",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-01-13"
+    },
+    {
+      "designation": "2021 AT2",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-12-30"
+    },
+    {
+      "designation": "2021 AK5",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-01-07"
+    },
+    {
+      "designation": "2021 CN3",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-02-24"
+    },
+    {
+      "designation": "2021 CZ4",
+      "orbitClass": "AMO",
+      "status": "compared",
+      "launch": "2037-02-12",
+      "tof_days": 121,
+      "nhats_v_inf_dep": 2.381,
+      "our_v_inf_dep": 2.4315272665601397,
+      "abs_dev_km_s": 0.05052726656013995,
+      "nhats_c3": 5.669
+    },
+    {
+      "designation": "2021 GM1",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-05-04"
+    },
+    {
+      "designation": "2021 JY5",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-05-15"
+    },
+    {
+      "designation": "2021 LD6",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-07-10"
+    },
+    {
+      "designation": "2021 LF6",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-06-13"
+    },
+    {
+      "designation": "2021 RZ3",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-09-04"
+    },
+    {
+      "designation": "2021 RG12",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-09-12"
+    },
+    {
+      "designation": "2021 TT4",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-10-06"
+    },
+    {
+      "designation": "2021 VH2",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-11-07"
+    },
+    {
+      "designation": "2021 VX22",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2020-11-20"
+    },
+    {
+      "designation": "2022 BY39",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-01-31"
+    },
+    {
+      "designation": "2022 ML3",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2022-07-05"
+    },
+    {
+      "designation": "2022 NX1",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2022-01-10"
+    },
+    {
+      "designation": "2022 OB5",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2025-01-18"
+    },
+    {
+      "designation": "2022 RS1",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2021-09-04"
+    },
+    {
+      "designation": "2022 RD2",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2043-12-22"
+    },
+    {
+      "designation": "2022 RW3",
+      "orbitClass": "AMO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2022-08-22"
+    },
+    {
+      "designation": "2022 UA1",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2042-10-16"
+    },
+    {
+      "designation": "2023 BU7",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2041-01-22"
+    },
+    {
+      "designation": "2023 GQ1",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-04-19"
+    },
+    {
+      "designation": "2023 GT1",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2022-04-16"
+    },
+    {
+      "designation": "2023 HM4",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2022-06-11"
+    },
+    {
+      "designation": "2023 LE",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2022-06-11"
+    },
+    {
+      "designation": "2023 LG2",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-06-22"
+    },
+    {
+      "designation": "2023 NY",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-07-08"
+    },
+    {
+      "designation": "2023 PZ",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-08-09"
+    },
+    {
+      "designation": "2023 RX1",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-09-02"
+    },
+    {
+      "designation": "2023 RO16",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-03-10"
+    },
+    {
+      "designation": "2023 SO11",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-10-28"
+    },
+    {
+      "designation": "2023 UZ2",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-10-04"
+    },
+    {
+      "designation": "2023 XN13",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2022-12-20"
+    },
+    {
+      "designation": "2023 XQ16",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-12-07"
+    },
+    {
+      "designation": "2023 YO1",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2025-07-13"
+    },
+    {
+      "designation": "2024 BD4",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-01-16"
+    },
+    {
+      "designation": "2024 DQ",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-04-11"
+    },
+    {
+      "designation": "2024 GR",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2038-10-21",
+      "tof_days": 97,
+      "nhats_v_inf_dep": 2.457,
+      "our_v_inf_dep": 2.364957539400928,
+      "abs_dev_km_s": 0.09204246059907195,
+      "nhats_c3": 6.036
+    },
+    {
+      "designation": "2024 GD2",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-03-26"
+    },
+    {
+      "designation": "2024 JQ1",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-05-07"
+    },
+    {
+      "designation": "2024 MS",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-06-16"
+    },
+    {
+      "designation": "2024 MM1",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2022-12-12"
+    },
+    {
+      "designation": "2024 PT5",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-08-03"
+    },
+    {
+      "designation": "2024 RA16",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-08-03"
+    },
+    {
+      "designation": "2024 XK6",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-12-01"
+    },
+    {
+      "designation": "2024 XH9",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2044-11-14"
+    },
+    {
+      "designation": "2024 YL4",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2023-12-15"
+    },
+    {
+      "designation": "2024 YY5",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-11-23"
+    },
+    {
+      "designation": "2025 DB7",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2029-08-17",
+      "tof_days": 121,
+      "nhats_v_inf_dep": 2.393,
+      "our_v_inf_dep": 2.521610225670411,
+      "abs_dev_km_s": 0.12861022567041136,
+      "nhats_c3": 5.727
+    },
+    {
+      "designation": "2025 DU7",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-02-25"
+    },
+    {
+      "designation": "2025 EM",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2025-02-11"
+    },
+    {
+      "designation": "2025 NL",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-06-24"
+    },
+    {
+      "designation": "2025 OR5",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2024-08-03"
+    },
+    {
+      "designation": "2025 UF5",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2029-04-27",
+      "tof_days": 249,
+      "nhats_v_inf_dep": 2.561,
+      "our_v_inf_dep": 2.404152252955243,
+      "abs_dev_km_s": 0.15684774704475712,
+      "nhats_c3": 6.559
+    },
+    {
+      "designation": "2025 WR7",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2025-11-26"
+    },
+    {
+      "designation": "2025 YU11",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2025-08-30"
+    },
+    {
+      "designation": "2026 AC4",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2025-02-11"
+    },
+    {
+      "designation": "2026 BZ5",
+      "orbitClass": "ATE",
+      "status": "compared",
+      "launch": "2026-01-21",
+      "tof_days": 57,
+      "nhats_v_inf_dep": 2.516,
+      "our_v_inf_dep": 2.5163861286690277,
+      "abs_dev_km_s": 0.0003861286690276522,
+      "nhats_c3": 6.328
+    },
+    {
+      "designation": "2026 FJ",
+      "orbitClass": "ATE",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2025-04-16"
+    },
+    {
+      "designation": "2026 HT",
+      "orbitClass": "APO",
+      "status": "compared",
+      "launch": "2027-03-13",
+      "tof_days": 105,
+      "nhats_v_inf_dep": 3.33,
+      "our_v_inf_dep": 3.2683546580009946,
+      "abs_dev_km_s": 0.06164534199900551,
+      "nhats_c3": 11.089
+    },
+    {
+      "designation": "2026 JQ1",
+      "orbitClass": "APO",
+      "status": "outside_earth_ephemeris_range",
+      "launch": "2025-06-03"
+    }
+  ]
+}

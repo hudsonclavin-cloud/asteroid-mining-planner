@@ -1,0 +1,67 @@
+{
+  "obs_end": null,
+  "radar_snr_g": null,
+  "occ": "2",
+  "des": "2020 MU1",
+  "radar_snr_a": null,
+  "obs_flag": " ",
+  "fullname": "       (2020 MU1)",
+  "computed": "2021-04-19",
+  "min_dur": {
+    "dv": "11.977",
+    "dur": 74
+  },
+  "min_dv_traj": {
+    "dv_dep_park": "3.500",
+    "dur_out": 121,
+    "dv_total": "4.403",
+    "v_dep_earth": "2.668",
+    "vrel_arr_earth": "0.000",
+    "tid": 282787,
+    "vrel_dep_neo": "0.403",
+    "v_arr_earth": "11.331",
+    "launch": "2020-06-29",
+    "c3": "7.117",
+    "dur_at": 24,
+    "dec_dep": "-84.477",
+    "dec_arr": "-75.139",
+    "dur_total": 370,
+    "vrel_arr_neo": "0.500",
+    "dur_ret": 225
+  },
+  "h": "24.8",
+  "obs_mag": null,
+  "radar_obs_g": null,
+  "min_dv": {
+    "dv": "4.403",
+    "dur": 370
+  },
+  "obs_start": null,
+  "max_size": "85",
+  "radar_obs_a": null,
+  "orbit_id": "12",
+  "min_dur_traj": {
+    "launch": "2020-05-20",
+    "c3": "4.913",
+    "dec_dep": "-15.852",
+    "dur_at": 8,
+    "dec_arr": "32.015",
+    "dur_total": 74,
+    "vrel_arr_neo": "4.430",
+    "dur_ret": 25,
+    "dv_dep_park": "3.401",
+    "dur_out": 41,
+    "dv_total": "11.977",
+    "v_dep_earth": "2.216",
+    "vrel_arr_earth": "0.000",
+    "tid": 198632,
+    "vrel_dep_neo": "4.146",
+    "v_arr_earth": "11.526"
+  },
+  "min_size": "19",
+  "n_via_traj": 673109,
+  "signature": {
+    "source": "NASA/JPL NHATS Data API",
+    "version": "1.3"
+  }
+}
