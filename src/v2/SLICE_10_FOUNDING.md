@@ -411,7 +411,16 @@ The 89 NHATS records outside the Earth ephemeris window are not a blocker for Sl
 
 **Phase C (implementation):** IN PROGRESS.
 - Solver integration: DONE. Clean-room TypeScript Izzo at src/v2/core/lambert/ (commits 70a97fa, 864993b, 4f5d847, bc57304, 569a6d8). Validation harness at tools/slice10-research/nhats-validation.mjs (commit 7347b88). DEC-1 Revision 2 replaced the original PyKEP/WASM path with clean-room TypeScript; see DEC-1 history above.
-- Earth-departure screening pipeline (Web Worker, parallel across the catalog): PENDING.
+- Earth-departure screening pipeline (Web Worker, parallel across the catalog): IN PROGRESS. Phase C.1 build-time screening cache precompute committed at ff92d16; workerized runtime integration remains pending.
+
+**Cache regenerated 2026-05-29 (post-fix):** The screening cache was regenerated after Dispatch 23a corrected the initial-guess middle-branch formula bug surfaced by the multi-agent audit (Finding 1). Pre-fix cache committed at HEAD ff92d16; post-fix cache regenerated at HEAD d8ace7a and committed in this follow-up update. Aggregate count delta:
+- feasible: 41422 -> 41422 (0 bodies)
+- high_c3: 483 -> 483 (0 bodies)
+- lambert_unconvergeable: 0 -> 0 (unchanged)
+- propagator_failed: 1 -> 1 (unchanged)
+- co-orbital tagged: 130 -> 130 (unchanged)
+
+The pre-fix cache's aggregate measurements stand as the engineering record at HEAD ff92d16; this regeneration supersedes the shipped cache artifact but produced no numerical change in body statuses, minC3 values, or best-window selections.
 - Catalog list UI integration: per-body badges, feasibility tag, fidelity tag per INV-016: PENDING.
 - Honesty-layer UI surfacing per OQ-1 resolution: PENDING.
 
