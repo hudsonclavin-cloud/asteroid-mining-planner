@@ -34,7 +34,11 @@ export function initial_guess_single_rev(T: number, lam: number): number {
     } else if (T <= T_1) {
         return ((2.5 * T_1) / T) * ((T_1 - T) / (1 - Math.pow(lam, 5))) + 1;
     } else {
-        return Math.pow(T_0 / T, Math.log2(T_1 / T_0)) - 1;
+        // Log-interpolation in the T_1 < T < T_0 region.
+        // Corrected formula matches poliastro/core/iod.py _initial_guess.
+        // Original implementation had a wrong algebraic form that produced bad starters
+        // for negative-lambda cases near the T_1 boundary (verified in Dispatch 22).
+        return Math.exp(Math.log(2) * Math.log(T / T_0) / Math.log(T_1 / T_0)) - 1;
     }
 }
 
