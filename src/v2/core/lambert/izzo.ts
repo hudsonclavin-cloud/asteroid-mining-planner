@@ -32,7 +32,7 @@ export interface LambertSuccess {
 
 export interface LambertFailure {
     ok: false;
-    reason: 'no_convergence' | 'invalid_geometry';
+    reason: 'no_convergence' | 'invalid_geometry' | 'multi_rev_not_supported';
 }
 
 export type LambertResult = LambertSuccess | LambertFailure;
@@ -64,6 +64,18 @@ export function lambert(
     const prograde = opts.prograde ?? true;
     const rtol = opts.rtol ?? 1e-8;
     const max_iter = opts.max_iter ?? 35;
+
+    // Slice 10 supports single-revolution transfers only (DEC-2).
+    // Multi-rev support (M >= 1) is deferred to Slice 11+. The lower-layer code
+    // (initial-guess multi-rev branch, tof multi-rev terms, householder) is partially
+    // implemented but not end-to-end validated. Rejecting M !== 0 here prevents
+    // footgun usage while preserving the lower-layer code for future Slice 11 work.
+    if (M !== 0) {
+        return {
+            ok: false,
+            reason: 'multi_rev_not_supported',
+        };
+    }
 
     const c = sub(r2, r1);
     const c_norm = norm(c);
