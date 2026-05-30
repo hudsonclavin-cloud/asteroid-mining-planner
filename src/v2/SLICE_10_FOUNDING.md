@@ -289,7 +289,7 @@ The repository licensing arc:
 
 **Question (original):** What numerical tolerance defines a "pass" for the 5-target NHATS comparison?
 
-**Resolution:** OQ-4 tolerance is defined on ABSOLUTE v_infinity_dep deviation, not relative C3. A target passes INV-015 validation if Aster v2's computed v_infinity_dep agrees with NHATS's min_dv_traj v_dep_earth value within **0.1 km/s** for stable-orbit targets and within **2.0 km/s** for Earth co-orbital targets. Targets failing both bounds indicate a real solver or pipeline bug.
+**Resolution:** OQ-4 tolerance is defined on ABSOLUTE v_infinity_dep deviation, not relative C3. A target passes INV-015 validation if Aster v2's computed v_infinity_dep agrees with NHATS's min_dv_traj v_dep_earth value within **0.1 km/s** for stable-orbit targets and within **2.0 km/s** for Earth co-orbital targets. These bounds reflect the observed safe envelope across the measured NHATS-comparable subset of 5 reference targets (OQ-4) and 36 in-window co-orbital targets (OQ-7). They are calibrated to the measured maxima with margin, NOT derived from a theoretical error model. Targets exceeding these bounds warrant investigation, but the bounds themselves should be re-measured if the catalog or solver materially changes.
 
 **Why absolute, not relative:**
 
@@ -394,12 +394,55 @@ The 89 NHATS records outside the Earth ephemeris window are not a blocker for Sl
 **Implications:**
 
 - The 130 co-orbital NEAs are tagged for UI honesty-layer treatment per INV-016 Amendment.
-- The co-orbital tolerance bound holds across the measured in-window NHATS population; Keplerian propagation + honesty tag is adequate for Slice 10 use.
+- The co-orbital tolerance bound holds across the measured in-window NHATS population; Keplerian propagation + honesty tag is adequate for Slice 10 use. Sample coverage caveat: this conclusion rests on 36 in-window NHATS-comparable co-orbital bodies of the 130 total. The remaining 94 (89 with NHATS launches outside the 2026-2040 Earth ephemeris window, plus 5 not in NHATS) are uncharacterized. A future slice that extends the Earth ephemeris backward to 2020 would close the coverage gap; for Slice 10's scope this is acceptable.
 - Future Slice 16+ work may still choose N-body propagation for best-in-class co-orbital targets, but this is an optimization decision, not a blocker surfaced by OQ-7.
 
 **Engineering record:**
 - Detailed per-body results: [tools/slice10-research/coorbital-drift-detail.json](/Users/hudsonclavin/asteroid-mining-planner/tools/slice10-research/coorbital-drift-detail.json)
 - NHATS responses cached: `tests/fixtures/v2/oq7-nhats-coorbital/`
+
+### OQ-8 — Multi-agent audit cycle (engineering record)
+
+**Status: CLOSED 2026-05-29.**
+
+**Question (retrospective):** Did the discipline patterns built into Slice 10 (verify-before-lock, surface-and-document, reference-anchored testing) catch their own failure modes when applied as an external audit?
+
+**Resolution:** Yes, demonstrably. A multi-agent audit (three parallel subagents with independent priors: Mathematician, Adversarial Reviewer, Architect) was run against Slice 10 at HEAD ff92d16. It produced 9 deduplicated findings across HIGH/MEDIUM/LOW severity. Each finding was resolved via independent verification followed by surgical fixes.
+
+**Audit summary:**
+
+| Finding | Severity | Resolution | Commit |
+|---|---|---|---|
+| F1: Initial-guess middle-branch formula bug | HIGH | Verified vs poliastro source (Dispatch 22), fixed (Dispatch 23a), downstream re-validated (Dispatch 23b/c) | d8ace7a + 8471659 |
+| F2: Cache rounding artifacts (Apophis minC3 = 0) | HIGH | Cache stores f64 precision; UI handles display rounding | 9e93ffc |
+| F3: "feasible" overstates NHATS-style accessibility | HIGH | Renamed status enum: feasible → low_departure_c3, high_c3 → high_departure_c3 | 9e93ffc |
+| F4: Cache lacks schemaVersion and provenance | MEDIUM | Added schemaVersion: 1 + SHA256 hashes of solver/catalog/Horizons/script | 9e93ffc |
+| F5: bestWindows policy-coupled (high_c3 bodies had empty arrays) | MEDIUM | Decoupled; all converged-solve bodies now get bestWindows | 9e93ffc |
+| F6: OQ-4/OQ-7 tolerance language | MEDIUM | Tolerances reframed as observed envelopes with sample-coverage caveats | (this commit) |
+| F7: lambert() exposed M ≠ 0 but didn't support it | MEDIUM | Top-level guard rejects M ≠ 0 with 'multi_rev_not_supported' reason | dbf8f42 |
+| F8: hyp2f1b standalone contract false near x → 1 | LOW | Documented domain narrowed to [0, 0.5], breakdown tests added at 0.99 and 0.999 | f455697 |
+| F9: Phase C status text drift | LOW | Refreshed | (this commit) |
+
+**Key verification pattern: independent reproduction before action.**
+
+For Finding 1, the Mathematician subagent claimed 106 no-convergence cases with a corrected starter. Dispatch 22 verified this against poliastro's actual source code (fresh clone, independent Python implementation), reproduced the bug behavior on the current TypeScript solver, and identified the specific minimum failure case (T=1.302, λ=-0.98). Only after independent verification was the fix applied. This is the same discipline that caught wrong hyp2f1b reference values, MPL/GPL licensing confusion, and FP cancellation antipatterns earlier in Slice 10 development.
+
+The audit didn't tell us we were wrong; it gave us hypotheses, which were then verified or refuted against external authoritative sources before any committed change.
+
+**Findings that did NOT reproduce exactly:**
+
+- F1's failure count was 106 in the audit and 18 in Dispatch 22's verification — different grid resolutions on the same parameter space. The QUALITATIVE finding reproduced (our starter fails materially more than poliastro's on the same grid); the EXACT count is grid-dependent and not a useful invariant.
+- F8's relative error at x=0.99 was framed as ">1e-3" in the audit but measured as 1.58e-4 in Dispatch 27. The test threshold was calibrated to measured reality, not the audit's approximate framing.
+
+Both cases were treated honestly in the engineering record rather than retrofitted to match the audit's numbers.
+
+**Engineering record:**
+
+- Audit report: /tmp/slice10-multiagent-audit-report.md (transient; reproducible via Dispatch 21's multi-agent prompt)
+- Verification report: /tmp/finding-1-verification.md (transient; reproducible via Dispatch 22)
+- Resolution commits: see table above
+
+The multi-agent audit pattern is documented for reuse in future slices' close-out.
 
 ## 7. Status
 
@@ -411,7 +454,7 @@ The 89 NHATS records outside the Earth ephemeris window are not a blocker for Sl
 
 **Phase C (implementation):** IN PROGRESS.
 - Solver integration: DONE. Clean-room TypeScript Izzo at src/v2/core/lambert/ (commits 70a97fa, 864993b, 4f5d847, bc57304, 569a6d8). Validation harness at tools/slice10-research/nhats-validation.mjs (commit 7347b88). DEC-1 Revision 2 replaced the original PyKEP/WASM path with clean-room TypeScript; see DEC-1 history above.
-- Earth-departure screening pipeline (Web Worker, parallel across the catalog): IN PROGRESS. Phase C.1 build-time screening cache precompute committed at ff92d16; workerized runtime integration remains pending.
+- Phase C.1 Lambert screening cache: DONE. Initial build-time precompute committed at ff92d16, regenerated after the initial-guess fix at 8471659, and contract-overhauled to schemaVersion 1 with full-f64 storage and provenance metadata at 9e93ffc.
 
 **Cache regenerated 2026-05-29 (post-fix):** The screening cache was regenerated after Dispatch 23a corrected the initial-guess middle-branch formula bug surfaced by the multi-agent audit (Finding 1). Pre-fix cache committed at HEAD ff92d16; post-fix cache regenerated at HEAD d8ace7a and committed in this follow-up update. Aggregate count delta:
 - low_departure_c3: 41422 -> 41422 (0 bodies)
@@ -429,8 +472,9 @@ The pre-fix cache's aggregate measurements stand as the engineering record at HE
 - bestWindows now stored for ALL bodies with at least one converged solve, not just those below the screening threshold (Finding 5 resolved)
 
 Aggregate counts unchanged. The cache contract is now stable for Slice 11+ consumption.
-- Catalog list UI integration: per-body badges, feasibility tag, fidelity tag per INV-016: PENDING.
-- Honesty-layer UI surfacing per OQ-1 resolution: PENDING.
+- Phase C.2 catalog list UI integration: PENDING. This is the deferred Slice 9 list-surface work that will consume the screening cache.
+- Phase C.3 per-body badges, departure-energy tag, and fidelity tag per INV-016: PENDING.
+- Phase C.4 honesty-layer UI surfacing per OQ-1 resolution: PENDING.
 
 **Phase D (verification):** PENDING.
 - INV-015 validation harness against 5 reference targets within OQ-4 tolerance.
