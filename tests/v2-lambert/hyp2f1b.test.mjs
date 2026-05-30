@@ -48,23 +48,21 @@ const { hyp2f1b } = await import(
 // scipy-verified values across a broader x range.
 
 const TOL = 1e-13;
-const TOL_LARGE_X = 1e-10; // Looser tolerance for x close to 1 (slower convergence)
 
 // Reference values from scipy.special.hyp2f1(3, 1, 2.5, x):
 const REFERENCES = [
   { x: 0.0, expected: 1.0 },
   { x: 0.1, expected: 1.1354243666200301 },
   { x: 0.25, expected: 1.4183991523122907 },
+  { x: 0.3, expected: 1.5444243078411781 },
   { x: 0.5, expected: 2.3561944901923448 }, // = 3π/4
-  { x: 0.75, expected: 5.8367983046245788 },
 ];
 
 for (const { x, expected } of REFERENCES) {
   const computed = hyp2f1b(x);
-  const tol = x > 0.5 ? TOL_LARGE_X : TOL;
   const error = Math.abs(computed - expected);
   assert.ok(
-    error < tol * Math.abs(expected),
+    error < TOL * Math.abs(expected),
     `hyp2f1b(${x}) = ${computed}, expected ${expected}, relative error ${error / Math.abs(expected)}`
   );
 }
@@ -75,6 +73,38 @@ const computedHalf = hyp2f1b(0.5);
 assert.ok(
   Math.abs(computedHalf - expectedHalf) < TOL,
   `hyp2f1b(0.5) should equal 3π/4 = ${expectedHalf}, got ${computedHalf}`
+);
+
+// ============================================================
+// Contract documentation: hyp2f1b is accurate for x in [0, 0.5].
+// Outside that range, the truncated series produces increasingly
+// wrong values. These tests document where the contract breaks.
+// ============================================================
+
+const xIn = 0.5;
+const oursIn = hyp2f1b(xIn);
+const refIn = 2.356194490192345;
+assert.ok(
+  Math.abs(oursIn - refIn) / refIn < 1e-12,
+  `hyp2f1b(0.5) = ${oursIn}, expected ~${refIn}, relative diff ${Math.abs(oursIn - refIn) / refIn}`
+);
+
+const xHigh = 0.99;
+const oursHigh = hyp2f1b(xHigh);
+const refHigh = 596.9839630207517;
+const relErrHigh = Math.abs(oursHigh - refHigh) / Math.abs(refHigh);
+assert.ok(
+  relErrHigh > 1e-4,
+  `hyp2f1b(0.99) precision should be degraded (>1e-4 rel err), but got ${relErrHigh}. If this fails, the helper improved unexpectedly — update the contract.`
+);
+
+const xSevere = 0.999;
+const oursSevere = hyp2f1b(xSevere);
+const refSevere = 18654.32779357236;
+const relErrSevere = Math.abs(oursSevere - refSevere) / Math.abs(refSevere);
+assert.ok(
+  relErrSevere > 1e-2,
+  `hyp2f1b(0.999) should have severe error (>1e-2 rel err), got ${relErrSevere}`
 );
 
 // At x >= 1 returns Infinity

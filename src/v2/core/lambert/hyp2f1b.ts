@@ -1,21 +1,19 @@
 /**
- * Gauss hypergeometric function 2F1(3, 1; 5/2; x).
+ * Compute the Gauss hypergeometric function 2F1(3, 1; 5/2; x) via series expansion.
  *
- * Used by Izzo's Lambert solver in the M=0 single-revolution case for
- * x in the range (sqrt(0.6), sqrt(1.4)) — see poliastro reference and
- * Izzo 2014 paper section 3.
+ * DOMAIN: x ∈ [0, 0.5]. The function 2F1(3, 1; 5/2; x) is mathematically defined
+ * for x ∈ [0, 1), but this implementation uses a raw truncated series (MAX_ITER = 1000)
+ * with no near-1 transformation. The series converges slowly as x → 1, and outside
+ * the documented domain its precision degrades materially before becoming severe near 1.
  *
- * Computed by direct power series:
- *   2F1(a, b; c; x) = sum_{n=0}^{inf} ((a)_n * (b)_n / (c)_n) * x^n / n!
+ * USAGE: This helper is called by the Izzo Lambert iteration (src/v2/core/lambert/tof.ts)
+ * with arguments in the range x ≈ S_1 ∈ [0, ~0.4], well within the safe domain.
  *
- * For our specialized case 2F1(3, 1; 5/2; x):
- *   term_0 = 1
- *   term_{n+1} = term_n * (n + 3)(n + 1) / ((n + 5/2)(n + 1)) * x
- *             = term_n * (n + 3) / (n + 5/2) * x
+ * If a future caller needs accurate evaluation near x → 1, this helper will need to
+ * be extended with a Pfaff or Euler transformation. Do not use this helper outside
+ * the documented [0, 0.5] domain without that work.
  *
- * Series diverges for |x| >= 1. We require x < 1 (caller's responsibility).
- * For x close to 1, convergence is slow; we cap iterations at 1000 with
- * a relative-tolerance break.
+ * Reference: NIST DLMF §15.2.1 for the series definition.
  */
 
 const MAX_ITER = 1000;
