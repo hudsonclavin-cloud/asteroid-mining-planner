@@ -4,18 +4,39 @@
  * The cache is generated offline by tools/build/precompute-lambert-screen.mjs
  * and shipped as tests/fixtures/v2/lambert-screen-cache.json.
  *
+ * Cache contract (schemaVersion: 1):
+ *
+ * Status meaning:
+ *   low_departure_c3:       Best departure C3 <= feasibleC3MaxKm2S2
+ *   high_departure_c3:      Solver converged, but best C3 > threshold
+ *   lambert_unconvergeable: No Lambert solve converged at any grid point
+ *   propagator_failed:      Keplerian propagator failed on this body's elements
+ *
+ * IMPORTANT: low_departure_c3 is a departure-energy screen ONLY. It does NOT mean
+ * the body is "accessible" in the NHATS or full-mission-stack sense, which also
+ * depends on arrival delta-v, stay time, and return trajectory terms. Slice 12+
+ * adds those dimensions.
+ *
+ * minC3 and bestWindows values are stored at full f64 precision. Display rounding
+ * happens at the UI layer.
+ *
+ * bestWindows contains up to 5 best (departure date, TOF) windows per body, sorted
+ * ascending by C3. ALL bodies with at least one converged Lambert solve get
+ * bestWindows, regardless of whether their minC3 falls below the threshold. This
+ * decouples planning data from policy classification.
+ *
  * Downstream consumers:
- *   - Slice 10 Phase C UI: per-body badge/feasibility tag rendering
+ *   - Slice 10 Phase C UI: per-body badge / departure-C3 tag rendering
  *   - Slice 11 (pork-chops): seed initial focus from best windows
  *   - Slice 12 (delta-v stack): read min-C3 as the first stack item
- *   - Slice 14+ (composition, economics): filter on feasibility status
+ *   - Slice 14+ (composition, economics): filter on departure-energy status
  */
 
 import lambertScreenCacheJson from '../../../tests/fixtures/v2/lambert-screen-cache.json' with { type: 'json' };
 
 export type LambertScreenStatus =
-  | 'feasible'
-  | 'high_c3'
+  | 'low_departure_c3'
+  | 'high_departure_c3'
   | 'lambert_unconvergeable'
   | 'propagator_failed';
 
@@ -40,6 +61,7 @@ export interface LambertScreenResult {
 }
 
 export interface LambertScreenCacheMetadata {
+  schemaVersion: 1;
   generatedAt: string;
   catalogSize: number;
   screeningWindow: { startUtc: string; endUtc: string };
@@ -55,11 +77,39 @@ export interface LambertScreenCacheMetadata {
   };
   totalSolves: number;
   wallTimeSeconds: number;
+  provenance: {
+    solverCommit: string;
+    catalogFixtureSha256: string;
+    horizonsFixtureSha256: string;
+    precomputeScriptSha256: string;
+  };
 }
 
 export interface LambertScreenCache {
   metadata: LambertScreenCacheMetadata;
   bodies: LambertScreenResult[];
+}
+
+export function validateLambertScreenCache(cache: unknown): LambertScreenCache {
+  if (!cache || typeof cache !== 'object') {
+    throw new Error('Cache is not an object');
+  }
+
+  const typedCache = cache as Record<string, unknown>;
+  if (!typedCache.metadata || typeof typedCache.metadata !== 'object') {
+    throw new Error('Cache missing metadata');
+  }
+
+  const metadata = typedCache.metadata as Record<string, unknown>;
+  if (metadata.schemaVersion !== 1) {
+    throw new Error(`Cache schemaVersion ${metadata.schemaVersion} not supported (expected 1)`);
+  }
+
+  if (!Array.isArray(typedCache.bodies)) {
+    throw new Error('Cache missing bodies array');
+  }
+
+  return cache as LambertScreenCache;
 }
 
 /**
@@ -68,7 +118,7 @@ export interface LambertScreenCache {
  * This is a synchronous JSON import resolved at build time.
  */
 export function loadLambertScreenCache(): LambertScreenCache {
-  return lambertScreenCacheJson as LambertScreenCache;
+  return validateLambertScreenCache(lambertScreenCacheJson);
 }
 
 /**

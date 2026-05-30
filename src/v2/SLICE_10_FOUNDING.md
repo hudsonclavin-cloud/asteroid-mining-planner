@@ -414,13 +414,21 @@ The 89 NHATS records outside the Earth ephemeris window are not a blocker for Sl
 - Earth-departure screening pipeline (Web Worker, parallel across the catalog): IN PROGRESS. Phase C.1 build-time screening cache precompute committed at ff92d16; workerized runtime integration remains pending.
 
 **Cache regenerated 2026-05-29 (post-fix):** The screening cache was regenerated after Dispatch 23a corrected the initial-guess middle-branch formula bug surfaced by the multi-agent audit (Finding 1). Pre-fix cache committed at HEAD ff92d16; post-fix cache regenerated at HEAD d8ace7a and committed in this follow-up update. Aggregate count delta:
-- feasible: 41422 -> 41422 (0 bodies)
-- high_c3: 483 -> 483 (0 bodies)
+- low_departure_c3: 41422 -> 41422 (0 bodies)
+- high_departure_c3: 483 -> 483 (0 bodies)
 - lambert_unconvergeable: 0 -> 0 (unchanged)
 - propagator_failed: 1 -> 1 (unchanged)
 - co-orbital tagged: 130 -> 130 (unchanged)
 
 The pre-fix cache's aggregate measurements stand as the engineering record at HEAD ff92d16; this regeneration supersedes the shipped cache artifact but produced no numerical change in body statuses, minC3 values, or best-window selections.
+
+**Cache contract overhauled 2026-05-29 (Dispatch 24, post-fix):** The cache schema was updated to address audit Findings 2, 3, 4, and 5:
+- Numeric values now stored at full f64 precision (Finding 2 resolved)
+- Status enum renamed: feasible → low_departure_c3, high_c3 → high_departure_c3 (Finding 3 resolved; departure-energy semantics now explicit)
+- Cache metadata includes schemaVersion: 1 and SHA256 provenance hashes for solver commit, input fixtures, and precompute script (Finding 4 resolved)
+- bestWindows now stored for ALL bodies with at least one converged solve, not just those below the screening threshold (Finding 5 resolved)
+
+Aggregate counts unchanged. The cache contract is now stable for Slice 11+ consumption.
 - Catalog list UI integration: per-body badges, feasibility tag, fidelity tag per INV-016: PENDING.
 - Honesty-layer UI surfacing per OQ-1 resolution: PENDING.
 

@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 /**
- * Phase C.1: Precompute Lambert screening cache for the full NEA catalog.
+ * Phase C.1: Precompute Lambert screening cache.
  *
- * For each NEA in the Slice 9 catalog, run Lambert across the Slice 10
- * screening grid and emit per-body min-C3 + best-5 windows + status tags.
+ * Schema: lambert-screen-cache.ts schemaVersion 1.
+ *
+ * Per-body output:
+ *   - status: low_departure_c3 / high_departure_c3 / lambert_unconvergeable / propagator_failed
+ *   - minC3: best departure C3 across the (departure x TOF) grid, full f64 precision
+ *   - bestWindows: top-5 windows by C3, regardless of threshold
+ *   - isCoOrbital: INV-016 amendment flag
+ *
+ * Provenance: cache metadata records SHA256 hashes of all input fixtures and this
+ * script itself, plus the git HEAD commit at generation time. Consumers can verify
+ * the cache is consistent with their expected inputs.
  *
  * Output:
  *   tests/fixtures/v2/lambert-screen-cache.json
@@ -16,11 +25,14 @@
  */
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import { once } from 'node:events';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..', '..');
 
 const tempOutDir = path.join(repoRoot, '.tmp-tests', 'lambert-screen-precompute');
@@ -91,12 +103,8 @@ function kmpsVectorFromMps(velocityMps) {
   return [velocityMps.x / 1000, velocityMps.y / 1000, velocityMps.z / 1000];
 }
 
-function magnitude3(vector) {
-  return Math.sqrt(vector[0] ** 2 + vector[1] ** 2 + vector[2] ** 2);
-}
-
-function subtract3(a, b) {
-  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+function magnitude3(x, y, z) {
+  return Math.sqrt(x * x + y * y + z * z);
 }
 
 function tdbToUtcDateString(tdbSeconds) {
@@ -104,8 +112,15 @@ function tdbToUtcDateString(tdbSeconds) {
   return new Date(utcSecondsSinceUnix * 1000).toISOString().slice(0, 10);
 }
 
-function round3(value) {
-  return Math.round(value * 1_000) / 1_000;
+function sha256Buffer(buffer) {
+  return createHash('sha256').update(buffer).digest('hex');
+}
+
+async function writeChunk(stream, chunk) {
+  if (stream.write(chunk)) {
+    return;
+  }
+  await once(stream, 'drain');
 }
 
 function maybeInsertBestWindow(bestWindows, candidate) {
@@ -148,9 +163,25 @@ const HORIZONS_FIXTURE = path.join(
   'horizons-inner-solar-system-2026-2040.json',
 );
 const NEA_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');
+const SCRIPT_BYTES = fs.readFileSync(__filename);
+const HORIZONS_BYTES = fs.readFileSync(HORIZONS_FIXTURE);
+const NEA_BYTES = fs.readFileSync(NEA_FIXTURE);
+const gitHeadResult = spawnSync('git', ['rev-parse', 'HEAD'], {
+  cwd: repoRoot,
+  encoding: 'utf8',
+});
+if (gitHeadResult.status !== 0) {
+  console.error('Failed to resolve git HEAD SHA for cache provenance');
+  console.error(gitHeadResult.stderr || gitHeadResult.stdout);
+  process.exit(1);
+}
+const solverCommit = gitHeadResult.stdout.trim();
+const catalogFixtureSha256 = sha256Buffer(NEA_BYTES);
+const horizonsFixtureSha256 = sha256Buffer(HORIZONS_BYTES);
+const precomputeScriptSha256 = sha256Buffer(SCRIPT_BYTES);
 
 console.log('Precomputing Earth states at all departure dates...');
-const horizonsRaw = JSON.parse(fs.readFileSync(HORIZONS_FIXTURE, 'utf8'));
+const horizonsRaw = JSON.parse(HORIZONS_BYTES.toString('utf8'));
 const horizonsStates = ingestSlice2Fixture(horizonsRaw);
 const earthSeries = horizonsStates.earth.map((sample) => sample.state);
 const departureDateStrings = departureTdbs.map((t) => tdbToUtcDateString(t));
@@ -164,15 +195,28 @@ const earthStates = departureTdbs.map((t) => {
 console.log(`  Precomputed ${earthStates.length} Earth states`);
 
 console.log('Loading catalog...');
-const catalogRaw = JSON.parse(fs.readFileSync(NEA_FIXTURE, 'utf8'));
+const catalogRaw = JSON.parse(NEA_BYTES.toString('utf8'));
 const canonicalCatalog = ingestSlice9Fixture(catalogRaw);
 const bodies = Object.values(canonicalCatalog.asteroids);
 console.log(`  Catalog size: ${bodies.length}`);
 
-const results = [];
+const tempBodiesPath = path.join(tempOutDir, 'lambert-screen-bodies.json');
+const bodyStream = fs.createWriteStream(tempBodiesPath, {
+  encoding: 'utf8',
+  highWaterMark: 1 << 20,
+});
+await writeChunk(bodyStream, '[\n');
 let totalSolves = 0;
-const tStart = Date.now();
+const tStartNs = process.hrtime.bigint();
 let bodiesProcessed = 0;
+let firstBodyWritten = false;
+const byStatus = {
+  low_departure_c3: 0,
+  high_departure_c3: 0,
+  lambert_unconvergeable: 0,
+  propagator_failed: 0,
+};
+let coOrbitalCount = 0;
 
 for (const body of bodies) {
   const e = body.elements.e;
@@ -222,11 +266,16 @@ for (const body of bodies) {
       }
 
       anyOk = true;
-      const vInfDepVec = subtract3(result.v1, earth.velocityKmPerS);
-      const vInfDepMag = magnitude3(vInfDepVec);
+      const vInfDepX = result.v1[0] - earth.velocityKmPerS[0];
+      const vInfDepY = result.v1[1] - earth.velocityKmPerS[1];
+      const vInfDepZ = result.v1[2] - earth.velocityKmPerS[2];
+      const vInfDepMag = magnitude3(vInfDepX, vInfDepY, vInfDepZ);
       const c3 = vInfDepMag * vInfDepMag;
-      const vInfArrVec = subtract3(result.v2, kmpsVectorFromMps(targetState.velocityMps));
-      const vInfArrMag = magnitude3(vInfArrVec);
+      const targetVelocityKmPerS = kmpsVectorFromMps(targetState.velocityMps);
+      const vInfArrX = result.v2[0] - targetVelocityKmPerS[0];
+      const vInfArrY = result.v2[1] - targetVelocityKmPerS[1];
+      const vInfArrZ = result.v2[2] - targetVelocityKmPerS[2];
+      const vInfArrMag = magnitude3(vInfArrX, vInfArrY, vInfArrZ);
 
       if (c3 < minC3) {
         minC3 = c3;
@@ -234,15 +283,13 @@ for (const body of bodies) {
         minC3TofDays = tofDays;
       }
 
-      if (c3 <= FEASIBLE_C3_MAX) {
-        maybeInsertBestWindow(bestWindows, {
-          launchDate: departureDateStrings[depIdx],
-          tofDays,
-          c3: round3(c3),
-          vInfDep: round3(vInfDepMag),
-          vInfArr: round3(vInfArrMag),
-        });
-      }
+      maybeInsertBestWindow(bestWindows, {
+        launchDate: departureDateStrings[depIdx],
+        tofDays,
+        c3,
+        vInfDep: vInfDepMag,
+        vInfArr: vInfArrMag,
+      });
     }
   }
 
@@ -250,26 +297,37 @@ for (const body of bodies) {
   if (!anyOk) {
     status = propagatorFailed ? 'propagator_failed' : 'lambert_unconvergeable';
   } else if (minC3 <= FEASIBLE_C3_MAX) {
-    status = 'feasible';
+    status = 'low_departure_c3';
   } else {
-    status = 'high_c3';
+    status = 'high_departure_c3';
   }
 
-  results.push({
+  const bodyResult = {
     bodyId: body.bodyId,
     spkId: body.spkId,
     designation: body.designation,
     status,
-    minC3: anyOk ? round3(minC3) : null,
+    minC3: anyOk ? minC3 : null,
     minC3Date: anyOk ? minC3Date : null,
     minC3TofDays: anyOk ? minC3TofDays : null,
     bestWindows,
     isCoOrbital,
-  });
+  };
+
+  if (firstBodyWritten) {
+    await writeChunk(bodyStream, ',\n');
+  }
+  await writeChunk(bodyStream, JSON.stringify(bodyResult));
+  firstBodyWritten = true;
+
+  byStatus[status] += 1;
+  if (isCoOrbital) {
+    coOrbitalCount += 1;
+  }
 
   bodiesProcessed += 1;
   if (bodiesProcessed % PROGRESS_INTERVAL === 0) {
-    const elapsed = (Date.now() - tStart) / 1000;
+    const elapsed = Number(process.hrtime.bigint() - tStartNs) / 1e9;
     if (elapsed > MAX_RUNTIME_SECONDS) {
       console.error(
         `Runtime exceeded ${MAX_RUNTIME_SECONDS}s at ${bodiesProcessed} bodies; stopping to report regression.`,
@@ -284,28 +342,25 @@ for (const body of bodies) {
   }
 }
 
-const tElapsed = (Date.now() - tStart) / 1000;
+await writeChunk(bodyStream, '\n]\n');
+await new Promise((resolve, reject) => {
+  bodyStream.end((error) => {
+    if (error) {
+      reject(error);
+      return;
+    }
+    resolve();
+  });
+});
+
+const tElapsed = Number(process.hrtime.bigint() - tStartNs) / 1e9;
 console.log(`\nPrecompute complete in ${tElapsed.toFixed(1)}s`);
 console.log(`Total solves: ${totalSolves}`);
 console.log(`Solves/sec:   ${(totalSolves / tElapsed / 1000).toFixed(0)}k`);
 
-const byStatus = {
-  feasible: 0,
-  high_c3: 0,
-  lambert_unconvergeable: 0,
-  propagator_failed: 0,
-};
-let coOrbitalCount = 0;
-for (const result of results) {
-  byStatus[result.status] += 1;
-  if (result.isCoOrbital) {
-    coOrbitalCount += 1;
-  }
-}
-
 console.log('\nStatus breakdown:');
 for (const [status, count] of Object.entries(byStatus)) {
-  console.log(`  ${status.padEnd(28)} ${count} (${((100 * count) / results.length).toFixed(2)}%)`);
+  console.log(`  ${status.padEnd(28)} ${count} (${((100 * count) / bodies.length).toFixed(2)}%)`);
 }
 console.log(`Co-orbital bodies tagged: ${coOrbitalCount}`);
 
@@ -316,8 +371,9 @@ if (coOrbitalCount !== 130) {
 
 const cache = {
   metadata: {
+    schemaVersion: 1,
     generatedAt: new Date().toISOString(),
-    catalogSize: results.length,
+    catalogSize: bodies.length,
     screeningWindow: { startUtc: SCREENING_START_UTC, endUtc: SCREENING_END_UTC },
     departureGridSpacingDays: DEPARTURE_GRID_SPACING_DAYS,
     tofGridSpacingDays: TOF_GRID_SPACING_DAYS,
@@ -331,11 +387,31 @@ const cache = {
     },
     totalSolves,
     wallTimeSeconds: tElapsed,
+    provenance: {
+      solverCommit,
+      catalogFixtureSha256,
+      horizonsFixtureSha256,
+      precomputeScriptSha256,
+    },
   },
-  bodies: results,
 };
 
 const outPath = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'lambert-screen-cache.json');
-fs.writeFileSync(outPath, JSON.stringify(cache));
+const outStream = fs.createWriteStream(outPath, {
+  encoding: 'utf8',
+  highWaterMark: 1 << 20,
+});
+await writeChunk(outStream, `${JSON.stringify(cache).slice(0, -1)},"bodies":`);
+await writeChunk(outStream, fs.readFileSync(tempBodiesPath, 'utf8'));
+await writeChunk(outStream, '}\n');
+await new Promise((resolve, reject) => {
+  outStream.end((error) => {
+    if (error) {
+      reject(error);
+      return;
+    }
+    resolve();
+  });
+});
 const sizeKb = (fs.statSync(outPath).size / 1024).toFixed(0);
 console.log(`\nCache written: ${path.relative(repoRoot, outPath)} (${sizeKb} KB)`);
