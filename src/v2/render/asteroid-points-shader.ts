@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import type { AsteroidBody } from '../core/constants/asteroids.js';
+import type { LambertScreenResult } from '../boundary/lambert-screen-cache.js';
+import { getScreeningColor } from './asteroid-screening-color.js';
 
 // Phase E round 2: V2 renders asteroid positions at honest-scale camera-relative
 // scene units, so point-size attenuation must use camera-relative depth
@@ -93,6 +95,16 @@ export function getAsteroidPointColor(body: Pick<AsteroidBody, 'isCuratedNea'>):
   return new THREE.Color(
     body.isCuratedNea ? ASTEROID_CURATED_NEA_COLOR_HEX : ASTEROID_MAIN_BELT_COLOR_HEX,
   );
+}
+
+export function getAsteroidPointColorWithScreening(
+  body: Pick<AsteroidBody, 'isCuratedNea'>,
+  screen: LambertScreenResult | null,
+): THREE.Color {
+  if (screen !== null) {
+    return getScreeningColor(screen);
+  }
+  return getAsteroidPointColor(body);
 }
 
 export function createAsteroidPointsShaderMaterial(

@@ -30,6 +30,10 @@ import {
   type CameraOrbitTween,
 } from '../../render/index.js';
 import { loadStarCatalog } from '../../boundary/star-catalog-tycho2.js';
+import {
+  createLambertScreenIndex,
+  loadLambertScreenCache,
+} from '../../boundary/lambert-screen-cache.js';
 import { createJupiterOblateMesh } from '../../render/jupiter-oblate.js';
 import { createMarsOblateMesh } from '../../render/mars-oblate.js';
 import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
@@ -613,6 +617,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   const stateSeries = new Map<BodyId, CanonicalState[]>();
   const asteroidBodies = Object.values(asteroidCatalog.asteroids).map(normalizeSlice9BodyForRuntime);
   const asteroidIndex = createAsteroidCatalogIndex(asteroidBodies);
+  const lambertScreenCache = loadLambertScreenCache();
+  const lambertScreenIndex = createLambertScreenIndex(lambertScreenCache);
 
   for (const bodyId of BODY_IDS) {
     const samples = allStates[bodyId];
@@ -775,6 +781,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
         densityTrigger: SLICE9_HYBRID_DENSITY_TRIGGER,
       },
     },
+    screeningIndex: lambertScreenIndex,
   });
   // Slice 7 Phase H: asteroidRenderer.root now owns the full browse stack for
   // the catalog: orbit-line batch, points layer, instanced bodies, and focused

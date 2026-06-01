@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { LambertScreenResult } from '../boundary/lambert-screen-cache.js';
 import {
   hasOrbitLineForBody,
   type AsteroidBody,
@@ -10,6 +11,7 @@ import {
   ASTEROID_CURATED_NEA_COLOR_HEX,
   createAsteroidPointsShaderMaterial,
   getAsteroidPointColor,
+  getAsteroidPointColorWithScreening,
 } from './asteroid-points-shader.js';
 import {
   ASTEROID_ORBIT_HIGH_DETAIL_SEGMENTS,
@@ -47,6 +49,9 @@ export interface AsteroidRendererUpdateInput {
 
 export interface AsteroidRendererOptions {
   readonly cellRenderer?: ConstructorParameters<typeof AsteroidCellRenderer>[1];
+  readonly screeningIndex?: {
+    byBodyId: Map<string, LambertScreenResult>;
+  } | null;
 }
 
 export function propagateAsteroidBodyState(
@@ -137,6 +142,9 @@ export class AsteroidRenderer {
   private readonly pointSizeAttribute: THREE.BufferAttribute;
   private readonly pointsBoundingSphere = new THREE.Sphere(new THREE.Vector3(), Number.POSITIVE_INFINITY);
   private readonly canonicalPositionsM: THREE.Vector3[] = [];
+  private readonly screeningIndex: {
+    byBodyId: Map<string, LambertScreenResult>;
+  } | null;
   private focusedAsteroidBodyId: AsteroidBodyId | null = null;
   private focusedMeshBodyId: AsteroidBodyId | null = null;
   private focusedOrbitLine: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial> | null = null;
@@ -148,6 +156,7 @@ export class AsteroidRenderer {
     }
 
     this.asteroids = asteroids.slice();
+    this.screeningIndex = options.screeningIndex ?? null;
     this.root.name = 'asteroid-renderer-root';
     this.orbitBatch = createAsteroidOrbitBatch(
       this.asteroids.filter((asteroid) => asteroid.hasOrbitLine ?? hasOrbitLineForBody(asteroid.H)),
@@ -167,7 +176,8 @@ export class AsteroidRenderer {
       this.worldPositionByBodyId.set(asteroid.bodyId, new THREE.Vector3());
       this.canonicalPositionByBodyId.set(asteroid.bodyId, { x: 0, y: 0, z: 0 });
 
-      const color = getAsteroidPointColor(asteroid);
+      const screen = this.screeningIndex?.byBodyId.get(asteroid.bodyId) ?? null;
+      const color = getAsteroidPointColorWithScreening(asteroid, screen);
       const colorBase = asteroidIndex * 3;
       this.pointBaseColors[colorBase] = color.r;
       this.pointBaseColors[colorBase + 1] = color.g;
@@ -434,7 +444,8 @@ export class AsteroidRenderer {
         const asteroid = this.asteroidById.get(this.focusedAsteroidBodyId)!;
         const range = this.orbitBatch.rangesByBodyId.get(this.focusedAsteroidBodyId)
           ?? buildFocusedOrbitRange(asteroid);
-        const focusedOrbitColor = getAsteroidPointColor(asteroid);
+        const focusedScreen = this.screeningIndex?.byBodyId.get(asteroid.bodyId) ?? null;
+        const focusedOrbitColor = getAsteroidPointColorWithScreening(asteroid, focusedScreen);
         this.focusedOrbitLine = createFocusedAsteroidOrbitLine(asteroid, range, focusedOrbitColor);
         this.focusedOrbitLine.frustumCulled = false;
         this.root.add(this.focusedOrbitLine);
