@@ -4,6 +4,7 @@ import type { AsteroidOrbitClass } from '../../core/index.js';
 
 export type NEACatalog = Slice9CanonicalFixture;
 export type OrbitClass = AsteroidOrbitClass;
+export type LayoutMode = 'sidebar' | 'overlay';
 export type SortKey =
   | 'designation-asc'
   | 'designation-desc'
@@ -12,6 +13,17 @@ export type SortKey =
   | 'absolute-magnitude-desc';
 
 const DEFAULT_SORT_KEY: SortKey = 'designation-asc';
+const STORAGE_KEY_LAYOUT_MODE = 'aster-v2-layout-mode';
+
+function loadInitialLayoutMode(): LayoutMode {
+  try {
+    const stored =
+      typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY_LAYOUT_MODE) : null;
+    return stored === 'overlay' ? 'overlay' : 'sidebar';
+  } catch {
+    return 'sidebar';
+  }
+}
 
 const mutableCatalog = signal<NEACatalog | null>(null);
 const mutableFilterClass = signal<OrbitClass | null>(null);
@@ -19,6 +31,7 @@ const mutableSearchQuery = signal('');
 const mutableSortKey = signal<SortKey>(DEFAULT_SORT_KEY);
 const mutableSelectedBody = signal<string | null>(null);
 const mutableFocusRequestId = signal(0);
+export const layoutModeSignal = signal<LayoutMode>(loadInitialLayoutMode());
 
 export const catalogSignal = computed(() => mutableCatalog.value);
 export const filterClassSignal = computed(() => mutableFilterClass.value);
@@ -69,6 +82,10 @@ export function readFocusRequestId(): number {
   return mutableFocusRequestId.value;
 }
 
+export function readLayoutMode(): LayoutMode {
+  return layoutModeSignal.value;
+}
+
 export function setCatalog(catalog: NEACatalog | null): void {
   mutableCatalog.value = catalog;
 }
@@ -94,6 +111,17 @@ export function requestFocus(): number {
   return mutableFocusRequestId.value;
 }
 
+export function setLayoutMode(mode: LayoutMode): void {
+  layoutModeSignal.value = mode;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_LAYOUT_MODE, mode);
+    }
+  } catch {
+    // localStorage unavailable; in-memory only
+  }
+}
+
 export function subscribeToFocusRequests(onRequest: (requestId: number) => void): () => void {
   let lastSeen = mutableFocusRequestId.value;
   return effect(() => {
@@ -105,4 +133,3 @@ export function subscribeToFocusRequests(onRequest: (requestId: number) => void)
     onRequest(nextRequestId);
   });
 }
-
