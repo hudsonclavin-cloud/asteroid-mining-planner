@@ -17,5 +17,20 @@
     }
   },
   "include": ["src/**/*", "vite.config.ts"],
-  "exclude": ["node_modules", "dist", "physics.worker.js", "worker"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "physics.worker.js",
+    "worker",
+    "src/data",
+    "src/economics",
+    "src/main.ts",
+    "src/physics",
+    "src/renderer",
+    "src/state",
+    "src/styles",
+    "src/ui",
+    "src/utils",
+    "src/workers"
+  ]
 }
