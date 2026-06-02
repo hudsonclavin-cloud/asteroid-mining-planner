@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { copyFileSync, createReadStream, mkdirSync } from 'fs';
+import { copyFileSync, createReadStream, mkdirSync, writeFileSync } from 'fs';
 
 export default defineConfig({
   root: '.',
@@ -59,6 +59,15 @@ export default defineConfig({
             })
             .pipe(res);
         });
+      },
+    },
+    {
+      name: 'copy-nojekyll',
+      writeBundle() {
+        mkdirSync(resolve(__dirname, 'docs'), { recursive: true });
+        // Create an empty .nojekyll file in docs/ so GitHub Pages does not
+        // apply Jekyll processing to the published static asset tree.
+        writeFileSync(resolve(__dirname, 'docs/.nojekyll'), '');
       },
     },
   ],
