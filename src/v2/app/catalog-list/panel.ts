@@ -19,6 +19,12 @@ import {
   loadLambertScreenCache,
 } from '../../boundary/lambert-screen-cache.js';
 import { renderEmpty } from './empty.js';
+import {
+  DISCLOSURE_INTRO,
+  DISCLOSURE_SECTIONS,
+  FOOTER_CLICK_HINT,
+  FOOTER_TEXT,
+} from './honesty-disclosure.js';
 import { renderRow } from './row.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
@@ -36,6 +42,7 @@ const SORT_OPTIONS: ReadonlyArray<{ key: SortKey; label: string }> = [
 
 const scrollTopSignal = signal(0);
 const viewportHeightSignal = signal(600);
+const popoverOpenSignal = signal(false);
 
 let scrollContainerEl: HTMLDivElement | null = null;
 let resizeListenerInstalled = false;
@@ -182,6 +189,144 @@ export function trackPanelSignals(): void {
   selectedBodySignal.value;
   scrollTopSignal.value;
   viewportHeightSignal.value;
+  popoverOpenSignal.value;
+}
+
+function renderFooter(): VNode {
+  return h(
+    'div',
+    {
+      style: {
+        padding: '10px 16px',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        background: 'rgba(0,0,0,0.3)',
+        fontSize: '11px',
+        color: '#888',
+        cursor: 'pointer',
+        fontFamily: 'system-ui, sans-serif',
+        flexShrink: 0,
+      },
+      onClick: () => {
+        popoverOpenSignal.value = true;
+      },
+      title: 'Click to view screen limitations',
+    },
+    h('span', { style: { fontWeight: 500, color: '#aaa' } }, FOOTER_TEXT),
+    h('span', { style: { marginLeft: '8px', color: '#666', fontSize: '10px' } }, `· ${FOOTER_CLICK_HINT}`),
+  );
+}
+
+function renderPopover(): VNode {
+  const sections = DISCLOSURE_SECTIONS.map((section) =>
+    h(
+      'div',
+      { key: section.title, style: { marginBottom: '16px' } },
+      h(
+        'div',
+        {
+          style: { fontWeight: 600, color: '#fff', fontSize: '13px', marginBottom: '4px' },
+        },
+        section.title,
+      ),
+      h(
+        'div',
+        {
+          style: { color: '#bbb', fontSize: '12px', lineHeight: '1.5' },
+        },
+        section.body,
+      ),
+    ),
+  );
+
+  return h(
+    'div',
+    {
+      style: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.6)',
+        zIndex: 100,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        pointerEvents: 'auto',
+      },
+      onClick: (event: MouseEvent) => {
+        if (event.target === event.currentTarget) {
+          popoverOpenSignal.value = false;
+        }
+      },
+    },
+    h(
+      'div',
+      {
+        style: {
+          background: 'rgba(25, 27, 33, 0.98)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          borderRadius: '8px',
+          padding: '24px',
+          maxWidth: '520px',
+          width: '90%',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+          fontFamily: 'system-ui, sans-serif',
+          position: 'relative',
+        },
+      },
+      h(
+        'button',
+        {
+          type: 'button',
+          onClick: () => {
+            popoverOpenSignal.value = false;
+          },
+          style: {
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            background: 'transparent',
+            border: 'none',
+            color: '#888',
+            fontSize: '20px',
+            cursor: 'pointer',
+            padding: '4px 8px',
+            lineHeight: 1,
+          },
+          title: 'Close',
+        },
+        '×',
+      ),
+      h(
+        'div',
+        {
+          style: {
+            fontSize: '15px',
+            fontWeight: 600,
+            color: '#fff',
+            marginBottom: '12px',
+          },
+        },
+        'About this screen',
+      ),
+      h(
+        'div',
+        {
+          style: {
+            fontSize: '12px',
+            color: '#bbb',
+            lineHeight: '1.5',
+            marginBottom: '20px',
+          },
+        },
+        DISCLOSURE_INTRO,
+      ),
+      ...sections,
+    ),
+  );
 }
 
 export function renderPanel(): VNode {
@@ -191,6 +336,7 @@ export function renderPanel(): VNode {
   const sortKey = sortKeySignal.value;
   const layoutMode = layoutModeSignal.value;
   const filteredRows = filteredRowsSignal.value;
+  const popover = popoverOpenSignal.value ? renderPopover() : null;
 
   const totalHeight = filteredRows.length * CATALOG_LIST_ROW_HEIGHT_PX;
   const maxScrollTop = Math.max(0, totalHeight - viewportHeightSignal.value);
@@ -254,156 +400,162 @@ export function renderPanel(): VNode {
         );
 
   return h(
-    'section',
-    {
-      style: panelStyle,
-    },
+    'div',
+    null,
     h(
-      'div',
+      'section',
       {
-        style: {
-          padding: '12px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        },
+        style: panelStyle,
       },
       h(
         'div',
         {
           style: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '10px',
+            padding: '12px 16px',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
           },
         },
         h(
-          'span',
+          'div',
           {
             style: {
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: '14px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '10px',
             },
           },
-          `NEA Catalog (${filteredRows.length.toLocaleString()})`,
-        ),
-        h(
-          'button',
-          {
-            type: 'button',
-            onClick: () => setLayoutMode(layoutMode === 'overlay' ? 'sidebar' : 'overlay'),
-            title: layoutMode === 'overlay' ? 'Switch to sidebar' : 'Switch to overlay',
-            style: {
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              color: '#bbb',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '11px',
+          h(
+            'span',
+            {
+              style: {
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: '14px',
+              },
             },
-          },
-          layoutMode === 'overlay' ? 'sidebar' : 'overlay',
+            `NEA Catalog (${filteredRows.length.toLocaleString()})`,
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              onClick: () => setLayoutMode(layoutMode === 'overlay' ? 'sidebar' : 'overlay'),
+              title: layoutMode === 'overlay' ? 'Switch to sidebar' : 'Switch to overlay',
+              style: {
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                color: '#bbb',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+              },
+            },
+            layoutMode === 'overlay' ? 'sidebar' : 'overlay',
+          ),
         ),
-      ),
-      h('input', {
-        type: 'text',
-        placeholder: 'Search designation or name…',
-        value: searchQuery,
-        onInput: (event: Event) => setSearch((event.target as HTMLInputElement).value),
-        style: {
-          width: '100%',
-          boxSizing: 'border-box',
-          padding: '6px 10px',
-          background: 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: '4px',
-          color: '#fff',
-          fontSize: '13px',
-          fontFamily: 'inherit',
-          marginBottom: '8px',
-        },
-      }),
-      h(
-        'div',
-        {
+        h('input', {
+          type: 'text',
+          placeholder: 'Search designation or name…',
+          value: searchQuery,
+          onInput: (event: Event) => setSearch((event.target as HTMLInputElement).value),
           style: {
-            display: 'flex',
-            gap: '4px',
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '6px 10px',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: '4px',
+            color: '#fff',
+            fontSize: '13px',
+            fontFamily: 'inherit',
             marginBottom: '8px',
-            flexWrap: 'wrap',
           },
-        },
-        ...ORBIT_CLASSES.map((orbitClass) =>
-          h(
-            'button',
-            {
-              key: orbitClass,
-              type: 'button',
-              onClick: () => setFilterClass(orbitClass === 'ALL' ? null : orbitClass),
-              style: {
-                padding: '3px 8px',
-                background:
-                  (filterClass ?? 'ALL') === orbitClass
-                    ? 'rgba(100,140,220,0.4)'
-                    : 'rgba(255,255,255,0.05)',
-                color: (filterClass ?? 'ALL') === orbitClass ? '#fff' : '#aaa',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                fontSize: '11px',
-              },
+        }),
+        h(
+          'div',
+          {
+            style: {
+              display: 'flex',
+              gap: '4px',
+              marginBottom: '8px',
+              flexWrap: 'wrap',
             },
-            orbitClass,
+          },
+          ...ORBIT_CLASSES.map((orbitClass) =>
+            h(
+              'button',
+              {
+                key: orbitClass,
+                type: 'button',
+                onClick: () => setFilterClass(orbitClass === 'ALL' ? null : orbitClass),
+                style: {
+                  padding: '3px 8px',
+                  background:
+                    (filterClass ?? 'ALL') === orbitClass
+                      ? 'rgba(100,140,220,0.4)'
+                      : 'rgba(255,255,255,0.05)',
+                  color: (filterClass ?? 'ALL') === orbitClass ? '#fff' : '#aaa',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                },
+              },
+              orbitClass,
+            ),
+          ),
+        ),
+        h(
+          'div',
+          {
+            style: {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              flexWrap: 'wrap',
+            },
+          },
+          h('span', { style: { color: '#888', fontSize: '11px' } }, 'Sort:'),
+          ...SORT_OPTIONS.map((option) =>
+            h(
+              'button',
+              {
+                key: option.key,
+                type: 'button',
+                onClick: () => setSort(option.key),
+                style: {
+                  padding: '2px 6px',
+                  background:
+                    sortKey === option.key ? 'rgba(100,140,220,0.4)' : 'transparent',
+                  color: sortKey === option.key ? '#fff' : '#aaa',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                },
+              },
+              option.label,
+            ),
           ),
         ),
       ),
       h(
         'div',
         {
+          ref: (el: HTMLDivElement | null) => attachScrollContainer(el),
           style: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            flexWrap: 'wrap',
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            position: 'relative',
           },
         },
-        h('span', { style: { color: '#888', fontSize: '11px' } }, 'Sort:'),
-        ...SORT_OPTIONS.map((option) =>
-          h(
-            'button',
-            {
-              key: option.key,
-              type: 'button',
-              onClick: () => setSort(option.key),
-              style: {
-                padding: '2px 6px',
-                background:
-                  sortKey === option.key ? 'rgba(100,140,220,0.4)' : 'transparent',
-                color: sortKey === option.key ? '#fff' : '#aaa',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '11px',
-              },
-            },
-            option.label,
-          ),
-        ),
+        listContent,
       ),
+      renderFooter(),
     ),
-    h(
-      'div',
-      {
-        ref: (el: HTMLDivElement | null) => attachScrollContainer(el),
-        style: {
-          flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          position: 'relative',
-        },
-      },
-      listContent,
-    ),
+    popover,
   );
 }
