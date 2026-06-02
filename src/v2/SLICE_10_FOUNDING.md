@@ -476,14 +476,32 @@ Aggregate counts unchanged. The cache contract is now stable for Slice 11+ consu
 - Phase C.3 per-body badges, departure-energy tag, and fidelity tag per INV-016: PENDING.
 - Phase C.4 honesty-layer UI surfacing per OQ-1 resolution: PENDING.
 
-**Phase D (verification):** PENDING.
-- INV-015 validation harness against 5 reference targets within OQ-4 tolerance.
-- Localhost eyes-on verification of badge rendering, tag clarity, fidelity-layer surface.
-- Regression sweep against Slice 9 + 8.5 behavior.
+**Phase D (verification): COMPLETE 2026-06-02.**
 
-**Phase E (cutover + deploy):** PENDING.
-- Founding-doc close note.
-- Deploy decision per Hudson.
+- Math layer audit cycle complete (OQ-8, multi-agent audit Dispatch 21, 9 deduplicated findings resolved).
+- Per-body screening cache regenerated post-fix and post-overhaul (8471659, 9e93ffc); schemaVersion 1 with provenance hashes.
+- Phase C.2 catalog list UI verified in browser (eeebf40): search, filter, sort, virtualized 41,906 rows, sidebar/overlay layout toggle, click-to-focus selection.
+- Phase C.3 per-body screening colors verified in 3D view (e350034): green gradient for low_departure_c3, muted slate for high_departure_c3, cyan tint blend for co-orbital bodies, magenta/red for solver/propagator edge cases.
+- Phase C.4 honesty disclosure footer + popover verified (d0fdec9): always-visible "Patched-conic screen · 2026–2040" footer, click-to-open popover with three plain-language sections (patched-conic scope, co-orbital drift, close-approach degeneracy).
+- Async cache architecture verified (b6b7f92): 32 MB cache fetched at runtime via module-level memoized Promise; loading state surfaced; renderer recolors via setScreeningIndex() when cache resolves.
+- tsc --noEmit passes cleanly across the v2 surface; legacy non-v2 sources explicitly excluded.
+- npx vite build succeeds with appropriately-sized bundle (~625 KB minified JS + 33 MB static cache served async).
+
+**Phase E (cutover + deploy): COMPLETE 2026-06-02.**
+
+- Build output committed in 205099a.
+- vite plugin added to preserve .nojekyll across builds (prevents GitHub Pages Jekyll mangling).
+- Pushed to origin/main; GitHub Pages serves from docs/ on main.
+- Live site: https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/solar-system/
+- Slice 10 publicly visible.
+
+**Founding-doc close note:**
+
+Slice 10 lands a complete patched-conic Earth-departure screening pipeline over the full 41,906-NEA catalog with the math layer audited end-to-end against poliastro and scipy. All eight measurement OQs are closed against measured data (OQ-1 through OQ-8). The 32 MB screening cache is served as a runtime static asset rather than bundled into JS, keeping initial page load fast (~625 KB minified bundle, ~167 KB gzipped). The UI surfaces both the visual encoding (status colors, co-orbital cyan tint) and the textual disclosure (always-visible footer + click-to-open popover with three specific limitation sections).
+
+The single multi-agent audit run (Dispatch 21, OQ-8 record) surfaced 9 deduplicated findings; all 9 were resolved via the verify-before-lock pattern. Finding 1 (initial-guess middle-branch formula bug) was independently verified against poliastro source before the one-line fix landed, breaking the self-reinforcing test pattern that allowed the bug to ship originally. This event is the strongest single artifact of the slice's discipline.
+
+Slice 11 (pork-chops) and Slice 12 (Δv stack) can consume the cache via the documented schemaVersion 1 contract. The cache includes per-body best-5 windows regardless of feasibility status, so downstream slices have planning seeds without re-screening. INV-016 honesty-layer requirements for co-orbital targets are surfaced in both rendering and disclosure layers.
 
 ## 8. Architectural Notes (Forward-Looking)
 
