@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+
 import { propagateKeplerianStateVectors } from '../../core/propagators/keplerian.js';
 import {
   isSlice9RuntimeEllipticBody,

@@ -11,9 +11,10 @@
     "research:slice2": "node tools/slice2-research/fetch-horizons.mjs && node tools/slice2-research/measure-interpolation.mjs"
   },
   "devDependencies": {
-    "vite": "^5.4.0",
+    "@types/node": "^25.9.1",
+    "@types/three": "^0.128.0",
     "typescript": "^5.5.0",
-    "@types/three": "^0.128.0"
+    "vite": "^5.4.0"
   },
   "dependencies": {
     "@preact/signals": "^2.9.0",
