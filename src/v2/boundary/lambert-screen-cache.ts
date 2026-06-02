@@ -32,8 +32,6 @@
  *   - Slice 14+ (composition, economics): filter on departure-energy status
  */
 
-import lambertScreenCacheJson from '../../../tests/fixtures/v2/lambert-screen-cache.json' with { type: 'json' };
-
 export type LambertScreenStatus =
   | 'low_departure_c3'
   | 'high_departure_c3'
@@ -112,13 +110,39 @@ export function validateLambertScreenCache(cache: unknown): LambertScreenCache {
   return cache as LambertScreenCache;
 }
 
+const CACHE_FILENAME = 'lambert-screen-cache.json';
+
+function resolveCacheUrl(): string {
+  const base = (typeof import.meta !== 'undefined' && (import.meta as any).env?.BASE_URL) || '/';
+  return base.endsWith('/') ? `${base}${CACHE_FILENAME}` : `${base}/${CACHE_FILENAME}`;
+}
+
+let cachedPromise: Promise<LambertScreenCache> | null = null;
+
 /**
- * Load the precomputed Lambert screening cache.
+ * Asynchronously load the Lambert screening cache.
  *
- * This is a synchronous JSON import resolved at build time.
+ * The cache JSON is fetched at runtime rather than bundled into the JS at build
+ * time, to keep the bundle small and avoid Node OOM during builds.
  */
-export function loadLambertScreenCache(): LambertScreenCache {
-  return validateLambertScreenCache(lambertScreenCacheJson);
+export function loadLambertScreenCacheAsync(): Promise<LambertScreenCache> {
+  if (cachedPromise !== null) {
+    return cachedPromise;
+  }
+
+  cachedPromise = (async () => {
+    const url = resolveCacheUrl();
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to load Lambert screen cache from ${url}: ${response.status} ${response.statusText}`,
+      );
+    }
+    const raw = await response.json();
+    return validateLambertScreenCache(raw);
+  })();
+
+  return cachedPromise;
 }
 
 /**

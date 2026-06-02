@@ -142,7 +142,7 @@ export class AsteroidRenderer {
   private readonly pointSizeAttribute: THREE.BufferAttribute;
   private readonly pointsBoundingSphere = new THREE.Sphere(new THREE.Vector3(), Number.POSITIVE_INFINITY);
   private readonly canonicalPositionsM: THREE.Vector3[] = [];
-  private readonly screeningIndex: {
+  private screeningIndex: {
     byBodyId: Map<string, LambertScreenResult>;
   } | null;
   private focusedAsteroidBodyId: AsteroidBodyId | null = null;
@@ -285,6 +285,34 @@ export class AsteroidRenderer {
     this.points.material = material;
     this.pointsMaterial.dispose();
     this.pointsMaterial = material;
+  }
+
+  setScreeningIndex(index: { byBodyId: Map<string, LambertScreenResult> } | null): void {
+    this.screeningIndex = index;
+
+    for (const [asteroidIndex, asteroid] of this.asteroids.entries()) {
+      const screen = index?.byBodyId.get(asteroid.bodyId) ?? null;
+      const color = getAsteroidPointColorWithScreening(asteroid, screen);
+      const colorBase = asteroidIndex * 3;
+      this.pointBaseColors[colorBase] = color.r;
+      this.pointBaseColors[colorBase + 1] = color.g;
+      this.pointBaseColors[colorBase + 2] = color.b;
+    }
+
+    for (const [pointIndex, bodyId] of this.pointBodyIds.entries()) {
+      const asteroid = this.asteroidById.get(bodyId);
+      if (!asteroid) {
+        continue;
+      }
+      const screen = index?.byBodyId.get(asteroid.bodyId) ?? null;
+      const color = getAsteroidPointColorWithScreening(asteroid, screen);
+      const colorBase = pointIndex * 3;
+      this.pointColors[colorBase] = color.r;
+      this.pointColors[colorBase + 1] = color.g;
+      this.pointColors[colorBase + 2] = color.b;
+    }
+
+    this.pointColorAttribute.needsUpdate = true;
   }
 
   resolveIntersection(intersection: THREE.Intersection): AsteroidBodyId | null {

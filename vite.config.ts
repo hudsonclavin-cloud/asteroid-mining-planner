@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync } from 'fs';
+import { copyFileSync, createReadStream, mkdirSync } from 'fs';
 
 export default defineConfig({
   root: '.',
@@ -36,6 +36,29 @@ export default defineConfig({
           resolve(__dirname, 'physics.worker.js'),
           resolve(__dirname, 'docs/physics.worker.js')
         );
+      },
+    },
+    {
+      name: 'copy-lambert-screen-cache',
+      writeBundle() {
+        mkdirSync(resolve(__dirname, 'docs'), { recursive: true });
+        copyFileSync(
+          resolve(__dirname, 'tests/fixtures/v2/lambert-screen-cache.json'),
+          resolve(__dirname, 'docs/lambert-screen-cache.json')
+        );
+      },
+      configureServer(server) {
+        server.middlewares.use('/asteroid-mining-planner/lambert-screen-cache.json', (_req, res) => {
+          createReadStream(resolve(__dirname, 'tests/fixtures/v2/lambert-screen-cache.json'))
+            .on('error', () => {
+              res.statusCode = 404;
+              res.end('cache not found');
+            })
+            .on('open', () => {
+              res.setHeader('Content-Type', 'application/json');
+            })
+            .pipe(res);
+        });
       },
     },
   ],

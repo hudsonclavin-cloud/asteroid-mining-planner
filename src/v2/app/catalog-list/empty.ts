@@ -1,10 +1,14 @@
 import { h, type VNode } from 'preact';
 
-export type EmptyReason = 'no-data' | 'no-matches';
+export type EmptyReason = 'no-data' | 'no-matches' | 'loading';
 
 export function renderEmpty(reason: EmptyReason): VNode {
   const message =
-    reason === 'no-data' ? 'No catalog loaded.' : 'No bodies match the current filters.';
+    reason === 'loading'
+      ? 'Loading screening data…'
+      : reason === 'no-data'
+        ? 'No catalog loaded.'
+        : 'No bodies match the current filters.';
 
   return h(
     'div',

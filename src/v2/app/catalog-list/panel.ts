@@ -16,9 +16,9 @@ import {
 } from '../ui-store/index.js';
 import {
   createLambertScreenIndex,
-  loadLambertScreenCache,
+  loadLambertScreenCacheAsync,
 } from '../../boundary/lambert-screen-cache.js';
-import { renderEmpty } from './empty.js';
+import { renderEmpty, type EmptyReason } from './empty.js';
 import {
   DISCLOSURE_INTRO,
   DISCLOSURE_SECTIONS,
@@ -27,9 +27,6 @@ import {
 } from './honesty-disclosure.js';
 import { renderRow } from './row.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
-
-const screeningCache = loadLambertScreenCache();
-const screeningIndex = createLambertScreenIndex(screeningCache);
 
 const ORBIT_CLASSES: ReadonlyArray<'ALL' | OrbitClass> = ['ALL', 'ATE', 'APO', 'AMO', 'IEO'];
 const SORT_OPTIONS: ReadonlyArray<{ key: SortKey; label: string }> = [
@@ -43,14 +40,24 @@ const SORT_OPTIONS: ReadonlyArray<{ key: SortKey; label: string }> = [
 const scrollTopSignal = signal(0);
 const viewportHeightSignal = signal(600);
 const popoverOpenSignal = signal(false);
+const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> | null>(null);
+
+loadLambertScreenCacheAsync()
+  .then((cache) => {
+    screeningIndexSignal.value = createLambertScreenIndex(cache);
+  })
+  .catch((error) => {
+    console.error('Failed to load Lambert screen cache:', error);
+  });
 
 let scrollContainerEl: HTMLDivElement | null = null;
 let resizeListenerInstalled = false;
 
-const allRowsSignal = computed(() => {
+function buildRowData(): CatalogListRowData[] {
   const catalog = catalogSignal.value;
-  if (!catalog) {
-    return [] as CatalogListRowData[];
+  const screeningIndex = screeningIndexSignal.value;
+  if (!catalog || !screeningIndex) {
+    return [];
   }
 
   const rows: CatalogListRowData[] = [];
@@ -70,7 +77,9 @@ const allRowsSignal = computed(() => {
     });
   }
   return rows;
-});
+}
+
+const allRowsSignal = computed(() => buildRowData());
 
 const filteredRowsSignal = computed(() => {
   const filterClass = filterClassSignal.value;
@@ -331,6 +340,7 @@ function renderPopover(): VNode {
 
 export function renderPanel(): VNode {
   const catalog = catalogSignal.value;
+  const screeningIndex = screeningIndexSignal.value;
   const filterClass = filterClassSignal.value;
   const searchQuery = searchQuerySignal.value;
   const sortKey = sortKeySignal.value;
@@ -381,12 +391,19 @@ export function renderPanel(): VNode {
           pointerEvents: 'auto',
         };
 
-  const listContent =
-    filteredRows.length === 0
-      ? catalog === null
-        ? renderEmpty('no-data')
-        : renderEmpty('no-matches')
-      : h(
+  let listContent: VNode;
+  if (filteredRows.length === 0) {
+    let reason: EmptyReason;
+    if (screeningIndex === null) {
+      reason = 'loading';
+    } else if (catalog === null) {
+      reason = 'no-data';
+    } else {
+      reason = 'no-matches';
+    }
+    listContent = renderEmpty(reason);
+  } else {
+    listContent = h(
           'div',
           {
             style: {
@@ -398,6 +415,7 @@ export function renderPanel(): VNode {
             renderRow(row, (startIdx + index) * CATALOG_LIST_ROW_HEIGHT_PX),
           ),
         );
+  }
 
   return h(
     'div',
