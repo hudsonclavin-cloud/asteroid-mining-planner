@@ -1,1 +1,164 @@
-{"schemaVersion":1,"generatedAt":"2026-06-03T00:10:07.677Z","gridSize":{"departure":200,"tof":100},"gridSpan":{"departureStart":"2026-01-01","departureEnd":"2040-01-01","tofMinDays":182.5,"tofMaxDays":1826.25},"bodies":[{"selectionReason":"close-approach","bodyId":"asteroid-99942","designation":"99942","displayName":"99942 Apophis (2004 MN4)","orbitClass":"ATE","eccentricity":0.19114292963930402,"runs":[468,116,106],"medianMs":116},{"selectionReason":"well-known-target","bodyId":"asteroid-101955","designation":"101955","displayName":"101955 Bennu (1999 RQ36)","orbitClass":"APO","eccentricity":0.20369784790713552,"runs":[106,96,105],"medianMs":105}]}
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-03T00:10:07.677Z",
+  "gridSize": {
+    "departure": 200,
+    "tof": 100
+  },
+  "gridSpan": {
+    "departureStart": "2026-01-01",
+    "departureEnd": "2040-01-01",
+    "tofMinDays": 182.5,
+    "tofMaxDays": 1826.25
+  },
+  "bodies": [
+    {
+      "selectionReason": "close-approach",
+      "bodyId": "asteroid-99942",
+      "designation": "99942",
+      "displayName": "99942 Apophis (2004 MN4)",
+      "orbitClass": "ATE",
+      "eccentricity": 0.19114292963930402,
+      "runs": [
+        468,
+        116,
+        106
+      ],
+      "medianMs": 116
+    },
+    {
+      "selectionReason": "well-known-target",
+      "bodyId": "asteroid-101955",
+      "designation": "101955",
+      "displayName": "101955 Bennu (1999 RQ36)",
+      "orbitClass": "APO",
+      "eccentricity": 0.20369784790713552,
+      "runs": [
+        106,
+        96,
+        105
+      ],
+      "medianMs": 105
+    },
+    {
+      "selectionReason": "sample-return-target",
+      "bodyId": "asteroid-25143",
+      "designation": "25143",
+      "displayName": "25143 Itokawa (1998 SF36)",
+      "orbitClass": "APO",
+      "eccentricity": 0.2801712626947607,
+      "runs": [
+        107,
+        94,
+        90
+      ],
+      "medianMs": 94
+    },
+    {
+      "selectionReason": "representative-apo",
+      "bodyId": "asteroid-1566",
+      "designation": "1566",
+      "displayName": "1566 Icarus (1949 MA)",
+      "orbitClass": "APO",
+      "eccentricity": 0.8270185495307947,
+      "runs": [
+        98,
+        102,
+        98
+      ],
+      "medianMs": 98
+    },
+    {
+      "selectionReason": "representative-ate",
+      "bodyId": "asteroid-2062",
+      "designation": "2062",
+      "displayName": "2062 Aten (1976 AA)",
+      "orbitClass": "ATE",
+      "eccentricity": 0.1828701879418933,
+      "runs": [
+        98,
+        97,
+        98
+      ],
+      "medianMs": 98
+    },
+    {
+      "selectionReason": "representative-amo",
+      "bodyId": "asteroid-433",
+      "designation": "433",
+      "displayName": "433 Eros (A898 PA)",
+      "orbitClass": "AMO",
+      "eccentricity": 0.22288929294611265,
+      "runs": [
+        92,
+        96,
+        104
+      ],
+      "medianMs": 96
+    },
+    {
+      "selectionReason": "representative-ieo",
+      "bodyId": "asteroid-163693",
+      "designation": "163693",
+      "displayName": "163693 Atira (2003 CP20)",
+      "orbitClass": "IEO",
+      "eccentricity": 0.32216557986238864,
+      "runs": [
+        99,
+        101,
+        95
+      ],
+      "medianMs": 99
+    },
+    {
+      "selectionReason": "co-orbital",
+      "bodyId": "asteroid-459872",
+      "designation": "459872",
+      "displayName": "459872 (2014 EK24)",
+      "orbitClass": "APO",
+      "eccentricity": 0.07010360321106089,
+      "runs": [
+        89,
+        97,
+        100
+      ],
+      "medianMs": 97
+    },
+    {
+      "selectionReason": "high-eccentricity",
+      "bodyId": "asteroid-2017 UR52",
+      "designation": "2017 UR52",
+      "displayName": "(2017 UR52)",
+      "orbitClass": "AMO",
+      "eccentricity": 0.9964262210658009,
+      "runs": [
+        116,
+        118,
+        97
+      ],
+      "medianMs": 116
+    },
+    {
+      "selectionReason": "low-eccentricity",
+      "bodyId": "asteroid-2020 AP2",
+      "designation": "2020 AP2",
+      "displayName": "(2020 AP2)",
+      "orbitClass": "AMO",
+      "eccentricity": 0.002819664144917087,
+      "runs": [
+        117,
+        440,
+        102
+      ],
+      "medianMs": 117
+    }
+  ],
+  "summary": {
+    "perBodyMedianMs": {
+      "min": 94,
+      "max": 117,
+      "median": 98.5
+    },
+    "totalRunMs": 3752
+  }
+}

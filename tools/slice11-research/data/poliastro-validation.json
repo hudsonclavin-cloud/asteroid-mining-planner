@@ -1,1 +1,83 @@
-{"schemaVersion":1,"generatedAt":"2026-06-03T00:18:17.790Z","gridSize":{"departure":50,"tof":50},"bodies":[{"bodyId":"asteroid-99942","designation":"99942","displayName":"99942 Apophis (2004 MN4)","errors":{"c3":{"maxRel":3.353474493864087e-14,"rmsRel":1.2978971526432194e-15,"p95Rel":1.9736497551066044e-15},"v_inf_dep":{"maxRel":1.6794328037530894e-14,"rmsRel":6.479555931424154e-16,"p95Rel":1.00209170491751e-15},"v_inf_arr":{"maxRel":7.955922146585508e-15,"rmsRel":5.660951945158643e-16,"p95Rel":1.1413069851632184e-15}},"cellsExceeding01pct":0}]}
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-03T00:18:17.790Z",
+  "gridSize": {
+    "departure": 50,
+    "tof": 50
+  },
+  "bodies": [
+    {
+      "bodyId": "asteroid-99942",
+      "designation": "99942",
+      "displayName": "99942 Apophis (2004 MN4)",
+      "errors": {
+        "c3": {
+          "maxRel": 3.353474493864087e-14,
+          "rmsRel": 1.2978971526432194e-15,
+          "p95Rel": 1.9736497551066044e-15
+        },
+        "v_inf_dep": {
+          "maxRel": 1.6794328037530894e-14,
+          "rmsRel": 6.479555931424154e-16,
+          "p95Rel": 1.00209170491751e-15
+        },
+        "v_inf_arr": {
+          "maxRel": 7.955922146585508e-15,
+          "rmsRel": 5.660951945158643e-16,
+          "p95Rel": 1.1413069851632184e-15
+        }
+      },
+      "cellsExceeding01pct": 0
+    },
+    {
+      "bodyId": "asteroid-101955",
+      "designation": "101955",
+      "displayName": "101955 Bennu (1999 RQ36)",
+      "errors": {
+        "c3": {
+          "maxRel": 1.1347617953611068e-14,
+          "rmsRel": 9.54198579918181e-16,
+          "p95Rel": 1.9479937719166283e-15
+        },
+        "v_inf_dep": {
+          "maxRel": 5.623594398056294e-15,
+          "rmsRel": 4.766693705847399e-16,
+          "p95Rel": 9.741756161845995e-16
+        },
+        "v_inf_arr": {
+          "maxRel": 6.27877533177586e-15,
+          "rmsRel": 4.70600249066006e-16,
+          "p95Rel": 8.065666614660662e-16
+        }
+      },
+      "cellsExceeding01pct": 0
+    },
+    {
+      "bodyId": "asteroid-25143",
+      "designation": "25143",
+      "displayName": "25143 Itokawa (1998 SF36)",
+      "errors": {
+        "c3": {
+          "maxRel": 3.428650990914828e-14,
+          "rmsRel": 1.9613853473863707e-15,
+          "p95Rel": 2.5646254450635002e-15
+        },
+        "v_inf_dep": {
+          "maxRel": 1.712997697744468e-14,
+          "rmsRel": 9.8079329707635e-16,
+          "p95Rel": 1.2813921836964195e-15
+        },
+        "v_inf_arr": {
+          "maxRel": 1.2188701655402323e-14,
+          "rmsRel": 7.907123385747198e-16,
+          "p95Rel": 1.3279811680369006e-15
+        }
+      },
+      "cellsExceeding01pct": 0
+    }
+  ],
+  "summary": {
+    "maxRelErrorAcrossBodies": 3.428650990914828e-14,
+    "validationPasses": true
+  }
+}
