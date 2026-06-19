@@ -347,21 +347,30 @@ function summarizeMultiRev(body, cells, lambertMultiRev, M) {
         }
 
         returnedCells += 1;
-        if (result.converged) {
+        const convergedBranches = result.branches.filter((branch) => branch.converged);
+        if (convergedBranches.length > 0) {
             convergedCells += 1;
         }
-        if (![...result.v1, ...result.v2].every(Number.isFinite)) {
-            nonFiniteCells += 1;
-            continue;
-        }
+        for (const branch of convergedBranches) {
+            if (![...branch.v1, ...branch.v2].every(Number.isFinite)) {
+                nonFiniteCells += 1;
+                continue;
+            }
 
-        const reconstructedTof = orbitalTofFromState(cell.earthPositionKm, cell.asteroidPositionKm, result.v1, MU_SUN, M);
-        if (reconstructedTof === null || !Number.isFinite(reconstructedTof)) {
-            nonFiniteCells += 1;
-            continue;
-        }
+            const reconstructedTof = orbitalTofFromState(
+                cell.earthPositionKm,
+                cell.asteroidPositionKm,
+                branch.v1,
+                MU_SUN,
+                M
+            );
+            if (reconstructedTof === null || !Number.isFinite(reconstructedTof)) {
+                nonFiniteCells += 1;
+                continue;
+            }
 
-        tofErrors.push(Math.abs(reconstructedTof - cell.tofSeconds) / cell.tofSeconds);
+            tofErrors.push(Math.abs(reconstructedTof - cell.tofSeconds) / cell.tofSeconds);
+        }
     }
 
     const summary = summarizeErrors(tofErrors);

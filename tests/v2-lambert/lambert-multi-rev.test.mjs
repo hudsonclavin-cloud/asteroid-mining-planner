@@ -80,10 +80,6 @@ function magnitude3(vector) {
     return Math.hypot(vector[0], vector[1], vector[2]);
 }
 
-function energyMetric(mu, r1, v1) {
-    return magnitude3(v1) ** 2 - (2 * mu) / magnitude3(r1);
-}
-
 function kmVectorFromMeters(positionM) {
     return [positionM.x / 1000, positionM.y / 1000, positionM.z / 1000];
 }
@@ -196,9 +192,12 @@ for (const testCase of M0_CASES) {
     assert.ok(singleRev.ok, `${testCase.name}: lambert() failed with ${singleRev.reason}`);
     const multiRev = lambertMultiRev(testCase.r1, testCase.r2, testCase.tof, testCase.mu, 0, true);
     assert.ok(multiRev, `${testCase.name}: lambertMultiRev(M=0) returned null`);
-    assert.ok(multiRev.converged, `${testCase.name}: lambertMultiRev(M=0) should converge`);
-    assertVecClose(multiRev.v1, singleRev.v1, `${testCase.name} v1`);
-    assertVecClose(multiRev.v2, singleRev.v2, `${testCase.name} v2`);
+    assert.equal(multiRev.M, 0, `${testCase.name}: expected M=0 result shape`);
+    assert.equal(multiRev.branches.length, 1, `${testCase.name}: expected single M=0 branch`);
+    assert.equal(multiRev.branches[0].branch, 'single', `${testCase.name}: expected single branch tag`);
+    assert.ok(multiRev.branches[0].converged, `${testCase.name}: lambertMultiRev(M=0) should converge`);
+    assertVecClose(multiRev.branches[0].v1, singleRev.v1, `${testCase.name} v1`);
+    assertVecClose(multiRev.branches[0].v2, singleRev.v2, `${testCase.name} v2`);
 }
 
 {
@@ -217,43 +216,63 @@ for (const testCase of M0_CASES) {
 
 for (const designation of ['99942', '101955', '25143']) {
     const { transfer, reference } = findM1Case(designation);
-    const selected = lambertMultiRev(transfer.r1, transfer.r2, transfer.tofSeconds, MU_SUN, 1, true);
-    assert.ok(selected, `${designation}: expected non-null M=1 solution`);
-    assert.ok(
-        Number.isFinite(selected.v1[0]) && Number.isFinite(selected.v1[1]) && Number.isFinite(selected.v1[2]),
-        `${designation}: v1 must be finite`
-    );
-    assert.ok(
-        Number.isFinite(selected.v2[0]) && Number.isFinite(selected.v2[1]) && Number.isFinite(selected.v2[2]),
-        `${designation}: v2 must be finite`
-    );
-    assert.ok(selected.branch === 'left' || selected.branch === 'right', `${designation}: invalid branch flag`);
+    const result = lambertMultiRev(transfer.r1, transfer.r2, transfer.tofSeconds, MU_SUN, 1, true);
+    assert.ok(result, `${designation}: expected non-null M=1 result`);
+    assert.equal(result.M, 1, `${designation}: expected M=1 result shape`);
+    assert.equal(result.branches.length, 2, `${designation}: expected left/right branches`);
+    assert.equal(result.branches[0].branch, 'left', `${designation}: expected left branch first`);
+    assert.equal(result.branches[1].branch, 'right', `${designation}: expected right branch second`);
 
-    const candidates = [reference.left, reference.right].filter((candidate) => candidate.ok);
-    assert.equal(candidates.length, 2, `${designation}: expected both reference branches to converge`);
+    const convergedBranches = result.branches.filter((branch) => branch.converged);
+    assert.ok(convergedBranches.length >= 1, `${designation}: expected at least one converged M=1 branch`);
 
-    const lowerEnergy = candidates.reduce((best, candidate) => {
-        const candidateEnergy = energyMetric(MU_SUN, transfer.r1, candidate.v1);
-        const bestEnergy = energyMetric(MU_SUN, transfer.r1, best.v1);
-        return candidateEnergy < bestEnergy ? candidate : best;
-    });
-
-    assert.equal(selected.branch, lowerEnergy.branch, `${designation}: selected wrong M=1 branch`);
-    assert.ok(selected.converged, `${designation}: selected M=1 solution should converge`);
-    assertVecClose(selected.v1, lowerEnergy.v1, `${designation} M=1 v1`);
-    assertVecClose(selected.v2, lowerEnergy.v2, `${designation} M=1 v2`);
+    for (const branch of result.branches) {
+        assert.ok(Number.isFinite(branch.x), `${designation}: branch ${branch.branch} x must be finite`);
+        if (!branch.converged) {
+            continue;
+        }
+        assert.ok(
+            Number.isFinite(branch.v1[0]) && Number.isFinite(branch.v1[1]) && Number.isFinite(branch.v1[2]),
+            `${designation}: ${branch.branch} v1 must be finite`
+        );
+        assert.ok(
+            Number.isFinite(branch.v2[0]) && Number.isFinite(branch.v2[1]) && Number.isFinite(branch.v2[2]),
+            `${designation}: ${branch.branch} v2 must be finite`
+        );
+        const expected = reference[branch.branch];
+        assert.ok(expected.ok, `${designation}: reference ${branch.branch} branch should converge`);
+        assertVecClose(branch.v1, expected.v1, `${designation} ${branch.branch} v1`);
+        assertVecClose(branch.v2, expected.v2, `${designation} ${branch.branch} v2`);
+    }
 }
 
 for (const designation of ['99942', '101955']) {
     const transfer = findM2Case(designation);
     const result = lambertMultiRev(transfer.r1, transfer.r2, transfer.tofSeconds, MU_SUN, 2, true);
-    assert.ok(result === null || result.converged === true, `${designation}: M=2 should converge or return null`);
+    if (result === null) {
+        continue;
+    }
+    assert.equal(result.M, 2, `${designation}: expected M=2 result shape`);
+    assert.equal(result.branches.length, 2, `${designation}: expected left/right M=2 branches`);
+    assert.equal(result.branches[0].branch, 'left', `${designation}: expected left branch first`);
+    assert.equal(result.branches[1].branch, 'right', `${designation}: expected right branch second`);
+    for (const branch of result.branches) {
+        assert.ok(Number.isFinite(branch.x), `${designation}: M=2 ${branch.branch} x must be finite`);
+    }
 }
 
 {
     const boundary = findBoundaryFailureCase();
     const result = lambertMultiRev(boundary.r1, boundary.r2, boundary.tofSeconds, MU_SUN, 1, true);
-    assert.ok(result === null || result.converged === false, 'Boundary case should fail gracefully without throw');
+    if (result === null) {
+        assert.equal(result, null, 'Boundary case may return null at the T_min guard');
+    } else {
+        assert.equal(result.branches.length, 2, 'Boundary case should preserve both branches when non-null');
+        assert.ok(
+            result.branches.some((branch) => branch.converged === false),
+            'Boundary case should expose a non-converged branch without throw'
+        );
+    }
 }
 
 assert.throws(

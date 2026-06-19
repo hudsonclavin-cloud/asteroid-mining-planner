@@ -1,5 +1,5 @@
 import type { Vec3 } from './vec3.js';
-import { add, cross, dot, norm, scale, sub } from './vec3.js';
+import { add, cross, norm, scale, sub } from './vec3.js';
 import { initial_guess_single_rev } from './initial-guess.js';
 import { householder } from './householder.js';
 import { compute_y, tof_equation, tof_equation_p, tof_equation_pp, tof_equation_ppp } from './tof.js';
@@ -28,12 +28,18 @@ type BranchSolveResult = {
     converged: boolean;
 };
 
-type Candidate = {
+export interface MultiRevBranch {
     v1: Vec3;
     v2: Vec3;
     converged: boolean;
-    branch: BranchName;
-};
+    branch: 'single' | 'left' | 'right';
+    x: number;
+}
+
+export interface MultiRevResult {
+    branches: MultiRevBranch[];
+    M: number;
+}
 
 function clamp(value: number, min: number, max: number): number {
     return Math.min(max, Math.max(min, value));
@@ -237,13 +243,13 @@ function velocityFromX(
     return { v1, v2 };
 }
 
-function makeCandidate(
+function makeBranch(
     x: number,
     converged: boolean,
-    branch: BranchName,
+    branch: 'single' | BranchName,
     geometry: Geometry,
     mu: number
-): Candidate | null {
+): MultiRevBranch | null {
     const velocities = velocityFromX(
         x,
         geometry.lambda,
@@ -265,11 +271,8 @@ function makeCandidate(
         ...velocities,
         converged,
         branch,
+        x,
     };
-}
-
-function specificEnergyMetric(candidate: Candidate, r1Mag: number, mu: number): number {
-    return dot(candidate.v1, candidate.v1) - (2 * mu) / r1Mag;
 }
 
 export function lambertMultiRev(
@@ -279,7 +282,7 @@ export function lambertMultiRev(
     mu: number,
     M: number,
     lw: boolean
-): { v1: Vec3; v2: Vec3; converged: boolean; branch: 'left' | 'right' } | null {
+): MultiRevResult | null {
     if (!Number.isInteger(M) || M < 0 || M > 2) {
         throw new RangeError('lambertMultiRev expects integer M in {0, 1, 2}');
     }
@@ -301,7 +304,14 @@ export function lambertMultiRev(
             return null;
         }
 
-        return makeCandidate(solved.x, true, 'left', geometry, mu);
+        const branch = makeBranch(solved.x, true, 'single', geometry, mu);
+        if (branch === null) {
+            return null;
+        }
+        return {
+            branches: [branch],
+            M,
+        };
     }
 
     const TMin = tMinForM(geometry.lambda, M);
@@ -316,28 +326,13 @@ export function lambertMultiRev(
     const left = solveOneBranch(geometry.lambda, T, M, 'left');
     const right = solveOneBranch(geometry.lambda, T, M, 'right');
 
-    const allCandidates = [
-        makeCandidate(left.x, left.converged, 'left', geometry, mu),
-        makeCandidate(right.x, right.converged, 'right', geometry, mu),
-    ].filter((candidate): candidate is Candidate => candidate !== null);
+    const branches = [
+        makeBranch(left.x, left.converged, 'left', geometry, mu),
+        makeBranch(right.x, right.converged, 'right', geometry, mu),
+    ].filter((branch): branch is MultiRevBranch => branch !== null);
 
-    if (allCandidates.length === 0) {
+    if (branches.length === 0) {
         return null;
     }
-
-    const convergedCandidates = allCandidates.filter((candidate) => candidate.converged);
-    const candidates = convergedCandidates.length > 0 ? convergedCandidates : allCandidates;
-
-    let best = candidates[0];
-    let bestEnergy = specificEnergyMetric(best, geometry.r1Mag, mu);
-    for (let index = 1; index < candidates.length; index += 1) {
-        const candidate = candidates[index];
-        const energy = specificEnergyMetric(candidate, geometry.r1Mag, mu);
-        if (energy < bestEnergy) {
-            best = candidate;
-            bestEnergy = energy;
-        }
-    }
-
-    return best;
+    return { branches, M };
 }
