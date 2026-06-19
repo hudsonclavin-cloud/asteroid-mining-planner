@@ -107,11 +107,6 @@ function initialGuessMultiRev(T: number, M: number, branch: BranchName): number 
 
 function halleyForTMin(lambda: number, M: number): number | null {
     let x = 0.1;
-    const initialY = compute_y(x, lambda);
-    if (!Number.isFinite(initialY)) {
-        return null;
-    }
-    const TAtSeed = tof_equation(x, initialY, 0, lambda, M);
 
     for (let iter = 0; iter < MAX_ITER; iter += 1) {
         const y = compute_y(x, lambda);
@@ -119,12 +114,13 @@ function halleyForTMin(lambda: number, M: number): number | null {
             return null;
         }
 
-        const fPrime = tof_equation_p(x, y, TAtSeed, lambda);
-        const fDoublePrime = tof_equation_pp(x, y, TAtSeed, fPrime, lambda);
+        const TAtX = tof_equation(x, y, 0, lambda, M);
+        const fPrime = tof_equation_p(x, y, TAtX, lambda);
+        const fDoublePrime = tof_equation_pp(x, y, TAtX, fPrime, lambda);
         if (!Number.isFinite(fPrime) || !Number.isFinite(fDoublePrime) || fDoublePrime === 0) {
             return null;
         }
-        const fTriplePrime = tof_equation_ppp(x, y, TAtSeed, fPrime, fDoublePrime, lambda);
+        const fTriplePrime = tof_equation_ppp(x, y, TAtX, fPrime, fDoublePrime, lambda);
         const denominator = 2 * fDoublePrime * fDoublePrime - fPrime * fTriplePrime;
         if (!Number.isFinite(fTriplePrime) || !Number.isFinite(denominator) || denominator === 0) {
             return null;
@@ -140,7 +136,7 @@ function halleyForTMin(lambda: number, M: number): number | null {
     return null;
 }
 
-function tMinForM(lambda: number, M: number): number | null {
+export function tMinForM(lambda: number, M: number): number | null {
     if (M === 0) {
         return 0;
     }

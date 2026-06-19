@@ -45,7 +45,7 @@ assert.equal(tscResult.status, 0, tscResult.stderr || tscResult.stdout || 'tsc f
 const importJs = async (relPath) => import(pathToFileURL(path.join(tempOutDir, relPath)).href);
 
 const { lambert } = await importJs('core/lambert/izzo.js');
-const { lambertMultiRev } = await importJs('core/lambert/lambert-multi-rev.js');
+const { lambertMultiRev, tMinForM } = await importJs('core/lambert/lambert-multi-rev.js');
 const { ingestSlice9Fixture } = await importJs('boundary/slice9-nea-catalog.js');
 const { ingestSlice2Fixture } = await importJs('boundary/horizons.js');
 const { normalizeSlice9BodyForRuntime } = await importJs('app/solar-system/slice9-runtime-asteroids.js');
@@ -231,6 +231,25 @@ for (const testCase of M0_CASES) {
     assert.ok(right.converged, 'F1 geometry right branch should converge under the x^2 <= 0.90 ceiling');
     assert.ok(Math.abs(right.x - 0.4819033370912975) < 1e-9, `Expected right branch x≈0.4819033370912975, got ${right.x}`);
     assert.ok(right.x * right.x < 0.90, `Expected right branch x² < 0.90, got ${right.x * right.x}`);
+}
+
+{
+    const r1 = [1, 0, 0];
+    const r2 = [-0.9992001599760031, 0.03998800199972351, 0];
+    const c = [r2[0] - r1[0], r2[1] - r1[1], r2[2] - r1[2]];
+    const cMag = magnitude3(c);
+    const r1Mag = magnitude3(r1);
+    const r2Mag = magnitude3(r2);
+    const s = 0.5 * (r1Mag + r2Mag + cMag);
+    const lambda = Math.sqrt(1 - Math.min(1, cMag / s));
+    const tMin = tMinForM(lambda, 1);
+    assert.ok(tMin !== null, 'Expected tMinForM(lambda, 1) to return a finite minimum');
+    assert.ok(
+        Math.abs(tMin - 4.566662627610557) < 1e-9,
+        `Expected corrected T_min≈4.566662627610557, got ${tMin}`
+    );
+    // poliastro 0.17 gates at the older higher threshold; this corrected iteration intentionally
+    // matches the independent f64 scan rather than mirroring poliastro's minimum-time gate.
 }
 
 for (const designation of ['99942', '101955', '25143']) {
