@@ -7,7 +7,9 @@ import { compute_y, tof_equation, tof_equation_p, tof_equation_pp, tof_equation_
 const RTOL = 1e-8;
 const MAX_ITER = 50;
 const EPSILON = 1e-12;
-const MULTI_REV_X_LIMIT = 0.45;
+// Dispatch 37.5 measured hyp2f1b relative error <= 1e-9 through x^2 = 0.95.
+// We fail closed above x^2 = 0.90 to leave margin below the unmeasured 0.95->0.99 region.
+const MULTI_REV_X_SQUARED_LIMIT = 0.90;
 
 type BranchName = 'left' | 'right';
 
@@ -160,8 +162,8 @@ function solveOneBranch(lambda: number, T: number, M: number, branch: BranchName
     let x = initialGuessMultiRev(T, M, branch);
 
     for (let iter = 0; iter < MAX_ITER; iter += 1) {
-        if (x > MULTI_REV_X_LIMIT) {
-            return { x: MULTI_REV_X_LIMIT, converged: false };
+        if (x * x > MULTI_REV_X_SQUARED_LIMIT) {
+            return { x, converged: false };
         }
 
         const y = compute_y(x, lambda);
@@ -194,8 +196,8 @@ function solveOneBranch(lambda: number, T: number, M: number, branch: BranchName
         if (!Number.isFinite(next)) {
             return { x, converged: false };
         }
-        if (next > MULTI_REV_X_LIMIT) {
-            return { x: MULTI_REV_X_LIMIT, converged: false };
+        if (next * next > MULTI_REV_X_SQUARED_LIMIT) {
+            return { x: next, converged: false };
         }
         if (Math.abs(next - x) < RTOL) {
             return { x: next, converged: true };

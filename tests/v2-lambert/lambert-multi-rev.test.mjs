@@ -153,7 +153,7 @@ function findBoundaryFailureCase() {
         const mid = (low + high) / 2;
         const candidate = buildTransfer('99942', transfer.departureUtc, mid);
         const result = lambertMultiRev(candidate.r1, candidate.r2, candidate.tofSeconds, MU_SUN, 1, true);
-        if (result && result.converged) {
+        if (result && result.branches.some((branch) => branch.converged)) {
             high = mid;
         } else {
             low = mid;
@@ -214,6 +214,25 @@ for (const testCase of M0_CASES) {
     assert.equal(result, null, 'Expected M=1 T_min guard to reject short Apophis transfer');
 }
 
+{
+    const result = lambertMultiRev(
+        [1, 0, 0],
+        [0.9779616006837398, 0.208784835627728, 0],
+        4.106597493078267,
+        1,
+        1,
+        true
+    );
+    assert.ok(result, 'F1 geometry should return both M=1 branches');
+    assert.equal(result.M, 1, 'F1 geometry should preserve M=1 in result shape');
+    assert.equal(result.branches.length, 2, 'F1 geometry should return left/right branches');
+    const right = result.branches[1];
+    assert.equal(right.branch, 'right', 'F1 geometry right branch should remain second');
+    assert.ok(right.converged, 'F1 geometry right branch should converge under the x^2 <= 0.90 ceiling');
+    assert.ok(Math.abs(right.x - 0.4819033370912975) < 1e-9, `Expected right branch x≈0.4819033370912975, got ${right.x}`);
+    assert.ok(right.x * right.x < 0.90, `Expected right branch x² < 0.90, got ${right.x * right.x}`);
+}
+
 for (const designation of ['99942', '101955', '25143']) {
     const { transfer, reference } = findM1Case(designation);
     const result = lambertMultiRev(transfer.r1, transfer.r2, transfer.tofSeconds, MU_SUN, 1, true);
@@ -269,8 +288,8 @@ for (const designation of ['99942', '101955']) {
     } else {
         assert.equal(result.branches.length, 2, 'Boundary case should preserve both branches when non-null');
         assert.ok(
-            result.branches.some((branch) => branch.converged === false),
-            'Boundary case should expose a non-converged branch without throw'
+            result.branches.every((branch) => branch.converged === false),
+            'Boundary case should fail closed with explicit non-converged branches when it is non-null'
         );
     }
 }
