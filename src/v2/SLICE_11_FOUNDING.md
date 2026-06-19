@@ -121,6 +121,8 @@ Multi-body comparison is a natural feature for mission designers choosing betwee
 - Audited via the same pattern that audited Slice 10's `lambert()`: test against poliastro across a (50×50) grid for each M value, max relative error must be ≤ 1e-6 (more generous than Slice 10's machine-precision bar because M=1 series convergence is genuinely harder)
 - Existing `lambert()` continues to reject M ≠ 0 per Slice 10 audit Finding 7; new code path is separate
 
+DEC-9 Amendment (2026-06-19, post-Dispatch-37 Finding 4 + 37.5 verification): lambertMultiRev() returns all solution branches with raw velocities and converged x — one branch for M=0, both left/right for M≥1 — rather than pre-selecting a "lower-energy branch." Branch selection by departure C3 (min |v1 − v_earth|²) is performed by the consuming layer (the porkchop worker per DEC-8), which carries the Earth ephemeris the core solver deliberately does not. Rationale: "lower-energy branch" was ambiguous between heliocentric specific energy and Earth-relative departure C3; the mission-relevant metric is C3, and computing it inside the core solver would be a layering violation. Verified: Finding 4 (heliocentric-vs-C3 ordering can diverge) + 37.5 (poliastro confirms both M≥1 branches are real solutions).
+
 **DEC-10: Light M=1 sampling extension (Phase E).**
 - Extend Measurement 2's 100-body sample to 500 bodies stratified by orbit class
 - Same RNG seed (11) means original 100 are subset of new 500 (reproducibility)
