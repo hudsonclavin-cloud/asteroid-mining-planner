@@ -253,3 +253,5 @@ To be populated during Slice 11 dispatches.
 - `bf177dd` validate(slice11): porkchop grid agreement with poliastro on 3 reference bodies — max rel error 3.43e-14, machine precision
 
 **2026-06-03: Founding doc drafted and locked.** All five OQs scoped (three closed by pre-research, two open through implementation). Ten DECs locked. Six phases defined.
+
+2026-06-19/20: Phase A complete. lambertMultiRev() implemented (9fc8bc4); DEC-9 amended to both-branches API (fb33487); audited via 3-subagent-prior pattern (Dispatch 37, 6 findings); remediated (f888201 F4 / 5b26ba9 F1 / dcdeb1c F2 / 6d68b3b F3); externally validated dual-oracle (3560ff8, poliastro bulk + f64 boundary, DEC-9 target met all M at machine scale). Phase F math-audit obligation discharged early. Post-Phase-A amendments AMD-1..5 recorded (§5a).
