@@ -131,6 +131,61 @@ DEC-9 Amendment (2026-06-19, post-Dispatch-37 Finding 4 + 37.5 verification): la
 
 ---
 
+## §5a. Post-Phase-A Amendments (2026-06-20)
+
+Phase A delivered `lambertMultiRev()` with the both-branches API (DEC-9 amended 2026-06-19, commit `fb33487`), audited via the three-subagent-prior pattern (Dispatch 37), remediated (Dispatch 38), and externally validated dual-oracle (Dispatch 39, commit `3560ff8`). These amendments propagate the both-branches decision into the downstream contracts (DEC-8 worker, DEC-5 display) and record audit-target closure. The locked DEC text in §5 is preserved unchanged; this section records the deltas with explicit "amends DEC-X" pointers.
+
+---
+
+**AMD-1 — Worker contract (amends DEC-8).**
+
+Forced by the DEC-9 amendment: the core solver returns all branches; selection by departure C3 happens at the consuming layer. The worker is that layer.
+
+LOCKED:
+
+- **C3 is computed in the worker, never the renderer.** C3 = |v1 − v_earth|² requires Earth state, which the worker resolves via its ephemeris model (the same model used to place departure epochs). The renderer never computes C3 and never holds ephemeris. This is the layering boundary the DEC-9 amendment forces.
+
+- **Worker message (main → worker):** `{ bodyId, bodyElements, gridParams, M }` where `gridParams = { depStartJD, depEndJD, tofMinDays, tofMaxDays, nDep, nTof }`. `M` is a single value per message. "Both" display mode (DEC-5) issues two messages (M=0 and M=1); the renderer composites. The ~200 ms budget in DEC-8 already covers the two computes (~98 ms each).
+
+- **TOF / units boundary.** The message boundary speaks the UI/cache vocabulary: departure as JD, TOF in days. The worker converts to the solver's internal units (seconds; μ in km³/s²) immediately before calling `lambertMultiRev`, and converts results back. The seconds-only zone is strictly internal to the worker — no tof-in-seconds value crosses the worker boundary.
+
+- **Worker result (worker → main):** `{ cells: [ Cell ], compute_ms }`, where each
+  Cell = { depJD, tofDays, status: 'ok' | 'no_solution' | 'stall', M, branches: [ Branch ], selectedBranch: <index | null> }
+  and Branch = { branch: 'single' | 'left' | 'right', converged: boolean, c3, vInfDep, vInfArr, x }.
+  (branches length 1 for M=0, up to 2 for M≥1; selectedBranch is worker-computed min-C3, null if none converged; c3 in km²/s² = |v1 − v_earth|²; vInf in km/s; x is the converged Izzo variable.)
+
+- **status semantics (closes deferred architect finding, null-vs-stall):** `no_solution` — T < T_min for this M (core returned null), render as no-solution cell. `stall` — a branch failed to converge though a solution should exist; render distinctly, never collapse silently into `no_solution`. `ok` — at least one branch converged.
+
+- **Both-branches-full-data + selection-hint (rationale).** The worker returns full data for every branch plus a `selectedBranch` hint, rather than only the winner. This keeps C3 computation/selection in the worker (where v_earth lives) while preserving renderer display flexibility: DEC-5 specifies different M=1 display per surface (overlay compact vs dedicated "both"), and full both-branch data lets either surface render its mode without a worker re-fetch. Payload cost is one extra branch of floats per M≥1 cell — trivial.
+
+---
+
+**AMD-2 — Display branch reconciliation (amends DEC-5 third bullet).**
+
+DEC-5's "Both branches of M=1 (left/right) are computed; the lower-energy one is used for display per Query 2 recommendation" is reconciled with the DEC-9 amendment: the displayed M=1 branch per cell is the **departure-C3-selected** branch (the worker's `selectedBranch`), not heliocentric specific energy. The phrase "lower-energy" is superseded by departure C3 — the mission-relevant metric. The non-selected branch's full data remains per-cell (AMD-1 payload) for the pinned-cell readout (DEC-6) and any dual-branch display mode.
+
+OPEN (framed, not forced — Phase B/D design decision): Whether the dedicated view's M=1 surface renders only the C3-selected branch (one locus) or both left/right branches as distinct loci. Lean: selected branch as the rendered surface, non-selected surfaced only in the pinned-cell readout, to avoid 3–4 overlapping loci (M=0 + M=1-left + M=1-right + contours) on one plot. Closes during Phase B/D against actual rendered density. Not locked here.
+
+---
+
+**AMD-3 — DEC-9 audit target closed (records status; no contract change).**
+
+DEC-9's audit target (max relative error ≤ 1e-6 for M ∈ {0,1,2}) is MET and exceeded. Dispatch 39 (commit `3560ff8`) measured machine-scale agreement vs poliastro 0.17 across full 50×50 grids on Apophis / Bennu / Itokawa for M ∈ {1,2} (bulk max relative error 3.6e-12), with the T_min boundary independently characterized via float64 scan (max divergence 2.2e-4 days, far below one grid cell of 18.64 days). Zero CLASS_POLIASTRO_ONLY cells (the solver never misses a solution poliastro finds); zero stalls. M=0 remains machine-precision validated (Measurement 3). The §6 Phase A STOP gate — "if audit fails for M=2, narrow scope to M ∈ {0,1} and update DEC-9" — did NOT trigger; M=2 passed.
+
+---
+
+**AMD-4 — Phase F audit obligation discharged (amends §6 Phase F).**
+
+§6 Phase F lists a multi-agent audit on `lambertMultiRev` (mathematician + adversarial + architect, Slice 10 Dispatch 21 pattern). This obligation is already met, front-loaded into Phase A: Dispatch 37 ran the three subagent priors + reconciliation (6 findings); Dispatch 38 remediated all findings, each verified against an external reference or measured number; Dispatch 39 externally validated dual-oracle. Phase F's math-audit line is discharged — do NOT re-run a full math audit at Phase F. Phase F reduces to: visual verification of overlay + dedicated route, full vite build + dev-server smoke, production deploy, OQ-4 closure, OQ-5 deferral note.
+
+---
+
+**AMD-5 — Validation-grid vs render-grid resolution (note; no contract change).**
+
+External validation (Measurement 3, Dispatch 39) ran at 50×50; DEC-2's production render grid is 200×100. Correctness is pointwise (per-cell machine-precision agreement), so it transfers to denser sampling of the same continuous (departure, TOF) space — resolution-independent. [Likely] no gap. Residual [Speculative] risk: isolated 200×100 cells landing on near-pathological geometry (exact antipodal, exact T_min) that the coarser 50×50 grid stepped over. Mitigation: when the Phase B worker first renders a real 200×100 grid, smoke-check the `status` counts — confirm zero unexpected `stall` cells and no NaN. Not a blocker; a Phase B smoke-test item.
+
+---
+
 ## §6. Phase breakdown
 
 **Phase A: lambertMultiRev() implementation + audit (~3-5 dispatches).**
