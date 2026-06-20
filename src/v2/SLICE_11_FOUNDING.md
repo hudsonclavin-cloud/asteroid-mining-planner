@@ -186,6 +186,40 @@ External validation (Measurement 3, Dispatch 39) ran at 50×50; DEC-2's producti
 
 ---
 
+**AMD-6 — Earth-state ownership (amends AMD-1 worker message contract).**
+
+AMD-1 stated the worker "resolves Earth state via its ephemeris model." Phase B Part 1 recon (Dispatch 40) found the existing worker holds asteroid bodies after init but does NOT own Earth ephemeris — Earth/planet state is loaded main-thread via `loader.ts`. Adopted implementation: the Earth state series is injected into the worker in the **init message** (once, at boot), held in worker memory alongside the asteroid bodies, and interpolated per departure column via `interpolateBodyStateSeries` (`hermite.ts`). This supersedes AMD-1's "worker resolves Earth via its ephemeris model" wording.
+
+Rationale: matches the established main-thread-loads / worker-computes split (`loader.ts` owns ephemeris loading); avoids duplicating the Horizons loader inside the worker. Earth state goes in the init message (not per compute message) to match the existing init-then-repeated-messages lifecycle. Committed `916417e`.
+
+---
+
+**AMD-7 — Lambert grid convention (records the validated screening setup as contract).**
+
+The porkchop grid uses the same Earth-departure Lambert convention as the externally-validated Slice 11 scripts (`multi-rev-poliastro-validate.mjs`, `multi-rev-dual-oracle-validate.mjs`), NOT a target-to-target convention. Per cell:
+
+- `r1` = Earth heliocentric position at departure (`depJD`)
+- `r2` = asteroid heliocentric position at arrival (`depJD + tofDays`)
+- `tof` = arrival − departure
+- `vInfDep = v1 − vEarth(dep)`; `vInfArr = v2 − vAsteroid(arr)`; `c3 = |vInfDep|²`
+- `selectedBranch` = min-c3 converged branch (per the DEC-9 amendment / AMD-2)
+
+This is recorded as explicit contract because it is not otherwise stated in §5 — it lived only in the research scripts, and a Dispatch 40 drafting error briefly proposed a target-to-target convention before recon caught it. Pinning it here prevents future re-derivation. Units inside the worker: meters, m/s, TDB seconds since J2000; the message boundary uses JD + `tofDays` (per AMD-1). Committed `916417e`.
+
+---
+
+**AMD-8 — DEC-8 timing reality + full-resolution decision (amends DEC-8).**
+
+DEC-8's ~98 ms/M budget was a Measurement-1 extrapolation (M=0 screening compute) that did not hold for M=1 both-branches at 200×100. Measured (Dispatch 40), then optimized (Dispatch 41 — `grid-compute.ts` allocation cleanup: eliminated copied `v1`/`v2` arrays, preallocated cells, scratch-reused km buffers; proven **bit-identical** against the validated baseline `916417e` across Apophis/Bennu/Itokawa, zero cell differences, solver iteration math untouched):
+
+- M=1 (both branches), 200×100: 255 ms → **148 ms** (42% reduction, bit-identical)
+- M=0, 200×100: 98 ms
+- projected "both" click (M=0 + M=1): ~246 ms
+
+Decision: 200×100 full resolution is used on BOTH surfaces (overlay and dedicated route). Surface-differentiated grid downscaling was considered and **REJECTED** as a non-value-aligned patch that hides cost rather than removing it; the optimization removed real allocation waste instead. The OQ-1 loading indicator (~150 ms target) covers the residual ~246 ms both-click latency, which sits within OQ-1's acceptable per-click band. INV-017 is preserved: resolution is uniform across surfaces, renderer behavior identical. Optimization committed as the `perf(slice11-phase-b)` commit on top of `916417e`.
+
+---
+
 ## §6. Phase breakdown
 
 **Phase A: lambertMultiRev() implementation + audit (~3-5 dispatches).**
