@@ -8,6 +8,7 @@ const METERS_PER_KILOMETER = 1000;
 const MU_SUN_KM3_S2 = GM_SUN_M3_S2 / (METERS_PER_KILOMETER ** 3);
 
 type Vec3Km = readonly [number, number, number];
+type MutableVec3Km = [number, number, number];
 type LambertSolver = (
   r1: Vec3Km,
   r2: Vec3Km,
@@ -74,24 +75,28 @@ function jdTdbToSecondsSinceJ2000(jdTdb: number): number {
   return (jdTdb - J2000_TDB_JULIAN_DATE) * SECONDS_PER_DAY;
 }
 
-function vectorKmFromMeters(positionM: CanonicalState['positionM']): Vec3Km {
-  return [positionM.x / METERS_PER_KILOMETER, positionM.y / METERS_PER_KILOMETER, positionM.z / METERS_PER_KILOMETER];
+function writeKmFromMeters(
+  target: MutableVec3Km,
+  positionM: CanonicalState['positionM'],
+): Vec3Km {
+  target[0] = positionM.x / METERS_PER_KILOMETER;
+  target[1] = positionM.y / METERS_PER_KILOMETER;
+  target[2] = positionM.z / METERS_PER_KILOMETER;
+  return target;
 }
 
-function vectorKmpsFromMps(velocityMps: CanonicalState['velocityMps']): Vec3Km {
-  return [
-    velocityMps.x / METERS_PER_KILOMETER,
-    velocityMps.y / METERS_PER_KILOMETER,
-    velocityMps.z / METERS_PER_KILOMETER,
-  ];
+function writeKmpsFromMps(
+  target: MutableVec3Km,
+  velocityMps: CanonicalState['velocityMps'],
+): Vec3Km {
+  target[0] = velocityMps.x / METERS_PER_KILOMETER;
+  target[1] = velocityMps.y / METERS_PER_KILOMETER;
+  target[2] = velocityMps.z / METERS_PER_KILOMETER;
+  return target;
 }
 
-function subtract3(left: Vec3Km, right: Vec3Km): Vec3Km {
-  return [left[0] - right[0], left[1] - right[1], left[2] - right[2]];
-}
-
-function magnitude3(vector: Vec3Km): number {
-  return Math.hypot(vector[0], vector[1], vector[2]);
+function magnitude3(x: number, y: number, z: number): number {
+  return Math.hypot(x, y, z);
 }
 
 function mapBranches(
@@ -99,23 +104,32 @@ function mapBranches(
   earthVelocityKmps: Vec3Km,
   asteroidVelocityKmps: Vec3Km,
 ): readonly PorkchopBranch[] {
-  return result.branches.map((branch) => {
-    const vInfDepVector = subtract3(branch.v1, earthVelocityKmps);
-    const vInfArrVector = subtract3(branch.v2, asteroidVelocityKmps);
-    const vInfDep = magnitude3(vInfDepVector);
-    const vInfArr = magnitude3(vInfArrVector);
+  const branches = new Array<PorkchopBranch>(result.branches.length);
 
-    return {
+  for (let index = 0; index < result.branches.length; index += 1) {
+    const branch = result.branches[index];
+    const vInfDepX = branch.v1[0] - earthVelocityKmps[0];
+    const vInfDepY = branch.v1[1] - earthVelocityKmps[1];
+    const vInfDepZ = branch.v1[2] - earthVelocityKmps[2];
+    const vInfArrX = branch.v2[0] - asteroidVelocityKmps[0];
+    const vInfArrY = branch.v2[1] - asteroidVelocityKmps[1];
+    const vInfArrZ = branch.v2[2] - asteroidVelocityKmps[2];
+    const vInfDep = magnitude3(vInfDepX, vInfDepY, vInfDepZ);
+    const vInfArr = magnitude3(vInfArrX, vInfArrY, vInfArrZ);
+
+    branches[index] = {
       branch: branch.branch,
       converged: branch.converged,
       c3: vInfDep * vInfDep,
       vInfDep,
       vInfArr,
       x: branch.x,
-      v1: [branch.v1[0], branch.v1[1], branch.v1[2]],
-      v2: [branch.v2[0], branch.v2[1], branch.v2[2]],
+      v1: branch.v1,
+      v2: branch.v2,
     };
-  });
+  }
+
+  return branches;
 }
 
 function resolveSelectedBranch(branches: readonly PorkchopBranch[]): number | null {
@@ -146,20 +160,26 @@ export function computePorkchopGrid(
   const depGridJd = buildLinspace(gridParams.depStartJD, gridParams.depEndJD, gridParams.nDep);
   const tofGridDays = buildLinspace(gridParams.tofMinDays, gridParams.tofMaxDays, gridParams.nTof);
   const startedAtMs = deps.nowMs?.();
-  const cells: PorkchopCell[] = [];
+  const totalCellCount = depGridJd.length * tofGridDays.length;
+  const cells = new Array<PorkchopCell>(totalCellCount);
+  const earthPositionKm: MutableVec3Km = [0, 0, 0];
+  const earthVelocityKmps: MutableVec3Km = [0, 0, 0];
+  const asteroidPositionKm: MutableVec3Km = [0, 0, 0];
+  const asteroidVelocityKmps: MutableVec3Km = [0, 0, 0];
+  let cellIndex = 0;
 
   for (const depJD of depGridJd) {
     const departureTdbSeconds = jdTdbToSecondsSinceJ2000(depJD);
     const earthState = deps.getEarthStateAtTdbSeconds(departureTdbSeconds);
-    const earthPositionKm = vectorKmFromMeters(earthState.positionM);
-    const earthVelocityKmps = vectorKmpsFromMps(earthState.velocityMps);
+    writeKmFromMeters(earthPositionKm, earthState.positionM);
+    writeKmpsFromMps(earthVelocityKmps, earthState.velocityMps);
 
     for (const tofDays of tofGridDays) {
       const tofSeconds = tofDays * SECONDS_PER_DAY;
       const arrivalTdbSeconds = departureTdbSeconds + tofSeconds;
       const asteroidState = deps.propagateTargetStateAtTdbSeconds(bodyElements, arrivalTdbSeconds);
-      const asteroidPositionKm = vectorKmFromMeters(asteroidState.positionM);
-      const asteroidVelocityKmps = vectorKmpsFromMps(asteroidState.velocityMps);
+      writeKmFromMeters(asteroidPositionKm, asteroidState.positionM);
+      writeKmpsFromMps(asteroidVelocityKmps, asteroidState.velocityMps);
       const lambertResult = solveLambert(
         earthPositionKm,
         asteroidPositionKm,
@@ -170,27 +190,29 @@ export function computePorkchopGrid(
       );
 
       if (lambertResult === null) {
-        cells.push({
+        cells[cellIndex] = {
           depJD,
           tofDays,
           status: 'no_solution',
           M,
           branches: [],
           selectedBranch: null,
-        });
+        };
+        cellIndex += 1;
         continue;
       }
 
       const branches = mapBranches(lambertResult, earthVelocityKmps, asteroidVelocityKmps);
       const selectedBranch = resolveSelectedBranch(branches);
-      cells.push({
+      cells[cellIndex] = {
         depJD,
         tofDays,
         status: selectedBranch === null ? 'stall' : 'ok',
         M,
         branches,
         selectedBranch,
-      });
+      };
+      cellIndex += 1;
     }
   }
 
