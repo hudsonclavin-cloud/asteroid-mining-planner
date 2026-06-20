@@ -1,0 +1,247 @@
+{
+  "generated": "2026-06-20T15:33:53.180Z",
+  "solverCommit": "6d68b3bc3013a0faa738f134ccaedfa582a05436",
+  "gridSpacing_days": 18.637755102040817,
+  "rows": [
+    {
+      "body": "99942 Apophis (2004 MN4)",
+      "M": 1,
+      "solverOnlyCells": [
+        {
+          "body": "Apophis",
+          "depDate": "2028-12-09",
+          "tofDays": 480.7040816326531,
+          "M": 1,
+          "lambda": 0.09353849180030435,
+          "s": 279939562.8552551,
+          "normalizedT": 4.568419187704052,
+          "trueTMin": 4.5661162793542225,
+          "xAtTrueTMin": 0.14598548133865039,
+          "trueTMinSeconds": 41511896.24088473,
+          "trueTMinDays": 480.461762047277,
+          "poliastroGateSeconds": 41511910.02373695,
+          "poliastroGateDays": 480.46192157102945,
+          "poliastroGateNormalizedT": 4.566117795404117,
+          "divergenceBandNormalizedT": 0.0000015160498945121503,
+          "divergenceBandDays": 0.00015952375247252348,
+          "rootsConfirmed": true,
+          "leftRootX": 0.12779286970230094,
+          "rightRootX": 0.1640636235474852,
+          "solverTMinNormalized": 4.566116279354223
+        }
+      ],
+      "maxDivergenceCase": {
+        "dep": "2028-12-09",
+        "tof": 480.7040816326531,
+        "divergenceBand_days": 0.00015952375247252348,
+        "divergenceBand_normalizedT": 0.0000015160498945121503
+      },
+      "representativeCase": {
+        "dep": "2028-12-09",
+        "tof": 480.7040816326531,
+        "divergenceBand_days": 0.00015952375247252348,
+        "divergenceBand_normalizedT": 0.0000015160498945121503
+      }
+    },
+    {
+      "body": "99942 Apophis (2004 MN4)",
+      "M": 2,
+      "solverOnlyCells": [
+        {
+          "body": "Apophis",
+          "depDate": "2026-02-14",
+          "tofDays": 424.7908163265306,
+          "M": 2,
+          "lambda": -0.9115211836176763,
+          "s": 169901195.66848505,
+          "normalizedT": 8.538174442684104,
+          "trueTMin": 8.53506670069959,
+          "xAtTrueTMin": 0.09093126112932835,
+          "trueTMinSeconds": 36688567.689239606,
+          "trueTMinDays": 424.6362001069399,
+          "poliastroGateSeconds": 36688567.695408516,
+          "poliastroGateDays": 424.6362001783393,
+          "poliastroGateNormalizedT": 8.535066702134698,
+          "divergenceBandNormalizedT": 1.435108032410426e-9,
+          "divergenceBandDays": 7.139942681533284e-8,
+          "rootsConfirmed": true,
+          "leftRootX": 0.07420789223074192,
+          "rightRootX": 0.10757637098349376,
+          "solverTMinNormalized": 8.53506670069959
+        }
+      ],
+      "maxDivergenceCase": {
+        "dep": "2026-02-14",
+        "tof": 424.7908163265306,
+        "divergenceBand_days": 7.139942681533284e-8,
+        "divergenceBand_normalizedT": 1.435108032410426e-9
+      },
+      "representativeCase": {
+        "dep": "2026-02-14",
+        "tof": 424.7908163265306,
+        "divergenceBand_days": 7.139942681533284e-8,
+        "divergenceBand_normalizedT": 1.435108032410426e-9
+      }
+    },
+    {
+      "body": "101955 Bennu (1999 RQ36)",
+      "M": 1,
+      "solverOnlyCells": [
+        {
+          "body": "Bennu",
+          "depDate": "2029-12-01",
+          "tofDays": 648.4438775510205,
+          "M": 1,
+          "lambda": -0.10678400807366689,
+          "s": 341590509.773964,
+          "normalizedT": 4.571916151052551,
+          "trueTMin": 4.567477787914836,
+          "xAtTrueTMin": 0.1459855702248027,
+          "trueTMinSeconds": 55971162.06571094,
+          "trueTMinDays": 647.8143757605433,
+          "poliastroGateSeconds": 55971180.643969424,
+          "poliastroGateDays": 647.8145907866832,
+          "poliastroGateNormalizedT": 4.567479303977391,
+          "divergenceBandNormalizedT": 0.0000015160625554955232,
+          "divergenceBandDays": 0.00021502613992652186,
+          "rootsConfirmed": true,
+          "leftRootX": 0.1207033232156479,
+          "rightRootX": 0.17104729933424345,
+          "solverTMinNormalized": 4.567477787914838
+        }
+      ],
+      "maxDivergenceCase": {
+        "dep": "2029-12-01",
+        "tof": 648.4438775510205,
+        "divergenceBand_days": 0.00021502613992652186,
+        "divergenceBand_normalizedT": 0.0000015160625554955232
+      },
+      "representativeCase": {
+        "dep": "2029-12-01",
+        "tof": 648.4438775510205,
+        "divergenceBand_days": 0.00021502613992652186,
+        "divergenceBand_normalizedT": 0.0000015160625554955232
+      }
+    },
+    {
+      "body": "101955 Bennu (1999 RQ36)",
+      "M": 2,
+      "solverOnlyCells": [
+        {
+          "body": "Bennu",
+          "depDate": "2027-11-02",
+          "tofDays": 629.8061224489796,
+          "M": 2,
+          "lambda": -0.5751790504129028,
+          "s": 232441769.6863762,
+          "normalizedT": 7.910795824297138,
+          "trueTMin": 7.91038423069138,
+          "xAtTrueTMin": 0.08595950954719923,
+          "trueTMinSeconds": 54412417.789275065,
+          "trueTMinDays": 629.7733540425355,
+          "poliastroGateSeconds": 54412417.84244084,
+          "poliastroGateDays": 629.7733546578802,
+          "poliastroGateNormalizedT": 7.910384238420531,
+          "divergenceBandNormalizedT": 7.729150652835415e-9,
+          "divergenceBandDays": 6.153446747703128e-7,
+          "rootsConfirmed": true,
+          "leftRootX": 0.08003017461516063,
+          "rightRootX": 0.09188173456833626,
+          "solverTMinNormalized": 7.910384230691381
+        }
+      ],
+      "maxDivergenceCase": {
+        "dep": "2027-11-02",
+        "tof": 629.8061224489796,
+        "divergenceBand_days": 6.153446747703128e-7,
+        "divergenceBand_normalizedT": 7.729150652835415e-9
+      },
+      "representativeCase": {
+        "dep": "2027-11-02",
+        "tof": 629.8061224489796,
+        "divergenceBand_days": 6.153446747703128e-7,
+        "divergenceBand_normalizedT": 7.729150652835415e-9
+      }
+    },
+    {
+      "body": "25143 Itokawa (1998 SF36)",
+      "M": 1,
+      "solverOnlyCells": [
+        {
+          "body": "Itokawa",
+          "depDate": "2026-06-28",
+          "tofDays": 368.8775510204082,
+          "M": 1,
+          "lambda": 0.6332670330258896,
+          "s": 241562631.8908953,
+          "normalizedT": 4.373429743190781,
+          "trueTMin": 4.371732116883838,
+          "xAtTrueTMin": 0.14527615326879778,
+          "trueTMinSeconds": 31858649.091862086,
+          "trueTMinDays": 368.7343644891445,
+          "poliastroGateSeconds": 31858659.42097088,
+          "poliastroGateDays": 368.73448403901483,
+          "poliastroGateNormalizedT": 4.371733534272772,
+          "divergenceBandNormalizedT": 0.000001417388933333541,
+          "divergenceBandDays": 0.00011954987030549091,
+          "rootsConfirmed": true,
+          "leftRootX": 0.12969438830926835,
+          "rightRootX": 0.16077535846650012,
+          "solverTMinNormalized": 4.3717321168838374
+        }
+      ],
+      "maxDivergenceCase": {
+        "dep": "2026-06-28",
+        "tof": 368.8775510204082,
+        "divergenceBand_days": 0.00011954987030549091,
+        "divergenceBand_normalizedT": 0.000001417388933333541
+      },
+      "representativeCase": {
+        "dep": "2026-06-28",
+        "tof": 368.8775510204082,
+        "divergenceBand_days": 0.00011954987030549091,
+        "divergenceBand_normalizedT": 0.000001417388933333541
+      }
+    },
+    {
+      "body": "25143 Itokawa (1998 SF36)",
+      "M": 2,
+      "solverOnlyCells": [
+        {
+          "body": "Itokawa",
+          "depDate": "2029-09-03",
+          "tofDays": 1095.75,
+          "M": 2,
+          "lambda": 0.4175179399619862,
+          "s": 341812739.3912556,
+          "normalizedT": 7.718158079917721,
+          "trueTMin": 7.7169108127850174,
+          "xAtTrueTMin": 0.08579712627020314,
+          "trueTMinSeconds": 94657500.7186717,
+          "trueTMinDays": 1095.572924984626,
+          "poliastroGateSeconds": 94657500.81774032,
+          "poliastroGateDays": 1095.5729261312538,
+          "poliastroGateNormalizedT": 7.716910820861544,
+          "divergenceBandNormalizedT": 8.07652611456433e-9,
+          "divergenceBandDays": 0.0000011466277101135347,
+          "rootsConfirmed": true,
+          "leftRootX": 0.07548054002656071,
+          "rightRootX": 0.09609231017420033,
+          "solverTMinNormalized": 7.716910812785018
+        }
+      ],
+      "maxDivergenceCase": {
+        "dep": "2029-09-03",
+        "tof": 1095.75,
+        "divergenceBand_days": 0.0000011466277101135347,
+        "divergenceBand_normalizedT": 8.07652611456433e-9
+      },
+      "representativeCase": {
+        "dep": "2029-09-03",
+        "tof": 1095.75,
+        "divergenceBand_days": 0.0000011466277101135347,
+        "divergenceBand_normalizedT": 8.07652611456433e-9
+      }
+    }
+  ]
+}
