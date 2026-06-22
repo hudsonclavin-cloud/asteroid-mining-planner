@@ -290,3 +290,23 @@ To be populated during Slice 11 dispatches.
 
 2026-06-19/20: Phase A complete. lambertMultiRev() implemented (9fc8bc4); DEC-9 amended to both-branches API (fb33487); audited via 3-subagent-prior pattern (Dispatch 37, 6 findings); remediated (f888201 F4 / 5b26ba9 F1 / dcdeb1c F2 / 6d68b3b F3); externally validated dual-oracle (3560ff8, poliastro bulk + f64 boundary, DEC-9 target met all M at machine scale). Phase F math-audit obligation discharged early. Post-Phase-A amendments AMD-1..5 recorded (§5a).
 2026-06-20: Phase B Part 1 complete. Porkchop worker + grid-compute (AMD-1 contract, Earth-from-init, validated Lambert convention) committed 916417e; grid-compute optimization (255->148ms M=1, bit-identical vs validated) committed ee2af8d. §5a amendments AMD-6/7/8 recorded.
+
+**2026-06-22: Phase B Part 2a — porkchop main-thread layer. Smoke gate passed, committed.**
+
+Canvas renderer + viridis colormap + worker client landed in two atomic commits:
+- `6c9bf34` feat(slice11): porkchop viridis colormap (0->30 km^2/s^2, clamp above 30)
+- `f1ec5e7` feat(slice11): porkchop canvas renderer + worker client (Phase B Part 2a)
+
+Math layer (porkchop.worker.ts, grid-compute.ts, core/lambert/) byte-untouched throughout — git diff against those paths empty at every gate. The renderer colors grid-compute output; it computes no trajectories.
+
+Value-check resolution (verify-before-lock applied to the smoke gate). A deterministic debug aid (smoke-only; the porkchop-smoke mount is untracked and removed at the Phase D dedicated route) auto-pinned the Apophis M=1 validated target. Sequence:
+1. Nearest-grid-cell C3 read 1939.48 vs expected 1781.29 — a grid-resolution artifact, not a pipeline error. The validated point falls between grid columns (~25.7 days/cell); nearest cell was ~5.5 days off in departure, and C3 has a steep departure gradient near the window. Nearest-cell-vs-exact-point was a wrong acceptance criterion.
+2. Exact-coordinate C3 through the identical Earth/Lambert path reproduces 1781.2916629949357 to machine precision. The 1.63e-5 residual first seen was a rounded-depJD artifact: criterion used 2461175.5 (UTC-style JD); reference case uses 2461175.500800741 (TDB JD), a 69.184 s (= TT-UTC) offset. Feeding identical departureTdbSeconds (832075269.1840142) + tofSeconds (94672800) yields an exact match, branch 1 (right). Renderer carries the validated numbers bit-faithfully.
+
+Provenance note (artifacts kept distinct): the reference 1781.2916629949357 is the grid-compute round-trip case in src/v2/porkchop/grid-compute.test.mjs, NOT a poliastro dual-oracle row. External poliastro cross-checks are separate and prior: bf177dd (pre-research porkchop grid, 3 bodies, 3.43e-14) and Phase A's solver dual-oracle (3.6e-12). The 2a smoke check establishes renderer<->grid-compute fidelity, not a new external result.
+
+Gate checks: tsc --noEmit clean; colormap.test 2/2; grid-compute.test 5/5; Lambert suite 10/10.
+
+Carried forward (neither a 2a blocker; before Phase D dedicated route):
+- OQ-2a-1 (lineage): prove production grid-compute.ts is the same path as the bf177dd poliastro-validated grid (one node-aligned cell, bit-identical through grid-compute vs direct lambertMultiRev), so the chain poliastro -> grid-compute -> renderer is on record by lineage, not assertion.
+- OQ-2a-2 (time system): pin the porkchop departure-axis time system (UTC vs TDB) as a documented choice. Invisible at 200x100 resolution; the 69.184 s offset is its visible tip.
