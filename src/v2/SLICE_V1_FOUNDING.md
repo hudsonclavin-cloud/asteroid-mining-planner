@@ -127,24 +127,37 @@ disappearing under the atmosphere shell at certain viewing angles.
 angles including ring-plane edge-on. Fix is either: adjust ring `renderOrder` values in
 saturn-rings.ts, or give Saturn's atmosphere shell a `renderOrder` below the ring floor.
 
-### OQ-V1-2 — Earth specular map format (TIFF)
+### OQ-V1-2 — Earth specular and normal map format (TIFF)
 
 **Status: OPEN.**
 
-Solar System Scope's Earth specular map is distributed as a `.tif` file. Three.js r128's
-`TextureLoader` routes all loads through `ImageLoader`, which decodes via the browser's native
-`Image` element. TIFF is not in the browser-native image format set (PNG, JPEG, WebP, GIF,
-AVIF). A TIFF will silently fail or throw at load time.
+Solar System Scope distributes **both** the Earth specular map and the Earth normal map as TIFF
+files — not JPEG. This was confirmed by the 2026-06-22 acquisition audit. The original OQ
+attributed the TIFF problem to the specular map only; that was incomplete.
 
-**Resolution criterion:** before Phase A ships, the specular map must be converted to JPEG or PNG
-as a documented acquisition step. A bash one-liner using ImageMagick (`convert
-earth_specular.tif earth_specular.jpg`) is sufficient; the output goes in `textures/`.
-This is a data-processing step, not a code change.
+Actual filenames on Solar System Scope:
+- Normal map: `2k_earth_normal_map.tif` (2048×1024)
+- Specular map: `2k_earth_specular_map.tif` (2048×1024)
 
-**Why it matters:** without the specular map, Earth uses flat Phong shininess across the full
-sphere, meaning oceans and continents reflect identically. The research explicitly flags that
-Earth with one flat roughness value produces "either dead oceans or plastic continents." The
-specular mask is the correct fix (see RESEARCH.md §4).
+Three.js r128's `TextureLoader` routes all loads through `ImageLoader`, which decodes via the
+browser's native `Image` element. TIFF is not in the browser-native image format set (PNG, JPEG,
+WebP, GIF, AVIF). A TIFF will silently fail or throw at load time. Both assets require
+TIFF→JPEG conversion before use.
+
+**Confirmed by 2026-06-22 acquisition audit:** Solar System Scope distributes the normal map as
+`2k_earth_normal_map.tif` and the specular map as `2k_earth_specular_map.tif` — both TIFF, both
+blocked on the same conversion. ImageMagick is the documented converter (commands in DEC-V1-1)
+and is not yet installed on the build machine. Staged TIFFs are held in `textures/_staging_v1/`
+pending ImageMagick install.
+
+**Resolution criterion:** both maps must be converted per the DEC-V1-1 commands before Phase A
+or Phase C ships (whichever requires them first). Normal maps encode linear data, not color
+data — the ImageMagick command must NOT apply sRGB encoding. This is a data-processing step,
+not a code change.
+
+**Why it matters:** without the specular map, Earth's ocean and land reflect identically (flat
+Phong shininess). Without the normal map, the terminator edge is geometrically smooth rather than
+surface-relief-perturbed — the research calls this out as a key realism gap.
 
 ### OQ-V1-3 — Lightweight Rayleigh/Mie Earth atmosphere
 
@@ -199,10 +212,10 @@ row here. The NOTICE file is updated in the Phase A commit to add Solar System S
 | Saturn rings | `2k_saturn_ring_alpha.png` | Solar System Scope | CC BY 4.0 | ✓ In repo | None |
 | Uranus | `2k_uranus.jpg` | Solar System Scope | CC BY 4.0 | ✓ In repo | None |
 | Neptune | `2k_neptune.jpg` | Solar System Scope | CC BY 4.0 | ✓ In repo | None |
-| Earth night (city lights) | `2k_earth_nightmap.jpg` | NASA SVS ID 30003 | Public domain (US Gov) | **✗ Missing — Phase C prerequisite** | Download `earth_lights_4800.tif` from https://svs.gsfc.nasa.gov/30003/ · Resize to 4096×2048 JPEG · Rename to `2k_earth_nightmap.jpg` · Place in `textures/` |
+| Earth night (city lights) | `2k_earth_nightmap.jpg` | NASA SVS ID 30003 | Public domain (US Gov) | **✗ Missing — Phase C prerequisite** | Download `earth_lights_4800.tif` (4800×2400) from https://svs.gsfc.nasa.gov/vis/a030000/a030000/a030003/earth_lights_4800.tif · Convert+resize: `convert earth_lights_4800.tif -resize 4096x2048! -quality 90 2k_earth_nightmap.jpg` (requires ImageMagick; `!` forces exact 4096×2048 — safe because both source and target are 2:1) · Place in `textures/` |
 | Earth clouds | `2k_earth_clouds.jpg` | Solar System Scope | CC BY 4.0 | **✗ Missing — Phase C prerequisite** | Download from https://www.solarsystemscope.com/textures/ · 2K version |
-| Earth normal map | `2k_earth_normal.jpg` | Solar System Scope | CC BY 4.0 | **✗ Missing — future (OQ-V1-2 context)** | Download from Solar System Scope · Native JPEG (not the TIFF specular) |
-| Earth specular map | `2k_earth_specular.jpg` | Solar System Scope | CC BY 4.0 | **✗ Missing — OQ-V1-2 blocks** | Download `2k_earth_specular.tif` · Convert: `convert 2k_earth_specular.tif 2k_earth_specular.jpg` (ImageMagick) · Place in `textures/` |
+| Earth normal map | `2k_earth_normal.jpg` | Solar System Scope | CC BY 4.0 | **✗ Missing — OQ-V1-2 blocks (TIFF, not JPEG)** | Download `2k_earth_normal_map.tif` (2048×1024) from https://www.solarsystemscope.com/textures/download/2k_earth_normal_map.tif · Convert: `convert 2k_earth_normal_map.tif -quality 90 2k_earth_normal.jpg` (requires ImageMagick; encode LINEAR not sRGB — normal maps are not color data) · Place in `textures/` |
+| Earth specular map | `2k_earth_specular.jpg` | Solar System Scope | CC BY 4.0 | **✗ Missing — OQ-V1-2 blocks** | Download `2k_earth_specular_map.tif` (2048×1024) from https://www.solarsystemscope.com/textures/download/2k_earth_specular_map.tif · Convert: `convert 2k_earth_specular_map.tif -quality 90 2k_earth_specular.jpg` (requires ImageMagick) · Place in `textures/` |
 
 **The fabricated fallback is prohibited by INV-V1-001.** The night map column shows no
 processing path that generates data — only a download path for the real NASA asset. If the night
@@ -477,3 +490,12 @@ is absent is day-texture-only Earth, not fabricated data.
 during prototype session) are superseded by the Phase A–C structure above. They are inputs to
 this document, not the dispatches themselves. Dispatches are written against this founding doc,
 with DEC-V1-4 STOP gates baked in.
+
+**2026-06-22:** Asset acquisition audit (pre-Phase-C). Of four missing assets, 1 acquired clean:
+Earth clouds (`2k_earth_clouds.jpg`, 2048×1024, CC BY 4.0, placed in `textures/`). Three
+blocked: (1) night map — no resize command in original DEC plus ImageMagick absent; (2) normal
+map — DEC wrongly assumed native JPEG; actual is `2k_earth_normal_map.tif` (TIFF); (3) specular
+map — DEC command had wrong source filename (`earth_specular.tif` vs actual
+`2k_earth_specular_map.tif`). DEC-V1-1 asset inventory and OQ-V1-2 amended above with corrected
+commands and filenames. Staged TIFFs held in `textures/_staging_v1/` pending ImageMagick install.
+INV-V1-001 held: no fabricated substitute generated for any blocked asset.
