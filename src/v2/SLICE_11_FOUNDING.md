@@ -62,6 +62,12 @@ Query 3 Section 10 gives a minimum viable ΔV stack model: `injection + 2×√C3
 **Status: OPEN — deferred to Slice 11 Phase D, may be cut.**
 Multi-body comparison is a natural feature for mission designers choosing between candidates. But it's out of scope for the first version of Slice 11; the dedicated route ships with single-body view in Slice 11. OQ-5 captures the deliberate deferral and the design space for a later addition.
 
+**OQ-11C-1 — Earth-state provisioning in the app overlay (INTEGRATION RISK, STOP gate).**
+The overlay-scoped client (DEC-11C-2) needs the long-window (14-year, 2026-2040) Earth state series to compute grids — the same series the smoke harness hand-builds via the validated fixture path (ingestSlice2Fixture → earthSeries → interpolateBodyStateSeries). This has been proven in the smoke harness but NEVER exercised in the actual app overlay. This is the same class of risk as the 2a Earth-fixture-span surprise: a data-provisioning assumption true in the smoke page but unverified in-app. RESOLUTION: the Phase C implementation dispatch MUST include a STOP gate that builds Earth-state in the overlay and verifies a computed grid reproduces a known cell value BEFORE wiring the modal UI — do not assume the smoke-harness Earth path transfers to the overlay unchanged. Where Earth-state is built (overlay mount) and how it's handed to the client must be read from current overlay code, not assumed.
+
+**OQ-11C-2 — Row trigger injection mechanism.**
+DEC-11C-1 requires a porkchop trigger separate from the hardwired row-click. Recon showed two viable mechanisms: (a) add a callback prop to renderRow, or (b) wrap/extend row-click handling at the panel level. The choice must be made at dispatch time against current row.ts/panel.ts structure (read first), preserving existing selectBody + requestFocus semantics exactly. Not locked here because it depends on the row component's current prop surface.
+
 ---
 
 ## §5. Locked DECs
@@ -128,6 +134,20 @@ DEC-9 Amendment (2026-06-19, post-Dispatch-37 Finding 4 + 37.5 verification): la
 - Same RNG seed (11) means original 100 are subset of new 500 (reproducibility)
 - Output: `tools/slice11-research/data/multi-rev-worth-it-500.json`
 - Closes OQ-2 definitively; informs Slice 11.5 go/no-go
+
+### Phase C DECs
+
+**DEC-11C-1 — Modal trigger: separate affordance, not row-click.**
+Plain catalog row-click KEEPS its current behavior: selectBody(bodyId) + requestFocus() (3D selection + focus). It is NOT overloaded to open the porkchop. The porkchop modal opens from a SEPARATE trigger — a dedicated control (icon button) on the row or in the selection-detail area — so opening a heavy modal is always an explicit, deliberate second action. Rationale: opening a compute-bearing modal on every row-click is hostile UX and would couple 3D-focus to porkchop-open. Recon confirmed row-click is hardwired in row.ts (line 78) to selectBody + requestFocus with no callback injection point; the trigger is added alongside, not by hijacking that handler.
+
+**DEC-11C-2 — Worker client lifetime: overlay-scoped, single persistent client.**
+PorkchopClient (which owns a Worker; createPorkchopClient @ porkchop-client.ts line 27, dispose() terminates it) is created ONCE when the Phase C overlay mounts, reused across every modal open/close, and disposed EXACTLY ONCE when the overlay tears down. The modal does NOT create or dispose the client on open/close. Rationale: per-open create/dispose churns workers, re-runs grid-compute wastefully, and creates a worker-leak surface if any close path forgets dispose(). One idle worker for the overlay's lifetime is the accepted cost. Constraint: PorkchopClient allows only one in-flight computeGrid() (throws if a request is already in flight) — the modal must guard against overlapping compute requests (e.g. disable recompute controls while a grid is computing).
+
+**DEC-11C-3 — Mount location: inside the existing overlay Preact tree, not a new global root.**
+The porkchop modal mounts inside the existing overlay tree (ui-overlay/overlay.ts mountPhaseCOverlay → PhaseCOverlay → renderPanel), reusing the inline modal/backdrop mechanics already present in catalog-list/panel.ts renderPopover (popoverOpenSignal pattern, backdrop-click + × dismissal). It is NOT a separate portal or global route root. ADD an ESC-to-dismiss handler (the existing popover has backdrop + × but no ESC — the modal should support all three). Rationale: the catalog already lives in this overlay tree and the full catalog is in scope there (catalogSignal.value), so the modal can derive its data without a new fetch (see DEC-11C-4). The dedicated full-page route is Phase D, separate from this modal.
+
+**DEC-11C-4 — Modal data is derived from the in-scope catalog, no new fetch.**
+PorkchopView needs { client, bodyId, bodyLabel, bodyElements, gridParams, M }. At modal-open time, mounting from the panel tree: bodyId comes from the row; bodyLabel is built from name || designation; bodyElements is looked up from catalogSignal.value (catalog.asteroids[bodyId]) — recon confirmed the row itself only carries a summary (CatalogListRowData) but the full catalog with orbital elements is already in panel scope; gridParams is constructed at open time; M defaults to 1; client is the overlay-scoped singleton from DEC-11C-2. No new network/data fetch for asteroid elements is required.
 
 ---
 
