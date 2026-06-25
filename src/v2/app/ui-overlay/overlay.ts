@@ -1,6 +1,10 @@
 import { h, render } from 'preact';
 import { effect } from '@preact/signals';
+import { ingestSlice2Fixture } from '../../boundary/horizons.js';
+import type { CanonicalStateSample, HorizonsFixture } from '../../boundary/horizons.js';
 import { loadSlice9NeaCatalogFixture } from '../../boundary/slice9-nea-catalog.js';
+import { createPorkchopClient } from '../../porkchop/porkchop-client.js';
+import type { PorkchopClient } from '../../porkchop/porkchop-client.js';
 import { disposePanel, renderPanel, trackPanelSignals } from '../catalog-list/panel.js';
 import {
   focusRequestIdSignal,
@@ -35,6 +39,11 @@ const OVERLAY_TELEMETRY_STYLE = [
   'pointer-events:none',
 ].join(';');
 
+const PORKCHOP_EARTH_FIXTURE_URL = new URL(
+  '../../data/horizons-inner-solar-system-2026-2040.json',
+  import.meta.url,
+);
+
 let catalogLoadPromise: Promise<void> | null = null;
 
 function ensureCatalogLoaded(): void {
@@ -59,6 +68,19 @@ function ensureCatalogLoaded(): void {
     .finally(() => {
       catalogLoadPromise = null;
     });
+}
+
+async function loadPorkchopEarthStateSeries(): Promise<readonly CanonicalStateSample['state'][]> {
+  const response = await fetch(PORKCHOP_EARTH_FIXTURE_URL);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load porkchop Earth fixture: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  const fixture = (await response.json()) as HorizonsFixture;
+  const states = ingestSlice2Fixture(fixture);
+  return states.earth.map((sample) => sample.state);
 }
 
 function PhaseCOverlay() {
@@ -103,6 +125,22 @@ export function mountPhaseCOverlay(mount: HTMLElement): () => void {
   host.style.cssText = OVERLAY_HOST_STYLE;
   mount.appendChild(host);
   ensureCatalogLoaded();
+  let porkchopClient: PorkchopClient | null = null;
+  let porkchopClientDisposed = false;
+  const porkchopClientPromise = loadPorkchopEarthStateSeries()
+    .then((earthStateSeries) => createPorkchopClient(earthStateSeries))
+    .then((client) => {
+      if (porkchopClientDisposed) {
+        client.dispose();
+        return null;
+      }
+      porkchopClient = client;
+      return client;
+    })
+    .catch((error) => {
+      console.error('Phase C failed to initialize porkchop client for overlay', error);
+      return null;
+    });
   const disposeRenderEffect = effect(() => {
     // Re-render the Preact root when the external store slices C.1 exposes
     // change. The scene stays imperative; the DOM overlay stays declarative.
@@ -113,8 +151,15 @@ export function mountPhaseCOverlay(mount: HTMLElement): () => void {
   });
 
   return () => {
+    porkchopClientDisposed = true;
     disposeRenderEffect();
     disposePanel();
+    if (porkchopClient !== null) {
+      porkchopClient.dispose();
+      porkchopClient = null;
+    } else {
+      void porkchopClientPromise;
+    }
     render(null, host);
     host.remove();
   };
