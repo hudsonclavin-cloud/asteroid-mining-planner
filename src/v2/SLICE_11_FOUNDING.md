@@ -310,3 +310,24 @@ Gate checks: tsc --noEmit clean; colormap.test 2/2; grid-compute.test 5/5; Lambe
 Carried forward (neither a 2a blocker; before Phase D dedicated route):
 - OQ-2a-1 (lineage): prove production grid-compute.ts is the same path as the bf177dd poliastro-validated grid (one node-aligned cell, bit-identical through grid-compute vs direct lambertMultiRev), so the chain poliastro -> grid-compute -> renderer is on record by lineage, not assertion.
 - OQ-2a-2 (time system): pin the porkchop departure-axis time system (UTC vs TDB) as a documented choice. Invisible at 200x100 resolution; the 69.184 s offset is its visible tip.
+
+**2026-06-22: Phase B Part 2b/2c — porkchop interaction + overlay layer. Committed.**
+
+Built the full interaction and overlay surface on the renderer, all in src/v2/porkchop/porkchop-view.ts, committed as one atomic unit (the features interleave in one file and were verified as a unit across five gates):
+- `9629d9c` feat(slice11): porkchop hover tooltip, pin/hover markers, viridis legend, iso-C3 contour overlay (Phase B Part 2b/2c)
+
+Math layer (porkchop.worker.ts, grid-compute.ts, core/lambert/) byte-untouched throughout — git diff against those paths empty at every one of five gates. Everything added reads the existing cells array; zero Lambert or worker recomputation.
+
+What landed:
+- Hover tooltip: pointermove reuses getCellAtCoordinates(...) — the identical lookup path as click — writing to a SEPARATE hoverCell state. Pin and hover are independent; hovering never disturbs the pinned selection. Verified: hover C3 matches click-pinned C3 on the same cell (the pixel->index mapping is sound).
+- Canvas markers: persistent pin marker + transient hover marker, drawn as an overlay pass AFTER the heatmap blit (not baked into ImageData). Index->display-pixel mapping via getDisplayCoordinatesForIndices(...).
+- Legend bar: real viridis gradient strip sampled from the same color path as the heatmap, ticks at 0 / 15 / 30 + ">30 clamp" marker, replacing the prior text-only label.
+- Contour overlay (2c): marching-squares over cells' selectedBranch.c3 at LOCKED iso-levels [9, 12, 16, 20, 25] km^2/s^2. Toggle, default OFF so the base heatmap is always available un-obscured. Drawn above heatmap, below markers. Cells without a valid selected-branch C3 are skipped. Segments precomputed via useMemo from cells + gridParams.
+
+Locked decision: contour iso-levels are [9, 12, 16, 20, 25] km^2/s^2 — chosen inside the 0->30 colormap range, spacing the feasibility belly readably, 9 near the practical low-C3 floor. Not user-tunable in this slice.
+
+Verification: each of five gates (hover, markers, legend, contour, and the hover<->click C3 match) verified in the smoke page before the next chained. tsc --noEmit clean; math diff empty at every gate.
+
+Smoke-only code (validatedTarget prop, auto-pin, "Pin validated cell" button, expected-C3 line, smoke header) was NOT touched and ships nowhere — it stays in the untracked smoke mount, removed wholesale at the Phase D dedicated route.
+
+Phase B status: the porkchop renderer + its full interaction/overlay layer are complete. Remaining Phase B/C/D/E work per §6: overlay modal surface, dedicated route, light M=1 sampling extension, audit + deploy.
