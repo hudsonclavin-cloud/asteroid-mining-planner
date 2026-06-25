@@ -73,7 +73,7 @@ DEC-11C-1 requires a porkchop trigger separate from the hardwired row-click. Rec
 ## §5. Locked DECs
 
 **DEC-1: Visualization surfaces — overlay + dedicated, shared renderer.**
-- Overlay modal opens from catalog list row click, dismissible via ESC/X/backdrop
+- Overlay modal opens from catalog list row click, dismissible via ESC/X/backdrop  *(SUPERSEDED by DEC-11C-1: opens from a separate trigger, not row-click; row-click keeps selectBody+requestFocus. ESC/X/backdrop dismissal retained per DEC-11C-3.)*
 - Dedicated route at `/v2/porkchop/?body=<bodyId>`, bookmarkable, shareable
 - Shared porkchop renderer component (Preact) consumed by both surfaces
 - INV-017 enforces renderer parity
