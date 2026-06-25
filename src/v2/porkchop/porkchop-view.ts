@@ -51,6 +51,52 @@ const LABEL_ROW_STYLE = [
   'opacity:0.8',
 ].join(';');
 
+const LEGEND_STACK_STYLE = [
+  'display:flex',
+  'flex-direction:column',
+  'align-items:flex-end',
+  'gap:6px',
+  'min-width:280px',
+].join(';');
+
+const LEGEND_BAR_STYLE = [
+  'width:280px',
+  'height:14px',
+  'border-radius:999px',
+  'border:1px solid rgba(255,255,255,0.16)',
+  'overflow:hidden',
+].join(';');
+
+const LEGEND_TICKS_STYLE = [
+  'display:flex',
+  'justify-content:space-between',
+  'gap:12px',
+  'width:280px',
+  'font-size:11px',
+  'opacity:0.84',
+].join(';');
+
+const CANVAS_STAGE_STYLE = [
+  'position:relative',
+  `width:${DISPLAY_WIDTH}px`,
+  'max-width:100%',
+].join(';');
+
+const TOOLTIP_STYLE = [
+  'position:absolute',
+  'pointer-events:none',
+  'min-width:180px',
+  'padding:10px 12px',
+  'border-radius:10px',
+  'border:1px solid rgba(255,255,255,0.14)',
+  'background:rgba(5,7,13,0.94)',
+  'box-shadow:0 14px 30px rgba(0,0,0,0.28)',
+  'font-size:12px',
+  'line-height:1.45',
+  'color:#eef2ff',
+  'z-index:2',
+].join(';');
+
 export interface PorkchopViewProps {
   readonly client: PorkchopClient;
   readonly bodyId: string;
@@ -73,6 +119,25 @@ interface PinnedReadout {
   readonly vInfDep: number | null;
   readonly vInfArr: number | null;
 }
+
+interface HoverTooltipPosition {
+  readonly x: number;
+  readonly y: number;
+}
+
+interface GridIndices {
+  readonly depIndex: number;
+  readonly tofIndex: number;
+}
+
+interface ContourSegment {
+  readonly x1: number;
+  readonly y1: number;
+  readonly x2: number;
+  readonly y2: number;
+}
+
+const CONTOUR_LEVELS = [9, 12, 16, 20, 25] as const;
 
 function jdTdbToDateParts(jdTdb: number): { year: number; monthIndex: number; day: number } {
   const shiftedJulianDay = jdTdb + 0.5;
@@ -101,6 +166,22 @@ function formatJdTdb(jdTdb: number): string {
 
 function formatNumber(value: number, digits: number): string {
   return value.toFixed(digits);
+}
+
+function rgbToCss(rgb: readonly [number, number, number]): string {
+  return `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`;
+}
+
+function buildLegendGradient(): string {
+  const stops: string[] = [];
+  const sampleCount = 12;
+  for (let index = 0; index <= sampleCount; index += 1) {
+    const fraction = index / sampleCount;
+    const c3 = fraction * 30;
+    const rgb = colorForPorkchopCell('ok', c3);
+    stops.push(`${rgbToCss(rgb)} ${formatNumber(fraction * 100, 2)}%`);
+  }
+  return `linear-gradient(90deg, ${stops.join(', ')})`;
 }
 
 function getCellAtGridIndices(
@@ -189,6 +270,166 @@ function buildPinnedReadout(cell: PorkchopWorkerCell): PinnedReadout {
   };
 }
 
+function getGridIndicesForCell(
+  cell: PorkchopWorkerCell,
+  gridParams: PorkchopGridParams,
+): GridIndices | null {
+  const depStep = gridParams.nDep <= 1
+    ? 0
+    : (gridParams.depEndJD - gridParams.depStartJD) / (gridParams.nDep - 1);
+  const tofStep = gridParams.nTof <= 1
+    ? 0
+    : (gridParams.tofMaxDays - gridParams.tofMinDays) / (gridParams.nTof - 1);
+  const depIndex = depStep === 0
+    ? 0
+    : Math.round((cell.depJD - gridParams.depStartJD) / depStep);
+  const tofIndex = tofStep === 0
+    ? 0
+    : Math.round((cell.tofDays - gridParams.tofMinDays) / tofStep);
+
+  if (depIndex < 0 || depIndex >= gridParams.nDep || tofIndex < 0 || tofIndex >= gridParams.nTof) {
+    return null;
+  }
+
+  return { depIndex, tofIndex };
+}
+
+function getDisplayCoordinatesForIndices(
+  depIndex: number,
+  tofIndex: number,
+  gridParams: PorkchopGridParams,
+): { x: number; y: number } {
+  return getDisplayCoordinatesForGridPoint(depIndex, tofIndex, gridParams);
+}
+
+function getDisplayCoordinatesForGridPoint(
+  depIndex: number,
+  tofIndex: number,
+  gridParams: PorkchopGridParams,
+): { x: number; y: number } {
+  const cellWidth = DISPLAY_WIDTH / gridParams.nDep;
+  const cellHeight = DISPLAY_HEIGHT / gridParams.nTof;
+  const rowFromTop = gridParams.nTof - 1 - tofIndex;
+  return {
+    x: depIndex * cellWidth + cellWidth / 2,
+    y: rowFromTop * cellHeight + cellHeight / 2,
+  };
+}
+
+function drawMarker(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  strokeStyle: string,
+  fillStyle: string,
+  radius: number,
+) {
+  context.save();
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.fillStyle = fillStyle;
+  context.strokeStyle = strokeStyle;
+  context.lineWidth = 2;
+  context.fill();
+  context.stroke();
+
+  context.beginPath();
+  context.moveTo(x - radius - 4, y);
+  context.lineTo(x + radius + 4, y);
+  context.moveTo(x, y - radius - 4);
+  context.lineTo(x, y + radius + 4);
+  context.stroke();
+  context.restore();
+}
+
+function getSelectedBranchC3(cell: PorkchopWorkerCell): number | null {
+  if (cell.status !== 'ok' || cell.selectedBranch === null) {
+    return null;
+  }
+  return cell.branches[cell.selectedBranch]?.c3 ?? null;
+}
+
+function interpolateEdge(level: number, startValue: number, endValue: number): number {
+  const delta = endValue - startValue;
+  if (delta === 0) {
+    return 0.5;
+  }
+  return Math.min(1, Math.max(0, (level - startValue) / delta));
+}
+
+function buildContourSegments(
+  cells: readonly PorkchopWorkerCell[],
+  gridParams: PorkchopGridParams,
+): readonly ContourSegment[] {
+  const segments: ContourSegment[] = [];
+  const edgePairsByCase: Readonly<Record<number, readonly [number, number][]>> = {
+    0: [],
+    1: [[3, 0]],
+    2: [[0, 1]],
+    3: [[3, 1]],
+    4: [[1, 2]],
+    5: [[3, 2], [0, 1]],
+    6: [[0, 2]],
+    7: [[3, 2]],
+    8: [[2, 3]],
+    9: [[0, 2]],
+    10: [[0, 3], [1, 2]],
+    11: [[1, 2]],
+    12: [[1, 3]],
+    13: [[0, 1]],
+    14: [[0, 3]],
+    15: [],
+  };
+
+  for (const level of CONTOUR_LEVELS) {
+    for (let depIndex = 0; depIndex < gridParams.nDep - 1; depIndex += 1) {
+      for (let tofIndex = 0; tofIndex < gridParams.nTof - 1; tofIndex += 1) {
+        const bottomLeft = getCellAtGridIndices(depIndex, tofIndex, cells, gridParams);
+        const bottomRight = getCellAtGridIndices(depIndex + 1, tofIndex, cells, gridParams);
+        const topRight = getCellAtGridIndices(depIndex + 1, tofIndex + 1, cells, gridParams);
+        const topLeft = getCellAtGridIndices(depIndex, tofIndex + 1, cells, gridParams);
+
+        if (bottomLeft === null || bottomRight === null || topRight === null || topLeft === null) {
+          continue;
+        }
+
+        const v0 = getSelectedBranchC3(bottomLeft);
+        const v1 = getSelectedBranchC3(bottomRight);
+        const v2 = getSelectedBranchC3(topRight);
+        const v3 = getSelectedBranchC3(topLeft);
+        if (v0 === null || v1 === null || v2 === null || v3 === null) {
+          continue;
+        }
+
+        const caseIndex =
+          (v0 >= level ? 1 : 0) |
+          (v1 >= level ? 2 : 0) |
+          (v2 >= level ? 4 : 0) |
+          (v3 >= level ? 8 : 0);
+        const edgePairs = edgePairsByCase[caseIndex];
+        if (edgePairs.length === 0) {
+          continue;
+        }
+
+        const edgePoints = [
+          () => getDisplayCoordinatesForGridPoint(depIndex + interpolateEdge(level, v0, v1), tofIndex, gridParams),
+          () => getDisplayCoordinatesForGridPoint(depIndex + 1, tofIndex + interpolateEdge(level, v1, v2), gridParams),
+          () => getDisplayCoordinatesForGridPoint(depIndex + interpolateEdge(level, v3, v2), tofIndex + 1, gridParams),
+          () => getDisplayCoordinatesForGridPoint(depIndex, tofIndex + interpolateEdge(level, v0, v3), gridParams),
+        ] as const;
+
+        for (const [startEdge, endEdge] of edgePairs) {
+          const start = edgePoints[startEdge]();
+          const end = edgePoints[endEdge]();
+          segments.push({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
+        }
+      }
+    }
+  }
+
+  return segments;
+}
+
 export function PorkchopView(props: PorkchopViewProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [cells, setCells] = useState<readonly PorkchopWorkerCell[] | null>(null);
@@ -196,12 +437,21 @@ export function PorkchopView(props: PorkchopViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pinnedCell, setPinnedCell] = useState<PorkchopWorkerCell | null>(null);
+  const [hoverCell, setHoverCell] = useState<PorkchopWorkerCell | null>(null);
+  const [hoverTooltipPosition, setHoverTooltipPosition] = useState<HoverTooltipPosition | null>(null);
+  const [showContours, setShowContours] = useState(false);
+  const contourSegments = useMemo(
+    () => (cells === null ? [] : buildContourSegments(cells, props.gridParams)),
+    [cells, props.gridParams],
+  );
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
     setPinnedCell(null);
+    setHoverCell(null);
+    setHoverTooltipPosition(null);
     void props.client.computeGrid({
       bodyId: props.bodyId,
       bodyElements: props.bodyElements,
@@ -268,7 +518,45 @@ export function PorkchopView(props: PorkchopViewProps) {
     context.clearRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
     context.imageSmoothingEnabled = false;
     context.drawImage(offscreen, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-  }, [cells, props.gridParams]);
+
+    if (showContours) {
+      context.save();
+      context.strokeStyle = 'rgba(255,255,255,0.72)';
+      context.lineWidth = 1.2;
+      context.lineCap = 'round';
+      for (const segment of contourSegments) {
+        context.beginPath();
+        context.moveTo(segment.x1, segment.y1);
+        context.lineTo(segment.x2, segment.y2);
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    const drawCellMarker = (
+      cell: PorkchopWorkerCell | null,
+      strokeStyle: string,
+      fillStyle: string,
+      radius: number,
+    ) => {
+      if (cell === null) {
+        return;
+      }
+      const indices = getGridIndicesForCell(cell, props.gridParams);
+      if (indices === null) {
+        return;
+      }
+      const { x, y } = getDisplayCoordinatesForIndices(
+        indices.depIndex,
+        indices.tofIndex,
+        props.gridParams,
+      );
+      drawMarker(context, x, y, strokeStyle, fillStyle, radius);
+    };
+
+    drawCellMarker(pinnedCell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.22)', 8);
+    drawCellMarker(hoverCell, 'rgba(167,243,208,0.95)', 'rgba(167,243,208,0.16)', 6);
+  }, [cells, contourSegments, hoverCell, pinnedCell, props.gridParams, showContours]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -286,6 +574,35 @@ export function PorkchopView(props: PorkchopViewProps) {
     canvas.addEventListener('click', handleClick);
     return () => {
       canvas.removeEventListener('click', handleClick);
+    };
+  }, [cells, props.gridParams]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || cells === null) {
+      return;
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const cell = getCellAtCoordinates(event, canvas, cells, props.gridParams);
+      const rect = canvas.getBoundingClientRect();
+      setHoverCell(cell);
+      setHoverTooltipPosition({
+        x: Math.min(Math.max(event.clientX - rect.left + 12, 8), rect.width - 188),
+        y: Math.min(Math.max(event.clientY - rect.top + 12, 8), rect.height - 108),
+      });
+    };
+
+    const handlePointerLeave = () => {
+      setHoverCell(null);
+      setHoverTooltipPosition(null);
+    };
+
+    canvas.addEventListener('pointermove', handlePointerMove);
+    canvas.addEventListener('pointerleave', handlePointerLeave);
+    return () => {
+      canvas.removeEventListener('pointermove', handlePointerMove);
+      canvas.removeEventListener('pointerleave', handlePointerLeave);
     };
   }, [cells, props.gridParams]);
 
@@ -308,12 +625,16 @@ export function PorkchopView(props: PorkchopViewProps) {
     () => (pinnedCell === null ? null : buildPinnedReadout(pinnedCell)),
     [pinnedCell],
   );
-
+  const hoverReadout = useMemo(
+    () => (hoverCell === null ? null : buildPinnedReadout(hoverCell)),
+    [hoverCell],
+  );
   const depEndLabel = formatJdTdb(props.gridParams.depEndJD);
   const depStartLabel = formatJdTdb(props.gridParams.depStartJD);
   const tofMinLabel = `${formatNumber(props.gridParams.tofMinDays, 1)} d`;
   const tofMaxLabel = `${formatNumber(props.gridParams.tofMaxDays, 1)} d`;
   const hasValidatedTarget = props.validatedTarget !== undefined;
+  const legendGradient = useMemo(() => buildLegendGradient(), []);
 
   return h(
     'div',
@@ -327,6 +648,18 @@ export function PorkchopView(props: PorkchopViewProps) {
         { style: 'font-size:13px;opacity:0.85;line-height:1.5;' },
         'Standalone Phase B smoke mount. X axis: departure date (early → late). Y axis: TOF days (short bottom → long top). ',
         computeMs === null ? '' : `worker compute ${formatNumber(computeMs, 1)} ms.`,
+      ),
+      h(
+        'label',
+        {
+          style: 'display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;opacity:0.9;cursor:pointer;',
+        },
+        h('input', {
+          type: 'checkbox',
+          checked: showContours,
+          onInput: () => setShowContours((current) => !current),
+        }),
+        `Show contours (${CONTOUR_LEVELS.join(', ')} km²/s²)`,
       ),
       hasValidatedTarget
         ? h(
@@ -369,17 +702,50 @@ export function PorkchopView(props: PorkchopViewProps) {
                 h('span', null, `TOF ↑ ${tofMaxLabel}`),
                 h('span', null, `${depStartLabel} → ${depEndLabel}`),
               ),
-              h('canvas', {
-                ref: canvasRef,
-                width: DISPLAY_WIDTH,
-                height: DISPLAY_HEIGHT,
-                style: CANVAS_STYLE,
-              }),
+              h(
+                'div',
+                { style: CANVAS_STAGE_STYLE },
+                h('canvas', {
+                  ref: canvasRef,
+                  width: DISPLAY_WIDTH,
+                  height: DISPLAY_HEIGHT,
+                  style: CANVAS_STYLE,
+                }),
+                hoverReadout !== null && hoverTooltipPosition !== null
+                  ? h(
+                      'div',
+                      {
+                        style: `${TOOLTIP_STYLE};left:${formatNumber(hoverTooltipPosition.x, 0)}px;top:${formatNumber(hoverTooltipPosition.y, 0)}px;`,
+                      },
+                      h('div', { style: 'font-weight:600;margin-bottom:6px;' }, 'Hover cell'),
+                      h('div', null, `Status: ${hoverReadout.cell.status}`),
+                      h('div', null, `Departure: ${formatJdTdb(hoverReadout.cell.depJD)}`),
+                      h('div', null, `TOF: ${formatNumber(hoverReadout.cell.tofDays, 3)} d`),
+                      h(
+                        'div',
+                        null,
+                        `C3: ${hoverReadout.c3 === null ? 'n/a' : `${formatNumber(hoverReadout.c3, 6)} km²/s²`}`,
+                      ),
+                    )
+                  : null,
+              ),
               h(
                 'div',
                 { style: LABEL_ROW_STYLE },
                 h('span', null, `TOF ↓ ${tofMinLabel}`),
-                h('span', null, 'viridis, linear 0 → 30 km²/s²; >30 clamped'),
+                h(
+                  'div',
+                  { style: LEGEND_STACK_STYLE },
+                  h('div', { style: `${LEGEND_BAR_STYLE};background:${legendGradient};` }),
+                  h(
+                    'div',
+                    { style: LEGEND_TICKS_STYLE },
+                    h('span', null, '0'),
+                    h('span', null, '15'),
+                    h('span', null, '30'),
+                    h('span', null, '>30 clamp'),
+                  ),
+                ),
               ),
             ),
     ),
