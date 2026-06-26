@@ -104,6 +104,7 @@ export interface PorkchopViewProps {
   readonly bodyElements: AsteroidOrbitalElements;
   readonly gridParams: PorkchopGridParams;
   readonly M: number;
+  readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly validatedTarget?: {
     readonly depJD: number;
     readonly tofDays: number;
@@ -111,8 +112,12 @@ export interface PorkchopViewProps {
   };
 }
 
-interface PinnedReadout {
-  readonly cell: PorkchopWorkerCell;
+export interface PorkchopPinnedReadout {
+  readonly status: PorkchopWorkerCell['status'];
+  readonly depJD: number;
+  readonly arrivalJD: number;
+  readonly tofDays: number;
+  readonly M: number;
   readonly selectedBranchLabel: string | null;
   readonly selectedBranchIndex: number | null;
   readonly c3: number | null;
@@ -247,10 +252,14 @@ function getNearestCellForTarget(
   return getCellAtGridIndices(depIndex, tofIndex, cells, gridParams);
 }
 
-function buildPinnedReadout(cell: PorkchopWorkerCell): PinnedReadout {
+function buildPinnedReadout(cell: PorkchopWorkerCell): PorkchopPinnedReadout {
   if (cell.status !== 'ok' || cell.selectedBranch === null) {
     return {
-      cell,
+      status: cell.status,
+      depJD: cell.depJD,
+      arrivalJD: cell.depJD + cell.tofDays,
+      tofDays: cell.tofDays,
+      M: cell.M,
       selectedBranchLabel: null,
       selectedBranchIndex: cell.selectedBranch,
       c3: null,
@@ -261,7 +270,11 @@ function buildPinnedReadout(cell: PorkchopWorkerCell): PinnedReadout {
 
   const branch = cell.branches[cell.selectedBranch];
   return {
-    cell,
+    status: cell.status,
+    depJD: cell.depJD,
+    arrivalJD: cell.depJD + cell.tofDays,
+    tofDays: cell.tofDays,
+    M: cell.M,
     selectedBranchLabel: branch?.branch ?? null,
     selectedBranchIndex: cell.selectedBranch,
     c3: branch?.c3 ?? null,
@@ -636,6 +649,10 @@ export function PorkchopView(props: PorkchopViewProps) {
   const hasValidatedTarget = props.validatedTarget !== undefined;
   const legendGradient = useMemo(() => buildLegendGradient(), []);
 
+  useEffect(() => {
+    props.onPinnedCellChange?.(pinnedReadout);
+  }, [pinnedReadout, props.onPinnedCellChange]);
+
   return h(
     'div',
     { style: FRAME_STYLE },
@@ -718,9 +735,9 @@ export function PorkchopView(props: PorkchopViewProps) {
                         style: `${TOOLTIP_STYLE};left:${formatNumber(hoverTooltipPosition.x, 0)}px;top:${formatNumber(hoverTooltipPosition.y, 0)}px;`,
                       },
                       h('div', { style: 'font-weight:600;margin-bottom:6px;' }, 'Hover cell'),
-                      h('div', null, `Status: ${hoverReadout.cell.status}`),
-                      h('div', null, `Departure: ${formatJdTdb(hoverReadout.cell.depJD)}`),
-                      h('div', null, `TOF: ${formatNumber(hoverReadout.cell.tofDays, 3)} d`),
+                      h('div', null, `Status: ${hoverReadout.status}`),
+                      h('div', null, `Departure: ${formatJdTdb(hoverReadout.depJD)}`),
+                      h('div', null, `TOF: ${formatNumber(hoverReadout.tofDays, 3)} d`),
                       h(
                         'div',
                         null,
@@ -759,15 +776,15 @@ export function PorkchopView(props: PorkchopViewProps) {
             'div',
             { style: 'display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;font-size:13px;line-height:1.5;' },
             h('span', null, 'Status'),
-            h('span', null, pinnedReadout.cell.status),
+            h('span', null, pinnedReadout.status),
             h('span', null, 'Departure'),
-            h('span', null, formatJdTdb(pinnedReadout.cell.depJD)),
+            h('span', null, formatJdTdb(pinnedReadout.depJD)),
             h('span', null, 'Arrival'),
-            h('span', null, formatJdTdb(pinnedReadout.cell.depJD + pinnedReadout.cell.tofDays)),
+            h('span', null, formatJdTdb(pinnedReadout.arrivalJD)),
             h('span', null, 'TOF'),
-            h('span', null, `${formatNumber(pinnedReadout.cell.tofDays, 3)} d`),
+            h('span', null, `${formatNumber(pinnedReadout.tofDays, 3)} d`),
             h('span', null, 'M'),
-            h('span', null, String(pinnedReadout.cell.M)),
+            h('span', null, String(pinnedReadout.M)),
             h('span', null, 'Branch'),
             h('span', null, pinnedReadout.selectedBranchLabel ?? 'n/a'),
             h('span', null, 'Branch index'),

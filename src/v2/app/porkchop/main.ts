@@ -4,7 +4,14 @@ import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizo
 import type { AsteroidOrbitalElements } from '../../core/constants/asteroids.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
-import { PorkchopView } from '../../porkchop/porkchop-view.js';
+import {
+  buildDeltaVStack,
+  DV_MARGIN_FRACTION,
+  LEO_PARKING_RADIUS_KM,
+  STATIONKEEPING_DV_KMPS,
+  type DeltaVStackBreakdown,
+} from '../../porkchop/delta-v.js';
+import { PorkchopView, type PorkchopPinnedReadout } from '../../porkchop/porkchop-view.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 
 const mount = document.getElementById('app');
@@ -52,6 +59,11 @@ interface PageState {
   readonly client: PorkchopClient;
 }
 
+interface StackState {
+  readonly readout: PorkchopPinnedReadout;
+  readonly breakdown: DeltaVStackBreakdown;
+}
+
 function utcMidnightToJdTdb(utcDate: string): number {
   const utcMillis = Date.parse(`${utcDate}T00:00:00Z`);
   if (!Number.isFinite(utcMillis)) {
@@ -96,6 +108,7 @@ function PorkchopDedicatedPage() {
   const [pageState, setPageState] = useState<PageState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pinnedReadout, setPinnedReadout] = useState<PorkchopPinnedReadout | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,6 +117,7 @@ function PorkchopDedicatedPage() {
     setLoading(true);
     setError(null);
     setPageState(null);
+    setPinnedReadout(null);
 
     void Promise.all([
       loadLongWindowEarthSeries(),
@@ -176,6 +190,22 @@ function PorkchopDedicatedPage() {
     );
   }
 
+  const stackState: StackState | null = useMemo(() => {
+    if (
+      pinnedReadout === null ||
+      pinnedReadout.status !== 'ok' ||
+      pinnedReadout.c3 === null ||
+      pinnedReadout.vInfArr === null
+    ) {
+      return null;
+    }
+
+    return {
+      readout: pinnedReadout,
+      breakdown: buildDeltaVStack(pinnedReadout.c3, pinnedReadout.vInfArr),
+    };
+  }, [pinnedReadout]);
+
   return h(
     'div',
     { style: PAGE_STYLE },
@@ -202,10 +232,59 @@ function PorkchopDedicatedPage() {
       h(
         'section',
         {
-          style: 'border:1px dashed rgba(255,255,255,0.18);border-radius:12px;padding:14px;background:rgba(255,255,255,0.02);',
+          style: 'border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;background:rgba(255,255,255,0.03);',
         },
         h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'ΔV stack'),
-        h('div', { style: 'font-size:12px;color:#93a4bf;line-height:1.6;' }, 'Phase D2'),
+        pinnedReadout === null
+          ? h('div', { style: 'font-size:12px;color:#93a4bf;line-height:1.6;' }, 'Pin a cell to see the ΔV stack.')
+          : stackState === null
+            ? h(
+                'div',
+                { style: 'font-size:12px;color:#93a4bf;line-height:1.6;' },
+                'Pinned cell has no converged branch, so the ΔV stack is unavailable.',
+              )
+            : [
+                h(
+                  'div',
+                  {
+                    key: 'stack-total',
+                    style: 'display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);',
+                  },
+                  h('span', { style: 'font-size:13px;color:#a5b4cf;text-transform:uppercase;letter-spacing:0.08em;' }, 'Total ΔV'),
+                  h('span', { style: 'font-size:26px;font-weight:700;color:#fff;' }, `${stackState.breakdown.totalKmps.toFixed(3)} km/s`),
+                ),
+                h(
+                  'div',
+                  {
+                    key: 'stack-lines',
+                    style: 'display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;font-size:12px;line-height:1.6;color:#d8e1f1;',
+                  },
+                  h('span', null, 'Injection'),
+                  h('span', null, `${stackState.breakdown.injectionKmps.toFixed(3)} km/s`),
+                  h('span', null, 'Rendezvous'),
+                  h('span', null, `${stackState.breakdown.rendezvousKmps.toFixed(3)} km/s`),
+                  h('span', null, 'Departure'),
+                  h('span', null, `${stackState.breakdown.departureKmps.toFixed(3)} km/s`),
+                  h('span', null, 'Stationkeeping'),
+                  h('span', null, `${stackState.breakdown.stationkeepingKmps.toFixed(3)} km/s`),
+                  h('span', null, 'Subtotal'),
+                  h('span', null, `${stackState.breakdown.subtotalKmps.toFixed(3)} km/s`),
+                  h('span', null, 'Margin'),
+                  h('span', null, `${stackState.breakdown.marginKmps.toFixed(3)} km/s (${(DV_MARGIN_FRACTION * 100).toFixed(0)}%)`),
+                  h('span', null, 'Pinned C3'),
+                  h('span', null, `${stackState.readout.c3.toFixed(6)} km²/s²`),
+                  h('span', null, 'Pinned v∞ arr'),
+                  h('span', null, `${stackState.readout.vInfArr!.toFixed(6)} km/s`),
+                ),
+                h(
+                  'div',
+                  {
+                    key: 'stack-assumptions',
+                    style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
+                  },
+                  `Assumptions: 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (150 m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
+                ),
+              ],
       ),
     ),
     h(
@@ -218,6 +297,7 @@ function PorkchopDedicatedPage() {
         bodyElements: pageState.bodyElements,
         gridParams: GRID_PARAMS,
         M: 1,
+        onPinnedCellChange: setPinnedReadout,
       }),
     ),
   );
