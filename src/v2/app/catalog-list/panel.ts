@@ -28,6 +28,11 @@ import {
 import { renderRow } from './row.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
+export interface RenderPanelOptions {
+  readonly onOpenPorkchop?: ((bodyId: string) => void) | undefined;
+  readonly porkchopDisabled?: boolean | undefined;
+}
+
 const ORBIT_CLASSES: ReadonlyArray<'ALL' | OrbitClass> = ['ALL', 'ATE', 'APO', 'AMO', 'IEO'];
 const SORT_OPTIONS: ReadonlyArray<{ key: SortKey; label: string }> = [
   { key: 'designation-asc', label: 'A-Z' },
@@ -338,7 +343,7 @@ function renderPopover(): VNode {
   );
 }
 
-export function renderPanel(): VNode {
+export function renderPanel(options: RenderPanelOptions = {}): VNode {
   const catalog = catalogSignal.value;
   const screeningIndex = screeningIndexSignal.value;
   const filterClass = filterClassSignal.value;
@@ -412,7 +417,10 @@ export function renderPanel(): VNode {
             },
           },
           ...visibleRows.map((row, index) =>
-            renderRow(row, (startIdx + index) * CATALOG_LIST_ROW_HEIGHT_PX),
+            renderRow(row, (startIdx + index) * CATALOG_LIST_ROW_HEIGHT_PX, {
+              onOpenPorkchop: options.onOpenPorkchop,
+              porkchopDisabled: options.porkchopDisabled,
+            }),
           ),
         );
   }
