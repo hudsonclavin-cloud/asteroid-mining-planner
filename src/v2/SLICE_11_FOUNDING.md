@@ -377,3 +377,28 @@ Verification: each of five gates (hover, markers, legend, contour, and the hover
 Smoke-only code (validatedTarget prop, auto-pin, "Pin validated cell" button, expected-C3 line, smoke header) was NOT touched and ships nowhere — it stays in the untracked smoke mount, removed wholesale at the Phase D dedicated route.
 
 Phase B status: the porkchop renderer + its full interaction/overlay layer are complete. Remaining Phase B/C/D/E work per §6: overlay modal surface, dedicated route, light M=1 sampling extension, audit + deploy.
+
+**2026-06-25: Phase C — overlay modal surface. Committed.**
+
+The porkchop now opens as a modal from the catalog list, reusing the validated renderer. Built across DEC-locked architecture (DECs 11C-1..5) with the Earth-source question resolved by measurement. Commits:
+- `197adfd` refactor(slice11): move long Earth fixture to production data path (src/v2/data/)
+- `131138d` feat(slice11): overlay-scoped porkchop client lifecycle — create-once after catalog load, dispose-once on teardown with async-race guard (DEC-11C-2)
+- `d0aa1d7` feat(slice11): Phase C overlay modal — row trigger + PorkchopView modal with ESC/backdrop/× dismiss (DEC-11C-1/3/4)
+
+Architecture (all DECs in §5 Phase C subsection):
+- Worker client is OVERLAY-SCOPED (DEC-11C-2): created once in mountPhaseCOverlay after ensureCatalogLoaded, disposed once on teardown. The async create chain (loadPorkchopEarthStateSeries → createPorkchopClient) is guarded against the teardown-before-resolve race via a porkchopClientDisposed flag — if teardown fires mid-load, the resolving client self-disposes rather than leaking a worker. The modal never creates/disposes the client.
+- Row trigger is a SEPARATE affordance (DEC-11C-1): an additive onOpenPorkchop callback prop threaded through renderRow, with a PC button inside the row. Row-body click (selectBody + requestFocus) is byte-unchanged — verified verbatim. OQ-11C-2 resolved: callback prop, not panel wrap.
+- Modal mounts in the overlay Preact tree (DEC-11C-3) via the renderPopover pattern, closes via ESC + backdrop + × (ESC handler added; the prior popover lacked it).
+- Modal data derived from catalogSignal.value (DEC-11C-4): bodyElements from catalog.asteroids[bodyId].elements, bodyLabel = name||designation, gridParams as a stable overlay constant matching the smoke-harness values, M=1. No new fetch.
+- Overlap guard: the overlay client is wrapped in a tracked proxy that sets a busy signal around computeGrid; the modal trigger no-ops when the client isn't ready, a compute is in flight, or a modal is already open — and closing the modal before the worker responds keeps reopen blocked until the in-flight request settles.
+- "Open detailed view" button present as a STUB; Phase D wires the dedicated route.
+
+Earth-source decision (DEC-11C-5 + amendment): the Phase C Step-1 verification gate FALSIFIED the original "one Earth source app-wide" premise. Runtime's earthSeries (loadSolarSystemStatesBrowser) is the 90-day fixture (91 samples, 2026-05→07); the porkchop grid needs coverage to ~2045. Forcing runtime to the long fixture was measured at ~48x loader time (4.7ms→224ms) and ~67x retained heap (~15MB) across all inner-system bodies, for a scene with no demonstrated 15-year-scrub need. Decision updated to a documented two-span split: the porkchop loads its OWN long-span Earth fixture (same Horizons provenance, different window), moved from tests/fixtures/ to src/v2/data/ for production. The long-fixture path was already proven by OQ-11C-1 (C3 1781.2916629949357 at the Apophis M=1 validated cell), and re-verified after the move. The 3D scene's 90-day source is unchanged.
+
+Verification: tsc --noEmit clean throughout; math layer (porkchop.worker.ts, grid-compute.ts, core/lambert) byte-untouched (diff empty); C3 re-verified after the fixture move; row-click handler confirmed verbatim; in-app modal smoke-tested (opens from row PC button, row-click still selects+focuses, ESC/backdrop/× close, reopen works).
+
+Process note: this phase was the first run under conditional tripwires (run the phase to completion, stop only if a tripwire fires) rather than positional stop-gates. Steps 3–4 (row trigger + modal) ran continuously to a working modal with no tripwire firing.
+
+Open item carried forward: the porkchop smoke render showed a high-C3 field (hover cell ~102 km²/s²) with feasibility only in scattered pockets — to be probed at Phase F visual verification (possible colormap/clamp inversion vs a genuinely sparse M=1 window set for the target). Not a Phase C blocker; the renderer is a separately-committed layer.
+
+Remaining per §6: Phase D (dedicated route + ΔV stack), Phase E (M=1 sampling to 500 bodies), Phase F (visual verification + deploy; math audit discharged early per AMD-4).
