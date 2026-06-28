@@ -420,3 +420,28 @@ Process note: this phase was the first run under conditional tripwires (run the 
 Open item carried forward: the porkchop smoke render showed a high-C3 field (hover cell ~102 km²/s²) with feasibility only in scattered pockets — to be probed at Phase F visual verification (possible colormap/clamp inversion vs a genuinely sparse M=1 window set for the target). Not a Phase C blocker; the renderer is a separately-committed layer.
 
 Remaining per §6: Phase D (dedicated route + ΔV stack), Phase E (M=1 sampling to 500 bodies), Phase F (visual verification + deploy; math audit discharged early per AMD-4).
+
+**2026-06-26/27: Phase D (dedicated route + ΔV stack) + log-scale colormap. Committed.**
+
+Phase D split into two units, both on the dedicated porkchop route:
+- D1 — dedicated route scaffold: `e871297` feat(slice11): Phase D1 dedicated porkchop route — ?body= param, own client, PorkchopView mount. New vite entry (v2/porkchop/), parallels the solar-system route; reads ?body= via URLSearchParams, resolves against the catalog, builds its own Earth series + client from src/v2/data/ (the moved long fixture), mounts PorkchopView. Default body asteroid-99942 when ?body= absent; "body not found" state for unresolvable ids. Build verified (vite emits to docs/).
+- D2 — ΔV stack (DEC-7): `0f5961d` feat(slice11): Phase D2 ΔV stack. Patched-conic injection from C3 ported into a v2 helper (src/v2/porkchop/delta-v.ts), NOT importing the tsc-excluded legacy src/physics/. Pinned-cell data reaches the page via an additive onPinnedCellChange callback from PorkchopView (DEC-6: stack is dedicated-view only — confirmed absent from the Phase C modal). Disclosed assumptions: 200 km circular LEO (rp=6578.137 km, μ=398600.4418), stationkeeping 150 m/s, 10% margin (INV-016c). Verified two-cell gate: C3=1781.29 → 35.83 km/s injection (finite, large, edge cell); C3=8.78 → 3.616 km/s (real-mission range — proves the formula physically correct). Smoke: pinned C3=32.16 → injection 4.599, total 28.516 km/s, internally consistent.
+
+Colormap investigation + log-scale fix. The dedicated-route plot rendered ~77% flat yellow, initially suspected a bug. Four read-only diagnostic passes (verify-before-lock):
+1. Suspected inverted colormap → traced C3=9 through colormap.ts: produced [54,95,139] dark blue. Colormap math correct. Hypothesis killed.
+2. Suspected 'ok'-cell null-C3 fallback (line 63 paints C3_MAX yellow) → instrumented the Apophis M=1 200×100 grid: 0 ok-cells with null C3. Hypothesis killed.
+3. Suspected c3 lost crossing the worker postMessage boundary → traced serialization: stripBranch preserves c3 intact; ran the live app and logged painter-side c3 = 69.46 (finite). Hypothesis killed.
+4. Counted runtime C3 buckets: 15,352 of 20,000 cells genuinely have C3 > 30. The plot was CORRECT — Apophis M=1 mostly has high-C3 windows in this range. The "bug" was a display-RANGE problem, not a defect.
+
+Resolution: the C3 distribution spans 3 orders of magnitude (medians ~109-154, p90 ~485-729 across Apophis/Bennu/Itokawa) — a linear colormap cannot resolve feasible belly + marginal band + tail. Switched to log-scale per the DEC-3 amendment (`b596f9f`): C3_MIN=1, C3_MAX=1000, contours 10/30/100/300, log-spaced labeled legend. Commits:
+- `b596f9f` docs(slice11): amend DEC-3 — log-scale C3 colormap
+- `ea5ea6e` feat(slice11): log-scale C3 colormap per DEC-3 amendment — MIN=1 MAX=1000, log legend, contours 10/30/100/300
+- `5362e42` test(slice11): update colormap.test to log-scale anchors + Windows-safe tsc invocation
+
+Result: yellow clamp 77% → 3.42%; dark feasible belly with structure visible across the field. Verification gate (monotonic, no NaN): C3=8.78→dark [52,98,139], C3=69.5→mid [61,171,121], C3=300→bright [142,210,80], C3>1000→clamp [253,231,37]. Math layer untouched throughout (display-only change).
+
+Lesson recorded: the four-pass diagnosis prevented "fixing" a non-bug — each wrong hypothesis (inverted colormap, null fallback, worker-boundary drop) was killed by tracing real values rather than trusting the visual impression. The actual issue was an encoding choice, found only by counting the real distribution.
+
+Carried to Phase F: the dedicated route header still shows leftover smoke copy ("Standalone Phase B smoke mount / worker compute Xms") — clean up before deploy. Plus visual verification + production deploy (math audit discharged per AMD-4).
+
+Remaining per §6: Phase E (M=1 sampling to 500 bodies), Phase F (visual verification + deploy).
