@@ -1,8 +1,8 @@
 export type PorkchopCellStatus = 'ok' | 'no_solution' | 'stall';
 export type Rgb = readonly [number, number, number];
 
-export const C3_COLOR_MIN = 0;
-export const C3_COLOR_MAX = 30;
+export const C3_COLOR_MIN = 1;
+export const C3_COLOR_MAX = 1000;
 export const NO_SOLUTION_RGB: Rgb = [36, 36, 42];
 export const STALL_RGB: Rgb = [255, 0, 180];
 
@@ -34,7 +34,11 @@ function lerpChannel(start: number, end: number, t: number): number {
 }
 
 export function c3ToViridisRgb(c3Km2S2: number): Rgb {
-  const normalized = clamp01((c3Km2S2 - C3_COLOR_MIN) / (C3_COLOR_MAX - C3_COLOR_MIN));
+  const c3ClampedToFloor = Math.max(c3Km2S2, C3_COLOR_MIN);
+  const normalized = clamp01(
+    (Math.log(c3ClampedToFloor) - Math.log(C3_COLOR_MIN)) /
+      (Math.log(C3_COLOR_MAX) - Math.log(C3_COLOR_MIN)),
+  );
 
   for (let index = 1; index < VIRIDIS_STOPS.length; index += 1) {
     const previous = VIRIDIS_STOPS[index - 1];

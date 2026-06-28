@@ -5,7 +5,7 @@ import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import type { PorkchopGridParams } from './grid-compute.js';
 import type { PorkchopClient } from './porkchop-client.js';
 import type { PorkchopWorkerCell } from './porkchop.worker.js';
-import { colorForPorkchopCell } from './colormap.js';
+import { C3_COLOR_MAX, C3_COLOR_MIN, colorForPorkchopCell } from './colormap.js';
 
 const HEATMAP_PIXEL_WIDTH = 200;
 const HEATMAP_PIXEL_HEIGHT = 100;
@@ -142,7 +142,7 @@ interface ContourSegment {
   readonly y2: number;
 }
 
-const CONTOUR_LEVELS = [9, 12, 16, 20, 25] as const;
+const CONTOUR_LEVELS = [10, 30, 100, 300] as const;
 
 function jdTdbToDateParts(jdTdb: number): { year: number; monthIndex: number; day: number } {
   const shiftedJulianDay = jdTdb + 0.5;
@@ -182,7 +182,9 @@ function buildLegendGradient(): string {
   const sampleCount = 12;
   for (let index = 0; index <= sampleCount; index += 1) {
     const fraction = index / sampleCount;
-    const c3 = fraction * 30;
+    const c3 = Math.exp(
+      Math.log(C3_COLOR_MIN) + fraction * (Math.log(C3_COLOR_MAX) - Math.log(C3_COLOR_MIN)),
+    );
     const rgb = colorForPorkchopCell('ok', c3);
     stops.push(`${rgbToCss(rgb)} ${formatNumber(fraction * 100, 2)}%`);
   }
@@ -757,11 +759,12 @@ export function PorkchopView(props: PorkchopViewProps) {
                   h(
                     'div',
                     { style: LEGEND_TICKS_STYLE },
-                    h('span', null, '0'),
-                    h('span', null, '15'),
-                    h('span', null, '30'),
-                    h('span', null, '>30 clamp'),
+                    h('span', null, '1'),
+                    h('span', null, '10'),
+                    h('span', null, '100'),
+                    h('span', null, '1000'),
                   ),
+                  h('div', { style: 'font-size:10px;opacity:0.7;width:280px;text-align:right;' }, 'logarithmic scale'),
                 ),
               ),
             ),
