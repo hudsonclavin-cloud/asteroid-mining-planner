@@ -266,6 +266,24 @@ Decision: 200×100 full resolution is used on BOTH surfaces (overlay and dedicat
 
 ---
 
+**DEC-3 AMENDMENT (2026-06-27) — log-scale C3 colormap, superseding linear 0→30 and the original contour set (amends DEC-3).**
+
+Forced by measured C3 distribution across Apophis/Bennu/Itokawa M=1 200×100 grids: ok-cell C3 medians ~109-154 km²/s², p90 ~485-729, structure-carrying band ~20-100, long tail beyond. The original linear 0→30 colormap clamped ~77% of cells to flat yellow (correct but uninformative); a linear ceiling of 100 was measured to still clamp ~73% AND compress the feasible belly (0-15) into the bottom 15% of color range. Linear cannot resolve feasible belly + marginal band + tail across 3 orders of magnitude. Log scaling is the correct encoding.
+
+LOCKED:
+- Colormap maps log(C3) to viridis: `t = (log(C3_clamped) − log(C3_MIN)) / (log(C3_MAX) − log(C3_MIN))`, clamped [0,1]. Viridis stops unchanged (dark = low C3 / feasible, bright = high C3 / infeasible).
+- C3_MIN = 1 km²/s² (DISCLOSED log floor). Rationale: v∞=1 km/s is uniformly excellent; no mission decision turns on C3 0.3 vs 0.8. Flooring here loses no decision information and prevents log(0)=−∞. Cells ≤ 1 clamp to t=0 (darkest).
+- C3_MAX = 1000 km²/s² (DISCLOSED log ceiling). Rationale: measured p90 (485-729) sits at t≈0.90-0.95 — visible but near-max, the correct read for "deep tail but not clamped." Spread: feasible belly C3<15 → t<0.39 (vs 15% under linear-100); structure band 20-100 → t≈0.43-0.67; tail 100-1000 → t≈0.67-1.0. Cells > 1000 clamp bright (honestly: deeply infeasible).
+- Contours: 10, 30, 100, 300 km²/s² (replacing original 0,5,10,20,30, which under log all stack in the bottom 49% / dark corner). New set maps to t≈0.33/0.49/0.67/0.82, covering all four decision regions: feasible gate (10), marginal boundary (30, preserving the original limit's spirit), band ceiling (100), tail onset (300). These are absolute C3 values, independent of colormap scale.
+- Legend: gradient + ticks become LOG-spaced and labeled (e.g. 1, 10, 100, 1000), and the legend must state "logarithmic scale" so the non-linear color↔C3 relationship is explicit, not misleading.
+
+VERIFICATION OBLIGATION (for the implementation dispatch):
+- C3=0 / sub-floor handling: a cell with C3 ≤ C3_MIN clamps to t=0 (darkest), never NaN.
+- Monotonicity + ordering: low C3 → dark, high C3 → bright, strictly monotonic. Verify three known cells: C3≈8.78 (feasible gate cell) renders clearly dark; C3≈69.5 (marginal sample) renders mid-range; a C3>1000 cell renders clamped-bright. Confirm correct ordering and visible distinction.
+- Legend must visually match the heatmap (same log path).
+
+---
+
 ## §6. Phase breakdown
 
 **Phase A: lambertMultiRev() implementation + audit (~3-5 dispatches).**
