@@ -19,7 +19,7 @@ const VALIDATED_TARGET = {
   expectedC3: 1781.29,
 } as const;
 const HORIZONS_FIXTURE_URL = new URL(
-  '../../../../tests/fixtures/v2/horizons-inner-solar-system-2026-2040.json',
+  '../../data/horizons-inner-solar-system-2026-2040.json',
   import.meta.url,
 );
 

@@ -212,21 +212,21 @@ function PorkchopDedicatedPage() {
     h(
       'aside',
       { style: SIDEBAR_STYLE },
-      h('div', { style: 'font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8da2c0;margin-bottom:10px;' }, 'Dedicated Porkchop'),
+      h('div', { style: 'font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8da2c0;margin-bottom:10px;' }, 'Porkchop Analysis'),
       h('div', { style: 'font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;' }, pageState.bodyLabel),
       h('div', { style: 'font-size:13px;color:#93a4bf;margin-bottom:20px;' }, pageState.bodyId),
       h(
         'div',
         { style: 'font-size:13px;line-height:1.6;color:#cbd5e1;margin-bottom:20px;' },
-        'M = 1 default. Dedicated route resolves the body from the URL and reuses the validated Earth-departure porkchop pipeline.',
+        `M=1 transfer search from Earth departure to ${pageState.bodyLabel}. Grid spans 2026–2040 departures and 182.5–1826.25 day flight times. Click a cell to inspect its branch and ΔV stack.`,
       ),
       h(
         'section',
         {
           style: 'border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;background:rgba(255,255,255,0.03);margin-bottom:16px;',
         },
-        h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Route state'),
-        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `URL body param: ${requestedBodyId}`),
+        h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Grid'),
+        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Target: ${pageState.bodyLabel} (${pageState.bodyId})`),
         h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Grid: ${GRID_PARAMS.nDep}×${GRID_PARAMS.nTof}`),
       ),
       h(

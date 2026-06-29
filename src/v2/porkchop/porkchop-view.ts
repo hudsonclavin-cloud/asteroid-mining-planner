@@ -661,13 +661,25 @@ export function PorkchopView(props: PorkchopViewProps) {
     h(
       'div',
       { style: PANEL_STYLE },
-      h('div', { style: 'font-size:20px;font-weight:600;margin-bottom:8px;' }, `${props.bodyLabel} — M=${props.M}`),
       h(
         'div',
-        { style: 'font-size:13px;opacity:0.85;line-height:1.5;' },
-        'Standalone Phase B smoke mount. X axis: departure date (early → late). Y axis: TOF days (short bottom → long top). ',
-        computeMs === null ? '' : `worker compute ${formatNumber(computeMs, 1)} ms.`,
+        { style: 'font-size:20px;font-weight:600;margin-bottom:8px;' },
+        hasValidatedTarget
+          ? `${props.bodyLabel} — M=${props.M}`
+          : `${props.bodyLabel} — Earth-Departure Porkchop (M=${props.M})`,
       ),
+      hasValidatedTarget
+        ? h(
+            'div',
+            { style: 'font-size:13px;opacity:0.85;line-height:1.5;' },
+            'Standalone Phase B smoke mount. X axis: departure date (early → late). Y axis: TOF days (short bottom → long top). ',
+            computeMs === null ? '' : `worker compute ${formatNumber(computeMs, 1)} ms.`,
+          )
+        : h(
+            'div',
+            { style: 'font-size:13px;opacity:0.85;line-height:1.5;' },
+            'Departure date runs left to right; time of flight increases upward. Color shows departure C3 energy (km²/s²) on a logarithmic scale — darker regions are lower-energy, more accessible transfer windows.',
+          ),
       h(
         'label',
         {
