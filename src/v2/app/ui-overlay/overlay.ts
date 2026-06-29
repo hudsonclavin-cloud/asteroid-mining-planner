@@ -286,9 +286,12 @@ function renderPorkchopModal(): ReturnType<typeof h> | null {
             'button',
             {
               type: 'button',
-              disabled: true,
-              title: 'Phase D wires the dedicated route',
-              style: 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#6b7280;padding:8px 12px;border-radius:8px;font-size:12px;cursor:not-allowed;',
+              onClick: () => {
+                const base = (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL;
+                const url = `${base}v2/porkchop/?body=${encodeURIComponent(body.bodyId)}`;
+                window.open(url, '_blank', 'noopener,noreferrer');
+              },
+              style: 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.22);color:#e5e7eb;padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;',
             },
             'Open detailed view',
           ),
