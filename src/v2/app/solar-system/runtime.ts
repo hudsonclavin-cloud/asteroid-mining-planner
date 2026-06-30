@@ -39,6 +39,11 @@ import { createMarsOblateMesh } from '../../render/mars-oblate.js';
 import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
 import { createSaturnRingsGroup } from '../../render/saturn-rings.js';
 import { HaloSystem } from '../../render/halos.js';
+import {
+  ATMOSPHERE_BODY_IDS,
+  ATMOSPHERE_PARAMS,
+  createAtmosphereMesh,
+} from '../../render/atmosphere.js';
 import { buildEarthMaterial, updateSunDirection } from '../../render/earth-shader.js';
 import { mountPhaseCOverlay } from '../ui-overlay/index.js';
 import { readSelectedBody, selectBody, subscribeToFocusRequests } from '../ui-store/index.js';
@@ -800,6 +805,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const renderRoots = new Map<BodyId, THREE.Object3D>();
   const meshes = new Map<BodyId, THREE.Mesh>();
+  const atmosphereShells = new Map<BodyId, THREE.Mesh<THREE.SphereGeometry, THREE.ShaderMaterial>>();
   const textureLoader = new THREE.TextureLoader();
   const earthSunDirection = new THREE.Vector3(1, 0, 0);
   const { marsSystemGroup, marsTiltGroup, marsCenteredGroup } = createMarsSystemRenderGroups();
@@ -843,6 +849,20 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
     scene.add(mesh);
     renderRoots.set(bodyId, mesh);
+  }
+  for (const [index, bodyId] of ATMOSPHERE_BODY_IDS.entries()) {
+    const runtimeBodyId = bodyId as BodyId;
+    const planetMesh = meshes.get(runtimeBodyId);
+    if (!planetMesh) {
+      continue;
+    }
+    const shell = createAtmosphereMesh(
+      planetMesh as THREE.Mesh<THREE.SphereGeometry, THREE.Material | THREE.Material[]>,
+      ATMOSPHERE_PARAMS[bodyId],
+      index,
+    );
+    atmosphereShells.set(runtimeBodyId, shell);
+    scene.add(shell);
   }
 
   const ambientLight = new THREE.AmbientLight(0x060810, 0.08);
@@ -1233,6 +1253,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
         relZ = helio.positionM.z - anchorPosM.z;
       }
       root.position.set(relX, relY, relZ);
+      atmosphereShells.get(bodyId)?.position.copy(root.position);
 
       const helio = getHeliocentricState(bodyId, currentTdbSeconds);
       const posRelCam = new THREE.Vector3(
@@ -1663,6 +1684,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     for (const mesh of meshes.values()) {
       mesh.geometry.dispose();
       (mesh.material as THREE.Material).dispose();
+    }
+    for (const shell of atmosphereShells.values()) {
+      shell.geometry.dispose();
+      shell.material.dispose();
     }
     for (const child of saturnRingsGroup.children) {
       if (child instanceof THREE.Mesh) {
