@@ -66,6 +66,7 @@ const SATURN_SYSTEM_OVERVIEW_RADIUS_M = 6_000_000_000;
 const EARTH_FOCUS_RADIUS_M = 400_000_000;
 const MIN_CAMERA_DISTANCE_M = 1e9;
 const MAX_CAMERA_DISTANCE_M = 15 * AU_M;
+const MIN_SUN_CLEARANCE_M = 5e9;
 const ORBIT_SENSITIVITY = 0.005;
 const WHEEL_ZOOM_SENSITIVITY = 0.0015;
 const TIME_SCRUB_STEP_SECONDS = 1800;
@@ -326,6 +327,44 @@ function sphericalToCartesian(
     y: radius * Math.cos(polar),
     z: radius * sinPolar * Math.sin(azimuth),
   };
+}
+
+function clampOrbitRadiusForSunClearance(
+  proposedRadius: number,
+  minRadius: number,
+  polar: number,
+  azimuth: number,
+  sunScenePos: { x: number; y: number; z: number },
+): number {
+  // Unit direction of the camera ray from scene origin.
+  const sinP = Math.sin(polar);
+  const dx = sinP * Math.cos(azimuth);
+  const dy = Math.cos(polar);
+  const dz = sinP * Math.sin(azimuth);
+  // Ray-sphere intersection: |t*d - S|^2 = r^2, solved for t along the ray (t >= 0).
+  const dot = dx * sunScenePos.x + dy * sunScenePos.y + dz * sunScenePos.z;
+  const sunDist2 =
+    sunScenePos.x ** 2 + sunScenePos.y ** 2 + sunScenePos.z ** 2;
+  const discriminant = dot * dot - (sunDist2 - MIN_SUN_CLEARANCE_M ** 2);
+  if (discriminant < 0) {
+    // Camera ray line never enters the clearance sphere.
+    return proposedRadius;
+  }
+  const sqrtDisc = Math.sqrt(discriminant);
+  const tNear = dot - sqrtDisc;
+  const tFar = dot + sqrtDisc;
+  if (tFar <= 0) {
+    // Clearance sphere lies entirely behind the camera ray direction.
+    return proposedRadius;
+  }
+  if (tNear <= 0) {
+    // Scene origin is inside the clearance sphere (e.g. the Sun is the focus
+    // anchor, sunScenePos ~ 0). The forward ray exits the sphere; clamping
+    // here would trap the camera at minRadius. Leave the radius unconstrained.
+    return proposedRadius;
+  }
+  // Clearance sphere is ahead along the ray; stop before its near boundary.
+  return Math.min(proposedRadius, Math.max(minRadius, tNear));
 }
 
 export function orbitStateToCameraDirection(
@@ -1562,6 +1601,22 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       orbitRadius * Math.exp(event.deltaY * WHEEL_ZOOM_SENSITIVITY),
       minOrbitRadius,
       MAX_CAMERA_DISTANCE_M,
+    );
+    // Prevent camera from passing through or into the Sun.
+    // Compute Sun's current scene position (world pos minus floating-origin anchor).
+    const anchorPosM = getCurrentOrbitCenter(performance.now());
+    const sunHelio = getHeliocentricState('sun', currentTdbSeconds);
+    const sunScenePosForClamp = {
+      x: sunHelio.positionM.x - anchorPosM.x,
+      y: sunHelio.positionM.y - anchorPosM.y,
+      z: sunHelio.positionM.z - anchorPosM.z,
+    };
+    orbitRadius = clampOrbitRadiusForSunClearance(
+      orbitRadius,
+      minOrbitRadius,
+      orbitPolar,
+      orbitAzimuth,
+      sunScenePosForClamp,
     );
     updateVisibleState();
   }
