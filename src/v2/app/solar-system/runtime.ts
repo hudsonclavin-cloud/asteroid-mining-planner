@@ -81,6 +81,12 @@ export const TOP_DOWN_PRESET_DURATION_MS = 1_000;
 export const INTERACTIVE_MIN_ORBIT_POLAR_RAD = 0.001;
 export const INTERACTIVE_MAX_ORBIT_POLAR_RAD = Math.PI - INTERACTIVE_MIN_ORBIT_POLAR_RAD;
 const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
+const TEXTURE_BASE_URL = (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL;
+const EARTH_DAY_TEXTURE_URL = `${TEXTURE_BASE_URL}2k_earth_daymap.jpg`;
+const EARTH_NIGHT_TEXTURE_URL = `${TEXTURE_BASE_URL}2k_earth_nightmap.jpg`;
+const EARTH_NORMAL_TEXTURE_URL = `${TEXTURE_BASE_URL}2k_earth_normal.jpg`;
+const EARTH_SPECULAR_TEXTURE_URL = `${TEXTURE_BASE_URL}2k_earth_specular.jpg`;
+const EARTH_CLOUD_TEXTURE_URL = `${TEXTURE_BASE_URL}2k_earth_clouds.jpg`;
 
 const BODY_IDS: BodyId[] = [
   'sun',
@@ -373,12 +379,72 @@ function createBodyMesh(bodyId: BodyId): THREE.Mesh {
 
   const constants = BODY_CONSTANTS[bodyId];
   const geometry = new THREE.SphereGeometry(constants.radiusM, 32, 32);
+  if (bodyId === 'earth') {
+    return new THREE.Mesh(
+      geometry,
+      new THREE.MeshPhongMaterial({
+        color: constants.vizColor,
+        shininess: 15,
+        specular: new THREE.Color(0x2244aa),
+      }),
+    );
+  }
+
   const material =
     bodyId === 'sun'
       ? new THREE.MeshBasicMaterial({ color: constants.vizColor })
       : new THREE.MeshLambertMaterial({ color: constants.vizColor });
 
   return new THREE.Mesh(geometry, material);
+}
+
+function loadTexture(
+  loader: THREE.TextureLoader,
+  url: string,
+  encoding: THREE.TextureEncoding,
+  onLoad: (texture: THREE.Texture) => void,
+): void {
+  loader.load(
+    url,
+    (texture) => {
+      texture.encoding = encoding;
+      onLoad(texture);
+    },
+    undefined,
+    (error) => {
+      console.warn(`Failed to load texture ${url}`, error);
+    },
+  );
+}
+
+function wireEarthTextures(mesh: THREE.Mesh, loader: THREE.TextureLoader): void {
+  const material = mesh.material;
+  if (!(material instanceof THREE.MeshPhongMaterial)) {
+    throw new Error('Earth material must be MeshPhongMaterial before texture wiring');
+  }
+
+  loadTexture(loader, EARTH_DAY_TEXTURE_URL, THREE.sRGBEncoding, (texture) => {
+    material.map = texture;
+    material.color.setHex(0xffffff);
+    material.needsUpdate = true;
+  });
+  loadTexture(loader, EARTH_NIGHT_TEXTURE_URL, THREE.sRGBEncoding, (texture) => {
+    material.emissiveMap = texture;
+    material.emissive.setHex(0x000000);
+    material.userData.nightMap = texture;
+    material.needsUpdate = true;
+  });
+  loadTexture(loader, EARTH_NORMAL_TEXTURE_URL, THREE.LinearEncoding, (texture) => {
+    material.normalMap = texture;
+    material.needsUpdate = true;
+  });
+  loadTexture(loader, EARTH_SPECULAR_TEXTURE_URL, THREE.LinearEncoding, (texture) => {
+    material.specularMap = texture;
+    material.needsUpdate = true;
+  });
+  loadTexture(loader, EARTH_CLOUD_TEXTURE_URL, THREE.sRGBEncoding, (texture) => {
+    mesh.userData.cloudMap = texture;
+  });
 }
 
 function isAsteroidFocusTarget(bodyId: FocusTarget): bodyId is AsteroidBodyId {
@@ -723,6 +789,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const renderRoots = new Map<BodyId, THREE.Object3D>();
   const meshes = new Map<BodyId, THREE.Mesh>();
+  const textureLoader = new THREE.TextureLoader();
   const { marsSystemGroup, marsTiltGroup, marsCenteredGroup } = createMarsSystemRenderGroups();
   const saturnTiltGroup = new THREE.Group();
   saturnTiltGroup.name = 'saturn-tilt-group';
@@ -734,6 +801,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   for (const bodyId of BODY_IDS) {
     const mesh = createBodyMesh(bodyId);
     meshes.set(bodyId, mesh);
+    if (bodyId === 'earth') {
+      wireEarthTextures(mesh, textureLoader);
+    }
     if (bodyId === 'mars') {
       marsTiltGroup.add(mesh);
       marsSystemGroup.userData = {
