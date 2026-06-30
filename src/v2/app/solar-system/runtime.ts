@@ -39,6 +39,7 @@ import { createMarsOblateMesh } from '../../render/mars-oblate.js';
 import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
 import { createSaturnRingsGroup } from '../../render/saturn-rings.js';
 import { HaloSystem } from '../../render/halos.js';
+import { buildEarthMaterial, updateSunDirection } from '../../render/earth-shader.js';
 import { mountPhaseCOverlay } from '../ui-overlay/index.js';
 import { readSelectedBody, selectBody, subscribeToFocusRequests } from '../ui-store/index.js';
 import {
@@ -402,49 +403,59 @@ function loadTexture(
   loader: THREE.TextureLoader,
   url: string,
   encoding: THREE.TextureEncoding,
-  onLoad: (texture: THREE.Texture) => void,
-): void {
-  loader.load(
-    url,
-    (texture) => {
-      texture.encoding = encoding;
-      onLoad(texture);
-    },
-    undefined,
-    (error) => {
-      console.warn(`Failed to load texture ${url}`, error);
-    },
-  );
+): Promise<THREE.Texture> {
+  return new Promise((resolve, reject) => {
+    loader.load(
+      url,
+      (texture) => {
+        texture.encoding = encoding;
+        resolve(texture);
+      },
+      undefined,
+      reject,
+    );
+  });
 }
 
-function wireEarthTextures(mesh: THREE.Mesh, loader: THREE.TextureLoader): void {
+function wireEarthTextures(
+  mesh: THREE.Mesh,
+  loader: THREE.TextureLoader,
+  sunDirection: THREE.Vector3,
+): void {
   const material = mesh.material;
   if (!(material instanceof THREE.MeshPhongMaterial)) {
     throw new Error('Earth material must be MeshPhongMaterial before texture wiring');
   }
 
-  loadTexture(loader, EARTH_DAY_TEXTURE_URL, THREE.sRGBEncoding, (texture) => {
-    material.map = texture;
-    material.color.setHex(0xffffff);
-    material.needsUpdate = true;
+  Promise.all([
+    loadTexture(loader, EARTH_DAY_TEXTURE_URL, THREE.sRGBEncoding),
+    loadTexture(loader, EARTH_NIGHT_TEXTURE_URL, THREE.sRGBEncoding),
+    loadTexture(loader, EARTH_NORMAL_TEXTURE_URL, THREE.LinearEncoding),
+    loadTexture(loader, EARTH_SPECULAR_TEXTURE_URL, THREE.LinearEncoding),
+  ]).then(([dayMap, nightMap, normalMap, specularMap]) => {
+    const previousMaterial = mesh.material;
+    mesh.material = buildEarthMaterial({
+      dayMap,
+      nightMap,
+      normalMap,
+      specularMap,
+      sunDirection,
+    });
+    mesh.userData.nightMap = nightMap;
+    if (previousMaterial instanceof THREE.Material) {
+      previousMaterial.dispose();
+    }
+  }).catch((error) => {
+    console.warn('Failed to load Earth hero shader textures', error);
   });
-  loadTexture(loader, EARTH_NIGHT_TEXTURE_URL, THREE.sRGBEncoding, (texture) => {
-    material.emissiveMap = texture;
-    material.emissive.setHex(0x000000);
-    material.userData.nightMap = texture;
-    material.needsUpdate = true;
-  });
-  loadTexture(loader, EARTH_NORMAL_TEXTURE_URL, THREE.LinearEncoding, (texture) => {
-    material.normalMap = texture;
-    material.needsUpdate = true;
-  });
-  loadTexture(loader, EARTH_SPECULAR_TEXTURE_URL, THREE.LinearEncoding, (texture) => {
-    material.specularMap = texture;
-    material.needsUpdate = true;
-  });
-  loadTexture(loader, EARTH_CLOUD_TEXTURE_URL, THREE.sRGBEncoding, (texture) => {
-    mesh.userData.cloudMap = texture;
-  });
+
+  loadTexture(loader, EARTH_CLOUD_TEXTURE_URL, THREE.sRGBEncoding)
+    .then((texture) => {
+      mesh.userData.cloudMap = texture;
+    })
+    .catch((error) => {
+      console.warn(`Failed to load texture ${EARTH_CLOUD_TEXTURE_URL}`, error);
+    });
 }
 
 function isAsteroidFocusTarget(bodyId: FocusTarget): bodyId is AsteroidBodyId {
@@ -790,6 +801,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   const renderRoots = new Map<BodyId, THREE.Object3D>();
   const meshes = new Map<BodyId, THREE.Mesh>();
   const textureLoader = new THREE.TextureLoader();
+  const earthSunDirection = new THREE.Vector3(1, 0, 0);
   const { marsSystemGroup, marsTiltGroup, marsCenteredGroup } = createMarsSystemRenderGroups();
   const saturnTiltGroup = new THREE.Group();
   saturnTiltGroup.name = 'saturn-tilt-group';
@@ -802,7 +814,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     const mesh = createBodyMesh(bodyId);
     meshes.set(bodyId, mesh);
     if (bodyId === 'earth') {
-      wireEarthTextures(mesh, textureLoader);
+      wireEarthTextures(mesh, textureLoader, earthSunDirection);
     }
     if (bodyId === 'mars') {
       marsTiltGroup.add(mesh);
@@ -833,8 +845,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     renderRoots.set(bodyId, mesh);
   }
 
-  const ambientLight = new THREE.AmbientLight(0x404060, 1.5);
-  const sunLight = new THREE.DirectionalLight(0xffffff, 2.0);
+  const ambientLight = new THREE.AmbientLight(0x060810, 0.08);
+  const sunLight = new THREE.DirectionalLight(0xfffde8, 4.0);
   const sunLightTarget = new THREE.Object3D();
   scene.add(ambientLight, sunLight, sunLightTarget);
   sunLight.target = sunLightTarget;
@@ -1247,6 +1259,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     sunLight.position.set(sunLightPosition.x, sunLightPosition.y, sunLightPosition.z);
     sunLightTarget.position.set(0, 0, 0);
     sunMesh.position.set(sunRelX, sunRelY, sunRelZ);
+    updateSunDirection(sunMesh.position, renderRoots.get('earth')!.position, earthSunDirection);
 
     camera.lookAt(0, 0, 0);
     camera.updateMatrixWorld();
