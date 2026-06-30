@@ -11,19 +11,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
 
 const TEMP_OUT_DIR = path.join(repoRoot, '.tmp-tests', 'slice11-m2');
-const DATA_PATH = path.join(repoRoot, 'tools', 'slice11-research', 'data', 'multi-rev-worth-it.json');
+const BASELINE_DATA_PATH = path.join(repoRoot, 'tools', 'slice11-research', 'data', 'multi-rev-worth-it.json');
+const DATA_PATH = path.join(repoRoot, 'tools', 'slice11-research', 'data', 'multi-rev-worth-it-500.json');
 const NEA_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');
 const SCREEN_CACHE_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'lambert-screen-cache.json');
 const HORIZONS_FIXTURE = path.join(
   repoRoot,
-  'tests',
-  'fixtures',
+  'src',
   'v2',
+  'data',
   'horizons-inner-solar-system-2026-2040.json',
 );
 
 const RNG_SEED = 11;
-const SAMPLE_TARGET = 25;
+const SAMPLE_TARGET = 125;
 const MU_SUN = 1.32712440018e11;
 const FEASIBLE_C3_MAX = 25.0;
 const MEANINGFUL_DELTA = 1.0;
@@ -79,10 +80,11 @@ function compileRuntimeModules() {
   fs.rmSync(TEMP_OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(TEMP_OUT_DIR, { recursive: true });
 
-  const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
+  const tscBin = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
   const tscResult = spawnSync(
-    tscBin,
+    process.execPath,
     [
+      tscBin,
       '--pretty', 'false',
       '--outDir', TEMP_OUT_DIR,
       '--rootDir', path.join(repoRoot, 'src', 'v2'),
@@ -171,11 +173,18 @@ function chooseSample(bodies) {
 
   sample.push(...apo, ...amoUnique, ...ieoUnique);
 
-  if (sample.length !== 100) {
-    throw new Error(`Expected 100 sampled bodies, received ${sample.length}`);
+  if (sample.length !== SAMPLE_TARGET * 4) {
+    throw new Error(`Expected ${SAMPLE_TARGET * 4} sampled bodies, received ${sample.length}`);
   }
 
   return sample;
+}
+
+function countByOrbitClass(bodies) {
+  return bodies.reduce((counts, body) => {
+    counts[body.orbitClass] = (counts[body.orbitClass] ?? 0) + 1;
+    return counts;
+  }, {});
 }
 
 async function main() {
@@ -213,7 +222,7 @@ async function main() {
 
   const bodiesOut = [];
   let fullyFailedBodies = 0;
-  const meaningfulByClass = { ATE: 0, APO: 0, AMO: 0, IEO: 0 };
+  const meaningfulWinsByClass = { ATE: 0, APO: 0, AMO: 0, IEO: 0 };
 
   for (let bodyIndex = 0; bodyIndex < sample.length; bodyIndex += 1) {
     const body = sample[bodyIndex];
@@ -276,7 +285,7 @@ async function main() {
     const delta = best && m0.minC3 !== null ? m0.minC3 - best.m1_minC3 : null;
     const meaningfulWin = Boolean(best && delta !== null && delta >= MEANINGFUL_DELTA && best.m1_minC3 <= FEASIBLE_C3_MAX);
     if (meaningfulWin) {
-      meaningfulByClass[body.class] += 1;
+      meaningfulWinsByClass[body.class] += 1;
     }
 
     bodiesOut.push({
@@ -306,11 +315,21 @@ async function main() {
   }
 
   const wins = bodiesOut.filter((body) => body.meaningful_win);
+  const baseline = JSON.parse(fs.readFileSync(BASELINE_DATA_PATH, 'utf8'));
+  const outputIds = new Set(bodiesOut.map((body) => body.bodyId));
+  const missingBaselineBodies = baseline.bodies
+    .map((body) => body.bodyId)
+    .filter((bodyId) => !outputIds.has(bodyId));
+  if (missingBaselineBodies.length > 0) {
+    throw new Error(`500-body sample is missing ${missingBaselineBodies.length} baseline bodies: ${missingBaselineBodies.join(', ')}`);
+  }
+
   const output = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: isoNow(),
     sampleSize: bodiesOut.length,
     rngSeed: RNG_SEED,
+    sampleTargetPerClass: SAMPLE_TARGET,
     criteria: {
       meaningfulDelta: MEANINGFUL_DELTA,
       feasibleC3Max: FEASIBLE_C3_MAX,
@@ -319,7 +338,8 @@ async function main() {
     summary: {
       meaningfulWinCount: wins.length,
       meaningfulWinFraction: wins.length / bodiesOut.length,
-      byOrbitClass: meaningfulByClass,
+      byOrbitClass: countByOrbitClass(bodiesOut),
+      meaningfulWinsByOrbitClass: meaningfulWinsByClass,
       tofRangeOfWins: {
         minDays: wins.length > 0 ? Math.min(...wins.map((body) => body.m1_tof_days)) : null,
         maxDays: wins.length > 0 ? Math.max(...wins.map((body) => body.m1_tof_days)) : null,
