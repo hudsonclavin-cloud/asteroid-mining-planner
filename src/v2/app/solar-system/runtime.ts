@@ -986,9 +986,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     bodies: asteroidWorkerBodies,
   });
 
-  let orbitRadius = OVERVIEW_ORBIT_RADIUS_M;
-  let orbitAzimuth = 0;
-  let orbitPolar = OVERVIEW_ORBIT_POLAR_RAD;
+  let orbitRadius = TOP_DOWN_ORBIT_STATE.radiusM;
+  let orbitAzimuth = TOP_DOWN_ORBIT_STATE.azimuthRad;
+  let orbitPolar = TOP_DOWN_ORBIT_STATE.polarRad;
   let currentFocusBody: FocusTarget = OUTER_SYSTEM_OVERVIEW;
   let targetFocusBody: FocusTarget = OUTER_SYSTEM_OVERVIEW;
   let focusTransitionStartMs = 0;
