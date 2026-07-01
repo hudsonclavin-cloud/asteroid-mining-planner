@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CSS2DObject, CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import {
   FRAME_GCRS_EARTH,
   FRAME_HELIO_J2000_ICRF,
@@ -46,7 +47,13 @@ import {
 } from '../../render/atmosphere.js';
 import { buildEarthMaterial, updateSunDirection } from '../../render/earth-shader.js';
 import { mountPhaseCOverlay } from '../ui-overlay/index.js';
-import { readSelectedBody, selectBody, subscribeToFocusRequests } from '../ui-store/index.js';
+import {
+  readSelectedBody,
+  selectBody,
+  subscribeToBodyLabelsVisible,
+  subscribeToFocusRequests,
+  subscribeToStarfieldDisplay,
+} from '../ui-store/index.js';
 import {
   loadSlice9NeaCatalogFixture,
   loadSolarSystemStatesBrowser,
@@ -117,6 +124,16 @@ const BODY_IDS: BodyId[] = [
   'dione',
   'mimas',
   'enceladus',
+];
+
+const LABELED_BODY_IDS: ReadonlyArray<{ bodyId: BodyId; label: string }> = [
+  { bodyId: 'sun', label: 'Sun' },
+  { bodyId: 'mercury', label: 'Mercury' },
+  { bodyId: 'venus', label: 'Venus' },
+  { bodyId: 'earth', label: 'Earth' },
+  { bodyId: 'mars', label: 'Mars' },
+  { bodyId: 'jupiter', label: 'Jupiter' },
+  { bodyId: 'saturn', label: 'Saturn' },
 ];
 
 /*
@@ -267,6 +284,33 @@ export function resolveSunLightPosition(
     y: sunRadiusM * 0.3,
     z: sunRadiusM * 0.2,
   };
+}
+
+function createBodyLabelElement(text: string): HTMLDivElement {
+  const element = document.createElement('div');
+  element.textContent = text;
+  element.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  element.style.fontSize = '12px';
+  element.style.lineHeight = '1';
+  element.style.color = '#ffffff';
+  element.style.background = 'rgba(0, 0, 0, 0.58)';
+  element.style.border = '1px solid rgba(255, 255, 255, 0.18)';
+  element.style.borderRadius = '999px';
+  element.style.padding = '3px 6px';
+  element.style.pointerEvents = 'none';
+  element.style.userSelect = 'none';
+  element.style.whiteSpace = 'nowrap';
+  element.style.textShadow = '0 1px 2px rgba(0, 0, 0, 0.65)';
+  element.style.transform = 'translate(-50%, calc(-100% - 8px))';
+  return element;
+}
+
+function createBodyLabelObject(text: string): CSS2DObject {
+  return new CSS2DObject(createBodyLabelElement(text));
+}
+
+function formatAsteroidLabel(asteroid: AsteroidBody): string {
+  return asteroid.designation || asteroid.name || asteroid.bodyId;
 }
 
 export const TOP_DOWN_ECLIPTIC_NORMAL_ICRF = rotateEclipticDirectionToIcrf({
@@ -781,6 +825,18 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   mount.replaceChildren(renderer.domElement);
   mount.style.position = 'relative';
   renderer.domElement.style.cursor = 'grab';
+  const labelRenderer = new CSS2DRenderer();
+  labelRenderer.setSize(initialViewport.width, initialViewport.height);
+  labelRenderer.domElement.style.position = 'absolute';
+  labelRenderer.domElement.style.top = '0';
+  labelRenderer.domElement.style.left = '0';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  mount.appendChild(labelRenderer.domElement);
+  let bodyLabelsVisible = true;
+  const disposeBodyLabelsBridge = subscribeToBodyLabelsVisible((visible) => {
+    bodyLabelsVisible = visible;
+    labelRenderer.domElement.style.display = visible ? '' : 'none';
+  });
   const disposePhaseCOverlay = mountPhaseCOverlay(mount);
 
   const focusedAsteroidHud = document.createElement('div');
@@ -834,6 +890,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const scene = new THREE.Scene();
   const starRenderer = new StarRenderer(starCatalog, renderer.getPixelRatio());
+  const disposeStarfieldDisplayBridge = subscribeToStarfieldDisplay(({ visible, brightness }) => {
+    starRenderer.setVisible(visible);
+    starRenderer.setOpacity(brightness);
+  });
   const camera = new THREE.PerspectiveCamera(
     45,
     initialViewport.width / initialViewport.height,
@@ -889,6 +949,20 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     scene.add(mesh);
     renderRoots.set(bodyId, mesh);
   }
+  for (const { bodyId, label } of LABELED_BODY_IDS) {
+    const target = renderRoots.get(bodyId);
+    if (!target) {
+      continue;
+    }
+    const labelObject = createBodyLabelObject(label);
+    labelObject.name = `body-label-${bodyId}`;
+    labelObject.position.set(0, 0, 0);
+    target.add(labelObject);
+  }
+  const focusedAsteroidLabel = createBodyLabelObject('');
+  focusedAsteroidLabel.name = 'focused-asteroid-label';
+  focusedAsteroidLabel.visible = false;
+  scene.add(focusedAsteroidLabel);
   for (const [index, bodyId] of ATMOSPHERE_BODY_IDS.entries()) {
     const runtimeBodyId = bodyId as BodyId;
     const planetMesh = meshes.get(runtimeBodyId);
@@ -1144,6 +1218,18 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     );
   }
 
+  function updateFocusedAsteroidLabel(bodyId: FocusTarget): void {
+    if (!isAsteroidFocusTarget(bodyId)) {
+      focusedAsteroidLabel.visible = false;
+      return;
+    }
+
+    const asteroid = getAsteroidBody(bodyId);
+    focusedAsteroidLabel.element.textContent = formatAsteroidLabel(asteroid);
+    focusedAsteroidLabel.position.set(0, 0, 0);
+    focusedAsteroidLabel.visible = true;
+  }
+
   function hidePlanetHoverTooltip(): void {
     renderPlanetHoverTooltip(planetHoverTooltip, null);
   }
@@ -1272,7 +1358,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     camera.updateProjectionMatrix();
     camera.position.set(camLocal.x, camLocal.y, camLocal.z);
 
-    const haloUpdates: Array<{ bodyId: BodyId; positionRelCam: THREE.Vector3; radiusM: number }> = [];
+    const haloUpdates: Array<{
+      bodyId: BodyId;
+      positionRelScene: THREE.Vector3;
+      distanceToCameraM: number;
+      radiusM: number;
+    }> = [];
 
     for (const bodyId of BODY_IDS) {
       const root = renderRoots.get(bodyId)!;
@@ -1295,14 +1386,20 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       atmosphereShells.get(bodyId)?.position.copy(root.position);
 
       const helio = getHeliocentricState(bodyId, currentTdbSeconds);
-      const posRelCam = new THREE.Vector3(
-        helio.positionM.x - anchorPosM.x - camLocal.x,
-        helio.positionM.y - anchorPosM.y - camLocal.y,
-        helio.positionM.z - anchorPosM.z - camLocal.z,
+      const positionRelScene = new THREE.Vector3(
+        helio.positionM.x - anchorPosM.x,
+        helio.positionM.y - anchorPosM.y,
+        helio.positionM.z - anchorPosM.z,
+      );
+      const distanceToCameraM = Math.hypot(
+        positionRelScene.x - camLocal.x,
+        positionRelScene.y - camLocal.y,
+        positionRelScene.z - camLocal.z,
       );
       haloUpdates.push({
         bodyId,
-        positionRelCam: posRelCam,
+        positionRelScene,
+        distanceToCameraM,
         radiusM: BODY_CONSTANTS[bodyId].radiusM,
       });
     }
@@ -1330,6 +1427,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       viewport,
     );
     const activeFocusBody = getActiveFocusBody(nowMs);
+    updateFocusedAsteroidLabel(activeFocusBody);
     asteroidRenderer.setFocusedAsteroid(
       isAsteroidFocusTarget(activeFocusBody) ? activeFocusBody : null,
     );
@@ -1354,6 +1452,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(viewport.width, viewport.height);
+    labelRenderer.setSize(viewport.width, viewport.height);
     starRenderer.setPixelRatio(renderer.getPixelRatio());
   }
 
@@ -1698,6 +1797,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       updatePlanetHoverTooltip(lastPointerX, lastPointerY, performance.now());
     }
     renderer.render(scene, camera);
+    if (bodyLabelsVisible) {
+      labelRenderer.render(scene, camera);
+    }
     animationHandle = window.requestAnimationFrame(renderFrame);
   }
 
@@ -1715,6 +1817,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   return () => {
     disposed = true;
+    disposeBodyLabelsBridge();
+    disposeStarfieldDisplayBridge();
     disposeUiFocusBridge();
     disposePhaseCOverlay();
     resetFrameTransformHooks();
@@ -1731,6 +1835,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     focusedAsteroidHud.remove();
     dateHud.remove();
     planetHoverTooltip.remove();
+    labelRenderer.domElement.remove();
     starRenderer.dispose();
     haloSystem.dispose();
     asteroidRenderer.dispose();

@@ -13,6 +13,8 @@ export type SortKey =
   | 'absolute-magnitude-desc';
 
 const DEFAULT_SORT_KEY: SortKey = 'designation-asc';
+export const DEFAULT_STARFIELD_BRIGHTNESS = 1;
+export const DEFAULT_BODY_LABELS_VISIBLE = true;
 const STORAGE_KEY_LAYOUT_MODE = 'aster-v2-layout-mode';
 
 function loadInitialLayoutMode(): LayoutMode {
@@ -31,6 +33,9 @@ const mutableSearchQuery = signal('');
 const mutableSortKey = signal<SortKey>(DEFAULT_SORT_KEY);
 const mutableSelectedBody = signal<string | null>(null);
 const mutableFocusRequestId = signal(0);
+const mutableStarfieldVisible = signal(true);
+const mutableStarfieldBrightness = signal(DEFAULT_STARFIELD_BRIGHTNESS);
+const mutableBodyLabelsVisible = signal(DEFAULT_BODY_LABELS_VISIBLE);
 export const layoutModeSignal = signal<LayoutMode>(loadInitialLayoutMode());
 
 export const catalogSignal = computed(() => mutableCatalog.value);
@@ -39,6 +44,9 @@ export const searchQuerySignal = computed(() => mutableSearchQuery.value);
 export const sortKeySignal = computed(() => mutableSortKey.value);
 export const selectedBodySignal = computed(() => mutableSelectedBody.value);
 export const focusRequestIdSignal = computed(() => mutableFocusRequestId.value);
+export const starfieldVisibleSignal = computed(() => mutableStarfieldVisible.value);
+export const starfieldBrightnessSignal = computed(() => mutableStarfieldBrightness.value);
+export const bodyLabelsVisibleSignal = computed(() => mutableBodyLabelsVisible.value);
 
 export interface UiStoreSignals {
   readonly catalog: ReadonlySignal<NEACatalog | null>;
@@ -47,6 +55,9 @@ export interface UiStoreSignals {
   readonly sortKey: ReadonlySignal<SortKey>;
   readonly selectedBody: ReadonlySignal<string | null>;
   readonly focusRequestId: ReadonlySignal<number>;
+  readonly starfieldVisible: ReadonlySignal<boolean>;
+  readonly starfieldBrightness: ReadonlySignal<number>;
+  readonly bodyLabelsVisible: ReadonlySignal<boolean>;
 }
 
 export const uiStoreSignals: UiStoreSignals = {
@@ -56,6 +67,9 @@ export const uiStoreSignals: UiStoreSignals = {
   sortKey: sortKeySignal,
   selectedBody: selectedBodySignal,
   focusRequestId: focusRequestIdSignal,
+  starfieldVisible: starfieldVisibleSignal,
+  starfieldBrightness: starfieldBrightnessSignal,
+  bodyLabelsVisible: bodyLabelsVisibleSignal,
 };
 
 export function readCatalog(): NEACatalog | null {
@@ -80,6 +94,18 @@ export function readSelectedBody(): string | null {
 
 export function readFocusRequestId(): number {
   return mutableFocusRequestId.value;
+}
+
+export function readStarfieldVisible(): boolean {
+  return mutableStarfieldVisible.value;
+}
+
+export function readStarfieldBrightness(): number {
+  return mutableStarfieldBrightness.value;
+}
+
+export function readBodyLabelsVisible(): boolean {
+  return mutableBodyLabelsVisible.value;
 }
 
 export function readLayoutMode(): LayoutMode {
@@ -111,6 +137,21 @@ export function requestFocus(): number {
   return mutableFocusRequestId.value;
 }
 
+export function setStarfieldVisible(visible: boolean): void {
+  mutableStarfieldVisible.value = visible;
+}
+
+export function setStarfieldBrightness(brightness: number): void {
+  if (!Number.isFinite(brightness)) {
+    return;
+  }
+  mutableStarfieldBrightness.value = Math.min(1, Math.max(0, brightness));
+}
+
+export function setBodyLabelsVisible(visible: boolean): void {
+  mutableBodyLabelsVisible.value = visible;
+}
+
 export function setLayoutMode(mode: LayoutMode): void {
   layoutModeSignal.value = mode;
   try {
@@ -131,5 +172,22 @@ export function subscribeToFocusRequests(onRequest: (requestId: number) => void)
     }
     lastSeen = nextRequestId;
     onRequest(nextRequestId);
+  });
+}
+
+export function subscribeToStarfieldDisplay(
+  onChange: (display: { visible: boolean; brightness: number }) => void,
+): () => void {
+  return effect(() => {
+    onChange({
+      visible: starfieldVisibleSignal.value,
+      brightness: starfieldBrightnessSignal.value,
+    });
+  });
+}
+
+export function subscribeToBodyLabelsVisible(onChange: (visible: boolean) => void): () => void {
+  return effect(() => {
+    onChange(bodyLabelsVisibleSignal.value);
   });
 }

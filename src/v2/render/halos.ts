@@ -72,14 +72,19 @@ export class HaloSystem {
   }
 
   update(
-    bodies: Array<{ bodyId: BodyId; positionRelCam: THREE.Vector3; radiusM: number }>,
+    bodies: Array<{
+      bodyId: BodyId;
+      positionRelScene: THREE.Vector3;
+      distanceToCameraM: number;
+      radiusM: number;
+    }>,
     camera: THREE.Camera,
     viewport: { width: number; height: number },
   ): void {
     const perspCamera = camera as THREE.PerspectiveCamera;
     const fovRad = perspCamera.fov ? (perspCamera.fov * Math.PI) / 180 : Math.PI / 4;
 
-    for (const { bodyId, positionRelCam, radiusM } of bodies) {
+    for (const { bodyId, positionRelScene, distanceToCameraM, radiusM } of bodies) {
       const entry = this.entries.get(bodyId);
       if (!entry) continue;
 
@@ -88,7 +93,7 @@ export class HaloSystem {
         continue;
       }
 
-      const distM = positionRelCam.length();
+      const distM = distanceToCameraM;
       if (distM <= 0) {
         entry.sprite.visible = false;
         continue;
@@ -99,8 +104,8 @@ export class HaloSystem {
       const haloOpacity = getHaloOpacityForApparentDiameterPx(apparentDiameterPx);
 
       if (haloOpacity > 0) {
-        // Show halo: position it at the body's camera-relative location
-        entry.sprite.position.copy(positionRelCam);
+        // Show halo at the body's scene-relative location.
+        entry.sprite.position.copy(positionRelScene);
         entry.material.opacity = haloOpacity;
 
         // Size the sprite to a minimum visible size (8 px diameter), projected back to world units

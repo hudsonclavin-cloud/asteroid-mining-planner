@@ -323,7 +323,12 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
     // Place camera in Three.js scene relative to the active focus anchor.
     camera.position.set(camLocal.x, camLocal.y, camLocal.z);
 
-    const haloUpdates: Array<{ bodyId: BodyId; positionRelCam: THREE.Vector3; radiusM: number }> = [];
+    const haloUpdates: Array<{
+      bodyId: BodyId;
+      positionRelScene: THREE.Vector3;
+      distanceToCameraM: number;
+      radiusM: number;
+    }> = [];
 
     for (const bodyId of BODY_IDS) {
       const mesh = meshes.get(bodyId)!;
@@ -339,15 +344,16 @@ export async function mountInnerSolarSystem(mount: HTMLElement): Promise<() => v
       const relZ = helio.positionM.z - anchorPosM.z;
       mesh.position.set(relX, relY, relZ);
 
-      // Position relative to camera for halos
-      const posRelCam = new THREE.Vector3(
-        relX - camLocal.x,
-        relY - camLocal.y,
-        relZ - camLocal.z,
+      const positionRelScene = new THREE.Vector3(relX, relY, relZ);
+      const distanceToCameraM = Math.hypot(
+        positionRelScene.x - camLocal.x,
+        positionRelScene.y - camLocal.y,
+        positionRelScene.z - camLocal.z,
       );
       haloUpdates.push({
         bodyId,
-        positionRelCam: posRelCam,
+        positionRelScene,
+        distanceToCameraM,
         radiusM: BODY_CONSTANTS[bodyId].radiusM,
       });
     }

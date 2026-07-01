@@ -4,6 +4,7 @@ import type { StarCatalog } from '../boundary/star-catalog-tycho2.js';
 export const STAR_RENDERER_MAGIC_DISTANCE = 1e9;
 export const STAR_RENDERER_BASE_POINT_SIZE_PX = 3;
 export const STAR_RENDERER_MAX_POINT_SIZE_PX = 8;
+export const STAR_RENDERER_DEFAULT_OPACITY = 1;
 
 const STAR_VERTEX_SHADER = `
 attribute float magnitude;
@@ -32,6 +33,8 @@ void main() {
 `;
 
 const STAR_FRAGMENT_SHADER = `
+uniform float uOpacity;
+
 varying vec3 vColor;
 
 void main() {
@@ -42,9 +45,16 @@ void main() {
   }
 
   float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-  gl_FragColor = vec4(vColor, alpha);
+  gl_FragColor = vec4(vColor, alpha * uOpacity);
 }
 `;
+
+function clamp01(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.min(1, Math.max(0, value));
+}
 
 export class StarRenderer {
   readonly geometry: THREE.BufferGeometry;
@@ -63,10 +73,12 @@ export class StarRenderer {
         uBasePointSizePx: { value: STAR_RENDERER_BASE_POINT_SIZE_PX },
         uMaxPointSizePx: { value: STAR_RENDERER_MAX_POINT_SIZE_PX },
         uDistanceScale: { value: STAR_RENDERER_MAGIC_DISTANCE },
+        uOpacity: { value: STAR_RENDERER_DEFAULT_OPACITY },
       },
       vertexShader: STAR_VERTEX_SHADER,
       fragmentShader: STAR_FRAGMENT_SHADER,
       transparent: true,
+      opacity: STAR_RENDERER_DEFAULT_OPACITY,
       depthTest: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
@@ -85,6 +97,17 @@ export class StarRenderer {
 
   setPixelRatio(pixelRatio: number): void {
     this.material.uniforms.uPixelRatio.value = pixelRatio;
+  }
+
+  setVisible(visible: boolean): void {
+    this.points.visible = visible;
+  }
+
+  setOpacity(value: number): void {
+    const opacity = clamp01(value);
+    this.material.transparent = true;
+    this.material.opacity = opacity;
+    this.material.uniforms.uOpacity.value = opacity;
   }
 
   dispose(): void {

@@ -1,16 +1,22 @@
 import { computed, signal } from '@preact/signals';
 import { h, type VNode } from 'preact';
 import {
+  bodyLabelsVisibleSignal,
   catalogSignal,
   filterClassSignal,
   layoutModeSignal,
   searchQuerySignal,
   selectedBodySignal,
+  setBodyLabelsVisible,
   setFilterClass,
   setLayoutMode,
   setSearch,
   setSort,
+  setStarfieldBrightness,
+  setStarfieldVisible,
   sortKeySignal,
+  starfieldBrightnessSignal,
+  starfieldVisibleSignal,
   type OrbitClass,
   type SortKey,
 } from '../ui-store/index.js';
@@ -201,6 +207,9 @@ export function trackPanelSignals(): void {
   filteredRowsSignal.value;
   layoutModeSignal.value;
   selectedBodySignal.value;
+  bodyLabelsVisibleSignal.value;
+  starfieldBrightnessSignal.value;
+  starfieldVisibleSignal.value;
   scrollTopSignal.value;
   viewportHeightSignal.value;
   popoverOpenSignal.value;
@@ -350,6 +359,9 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
   const searchQuery = searchQuerySignal.value;
   const sortKey = sortKeySignal.value;
   const layoutMode = layoutModeSignal.value;
+  const bodyLabelsVisible = bodyLabelsVisibleSignal.value;
+  const starfieldVisible = starfieldVisibleSignal.value;
+  const starfieldBrightness = starfieldBrightnessSignal.value;
   const filteredRows = filteredRowsSignal.value;
   const popover = popoverOpenSignal.value ? renderPopover() : null;
 
@@ -532,6 +544,104 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
               },
               orbitClass,
             ),
+          ),
+        ),
+        h(
+          'div',
+          {
+            style: {
+              marginBottom: '8px',
+              padding: '8px',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '4px',
+            },
+          },
+          h(
+            'div',
+            {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+                marginBottom: '8px',
+              },
+            },
+            h('span', { style: { color: '#888', fontSize: '11px' } }, 'Display'),
+            h(
+              'div',
+              {
+                style: {
+                  display: 'flex',
+                  gap: '4px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'flex-end',
+                },
+              },
+              h(
+                'button',
+                {
+                  type: 'button',
+                  onClick: () => setStarfieldVisible(!starfieldVisible),
+                  style: {
+                    padding: '3px 8px',
+                    background: starfieldVisible ? 'rgba(100,140,220,0.4)' : 'rgba(255,255,255,0.05)',
+                    color: starfieldVisible ? '#fff' : '#aaa',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '3px',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                  },
+                },
+                starfieldVisible ? 'Starfield on' : 'Starfield off',
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  onClick: () => setBodyLabelsVisible(!bodyLabelsVisible),
+                  style: {
+                    padding: '3px 8px',
+                    background: bodyLabelsVisible ? 'rgba(100,140,220,0.4)' : 'rgba(255,255,255,0.05)',
+                    color: bodyLabelsVisible ? '#fff' : '#aaa',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '3px',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                  },
+                },
+                bodyLabelsVisible ? 'Labels on' : 'Labels off',
+              ),
+            ),
+          ),
+          h(
+            'label',
+            {
+              style: {
+                display: 'grid',
+                gridTemplateColumns: '1fr auto',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#aaa',
+                fontSize: '11px',
+              },
+            },
+            h('span', null, 'Starfield brightness'),
+            h('span', { style: { color: '#888', fontVariantNumeric: 'tabular-nums' } }, `${Math.round(starfieldBrightness * 100)}%`),
+            h('input', {
+              type: 'range',
+              min: '0',
+              max: '1',
+              step: '0.05',
+              value: String(starfieldBrightness),
+              onInput: (event: Event) => setStarfieldBrightness(Number((event.target as HTMLInputElement).value)),
+              style: {
+                gridColumn: '1 / -1',
+                width: '100%',
+                cursor: 'pointer',
+              },
+            }),
           ),
         ),
         h(
