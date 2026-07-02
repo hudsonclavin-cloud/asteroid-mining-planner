@@ -62,6 +62,10 @@ and the doc comment in `src/v2/core/lambert/dla.ts`. The pre-lock research summa
 ecliptic→equatorial obliquity rotation was REJECTED by that measurement — applying it would
 introduce up to ~23.4° of silent error.
 
+### Frame-by-measurement (INV-021, `src/v2/SLICE_12_FOUNDING.md` §3)
+
+**INV-021 (frame-by-measurement):** Any quantity derived from the *components* (not magnitude) of a Lambert output vector must have its reference frame established by numerical measurement at the consuming boundary before first use — never inferred from a label or doc comment. Rationale: magnitudes are frame-invariant, so all prior validation (OQ-3, machine-precision C3 agreement) says nothing about component frames; and the 2026-07-01 halo bug demonstrated that frame-labeling errors survive multiple recons while producing plausible-looking output.
+
 ---
 
 ## §3. Rendering rules
@@ -108,6 +112,10 @@ Symptom: all planet dots rendered offset from their true positions by `−camLoc
 | `texture.encoding = THREE.LinearEncoding` | (same) | Normal/specular maps |
 | Manual camera controls | `THREE.OrbitControls` from CDN | Not in r128 bundle |
 | CylinderGeometry + SphereGeometry | `THREE.CapsuleGeometry` | Added in r142 |
+
+### Launch-feasibility disclosure (INV-016d, `src/v2/SLICE_12_FOUNDING.md` §3)
+
+**INV-016d (honesty extension):** Any launch-feasibility display must disclose, in a discoverable surface, (i) the launch site assumed and its parameters, (ii) the band model used to classify feasibility, and (iii) that dogleg/plane-change costs are advisory and NOT included in the displayed ΔV stack. Same disclosure pattern as INV-016c.
 
 ---
 
@@ -162,5 +170,7 @@ that is not ImageMagick.
 | INV-015 | `src/v2/SLICE_10_FOUNDING.md` | Lambert solver must trace to a peer-reviewed algorithm |
 | INV-016 | `src/v2/SLICE_10_FOUNDING.md` | Patched-conic honesty layer: every C3/ΔV carries a fidelity tag |
 | INV-016c | `src/v2/SLICE_11_FOUNDING.md` | ΔV stack assumptions must be disclosed (200km LEO, 150m/s stationkeeping, 10% margin) |
+| INV-016d | `src/v2/SLICE_12_FOUNDING.md` | Launch-feasibility displays must disclose the assumed site + parameters, the band model, and that dogleg costs are advisory / not in the ΔV stack |
 | INV-017..020 | `src/v2/SLICE_11_FOUNDING.md` | Porkchop renderer: one component, worker-only compute, bookmarkable URL, no partial renders |
+| INV-021 | `src/v2/SLICE_12_FOUNDING.md` | Component-derived quantities (e.g. DLA): reference frame established by numerical measurement at the consuming boundary, never inferred from a label |
 | INV-V1-001 | `src/v2/SLICE_V1_FOUNDING.md` | Visual asset provenance must be confirmed before shipping (CC/public domain) |
