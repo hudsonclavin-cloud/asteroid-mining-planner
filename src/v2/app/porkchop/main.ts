@@ -298,6 +298,7 @@ function PorkchopDedicatedPage() {
         gridParams: GRID_PARAMS,
         M: 1,
         onPinnedCellChange: setPinnedReadout,
+        showDlaOverlayControl: true,
       }),
     ),
   );
