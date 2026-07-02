@@ -2,6 +2,11 @@ import { h, render } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizons.js';
 import type { AsteroidOrbitalElements } from '../../core/constants/asteroids.js';
+import {
+  CAPE_CANAVERAL,
+  LAUNCH_SITES,
+  type LaunchSite,
+} from '../../core/lambert/feasibility.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
 import {
@@ -109,6 +114,8 @@ function PorkchopDedicatedPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pinnedReadout, setPinnedReadout] = useState<PorkchopPinnedReadout | null>(null);
+  const [showDlaContours, setShowDlaContours] = useState(false);
+  const [selectedLaunchSite, setSelectedLaunchSite] = useState<LaunchSite>(CAPE_CANAVERAL);
 
   useEffect(() => {
     let cancelled = false;
@@ -228,6 +235,52 @@ function PorkchopDedicatedPage() {
         h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Grid'),
         h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Target: ${pageState.bodyLabel} (${pageState.bodyId})`),
         h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Grid: ${GRID_PARAMS.nDep}×${GRID_PARAMS.nTof}`),
+        h(
+          'label',
+          {
+            style: 'display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:12px;color:#d8e1f1;cursor:pointer;',
+            title: 'Screening estimate only; day-specific geometry may differ.',
+          },
+          h('input', {
+            type: 'checkbox',
+            checked: showDlaContours,
+            onInput: () => setShowDlaContours((current) => !current),
+          }),
+          h(
+            'span',
+            { style: 'display:flex;flex-direction:column;gap:2px;' },
+            h('span', null, 'DLA feasibility'),
+            h(
+              'span',
+              { style: 'font-size:10px;line-height:1.35;color:#93a4bf;font-style:italic;' },
+              'Screening estimate only; day-specific geometry may differ.',
+            ),
+          ),
+        ),
+        showDlaContours
+          ? h(
+              'label',
+              {
+                style: 'display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:12px;color:#cbd5e1;',
+              },
+              h('span', { style: 'font-size:11px;color:#93a4bf;text-transform:uppercase;letter-spacing:0.08em;' }, 'Launch site'),
+              h(
+                'select',
+                {
+                  value: selectedLaunchSite.name,
+                  style: 'width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,0.18);border-radius:6px;background:#0b1220;color:#eef2ff;padding:7px 8px;font:inherit;',
+                  onInput: (event: Event) => {
+                    const select = event.currentTarget as HTMLSelectElement;
+                    const nextSite = LAUNCH_SITES.find((site) => site.name === select.value);
+                    if (nextSite !== undefined) {
+                      setSelectedLaunchSite(nextSite);
+                    }
+                  },
+                },
+                LAUNCH_SITES.map((site) => h('option', { key: site.name, value: site.name }, site.name)),
+              ),
+            )
+          : null,
       ),
       h(
         'section',
@@ -299,6 +352,8 @@ function PorkchopDedicatedPage() {
         M: 1,
         onPinnedCellChange: setPinnedReadout,
         showDlaOverlayControl: true,
+        showDlaContours,
+        launchSite: selectedLaunchSite,
       }),
     ),
   );

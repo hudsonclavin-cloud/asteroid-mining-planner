@@ -6,6 +6,7 @@ import {
   CAPE_CANAVERAL,
   classifyFeasibility,
   type FeasibilityClass,
+  type LaunchSite,
 } from '../core/lambert/feasibility.js';
 import type { PorkchopGridParams } from './grid-compute.js';
 import type { PorkchopClient } from './porkchop-client.js';
@@ -123,6 +124,8 @@ export interface PorkchopViewProps {
   readonly M: number;
   readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly showDlaOverlayControl?: boolean | undefined;
+  readonly showDlaContours?: boolean | undefined;
+  readonly launchSite?: LaunchSite | undefined;
   readonly validatedTarget?: {
     readonly depJD: number;
     readonly tofDays: number;
@@ -175,10 +178,12 @@ const C3_CONTOUR_LEVELS: readonly ContourLevel[] = [
   { value: 300, strokeStyle: 'rgba(255,255,255,0.72)' },
 ];
 
-const DLA_CONTOUR_LEVELS: readonly ContourLevel[] = [
-  { value: 28.5, strokeStyle: '#22c55e' },
-  { value: 57, strokeStyle: '#ef4444' },
-];
+function buildDlaContourLevels(site: LaunchSite): readonly ContourLevel[] {
+  return [
+    { value: site.latitudeDeg, strokeStyle: '#22c55e' },
+    { value: site.iMaxDeg, strokeStyle: '#ef4444' },
+  ];
+}
 
 function jdTdbToDateParts(jdTdb: number): { year: number; monthIndex: number; day: number } {
   const shiftedJulianDay = jdTdb + 0.5;
@@ -290,7 +295,7 @@ function getNearestCellForTarget(
   return getCellAtGridIndices(depIndex, tofIndex, cells, gridParams);
 }
 
-function buildPinnedReadout(cell: PorkchopWorkerCell): PorkchopPinnedReadout {
+function buildPinnedReadout(cell: PorkchopWorkerCell, launchSite: LaunchSite): PorkchopPinnedReadout {
   if (cell.status !== 'ok' || cell.selectedBranch === null) {
     return {
       status: cell.status,
@@ -322,7 +327,7 @@ function buildPinnedReadout(cell: PorkchopWorkerCell): PorkchopPinnedReadout {
     vInfDep: branch?.vInfDep ?? null,
     vInfArr: branch?.vInfArr ?? null,
     dlaDeg,
-    feasibility: classifyFeasibility(dlaDeg, CAPE_CANAVERAL),
+    feasibility: classifyFeasibility(dlaDeg, launchSite),
   };
 }
 
@@ -514,14 +519,15 @@ export function PorkchopView(props: PorkchopViewProps) {
   const [hoverCell, setHoverCell] = useState<PorkchopWorkerCell | null>(null);
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<HoverTooltipPosition | null>(null);
   const [showContours, setShowContours] = useState(false);
-  const [showDlaContours, setShowDlaContours] = useState(false);
+  const launchSite = props.launchSite ?? CAPE_CANAVERAL;
   const contourSegments = useMemo(
     () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, C3_CONTOUR_LEVELS, getSelectedBranchC3)),
     [cells, props.gridParams],
   );
+  const dlaContourLevels = useMemo(() => buildDlaContourLevels(launchSite), [launchSite]);
   const dlaContourSegments = useMemo(
-    () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, DLA_CONTOUR_LEVELS, getSelectedBranchAbsDla)),
-    [cells, props.gridParams],
+    () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, dlaContourLevels, getSelectedBranchAbsDla)),
+    [cells, dlaContourLevels, props.gridParams],
   );
 
   useEffect(() => {
@@ -612,7 +618,7 @@ export function PorkchopView(props: PorkchopViewProps) {
       context.restore();
     }
 
-    if (props.showDlaOverlayControl === true && showDlaContours) {
+    if (props.showDlaOverlayControl === true && props.showDlaContours === true) {
       context.save();
       context.lineWidth = 2;
       context.lineCap = 'round';
@@ -650,7 +656,7 @@ export function PorkchopView(props: PorkchopViewProps) {
 
     drawCellMarker(pinnedCell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.22)', 8);
     drawCellMarker(hoverCell, 'rgba(167,243,208,0.95)', 'rgba(167,243,208,0.16)', 6);
-  }, [cells, contourSegments, dlaContourSegments, hoverCell, pinnedCell, props.gridParams, props.showDlaOverlayControl, showContours, showDlaContours]);
+  }, [cells, contourSegments, dlaContourSegments, hoverCell, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, showContours]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -716,12 +722,12 @@ export function PorkchopView(props: PorkchopViewProps) {
   }, [cells, props.gridParams, props.validatedTarget]);
 
   const pinnedReadout = useMemo(
-    () => (pinnedCell === null ? null : buildPinnedReadout(pinnedCell)),
-    [pinnedCell],
+    () => (pinnedCell === null ? null : buildPinnedReadout(pinnedCell, launchSite)),
+    [launchSite, pinnedCell],
   );
   const hoverReadout = useMemo(
-    () => (hoverCell === null ? null : buildPinnedReadout(hoverCell)),
-    [hoverCell],
+    () => (hoverCell === null ? null : buildPinnedReadout(hoverCell, launchSite)),
+    [hoverCell, launchSite],
   );
   const depEndLabel = formatJdTdb(props.gridParams.depEndJD);
   const depStartLabel = formatJdTdb(props.gridParams.depStartJD);
@@ -771,30 +777,6 @@ export function PorkchopView(props: PorkchopViewProps) {
         }),
         `Show contours (${C3_CONTOUR_LEVELS.map((level) => level.value).join(', ')} km²/s²)`,
       ),
-      props.showDlaOverlayControl === true
-        ? h(
-            'label',
-            {
-              style: 'display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-size:12px;opacity:0.92;cursor:pointer;',
-              title: 'Screening estimate only; day-specific geometry may differ.',
-            },
-            h('input', {
-              type: 'checkbox',
-              checked: showDlaContours,
-              onInput: () => setShowDlaContours((current) => !current),
-            }),
-            h(
-              'span',
-              { style: 'display:flex;flex-direction:column;gap:2px;' },
-              h('span', null, 'DLA feasibility'),
-              h(
-                'span',
-                { style: 'font-size:10px;line-height:1.35;color:#93a4bf;font-style:italic;' },
-                'Screening estimate only; day-specific geometry may differ.',
-              ),
-            ),
-          )
-        : null,
       hasValidatedTarget
         ? h(
             'button',
