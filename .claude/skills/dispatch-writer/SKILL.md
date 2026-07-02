@@ -1,10 +1,8 @@
 ---
 name: dispatch-writer
-description: >
-  Use when Hudson asks to write a Codex dispatch, draft instructions for the
-  execution agent, or produce a new dispatch for any Slice N task. Outputs a
-  correctly-structured dispatch block ready to paste into Codex.
+description: "Use when Hudson asks to write a Codex dispatch, draft instructions for the execution agent, produce a new dispatch for any Slice N task, or when any fix/recon/diagnostic work needs to be handed to Codex. Outputs a correctly-structured dispatch block saved as a file, ready to paste into Codex. Also covers tripwire phrasing, STOP gates, visual gates for UI work, diagnostic dispatches, and multi-commit splits."
 ---
+
 
 # Dispatch Writer
 
@@ -112,6 +110,78 @@ may fail for reasons unrelated to the dispatch's change.
 
 ---
 
+## Tripwires vs STOP gates (added 2026-07-01)
+
+Two distinct control mechanisms; name which one each dispatch uses.
+
+**STOP gate (positional):** "STOP after step N. Hudson verifies X. Wait for
+go-ahead." Used before commits on UI work (browser visual gate) and math-layer
+work (oracle check). The dispatch cannot proceed past it regardless of how the
+steps went.
+
+**Tripwire (conditional):** "Run steps 1–N to completion; stop ONLY if
+<measurable condition> fires." Used for everything else — the run is
+continuous, not step-by-step. Tripwire conditions must be measurable (tsc
+error, HEAD mismatch, hunks won't split, an assumption that would have to be
+guessed), never vibes. When a tripwire fires, the final report replaces "next
+steps" with "what I found and why I stopped" — findings, not apologies.
+
+Every dispatch declares its discipline near the top:
+`TRIPWIRE DISCIPLINE: Run to completion. Stop only if (a)…, (b)…, (c)…`
+
+**Visual gate phrasing for UI work:** enumerate the exact checks as lettered
+bullets Hudson can answer pass/fail one by one (a. top-down alignment, b. halo
+sizing, c. drag-orbit…). "Hudson verifies in browser" without the checklist
+produces skipped verifications.
+
+---
+
+## Live state beats written state (added 2026-07-01)
+
+The CONTEXT line's HEAD hash can be stale — handoffs freeze the state at
+writing time, and multiple dispatches ran between writings twice this week.
+Rule: step 1 always verifies `git log --oneline -1` and `git status` against
+CONTEXT, and the dispatch says explicitly what to do on mismatch. Default:
+"STOP if HEAD does not match CONTEXT or a later expected commit" — but a
+dispatch may whitelist known-later commits ("or a later V1 deploy commit").
+Never instruct Codex to trust the dispatch's own CONTEXT over the live repo.
+
+---
+
+## Diagnostic dispatches (added 2026-07-01)
+
+Throwaway probes (hide a scene object, add a console log, write a /tmp probe
+script) are legitimate dispatches with two extra rules:
+
+1. Every temporary line carries the marker
+   `// TEMP DIAGNOSTIC — remove before commit`.
+2. **The revert is a numbered step in the SAME dispatch**, gated on Hudson's
+   observation ("AFTER Hudson reports, remove every marked line; confirm
+   git status clean"). A forgotten diagnostic revert dirty-treed the repo and
+   tripwired two subsequent dispatches on 2026-07-01. If the observation may
+   span sessions, the dispatch ends by explicitly stating the tree is dirty
+   and which dispatch cleans it.
+
+Probe scripts go in /tmp (or OS temp), never in the repo. Probes import
+production code rather than re-implementing the path under test.
+
+---
+
+## Multi-commit splits (added 2026-07-01)
+
+When one working tree holds multiple logical changes (it happens — a fix lands
+on top of uncommitted feature work), the dispatch attempts `git add -p` splits
+into atomic commits in dependency order, and declares the fallback:
+
+> TRIPWIRE: if hunks cannot be cleanly separated, STOP and report the diff.
+> Do NOT ship a blob commit. Hudson decides the fallback.
+
+An honest combined commit message ("display controls, body labels, and halo
+alignment") chosen BY HUDSON at the fallback beats a silent blob chosen by the
+agent. The agent never makes that call alone.
+
+---
+
 ## Worked example (condensed from Dispatch 1 — research ingestion)
 
 ```
@@ -187,3 +257,5 @@ CONSTRAINTS:
 | Validation / measurement | One dispatch per measurement; close the OQ in the founding doc separately |
 | Refactor touching many files | Split into (a) copy/extract, (b) wire-up, (c) delete-dead-code dispatches |
 | Uncertainty about expected output | Add a STOP gate with a specific check; don't guess |
+| Bug with unverified root cause | Recon dispatch first (see diagnostic-recon skill); fix dispatch only after the verdict |
+| New/changed math-layer code | Audit dispatch before deploy (see multi-agent-audit skill) |
