@@ -258,28 +258,39 @@ function PorkchopDedicatedPage() {
           ),
         ),
         showDlaContours
-          ? h(
-              'label',
-              {
-                style: 'display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:12px;color:#cbd5e1;',
-              },
-              h('span', { style: 'font-size:11px;color:#93a4bf;text-transform:uppercase;letter-spacing:0.08em;' }, 'Launch site'),
+          ? [
               h(
-                'select',
+                'label',
                 {
-                  value: selectedLaunchSite.name,
-                  style: 'width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,0.18);border-radius:6px;background:#0b1220;color:#eef2ff;padding:7px 8px;font:inherit;',
-                  onInput: (event: Event) => {
-                    const select = event.currentTarget as HTMLSelectElement;
-                    const nextSite = LAUNCH_SITES.find((site) => site.name === select.value);
-                    if (nextSite !== undefined) {
-                      setSelectedLaunchSite(nextSite);
-                    }
-                  },
+                  key: 'dla-site-picker',
+                  style: 'display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:12px;color:#cbd5e1;',
                 },
-                LAUNCH_SITES.map((site) => h('option', { key: site.name, value: site.name }, site.name)),
+                h('span', { style: 'font-size:11px;color:#93a4bf;text-transform:uppercase;letter-spacing:0.08em;' }, 'Launch site'),
+                h(
+                  'select',
+                  {
+                    value: selectedLaunchSite.name,
+                    style: 'width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,0.18);border-radius:6px;background:#0b1220;color:#eef2ff;padding:7px 8px;font:inherit;',
+                    onInput: (event: Event) => {
+                      const select = event.currentTarget as HTMLSelectElement;
+                      const nextSite = LAUNCH_SITES.find((site) => site.name === select.value);
+                      if (nextSite !== undefined) {
+                        setSelectedLaunchSite(nextSite);
+                      }
+                    },
+                  },
+                  LAUNCH_SITES.map((site) => h('option', { key: site.name, value: site.name }, site.name)),
+                ),
               ),
-            )
+              h(
+                'div',
+                {
+                  key: 'dla-016d-disclosure',
+                  style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
+                },
+                `Launch-feasibility bands are a screening estimate against ${selectedLaunchSite.name}'s azimuth corridor (sourced NASA limits). Day-specific launch geometry can bind tighter — e.g. MGS launched from Cape with DLA 36.5 deg (nominally AMBER) yet required a dogleg because its daily window forced the southerly azimuth side, where the effective ceiling is only ~34-39 deg. Dogleg costs are advisory and NOT included in the ΔV stack.`,
+              ),
+            ]
           : null,
       ),
       h(

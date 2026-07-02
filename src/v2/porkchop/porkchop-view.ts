@@ -868,6 +868,34 @@ export function PorkchopView(props: PorkchopViewProps) {
                     h('span', null, '1000'),
                   ),
                   h('div', { style: 'font-size:10px;opacity:0.7;width:280px;text-align:right;' }, 'logarithmic scale'),
+                  props.showDlaOverlayControl === true && props.showDlaContours === true
+                    ? [
+                        h(
+                          'div',
+                          {
+                            key: 'dla-legend-green',
+                            style: 'display:flex;align-items:center;justify-content:flex-end;gap:6px;width:280px;font-size:10px;opacity:0.85;',
+                          },
+                          h('span', { style: 'display:inline-block;width:26px;border-top:2px dashed #22c55e;' }),
+                          h('span', null, `min direct inclination (iMin): ${formatNumber(launchSite.iMinDeg, 1)}°`),
+                        ),
+                        h(
+                          'div',
+                          {
+                            key: 'dla-legend-red',
+                            style: 'display:flex;align-items:center;justify-content:flex-end;gap:6px;width:280px;font-size:10px;opacity:0.85;',
+                          },
+                          h('span', { style: 'display:inline-block;width:26px;border-top:2px dashed #ef4444;' }),
+                          h(
+                            'span',
+                            null,
+                            launchSite.dlaCeilingDeg >= 90
+                              ? 'no dogleg band — corridor covers all declinations'
+                              : `max direct declination (ceiling): ${formatNumber(launchSite.dlaCeilingDeg, 1)}°`,
+                          ),
+                        ),
+                      ]
+                    : null,
                 ),
               ),
             ),
@@ -917,6 +945,26 @@ export function PorkchopView(props: PorkchopViewProps) {
               { style: 'font-size:11px;line-height:1.45;color:#93a4bf;font-style:italic;' },
               'Screening estimate. Actual launch geometry may differ (see azimuth constraints).',
             ),
+            pinnedReadout.feasibility === 'AMBER'
+              ? [
+                  h('span', { key: 'amber-advisory-label' }, ''),
+                  h(
+                    'span',
+                    { key: 'amber-advisory-text', style: 'font-size:11px;line-height:1.45;color:#fbbf24;font-style:italic;' },
+                    'Advisory: Raised-inclination injection — payload penalty applies (vehicle-dependent).',
+                  ),
+                ]
+              : null,
+            pinnedReadout.feasibility === 'RED'
+              ? [
+                  h('span', { key: 'red-advisory-label' }, ''),
+                  h(
+                    'span',
+                    { key: 'red-advisory-text', style: 'font-size:11px;line-height:1.45;color:#fca5a5;font-style:italic;' },
+                    'Advisory: Dogleg required — plane-change cost NOT in ΔV total (order ~1 km/s per ~7-10 deg, vehicle-dependent).',
+                  ),
+                ]
+              : null,
             props.validatedTarget === undefined
               ? null
               : [
