@@ -17,9 +17,9 @@
 
 | | Commit | Description |
 |-|--------|-------------|
-| **HEAD (local)** | `closeout build commit pending push` | build(slice12): deploy DLA launch-feasibility overlay — slice closed |
-| **origin/main** | `8c1722c` | fix(slice12): signed-field DLA contours (pre-closeout) |
-| **Deployed (gh-pages)** | `closeout build commit pending Hudson push` | Slice 12 DLA overlay build output staged in `docs/` |
+| **HEAD (local)** | `946afed` | build(slice12): deploy DLA launch-feasibility overlay — slice closed |
+| **origin/main** | `946afed` | in sync with local HEAD |
+| **Deployed (gh-pages)** | `946afed` | Slice 12 DLA overlay live from `docs/` |
 
 ---
 
@@ -33,7 +33,7 @@
 | Mission planning | Slice 11.5 (500-body M=1) | COMPLETE (data committed `50b3b68`) |
 | Visualization | Slice V1 (textures + shader + atmosphere) | COMPLETE + DEPLOYED (`3211525`) |
 | Visualization | Visual fixes (top-down, starfield ctrl, labels, halo frame) | COMPLETE + DEPLOYED (`dc44751`) |
-| Mission planning | Slice 12 (DLA overlay) | COMPLETE + DEPLOYED (closeout build commit) |
+| Mission planning | Slice 12 (DLA overlay) | COMPLETE + DEPLOYED (`946afed`) |
 
 **Active founding doc (mission planning):** `src/v2/SLICE_12_FOUNDING.md`
 **Next founding doc to write:** `src/v2/SLICE_13_FOUNDING.md`
@@ -46,7 +46,7 @@
 
 **2. AGENTS.md operating-system commit** — this session's OS files (AGENTS.md, STATUS.md, INVARIANTS.md) landed; verify the tripwire (§2 HEAD-check) actually fires next session before real work begins.
 
-**3. Parked-issue triage** — before Slice 12 code lands, decide which of the 9 parked issues (see §Parked issues) get addressed and which stay parked.
+**3. Parked-issue triage** — before Slice 13 code lands, decide which of the 9 parked issues (see §Parked issues) get addressed and which stay parked.
 
 ---
 
