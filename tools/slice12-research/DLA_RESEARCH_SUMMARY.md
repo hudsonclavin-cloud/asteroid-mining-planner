@@ -8,8 +8,20 @@ Pre-research captured for a future DLA / launch-feasibility porkchop overlay, de
 
 - **DLA = Declination of Launch Asymptote** = angle between the Earth-departure hyperbolic excess velocity vector (v∞) and Earth's equatorial plane.
 - **Hard rule:** |DLA| ≥ |launch-site latitude| for any DIRECT (no-dogleg) prograde launch. Derivation: spherical trig gives cos(i) = cos(φ)·sin(A), where i = orbit inclination, φ = site latitude, A = launch azimuth from north. Minimum inclination is at due-east launch (A=90°) → i = φ. DLA equals departure-trajectory inclination, so |DLA| ≥ |φ|.
+
+  > **ERRATUM (2026-07-02):** The inequality above is INVERTED. A parking orbit of
+  > inclination i contains asymptote declinations |DLA| <= i (RAAN chosen at launch),
+  > so LOW declinations are the free/optimal side and the constraint is
+  > i >= |DLA| with i bounded by the site's azimuth corridor. Verified model and
+  > sources: SLICE_12_FOUNDING.md OQ-12-2 + AMD-12-1 (NASA Trajectory Browser guide;
+  > NASA shuttle-era azimuth limits; DART screening gate |DLA| < 28.5 deg).
+  > This wrong line propagated three times before being contained - do not cite it.
 - **Cape Canaveral:** φ = 28.5°N → cannot directly reach |DLA| < 28.5°. Azimuth corridor 40°–115°.
 - **Vandenberg:** φ = 34.4°N → cannot directly reach |DLA| < 34.4°.
+
+  > **ERRATUM (2026-07-02):** The two site bullets above inherit the same inverted
+  > inequality. Low |DLA| is not the unreachable side for Cape; the sourced band model
+  > is recorded in SLICE_12_FOUNDING.md OQ-12-2 + AMD-12-1.
 
 ---
 

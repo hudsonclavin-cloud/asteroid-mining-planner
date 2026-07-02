@@ -76,6 +76,10 @@ The math is pinned:
 - DLA = arcsin(v∞,Z / |v∞|) where v∞,Z is in **Earth-equatorial** frame.
 - Aster's Lambert solver outputs vInfDep in **heliocentric ecliptic** (AMD-7). One rotation: Rx(-ε), ε≈23.44° (obliquity), ecliptic→equatorial.
 - Feasibility: |DLA| ≥ |site latitude| for direct prograde. Cape 28.5°, Vandenberg 34.4°. Dogleg cost: Δi=10° → ~1.36 km/s (~26% payload loss).
+
+  > **ERRATUM (2026-07-02):** Inequality inverted - see SLICE_12_FOUNDING.md
+  > OQ-12-2 / AMD-12-1 for the corrected, sourced band model. Preserved unedited
+  > as a historical record of the error.
 - Implementation: algebra on existing vInfDep per cell, same marching-squares contours as C3, no new Lambert work.
 - **Verify-before-lock obligation:** validate DLA formula + rotation against poliastro or a known mission's published DLA before any DEC locks.
 
