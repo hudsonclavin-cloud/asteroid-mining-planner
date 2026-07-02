@@ -53,19 +53,14 @@ Two-span split: the **porkchop worker** uses its OWN long-span Earth fixture at 
 (2026–2040 departure window). The **3D scene** uses the 90-day runtime fixture
 (`loadSolarSystemStatesBrowser`). Do not merge these two sources.
 
-### DLA frame conversion (⚠ NOT YET LOCKED — verify before locking, `tools/slice12-research/DLA_RESEARCH_SUMMARY.md`)
+### DLA frame convention (DEC-12-2, LOCKED — measured; do NOT reintroduce the rotation)
 
-Aster's Lambert output (vInfDep) is in **heliocentric ecliptic** frame. The DLA formula needs
-**Earth equatorial** frame. One rotation required:
-
-```
-v∞,Z_equatorial = v∞,Y_ecliptic · sin(ε) + v∞,Z_ecliptic · cos(ε)
-DLA = arcsin(v∞,Z_equatorial / |v∞|)
-ε = 23.44°  (J2000 mean obliquity)
-```
-
-⚠ **Verify-before-lock**: validate against poliastro or a known mission's published DLA before
-any DEC locks. Do not implement without an oracle verification gate.
+DLA components are already ICRF/equatorial (OQ-12-1 measured: Earth velocity Z-component from
+the porkchop worker's own fixture reaches 11.715 km/s, impossible in an ecliptic frame);
+DLA = asin(vZ/|v|) directly, NO rotation. See `src/v2/SLICE_12_FOUNDING.md` OQ-12-1 / DEC-12-2
+and the doc comment in `src/v2/core/lambert/dla.ts`. The pre-lock research summary's
+ecliptic→equatorial obliquity rotation was REJECTED by that measurement — applying it would
+introduce up to ~23.4° of silent error.
 
 ---
 
