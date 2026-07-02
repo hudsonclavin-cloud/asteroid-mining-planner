@@ -7,7 +7,7 @@
 
 ## §Identity
 
-**Canonical repo:** `C:\Users\hudso\asteroid-mining-planner-codex-first-run`
+**Canonical repo:** `C:\Users\hudso\asteroid-mining-planner`
 **Live site:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/solar-system/
 **Porkchop route:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/?body=asteroid-99942
 
