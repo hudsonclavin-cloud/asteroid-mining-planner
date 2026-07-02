@@ -46,12 +46,13 @@ INV-001 through INV-020 remain operative. Specifically load-bearing for this sli
 **Second finding from the same recon (drives DEC-12-5 revision):** the worker's `stripBranch` (`src/v2/porkchop/porkchop.worker.ts:71-77`) posts only scalar magnitudes — vInfDep *vector components never cross the worker boundary*. They exist only inside `grid-compute.ts:111-117`. DLA must therefore be computed in-worker (one line where vInfDepZ already lives) and shipped as an additive scalar payload field.
 
 **OQ-12-2: What is the correct feasibility band model, and what are the site thresholds?**
-**STATUS: OPEN — closes in Phase A via source verification. Note: a live contradiction exists in our own materials.**
-The committed pre-research (query-1-porkchop-conventions.md) states, citing the DART mission study: trajectories were only considered with **|DLA| < 28.5°** (Cape latitude); higher |DLA| needs dog-leg maneuvers. The 2026-06-30 handoff and SLICE_12_PLAN.md state the inequality **inverted** (|DLA| ≥ latitude). Query 1's version is [Likely correct → verify to Certain]: physically, a due-east (minimum-energy) launch from latitude φ produces inclination i = φ, and the departure asymptote must lie within the parking-orbit plane, requiring |DLA| ≤ i. The richer model this slice should verify and, if confirmed, adopt:
-- **GREEN — direct, optimal:** |DLA| ≤ φ_site. Asymptote reachable from the minimum-inclination parking orbit; two daily launch opportunities.
-- **AMBER — direct, penalized:** φ_site < |DLA| ≤ i_max(site). Reachable by raising parking-orbit inclination (losing Earth-rotation assist; performance penalty grows with i). Cape azimuth limits put i_max ≈ 57° (verify).
-- **RED — dogleg required:** |DLA| > i_max(site). Plane-change (dogleg) maneuver required; the summary's cited cost scale (Δi = 10° → ~1.36 km/s, ~26% payload loss) is advisory pending verification.
-Sources for closure: Sergeyevsky et al. interplanetary launch-window literature, JPL Trajectory Browser documentation, the DART trajectory paper already cited in Query 1. The resolution must record the verified inequality direction, the band definitions, and the Cape parameter values with citations. **The inverted line in SLICE_12_PLAN.md gets corrected in the same commit that locks this OQ's DEC.**
+**STATUS: CLOSED 2026-07-02.**
+**Resolution:** The band model is confirmed against primary sources; the 2026-06-30 handoff / SLICE_12_PLAN inequality (|DLA| >= latitude) was inverted and is rejected. Physical basis: |DLA| equals the minimum Earth parking-orbit inclination required for injection, which the launch site's latitude bounds from below (NASA Ames Trajectory Browser User Guide, trajbrowser.arc.nasa.gov/user_guide.php). Verified bands for Cape Canaveral (latitude 28.5 deg):
+- GREEN (direct, optimal): |DLA| <= 28.5 deg. Minimum-inclination direct injection; matches the DART screening gate |DLA| < 28.5 deg already cited in query-1-porkchop-conventions.md.
+- AMBER (direct, penalized): 28.5 deg < |DLA| <= 57 deg. Reachable by raising parking-orbit inclination up to the azimuth-limited ceiling. Cape azimuths are range-safety-limited to 35-120 deg; Az=35 deg yields i=57 deg (NASA, history.nasa.gov/shuttleoverview1988/part1.htm). Performance penalty ~500 lb payload per degree of inclination raise between 28.5 and 57 deg (same source, shuttle-era figure, used as an order-of-magnitude advisory only).
+- RED (dogleg required): |DLA| > 57 deg. Beyond the northerly azimuth ceiling. Sources span 57-59 deg for the ceiling (satobs.org Ch.9: 28.5-59; astronautix.com Cape entry: max 57.0); adopt 57 deg (NASA figure), disclosed.
+Honesty caveat carried into INV-016d disclosure: the band model is a screening simplification. Daily launch-window geometry can bind tighter than the band edges - Mars Global Surveyor performed a dogleg at DLA = 36.5 deg (inside our AMBER band) because its window required the southerly azimuth side, where the ceiling is only ~39 deg (MGS Mission Plan Section 3, msss.com). The overlay classifies screening feasibility, not day-specific launch geometry.
+Canonical reference for the full azimuth-vs-DLA constraint region: JPL Publication 82-43, Interplanetary Mission Design Handbook Vol I Part 2 (Sergeyevsky et al.), Fig. 13 "Permissible regions of azimuth vs asymptote declination launch space for Cape Canaveral" (ntrs.nasa.gov/api/citations/19840010158).
 
 **OQ-12-3: What is the oracle and tolerance bar for DLA validation?**
 **STATUS: OPEN — closes in Phase A.**
@@ -80,10 +81,9 @@ Lean: ship Cape Canaveral only, but implement site constraints as a parameter ob
 - Approximations disclosed per INV-016d: ICRF vs Earth mean equator/equinox of J2000 differ by the ~17 mas frame bias (negligible at degree-scale DLA); DLA is computed against the **J2000** equator, not equator-of-date — precession drift over the 2026–2040 window is ≤ ~0.2°, well inside the OQ-12-3 tolerance bar, and stated in the disclosure rather than corrected.
 - Justification: INV-021 satisfied by measurement (probe output in OQ-12-1); centralizing the frame decision in one commented function is the direct lesson of the halo bug.
 
-**DEC-12-3 (proposed, conditional on OQ-12-2): Feasibility classification.**
+**DEC-12-3 (proposed): Feasibility classification.**
 - Three-state per-cell classification per the GREEN/AMBER/RED band model in OQ-12-2, parameterized by site `{latitudeDeg, iMaxDeg}`.
-- Initial site: Cape Canaveral, latitude 28.5°, i_max pending OQ-12-2 verification (~57°, verify).
-- If OQ-12-2 verification supports only the simpler DART-style single gate with confidence, fall back to two-state (|DLA| ≤ φ feasible / > φ constrained) and record the narrowing as part of the OQ closure.
+- Initial site: Cape Canaveral, latitudeDeg 28.5, iMaxDeg 57 (per OQ-12-2 closure; sources span 57-59, NASA figure adopted).
 
 **DEC-12-4 (proposed): Rendering surface and precedence.**
 - DLA overlay ships on the **dedicated route first** (matches Slice 11 DEC-4's pattern of putting auxiliary overlays dedicated-only); the compact overlay modal gains at most the per-cell readout field, no overlay layer, to preserve its compactness. Extending the overlay modal is a later decision.
@@ -97,7 +97,7 @@ Lean: ship Cape Canaveral only, but implement site constraints as a parameter ob
 - Justification: computing where the data already lives is the minimal-surface change; INV-018 (worker-only grid compute) is if anything better served.
 
 **DEC-12-6 (proposed): ΔV stack separation.**
-- The displayed ΔV stack (DEC-7 / Query 3 §10 model) is NOT modified this slice. RED cells show an *advisory* dogleg-cost note (order-of-magnitude, per verified OQ-12-2 sources) clearly marked as excluded from the stack total, per INV-016d.
+- The displayed ΔV stack (DEC-7 / Query 3 §10 model) is NOT modified this slice. RED cells show an *advisory* dogleg-cost note (order-of-magnitude, per verified OQ-12-2 sources) clearly marked as excluded from the stack total, per INV-016d. AMBER advisory may cite the ~500 lb/deg shuttle-era gradient as order-of-magnitude context, clearly labeled as vehicle-dependent.
 - Justification: pricing plane changes correctly belongs with the Slice 13 ΔV-stack extension; folding an unverified cost model into the audited stack now would trade honesty for completeness.
 
 ---
@@ -144,4 +144,5 @@ Lean: ship Cape Canaveral only, but implement site constraints as a parameter ob
 - **2026-06-30:** Pre-research committed — `8081c0b` docs(slice12): DLA research summary (deferred from Slice 11 per DEC-4). Query 1 (`query-1-porkchop-conventions.md`) already carried the DART DLA convention from Slice 11 pre-research.
 - **2026-07-01:** Founding doc drafted by Nova (Fable 5) — DRAFT status, pending Hudson review/lock. **Two verify-before-lock catches recorded at drafting time:** (1) the feasibility inequality in the 2026-06-30 handoff and SLICE_12_PLAN.md is inverted relative to the committed Query 1 pre-research (Query 1/DART: |DLA| < site latitude is the feasible side); OQ-12-2 verifies and the plan doc gets corrected at closure. (2) The "one Rx(ε) rotation" premise assumes vInfDep is ecliptic-frame; the 2026-07-01 render-pipeline recon proved ingestion rotates to ICRF, so the porkchop-worker frame must be measured (OQ-12-1) before DEC-12-2's function body can be written — magnitude-level poliastro validation (OQ-3) cannot settle component frames.
 - **2026-07-01 (later):** OQ-12-1 CLOSED by read-only frame recon + numerical probe, pre-lock. Verdict: ICRF/equatorial (max Earth |vZ| = 11.715 km/s from the worker's own fixture; ecliptic frame would show ~0). Two draft revisions recorded: DEC-12-2 becomes a no-rotation function with the measurement cited in-code; DEC-12-5 revised from main-thread to in-worker computation after the recon showed `stripBranch` discards vector components at the worker boundary. AMD-7 "heliocentric ecliptic" label flagged as a Slice 11 erratum to correct at lock.
+- **2026-07-02:** OQ-12-2 CLOSED by primary-source verification (NASA Trajectory Browser guide, NASA shuttle reference for Cape azimuth/inclination limits, MGS Mission Plan dogleg example, JPL Pub 82-43 Fig. 13). Handoff's inverted inequality rejected; three-band model GREEN/AMBER/RED locked into DEC-12-3 with Cape {28.5, 57}. All OQs blocking lock are now closed; OQ-12-4 (overlay form) and OQ-12-5 (site scope) remain open by design (Phase C / Hudson's call respectively).
 - *(Lock entry, remaining phase completions, and OQ closures to be appended.)*
