@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
 const tempOutDir = path.join(repoRoot, '.tmp-tests', 'v2-porkchop-grid');
 const neaFixturePath = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');
-const horizonsFixturePath = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-inner-solar-system-2026-2040.json');
+const horizonsFixturePath = path.join(repoRoot, 'src', 'v2', 'data', 'horizons-inner-solar-system-2026-2040.json');
 const secondsPerDay = 86_400;
 const relTol = 1e-12;
 const validatedRoundTripCases = [
@@ -48,10 +48,11 @@ function compileModules() {
   fs.rmSync(tempOutDir, { recursive: true, force: true });
   fs.mkdirSync(tempOutDir, { recursive: true });
 
-  const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
+  const tscBin = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
   const result = spawnSync(
-    tscBin,
+    process.execPath,
     [
+      tscBin,
       '--pretty', 'false',
       '--outDir', tempOutDir,
       '--rootDir', path.join(repoRoot, 'src', 'v2'),
@@ -499,6 +500,7 @@ test('porkchop worker init bootstraps Earth state and strips velocity internals 
             c3: 1.23,
             vInfDep: 1.1,
             vInfArr: 2.2,
+            dlaDeg: null,
             x: -0.2,
           },
         ],

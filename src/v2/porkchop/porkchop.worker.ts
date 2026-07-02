@@ -37,7 +37,9 @@ export interface PorkchopWorkerErrorMessage {
   readonly reason: string;
 }
 
-export type PorkchopWorkerBranch = Omit<PorkchopBranch, 'v1' | 'v2'>;
+export type PorkchopWorkerBranch = Omit<PorkchopBranch, 'v1' | 'v2' | 'dlaDeg'> & {
+  readonly dlaDeg?: number | null;
+};
 export type PorkchopWorkerCell = Omit<PorkchopCell, 'branches'> & {
   readonly branches: readonly PorkchopWorkerBranch[];
 };
@@ -75,6 +77,7 @@ function stripBranch(branch: PorkchopBranch): PorkchopWorkerBranch {
     c3: branch.c3,
     vInfDep: branch.vInfDep,
     vInfArr: branch.vInfArr,
+    dlaDeg: branch.dlaDeg ?? null,
     x: branch.x,
   };
 }

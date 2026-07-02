@@ -2,6 +2,7 @@ import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import type { CanonicalState } from '../core/types.js';
 import { GM_SUN_M3_S2 } from '../core/propagators/keplerian.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../core/units.js';
+import { dlaDegFromVInf } from '../core/lambert/dla.js';
 import { lambertMultiRev, type MultiRevResult } from '../core/lambert/lambert-multi-rev.js';
 
 const METERS_PER_KILOMETER = 1000;
@@ -33,6 +34,7 @@ export interface PorkchopBranch {
   readonly c3: number;
   readonly vInfDep: number;
   readonly vInfArr: number;
+  readonly dlaDeg?: number | null;
   readonly x: number;
   readonly v1: Vec3Km;
   readonly v2: Vec3Km;
@@ -116,6 +118,7 @@ function mapBranches(
     const vInfArrZ = branch.v2[2] - asteroidVelocityKmps[2];
     const vInfDep = magnitude3(vInfDepX, vInfDepY, vInfDepZ);
     const vInfArr = magnitude3(vInfArrX, vInfArrY, vInfArrZ);
+    const dlaDeg = branch.converged ? dlaDegFromVInf(vInfDepX, vInfDepY, vInfDepZ) : null;
 
     branches[index] = {
       branch: branch.branch,
@@ -123,6 +126,7 @@ function mapBranches(
       c3: vInfDep * vInfDep,
       vInfDep,
       vInfArr,
+      dlaDeg,
       x: branch.x,
       v1: branch.v1,
       v2: branch.v2,
