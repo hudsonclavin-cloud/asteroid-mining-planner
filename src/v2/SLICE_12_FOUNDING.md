@@ -102,6 +102,23 @@ Candidate forms: contour lines at |DLA| = φ_site (and ± i_max if the band mode
 
 ---
 
+## §5a. Post-lock amendments
+
+**AMD-12-1 (2026-07-02, amends DEC-12-3): feasibility band model corrected — the GREEN edge is the site's minimum achievable inclination, not its latitude.**
+
+- The original DEC-12-3 parameterization `{latitudeDeg, iMaxDeg}` with GREEN = |DLA| <= latitudeDeg encoded "minimum achievable inclination = site latitude," which holds only where due-east (Az=90 deg) launch is permitted. Cape satisfies it (azimuths 35-120 deg); Vandenberg does not (azimuths 158-201 deg, minimum inclination ~70 deg) — its shipped entry {latitudeDeg 34.7, iMaxDeg 100.4} was wrong in structure and value. Trigger: Phase E audit H-1, confirmed by three independent lenses + production-grid probe (1,502/17,477 Apophis cells misclassified with Vandenberg selected; RED tier unreachable at threshold 100.4 since |DLA| = arcsin(.) <= 90 deg identically). Report: `C:\Users\hudso\aster-audit-reports\slice12-phaseE-audit.md`.
+- **Corrected model:** `LaunchSite = { name, latitudeDeg (descriptive metadata), iMinDeg, iMaxDeg (max corridor inclination, metadata), dlaCeilingDeg (classification ceiling) }`. Classification uses iMinDeg and dlaCeilingDeg only:
+  - GREEN: |DLA| <= iMinDeg — reachable from the site's minimum-inclination orbit (a plane of inclination i contains every asymptote declination |delta| <= i; the constraint is i >= |DLA|, an inequality).
+  - AMBER: iMinDeg < |DLA| <= dlaCeilingDeg — direct but penalized; parking-orbit inclination must be raised to at least |DLA| (the OQ-12-2 band semantics, preserved unchanged by this amendment).
+  - RED: |DLA| > dlaCeilingDeg — dogleg required.
+  - null: DLA null or non-finite (NaN/±Infinity guard added to classifyFeasibility — audit M-A, partial).
+- `dlaCeilingDeg` is the maximum |DLA| coplanar-injectable from the corridor: coverage(i) = min(i, 180 deg − i), maximized over achievable inclinations. Cape: 57 (all-prograde corridor, coverage = iMax). Vandenberg: 90 (corridor spans Az=180 deg → polar orbit covers all declinations). Raw iMaxDeg (57 Cape / 104 Vandenberg) is retained as sourced metadata; it is NOT a valid |DLA| threshold once inclinations exceed 90 deg.
+- **Sites:** CAPE_CANAVERAL {latitudeDeg 28.5, iMinDeg 28.5, iMaxDeg 57, dlaCeilingDeg 57} — classification effect bit-identical to pre-amendment behavior at every |DLA|. VANDENBERG_SFB {latitudeDeg 34.7, iMinDeg 70, iMaxDeg 104, dlaCeilingDeg 90} — GREEN edge corrected 34.7 → 70; RED legitimately empty at screening level (polar-capable corridor).
+- **Sources:** NASA Shuttle overview 1988 (Cape Az 35-120 deg → i 28.5-57 deg; Vandenberg Az 158-201 deg → i 70-104 deg, history.nasa.gov/shuttleoverview1988/part1.htm); USPTO 4,368,578 ("approximately 70 and 104 degrees"); orbitalradar.com Vandenberg profile ("70 deg to retrograde"); spherical cross-check cos(i) = cos(34.7 deg)·sin(158 deg) → 72.06 deg, consistent with the sourced 70 deg operational floor (rotating-Earth azimuth correction, same ~2-3 deg class as Cape's 59.7→57).
+- **Execution note (recorded per verify-before-lock):** the dispatch draft for this amendment proposed inverted band semantics (GREEN = the [iMin, iMax] band; AMBER below iMin as "plane change down required"). Execution stopped and corrected the mapping: a below-minimum-inclination declination needs NO plane change (i >= |DLA| suffices), and the draft mapping contradicted the OQ-12-2 closure and its cited sources (NASA Trajectory Browser: |DLA| = minimum REQUIRED inclination; DART screening gate: |DLA| < 28.5 is the feasible side). OQ-12-2 remains closed as written. This is the third resurrection of the inverted-inequality error documented in §8 (2026-07-01 catch #1) and audit finding M-E — the doc-fanout dispatch correcting DLA_RESEARCH_SUMMARY.md/HANDOFF.md is now urgent.
+
+---
+
 ## §6. Phase breakdown
 
 **Phase A — Formula verification (≈2 dispatches). STOP-gated.**
@@ -147,4 +164,5 @@ Candidate forms: contour lines at |DLA| = φ_site (and ± i_max if the band mode
 - **2026-07-02:** OQ-12-2 CLOSED by primary-source verification (NASA Trajectory Browser guide, NASA shuttle reference for Cape azimuth/inclination limits, MGS Mission Plan dogleg example, JPL Pub 82-43 Fig. 13). Handoff's inverted inequality rejected; three-band model GREEN/AMBER/RED locked into DEC-12-3 with Cape {28.5, 57}. Measurement/source OQs blocking lock are now closed; OQ-12-4 (overlay form) remains open by design for Phase C, and OQ-12-5 remained pending Hudson's lock call.
 - **2026-07-02: FOUNDING DOC LOCKED.** Six DECs locked (DEC-12-5 as revised pre-lock). OQ-12-1, OQ-12-2 closed pre-lock by measurement/sources; OQ-12-5 closed at lock (Hudson's call); OQ-12-3 closes in Phase A, OQ-12-4 in Phase C. AMD-7 erratum recorded in SLICE_11_FOUNDING.md. Phase A implementation dispatches may now be written against this contract.
 - **2026-07-02:** OQ-12-3 CLOSED by DLA oracle validation against poliastro (`3926d54`). Apophis 25x25 grid, compared 625 cells; max |delta DLA| = 1.7053025658242404e-13 deg, RMS = 1.6758652100217005e-14 deg, branch mismatches 0, skipped-low-vInf 0. Data: `tools/slice12-research/data/dla-oracle-validation.json`.
+- **2026-07-02 (post-Phase-E-audit):** AMD-12-1 recorded (§5a) — DEC-12-3 band model corrected per audit H-1: LaunchSite re-shaped to {latitudeDeg (metadata), iMinDeg, iMaxDeg (metadata), dlaCeilingDeg}; Vandenberg re-parameterized {34.7, 70, 104, 90} with NASA/USPTO sources; NaN/±Infinity guard added to classifyFeasibility (audit M-A, partial). Audit report: `C:\Users\hudso\aster-audit-reports\slice12-phaseE-audit.md`. The dispatch draft's inverted mapping (AMBER below iMin) was caught at execution and corrected against OQ-12-2 — see AMD-12-1 execution note.
 - *(Lock entry, remaining phase completions, and OQ closures to be appended.)*
