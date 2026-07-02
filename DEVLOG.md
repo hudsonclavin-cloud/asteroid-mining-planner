@@ -1,5 +1,23 @@
 # Aster Physics Approximations — DEVLOG
 
+## Slice 12 — DLA / Launch-Feasibility Overlay Shipped (2026-07-02)
+
+Slice 12 shipped the dedicated porkchop DLA / launch-feasibility overlay: per-cell
+DLA from ICRF `vInfDep` components with no rotation after the worker frame was measured,
+three-band site classification for Cape and Vandenberg using the corrected iMin/ceiling
+model from AMD-12-1, signed-field contour pairs, selected-cell badge site attribution,
+and INV-016d screening disclosures.
+
+Validation closed both DLA paths: the Phase A M=0 Apophis oracle matched poliastro to
+max |delta DLA| = 1.7053025658242404e-13 deg over 625 cells, and the Phase E M=1
+vector-direction oracle matched 921 shipped multi-rev selected cells at machine precision
+with max angular separation 5.74e-13 deg and max |delta DLA| 5.61e-13 deg.
+
+The Phase E three-lens audit found 2 HIGH and 5 MEDIUM findings; all were resolved
+pre-deploy. Three inverted-premise catches were recorded: the feasibility inequality
+twice and the obsolete obliquity-rotation premise once. All were caught by measurement,
+source verification, or tripwire discipline before poisoning the substrate.
+
 ## Phase 6 — Docs / Hygiene / Zero-Build Smoke Checks (2026-04-21)
 
 This pass intentionally avoided renderer and worker code changes. The goal was to put

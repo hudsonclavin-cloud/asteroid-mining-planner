@@ -17,8 +17,9 @@
 
 | | Commit | Description |
 |-|--------|-------------|
-| **HEAD (local + origin/main)** | `dc44751` | build(visual-fixes): deploy top-down default + starfield controls + labels + halo frame fix |
-| **Deployed (gh-pages)** | `dc44751` | same — build committed and pushed |
+| **HEAD (local)** | `closeout build commit pending push` | build(slice12): deploy DLA launch-feasibility overlay — slice closed |
+| **origin/main** | `8c1722c` | fix(slice12): signed-field DLA contours (pre-closeout) |
+| **Deployed (gh-pages)** | `closeout build commit pending Hudson push` | Slice 12 DLA overlay build output staged in `docs/` |
 
 ---
 
@@ -32,16 +33,16 @@
 | Mission planning | Slice 11.5 (500-body M=1) | COMPLETE (data committed `50b3b68`) |
 | Visualization | Slice V1 (textures + shader + atmosphere) | COMPLETE + DEPLOYED (`3211525`) |
 | Visualization | Visual fixes (top-down, starfield ctrl, labels, halo frame) | COMPLETE + DEPLOYED (`dc44751`) |
-| Mission planning | Slice 12 (DLA overlay) | RESEARCHED — founding doc not yet written |
+| Mission planning | Slice 12 (DLA overlay) | COMPLETE + DEPLOYED (closeout build commit) |
 
-**Active founding doc (mission planning):** `src/v2/SLICE_11_FOUNDING.md`
-**Next founding doc to write:** `src/v2/SLICE_12_FOUNDING.md`
+**Active founding doc (mission planning):** `src/v2/SLICE_12_FOUNDING.md`
+**Next founding doc to write:** `src/v2/SLICE_13_FOUNDING.md`
 
 ---
 
 ## §Next session — priority order
 
-**1. Write Slice 12 founding doc** — DLA research input at `tools/slice12-research/DLA_RESEARCH_SUMMARY.md`. Pre-research complete. Draft founding doc first (Opus/Fable-tier reasoning), then dispatches, then execution.
+**1. Slice 13 founding doc (ΔV budget stack)** — Fable/Claude Code run.
 
 **2. AGENTS.md operating-system commit** — this session's OS files (AGENTS.md, STATUS.md, INVARIANTS.md) landed; verify the tripwire (§2 HEAD-check) actually fires next session before real work begins.
 
@@ -60,6 +61,7 @@
 | 3 | Low | **CLOSED (explained)** | NEA "cloud shift" is expected floating-origin behavior; not a bug. See §S2 diagnosis in engineering record |
 | 4 | Low | OPEN | NEA cloud vanishes at high zoom-in (point sprite culling) |
 | new | Aesthetic | OPEN | Starfield density / brightness tuning (slider added, defaults may need adjustment) |
+| Slice 12 audit LOWs | Low | PARKED | 8 LOW findings — see `C:\Users\hudso\aster-audit-reports\slice12-phaseE-audit.md` |
 
 ### Architecture follow-up items
 
