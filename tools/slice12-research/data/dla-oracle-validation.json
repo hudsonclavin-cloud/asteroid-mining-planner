@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-02T04:40:47.642Z",
+  "harness": {
+    "entryPoint": "tools/slice11-research/measurements/poliastro-validation.mjs pattern reused with tools/slice12-research/dla-oracle-grid.py",
+    "poliastroPython": "C:\\Users\\hudso\\.aster-slice11-venv\\Scripts\\python.exe",
+    "body": {
+      "designation": "99942",
+      "name": "99942 Apophis (2004 MN4)"
+    },
+    "gridSize": {
+      "departure": 25,
+      "tof": 25
+    },
+    "window": {
+      "departureStartUtc": "2026-01-01",
+      "departureEndUtc": "2032-01-01",
+      "tofMinDays": 182.5,
+      "tofMaxDays": 1095.75
+    }
+  },
+  "bar": {
+    "maxAbsDlaDeg": 0.000001,
+    "minVInfKmps": 0.1,
+    "pass": true,
+    "justification": "Same states, same ICRF frame, and closed-form DLA algebra on solver vectors; 1e-6 deg absorbs solver representation differences."
+  },
+  "summary": {
+    "comparedCells": 625,
+    "skippedLowVInfCells": 0,
+    "branchMismatchCells": 0,
+    "maxAbsDeltaDeg": 1.7053025658242404e-13,
+    "rmsDeltaDeg": 1.6758652100217005e-14,
+    "maxCell": {
+      "index": 153,
+      "depDate": "2027-07-02",
+      "tofDays": 296.65625,
+      "oursDlaDeg": 34.92820122078501,
+      "poliastroDlaDeg": 34.92820122078484,
+      "deltaDeg": 1.7053025658242404e-13,
+      "oursVInfDepMag": 1.275293789763447,
+      "poliastroVInfDepMag": 1.2752937897634524
+    }
+  },
+  "branchMismatches": [],
+  "skippedLowVInf": []
+}
