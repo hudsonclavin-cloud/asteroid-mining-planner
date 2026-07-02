@@ -144,6 +144,7 @@ const script = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
 ```
 
 Do NOT use bare `'tsc'` — it is not on PATH in Windows build environments.
+`node_modules/.bin/tsc` shims return `status:null` under `spawnSync` on Windows — never spawn the shim; always use `process.execPath` + `node_modules/typescript/bin/tsc`.
 
 ### Build script
 
