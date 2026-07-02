@@ -2,6 +2,11 @@ import { h } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../core/units.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
+import {
+  CAPE_CANAVERAL,
+  classifyFeasibility,
+  type FeasibilityClass,
+} from '../core/lambert/feasibility.js';
 import type { PorkchopGridParams } from './grid-compute.js';
 import type { PorkchopClient } from './porkchop-client.js';
 import type { PorkchopWorkerCell } from './porkchop.worker.js';
@@ -97,6 +102,18 @@ const TOOLTIP_STYLE = [
   'z-index:2',
 ].join(';');
 
+const FEASIBILITY_BADGE_STYLE: Record<Exclude<FeasibilityClass, null>, string> = {
+  GREEN: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#22c55e;color:#04130a;font-size:11px;font-weight:700;',
+  AMBER: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#f59e0b;color:#170f02;font-size:11px;font-weight:700;',
+  RED: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#ef4444;color:#1f0505;font-size:11px;font-weight:700;',
+};
+
+const FEASIBILITY_BADGE_LABEL: Record<Exclude<FeasibilityClass, null>, string> = {
+  GREEN: 'Direct',
+  AMBER: 'Penalized',
+  RED: 'Dogleg req.',
+};
+
 export interface PorkchopViewProps {
   readonly client: PorkchopClient;
   readonly bodyId: string;
@@ -123,6 +140,8 @@ export interface PorkchopPinnedReadout {
   readonly c3: number | null;
   readonly vInfDep: number | null;
   readonly vInfArr: number | null;
+  readonly dlaDeg: number | null;
+  readonly feasibility: FeasibilityClass;
 }
 
 interface HoverTooltipPosition {
@@ -267,10 +286,13 @@ function buildPinnedReadout(cell: PorkchopWorkerCell): PorkchopPinnedReadout {
       c3: null,
       vInfDep: null,
       vInfArr: null,
+      dlaDeg: null,
+      feasibility: null,
     };
   }
 
   const branch = cell.branches[cell.selectedBranch];
+  const dlaDeg = branch?.dlaDeg ?? null;
   return {
     status: cell.status,
     depJD: cell.depJD,
@@ -282,7 +304,16 @@ function buildPinnedReadout(cell: PorkchopWorkerCell): PorkchopPinnedReadout {
     c3: branch?.c3 ?? null,
     vInfDep: branch?.vInfDep ?? null,
     vInfArr: branch?.vInfArr ?? null,
+    dlaDeg,
+    feasibility: classifyFeasibility(dlaDeg, CAPE_CANAVERAL),
   };
+}
+
+function renderFeasibilityBadge(feasibility: FeasibilityClass) {
+  if (feasibility === null) {
+    return null;
+  }
+  return h('span', { style: FEASIBILITY_BADGE_STYLE[feasibility] }, FEASIBILITY_BADGE_LABEL[feasibility]);
 }
 
 function getGridIndicesForCell(
@@ -806,6 +837,19 @@ export function PorkchopView(props: PorkchopViewProps) {
             h('span', null, pinnedReadout.selectedBranchIndex === null ? 'n/a' : String(pinnedReadout.selectedBranchIndex)),
             h('span', null, 'C3'),
             h('span', null, pinnedReadout.c3 === null ? 'n/a' : `${formatNumber(pinnedReadout.c3, 6)} km²/s²`),
+            h('span', null, 'DLA'),
+            h(
+              'span',
+              { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' },
+              pinnedReadout.dlaDeg === null ? '—' : `${formatNumber(pinnedReadout.dlaDeg, 1)}°`,
+              renderFeasibilityBadge(pinnedReadout.feasibility),
+            ),
+            h('span', null, ''),
+            h(
+              'span',
+              { style: 'font-size:11px;line-height:1.45;color:#93a4bf;font-style:italic;' },
+              'Screening estimate. Actual launch geometry may differ (see azimuth constraints).',
+            ),
             props.validatedTarget === undefined
               ? null
               : [
