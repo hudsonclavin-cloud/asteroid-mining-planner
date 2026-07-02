@@ -179,9 +179,11 @@ const C3_CONTOUR_LEVELS: readonly ContourLevel[] = [
 ];
 
 function buildDlaContourLevels(site: LaunchSite): readonly ContourLevel[] {
+  // Band edges per AMD-12-1: green = GREEN/AMBER boundary (iMinDeg), red = AMBER/RED
+  // boundary (dlaCeilingDeg). NOT latitude / raw iMax — see SLICE_12_FOUNDING.md AMD-12-1.
   return [
-    { value: site.latitudeDeg, strokeStyle: '#22c55e' },
-    { value: site.iMaxDeg, strokeStyle: '#ef4444' },
+    { value: site.iMinDeg, strokeStyle: '#22c55e' },
+    { value: site.dlaCeilingDeg, strokeStyle: '#ef4444' },
   ];
 }
 
