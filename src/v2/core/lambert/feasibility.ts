@@ -7,6 +7,18 @@ export const CAPE_CANAVERAL: LaunchSite = {
   iMaxDeg: 57,
 };
 
+export const VANDENBERG_SFB: LaunchSite = {
+  name: 'Vandenberg SFB',
+  latitudeDeg: 34.7,
+  // Vandenberg azimuth range 158-201 covers inclinations ~65-~115;
+  // practical prograde interplanetary ceiling is debated, so use 100.4
+  // (complement of 79.6 retrograde minimum) as a conservative upper bound.
+  // INV-016d disclosure covers edge cases.
+  iMaxDeg: 100.4,
+};
+
+export const LAUNCH_SITES: ReadonlyArray<LaunchSite> = [CAPE_CANAVERAL, VANDENBERG_SFB];
+
 /**
  * Classify a DLA value against a launch site's constraints.
  * GREEN: |DLA| <= latitudeDeg (direct, minimum-inclination injection)
