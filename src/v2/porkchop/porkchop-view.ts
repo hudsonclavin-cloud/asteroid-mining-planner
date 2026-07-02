@@ -180,12 +180,19 @@ const C3_CONTOUR_LEVELS: readonly ContourLevel[] = [
   { value: 300, strokeStyle: 'rgba(255,255,255,0.72)' },
 ];
 
-function buildDlaContourLevels(site: LaunchSite): readonly ContourLevel[] {
+export function buildDlaContourLevels(site: LaunchSite): readonly ContourLevel[] {
   // Band edges per AMD-12-1: green = GREEN/AMBER boundary (iMinDeg), red = AMBER/RED
   // boundary (dlaCeilingDeg). NOT latitude / raw iMax — see SLICE_12_FOUNDING.md AMD-12-1.
+  // Contoured as ± pairs on the SIGNED dlaDeg field (Phase E audit M-D): |DLA| = L is the
+  // union of the DLA = +L and DLA = −L level sets, and marching squares on the folded
+  // |DLA| field misses/misplaces crossings wherever the sign flips between adjacent
+  // cells. Each ± pair shares one style, so the legend's two |DLA|-threshold entries
+  // remain accurate.
   return [
     { value: site.iMinDeg, strokeStyle: '#22c55e' },
+    { value: -site.iMinDeg, strokeStyle: '#22c55e' },
     { value: site.dlaCeilingDeg, strokeStyle: '#ef4444' },
+    { value: -site.dlaCeilingDeg, strokeStyle: '#ef4444' },
   ];
 }
 
@@ -423,12 +430,13 @@ function getSelectedBranchC3(cell: PorkchopWorkerCell): number | null {
   return cell.branches[cell.selectedBranch]?.c3 ?? null;
 }
 
-function getSelectedBranchAbsDla(cell: PorkchopWorkerCell): number | null {
+// SIGNED selected-branch DLA — deliberately NOT folded with Math.abs (audit M-D):
+// the ± contour levels from buildDlaContourLevels do the folding exactly.
+export function getSelectedBranchDla(cell: PorkchopWorkerCell): number | null {
   if (cell.status !== 'ok' || cell.selectedBranch === null) {
     return null;
   }
-  const dlaDeg = cell.branches[cell.selectedBranch]?.dlaDeg ?? null;
-  return dlaDeg === null ? null : Math.abs(dlaDeg);
+  return cell.branches[cell.selectedBranch]?.dlaDeg ?? null;
 }
 
 function interpolateEdge(level: number, startValue: number, endValue: number): number {
@@ -439,7 +447,9 @@ function interpolateEdge(level: number, startValue: number, endValue: number): n
   return Math.min(1, Math.max(0, (level - startValue) / delta));
 }
 
-function buildContourSegments(
+// Exported for external verification probes/tests only (audit-verified core, 16/16
+// case table — do not modify the algorithm).
+export function buildContourSegments(
   cells: readonly PorkchopWorkerCell[],
   gridParams: PorkchopGridParams,
   levels: readonly ContourLevel[],
@@ -532,7 +542,7 @@ export function PorkchopView(props: PorkchopViewProps) {
   );
   const dlaContourLevels = useMemo(() => buildDlaContourLevels(launchSite), [launchSite]);
   const dlaContourSegments = useMemo(
-    () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, dlaContourLevels, getSelectedBranchAbsDla)),
+    () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, dlaContourLevels, getSelectedBranchDla)),
     [cells, dlaContourLevels, props.gridParams],
   );
 
