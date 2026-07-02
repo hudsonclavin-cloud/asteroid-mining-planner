@@ -1,6 +1,6 @@
 # Slice 12 Founding Document — DLA / Launch-Feasibility Overlay
 
-**Status:** DRAFT — pending Hudson review and lock. DECs below are PROPOSED, not locked.
+**Status:** LOCKED 2026-07-02
 **Author:** Nova (Fable 5 draft) for Hudson Clavin
 **Prior slice:** Slice 11 (porkchop visualization + ΔV stack, deployed at https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/?body=asteroid-99942) + visual-fix track (top-down default, labels, halo frame fix, deployed dc44751)
 **Next slice (candidates):** Slice 13 (ΔV budget stack extension — dogleg cost integration lands there)
@@ -63,40 +63,40 @@ Candidates: (a) construct DLA in poliastro from the same states our solver uses 
 Candidate forms: contour lines at |DLA| = φ_site (and ± i_max if the band model locks), a hatched or desaturated mask over RED cells, or a discrete three-color tint layer. Constraint: must coexist legibly with the existing C3 heatmap + contours + M-branch encodings without turning the plot into noise. Decide against the real rendered grid, not in the abstract.
 
 **OQ-12-5: Site model scope for this slice — Cape-only or site picker?**
-**STATUS: OPEN — scope decision for Hudson at lock, not a measurement.**
-Lean: ship Cape Canaveral only, but implement site constraints as a parameter object `{name, latitudeDeg, iMaxDeg}` so adding Vandenberg (or Boca Chica, Kourou) later is data, not code. A picker UI is deferred unless Hudson pulls it in.
+**STATUS: CLOSED 2026-07-02.**
+**Resolution:** Picker this slice; site constraints are implemented as parameter objects per DEC-12-3, so additional sites are data, not code. Phase D expands to include the site picker UI and initial site list.
 
 ---
 
-## §5. Proposed DECs (PENDING LOCK — Hudson approves, amends, or rejects each)
+## §5. Locked DECs
 
-**DEC-12-1 (proposed): DLA definition and computation point.**
+**DEC-12-1: DLA definition and computation point.**
 - DLA = arcsin(v∞,Z_equatorial / |v∞|), in degrees for display, computed per cell from the **selectedBranch** vInfDep (consistent with Slice 11's selected-branch convention for C3).
 - Cells with no converged selected branch, or |v∞| below a guard epsilon (proposed 1 m/s), carry DLA = null and are skipped by overlays — mirroring the existing "cells without a valid selected-branch C3 are skipped" contour rule.
 - Justification: matches the JPL Trajectory Browser definition ("angle of v∞ to the equatorial plane," per Query 1) and DART-study usage.
 
-**DEC-12-2 (proposed, updated per OQ-12-1 closure): Frame handling — no rotation; the decision lives in one documented function.**
+**DEC-12-2 (updated per OQ-12-1 closure): Frame handling — no rotation; the decision lives in one documented function.**
 - Per the measured OQ-12-1 result, vInfDep components are already heliocentric ICRF (equatorial-aligned): DLA = arcsin(vInfDepZ / |vInfDep|) with **no rotation**. The DLA computation (`dlaDegFromVInf()` or equivalent) carries a doc comment citing the OQ-12-1 probe as the reason no obliquity rotation appears — so a future reader who "knows" a rotation is needed finds the measurement before reintroducing the bug.
 - Unit tests pin the convention with constructed fixtures: a vector in the equatorial plane → DLA = 0; a pure +Z vector → DLA = +90°; a known 45° case; the |v∞| < ε guard → null.
 - Approximations disclosed per INV-016d: ICRF vs Earth mean equator/equinox of J2000 differ by the ~17 mas frame bias (negligible at degree-scale DLA); DLA is computed against the **J2000** equator, not equator-of-date — precession drift over the 2026–2040 window is ≤ ~0.2°, well inside the OQ-12-3 tolerance bar, and stated in the disclosure rather than corrected.
 - Justification: INV-021 satisfied by measurement (probe output in OQ-12-1); centralizing the frame decision in one commented function is the direct lesson of the halo bug.
 
-**DEC-12-3 (proposed): Feasibility classification.**
+**DEC-12-3: Feasibility classification.**
 - Three-state per-cell classification per the GREEN/AMBER/RED band model in OQ-12-2, parameterized by site `{latitudeDeg, iMaxDeg}`.
 - Initial site: Cape Canaveral, latitudeDeg 28.5, iMaxDeg 57 (per OQ-12-2 closure; sources span 57-59, NASA figure adopted).
 
-**DEC-12-4 (proposed): Rendering surface and precedence.**
+**DEC-12-4: Rendering surface and precedence.**
 - DLA overlay ships on the **dedicated route first** (matches Slice 11 DEC-4's pattern of putting auxiliary overlays dedicated-only); the compact overlay modal gains at most the per-cell readout field, no overlay layer, to preserve its compactness. Extending the overlay modal is a later decision.
 - Toggle default OFF (matches contour-overlay precedent) so the base heatmap stays unobscured.
 - Legend and INV-016d disclosure ship with the toggle, not after.
 
-**DEC-12-5 (proposed, REVISED per OQ-12-1 recon): Computation locus — in-worker, one additive payload scalar.**
+**DEC-12-5 (revised pre-lock per OQ-12-1 recon): Computation locus — in-worker, one additive payload scalar.**
 - The original proposal (main-thread computation from returned vectors) is **invalidated by measurement**: `stripBranch` posts only scalar magnitudes; vInfDep components never leave the worker. DEC-8's payload field `vInfDep` is the magnitude, not the vector.
 - Revised: compute `dlaDeg` inside the worker at `grid-compute.ts` (~line 111-117), where `vInfDepX/Y/Z` already exist — one `Math.asin(vInfDepZ / vInfDep)` per converged branch — and add `dlaDeg` as an **additive scalar field** to the branch payload through `stripBranch`. Feasibility classification (band comparison against site parameters) stays main-thread at render/readout time, since site selection is a UI concern.
 - The worker message schema change is additive-only (one optional number per branch); existing consumers are unaffected. This touches grid assembly, not `lambert()` — INV-019 (audited Lambert layer untouched) holds. Alternative rejected: shipping the 3-component vectors per branch would grow the payload ~3× more for no benefit, since DLA is the only component-derived quantity this slice needs.
 - Justification: computing where the data already lives is the minimal-surface change; INV-018 (worker-only grid compute) is if anything better served.
 
-**DEC-12-6 (proposed): ΔV stack separation.**
+**DEC-12-6: ΔV stack separation.**
 - The displayed ΔV stack (DEC-7 / Query 3 §10 model) is NOT modified this slice. RED cells show an *advisory* dogleg-cost note (order-of-magnitude, per verified OQ-12-2 sources) clearly marked as excluded from the stack total, per INV-016d. AMBER advisory may cite the ~500 lb/deg shuttle-era gradient as order-of-magnitude context, clearly labeled as vehicle-dependent.
 - Justification: pricing plane changes correctly belongs with the Slice 13 ΔV-stack extension; folding an unverified cost model into the audited stack now would trade honesty for completeness.
 
@@ -120,7 +120,7 @@ Lean: ship Cape Canaveral only, but implement site constraints as a parameter ob
 - Hudson visual gate before commit (UI STOP-gate rule, AGENTS.md §2).
 
 **Phase D — Site parameterization (≈1 dispatch, may fold into C).**
-- Site object per DEC-12-3/OQ-12-5 resolution; Cape values wired; no picker unless pulled in at lock.
+- Site object per DEC-12-3/OQ-12-5 resolution; Cape values wired as default; picker UI and initial site list included per Hudson lock decision.
 
 **Phase E — Audit + deploy (≈2 dispatches).**
 - Multi-agent audit on the Phase A functions (mathematician re-derives the rotation + arcsin from the frame definitions; adversarial hunts edge cases: |v∞|→0, polar asymptotes DLA→±90°, branch-selection interaction, sign conventions at the equinoxes; architect confirms the single-pure-function containment). Cheap because the surface is small; run the full pattern anyway — it is the discipline, and frame math is exactly where it has paid off.
@@ -134,7 +134,7 @@ Lean: ship Cape Canaveral only, but implement site constraints as a parameter ob
 - RLA (right ascension of launch asymptote) overlay — cheap to add to the readout later; deliberately excluded to keep this slice's validation surface minimal.
 - Arrival-side declination (DAP) and arrival-geometry constraints.
 - Launch-vehicle performance curves (payload vs C3) — Slice 13 territory per the candidate roadmap.
-- Multi-site picker UI; Vandenberg/other site data beyond the parameter shape.
+- Launch-site catalog breadth beyond the initial picker list.
 - Daily launch-window geometry (RLA-vs-GST timing, two-window structure) — mission-ops depth beyond a screening tool this slice.
 
 ---
@@ -144,5 +144,6 @@ Lean: ship Cape Canaveral only, but implement site constraints as a parameter ob
 - **2026-06-30:** Pre-research committed — `8081c0b` docs(slice12): DLA research summary (deferred from Slice 11 per DEC-4). Query 1 (`query-1-porkchop-conventions.md`) already carried the DART DLA convention from Slice 11 pre-research.
 - **2026-07-01:** Founding doc drafted by Nova (Fable 5) — DRAFT status, pending Hudson review/lock. **Two verify-before-lock catches recorded at drafting time:** (1) the feasibility inequality in the 2026-06-30 handoff and SLICE_12_PLAN.md is inverted relative to the committed Query 1 pre-research (Query 1/DART: |DLA| < site latitude is the feasible side); OQ-12-2 verifies and the plan doc gets corrected at closure. (2) The "one Rx(ε) rotation" premise assumes vInfDep is ecliptic-frame; the 2026-07-01 render-pipeline recon proved ingestion rotates to ICRF, so the porkchop-worker frame must be measured (OQ-12-1) before DEC-12-2's function body can be written — magnitude-level poliastro validation (OQ-3) cannot settle component frames.
 - **2026-07-01 (later):** OQ-12-1 CLOSED by read-only frame recon + numerical probe, pre-lock. Verdict: ICRF/equatorial (max Earth |vZ| = 11.715 km/s from the worker's own fixture; ecliptic frame would show ~0). Two draft revisions recorded: DEC-12-2 becomes a no-rotation function with the measurement cited in-code; DEC-12-5 revised from main-thread to in-worker computation after the recon showed `stripBranch` discards vector components at the worker boundary. AMD-7 "heliocentric ecliptic" label flagged as a Slice 11 erratum to correct at lock.
-- **2026-07-02:** OQ-12-2 CLOSED by primary-source verification (NASA Trajectory Browser guide, NASA shuttle reference for Cape azimuth/inclination limits, MGS Mission Plan dogleg example, JPL Pub 82-43 Fig. 13). Handoff's inverted inequality rejected; three-band model GREEN/AMBER/RED locked into DEC-12-3 with Cape {28.5, 57}. All OQs blocking lock are now closed; OQ-12-4 (overlay form) and OQ-12-5 (site scope) remain open by design (Phase C / Hudson's call respectively).
+- **2026-07-02:** OQ-12-2 CLOSED by primary-source verification (NASA Trajectory Browser guide, NASA shuttle reference for Cape azimuth/inclination limits, MGS Mission Plan dogleg example, JPL Pub 82-43 Fig. 13). Handoff's inverted inequality rejected; three-band model GREEN/AMBER/RED locked into DEC-12-3 with Cape {28.5, 57}. Measurement/source OQs blocking lock are now closed; OQ-12-4 (overlay form) remains open by design for Phase C, and OQ-12-5 remained pending Hudson's lock call.
+- **2026-07-02: FOUNDING DOC LOCKED.** Six DECs locked (DEC-12-5 as revised pre-lock). OQ-12-1, OQ-12-2 closed pre-lock by measurement/sources; OQ-12-5 closed at lock (Hudson's call); OQ-12-3 closes in Phase A, OQ-12-4 in Phase C. AMD-7 erratum recorded in SLICE_11_FOUNDING.md. Phase A implementation dispatches may now be written against this contract.
 - *(Lock entry, remaining phase completions, and OQ closures to be appended.)*

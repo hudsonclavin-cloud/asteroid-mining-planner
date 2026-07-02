@@ -256,6 +256,8 @@ The porkchop grid uses the same Earth-departure Lambert convention as the extern
 
 This is recorded as explicit contract because it is not otherwise stated in §5 — it lived only in the research scripts, and a Dispatch 40 drafting error briefly proposed a target-to-target convention before recon caught it. Pinning it here prevents future re-derivation. Units inside the worker: meters, m/s, TDB seconds since J2000; the message boundary uses JD + `tofDays` (per AMD-1). Committed `916417e`.
 
+> **ERRATUM (2026-07-02, recorded at Slice 12 lock):** the frame label above is incorrect for vector components. Measurement (Slice 12 OQ-12-1 probe: Earth velocity Z-component from the porkchop worker's own fixture reaches 11.715 km/s, impossible in an ecliptic frame) established that vInfDep components are heliocentric ICRF (equatorial-aligned) J2000. Magnitudes (C3, |vInf|) were and remain frame-invariant and unaffected. See src/v2/SLICE_12_FOUNDING.md OQ-12-1.
+
 ---
 
 **AMD-8 — DEC-8 timing reality + full-resolution decision (amends DEC-8).**
