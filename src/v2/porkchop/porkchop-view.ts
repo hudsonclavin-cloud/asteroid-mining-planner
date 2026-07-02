@@ -122,6 +122,7 @@ export interface PorkchopViewProps {
   readonly gridParams: PorkchopGridParams;
   readonly M: number;
   readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
+  readonly showDlaOverlayControl?: boolean | undefined;
   readonly validatedTarget?: {
     readonly depJD: number;
     readonly tofDays: number;
@@ -159,9 +160,25 @@ interface ContourSegment {
   readonly y1: number;
   readonly x2: number;
   readonly y2: number;
+  readonly strokeStyle: string;
 }
 
-const CONTOUR_LEVELS = [10, 30, 100, 300] as const;
+interface ContourLevel {
+  readonly value: number;
+  readonly strokeStyle: string;
+}
+
+const C3_CONTOUR_LEVELS: readonly ContourLevel[] = [
+  { value: 10, strokeStyle: 'rgba(255,255,255,0.72)' },
+  { value: 30, strokeStyle: 'rgba(255,255,255,0.72)' },
+  { value: 100, strokeStyle: 'rgba(255,255,255,0.72)' },
+  { value: 300, strokeStyle: 'rgba(255,255,255,0.72)' },
+];
+
+const DLA_CONTOUR_LEVELS: readonly ContourLevel[] = [
+  { value: 28.5, strokeStyle: '#22c55e' },
+  { value: 57, strokeStyle: '#ef4444' },
+];
 
 function jdTdbToDateParts(jdTdb: number): { year: number; monthIndex: number; day: number } {
   const shiftedJulianDay = jdTdb + 0.5;
@@ -395,6 +412,14 @@ function getSelectedBranchC3(cell: PorkchopWorkerCell): number | null {
   return cell.branches[cell.selectedBranch]?.c3 ?? null;
 }
 
+function getSelectedBranchAbsDla(cell: PorkchopWorkerCell): number | null {
+  if (cell.status !== 'ok' || cell.selectedBranch === null) {
+    return null;
+  }
+  const dlaDeg = cell.branches[cell.selectedBranch]?.dlaDeg ?? null;
+  return dlaDeg === null ? null : Math.abs(dlaDeg);
+}
+
 function interpolateEdge(level: number, startValue: number, endValue: number): number {
   const delta = endValue - startValue;
   if (delta === 0) {
@@ -406,6 +431,8 @@ function interpolateEdge(level: number, startValue: number, endValue: number): n
 function buildContourSegments(
   cells: readonly PorkchopWorkerCell[],
   gridParams: PorkchopGridParams,
+  levels: readonly ContourLevel[],
+  getScalar: (cell: PorkchopWorkerCell) => number | null,
 ): readonly ContourSegment[] {
   const segments: ContourSegment[] = [];
   const edgePairsByCase: Readonly<Record<number, readonly [number, number][]>> = {
@@ -427,7 +454,8 @@ function buildContourSegments(
     15: [],
   };
 
-  for (const level of CONTOUR_LEVELS) {
+  for (const contourLevel of levels) {
+    const level = contourLevel.value;
     for (let depIndex = 0; depIndex < gridParams.nDep - 1; depIndex += 1) {
       for (let tofIndex = 0; tofIndex < gridParams.nTof - 1; tofIndex += 1) {
         const bottomLeft = getCellAtGridIndices(depIndex, tofIndex, cells, gridParams);
@@ -439,10 +467,10 @@ function buildContourSegments(
           continue;
         }
 
-        const v0 = getSelectedBranchC3(bottomLeft);
-        const v1 = getSelectedBranchC3(bottomRight);
-        const v2 = getSelectedBranchC3(topRight);
-        const v3 = getSelectedBranchC3(topLeft);
+        const v0 = getScalar(bottomLeft);
+        const v1 = getScalar(bottomRight);
+        const v2 = getScalar(topRight);
+        const v3 = getScalar(topLeft);
         if (v0 === null || v1 === null || v2 === null || v3 === null) {
           continue;
         }
@@ -467,7 +495,7 @@ function buildContourSegments(
         for (const [startEdge, endEdge] of edgePairs) {
           const start = edgePoints[startEdge]();
           const end = edgePoints[endEdge]();
-          segments.push({ x1: start.x, y1: start.y, x2: end.x, y2: end.y });
+          segments.push({ x1: start.x, y1: start.y, x2: end.x, y2: end.y, strokeStyle: contourLevel.strokeStyle });
         }
       }
     }
@@ -486,8 +514,13 @@ export function PorkchopView(props: PorkchopViewProps) {
   const [hoverCell, setHoverCell] = useState<PorkchopWorkerCell | null>(null);
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<HoverTooltipPosition | null>(null);
   const [showContours, setShowContours] = useState(false);
+  const [showDlaContours, setShowDlaContours] = useState(false);
   const contourSegments = useMemo(
-    () => (cells === null ? [] : buildContourSegments(cells, props.gridParams)),
+    () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, C3_CONTOUR_LEVELS, getSelectedBranchC3)),
+    [cells, props.gridParams],
+  );
+  const dlaContourSegments = useMemo(
+    () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, DLA_CONTOUR_LEVELS, getSelectedBranchAbsDla)),
     [cells, props.gridParams],
   );
 
@@ -567,11 +600,26 @@ export function PorkchopView(props: PorkchopViewProps) {
 
     if (showContours) {
       context.save();
-      context.strokeStyle = 'rgba(255,255,255,0.72)';
       context.lineWidth = 1.2;
       context.lineCap = 'round';
       for (const segment of contourSegments) {
         context.beginPath();
+        context.strokeStyle = segment.strokeStyle;
+        context.moveTo(segment.x1, segment.y1);
+        context.lineTo(segment.x2, segment.y2);
+        context.stroke();
+      }
+      context.restore();
+    }
+
+    if (props.showDlaOverlayControl === true && showDlaContours) {
+      context.save();
+      context.lineWidth = 2;
+      context.lineCap = 'round';
+      context.setLineDash([8, 5]);
+      for (const segment of dlaContourSegments) {
+        context.beginPath();
+        context.strokeStyle = segment.strokeStyle;
         context.moveTo(segment.x1, segment.y1);
         context.lineTo(segment.x2, segment.y2);
         context.stroke();
@@ -602,7 +650,7 @@ export function PorkchopView(props: PorkchopViewProps) {
 
     drawCellMarker(pinnedCell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.22)', 8);
     drawCellMarker(hoverCell, 'rgba(167,243,208,0.95)', 'rgba(167,243,208,0.16)', 6);
-  }, [cells, contourSegments, hoverCell, pinnedCell, props.gridParams, showContours]);
+  }, [cells, contourSegments, dlaContourSegments, hoverCell, pinnedCell, props.gridParams, props.showDlaOverlayControl, showContours, showDlaContours]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -721,8 +769,32 @@ export function PorkchopView(props: PorkchopViewProps) {
           checked: showContours,
           onInput: () => setShowContours((current) => !current),
         }),
-        `Show contours (${CONTOUR_LEVELS.join(', ')} km²/s²)`,
+        `Show contours (${C3_CONTOUR_LEVELS.map((level) => level.value).join(', ')} km²/s²)`,
       ),
+      props.showDlaOverlayControl === true
+        ? h(
+            'label',
+            {
+              style: 'display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-size:12px;opacity:0.92;cursor:pointer;',
+              title: 'Screening estimate only; day-specific geometry may differ.',
+            },
+            h('input', {
+              type: 'checkbox',
+              checked: showDlaContours,
+              onInput: () => setShowDlaContours((current) => !current),
+            }),
+            h(
+              'span',
+              { style: 'display:flex;flex-direction:column;gap:2px;' },
+              h('span', null, 'DLA feasibility'),
+              h(
+                'span',
+                { style: 'font-size:10px;line-height:1.35;color:#93a4bf;font-style:italic;' },
+                'Screening estimate only; day-specific geometry may differ.',
+              ),
+            ),
+          )
+        : null,
       hasValidatedTarget
         ? h(
             'button',
