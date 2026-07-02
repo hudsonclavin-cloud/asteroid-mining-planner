@@ -146,6 +146,8 @@ export interface PorkchopPinnedReadout {
   readonly vInfArr: number | null;
   readonly dlaDeg: number | null;
   readonly feasibility: FeasibilityClass;
+  /** Site the feasibility class was computed against — rendered beside the badge (audit H-2). */
+  readonly siteName: string;
 }
 
 interface HoverTooltipPosition {
@@ -312,6 +314,7 @@ function buildPinnedReadout(cell: PorkchopWorkerCell, launchSite: LaunchSite): P
       vInfArr: null,
       dlaDeg: null,
       feasibility: null,
+      siteName: launchSite.name,
     };
   }
 
@@ -330,6 +333,7 @@ function buildPinnedReadout(cell: PorkchopWorkerCell, launchSite: LaunchSite): P
     vInfArr: branch?.vInfArr ?? null,
     dlaDeg,
     feasibility: classifyFeasibility(dlaDeg, launchSite),
+    siteName: launchSite.name,
   };
 }
 
@@ -899,6 +903,13 @@ export function PorkchopView(props: PorkchopViewProps) {
               { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' },
               pinnedReadout.dlaDeg === null ? '—' : `${formatNumber(pinnedReadout.dlaDeg, 1)}°`,
               renderFeasibilityBadge(pinnedReadout.feasibility),
+              pinnedReadout.feasibility === null
+                ? null
+                : h(
+                    'span',
+                    { style: 'font-size:11px;color:#93a4bf;white-space:nowrap;' },
+                    `· ${pinnedReadout.siteName}`,
+                  ),
             ),
             h('span', null, ''),
             h(
