@@ -971,7 +971,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                   h(
                     'span',
                     { key: 'red-advisory-text', style: 'font-size:11px;line-height:1.45;color:#fca5a5;font-style:italic;' },
-                    'Dogleg required — beyond direct-injection capability; the mission cost card marks this cell not feasible at screening fidelity (no priced number; a plane change of this class consumes most vehicle payload).',
+                    'Dogleg required — beyond direct-injection capability; not feasible at screening fidelity (no priced number: a plane change of this class consumes most vehicle payload).',
                   ),
                 ]
               : null,
