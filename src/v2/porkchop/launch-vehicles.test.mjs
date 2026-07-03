@@ -254,3 +254,60 @@ test('deliveredMassKg excludes injection by construction and applies mode depart
 
   assert.equal(deliveredMassKg(newGlenn, 35, budget), BEYOND_CURVE);
 });
+
+test('deliveredMassKg rejects corrupted budgets and invalid modes with INVALID_INPUT, never BEYOND_CURVE or a number', async () => {
+  const {
+    BEYOND_CURVE,
+    INVALID_INPUT,
+    LAUNCH_VEHICLES,
+    deliveredMassKg,
+    isBeyondCurve,
+    isInvalidInput,
+  } = await loadModule();
+  const fhExp = findVehicle(LAUNCH_VEHICLES, 'Falcon Heavy', 'Expendable');
+  const validBudget = { rendezvousMps: 1500, stationkeepingMps: 150, marginMps: 75 };
+
+  // Sentinel distinctness (audit MED-2 / D3): frozen singleton, disjoint from BEYOND_CURVE.
+  assert.notEqual(INVALID_INPUT, BEYOND_CURVE);
+  assert.ok(Object.isFrozen(INVALID_INPUT));
+  assert.equal(isInvalidInput(INVALID_INPUT), true);
+  assert.equal(isInvalidInput(BEYOND_CURVE), false);
+  assert.equal(isBeyondCurve(INVALID_INPUT), false);
+
+  // Corrupted components at an IN-CURVE c3 → INVALID_INPUT, explicitly not the
+  // (false) beyond-curve statement — the audit's contradictory-card probe.
+  const nanBudget = { ...validBudget, rendezvousMps: Number.NaN };
+  assert.equal(deliveredMassKg(fhExp, 20, nanBudget), INVALID_INPUT);
+  assert.notEqual(deliveredMassKg(fhExp, 20, nanBudget), BEYOND_CURVE);
+  assert.equal(deliveredMassKg(fhExp, 20, { ...validBudget, marginMps: Number.POSITIVE_INFINITY }), INVALID_INPUT);
+  assert.equal(deliveredMassKg(fhExp, 20, { ...validBudget, stationkeepingMps: -1 }), INVALID_INPUT);
+
+  // Named regression (Phase F audit probe): a −5000 m/s ΔV previously AMPLIFIED
+  // 10,115 kg to 49,765.70… kg through exp(); it must now be rejected.
+  assert.equal(
+    deliveredMassKg(fhExp, 20, { rendezvousMps: -5000, stationkeepingMps: 0, marginMps: 0 }),
+    INVALID_INPUT,
+  );
+
+  // Mode hardening: unknown mode strings and departure-less sample return are
+  // rejected instead of silently priced as one-way (audit A-9 seams).
+  assert.equal(deliveredMassKg(fhExp, 20, validBudget, 'SAMPLE-RETURN'), INVALID_INPUT);
+  assert.equal(deliveredMassKg(fhExp, 20, validBudget, 'sample-return'), INVALID_INPUT);
+
+  // Beyond-curve precedence unchanged: curve verdict first, zero budget reads,
+  // even when the budget is corrupted (order frozen by the Phase F audit).
+  let budgetReads = 0;
+  const trackedCorruptBudget = new Proxy({ ...validBudget, rendezvousMps: Number.NaN }, {
+    get(target, prop) {
+      budgetReads += 1;
+      return target[prop];
+    },
+  });
+  const newGlenn = findVehicle(LAUNCH_VEHICLES, 'New Glenn', 'Standard');
+  assert.equal(deliveredMassKg(newGlenn, 35, trackedCorruptBudget), BEYOND_CURVE);
+  assert.equal(budgetReads, 0, 'beyond-curve short-circuit must read zero budget properties');
+
+  // Finite-input byte-identity: the frozen hand-computed value is unchanged.
+  const frozenBudget = { rendezvousMps: 1500, stationkeepingMps: 150, marginMps: 75, departureMps: 600 };
+  assertClose(deliveredMassKg(fhExp, 20, frozenBudget), 5837.652223940382, 'finite behavior byte-identical');
+});

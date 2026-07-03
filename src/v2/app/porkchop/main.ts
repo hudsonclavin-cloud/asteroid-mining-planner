@@ -12,6 +12,7 @@ import {
   deliveredMassKg,
   deterministicMarginMps,
   isBeyondCurve,
+  isInvalidInput,
   LAUNCH_VEHICLES,
   payloadAtC3,
   SCREENING_ISP_S,
@@ -96,7 +97,10 @@ interface CostCardState {
   readonly stationkeepingMps: number;
   readonly departureMps: number; // 0 in one-way mode
   readonly marginMps: number; // DEC-13-6: 5% of deterministic maneuver lines only
-  readonly deliveredKg: number | null; // null = beyond published curve
+  readonly deliveredKg: number | null; // null = beyond published curve OR invalid input
+  /** True when deliveredMassKg rejected the inputs (INVALID_INPUT) — renders an
+   *  em-dash + "invalid cell data", never the beyond-curve copy (audit MED-2). */
+  readonly invalidInput: boolean;
 }
 
 const MISSION_MODE_LABELS: Record<MissionMode, string> = {
@@ -253,8 +257,12 @@ function PorkchopDedicatedPage() {
       pinnedReadout === null ||
       pinnedReadout.status !== 'ok' ||
       pinnedReadout.c3 === null ||
-      pinnedReadout.vInfArr === null
+      pinnedReadout.vInfArr === null ||
+      !Number.isFinite(pinnedReadout.c3) ||
+      !Number.isFinite(pinnedReadout.vInfArr)
     ) {
+      // The finiteness clauses close the audit's NaN-velocity-with-finite-position
+      // seam (MED-2 / A-2): `=== null` alone is NaN-transparent.
       return null;
     }
 
@@ -286,7 +294,8 @@ function PorkchopDedicatedPage() {
       stationkeepingMps,
       departureMps,
       marginMps,
-      deliveredKg: isBeyondCurve(delivered) ? null : delivered,
+      deliveredKg: isBeyondCurve(delivered) || isInvalidInput(delivered) ? null : delivered,
+      invalidInput: isInvalidInput(delivered),
     };
   }, [pinnedReadout, selectedMode, selectedVehicle]);
 
@@ -472,13 +481,23 @@ function PorkchopDedicatedPage() {
                     { key: 'card-headline', style: 'margin:6px 0 10px;' },
                     h(
                       'div',
-                      { style: costCardState.deliveredKg === null ? 'font-size:22px;font-weight:700;color:#fbbf24;line-height:1.3;' : 'font-size:30px;font-weight:700;color:#fff;line-height:1.2;' },
-                      costCardState.deliveredKg === null ? 'Beyond published curve' : formatKg(costCardState.deliveredKg),
+                      {
+                        style: costCardState.invalidInput
+                          ? 'font-size:22px;font-weight:700;color:#93a4bf;line-height:1.3;'
+                          : costCardState.deliveredKg === null
+                            ? 'font-size:22px;font-weight:700;color:#fbbf24;line-height:1.3;'
+                            : 'font-size:30px;font-weight:700;color:#fff;line-height:1.2;',
+                      },
+                      costCardState.invalidInput
+                        ? '—'
+                        : costCardState.deliveredKg === null
+                          ? 'Beyond published curve'
+                          : formatKg(costCardState.deliveredKg),
                     ),
                     h(
                       'div',
                       { style: 'display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;margin-top:4px;' },
-                      `delivered to ${pageState.bodyLabel}`,
+                      costCardState.invalidInput ? 'invalid cell data' : `delivered to ${pageState.bodyLabel}`,
                       costCardState.band === null
                         ? null
                         : h('span', { style: CARD_BADGE_STYLE[costCardState.band] }, costCardState.band),

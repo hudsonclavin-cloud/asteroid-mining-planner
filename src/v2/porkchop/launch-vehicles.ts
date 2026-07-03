@@ -38,6 +38,13 @@ export const BEYOND_CURVE = Object.freeze({ kind: 'beyond-curve' } as const);
 export type BeyondCurve = typeof BEYOND_CURVE;
 export type PayloadAtC3Result = number | BeyondCurve;
 
+// Phase F audit MED-2: a corrupted ΔV budget is NOT a curve statement — returning
+// BEYOND_CURVE for it would assert a falsehood under INV-023. Distinct sentinel,
+// same frozen-singleton construction so arithmetic on it is a compile error.
+export const INVALID_INPUT = Object.freeze({ kind: 'invalid-input' } as const);
+export type InvalidInput = typeof INVALID_INPUT;
+export type DeliveredMassResult = number | BeyondCurve | InvalidInput;
+
 // DEC-13-5: representative of 300-350 s storable bipropellant class; disclosed per INV-016e.
 export const SCREENING_ISP_S = 320;
 // Exact standard gravity, m/s^2.
@@ -167,9 +174,15 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
   },
 ];
 
-export function isBeyondCurve(value: PayloadAtC3Result): value is BeyondCurve {
+export function isBeyondCurve(value: PayloadAtC3Result | DeliveredMassResult): value is BeyondCurve {
   return value === BEYOND_CURVE;
 }
+
+export function isInvalidInput(value: DeliveredMassResult): value is InvalidInput {
+  return value === INVALID_INPUT;
+}
+
+const isNonNegativeFinite = (value: number): boolean => Number.isFinite(value) && value >= 0;
 
 export function deterministicMarginMps(...deterministicManeuversMps: readonly number[]): number {
   return deterministicManeuversMps.reduce((sum, maneuverMps) => sum + maneuverMps, 0) * 0.05;
@@ -211,10 +224,35 @@ export function deliveredMassKg(
   c3: number,
   budget: SpacecraftDvBudget,
   mode: MissionMode = 'one-way',
-): PayloadAtC3Result {
+): DeliveredMassResult {
+  // Curve check stays FIRST: the beyond-curve short-circuit reads zero budget
+  // properties (audit-verified order; a beyond-curve verdict is true regardless
+  // of budget validity).
   const payloadKg = payloadAtC3(vehicle, c3);
   if (isBeyondCurve(payloadKg)) {
     return BEYOND_CURVE;
+  }
+
+  // Input hardening (Phase F audit MED-2): reject unknown modes, sample-return
+  // without a departure line, and any NaN/±Infinity/negative budget component —
+  // INVALID_INPUT, never BEYOND_CURVE (INV-023) and never a fabricated number
+  // (a negative Δv would silently AMPLIFY mass through exp()).
+  // NOTE: marginMps must be assembled for the same mode passed here (see
+  // deterministicMarginMps) — a mismatched margin base is arithmetically
+  // undetectable at this boundary and remains the caller's contract.
+  if (mode !== 'one-way' && mode !== 'sample-return') {
+    return INVALID_INPUT;
+  }
+  if (mode === 'sample-return' && budget.departureMps === undefined) {
+    return INVALID_INPUT;
+  }
+  if (
+    !isNonNegativeFinite(budget.rendezvousMps) ||
+    !isNonNegativeFinite(budget.stationkeepingMps) ||
+    !isNonNegativeFinite(budget.marginMps) ||
+    (budget.departureMps !== undefined && !isNonNegativeFinite(budget.departureMps))
+  ) {
+    return INVALID_INPUT;
   }
 
   const departureMps = mode === 'sample-return' ? (budget.departureMps ?? 0) : 0;
@@ -222,7 +260,7 @@ export function deliveredMassKg(
     budget.rendezvousMps + budget.stationkeepingMps + budget.marginMps + departureMps;
 
   if (!Number.isFinite(dvSpacecraftMps)) {
-    return BEYOND_CURVE;
+    return INVALID_INPUT;
   }
 
   return payloadKg * Math.exp(-dvSpacecraftMps / (G0_MPS2 * SCREENING_ISP_S));

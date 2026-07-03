@@ -56,3 +56,10 @@ assert.equal(pole, 90);
 const positive = dlaDegFromVInf(1.25, -0.75, 2.5);
 const negative = dlaDegFromVInf(1.25, -0.75, -2.5);
 assertClose(negative, -positive, 1e-12, 'negative-Z symmetry');
+
+// Non-finite components return null, never NaN or a fabricated value
+// (Slice 12 audit M-A residual; Slice 13 founding doc §2; Phase F audit MED-2).
+assert.equal(dlaDegFromVInf(Number.NaN, 3.2, -1.1), null);
+assert.equal(dlaDegFromVInf(Number.POSITIVE_INFINITY, 0, 1), null); // was 0 (fabricated GREEN-class value)
+assert.equal(dlaDegFromVInf(0, 0, Number.POSITIVE_INFINITY), null); // was NaN
+assert.equal(dlaDegFromVInf(0, Number.NEGATIVE_INFINITY, 0), null);

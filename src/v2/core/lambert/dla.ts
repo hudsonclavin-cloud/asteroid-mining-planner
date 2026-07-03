@@ -18,7 +18,10 @@
  */
 export function dlaDegFromVInf(vx: number, vy: number, vz: number, epsilonMag = 1e-3): number | null {
     const mag = Math.hypot(vx, vy, vz);
-    if (mag < epsilonMag) {
+    // Non-finite components (NaN/±Infinity) return null, never NaN or a fabricated
+    // value — same guard pattern as classifyFeasibility (Slice 12 audit M-A residual,
+    // Slice 13 founding doc §2 pre-slice dependency).
+    if (!Number.isFinite(mag) || mag < epsilonMag) {
         return null;
     }
 

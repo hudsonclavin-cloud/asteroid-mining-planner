@@ -77,7 +77,10 @@ function stripBranch(branch: PorkchopBranch): PorkchopWorkerBranch {
     c3: branch.c3,
     vInfDep: branch.vInfDep,
     vInfArr: branch.vInfArr,
-    dlaDeg: branch.dlaDeg ?? null,
+    // Non-finite dlaDeg is normalized to null at the message boundary — mirrors
+    // classifyFeasibility's guard (Slice 12 audit M-A residual; `??` alone is
+    // NaN-transparent).
+    dlaDeg: typeof branch.dlaDeg === 'number' && Number.isFinite(branch.dlaDeg) ? branch.dlaDeg : null,
     x: branch.x,
   };
 }

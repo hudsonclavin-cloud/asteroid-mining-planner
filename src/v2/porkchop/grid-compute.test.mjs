@@ -424,6 +424,9 @@ test('porkchop worker init bootstraps Earth state and strips velocity internals 
                 c3: 1.23,
                 vInfDep: 1.1,
                 vInfArr: 2.2,
+                // NaN exercises stripBranch's non-finite guard (audit MED-2 / M-A):
+                // the posted payload must carry null, never NaN.
+                dlaDeg: Number.NaN,
                 x: -0.2,
                 v1: [1, 2, 3],
                 v2: [4, 5, 6],
