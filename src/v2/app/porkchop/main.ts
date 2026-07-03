@@ -37,7 +37,12 @@ if (!(mount instanceof HTMLElement)) {
   throw new Error('V2 Porkchop mount point "#app" was not found');
 }
 
-const DEFAULT_BODY_ID = 'asteroid-99942';
+// OQ-13-3 showcase body (measured recon, 2026-07-03): 2020 FK3's globally cheapest
+// cell (C3=0.72, dep 2026-12-26) is RED at DLA +82.4° — the naive best deal in the
+// grid is infeasible. Id copied verbatim from the catalog key (embedded space).
+const DEFAULT_BODY_ID = 'asteroid-2020 FK3';
+// Recognizable numbered comparison, one click away (Hudson's option-3 call).
+const APOPHIS_BODY_ID = 'asteroid-99942';
 const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',
   import.meta.url,
@@ -320,7 +325,15 @@ function PorkchopDedicatedPage() {
       { style: SIDEBAR_STYLE },
       h('div', { style: 'font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8da2c0;margin-bottom:10px;' }, 'Porkchop Analysis'),
       h('div', { style: 'font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;' }, pageState.bodyLabel),
-      h('div', { style: 'font-size:13px;color:#93a4bf;margin-bottom:20px;' }, pageState.bodyId),
+      h('div', { style: 'font-size:13px;color:#93a4bf;margin-bottom:6px;' }, pageState.bodyId),
+      h(
+        'a',
+        {
+          href: `?body=${encodeURIComponent(pageState.bodyId === APOPHIS_BODY_ID ? DEFAULT_BODY_ID : APOPHIS_BODY_ID)}`,
+          style: 'display:inline-block;font-size:12px;color:#7dd3fc;text-decoration:none;margin-bottom:20px;',
+        },
+        `Compare: ${pageState.bodyId === APOPHIS_BODY_ID ? '2020 FK3' : 'Apophis (99942)'} →`,
+      ),
       h(
         'div',
         { style: 'font-size:13px;line-height:1.6;color:#cbd5e1;margin-bottom:20px;' },
