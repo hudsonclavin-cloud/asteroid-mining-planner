@@ -170,6 +170,22 @@ function PorkchopDedicatedPage() {
     };
   }, [requestedBodyId]);
 
+  const stackState: StackState | null = useMemo(() => {
+    if (
+      pinnedReadout === null ||
+      pinnedReadout.status !== 'ok' ||
+      pinnedReadout.c3 === null ||
+      pinnedReadout.vInfArr === null
+    ) {
+      return null;
+    }
+
+    return {
+      readout: pinnedReadout,
+      breakdown: buildDeltaVStack(pinnedReadout.c3, pinnedReadout.vInfArr),
+    };
+  }, [pinnedReadout]);
+
   if (loading) {
     return h(
       'div',
@@ -196,22 +212,6 @@ function PorkchopDedicatedPage() {
       ),
     );
   }
-
-  const stackState: StackState | null = useMemo(() => {
-    if (
-      pinnedReadout === null ||
-      pinnedReadout.status !== 'ok' ||
-      pinnedReadout.c3 === null ||
-      pinnedReadout.vInfArr === null
-    ) {
-      return null;
-    }
-
-    return {
-      readout: pinnedReadout,
-      breakdown: buildDeltaVStack(pinnedReadout.c3, pinnedReadout.vInfArr),
-    };
-  }, [pinnedReadout]);
 
   return h(
     'div',
