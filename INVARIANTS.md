@@ -117,6 +117,8 @@ Symptom: all planet dots rendered offset from their true positions by `−camLoc
 
 **INV-016d (honesty extension):** Any launch-feasibility display must disclose, in a discoverable surface, (i) the launch site assumed and its parameters, (ii) the band model used to classify feasibility, and (iii) that dogleg/plane-change costs are advisory and NOT included in the displayed ΔV stack. Same disclosure pattern as INV-016c.
 
+**AMENDED (Slice 13, DEC-13-3 — clause (iii) superseded; clauses (i)–(ii) unchanged):** dogleg cost is now a labeled line in the mission cost card, priced per the two-regime screening model — GREEN: none; AMBER: zero added ΔV with an explicit disclosure that plane-matching is launch-geometry class (~1 m/s-per-degree, JPL DESCANSO evidence), below screening error bars; RED: a "not feasible at screening fidelity" verdict panel, never a fabricated number. The INV-016e disclosure surface states the regime applied to each cell. The vehicle-agnostic ΔV stack panel remains unpriced physics; the two shipped advisory strings were updated in the same commit as this amendment (`src/v2/app/porkchop/main.ts` INV-016d disclosure text, `src/v2/porkchop/porkchop-view.ts` RED advisory). See `src/v2/SLICE_13_FOUNDING.md` §2 / DEC-13-3.
+
 ---
 
 ## §4. Math-layer validation oracles

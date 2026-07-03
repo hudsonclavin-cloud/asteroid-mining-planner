@@ -971,7 +971,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                   h(
                     'span',
                     { key: 'red-advisory-text', style: 'font-size:11px;line-height:1.45;color:#fca5a5;font-style:italic;' },
-                    'Advisory: Dogleg required — plane-change cost NOT in ΔV total (order ~1 km/s per ~7-10 deg, vehicle-dependent).',
+                    'Dogleg required — beyond direct-injection capability; the mission cost card marks this cell not feasible at screening fidelity (no priced number; a plane change of this class consumes most vehicle payload).',
                   ),
                 ]
               : null,

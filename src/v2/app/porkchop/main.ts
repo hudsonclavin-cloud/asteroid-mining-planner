@@ -5,8 +5,20 @@ import type { AsteroidOrbitalElements } from '../../core/constants/asteroids.js'
 import {
   CAPE_CANAVERAL,
   LAUNCH_SITES,
+  type FeasibilityClass,
   type LaunchSite,
 } from '../../core/lambert/feasibility.js';
+import {
+  deliveredMassKg,
+  deterministicMarginMps,
+  isBeyondCurve,
+  LAUNCH_VEHICLES,
+  payloadAtC3,
+  SCREENING_ISP_S,
+  type LaunchVehicle,
+  type MissionMode,
+  type SpacecraftDvBudget,
+} from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
 import {
@@ -69,6 +81,49 @@ interface StackState {
   readonly breakdown: DeltaVStackBreakdown;
 }
 
+// Mission cost card state (Slice 13 DEC-13-4). No injection field by construction:
+// injection is embodied in payload-at-C3 (the launch vehicle already did it).
+interface CostCardState {
+  readonly readout: PorkchopPinnedReadout;
+  readonly band: FeasibilityClass;
+  readonly payloadKg: number | null; // null = beyond published curve (INV-023)
+  readonly rendezvousMps: number;
+  readonly stationkeepingMps: number;
+  readonly departureMps: number; // 0 in one-way mode
+  readonly marginMps: number; // DEC-13-6: 5% of deterministic maneuver lines only
+  readonly deliveredKg: number | null; // null = beyond published curve
+}
+
+const MISSION_MODE_LABELS: Record<MissionMode, string> = {
+  'one-way': 'One-way rendezvous',
+  'sample-return': 'Sample return',
+};
+
+const CARD_BADGE_STYLE: Record<Exclude<FeasibilityClass, null>, string> = {
+  GREEN: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#22c55e;color:#04130a;font-size:11px;font-weight:700;',
+  AMBER: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#f59e0b;color:#170f02;font-size:11px;font-weight:700;',
+  RED: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#ef4444;color:#1f0505;font-size:11px;font-weight:700;',
+};
+
+const CARD_PICKER_SELECT_STYLE =
+  'width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,0.18);border-radius:6px;background:#0b1220;color:#eef2ff;padding:7px 8px;font:inherit;';
+const CARD_PICKER_LABEL_STYLE =
+  'font-size:11px;color:#93a4bf;text-transform:uppercase;letter-spacing:0.08em;';
+const CARD_DISCLOSURE_STYLE =
+  'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;';
+
+const vehicleKey = (vehicle: LaunchVehicle): string => `${vehicle.name} — ${vehicle.config}`;
+
+function jdTdbToUtcDateString(jdTdb: number): string {
+  const tdbSecondsSinceJ2000 = (jdTdb - J2000_TDB_JULIAN_DATE) * SECONDS_PER_DAY;
+  const utcMillis = (tdbSecondsSinceJ2000 - 69.184 + 946_728_000) * 1000;
+  return new Date(utcMillis).toISOString().slice(0, 10);
+}
+
+function formatKg(valueKg: number): string {
+  return `${Math.round(valueKg).toLocaleString('en-US')} kg`;
+}
+
 function utcMidnightToJdTdb(utcDate: string): number {
   const utcMillis = Date.parse(`${utcDate}T00:00:00Z`);
   if (!Number.isFinite(utcMillis)) {
@@ -116,6 +171,8 @@ function PorkchopDedicatedPage() {
   const [pinnedReadout, setPinnedReadout] = useState<PorkchopPinnedReadout | null>(null);
   const [showDlaContours, setShowDlaContours] = useState(false);
   const [selectedLaunchSite, setSelectedLaunchSite] = useState<LaunchSite>(CAPE_CANAVERAL);
+  const [selectedVehicle, setSelectedVehicle] = useState<LaunchVehicle>(LAUNCH_VEHICLES[0]);
+  const [selectedMode, setSelectedMode] = useState<MissionMode>('one-way');
 
   useEffect(() => {
     let cancelled = false;
@@ -185,6 +242,48 @@ function PorkchopDedicatedPage() {
       breakdown: buildDeltaVStack(pinnedReadout.c3, pinnedReadout.vInfArr),
     };
   }, [pinnedReadout]);
+
+  const costCardState: CostCardState | null = useMemo(() => {
+    if (
+      pinnedReadout === null ||
+      pinnedReadout.status !== 'ok' ||
+      pinnedReadout.c3 === null ||
+      pinnedReadout.vInfArr === null
+    ) {
+      return null;
+    }
+
+    // Spacecraft ΔV budget in m/s (DEC-13-4). Injection is ABSENT by construction —
+    // payload-at-C3 embodies it. Dogleg adds zero in GREEN/AMBER (DEC-13-3 / OQ-13-2
+    // option (a): zero-with-disclosure); RED cells never price (infeasible panel).
+    const rendezvousMps = pinnedReadout.vInfArr * 1000;
+    const departureMps = selectedMode === 'sample-return' ? rendezvousMps : 0;
+    const stationkeepingMps = STATIONKEEPING_DV_KMPS * 1000;
+    // DEC-13-6: 5% margin on deterministic maneuver lines only; the 150 m/s
+    // stationkeeping line is the generic allocation and is not margined.
+    const marginMps =
+      selectedMode === 'sample-return'
+        ? deterministicMarginMps(rendezvousMps, departureMps)
+        : deterministicMarginMps(rendezvousMps);
+    const budget: SpacecraftDvBudget =
+      selectedMode === 'sample-return'
+        ? { rendezvousMps, stationkeepingMps, marginMps, departureMps }
+        : { rendezvousMps, stationkeepingMps, marginMps };
+
+    const payload = payloadAtC3(selectedVehicle, pinnedReadout.c3);
+    const delivered = deliveredMassKg(selectedVehicle, pinnedReadout.c3, budget, selectedMode);
+
+    return {
+      readout: pinnedReadout,
+      band: pinnedReadout.feasibility,
+      payloadKg: isBeyondCurve(payload) ? null : payload,
+      rendezvousMps,
+      stationkeepingMps,
+      departureMps,
+      marginMps,
+      deliveredKg: isBeyondCurve(delivered) ? null : delivered,
+    };
+  }, [pinnedReadout, selectedMode, selectedVehicle]);
 
   if (loading) {
     return h(
@@ -288,10 +387,167 @@ function PorkchopDedicatedPage() {
                   key: 'dla-016d-disclosure',
                   style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
                 },
-                `Launch-feasibility bands are a screening estimate against ${selectedLaunchSite.name}'s azimuth corridor (sourced NASA limits). Day-specific launch geometry can bind tighter — e.g. MGS launched from Cape with DLA 36.5 deg (nominally AMBER) yet required a dogleg because its daily window forced the southerly azimuth side, where the effective ceiling is only ~34-39 deg. Dogleg costs are advisory and NOT included in the ΔV stack.`,
+                `Launch-feasibility bands are a screening estimate against ${selectedLaunchSite.name}'s azimuth corridor (sourced NASA limits). Day-specific launch geometry can bind tighter — e.g. MGS launched from Cape with DLA 36.5 deg (nominally AMBER) yet required a dogleg because its daily window forced the southerly azimuth side, where the effective ceiling is only ~34-39 deg. Dogleg cost is priced in the mission cost card per the two-regime screening model (INV-016d as amended by Slice 13): zero-with-disclosure for AMBER, not-feasible verdict for RED.`,
               ),
             ]
           : null,
+      ),
+      h(
+        'section',
+        {
+          style: 'border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;background:rgba(255,255,255,0.03);margin-bottom:16px;',
+        },
+        h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Mission cost'),
+        h(
+          'label',
+          { key: 'vehicle-picker', style: 'display:flex;flex-direction:column;gap:6px;margin-bottom:10px;font-size:12px;color:#cbd5e1;' },
+          h('span', { style: CARD_PICKER_LABEL_STYLE }, 'Launch vehicle'),
+          h(
+            'select',
+            {
+              value: vehicleKey(selectedVehicle),
+              style: CARD_PICKER_SELECT_STYLE,
+              onInput: (event: Event) => {
+                const select = event.currentTarget as HTMLSelectElement;
+                const nextVehicle = LAUNCH_VEHICLES.find((vehicle) => vehicleKey(vehicle) === select.value);
+                if (nextVehicle !== undefined) {
+                  setSelectedVehicle(nextVehicle);
+                }
+              },
+            },
+            LAUNCH_VEHICLES.map((vehicle) =>
+              h('option', { key: vehicleKey(vehicle), value: vehicleKey(vehicle) }, `${vehicle.name} — ${vehicle.config} (${vehicle.site})`),
+            ),
+          ),
+        ),
+        h(
+          'label',
+          { key: 'mode-picker', style: 'display:flex;flex-direction:column;gap:6px;margin-bottom:10px;font-size:12px;color:#cbd5e1;' },
+          h('span', { style: CARD_PICKER_LABEL_STYLE }, 'Mission mode'),
+          h(
+            'select',
+            {
+              value: selectedMode,
+              style: CARD_PICKER_SELECT_STYLE,
+              onInput: (event: Event) => {
+                const select = event.currentTarget as HTMLSelectElement;
+                setSelectedMode(select.value === 'sample-return' ? 'sample-return' : 'one-way');
+              },
+            },
+            h('option', { key: 'one-way', value: 'one-way' }, MISSION_MODE_LABELS['one-way']),
+            h('option', { key: 'sample-return', value: 'sample-return' }, MISSION_MODE_LABELS['sample-return']),
+          ),
+        ),
+        costCardState === null
+          ? h('div', { style: 'font-size:12px;color:#93a4bf;line-height:1.6;' }, 'Pin a cell to price the mission.')
+          : [
+              // Headline: delivered mass for GREEN/AMBER; verdict panel for RED (DEC-13-3 / D3 —
+              // layout stays stable, only headline + dogleg line change).
+              costCardState.band === 'RED'
+                ? h(
+                    'div',
+                    { key: 'card-headline', style: 'margin:6px 0 10px;' },
+                    h('div', { style: 'font-size:22px;font-weight:700;color:#fca5a5;line-height:1.3;' }, 'Not feasible at screening fidelity'),
+                    h(
+                      'div',
+                      { style: 'font-size:12px;color:#cbd5e1;line-height:1.5;margin-top:6px;' },
+                      `DLA ${costCardState.readout.dlaDeg === null ? '—' : costCardState.readout.dlaDeg.toFixed(1)}° exceeds ${costCardState.readout.siteName}'s direct-injection capability; a plane change of this class consumes most of the vehicle's payload (IXPE-class), so no delivered-mass number is honest at screening fidelity.`,
+                    ),
+                  )
+                : h(
+                    'div',
+                    { key: 'card-headline', style: 'margin:6px 0 10px;' },
+                    h(
+                      'div',
+                      { style: costCardState.deliveredKg === null ? 'font-size:22px;font-weight:700;color:#fbbf24;line-height:1.3;' : 'font-size:30px;font-weight:700;color:#fff;line-height:1.2;' },
+                      costCardState.deliveredKg === null ? 'Beyond published curve' : formatKg(costCardState.deliveredKg),
+                    ),
+                    h(
+                      'div',
+                      { style: 'display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;margin-top:4px;' },
+                      `delivered to ${pageState.bodyLabel}`,
+                      costCardState.band === null
+                        ? null
+                        : h('span', { style: CARD_BADGE_STYLE[costCardState.band] }, costCardState.band),
+                    ),
+                  ),
+              h(
+                'div',
+                { key: 'card-subline', style: 'font-size:11px;color:#93a4bf;margin-bottom:10px;' },
+                `${vehicleKey(selectedVehicle)} · ${MISSION_MODE_LABELS[selectedMode]} · ${jdTdbToUtcDateString(costCardState.readout.depJD)} + ${costCardState.readout.tofDays.toFixed(0)} d`,
+              ),
+              h(
+                'div',
+                {
+                  key: 'card-stack',
+                  style: `display:grid;grid-template-columns:max-content 1fr;gap:7px 14px;font-size:12px;line-height:1.6;color:#d8e1f1;${costCardState.band === 'RED' ? 'opacity:0.55;' : ''}`,
+                },
+                h('span', null, `Payload at C3 = ${costCardState.readout.c3!.toFixed(1)}`),
+                h('span', null, costCardState.payloadKg === null ? 'beyond published curve' : formatKg(costCardState.payloadKg)),
+                h('span', null, 'Rendezvous burn'),
+                h('span', null, `${costCardState.rendezvousMps.toFixed(0)} m/s`),
+                selectedMode === 'sample-return'
+                  ? [
+                      h('span', { key: 'dep-label' }, 'Departure burn (sample return)'),
+                      h('span', { key: 'dep-value' }, `${costCardState.departureMps.toFixed(0)} m/s`),
+                    ]
+                  : null,
+                h('span', null, 'Stationkeeping'),
+                h('span', null, `${costCardState.stationkeepingMps.toFixed(0)} m/s`),
+                h('span', null, 'Dogleg penalty'),
+                h(
+                  'span',
+                  null,
+                  costCardState.band === 'GREEN'
+                    ? 'none (GREEN)'
+                    : costCardState.band === 'AMBER'
+                      ? '~0 (launch-geometry, AMBER)'
+                      : costCardState.band === 'RED'
+                        ? 'exceeds site capability'
+                        : '— (no DLA for this cell)',
+                ),
+                h('span', null, 'Margin (5%)'),
+                h('span', null, `${costCardState.marginMps.toFixed(0)} m/s (deterministic lines)`),
+                h('span', { style: 'font-weight:700;color:#fff;' }, 'Delivered mass'),
+                h(
+                  'span',
+                  { style: 'font-weight:700;color:#fff;' },
+                  costCardState.band === 'RED' || costCardState.deliveredKg === null ? '—' : formatKg(costCardState.deliveredKg),
+                ),
+              ),
+              h(
+                'div',
+                { key: 'card-injection-split', style: 'font-size:10px;color:#93a4bf;font-style:italic;margin-top:8px;line-height:1.4;' },
+                `Launch vehicle provides injection to C3 = ${costCardState.readout.c3!.toFixed(1)} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
+              ),
+              h(
+                'details',
+                { key: 'card-016e-disclosure', style: CARD_DISCLOSURE_STYLE },
+                h('summary', { style: 'cursor:pointer;color:#a5b4cf;' }, 'Assumptions & sources'),
+                h(
+                  'div',
+                  { style: 'margin-top:8px;display:flex;flex-direction:column;gap:6px;' },
+                  h('div', null, `Vehicle curve: ${selectedVehicle.source}, as-of ${selectedVehicle.asOf} (queried 2026-07-02); official anchors only.`),
+                  h('div', null, 'Interpolation: piecewise-linear between published anchors; no extrapolation — beyond the last anchor the card reads "beyond published curve".'),
+                  h('div', null, `Spacecraft propulsion: screening Isp ${SCREENING_ISP_S} s (representative of the 300–350 s storable-bipropellant class). Mission mode: ${MISSION_MODE_LABELS[selectedMode]}. Delivered mass is arrival wet mass (no dry-mass modeling).`),
+                  h('div', null, 'Margin policy: 5% on deterministic maneuver lines (ECSS-anchored); the 150 m/s stationkeeping line is a generic allocation and is not margined.'),
+                  h(
+                    'div',
+                    null,
+                    costCardState.band === 'GREEN'
+                      ? "Dogleg regime (this cell): GREEN — DLA within the site's direct-injection band; no plane-change cost."
+                      : costCardState.band === 'AMBER'
+                        ? 'Dogleg regime (this cell): AMBER — plane-matching is handled by launch geometry at ~1 m/s-per-degree class cost (JPL DESCANSO Vol. 12 evidence), below screening error bars; zero added ΔV, disclosed rather than fabricated.'
+                        : costCardState.band === 'RED'
+                          ? 'Dogleg regime (this cell): RED — beyond the site corridor; the honest cost is IXPE-class capacity destruction, so the card shows a verdict, not a number.'
+                          : 'Dogleg regime (this cell): unavailable — the cell has no DLA value.',
+                  ),
+                  selectedVehicle.name === 'New Glenn'
+                    ? h('div', null, 'New Glenn: interpolation across the steep C3 20–30 segment overestimates payload by up to ~3% (measured, Phase B oracle).')
+                    : null,
+                ),
+              ),
+            ],
       ),
       h(
         'section',
