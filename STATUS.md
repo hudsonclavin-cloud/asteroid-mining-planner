@@ -51,6 +51,14 @@
 
 ---
 
+## §Queued dispatches
+
+None queued.
+
+This section exists because the M-A guards near-miss showed that a written dispatch can survive multiple quota shuffles unrun and only be caught later by audit; queued work should be visible at session start.
+
+---
+
 ## §Parked issues
 
 ### Visual bugs (Claude-in-Chrome audit 2026-06-30, revised 2026-07-01)
