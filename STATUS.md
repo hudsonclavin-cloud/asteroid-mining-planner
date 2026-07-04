@@ -17,9 +17,9 @@
 
 | | Commit | Description |
 |-|--------|-------------|
-| **HEAD (local)** | `946afed` | build(slice12): deploy DLA launch-feasibility overlay — slice closed |
-| **origin/main** | `946afed` | in sync with local HEAD |
-| **Deployed (gh-pages)** | `946afed` | Slice 12 DLA overlay live from `docs/` |
+| **HEAD (local)** | `<pending deploy commit>` | build(slice13): production docs/ output for deploy |
+| **origin/main** | `8ab94cf` | fix(slice13): input-hardening (Phase F remediation, pushed; pre-deploy) |
+| **Deployed (gh-pages)** | `<pending deploy commit>` | Slice 13 mission cost card build output in `docs/` |
 
 ---
 
@@ -34,9 +34,10 @@
 | Visualization | Slice V1 (textures + shader + atmosphere) | COMPLETE + DEPLOYED (`3211525`) |
 | Visualization | Visual fixes (top-down, starfield ctrl, labels, halo frame) | COMPLETE + DEPLOYED (`dc44751`) |
 | Mission planning | Slice 12 (DLA overlay) | COMPLETE + DEPLOYED (`946afed`) |
+| Mission planning | Slice 13 (mission cost card) | COMPLETE + DEPLOYED (`<pending deploy commit>`) — founding `3be2ae4`, L-4 hoist `6a0123c`, Phase A-2 math `7180593`, Phase B oracle `808e709`, cost card `5486be5`, showcase `625b882`, OQ-13-3 close `65fe39c`, MED-1 `5d386ec`, MED-2 `8ab94cf`, LOW docs pass (this session), build `<pending deploy commit>` |
 
-**Active founding doc (mission planning):** `src/v2/SLICE_12_FOUNDING.md`
-**Next founding doc to write:** `src/v2/SLICE_13_FOUNDING.md`
+**Active founding doc (mission planning):** `src/v2/SLICE_13_FOUNDING.md` (CLOSED)
+**Next founding doc to write:** `src/v2/SLICE_14_FOUNDING.md` (packaging / demo)
 
 ---
 

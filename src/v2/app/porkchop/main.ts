@@ -130,6 +130,13 @@ function jdTdbToUtcDateString(jdTdb: number): string {
 }
 
 function formatKg(valueKg: number): string {
+  // Floor sub-half-kilogram results (including exp() underflow to exact 0) at
+  // "< 1 kg" — a confident "0 kg" headline overstates the precision (audit L-e).
+  // Payload-at-C3 values are always >= the smallest anchor (120 kg), so only the
+  // delivered-mass headline can reach this branch.
+  if (valueKg < 0.5) {
+    return '< 1 kg';
+  }
   return `${Math.round(valueKg).toLocaleString('en-US')} kg`;
 }
 
@@ -461,7 +468,15 @@ function PorkchopDedicatedPage() {
           ),
         ),
         costCardState === null
-          ? h('div', { style: 'font-size:12px;color:#93a4bf;line-height:1.6;' }, 'Pin a cell to price the mission.')
+          ? h(
+              'div',
+              { style: 'font-size:12px;color:#93a4bf;line-height:1.6;' },
+              // Distinguish "nothing pinned" from "pinned cell has no converged branch",
+              // mirroring the sibling ΔV-stack panel (audit L-f).
+              pinnedReadout === null
+                ? 'Pin a cell to price the mission.'
+                : 'Pinned cell has no converged branch, so the mission cost card is unavailable.',
+            )
           : [
               // Headline: delivered mass for GREEN/AMBER; verdict panel for RED (DEC-13-3 / D3 —
               // layout stays stable, only headline + dogleg line change).
@@ -567,15 +582,15 @@ function PorkchopDedicatedPage() {
                     'div',
                     null,
                     costCardState.band === 'GREEN'
-                      ? "Dogleg regime (this cell): GREEN — DLA within the site's direct-injection band; no plane-change cost."
+                      ? `Dogleg regime (this cell): GREEN — DLA within ${costCardState.readout.siteName}'s direct-injection band; no plane-change cost.`
                       : costCardState.band === 'AMBER'
-                        ? 'Dogleg regime (this cell): AMBER — plane-matching is handled by launch geometry at ~1 m/s-per-degree class cost (JPL DESCANSO Vol. 12 evidence), below screening error bars; zero added ΔV, disclosed rather than fabricated.'
+                        ? `Dogleg regime (this cell): AMBER — plane-matching from ${costCardState.readout.siteName} is handled by launch geometry at ~1 m/s-per-degree class cost (JPL DESCANSO Vol. 12 evidence), below screening error bars; zero added ΔV, disclosed rather than fabricated.`
                         : costCardState.band === 'RED'
-                          ? 'Dogleg regime (this cell): RED — beyond the site corridor; the honest cost is IXPE-class capacity destruction, so the card shows a verdict, not a number.'
-                          : 'Dogleg regime (this cell): unavailable — the cell has no DLA value.',
+                          ? `Dogleg regime (this cell): RED — beyond ${costCardState.readout.siteName}'s corridor; the honest cost is IXPE-class capacity destruction, so the card shows a verdict, not a number.`
+                          : 'Dogleg regime (this cell): unavailable — the cell has no DLA value (null-band; screening model defines only GREEN/AMBER/RED).',
                   ),
                   selectedVehicle.name === 'New Glenn'
-                    ? h('div', null, 'New Glenn: interpolation across the steep C3 20–30 segment overestimates payload by up to ~3% (measured, Phase B oracle).')
+                    ? h('div', null, 'New Glenn: interpolation across the steep C3 20–30 segment overestimates payload by up to ~3.1% (measured, Phase B oracle).')
                     : null,
                 ),
               ),

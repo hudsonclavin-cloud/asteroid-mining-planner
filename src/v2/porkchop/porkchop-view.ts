@@ -961,7 +961,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                   h(
                     'span',
                     { key: 'amber-advisory-text', style: 'font-size:11px;line-height:1.45;color:#fbbf24;font-style:italic;' },
-                    'Advisory: Raised-inclination injection — payload penalty applies (vehicle-dependent).',
+                    'Advisory: Raised-inclination injection — plane-matching handled by launch geometry at negligible ΔV (below screening error bars); a vehicle payload penalty still applies (vehicle-dependent).',
                   ),
                 ]
               : null,

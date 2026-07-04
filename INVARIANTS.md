@@ -172,7 +172,7 @@ that is not ImageMagick.
 | INV-015 | `src/v2/SLICE_10_FOUNDING.md` | Lambert solver must trace to a peer-reviewed algorithm |
 | INV-016 | `src/v2/SLICE_10_FOUNDING.md` | Patched-conic honesty layer: every C3/ΔV carries a fidelity tag |
 | INV-016c | `src/v2/SLICE_11_FOUNDING.md` | ΔV stack assumptions must be disclosed (200km LEO, 150m/s stationkeeping, 10% margin) |
-| INV-016d | `src/v2/SLICE_12_FOUNDING.md` | Launch-feasibility displays must disclose the assumed site + parameters, the band model, and that dogleg costs are advisory / not in the ΔV stack |
+| INV-016d | `src/v2/SLICE_12_FOUNDING.md` (amended `SLICE_13_FOUNDING.md`) | Launch-feasibility displays must disclose the assumed site + parameters, the band model, and — originally — that dogleg costs are advisory / not in the ΔV stack. **AMENDED Slice 13 (DEC-13-3):** dogleg is now priced in the mission cost card per the two-regime model (GREEN none / AMBER zero-with-disclosure / RED verdict); see body §3. |
 | INV-017..020 | `src/v2/SLICE_11_FOUNDING.md` | Porkchop renderer: one component, worker-only compute, bookmarkable URL, no partial renders |
 | INV-021 | `src/v2/SLICE_12_FOUNDING.md` | Component-derived quantities (e.g. DLA): reference frame established by numerical measurement at the consuming boundary, never inferred from a label |
 | INV-V1-001 | `src/v2/SLICE_V1_FOUNDING.md` | Visual asset provenance must be confirmed before shipping (CC/public domain) |
