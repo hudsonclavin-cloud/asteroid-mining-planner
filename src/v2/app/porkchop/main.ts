@@ -20,14 +20,17 @@ import {
   SPACECRAFT_STATIONKEEPING_MPS,
   type LaunchVehicle,
   type MissionMode,
+  type PayloadAtC3Result,
   type SpacecraftDvBudget,
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
 import {
   buildDeltaVStack,
+  departureDvFromVInf,
   DV_MARGIN_FRACTION,
   LEO_PARKING_RADIUS_KM,
+  rendezvousDvFromVInf,
   STATIONKEEPING_DV_KMPS,
   type DeltaVStackBreakdown,
 } from '../../porkchop/delta-v.js';
@@ -87,14 +90,16 @@ interface PageState {
 interface StackState {
   readonly readout: PorkchopPinnedReadout;
   readonly breakdown: DeltaVStackBreakdown;
+  readonly vInfArrKmps: number;
 }
 
 // Mission cost card state (Slice 13 DEC-13-4). No injection field by construction:
 // injection is embodied in payload-at-C3 (the launch vehicle already did it).
 interface CostCardState {
   readonly readout: PorkchopPinnedReadout;
+  readonly c3: number;
   readonly band: FeasibilityClass;
-  readonly payloadKg: number | null; // null = beyond published curve (INV-023)
+  readonly payload: PayloadAtC3Result;
   readonly rendezvousMps: number;
   readonly stationkeepingMps: number;
   readonly departureMps: number; // 0 in one-way mode
@@ -260,6 +265,7 @@ function PorkchopDedicatedPage() {
     return {
       readout: pinnedReadout,
       breakdown: buildDeltaVStack(pinnedReadout.c3, pinnedReadout.vInfArr),
+      vInfArrKmps: pinnedReadout.vInfArr,
     };
   }, [pinnedReadout]);
 
@@ -280,8 +286,10 @@ function PorkchopDedicatedPage() {
     // Spacecraft ΔV budget in m/s (DEC-13-4). Injection is ABSENT by construction —
     // payload-at-C3 embodies it. Dogleg adds zero in GREEN/AMBER (DEC-13-3 / OQ-13-2
     // option (a): zero-with-disclosure); RED cells never price (infeasible panel).
-    const rendezvousMps = pinnedReadout.vInfArr * 1000;
-    const departureMps = selectedMode === 'sample-return' ? rendezvousMps : 0;
+    const c3 = pinnedReadout.c3;
+    const rendezvousMps = rendezvousDvFromVInf(pinnedReadout.vInfArr) * 1000;
+    const departureMps =
+      selectedMode === 'sample-return' ? departureDvFromVInf(pinnedReadout.vInfArr) * 1000 : 0;
     const stationkeepingMps = SPACECRAFT_STATIONKEEPING_MPS;
     // DEC-13-6: margin on deterministic maneuver lines only; stationkeeping is
     // the generic allocation and is not margined.
@@ -299,8 +307,9 @@ function PorkchopDedicatedPage() {
 
     return {
       readout: pinnedReadout,
+      c3,
       band: pinnedReadout.feasibility,
-      payloadKg: isBeyondCurve(payload) ? null : payload,
+      payload,
       rendezvousMps,
       stationkeepingMps,
       departureMps,
@@ -533,8 +542,14 @@ function PorkchopDedicatedPage() {
                   key: 'card-stack',
                   style: `display:grid;grid-template-columns:max-content 1fr;gap:7px 14px;font-size:12px;line-height:1.6;color:#d8e1f1;${costCardState.band === 'RED' ? 'opacity:0.55;' : ''}`,
                 },
-                h('span', null, `Payload at C3 = ${costCardState.readout.c3!.toFixed(1)}`),
-                h('span', null, costCardState.payloadKg === null ? 'beyond published curve' : formatKg(costCardState.payloadKg)),
+                h('span', null, `Payload at C3 = ${costCardState.c3.toFixed(1)}`),
+                h(
+                  'span',
+                  null,
+                  isBeyondCurve(costCardState.payload)
+                    ? 'beyond published curve'
+                    : formatKg(costCardState.payload),
+                ),
                 h('span', null, 'Rendezvous burn'),
                 h('span', null, `${costCardState.rendezvousMps.toFixed(0)} m/s`),
                 selectedMode === 'sample-return'
@@ -569,7 +584,7 @@ function PorkchopDedicatedPage() {
               h(
                 'div',
                 { key: 'card-injection-split', style: 'font-size:10px;color:#93a4bf;font-style:italic;margin-top:8px;line-height:1.4;' },
-                `Launch vehicle provides injection to C3 = ${costCardState.readout.c3!.toFixed(1)} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
+                `Launch vehicle provides injection to C3 = ${costCardState.c3.toFixed(1)} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
               ),
               h(
                 'details',
@@ -645,7 +660,7 @@ function PorkchopDedicatedPage() {
                   h('span', null, 'Pinned C3'),
                   h('span', null, `${stackState.readout.c3.toFixed(6)} km²/s²`),
                   h('span', null, 'Pinned v∞ arr'),
-                  h('span', null, `${stackState.readout.vInfArr!.toFixed(6)} km/s`),
+                  h('span', null, `${stackState.vInfArrKmps.toFixed(6)} km/s`),
                 ),
                 h(
                   'div',
