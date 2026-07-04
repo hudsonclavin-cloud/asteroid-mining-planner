@@ -3,7 +3,7 @@
  *
  * Vehicle payload curves are NASA LSP elvperf primary-source anchors (as-of 2024-02-29,
  * queried 2026-07-02). Curves interpolate only between sourced anchors; no extrapolation.
- * New Glenn keeps all four sourced anchors, including 120 kg at C3=30 km^2/s^2.
+ * New Glenn keeps all five sourced anchors, including 120 kg at C3=30 km^2/s^2.
  * NG C3=21-29 interior optimistic (linear across steep segment); densification anchors
  * at C3=25/35 pending, oracle to quantify.
  *
@@ -143,6 +143,7 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     asOf: ELVPERF_AS_OF,
     curve: [
       { c3: 0, payloadKg: 7180 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 5, payloadKg: 6360 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-03 (Perplexity Computer, oracle-verified)
       { c3: 10, payloadKg: 4930 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
       { c3: 20, payloadKg: 2365 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
       { c3: 30, payloadKg: 120 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02

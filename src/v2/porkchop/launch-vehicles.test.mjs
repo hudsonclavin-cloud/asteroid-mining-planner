@@ -117,6 +117,7 @@ const expectedAnchors = [
     config: 'Standard',
     curve: [
       [0, 7180],
+      [5, 6360],
       [10, 4930],
       [20, 2365],
       [30, 120],
