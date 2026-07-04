@@ -214,9 +214,11 @@ test('payloadAtC3 guards non-finite and below-first C3 inputs', async () => {
 test('deliveredMassKg excludes injection by construction and applies mode departure only for sample return', async () => {
   const {
     BEYOND_CURVE,
+    DETERMINISTIC_MARGIN_FRACTION,
     G0_MPS2,
     LAUNCH_VEHICLES,
     SCREENING_ISP_S,
+    SPACECRAFT_STATIONKEEPING_MPS,
     deliveredMassKg,
     deterministicMarginMps,
   } = await loadModule();
@@ -225,8 +227,9 @@ test('deliveredMassKg excludes injection by construction and applies mode depart
 
   const launchVehiclePayloadKg = 10115;
   const rendezvousMps = 1500;
-  const stationkeepingMps = 150;
+  const stationkeepingMps = SPACECRAFT_STATIONKEEPING_MPS;
   const marginMps = deterministicMarginMps(rendezvousMps);
+  assert.equal(marginMps, rendezvousMps * DETERMINISTIC_MARGIN_FRACTION);
   const budget = { rendezvousMps, stationkeepingMps, marginMps, departureMps: 600 };
   const dvNoInjectionMps = rendezvousMps + stationkeepingMps + marginMps;
 
@@ -261,12 +264,18 @@ test('deliveredMassKg rejects corrupted budgets and invalid modes with INVALID_I
     BEYOND_CURVE,
     INVALID_INPUT,
     LAUNCH_VEHICLES,
+    SPACECRAFT_STATIONKEEPING_MPS,
     deliveredMassKg,
+    deterministicMarginMps,
     isBeyondCurve,
     isInvalidInput,
   } = await loadModule();
   const fhExp = findVehicle(LAUNCH_VEHICLES, 'Falcon Heavy', 'Expendable');
-  const validBudget = { rendezvousMps: 1500, stationkeepingMps: 150, marginMps: 75 };
+  const validBudget = {
+    rendezvousMps: 1500,
+    stationkeepingMps: SPACECRAFT_STATIONKEEPING_MPS,
+    marginMps: deterministicMarginMps(1500),
+  };
 
   // Sentinel distinctness (audit MED-2 / D3): frozen singleton, disjoint from BEYOND_CURVE.
   assert.notEqual(INVALID_INPUT, BEYOND_CURVE);
@@ -309,6 +318,11 @@ test('deliveredMassKg rejects corrupted budgets and invalid modes with INVALID_I
   assert.equal(budgetReads, 0, 'beyond-curve short-circuit must read zero budget properties');
 
   // Finite-input byte-identity: the frozen hand-computed value is unchanged.
-  const frozenBudget = { rendezvousMps: 1500, stationkeepingMps: 150, marginMps: 75, departureMps: 600 };
+  const frozenBudget = {
+    rendezvousMps: 1500,
+    stationkeepingMps: SPACECRAFT_STATIONKEEPING_MPS,
+    marginMps: deterministicMarginMps(1500),
+    departureMps: 600,
+  };
   assertClose(deliveredMassKg(fhExp, 20, frozenBudget), 5837.652223940382, 'finite behavior byte-identical');
 });

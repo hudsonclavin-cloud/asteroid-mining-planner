@@ -47,6 +47,10 @@ export type DeliveredMassResult = number | BeyondCurve | InvalidInput;
 
 // DEC-13-5: representative of 300-350 s storable bipropellant class; disclosed per INV-016e.
 export const SCREENING_ISP_S = 320;
+// DEC-13-6: 5% ECSS-anchored margin on deterministic maneuver lines.
+export const DETERMINISTIC_MARGIN_FRACTION = 0.05;
+// DEC-13-6: generic stationkeeping allocation, not included in deterministic margin.
+export const SPACECRAFT_STATIONKEEPING_MPS = 150;
 // Exact standard gravity, m/s^2.
 export const G0_MPS2 = 9.80665;
 
@@ -186,7 +190,10 @@ export function isInvalidInput(value: DeliveredMassResult): value is InvalidInpu
 const isNonNegativeFinite = (value: number): boolean => Number.isFinite(value) && value >= 0;
 
 export function deterministicMarginMps(...deterministicManeuversMps: readonly number[]): number {
-  return deterministicManeuversMps.reduce((sum, maneuverMps) => sum + maneuverMps, 0) * 0.05;
+  return (
+    deterministicManeuversMps.reduce((sum, maneuverMps) => sum + maneuverMps, 0) *
+    DETERMINISTIC_MARGIN_FRACTION
+  );
 }
 
 export function payloadAtC3(vehicle: LaunchVehicle, c3: number): PayloadAtC3Result {

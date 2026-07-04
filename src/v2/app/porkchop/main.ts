@@ -10,12 +10,14 @@ import {
 } from '../../core/lambert/feasibility.js';
 import {
   deliveredMassKg,
+  DETERMINISTIC_MARGIN_FRACTION,
   deterministicMarginMps,
   isBeyondCurve,
   isInvalidInput,
   LAUNCH_VEHICLES,
   payloadAtC3,
   SCREENING_ISP_S,
+  SPACECRAFT_STATIONKEEPING_MPS,
   type LaunchVehicle,
   type MissionMode,
   type SpacecraftDvBudget,
@@ -120,6 +122,8 @@ const CARD_PICKER_LABEL_STYLE =
   'font-size:11px;color:#93a4bf;text-transform:uppercase;letter-spacing:0.08em;';
 const CARD_DISCLOSURE_STYLE =
   'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;';
+const DETERMINISTIC_MARGIN_PERCENT = (DETERMINISTIC_MARGIN_FRACTION * 100).toFixed(0);
+const SPACECRAFT_STATIONKEEPING_DISPLAY_MPS = SPACECRAFT_STATIONKEEPING_MPS.toFixed(0);
 
 const vehicleKey = (vehicle: LaunchVehicle): string => `${vehicle.name} — ${vehicle.config}`;
 
@@ -278,9 +282,9 @@ function PorkchopDedicatedPage() {
     // option (a): zero-with-disclosure); RED cells never price (infeasible panel).
     const rendezvousMps = pinnedReadout.vInfArr * 1000;
     const departureMps = selectedMode === 'sample-return' ? rendezvousMps : 0;
-    const stationkeepingMps = STATIONKEEPING_DV_KMPS * 1000;
-    // DEC-13-6: 5% margin on deterministic maneuver lines only; the 150 m/s
-    // stationkeeping line is the generic allocation and is not margined.
+    const stationkeepingMps = SPACECRAFT_STATIONKEEPING_MPS;
+    // DEC-13-6: margin on deterministic maneuver lines only; stationkeeping is
+    // the generic allocation and is not margined.
     const marginMps =
       selectedMode === 'sample-return'
         ? deterministicMarginMps(rendezvousMps, departureMps)
@@ -553,7 +557,7 @@ function PorkchopDedicatedPage() {
                         ? 'exceeds site capability'
                         : '— (no DLA for this cell)',
                 ),
-                h('span', null, 'Margin (5%)'),
+                h('span', null, `Margin (${DETERMINISTIC_MARGIN_PERCENT}%)`),
                 h('span', null, `${costCardState.marginMps.toFixed(0)} m/s (deterministic lines)`),
                 h('span', { style: 'font-weight:700;color:#fff;' }, 'Delivered mass'),
                 h(
@@ -577,7 +581,7 @@ function PorkchopDedicatedPage() {
                   h('div', null, `Vehicle curve: ${selectedVehicle.source}, as-of ${selectedVehicle.asOf} (queried 2026-07-02); official anchors only.`),
                   h('div', null, 'Interpolation: piecewise-linear between published anchors; no extrapolation — beyond the last anchor the card reads "beyond published curve".'),
                   h('div', null, `Spacecraft propulsion: screening Isp ${SCREENING_ISP_S} s (representative of the 300–350 s storable-bipropellant class). Mission mode: ${MISSION_MODE_LABELS[selectedMode]}. Delivered mass is arrival wet mass (no dry-mass modeling).`),
-                  h('div', null, 'Margin policy: 5% on deterministic maneuver lines (ECSS-anchored); the 150 m/s stationkeeping line is a generic allocation and is not margined.'),
+                  h('div', null, `Margin policy: ${DETERMINISTIC_MARGIN_PERCENT}% on deterministic maneuver lines (ECSS-anchored); the ${SPACECRAFT_STATIONKEEPING_DISPLAY_MPS} m/s stationkeeping line is a generic allocation and is not margined.`),
                   h(
                     'div',
                     null,
@@ -649,7 +653,7 @@ function PorkchopDedicatedPage() {
                     key: 'stack-assumptions',
                     style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
                   },
-                  `Assumptions: 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (150 m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
+                  `Assumptions: 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
                 ),
               ],
       ),
