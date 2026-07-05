@@ -429,7 +429,7 @@ function PorkchopDedicatedPage() {
                   key: 'dla-016d-disclosure',
                   style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
                 },
-                `Launch-feasibility bands are a screening estimate against ${selectedLaunchSite.name}'s azimuth corridor (sourced NASA limits). Day-specific launch geometry can bind tighter — e.g. MGS launched from Cape with DLA 36.5 deg (nominally AMBER) yet required a dogleg because its daily window forced the southerly azimuth side, where the effective ceiling is only ~34-39 deg. Dogleg cost is priced in the mission cost card per the two-regime screening model (INV-016d as amended by Slice 13): zero-with-disclosure for AMBER, not-feasible verdict for RED.`,
+                `Launch-feasibility bands are a screening estimate against ${selectedLaunchSite.name}'s azimuth corridor (sourced NASA limits). Day-specific launch geometry can bind tighter — e.g. MGS launched from Cape with DLA 36.5 deg (nominally AMBER) yet required a dogleg because its daily window forced the southerly azimuth side, where the effective ceiling is only ~34-39 deg. Dogleg cost is priced by a two-regime screening model: zero cost (with disclosure) for cells inside the direct-injection band, and a not-feasible verdict for cells outside it.`,
               ),
             ]
           : null,
@@ -519,7 +519,7 @@ function PorkchopDedicatedPage() {
                       costCardState.invalidInput
                         ? '—'
                         : costCardState.deliveredKg === null
-                          ? 'Beyond published curve'
+                          ? 'No published payload data past this C3 — not extrapolating.'
                           : formatKg(costCardState.deliveredKg),
                     ),
                     h(
@@ -547,7 +547,7 @@ function PorkchopDedicatedPage() {
                   'span',
                   null,
                   isBeyondCurve(costCardState.payload)
-                    ? 'beyond published curve'
+                    ? 'No published payload data past this C3 — not extrapolating.'
                     : formatKg(costCardState.payload),
                 ),
                 h('span', null, 'Rendezvous burn'),
@@ -594,7 +594,7 @@ function PorkchopDedicatedPage() {
                   'div',
                   { style: 'margin-top:8px;display:flex;flex-direction:column;gap:6px;' },
                   h('div', null, `Vehicle curve: ${selectedVehicle.source}, as-of ${selectedVehicle.asOf} (queried 2026-07-02); official anchors only.`),
-                  h('div', null, 'Interpolation: piecewise-linear between published anchors; no extrapolation — beyond the last anchor the card reads "beyond published curve".'),
+                  h('div', null, 'Interpolation: piecewise-linear between published anchors; no extrapolation — past the last published anchor the card reads "No published payload data past this C3 — not extrapolating."'),
                   h('div', null, `Spacecraft propulsion: screening Isp ${SCREENING_ISP_S} s (representative of the 300–350 s storable-bipropellant class). Mission mode: ${MISSION_MODE_LABELS[selectedMode]}. Delivered mass is arrival wet mass (no dry-mass modeling).`),
                   h('div', null, `Margin policy: ${DETERMINISTIC_MARGIN_PERCENT}% on deterministic maneuver lines (ECSS-anchored); the ${SPACECRAFT_STATIONKEEPING_DISPLAY_MPS} m/s stationkeeping line is a generic allocation and is not margined.`),
                   h(
