@@ -194,7 +194,7 @@ function PorkchopDedicatedPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pinnedReadout, setPinnedReadout] = useState<PorkchopPinnedReadout | null>(null);
-  const [showDlaContours, setShowDlaContours] = useState(false);
+  const [showDlaContours, setShowDlaContours] = useState(true);
   const [selectedLaunchSite, setSelectedLaunchSite] = useState<LaunchSite>(CAPE_CANAVERAL);
   const [selectedVehicle, setSelectedVehicle] = useState<LaunchVehicle>(LAUNCH_VEHICLES[0]);
   const [selectedMode, setSelectedMode] = useState<MissionMode>('one-way');
