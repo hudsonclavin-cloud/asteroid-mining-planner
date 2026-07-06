@@ -1,5 +1,5 @@
 import { h, render } from 'preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizons.js';
 import type { AsteroidOrbitalElements } from '../../core/constants/asteroids.js';
 import {
@@ -238,6 +238,18 @@ function toTourAnchorRect(rect: PorkchopViewportRect | DOMRect): TourAnchorRect 
   };
 }
 
+function sameTourAnchorRect(left: TourAnchorRect | null, right: TourAnchorRect | null): boolean {
+  if (left === null || right === null) {
+    return left === right;
+  }
+  return (
+    Math.abs(left.left - right.left) < 0.5 &&
+    Math.abs(left.top - right.top) < 0.5 &&
+    Math.abs(left.width - right.width) < 0.5 &&
+    Math.abs(left.height - right.height) < 0.5
+  );
+}
+
 async function loadLongWindowEarthSeries() {
   const response = await fetch(HORIZONS_FIXTURE_URL);
   if (!response.ok) {
@@ -271,6 +283,10 @@ function PorkchopDedicatedPage() {
   const [tourVariant, setTourVariant] = useState<Fk3TourVariant>('red-no-price');
   const [tourCellRect, setTourCellRect] = useState<TourAnchorRect | null>(null);
   const [tourCostCardRect, setTourCostCardRect] = useState<TourAnchorRect | null>(null);
+  const handleGlobalMinimumCellRectChange = useCallback((rect: PorkchopViewportRect | null) => {
+    const nextRect = rect === null ? null : toTourAnchorRect(rect);
+    setTourCellRect((current) => (sameTourAnchorRect(current, nextRect) ? current : nextRect));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -488,7 +504,8 @@ function PorkchopDedicatedPage() {
   useEffect(() => {
     const measureCostCard = () => {
       const card = costCardRef.current;
-      setTourCostCardRect(card === null ? null : toTourAnchorRect(card.getBoundingClientRect()));
+      const nextRect = card === null ? null : toTourAnchorRect(card.getBoundingClientRect());
+      setTourCostCardRect((current) => (sameTourAnchorRect(current, nextRect) ? current : nextRect));
     };
     measureCostCard();
     window.addEventListener('resize', measureCostCard);
@@ -885,7 +902,7 @@ function PorkchopDedicatedPage() {
         M: 1,
         onPinnedCellChange: setPinnedReadout,
         onGlobalMinimumCellChange: setGlobalMinimumReadout,
-        onGlobalMinimumCellRectChange: (rect) => setTourCellRect(rect === null ? null : toTourAnchorRect(rect)),
+        onGlobalMinimumCellRectChange: handleGlobalMinimumCellRectChange,
         pinGlobalMinimumRequestId: tourPinRequestId,
         showDlaOverlayControl: true,
         showDlaContours,
