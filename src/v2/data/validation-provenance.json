@@ -3,7 +3,7 @@
   "_note": "Single source of truth for every number on the Front 2 validation card. The card renders exclusively from this file; no validation number is a literal in component code. Each row carries its display value, the exact value read from its source artifact, and that artifact's path + commit. Values were verified against each artifact opened at its named commit before this file was committed.",
   "headline": {
     "rowId": "cost-oracle-strict",
-    "label": "Largest validation error",
+    "label": "Largest error on well-behaved inputs",
     "className": "STRICT",
     "surface": "launch-vehicle payload interpolation",
     "framing": "Worst case across every validation surface, under the STRICT class. The trajectory solver itself agrees with the poliastro reference to machine precision (rows below); the largest error the tool shows on well-behaved inputs comes from interpolating published launch-vehicle payload curves."
