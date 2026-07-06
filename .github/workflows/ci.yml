@@ -1,10 +1,11 @@
 name: CI
 
 # First committed workflow in this repo (Slice 14 Phase A / DEC-14-5).
-# Type-regression gate ONLY. It is deliberately SEPARATE from the GitHub Pages
-# deploy: it never builds docs/, never deploys, never writes to the repo.
-# Pages continues to serve from the committed docs/ folder via built-in
-# branch-deploy, entirely untouched by this workflow.
+# Two gates: `typecheck` (tsc --noEmit type-regression) and `golden-numbers`
+# (pins payloadAtC3 / deliveredMassKg — the df3225f data-literal guard).
+# It is deliberately SEPARATE from the GitHub Pages deploy: it never builds
+# docs/, never deploys, never writes to the repo. Pages continues to serve from
+# the committed docs/ folder via built-in branch-deploy, untouched by this workflow.
 
 on:
   push:
@@ -30,3 +31,22 @@ jobs:
 
       - name: Typecheck (tsc --noEmit)
         run: npx tsc --noEmit
+
+  golden-numbers:
+    name: golden-numbers (df3225f guard)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          # Node 24: the golden test imports production TypeScript directly via
+          # native type-stripping (no tsc spawn, no .bin/tsc shim). Requires
+          # Node >= 22.18 / 24. No `npm ci` — the test only touches node builtins
+          # and the self-contained launch-vehicles module.
+          node-version: '24'
+
+      - name: Golden-numbers test (payloadAtC3 / deliveredMassKg)
+        run: node --test tests/v2-golden/launch-vehicles.golden.test.mjs
