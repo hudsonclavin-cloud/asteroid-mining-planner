@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "_note": "Single source of truth for every number on the Front 2 validation card. The card renders exclusively from this file; no validation number is a literal in component code. Each row carries its display value, the exact value read from its source artifact, and that artifact's path + commit. Values were verified against each artifact opened at its named commit before this file was committed.",
+  "headline": {
+    "rowId": "cost-oracle-strict",
+    "label": "Largest error on well-behaved inputs",
+    "className": "STRICT",
+    "surface": "launch-vehicle payload interpolation",
+    "framing": "Worst case across every validation surface, under the STRICT class. The trajectory solver itself agrees with the poliastro reference to machine precision (rows below); the largest error the tool shows on well-behaved inputs comes from interpolating published launch-vehicle payload curves."
+  },
+  "classDefinitions": {
+    "STRICT": "Error measured across the well-behaved curve segments the tool is designed to screen on. This is the gated figure.",
+    "OBSERVED": "Error including the one steep segment where the tool is knowingly optimistic. Disclosed here rather than gated, so the worst case is never hidden."
+  },
+  "observedDisclosure": "New Glenn payload between C3 = 20 and C3 = 30 is linearly interpolated across a steep final segment and may overestimate actual capability by up to ~3%. All other vehicles interpolate within 3% of NASA LSP published values.",
+  "rows": [
+    {
+      "id": "data-source",
+      "label": "Launch-vehicle performance data",
+      "measures": "Payload-vs-C3 curves used to price delivered mass",
+      "value": "NASA LSP elvperf",
+      "sourceValue": "NASA LSP elvperf",
+      "format": "primary source",
+      "asOf": "2024-02-29",
+      "solverConfig": "Official published anchors only; piecewise-linear between anchors, never extrapolated past the last one.",
+      "sourceArtifact": "src/v2/porkchop/launch-vehicles.ts",
+      "sourceCommit": "bcf1738",
+      "class": null,
+      "note": "As-of the 2024-02-29 NASA Launch Services Program elvperf query."
+    },
+    {
+      "id": "lambert-m0",
+      "label": "Transfer solver vs poliastro (single-revolution)",
+      "measures": "Largest relative disagreement in C3 and arrival/departure excess velocity across the porkchop grid",
+      "value": "3.43e-14",
+      "sourceValue": "3.428650990914828e-14",
+      "format": "max relative error",
+      "solverConfig": "Single-revolution (M=0), 50x50 departure-by-time-of-flight grid, checked on Apophis, Bennu, and Itokawa.",
+      "sourceArtifact": "tools/slice11-research/data/poliastro-validation.json",
+      "sourceCommit": "3d5f1cd",
+      "class": null,
+      "note": "Machine precision — the two independent solvers agree to the last bits of a 64-bit float."
+    },
+    {
+      "id": "lambert-multirev-magnitude",
+      "label": "Transfer solver vs poliastro (multi-revolution)",
+      "measures": "Largest relative disagreement in the magnitudes of C3 and excess velocity",
+      "value": "3.60e-12",
+      "sourceValue": "3.5979389805439233e-12",
+      "format": "max relative error",
+      "solverConfig": "Multi-revolution (M=1 and M=2), 50x50 grid, magnitudes only.",
+      "sourceArtifact": "tools/slice11-research/data/multi-rev-poliastro-validation.json",
+      "sourceCommit": "3560ff8",
+      "class": null,
+      "note": "Magnitude only: this confirms the sizes of C3 and excess velocity agree, not the vector directions. The directions are validated separately in the next row, so this figure does not by itself claim a full-solution match."
+    },
+    {
+      "id": "dla-m1-vector",
+      "label": "Multi-revolution vector directions vs poliastro",
+      "measures": "Largest angle between our excess-velocity vector and poliastro's, and the largest resulting difference in declination of the launch asymptote",
+      "value": "5.74e-13 deg angle / 5.61e-13 deg declination",
+      "sourceValue": "maxAngularSeparationDeg 5.737702974878478e-13; maxAbsDeltaDlaDeg 5.613287612504791e-13",
+      "format": "max angular separation / max declination difference (bar: 1e-6 deg)",
+      "solverConfig": "M=1, both branches, 25x25 grids on Apophis and Bennu — the directions the launch-feasibility overlay actually ships.",
+      "sourceArtifact": "tools/slice12-research/data/dla-oracle-m1-vectors.json",
+      "sourceCommit": "830a4d9",
+      "class": null,
+      "note": "Closes the magnitude-only gap above: the vector directions the declination overlay depends on are validated, far inside the 1e-6 deg acceptance bar."
+    },
+    {
+      "id": "cost-oracle-strict",
+      "label": "Payload interpolation vs NASA LSP (well-behaved segments)",
+      "measures": "Interpolated payload-at-C3 vs the tool's own published values at held-out C3 points",
+      "value": "1.18% max / 0.55% RMS",
+      "sourceValue": "Max |error| 1.18% (New Glenn @ C3=15); RMS |error| 0.55%; threshold 5.0%; PASS",
+      "format": "max error / RMS error",
+      "solverConfig": "STRICT class: well-behaved curve segments, held-out C3 = 15/25/35/50; passes the 5% acceptance bar.",
+      "sourceArtifact": "tools/slice13-research/elvperf/oracle/oracle-report.md",
+      "sourceCommit": "808e709",
+      "class": "STRICT",
+      "note": "Excludes New Glenn's steep final segment — see the OBSERVED figure."
+    },
+    {
+      "id": "cost-oracle-observed",
+      "label": "Payload interpolation vs NASA LSP (including the steep segment)",
+      "measures": "Same comparison, including the one segment where straight-line interpolation is knowingly optimistic",
+      "value": "3.11% max / 2.10% RMS",
+      "sourceValue": "Max |error| 3.11% (New Glenn @ C3=25); RMS |error| 2.10%",
+      "format": "max error / RMS error",
+      "solverConfig": "OBSERVED class: every measured point, including New Glenn's steep C3 20-30 segment. Measured and disclosed, not gated.",
+      "sourceArtifact": "tools/slice13-research/elvperf/oracle/oracle-report.md",
+      "sourceCommit": "808e709",
+      "class": "OBSERVED",
+      "note": "The single worst point; New Glenn between C3 = 20 and 30 may read ~3% high. See the disclosure."
+    }
+  ]
+}
