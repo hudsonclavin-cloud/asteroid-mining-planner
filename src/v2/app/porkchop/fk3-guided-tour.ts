@@ -5,6 +5,13 @@ export type Fk3TourVariant = 'red-no-price' | 'red-with-price' | 'penalty';
 
 export const FK3_TOUR_STORAGE_KEY = 'aster.fk3TourSeen';
 
+export interface TourAnchorRect {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 const STEP_COPY: Record<Fk3TourStep, { readonly title: string; readonly body: string }> = {
   1: {
     title: 'The cheapest window',
@@ -51,13 +58,6 @@ const CARD_BASE_STYLE = [
   'pointer-events:auto',
 ].join(';');
 
-const STEP_POSITIONS: Record<Fk3TourStep, string> = {
-  1: 'right:24px;top:120px;',
-  2: 'right:24px;top:120px;',
-  3: 'left:24px;top:250px;',
-  4: 'left:50%;top:50%;transform:translate(-50%,-50%);',
-};
-
 const TITLE_STYLE = 'font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;';
 const BODY_STYLE = 'font-size:13px;line-height:1.55;color:#cbd5e1;margin-bottom:12px;';
 const ACTION_ROW_STYLE = 'display:flex;justify-content:space-between;align-items:center;gap:8px;';
@@ -73,14 +73,66 @@ const HIGHLIGHT_BASE_STYLE = [
   'pointer-events:none',
 ].join(';');
 
-const HIGHLIGHTS: Partial<Record<Fk3TourStep, string>> = {
-  1: 'left:360px;right:28px;top:118px;height:380px;',
-  2: 'left:360px;right:28px;top:118px;height:380px;',
-  3: 'left:18px;top:412px;width:300px;height:238px;',
-};
-
 function stepBody(step: Fk3TourStep, variant: Fk3TourVariant): string {
   return step === 3 ? STEP_3_COPY[variant] : STEP_COPY[step].body;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function expandRect(rect: TourAnchorRect, padding: number): TourAnchorRect {
+  return {
+    left: Math.max(8, rect.left - padding),
+    top: Math.max(8, rect.top - padding),
+    width: rect.width + padding * 2,
+    height: rect.height + padding * 2,
+  };
+}
+
+function rectStyle(rect: TourAnchorRect): string {
+  return `left:${rect.left.toFixed(0)}px;top:${rect.top.toFixed(0)}px;width:${rect.width.toFixed(0)}px;height:${rect.height.toFixed(0)}px;`;
+}
+
+function cardPosition(step: Fk3TourStep, anchor: TourAnchorRect | null): string {
+  if (step === 4 || anchor === null) {
+    return 'left:50%;top:50%;transform:translate(-50%,-50%);';
+  }
+
+  const cardWidth = Math.min(360, Math.max(280, window.innerWidth - 32));
+  const margin = 20;
+  let left: number;
+  let top: number;
+
+  if (step === 3) {
+    left = Math.max(anchor.left + anchor.width + 32, 360);
+    top = anchor.top;
+  } else {
+    const preferRight = anchor.left + anchor.width + cardWidth + margin * 2 < window.innerWidth;
+    left = preferRight ? anchor.left + anchor.width + margin : anchor.left - cardWidth - margin;
+    top = anchor.top - 24;
+  }
+
+  left = clamp(left, 16, Math.max(16, window.innerWidth - cardWidth - 16));
+  top = clamp(top, 16, Math.max(16, window.innerHeight - 220));
+  return `left:${left.toFixed(0)}px;top:${top.toFixed(0)}px;`;
+}
+
+function stepAnchor(
+  step: Fk3TourStep,
+  cellRect: TourAnchorRect | null,
+  costCardRect: TourAnchorRect | null,
+): TourAnchorRect | null {
+  if (step === 1) {
+    return cellRect === null ? null : expandRect(cellRect, 14);
+  }
+  if (step === 2) {
+    return cellRect === null ? null : expandRect(cellRect, 26);
+  }
+  if (step === 3) {
+    return costCardRect === null ? null : expandRect(costCardRect, 6);
+  }
+  return null;
 }
 
 export function markFk3TourSeen(): void {
@@ -102,6 +154,8 @@ export function hasSeenFk3Tour(): boolean {
 interface Fk3GuidedTourProps {
   readonly step: Fk3TourStep;
   readonly variant: Fk3TourVariant;
+  readonly cellRect: TourAnchorRect | null;
+  readonly costCardRect: TourAnchorRect | null;
   readonly onNext: () => void;
   readonly onSkip: () => void;
   readonly onClose: () => void;
@@ -110,17 +164,17 @@ interface Fk3GuidedTourProps {
 export function Fk3GuidedTour(props: Fk3GuidedTourProps): VNode {
   const copy = STEP_COPY[props.step];
   const isFinal = props.step === 4;
-  const highlight = HIGHLIGHTS[props.step];
+  const anchor = stepAnchor(props.step, props.cellRect, props.costCardRect);
   return h(
     'div',
     { style: BACKDROP_STYLE, 'aria-live': 'polite' },
-    highlight === undefined ? null : h('div', { style: `${HIGHLIGHT_BASE_STYLE};${highlight}` }),
+    anchor === null ? null : h('div', { style: `${HIGHLIGHT_BASE_STYLE};${rectStyle(anchor)}` }),
     h(
       'section',
       {
         role: 'dialog',
         'aria-label': copy.title,
-        style: `${CARD_BASE_STYLE};${STEP_POSITIONS[props.step]}`,
+        style: `${CARD_BASE_STYLE};${cardPosition(props.step, anchor)}`,
       },
       h('div', { style: TITLE_STYLE }, copy.title),
       h('div', { style: BODY_STYLE }, stepBody(props.step, props.variant)),

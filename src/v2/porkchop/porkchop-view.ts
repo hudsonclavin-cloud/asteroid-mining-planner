@@ -124,6 +124,7 @@ export interface PorkchopViewProps {
   readonly M: number;
   readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
+  readonly onGlobalMinimumCellRectChange?: ((rect: PorkchopViewportRect | null) => void) | undefined;
   readonly pinGlobalMinimumRequestId?: number | undefined;
   readonly showDlaOverlayControl?: boolean | undefined;
   readonly showDlaContours?: boolean | undefined;
@@ -150,6 +151,13 @@ export interface PorkchopPinnedReadout {
   readonly feasibility: FeasibilityClass;
   /** Site the feasibility class was computed against — rendered beside the badge (audit H-2). */
   readonly siteName: string;
+}
+
+export interface PorkchopViewportRect {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
 }
 
 interface HoverTooltipPosition {
@@ -782,6 +790,37 @@ export function PorkchopView(props: PorkchopViewProps) {
   useEffect(() => {
     props.onGlobalMinimumCellChange?.(globalMinimumReadout);
   }, [globalMinimumReadout, props.onGlobalMinimumCellChange]);
+
+  useEffect(() => {
+    const emitRect = () => {
+      const canvas = canvasRef.current;
+      if (canvas === null || globalMinimumCell === null) {
+        props.onGlobalMinimumCellRectChange?.(null);
+        return;
+      }
+      const indices = getGridIndicesForCell(globalMinimumCell, props.gridParams);
+      if (indices === null) {
+        props.onGlobalMinimumCellRectChange?.(null);
+        return;
+      }
+      const canvasRect = canvas.getBoundingClientRect();
+      const cellWidth = canvasRect.width / props.gridParams.nDep;
+      const cellHeight = canvasRect.height / props.gridParams.nTof;
+      const rowFromTop = props.gridParams.nTof - 1 - indices.tofIndex;
+      props.onGlobalMinimumCellRectChange?.({
+        left: canvasRect.left + indices.depIndex * cellWidth,
+        top: canvasRect.top + rowFromTop * cellHeight,
+        width: cellWidth,
+        height: cellHeight,
+      });
+    };
+
+    emitRect();
+    window.addEventListener('resize', emitRect);
+    return () => {
+      window.removeEventListener('resize', emitRect);
+    };
+  }, [globalMinimumCell, props.gridParams, props.onGlobalMinimumCellRectChange]);
 
   useEffect(() => {
     if (

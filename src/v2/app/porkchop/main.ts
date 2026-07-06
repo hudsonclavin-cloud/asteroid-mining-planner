@@ -1,5 +1,5 @@
 import { h, render } from 'preact';
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizons.js';
 import type { AsteroidOrbitalElements } from '../../core/constants/asteroids.js';
 import {
@@ -34,7 +34,11 @@ import {
   STATIONKEEPING_DV_KMPS,
   type DeltaVStackBreakdown,
 } from '../../porkchop/delta-v.js';
-import { PorkchopView, type PorkchopPinnedReadout } from '../../porkchop/porkchop-view.js';
+import {
+  PorkchopView,
+  type PorkchopPinnedReadout,
+  type PorkchopViewportRect,
+} from '../../porkchop/porkchop-view.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 import {
   FK3_TOUR_STORAGE_KEY,
@@ -43,6 +47,7 @@ import {
   markFk3TourSeen,
   type Fk3TourStep,
   type Fk3TourVariant,
+  type TourAnchorRect,
 } from './fk3-guided-tour.js';
 import { ValidationCard } from './validation-card.js';
 
@@ -224,6 +229,15 @@ function readoutMatchesCell(
   );
 }
 
+function toTourAnchorRect(rect: PorkchopViewportRect | DOMRect): TourAnchorRect {
+  return {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
 async function loadLongWindowEarthSeries() {
   const response = await fetch(HORIZONS_FIXTURE_URL);
   if (!response.ok) {
@@ -238,6 +252,7 @@ async function loadLongWindowEarthSeries() {
 }
 
 function PorkchopDedicatedPage() {
+  const costCardRef = useRef<HTMLElement | null>(null);
   const requestedBodyId = useMemo(() => resolveRequestedBodyId(), []);
   const [pageState, setPageState] = useState<PageState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -254,6 +269,8 @@ function PorkchopDedicatedPage() {
   const [tourReplayRequestId, setTourReplayRequestId] = useState(0);
   const [tourStep, setTourStep] = useState<Fk3TourStep | null>(null);
   const [tourVariant, setTourVariant] = useState<Fk3TourVariant>('red-no-price');
+  const [tourCellRect, setTourCellRect] = useState<TourAnchorRect | null>(null);
+  const [tourCostCardRect, setTourCostCardRect] = useState<TourAnchorRect | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -468,6 +485,18 @@ function PorkchopDedicatedPage() {
     setTourStep(null);
   };
 
+  useEffect(() => {
+    const measureCostCard = () => {
+      const card = costCardRef.current;
+      setTourCostCardRect(card === null ? null : toTourAnchorRect(card.getBoundingClientRect()));
+    };
+    measureCostCard();
+    window.addEventListener('resize', measureCostCard);
+    return () => {
+      window.removeEventListener('resize', measureCostCard);
+    };
+  }, [costCardState, tourStep]);
+
   if (loading) {
     return h(
       'div',
@@ -604,6 +633,9 @@ function PorkchopDedicatedPage() {
       h(
         'section',
         {
+          ref: (el: HTMLElement | null) => {
+            costCardRef.current = el;
+          },
           style: 'border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;background:rgba(255,255,255,0.03);margin-bottom:16px;',
         },
         h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Mission cost'),
@@ -853,6 +885,7 @@ function PorkchopDedicatedPage() {
         M: 1,
         onPinnedCellChange: setPinnedReadout,
         onGlobalMinimumCellChange: setGlobalMinimumReadout,
+        onGlobalMinimumCellRectChange: (rect) => setTourCellRect(rect === null ? null : toTourAnchorRect(rect)),
         pinGlobalMinimumRequestId: tourPinRequestId,
         showDlaOverlayControl: true,
         showDlaContours,
@@ -864,6 +897,8 @@ function PorkchopDedicatedPage() {
       : h(Fk3GuidedTour, {
           step: tourStep,
           variant: tourVariant,
+          cellRect: tourCellRect,
+          costCardRect: tourCostCardRect,
           onNext: () => setTourStep((current) => (current === null || current >= 4 ? current : ((current + 1) as Fk3TourStep))),
           onSkip: dismissTour,
           onClose: dismissTour,
