@@ -36,6 +36,7 @@ import {
 } from '../../porkchop/delta-v.js';
 import { PorkchopView, type PorkchopPinnedReadout } from '../../porkchop/porkchop-view.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
+import { ValidationCard } from './validation-card.js';
 
 const mount = document.getElementById('app');
 
@@ -672,6 +673,7 @@ function PorkchopDedicatedPage() {
                 ),
               ],
       ),
+      h(ValidationCard, null),
     ),
     h(
       'main',
