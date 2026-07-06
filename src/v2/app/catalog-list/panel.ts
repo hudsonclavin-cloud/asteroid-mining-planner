@@ -52,6 +52,7 @@ const scrollTopSignal = signal(0);
 const viewportHeightSignal = signal(600);
 const popoverOpenSignal = signal(false);
 const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> | null>(null);
+const ABOUT_ROUTE = '../about/';
 
 loadLambertScreenCacheAsync()
   .then((cache) => {
@@ -220,6 +221,10 @@ function renderFooter(): VNode {
     'div',
     {
       style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: '12px',
         padding: '10px 16px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         background: 'rgba(0,0,0,0.3)',
@@ -234,8 +239,27 @@ function renderFooter(): VNode {
       },
       title: 'Click to view screen limitations',
     },
-    h('span', { style: { fontWeight: 500, color: '#aaa' } }, FOOTER_TEXT),
-    h('span', { style: { marginLeft: '8px', color: '#666', fontSize: '10px' } }, `· ${FOOTER_CLICK_HINT}`),
+    h(
+      'span',
+      null,
+      h('span', { style: { fontWeight: 500, color: '#aaa' } }, FOOTER_TEXT),
+      h('span', { style: { marginLeft: '8px', color: '#666', fontSize: '10px' } }, `· ${FOOTER_CLICK_HINT}`),
+    ),
+    h(
+      'a',
+      {
+        href: ABOUT_ROUTE,
+        onClick: (event: MouseEvent) => {
+          event.stopPropagation();
+        },
+        style: {
+          color: '#7dd3fc',
+          textDecoration: 'none',
+          flexShrink: 0,
+        },
+      },
+      'About this tool',
+    ),
   );
 }
 

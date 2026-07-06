@@ -54,6 +54,7 @@ const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',
   import.meta.url,
 );
+const ABOUT_ROUTE = '../about/';
 
 const PAGE_STYLE = [
   'width:100%',
@@ -356,6 +357,14 @@ function PorkchopDedicatedPage() {
       h('div', { style: 'font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8da2c0;margin-bottom:10px;' }, 'Porkchop Analysis'),
       h('div', { style: 'font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;' }, pageState.bodyLabel),
       h('div', { style: 'font-size:13px;color:#93a4bf;margin-bottom:6px;' }, pageState.bodyId),
+      h(
+        'a',
+        {
+          href: ABOUT_ROUTE,
+          style: 'display:inline-block;font-size:12px;color:#7dd3fc;text-decoration:none;margin-bottom:10px;',
+        },
+        'About this tool →',
+      ),
       h(
         'a',
         {
