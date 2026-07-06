@@ -36,6 +36,14 @@ import {
 } from '../../porkchop/delta-v.js';
 import { PorkchopView, type PorkchopPinnedReadout } from '../../porkchop/porkchop-view.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
+import {
+  FK3_TOUR_STORAGE_KEY,
+  Fk3GuidedTour,
+  hasSeenFk3Tour,
+  markFk3TourSeen,
+  type Fk3TourStep,
+  type Fk3TourVariant,
+} from './fk3-guided-tour.js';
 import { ValidationCard } from './validation-card.js';
 
 const mount = document.getElementById('app');
@@ -55,6 +63,7 @@ const HORIZONS_FIXTURE_URL = new URL(
   import.meta.url,
 );
 const ABOUT_ROUTE = '../about/';
+const FK3_TOUR_REPLAY_SESSION_KEY = 'aster.fk3TourReplay';
 
 const PAGE_STYLE = [
   'width:100%',
@@ -177,6 +186,44 @@ function resolveRequestedBodyId(): string {
   return params.get('body') || DEFAULT_BODY_ID;
 }
 
+function readReplayRequest(): boolean {
+  try {
+    return sessionStorage.getItem(FK3_TOUR_REPLAY_SESSION_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeReplayRequest(): void {
+  try {
+    sessionStorage.setItem(FK3_TOUR_REPLAY_SESSION_KEY, '1');
+  } catch {
+    // sessionStorage unavailable; same-page replay still uses state.
+  }
+}
+
+function clearReplayRequest(): void {
+  try {
+    sessionStorage.removeItem(FK3_TOUR_REPLAY_SESSION_KEY);
+  } catch {
+    // sessionStorage unavailable; nothing to clear.
+  }
+}
+
+function readoutMatchesCell(
+  readout: PorkchopPinnedReadout | null,
+  target: PorkchopPinnedReadout | null,
+): boolean {
+  if (readout === null || target === null || readout.c3 === null || target.c3 === null) {
+    return false;
+  }
+  return (
+    Math.abs(readout.depJD - target.depJD) < 1e-9 &&
+    Math.abs(readout.tofDays - target.tofDays) < 1e-9 &&
+    Math.abs(readout.c3 - target.c3) < 1e-9
+  );
+}
+
 async function loadLongWindowEarthSeries() {
   const response = await fetch(HORIZONS_FIXTURE_URL);
   if (!response.ok) {
@@ -196,10 +243,17 @@ function PorkchopDedicatedPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pinnedReadout, setPinnedReadout] = useState<PorkchopPinnedReadout | null>(null);
+  const [globalMinimumReadout, setGlobalMinimumReadout] = useState<PorkchopPinnedReadout | null>(null);
   const [showDlaContours, setShowDlaContours] = useState(true);
   const [selectedLaunchSite, setSelectedLaunchSite] = useState<LaunchSite>(CAPE_CANAVERAL);
   const [selectedVehicle, setSelectedVehicle] = useState<LaunchVehicle>(LAUNCH_VEHICLES[0]);
   const [selectedMode, setSelectedMode] = useState<MissionMode>('one-way');
+  const [tourPinRequestId, setTourPinRequestId] = useState(0);
+  const [tourPendingStart, setTourPendingStart] = useState(false);
+  const [tourAutoAttempted, setTourAutoAttempted] = useState(false);
+  const [tourReplayRequestId, setTourReplayRequestId] = useState(0);
+  const [tourStep, setTourStep] = useState<Fk3TourStep | null>(null);
+  const [tourVariant, setTourVariant] = useState<Fk3TourVariant>('red-no-price');
 
   useEffect(() => {
     let cancelled = false;
@@ -253,6 +307,11 @@ function PorkchopDedicatedPage() {
       }
     };
   }, [requestedBodyId]);
+
+  const isDefaultTourState =
+    requestedBodyId === DEFAULT_BODY_ID &&
+    selectedLaunchSite.name === CAPE_CANAVERAL.name &&
+    showDlaContours;
 
   const stackState: StackState | null = useMemo(() => {
     if (
@@ -321,6 +380,94 @@ function PorkchopDedicatedPage() {
     };
   }, [pinnedReadout, selectedMode, selectedVehicle]);
 
+  const requestTourStart = () => {
+    setTourPendingStart(true);
+    setTourPinRequestId((current) => current + 1);
+  };
+
+  const restoreDefaultsAndReplayTour = () => {
+    writeReplayRequest();
+    if (requestedBodyId !== DEFAULT_BODY_ID) {
+      location.assign(location.pathname);
+      return;
+    }
+    setSelectedLaunchSite(CAPE_CANAVERAL);
+    setShowDlaContours(true);
+    setTourReplayRequestId((current) => current + 1);
+  };
+
+  useEffect(() => {
+    if (loading || pageState === null || globalMinimumReadout === null || tourStep !== null || tourPendingStart) {
+      return;
+    }
+    const replayRequested = readReplayRequest() || tourReplayRequestId > 0;
+    const firstVisitRequested = !tourAutoAttempted && !hasSeenFk3Tour();
+    if (!replayRequested && !firstVisitRequested) {
+      return;
+    }
+    if (!isDefaultTourState) {
+      if (firstVisitRequested) {
+        setTourAutoAttempted(true);
+      }
+      return;
+    }
+    if (globalMinimumReadout.feasibility === 'GREEN') {
+      console.error('FK3 tour premise failed: global-minimum cell is GREEN', globalMinimumReadout);
+      setTourAutoAttempted(true);
+      clearReplayRequest();
+      return;
+    }
+    if (firstVisitRequested) {
+      setTourAutoAttempted(true);
+    }
+    requestTourStart();
+  }, [
+    globalMinimumReadout,
+    isDefaultTourState,
+    loading,
+    pageState,
+    tourAutoAttempted,
+    tourPendingStart,
+    tourReplayRequestId,
+    tourStep,
+  ]);
+
+  useEffect(() => {
+    if (
+      !tourPendingStart ||
+      !isDefaultTourState ||
+      !readoutMatchesCell(pinnedReadout, globalMinimumReadout) ||
+      costCardState === null
+    ) {
+      return;
+    }
+
+    if (costCardState.band === 'RED') {
+      setTourVariant('red-no-price');
+    } else if (costCardState.band === 'AMBER') {
+      setTourVariant('penalty');
+    } else {
+      console.error('FK3 tour binding failed: unexpected pinned verdict/card state', {
+        globalMinimumReadout,
+        costCardState,
+      });
+      setTourPendingStart(false);
+      clearReplayRequest();
+      return;
+    }
+
+    clearReplayRequest();
+    setTourPendingStart(false);
+    setTourStep(1);
+  }, [costCardState, globalMinimumReadout, isDefaultTourState, pinnedReadout, tourPendingStart]);
+
+  const dismissTour = () => {
+    markFk3TourSeen();
+    clearReplayRequest();
+    setTourPendingStart(false);
+    setTourStep(null);
+  };
+
   if (loading) {
     return h(
       'div',
@@ -364,6 +511,16 @@ function PorkchopDedicatedPage() {
           style: 'display:inline-block;font-size:12px;color:#7dd3fc;text-decoration:none;margin-bottom:10px;',
         },
         'About this tool →',
+      ),
+      h(
+        'button',
+        {
+          type: 'button',
+          onClick: restoreDefaultsAndReplayTour,
+          title: `Restores FK3, Cape Canaveral, and DLA-on before replaying. First-visit flag: ${FK3_TOUR_STORAGE_KEY}`,
+          style: 'display:inline-block;background:transparent;border:0;color:#7dd3fc;text-decoration:none;margin:0 0 20px;padding:0;font:inherit;font-size:12px;cursor:pointer;',
+        },
+        'Replay tour →',
       ),
       h(
         'a',
@@ -695,11 +852,22 @@ function PorkchopDedicatedPage() {
         gridParams: GRID_PARAMS,
         M: 1,
         onPinnedCellChange: setPinnedReadout,
+        onGlobalMinimumCellChange: setGlobalMinimumReadout,
+        pinGlobalMinimumRequestId: tourPinRequestId,
         showDlaOverlayControl: true,
         showDlaContours,
         launchSite: selectedLaunchSite,
       }),
     ),
+    tourStep === null
+      ? null
+      : h(Fk3GuidedTour, {
+          step: tourStep,
+          variant: tourVariant,
+          onNext: () => setTourStep((current) => (current === null || current >= 4 ? current : ((current + 1) as Fk3TourStep))),
+          onSkip: dismissTour,
+          onClose: dismissTour,
+        }),
   );
 }
 

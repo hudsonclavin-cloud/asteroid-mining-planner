@@ -123,6 +123,8 @@ export interface PorkchopViewProps {
   readonly gridParams: PorkchopGridParams;
   readonly M: number;
   readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
+  readonly onGlobalMinimumCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
+  readonly pinGlobalMinimumRequestId?: number | undefined;
   readonly showDlaOverlayControl?: boolean | undefined;
   readonly showDlaContours?: boolean | undefined;
   readonly launchSite?: LaunchSite | undefined;
@@ -428,6 +430,19 @@ function getSelectedBranchC3(cell: PorkchopWorkerCell): number | null {
     return null;
   }
   return cell.branches[cell.selectedBranch]?.c3 ?? null;
+}
+
+function findGlobalMinimumCell(cells: readonly PorkchopWorkerCell[]): PorkchopWorkerCell | null {
+  let minimumCell: PorkchopWorkerCell | null = null;
+  let minimumC3 = Infinity;
+  for (const cell of cells) {
+    const c3 = getSelectedBranchC3(cell);
+    if (c3 !== null && c3 < minimumC3) {
+      minimumC3 = c3;
+      minimumCell = cell;
+    }
+  }
+  return minimumCell;
 }
 
 // SIGNED selected-branch DLA — deliberately NOT folded with Math.abs (audit M-D):
@@ -745,6 +760,14 @@ export function PorkchopView(props: PorkchopViewProps) {
     () => (hoverCell === null ? null : buildPinnedReadout(hoverCell, launchSite)),
     [hoverCell, launchSite],
   );
+  const globalMinimumCell = useMemo(
+    () => (cells === null ? null : findGlobalMinimumCell(cells)),
+    [cells],
+  );
+  const globalMinimumReadout = useMemo(
+    () => (globalMinimumCell === null ? null : buildPinnedReadout(globalMinimumCell, launchSite)),
+    [globalMinimumCell, launchSite],
+  );
   const depEndLabel = formatJdTdb(props.gridParams.depEndJD);
   const depStartLabel = formatJdTdb(props.gridParams.depStartJD);
   const tofMinLabel = `${formatNumber(props.gridParams.tofMinDays, 1)} d`;
@@ -755,6 +778,21 @@ export function PorkchopView(props: PorkchopViewProps) {
   useEffect(() => {
     props.onPinnedCellChange?.(pinnedReadout);
   }, [pinnedReadout, props.onPinnedCellChange]);
+
+  useEffect(() => {
+    props.onGlobalMinimumCellChange?.(globalMinimumReadout);
+  }, [globalMinimumReadout, props.onGlobalMinimumCellChange]);
+
+  useEffect(() => {
+    if (
+      props.pinGlobalMinimumRequestId === undefined ||
+      props.pinGlobalMinimumRequestId <= 0 ||
+      globalMinimumCell === null
+    ) {
+      return;
+    }
+    setPinnedCell(globalMinimumCell);
+  }, [globalMinimumCell, props.pinGlobalMinimumRequestId]);
 
   return h(
     'div',
