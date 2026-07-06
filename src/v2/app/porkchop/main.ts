@@ -502,14 +502,25 @@ function PorkchopDedicatedPage() {
   };
 
   useEffect(() => {
+    let frameOne = 0;
+    let frameTwo = 0;
     const measureCostCard = () => {
       const card = costCardRef.current;
       const nextRect = card === null ? null : toTourAnchorRect(card.getBoundingClientRect());
       setTourCostCardRect((current) => (sameTourAnchorRect(current, nextRect) ? current : nextRect));
     };
-    measureCostCard();
+    if (tourStep === 3 && costCardRef.current !== null) {
+      costCardRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
+      frameOne = requestAnimationFrame(() => {
+        frameTwo = requestAnimationFrame(measureCostCard);
+      });
+    } else {
+      measureCostCard();
+    }
     window.addEventListener('resize', measureCostCard);
     return () => {
+      cancelAnimationFrame(frameOne);
+      cancelAnimationFrame(frameTwo);
       window.removeEventListener('resize', measureCostCard);
     };
   }, [costCardState, tourStep]);
