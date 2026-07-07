@@ -17,6 +17,8 @@ import {
 export type Slice9Inv014Tier = 'visualization-tier' | 'planning-tier' | 'not-kepler-safe';
 export type Slice9AnchorSource = 'sbdb' | 'horizons-reanchor' | 'stale-unanchored';
 
+export const SLICE9_NEA_CATALOG_TOTAL_BODIES = 41_906;
+
 export interface Slice9AsteroidAnchorFixture {
   epochTdbJd: number;
   positionKm: [number, number, number];
@@ -253,6 +255,11 @@ function assertSlice9FixtureShape(fixture: Slice9Fixture): void {
   const asteroidCount = Object.keys(fixture.asteroids).length;
   if (asteroidCount <= 0) {
     throw new Error('Slice 9 fixture must define at least one asteroid');
+  }
+  if (fixture.catalog.totalBodies !== SLICE9_NEA_CATALOG_TOTAL_BODIES) {
+    throw new Error(
+      `Slice 9 catalog.totalBodies must equal ${SLICE9_NEA_CATALOG_TOTAL_BODIES}; received ${fixture.catalog.totalBodies}`,
+    );
   }
   if (fixture.catalog.totalBodies !== asteroidCount) {
     throw new Error(

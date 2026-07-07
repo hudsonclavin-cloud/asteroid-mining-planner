@@ -1,5 +1,6 @@
 import { h, render, type ComponentChildren, type VNode } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
+import { SLICE9_NEA_CATALOG_TOTAL_BODIES } from '../../boundary/slice9-nea-catalog.js';
 
 const mount = document.getElementById('app');
 
@@ -334,7 +335,9 @@ function AboutPage(): VNode {
       section(
         'What this is',
         paragraph(
-          'Aster is a browser-based asteroid mission-planning tool. It computes Earth-departure launch windows as porkchop plots from a re-derived Lambert solver, screens each window against launch-site geometry (the declination of the launch asymptote), and prices delivered mass against published launch-vehicle performance curves — across a catalog of 41,906 near-Earth objects. Where a result depends on an assumption, or falls outside a validated range, the tool states that rather than showing a confident number.',
+          'Aster is a browser-based asteroid mission-planning tool. It computes Earth-departure launch windows as porkchop plots from a re-derived Lambert solver, screens each window against launch-site geometry (the declination of the launch asymptote), and prices delivered mass against published launch-vehicle performance curves — across a catalog of ',
+          SLICE9_NEA_CATALOG_TOTAL_BODIES.toLocaleString(),
+          ' near-Earth objects. Where a result depends on an assumption, or falls outside a validated range, the tool states that rather than showing a confident number.',
         ),
         h(
           'div',
