@@ -181,4 +181,11 @@ that is not ImageMagick.
 | INV-024 | `src/v2/SLICE_14_FOUNDING.md` | Anti-porting: the physics / orbital-mechanics layer is re-derived in-repo; external astrodynamics libraries (poliastro, adam_core, or successors) serve as validation oracles only — never imported, ported, or transcribed |
 | INV-025 | `src/v2/SLICE_14_FOUNDING.md` | Public-copy taxonomy rule: user-facing copy never exposes internal taxonomy identifiers (slice/DEC/INV numbers, dispatch names) without plain-English framing; artifacts introduced by what they demonstrate, never by bare internal ID |
 | INV-026 | `src/v2/SLICE_14_FOUNDING.md` | Trust-surface provenance: every numeric claim on a public validation/trust surface renders from a single committed provenance artifact (JSON), never from literals in component code |
+| INV-027 | `src/v2/SLICE_15_FOUNDING.md` | No math in the `mcp/` layer: adapters only; math belongs in `src/v2/core/` and receives math-layer treatment |
+| INV-028 | `src/v2/SLICE_15_FOUNDING.md` | Evidence envelope on every tool result; refusal is a result. No bare numbers, thrown exceptions for domain limits, or silent interpolation |
+| INV-029 | `src/v2/SLICE_15_FOUNDING.md` | Tool budget hard cap 8; a ninth tool is a founding-doc amendment, never a dispatch |
+| INV-030 | `src/v2/SLICE_15_FOUNDING.md` | Browser app builds green after every extraction commit; site and server share the core, so drift is the failure mode |
+| INV-031 | `src/v2/SLICE_15_FOUNDING.md` | Eval gate before publish: the 10-pair eval must pass with answers verified against the repo, never model memory |
+| INV-032 | `src/v2/SLICE_15_FOUNDING.md` | No non-finite numbers cross the wire; NaN/Infinity reaching an envelope value path is a bug-class refusal or error, never serialized |
+| INV-033 | `src/v2/SLICE_15_FOUNDING.md` | Anti-fabrication: no SourceRef path, commit, count, or URL enters any envelope, fixture, or provenance artifact unless confirmed to exist and match |
 | INV-V1-001 | `src/v2/SLICE_V1_FOUNDING.md` | Visual asset provenance must be confirmed before shipping (CC/public domain) |
