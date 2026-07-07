@@ -15,20 +15,6 @@
   "observedDisclosure": "New Glenn payload between C3 = 20 and C3 = 30 is linearly interpolated across a steep final segment and may overestimate actual capability by up to ~3%. All other vehicles interpolate within 3% of NASA LSP published values.",
   "rows": [
     {
-      "id": "neo_count",
-      "label": "Near-Earth object catalog size",
-      "measures": "Count of known near-Earth objects in the catalog the tool screens against",
-      "value": "41,906",
-      "sourceValue": "41906",
-      "format": "integer count",
-      "asOf": "2024-02-29",
-      "solverConfig": "JPL/CNEOS NEO count as of the data pull date; used as the catalog scope claim on the About page.",
-      "sourceArtifact": "src/v2/data/neo-catalog",
-      "sourceCommit": "bcf1738",
-      "class": null,
-      "note": "Source: NASA CNEOS / JPL Small-Body Database (https://cneos.jpl.nasa.gov/stats/totals.html). Count reflects the catalog snapshot used at launch; the live CNEOS tally increases as new objects are discovered."
-    },
-    {
       "id": "data-source",
       "label": "Launch-vehicle performance data",
       "measures": "Payload-vs-C3 curves used to price delivered mass",
