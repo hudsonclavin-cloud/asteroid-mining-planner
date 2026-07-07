@@ -345,7 +345,7 @@ function AboutPage(): VNode {
       section(
         'How it was built',
         paragraph(
-          'Aster is built with an AI-directed engineering process held to a fixed discipline. For each unit of work — a "slice" — an AI advisor named Nova drafts the founding document, the research, and the execution dispatches; a human reviews every decision, independently verifies every external number, and locks it before any code ships. The order is fixed — pre-research, decisions, founding document, execution, multi-agent audit, deploy — and skipping a step is treated as a defect to be caught and corrected.',
+          'Aster is built with an AI-directed engineering process held to a fixed discipline. For each unit of work — a "slice" — an AI advisor named Nova drafts the founding document, the research, and the execution dispatches; a human reviews every decision, independently verifies external numbers against their sources, and locks each decision before execution. The order is fixed — pre-research, decisions, founding document, execution, multi-agent audit, deploy — and skipping a step is treated as a defect to be caught and corrected.',
         ),
         paragraph(
           'Everything below links the actual working documents that process produced — pinned to the commit they existed at. They were not written for this page.',
