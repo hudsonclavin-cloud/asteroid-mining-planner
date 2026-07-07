@@ -9,7 +9,8 @@
 
 **Canonical repo:** `C:\Users\hudso\asteroid-mining-planner`
 **Live site:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/solar-system/
-**Porkchop route:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/?body=asteroid-99942
+**About route:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/about/
+**Porkchop route:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/
 
 ---
 
@@ -17,9 +18,16 @@
 
 | | Commit | Description |
 |-|--------|-------------|
-| **HEAD (local)** | `1accf9d` | build(slice13): production docs/ output for deploy |
-| **origin/main** | `8ab94cf` | fix(slice13): input-hardening (Phase F remediation, pushed; pre-deploy) |
-| **Deployed (gh-pages)** | `1accf9d` | Slice 13 mission cost card build output in `docs/` |
+| **HEAD (local)** | `b7532eb` | Slice 14 Phase E: rebuild docs/ (About copy + count fix into live bundle) |
+| **origin/main** | `b7532eb` | Same as local HEAD |
+| **Deployed bundle in `docs/`** | `b7532eb` | Slice 14 Phase E bundle: About + validation card + FK3 tour + CI-era docs output |
+
+**Current built bundles (from committed `docs/v2/*/index.html`):**
+- About: `aboutV2-DftM0n-e.js`
+- Porkchop: `porkchopV2-Cxwkeql6.js`
+- Solar system: `solarSystemV2-VhE9zmmW.js`
+- Shared Slice 9 catalog chunk: `slice9-nea-catalog-DpR-rPTv.js`
+- Validation provenance asset: `validation-provenance-lm2C_8vP.json`
 
 ---
 
@@ -29,25 +37,35 @@
 |-------|-------|-------|
 | Mission planning | Slice 9 (catalog) | COMPLETE |
 | Mission planning | Slice 10 (Lambert, C3 screen) | COMPLETE |
-| Mission planning | Slice 11 (porkchop + ΔV) | COMPLETE + DEPLOYED (`da3c520`) |
-| Mission planning | Slice 11.5 (500-body M=1) | COMPLETE (data committed `50b3b68`) |
-| Visualization | Slice V1 (textures + shader + atmosphere) | COMPLETE + DEPLOYED (`3211525`) |
-| Visualization | Visual fixes (top-down, starfield ctrl, labels, halo frame) | COMPLETE + DEPLOYED (`dc44751`) |
-| Mission planning | Slice 12 (DLA overlay) | COMPLETE + DEPLOYED (`946afed`) |
-| Mission planning | Slice 13 (mission cost card) | COMPLETE + DEPLOYED (`1accf9d`) — founding `3be2ae4`, L-4 hoist `6a0123c`, Phase A-2 math `7180593`, Phase B oracle `808e709`, cost card `5486be5`, showcase `625b882`, OQ-13-3 close `65fe39c`, MED-1 `5d386ec`, MED-2 `8ab94cf`, LOW docs pass (this session), build `1accf9d` |
+| Mission planning | Slice 11 (porkchop + ΔV) | COMPLETE + DEPLOYED |
+| Mission planning | Slice 11.5 (500-body M=1) | COMPLETE |
+| Visualization | Slice V1 (textures + shader + atmosphere) | COMPLETE + DEPLOYED |
+| Visualization | Visual fixes (top-down, starfield ctrl, labels, halo frame) | COMPLETE + DEPLOYED |
+| Mission planning | Slice 12 (DLA overlay) | COMPLETE + DEPLOYED |
+| Mission planning | Slice 13 (mission cost card) | COMPLETE + DEPLOYED |
+| Packaging / demo | Slice 14 (About + validation card + FK3 tour + CI) | **CLOSED + DEPLOYED** (`b7532eb`, 2026-07-07) |
 
-**Active founding doc (mission planning):** `src/v2/SLICE_13_FOUNDING.md` (CLOSED)
-**Next founding doc to write:** `src/v2/SLICE_14_FOUNDING.md` (packaging / demo)
+**Active founding doc (mission planning):** `src/v2/SLICE_14_FOUNDING.md` (CLOSED)
+**Next slice:** Slice 15 candidates come from the OQ-14-6 triage table.
+**Invariant ceiling:** `INV-026` (`INVARIANTS.md` index-current).
+
+**Slice 14 shipped fronts and gates:**
+- Front 1: About page `/v2/about/` (`1463023`, rebuilt into `aboutV2-DftM0n-e.js` at `b7532eb`).
+- Front 2: validation card on `/v2/porkchop/` (`6cdebfd`, provenance asset `validation-provenance-lm2C_8vP.json`).
+- Front 3: FK3 guided tour (`6c9d7f9`, rebuilt into `porkchopV2-Cxwkeql6.js` at `b7532eb`).
+- CI: `.github/workflows/ci.yml` with A1 `tsc --noEmit` and A2 golden-numbers guard (`4837bbc`).
+
+**Verified nuance:** `src/v2/SLICE_14_FOUNDING.md` in `b7532eb` does not contain a final §8 close-entry line yet. The closed/deployed state above is grounded in the Phase E source/docs commits and committed build output.
 
 ---
 
 ## §Next session — priority order
 
-**1. Slice 13 founding doc (ΔV budget stack)** — Fable/Claude Code run.
+**1. Push/review coordination** — Hudson pushes or verifies `b7532eb` and this STATUS refresh together as appropriate.
 
-**2. AGENTS.md operating-system commit** — this session's OS files (AGENTS.md, STATUS.md, INVARIANTS.md) landed; verify the tripwire (§2 HEAD-check) actually fires next session before real work begins.
+**2. Slice 14 close-record cleanup** — if desired, add the missing `SLICE_14_FOUNDING.md` §8 close entry and OQ-14-6 disposition table in a separate docs-only dispatch.
 
-**3. Parked-issue triage** — before Slice 13 code lands, decide which of the 9 parked issues (see §Parked issues) get addressed and which stay parked.
+**3. Slice 15 selection** — triage OQ-14-6 candidates into Slice 15 / later / rejected.
 
 ---
 
@@ -83,6 +101,14 @@ This section exists because the M-A guards near-miss showed that a written dispa
 | 9 | Picking near/far desync from render camera |
 | 10 | Sun-clearance threshold applies to scroll wheel only, not all zoom paths |
 
+### Cleanup queue
+
+| # | Issue |
+|---|-------|
+| C1 | Add missing Slice 14 founding-doc §8 close entry + OQ-14-6 disposition table, if Hudson wants the founding doc to mirror the STATUS close state |
+| C2 | Fix the 59-test-file Windows `.bin/tsc` shim violation noted in Slice 14 §7 |
+| C3 | Re-land New Glenn C3=5 anchor only with elvperf screenshot + oracle row + DEC-13-1 amendment |
+
 ---
 
 ## §OQ register
@@ -92,6 +118,7 @@ This section exists because the M-A guards near-miss showed that a written dispa
 | OQ-1 | Slice 10 | CLOSED — Lambert M=1 in production |
 | OQ-2 | Slice 11 | CLOSED — full-catalog M=1 re-screen DEFERRED (see `50b3b68`, 11.5 engineering record) |
 | OQ-3 | Slice 10 | CLOSED — MIT clean-room throughout (DEC-1 Rev 2) |
+| OQ-14-6 | Slice 14 | OPEN/PENDING DISPOSITION — candidate list extracted; Slice 15 triage remains |
 
 ---
 
@@ -99,16 +126,16 @@ This section exists because the M-A guards near-miss showed that a written dispa
 
 | Clone | State |
 |-------|-------|
-| `asteroid-mining-planner-codex-first-run` | **CANONICAL** |
+| `asteroid-mining-planner` | **CANONICAL** |
+| `asteroid-mining-planner-codex-first-run` | Old canonical naming; verify before deletion |
 | `asteroid-mining-planner-1` | Stale Slice 8.5; bundled to `C:\Users\hudso\slice3-research-rescue.bundle` |
-| `asteroid-mining-planner` | Ancient, 427 commits behind |
 
-Delete stale clones by hand when not under time pressure. Rename canonical after deletion.
+Delete stale clones by hand when not under time pressure.
 
 ---
 
 ## §Uncommitted / untracked items
 
-- `_rescued-agent-defs/` — intentionally untracked, local only; V1-era prior art for reference
-- No tracked file changes expected at session start. If this section and `git status` disagree,
-  trust `git status` and update STATUS.md.
+- `_rescued-agent-defs/` — intentionally untracked, local only; V1-era prior art for reference.
+- Local `.claude/skills/*.md` edits may appear in Hudson's working tree; they are not Slice 14 source/docs state.
+- No tracked project file changes expected at session start. If this section and `git status` disagree, trust `git status` and update STATUS.md.
