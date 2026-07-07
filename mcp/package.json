@@ -1,0 +1,21 @@
+{
+  "name": "aster-mcp-internal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/mcp/src/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "test": "npm run build && node --test dist/mcp/test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
