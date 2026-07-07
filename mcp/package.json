@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p .",
-    "test": "npm run build && node --test dist/mcp/test"
+    "test": "npm run build && node --test dist/mcp/test/*.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
