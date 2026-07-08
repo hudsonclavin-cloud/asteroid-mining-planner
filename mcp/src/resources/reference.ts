@@ -15,6 +15,7 @@ import {
   SPACECRAFT_STATIONKEEPING_MPS
 } from '../../../src/v2/porkchop/launch-vehicles.js';
 import { gitCommitForPath } from './repo.js';
+import { makeSiteId, makeVehicleId } from '../tools/compute-shared.js';
 
 const RESOURCE_MIME = 'application/json';
 
@@ -34,7 +35,10 @@ export function registerReferenceResources(server: McpServer): void {
     () => ({
       provenance: provenanceNote('src/v2/porkchop/launch-vehicles.ts', 'Vehicle payload curves from NASA LSP elvperf.'),
       asOf: '2024-02-29',
-      vehicles: LAUNCH_VEHICLES
+      vehicles: LAUNCH_VEHICLES.map((vehicle) => ({
+        vehicleId: makeVehicleId(vehicle),
+        ...vehicle
+      }))
     })
   );
 
@@ -45,7 +49,10 @@ export function registerReferenceResources(server: McpServer): void {
     'Launch-site DLA screening bands.',
     () => ({
       provenance: provenanceNote('src/v2/core/lambert/feasibility.ts', 'Launch-site DLA bands and classification semantics.'),
-      sites: LAUNCH_SITES,
+      sites: LAUNCH_SITES.map((site) => ({
+        siteId: makeSiteId(site),
+        ...site
+      })),
       classes: {
         GREEN: '|DLA| <= iMinDeg',
         AMBER: 'iMinDeg < |DLA| <= dlaCeilingDeg',

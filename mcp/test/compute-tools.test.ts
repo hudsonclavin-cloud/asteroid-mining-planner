@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { ZodError } from 'zod';
 
 import { validateLeafRefs } from '../src/envelope/index.js';
+import { dlaFeasibilityInputSchema, runDlaFeasibility } from '../src/tools/dla-feasibility.js';
+import { estimateMissionCostInputSchema, runEstimateMissionCost } from '../src/tools/estimate-mission-cost.js';
 import { runExplainCell } from '../src/tools/explain-cell.js';
+import { runGetValidationReport } from '../src/tools/get-validation-report.js';
 import { porkchopScanInputSchema, runPorkchopScan } from '../src/tools/porkchop-scan.js';
-import { readRepoJson } from '../src/resources/repo.js';
+import { readRepoJson, readRepoText } from '../src/resources/repo.js';
 
 type PinnedFixture = {
   toleranceRel: number;
@@ -27,6 +31,14 @@ const relError = (actual: number, expected: number): number =>
 
 async function loadPinnedFixture(): Promise<PinnedFixture> {
   return readRepoJson<PinnedFixture>('tests/fixtures/v2/lambert-multi-rev-pinned-cells.json');
+}
+
+function parseCostOracle(text: string) {
+  const strictMax = Number(text.match(/\*\*Max \|error\|:\*\* ([0-9.]+)% \(New Glenn @ C3=15\)/)?.[1]);
+  const strictRms = Number(text.match(/## STRICT verdict: PASS[\s\S]*?\*\*RMS \|error\|:\*\* ([0-9.]+)%/)?.[1]);
+  const observedMax = Number(text.match(/\*\*Max \|error\|:\*\* ([0-9.]+)% \(New Glenn @ C3=25\)/)?.[1]);
+  const observedRms = Number(text.match(/## OBSERVED summary[\s\S]*?\*\*RMS \|error\|:\*\* ([0-9.]+)%/)?.[1]);
+  return { strictMax, strictRms, observedMax, observedRms };
 }
 
 test('T12 explain_cell lambert stage matches the pinned fixture', async () => {
@@ -169,4 +181,152 @@ test('T17 every explain_cell quantity leaf carries confidence and resolving sour
     assert((leaf.sourceIds?.length ?? 0) > 0);
   }
   assert.deepEqual(validateLeafRefs(envelope), []);
+});
+
+test('T18 dla_feasibility returns a DLA quantity and RED sites as values, not refusals', async () => {
+  const envelope = await runDlaFeasibility({
+    designation: '99942',
+    departureDate: '2027-04-07',
+    tofDays: 903.4868421052632,
+    M: 2
+  });
+
+  assert.equal(envelope.refusal, undefined);
+  const value = envelope.value as {
+    dla: { value: number; frame: string };
+    sites: Array<{ siteId: string; feasible: boolean; marginDeg: { value: number } }>;
+  };
+  assert.equal(value.dla.frame, 'ICRF/equatorial');
+  const cape = value.sites.find((site) => site.siteId === 'cape-canaveral');
+  assert(cape);
+  assert.equal(cape.feasible, false);
+  assert(cape.marginDeg.value < 0);
+});
+
+test('T19 dla_feasibility unknown siteId is a Zod error and dates beyond 2040 refuse out_of_envelope', async () => {
+  assert.throws(
+    () =>
+      dlaFeasibilityInputSchema.parse({
+        designation: '99942',
+        departureDate: '2032-06-10',
+        tofDays: 272,
+        siteId: 'ksc'
+      }),
+    ZodError
+  );
+
+  const envelope = await runDlaFeasibility({
+    designation: '99942',
+    departureDate: '2041-01-01',
+    tofDays: 272,
+    M: 0
+  });
+  assert.equal(envelope.refusal?.code, 'out_of_envelope');
+  assert.match(envelope.refusal?.reason ?? '', /through 2040-/);
+});
+
+test('T20 estimate_mission_cost happy path keeps measured payload leaves and assumed top-level confidence', async () => {
+  const envelope = await runEstimateMissionCost({
+    designation: '433',
+    departureDate: '2032-06-10',
+    tofDays: 272,
+    M: 0,
+    vehicleId: 'falcon-heavy-expendable'
+  });
+
+  assert.equal(envelope.refusal, undefined);
+  assert.equal(envelope.confidence, 'assumed');
+  const value = envelope.value as {
+    payloadAtC3: { confidence: string; sourceIds: string[] };
+    deliveredMass: { value: number };
+  };
+  assert(value.deliveredMass.value > 0);
+  assert.equal(value.payloadAtC3.confidence, 'measured');
+  assert(value.payloadAtC3.sourceIds.includes('launch-vehicles'));
+  assert.deepEqual(validateLeafRefs(envelope), []);
+  assert((envelope.assumptions ?? []).some((entry) => entry.includes('Margin policy: deterministic 5%')));
+});
+
+test('T21 estimate_mission_cost refuses out_of_envelope beyond a vehicle curve domain', async () => {
+  const fixture = await loadPinnedFixture();
+  const sample = fixture.cells.find((cell) => cell.id === 'apophis-M0');
+  assert(sample);
+
+  const envelope = await runEstimateMissionCost({
+    designation: '99942',
+    departureDate: sample.departureUtc,
+    tofDays: sample.arrivalOffsetDays,
+    M: sample.M,
+    vehicleId: 'falcon-heavy-expendable'
+  });
+
+  assert.equal(envelope.refusal?.code, 'out_of_envelope');
+  assert.match(envelope.refusal?.reason ?? '', /0 through 55 km\^2\/s\^2/);
+});
+
+test('T22 estimate_mission_cost flags RED selected sites without hiding the mass math', async () => {
+  const envelope = await runEstimateMissionCost({
+    designation: '99942',
+    departureDate: '2027-04-07',
+    tofDays: 903.4868421052632,
+    M: 2,
+    vehicleId: 'falcon-heavy-expendable',
+    siteId: 'cape-canaveral'
+  });
+
+  assert.equal(envelope.refusal, undefined);
+  const value = envelope.value as {
+    deliveredMass: { value: number };
+    site: { siteFeasible: boolean };
+  };
+  assert(value.deliveredMass.value > 0);
+  assert.equal(value.site.siteFeasible, false);
+  assert((envelope.assumptions ?? []).some((entry) => entry.includes('siteFeasible:false')));
+});
+
+test('T23 get_validation_report(all) keeps all class labels distinct and sourceIds resolvable', async () => {
+  const envelope = await runGetValidationReport({ section: 'all' });
+
+  assert.equal(envelope.refusal, undefined);
+  const sections = (envelope.value as unknown as {
+    sections: {
+      lambert_m0: { label: string };
+      lambert_multirev: { label: string };
+      dla_vectors: { label: string };
+      cost_oracle: { strict: { label: string }; observed: { label: string } };
+    };
+  }).sections;
+  assert.equal(sections.lambert_m0.label, 'M=0 vs poliastro');
+  assert.match(sections.lambert_multirev.label, /magnitude/i);
+  assert.equal(sections.cost_oracle.strict.label, 'STRICT');
+  assert.equal(sections.cost_oracle.observed.label, 'OBSERVED');
+  assert.deepEqual(validateLeafRefs(envelope), []);
+});
+
+test('T24 get_validation_report figures match the committed artifacts', async () => {
+  const [lambertM0, multiRev, dlaVectors, costOracleText] = await Promise.all([
+    readRepoJson<{ summary: { maxRelErrorAcrossBodies: number } }>('tools/slice11-research/data/poliastro-validation.json'),
+    readRepoJson<{ overallMaxRelError: number }>('tools/slice11-research/data/multi-rev-poliastro-validation.json'),
+    readRepoJson<{ summary: { maxAngularSeparationDeg: number; maxAbsDeltaDlaDeg: number } }>('tools/slice12-research/data/dla-oracle-m1-vectors.json'),
+    readRepoText('tools/slice13-research/elvperf/oracle/oracle-report.md')
+  ]);
+  const oracle = parseCostOracle(costOracleText);
+  const envelope = await runGetValidationReport({ section: 'all' });
+  const sections = (envelope.value as unknown as {
+    sections: {
+      lambert_m0: { maxRelError: { value: number } };
+      lambert_multirev: { maxRelError: { value: number } };
+      dla_vectors: { maxAngularSeparationDeg: { value: number }; maxAbsDeltaDlaDeg: { value: number } };
+      cost_oracle: { strict: { maxErrorPct: { value: number }; rmsErrorPct: { value: number } }; observed: { maxErrorPct: { value: number }; rmsErrorPct: { value: number } } };
+    };
+  }).sections;
+
+  assert.equal(sections.lambert_m0.maxRelError.value, lambertM0.summary.maxRelErrorAcrossBodies);
+  assert.equal(sections.lambert_multirev.maxRelError.value, multiRev.overallMaxRelError);
+  assert.equal(sections.dla_vectors.maxAngularSeparationDeg.value, dlaVectors.summary.maxAngularSeparationDeg);
+  assert.equal(sections.dla_vectors.maxAbsDeltaDlaDeg.value, dlaVectors.summary.maxAbsDeltaDlaDeg);
+  assert.equal(sections.cost_oracle.strict.maxErrorPct.value, oracle.strictMax);
+  assert.equal(sections.cost_oracle.strict.rmsErrorPct.value, oracle.strictRms);
+  assert.equal(sections.cost_oracle.observed.maxErrorPct.value, oracle.observedMax);
+  assert.equal(sections.cost_oracle.observed.rmsErrorPct.value, oracle.observedRms);
 });

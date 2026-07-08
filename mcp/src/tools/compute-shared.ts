@@ -11,17 +11,25 @@ import { type CanonicalState } from '../../../src/v2/core/types.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../../src/v2/core/units.js';
 import {
   type LaunchVehicle,
+  deliveredMassKg,
+  deterministicMarginMps,
+  isBeyondCurve,
   LAUNCH_VEHICLES,
+  payloadAtC3,
+  SPACECRAFT_STATIONKEEPING_MPS
 } from '../../../src/v2/porkchop/launch-vehicles.js';
+import { rendezvousDvFromVInf } from '../../../src/v2/porkchop/delta-v.js';
 import {
   computePorkchopGrid,
   type PorkchopCell,
   type PorkchopEphemerisDependencies,
   type PorkchopGridParams
 } from '../../../src/v2/porkchop/grid-compute.js';
-import { type SourceRef } from '../envelope/index.js';
+import { type EvidenceEnvelope, quantity, refuse, type SourceRef } from '../envelope/index.js';
 import { gitCommitForPath, readRepoJson } from '../resources/repo.js';
 import { loadCatalogContext } from './catalog-shared.js';
+
+export { LAUNCH_SITES, LAUNCH_VEHICLES };
 
 export const HORIZONS_EARTH_FIXTURE_PATH = 'src/v2/data/horizons-inner-solar-system-2026-2040.json';
 const HORIZONS_BOUNDARY_PATH = 'src/v2/boundary/horizons.ts';
@@ -155,6 +163,9 @@ export function findSiteById(siteId: string): LaunchSite | undefined {
   return LAUNCH_SITES.find((site) => makeSiteId(site) === siteId);
 }
 
+export const SITE_ID_VALUES = LAUNCH_SITES.map((site) => makeSiteId(site)) as [string, ...string[]];
+export const VEHICLE_ID_VALUES = LAUNCH_VEHICLES.map((vehicle) => makeVehicleId(vehicle)) as [string, ...string[]];
+
 export function vehicleCurveDomain(vehicle: LaunchVehicle): { minC3: number; maxC3: number } {
   const first = vehicle.curve[0];
   const last = vehicle.curve[vehicle.curve.length - 1];
@@ -169,6 +180,90 @@ export function classifyDlaForSite(dlaDeg: number | null, site: LaunchSite | und
     return null;
   }
   return classifyFeasibility(dlaDeg, site);
+}
+
+export function curveDomainRefusal(
+  tool: string,
+  vehicle: LaunchVehicle,
+  c3: number
+): EvidenceEnvelope<null> {
+  const domain = vehicleCurveDomain(vehicle);
+  return refuse(
+    tool,
+    'out_of_envelope',
+    `${makeVehicleId(vehicle)} publishes payload anchors only for C3 ${domain.minC3} through ${domain.maxC3} km^2/s^2; requested cell is C3=${c3.toFixed(3)} km^2/s^2.`,
+    `choose a vehicle whose curve covers C3=${c3.toFixed(3)}, or a cell with lower C3`,
+    {
+      as_of: vehicle.asOf,
+      provenance: baseComputeProvenance({ includeVehicle: true }),
+      validity_envelope: 'Published launch-vehicle C3 domain only; no extrapolation beyond committed anchors.'
+    }
+  );
+}
+
+export function buildOneWayMissionCost(vehicle: LaunchVehicle, c3: number, vInfArrKmps: number): {
+  payloadKg: number;
+  rendezvousMps: number;
+  stationkeepingMps: number;
+  marginMps: number;
+  deliveredMassKg: number;
+} | null {
+  const payload = payloadAtC3(vehicle, c3);
+  if (isBeyondCurve(payload)) {
+    return null;
+  }
+
+  const rendezvousMps = rendezvousDvFromVInf(vInfArrKmps) * 1000;
+  const stationkeepingMps = SPACECRAFT_STATIONKEEPING_MPS;
+  const marginMps = deterministicMarginMps(rendezvousMps);
+  const delivered = deliveredMassKg(vehicle, c3, {
+    rendezvousMps,
+    stationkeepingMps,
+    marginMps
+  }, 'one-way');
+  if (typeof delivered !== 'number') {
+    throw new Error(`One-way delivered-mass budget unexpectedly failed for ${makeVehicleId(vehicle)} at C3=${c3}`);
+  }
+
+  return {
+    payloadKg: payload,
+    rendezvousMps,
+    stationkeepingMps,
+    marginMps,
+    deliveredMassKg: delivered
+  };
+}
+
+export function siteVerdictRows(
+  dlaDeg: number | null,
+  sites: readonly LaunchSite[]
+): Array<{
+  siteId: string;
+  name: string;
+  verdict: 'GREEN' | 'AMBER' | 'RED' | null;
+  feasible: boolean;
+  inclinationBand: ReturnType<typeof quantity>;
+  marginDeg: ReturnType<typeof quantity>;
+}> {
+  const absDla = dlaDeg === null ? Number.NaN : Math.abs(dlaDeg);
+  return sites.map((site) => {
+    const verdict = classifyFeasibility(dlaDeg, site);
+    const activeBandDeg = verdict === 'GREEN' ? site.iMinDeg : site.dlaCeilingDeg;
+    return {
+      siteId: makeSiteId(site),
+      name: site.name,
+      verdict,
+      feasible: verdict === 'GREEN' || verdict === 'AMBER',
+      inclinationBand: quantity(activeBandDeg, 'deg', {
+        confidence: 'derived',
+        sourceIds: ['dla-feasibility']
+      }),
+      marginDeg: quantity(activeBandDeg - absDla, 'deg', {
+        confidence: 'derived',
+        sourceIds: ['dla-feasibility']
+      })
+    };
+  });
 }
 
 export function baseComputeProvenance(options: {

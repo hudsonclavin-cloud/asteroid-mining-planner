@@ -14,6 +14,10 @@ export async function readRepoJson<T>(relativePath: string): Promise<T> {
   return JSON.parse(text) as T;
 }
 
+export async function readRepoText(relativePath: string): Promise<string> {
+  return readFile(repoPath(relativePath), 'utf8');
+}
+
 export function gitCommitForPath(relativePath: string): string {
   // Phase D note: this is truthful on the canonical repo/dev box. Phase G needs
   // a build-time baked fallback for published npm runs where .git is absent.

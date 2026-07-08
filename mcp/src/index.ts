@@ -3,7 +3,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { registerReferenceResources } from './resources/reference.js';
 import { registerCatalogTools } from './tools/catalog.js';
+import { registerDlaFeasibilityTool } from './tools/dla-feasibility.js';
+import { registerEstimateMissionCostTool } from './tools/estimate-mission-cost.js';
 import { registerExplainCellTool } from './tools/explain-cell.js';
+import { registerGetValidationReportTool } from './tools/get-validation-report.js';
 import { registerPorkchopScanTool } from './tools/porkchop-scan.js';
 
 const server = new McpServer({
@@ -14,6 +17,9 @@ const server = new McpServer({
 registerCatalogTools(server);
 registerPorkchopScanTool(server);
 registerExplainCellTool(server);
+registerDlaFeasibilityTool(server);
+registerEstimateMissionCostTool(server);
+registerGetValidationReportTool(server);
 registerReferenceResources(server);
 
 const transport = new StdioServerTransport();

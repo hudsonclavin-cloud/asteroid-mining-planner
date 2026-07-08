@@ -4,16 +4,16 @@ import { z } from 'zod';
 import type { Slice9NeaBody } from '../../../src/v2/boundary/slice9-nea-catalog.js';
 import { dlaDegFromVInf } from '../../../src/v2/core/lambert/dla.js';
 import { type CanonicalState } from '../../../src/v2/core/types.js';
-import { departureDvFromVInf, rendezvousDvFromVInf } from '../../../src/v2/porkchop/delta-v.js';
-import { deliveredMassKg, isBeyondCurve, payloadAtC3 } from '../../../src/v2/porkchop/launch-vehicles.js';
+import { payloadAtC3 } from '../../../src/v2/porkchop/launch-vehicles.js';
 import { makeEnvelope, quantity, refuse } from '../envelope/index.js';
 import { evidenceEnvelopeOutputSchema } from './envelope-schema.js';
 import { CLOSED_WORLD_TOOL_ANNOTATIONS, toolResult } from './common.js';
 import {
-  MAX_GRID_CELLS,
   baseComputeProvenance,
+  buildOneWayMissionCost,
   classifyDlaForSite,
   computeGridForBody,
+  curveDomainRefusal,
   earthSpanHelp,
   findSiteById,
   findVehicleById,
@@ -175,19 +175,8 @@ export async function runExplainCell(args: z.output<typeof explainCellInputSchem
   const dlaDeg = dlaDegFromVInf(vInfComponents.x, vInfComponents.y, vInfComponents.z);
 
   if (vehicle) {
-    const payload = payloadAtC3(vehicle, selectedBranch.c3);
-    if (isBeyondCurve(payload)) {
-      const domain = vehicleCurveDomain(vehicle);
-      return refuse(
-        'explain_cell',
-        'out_of_envelope',
-        `${makeVehicleId(vehicle)} publishes payload anchors only for C3 ${domain.minC3} through ${domain.maxC3} km^2/s^2; requested cell is C3=${selectedBranch.c3.toFixed(3)} km^2/s^2.`,
-        `choose a vehicle whose curve covers C3=${selectedBranch.c3.toFixed(3)}, or a cell with lower C3`,
-        {
-          provenance: baseComputeProvenance({ includeVehicle: true }),
-          validity_envelope: `Published launch-vehicle C3 domain only; ${MAX_GRID_CELLS} applies to porkchop_scan, not this single-cell call.`
-        }
-      );
+    if (buildOneWayMissionCost(vehicle, selectedBranch.c3, selectedBranch.vInfArr) === null) {
+      return curveDomainRefusal('explain_cell', vehicle, selectedBranch.c3);
     }
   }
 
@@ -268,20 +257,17 @@ export async function runExplainCell(args: z.output<typeof explainCellInputSchem
 
   const assumptions = [
     'Selected Lambert branch is the lowest departure C3 among converged branches for the requested M.',
-    site ? `Site verdict evaluated for siteId=${makeSiteId(site)}.` : 'No launch site selected; site-band verdict omitted.'
+    site ? `Site verdict evaluated for siteId=${makeSiteId(site)}.` : 'No launch site selected; site-band verdict omitted.',
+    'Margin policy: deterministic 5% margin on deterministic maneuver lines only; stationkeeping is not margined.'
   ];
 
   if (vehicle) {
     const domain = vehicleCurveDomain(vehicle);
     const payload = payloadAtC3(vehicle, selectedBranch.c3);
-    const rendezvousMps = rendezvousDvFromVInf(selectedBranch.vInfArr) * 1000;
-    const stationkeepingMps = 150;
-    const marginMps = rendezvousMps * 0.05;
-    const delivered = deliveredMassKg(vehicle, selectedBranch.c3, {
-      rendezvousMps,
-      stationkeepingMps,
-      marginMps
-    }, 'one-way');
+    const missionCost = buildOneWayMissionCost(vehicle, selectedBranch.c3, selectedBranch.vInfArr);
+    if (missionCost === null) {
+      return curveDomainRefusal('explain_cell', vehicle, selectedBranch.c3);
+    }
 
     stages.push({
       stage: 'vehicle',
@@ -312,21 +298,21 @@ export async function runExplainCell(args: z.output<typeof explainCellInputSchem
       stage: 'screening-dv-and-delivered-mass',
       missionMode: 'one-way',
       budget: {
-        rendezvous: quantity(rendezvousMps, 'm/s', {
+        rendezvous: quantity(missionCost.rendezvousMps, 'm/s', {
           confidence: 'derived',
           sourceIds: ['delta-v-model']
         }),
-        stationkeeping: quantity(stationkeepingMps, 'm/s', {
+        stationkeeping: quantity(missionCost.stationkeepingMps, 'm/s', {
           confidence: 'assumed',
           sourceIds: ['delta-v-model']
         }),
-        margin: quantity(marginMps, 'm/s', {
-          confidence: 'derived',
+        margin: quantity(missionCost.marginMps, 'm/s', {
+          confidence: 'assumed',
           sourceIds: ['delta-v-model']
         })
       },
-      deliveredMass: quantity(delivered as number, 'kg', {
-        confidence: 'derived',
+      deliveredMass: quantity(missionCost.deliveredMassKg, 'kg', {
+        confidence: 'assumed',
         sourceIds: ['launch-vehicles', 'delta-v-model']
       })
     });
