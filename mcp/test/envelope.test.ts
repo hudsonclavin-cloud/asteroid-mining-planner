@@ -187,6 +187,33 @@ test('refuse returns value null and rejects invalid refusal codes', () => {
   );
 });
 
+test('infeasibility is a value not a refusal (DEC-15-4 convention g)', () => {
+  const knownNegative = makeEnvelope({
+    tool: 'explain_cell',
+    value: {
+      feasible: false,
+      reason: 'No M=2 transfer exists at this time of flight.'
+    },
+    provenance: [derivedComputation],
+    assumptions: ['Lambert solver returned no feasible branch for this M/TOF cell'],
+    validity_envelope: 'Pinned Slice 15 fixture cell only'
+  });
+
+  const epistemicLimit = refuse(
+    'explain_cell',
+    'insufficient_data',
+    'No solver fixture is available for this cell.',
+    'Add a pinned fixture or run the validated solver for this cell.',
+    { provenance: [derivedComputation], validity_envelope: 'Pinned Slice 15 fixture cell only' }
+  );
+
+  assert.equal(knownNegative.value?.feasible, false);
+  assert.equal(knownNegative.refusal, undefined);
+  assert.equal(epistemicLimit.value, null);
+  assert.equal(epistemicLimit.refusal?.code, 'insufficient_data');
+  assert.notDeepEqual(knownNegative, epistemicLimit);
+});
+
 test('confidenceMin orders assumed below derived below measured', () => {
   assert.equal(confidenceMin([measuredRepo, derivedComputation]), 'derived');
   assert.equal(
