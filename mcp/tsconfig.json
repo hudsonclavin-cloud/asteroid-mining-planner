@@ -17,6 +17,10 @@
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",
-    "../src/v2/core/**/*.ts"
+    "../src/v2/core/**/*.ts",
+    "../src/v2/boundary/**/*.ts",
+    "../src/v2/porkchop/grid-compute.ts",
+    "../src/v2/porkchop/launch-vehicles.ts",
+    "../src/v2/porkchop/delta-v.ts"
   ]
 }

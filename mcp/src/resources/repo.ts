@@ -15,6 +15,8 @@ export async function readRepoJson<T>(relativePath: string): Promise<T> {
 }
 
 export function gitCommitForPath(relativePath: string): string {
+  // Phase D note: this is truthful on the canonical repo/dev box. Phase G needs
+  // a build-time baked fallback for published npm runs where .git is absent.
   return execFileSync('git', ['log', '-1', '--format=%H', '--', relativePath], {
     cwd: REPO_ROOT,
     encoding: 'utf8'

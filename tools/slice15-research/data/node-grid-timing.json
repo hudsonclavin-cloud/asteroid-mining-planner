@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-07-07",
+  "box": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpuModel": "Intel(R) Core(TM) Ultra 7 255H",
+    "cpuCount": 16,
+    "nodeVersion": "v24.18.0"
+  },
+  "body": {
+    "designation": "99942",
+    "name": "99942 Apophis (2004 MN4)"
+  },
+  "baseline200x100M0": {
+    "gridDeparture": 200,
+    "gridTof": 100,
+    "M": 0,
+    "runsMs": [
+      73.55389999999989
+    ],
+    "medianMs": 73.55389999999989
+  },
+  "candidates": [
+    {
+      "gridDeparture": 40,
+      "gridTof": 25,
+      "M": 0,
+      "runsMs": [
+        3.1900000000000546,
+        3.2924000000000433,
+        2.7869000000000597
+      ],
+      "medianMs": 3.1900000000000546
+    },
+    {
+      "gridDeparture": 60,
+      "gridTof": 40,
+      "M": 0,
+      "runsMs": [
+        5.557000000000016,
+        6.091999999999871,
+        5.701599999999871
+      ],
+      "medianMs": 5.701599999999871
+    },
+    {
+      "gridDeparture": 80,
+      "gridTof": 50,
+      "M": 0,
+      "runsMs": [
+        8.683899999999994,
+        14.335400000000163,
+        8.97219999999993
+      ],
+      "medianMs": 8.97219999999993
+    }
+  ],
+  "chosenDefault": {
+    "gridDeparture": 80,
+    "gridTof": 50,
+    "hardCapCells": 20000,
+    "selectionRule": "largest candidate with median wall time <= ~2 s on this box"
+  }
+}

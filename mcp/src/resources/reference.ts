@@ -71,7 +71,7 @@ export function registerReferenceResources(server: McpServer): void {
         designation: 'Slice9NeaBody.designation',
         name: 'Slice9NeaBody.name',
         orbitClass: 'Slice9NeaBody.orbitClass',
-        screeningColor: 'LambertScreenResult.status joined by bodyId'
+        screeningStatus: 'LambertScreenResult.status joined by bodyId'
       },
       bodyRecordFields: [
         'bodyId',
