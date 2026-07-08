@@ -1,7 +1,7 @@
 # Slice 15 Founding Document — aster-mcp: the Agent Interface to Aster
 
 **Status:** LOCKED (Hudson, 2026-07-07). Every §5 entry is LOCKED; post-lock changes to a locked DEC are amendments (marked, not overwritten). Envelope schema changes are Opus-tier.
-**COPY-VERSION:** S15-FOUNDING-LOCKED-2026-07-07-A  ← verify this marker via Select-String after copying to the repo (standing Slice 14 handoff rule).
+**COPY-VERSION:** S15-FOUNDING-LOCKED-2026-07-07-B  ← verify this marker via Select-String after copying to the repo (standing Slice 14 handoff rule).
 **Author:** Hudson Clavin (drafted by Nova/Fable 5, 2026-07-06)
 **Prior slice:** Slice 14 (packaging/showcase — methodology surface, validation card, FK3 guided narrative)
 **Next slice (planned):** Slice 16 (agent-honesty study, run against this server)
@@ -80,7 +80,7 @@ Requirement: **≥3 of the 10 pairs must be refusal-path questions** (correct an
 
 ## §5. DECs (ALL PROPOSED — Hudson converts at lock)
 
-**DEC-15-1 (PROPOSED): Same repo, `mcp/` workspace. No new repository.**
+**DEC-15-1 (LOCKED 2026-07-07 — label corrected in amendment A1): Same repo, `mcp/` workspace. No new repository.**
 The server lives at `mcp/` inside `asteroid-mining-planner`, sharing `src/v2/core/` by direct import. Justification: (a) provenance — envelope `SourceRef`s and eval ground truth cite commits; one history keeps every citation resolvable; (b) INV-030 is only enforceable when both builds live in one tree; (c) the reviewer story is stronger — one repo shows site + server + evals as one system; (d) solo-dev sync cost of a split repo is pure loss. Reversibility: extracting `mcp/` to its own repo later is cheap; merging histories back is not — same-repo is the reversible choice. **The first genuinely new repo in the portfolio appears only if/when a Lens ships as its own product (post-envelope, per the complements skill).**
 
 **DEC-15-2 (LOCKED 2026-07-07 — Query A): Stack pin.**
@@ -88,7 +88,7 @@ TypeScript; **`@modelcontextprotocol/sdk` pinned at 1.29.0** (current stable; `r
 
 **Inspector [Query A CONFIRMED]:** Phase E uses `npx @modelcontextprotocol/inspector`; no Windows-specific stdio-testing caveat exists (the only Windows note concerns developing the Inspector itself, not testing servers with it).
 
-**DEC-15-3 (PROPOSED): stdio-only for v1.**
+**DEC-15-3 (LOCKED 2026-07-07 — label corrected in amendment A1): stdio-only for v1.**
 Zero hosting surface, zero auth surface, reviewer-runnable offline. Remote transport (streamable HTTP, stateless JSON, Cloudflare) is Slice 17 behind its own OQ (Workers CPU-ms vs the M-2 measurement — measured on-platform, never assumed).
 
 **DEC-15-4 (LOCKED 2026-07-07 — schema finalized under the truth criterion; Opus-tier to amend): Evidence envelope v1.**
@@ -144,16 +144,18 @@ Design commitments: (a) **Quantity leaves, not a top-level units string** — co
 8. *(reserved — empty by design; anti-scope-creep + Hudson's slot.)*
 Resources (not tools): vehicle configs + curve domains, launch-site DLA bands, catalog field schema, ΔV stack model description. Rationale: MCP resources exist for static reference data; spending tool slots on lookups wastes both the budget and agent attention. All v1 tools annotate `readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false` (closed-world catalog).
 
-**DEC-15-6 (RESOLVED → PURE branch, 2026-07-07; ready to lock): Extraction strategy.**
+**DEC-15-6 (LOCKED 2026-07-07 — label corrected in amendment A1): Extraction strategy.**
 **Verdict: PURE** (OQ-15-1 closed via Dispatch 0 + 0.5). `mcp/` imports `src/v2/core/*` via tsconfig paths — no extraction, no shims, no fixture-mode. The three branches below are retained for the record; only PURE is live. Path correction folded from the 0.5 run: the Earth ephemeris is `src/v2/data/horizons-inner-solar-system-2026-2040.json` (NOT under `tests/fixtures/`) — any Phase B/D dispatch touching ephemeris uses this path.
 - **PURE →** no extraction at all: `mcp/` imports `src/v2/core/*` via tsconfig paths. Cheapest, likeliest.
 - **SHIMMABLE →** side-file + atomic-swap seams for each listed offender (e.g., `performance.now` → injected clock), browser build green every commit (INV-030). **Tripwire: if shimming requires touching >5 core files or ANY audited solver file, treat as COUPLED** — solver edits trigger re-audit, and re-audit for a transport project is the wrong trade.
 - **COUPLED →** v1 ships **fixture mode**: tools serve from committed, pinned artifacts (Slice 13 showcase numbers, validation JSONs) with honest `kind:"repo"` provenance; `porkchop_scan` drops from the v1 tool set (slot stays empty) and live compute becomes Slice 15.5. Honest and shippable beats coupled and stalled.
 
-**DEC-15-7 (PROPOSED): Package name policy.**
+**DEC-15-7 (LOCKED 2026-07-07 — FULFILLED same day): Package name policy.**
 Name chosen by Hudson from the verified-free set (`asteroid-mcp`, `aster-mission-mcp`, `aster-planner-mcp`, or scoped). Availability re-verified immediately before publish via Node fetch (PowerShell curl is aliased). `package.json` carries `"private": true` until the publish decision; repo directory is `mcp/` regardless of the public name.
 
-**DEC-15-8 (PROPOSED): Error/refusal boundary.**
+FULFILLED (2026-07-07, Hudson's choice per this DEC's own delegation): public name = aster-mission-mcp. Re-verified free (registry 404) same day. Open sub-item: confirm npm account/username before Phase G. Publish-time re-verification stands.
+
+**DEC-15-8 (LOCKED 2026-07-07 — label corrected in amendment A1): Error/refusal boundary.**
 Transport failures and schema-invalid input → MCP errors with actionable messages. Domain limits → envelope refusals. A tool implementation may never convert one into the other; the eval includes at least one pair verifying the boundary.
 
 ---
@@ -183,4 +185,5 @@ Slice 16 execution (design doc ships separately, in parallel). Remote transport/
 - 2026-07-06 — Doc drafted BEFORE Queries A–C returned, under DRAFT/PROPOSED discipline. Standing rule: query findings override draft text; contradictions are logged here, not silently absorbed. Anchoring risk named at draft time.
 - 2026-07-07 — Slice 14 handoff folded. B3 correction applied: §2 now carries INV-024's locked verbatim (the draft had quoted superseded pre-lock wording). Non-obvious consequence surfaced: INV-024's narrowing to *astrodynamics* libraries is what makes this slice's infrastructure dependencies (MCP SDK, Zod) unambiguously legal — the correction was load-bearing, not cosmetic. B2: INV-027..032 numbering confirmed safe (ceiling 026 @ b651519). INV-033 (anti-fabrication) added, elevating the Slice 14 incident's tripwire to architectural status for provenance-emitting code. OQ-15-4 anchors replaced with the handoff's verified table (artifacts + commits + mandatory class labels). OQ-15-2 slot candidates extended with the OQ-14-6 interpretability shortlist. Slice 14 confirmed CLOSED 2026-07-07 (founding doc 8fcddb6; origin/main b7532eb) — the Wave-0 sequencing gate ahead of this slice is cleared.
 - 2026-07-07 — Dispatch 0.5 landed (commit d726f3d, Node 24.18.0, solverCommit de5c4ee). OQ-15-1 CLOSED → PURE; DEC-15-6 RESOLVED → PURE branch (direct core import, no shims). Smoke PASS on all cells within 1e-9; null case returns null. **Oracle upgrade succeeded** — poliastro 0.17.0 via the live venv; M0/M1/M2 cells are `oracle-anchored` (per-cell poliastro cross-check committed), the infeasible cell `aster-self-consistent` (correct — no oracle "no-solution" analogue). Best-case provenance outcome: shipped self-consistency-first as the safe default AND the oracle upgrade landed, so the fixture carries external validation where feasible — a verified OQ-15-4 eval anchor and Slice 16 ground-truth seed in one artifact. Ephemeris path correction recorded (src/v2/data/, not tests/fixtures/). **Lock status: all mechanical blockers closed. Only DEC-15-4 (envelope schema) + DEC-15-5 (tool set/slot) remain — both Fable-tier judgment, the lock session.**
-- 2026-07-07 — Lock session (Fable). DEC-15-4 finalized under Hudson's stated criterion ("most truthful"): (f) mixed-provenance rule added — leaf confidence+sourceIds required exactly when omission would lose a distinction (>1 source or mixed classes); (g) infeasibility-as-value convention — refusals are epistemic limits, never negative answers; fixture's infeasible cell pinned as the adapter-mapping reference; (h) `as_of` added — flipped from deferrable to day-one after finding a concrete present-tense value to carry (elvperf as-of 2024-02-29, catalog snapshot date). REJECTED at same review: structured validity_envelope (gold-plating; enforcement lives in the refusal boundary). OQ-15-3 RESOLVED. DEC-15-5 slot ruled EMPTY (anti-scope-creep margin held; sensitivity/compare_bodies first-claim on 15.5). **Every §5 entry LOCKED — doc marker S15-FOUNDING-LOCKED-2026-07-07-A.**
+- 2026-07-07 — Lock session (Fable). DEC-15-4 finalized under Hudson's stated criterion ("most truthful"): (f) mixed-provenance rule added — leaf confidence+sourceIds required exactly when omission would lose a distinction (>1 source or mixed classes); (g) infeasibility-as-value convention — refusals are epistemic limits, never negative answers; fixture's infeasible cell pinned as the adapter-mapping reference; (h) `as_of` added — flipped from deferrable to day-one after finding a concrete present-tense value to carry (elvperf as-of 2024-02-29, catalog snapshot date). REJECTED at same review: structured validity_envelope (gold-plating; enforcement lives in the refusal boundary). OQ-15-3 RESOLVED. DEC-15-5 slot ruled EMPTY (anti-scope-creep margin held; sensitivity/compare_bodies first-claim on 15.5). **Every §5 entry LOCKED — doc marker S15-FOUNDING-LOCKED-2026-07-07-B.**
+- 2026-07-07 — AMENDMENT A1 (post-lock, tracked — not a silent edit). (1) Label-lag corrected: DEC-15-1/3/6/8 carried pre-lock labels under a LOCKED header; the header governs, labels now match. No DEC content changed. (2) DEC-15-7 FULFILLED: name = aster-mission-mcp (Hudson, re-verified free same day). (3) Marker → -B
