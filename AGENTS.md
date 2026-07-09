@@ -95,6 +95,56 @@ git log --oneline -1      # confirm HEAD matches STATUS.md — if not, STOP and 
 - "It looks right" is not verification. "It reproduces value X against oracle Y within tolerance Z" is.
 - Diagnose before concluding: at least two independent recon passes before a DEC is written.
 
+### §2.1 Hook-enforced hard rules & overrides (added 2026-07-09, CFG1)
+
+These are enforced by .githooks/ where possible; they override anything a
+prompt implies.
+
+1. NEVER push. `git push` is Hudson's manual act. The pre-push hook blocks it.
+   Do not set ASTER_PUSH_OK, do not use --no-verify, do not change
+   core.hooksPath, do not edit .githooks/. Any of these is a violation even if
+   it "would help."
+2. Explicit staging only: `git add <named paths>` — never `-A`, never `.`. The
+   pre-commit hook validates staged paths against .dispatch-scope; write that
+   file in Step 1 of each dispatch from its staging list, and paste its
+   contents in the final report.
+3. Protected paths — no edits without a Hudson-signed dispatch AND
+   ASTER_PROTECTED_OK (Hudson sets it, not you): src/v2/core/**; line
+   DELETIONS in INVARIANTS.md and src/v2/*_FOUNDING.md (additive/annotation
+   only); .githooks/**; AGENTS.md; CLAUDE.md.
+4. STOP means stop: report and wait. Never improvise past a tripwire, never
+   "fix" out-of-scope things because they're adjacent.
+5. Report only verified facts (INV-033): every hash/path/count/version
+   confirmed in THIS repo. Honest UNKNOWN beats a confident wrong line.
+6. No installs or network beyond what the dispatch allows.
+7. If a build churns docs/ outside scope: `git restore docs/` before staging.
+8. A "create" target that already exists is a TRIPWIRE — surface, do not
+   overwrite. (Origin: CFG1 rev A named an existing file as "create"; caught
+   pre-execution.)
+
+Overrides (Hudson-only, per-command, NEVER profile-persisted): ASTER_PUSH_OK=1
+(push), ASTER_PROTECTED_OK=1 (protected paths / additive-rule amendments).
+Persisting either in a shell profile leaks it to agent-spawned shells and
+defeats the gate.
+
+Note: hooks are drift-protection, not adversary-proofing. --no-verify and
+unsetting core.hooksPath exist; using them against these rules is itself a
+violation, is loud in history, and is caught by INV-033 verification.
+
+### §2.2 Environment facts (delta, added 2026-07-09, CFG1)
+
+Facts not already stated above; included only where absent upstream.
+
+- tsc/test subprocesses: `process.execPath` + full path to
+  `node_modules/typescript/bin/tsc` — NEVER the `node_modules/.bin` shims
+  (broken under spawnSync on this box; do not add violation #60).
+- Compiled mcp layout: tests at `mcp/dist/mcp/test/*.js`, entry at
+  `mcp/dist/mcp/src/index.js`.
+- Earth ephemeris fixture: `src/v2/data/horizons-inner-solar-system-2026-2040.json`.
+- Pinned Lambert fixtures: `tests/fixtures/v2/lambert-multi-rev-pinned-cells.json`.
+- Each dispatch carries a COPY-VERSION marker; content-verify it (Select-String)
+  in Step 1 — a missing or stale marker is a tripwire.
+
 ---
 
 ## §3. Claude Code role

@@ -1,0 +1,9 @@
+#!/bin/sh
+if [ "$ASTER_PUSH_OK" = "1" ]; then
+  exit 0
+fi
+echo "" >&2
+echo "PUSH BLOCKED (.githooks/pre-push): pushing is Hudson's manual act." >&2
+echo "Agents: stop and report per AGENTS.md §2 hard rule 1." >&2
+echo "Hudson: use 'git hpush', or ASTER_PUSH_OK=1 for this command only." >&2
+exit 1

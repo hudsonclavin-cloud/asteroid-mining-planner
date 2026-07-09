@@ -1,0 +1,5 @@
+# CFG1 enforcement-layer scope
+AGENTS.md
+CLAUDE.md
+.githooks/*
+.dispatch-scope
