@@ -6,6 +6,11 @@ index.html linguist-generated
 
 # Built output
 dist/** linguist-generated
+docs/** linguist-generated text eol=lf
+docs/**/*.jpg -text
+docs/**/*.png -text
+docs/**/*.tif -text
+docs/**/*.bin -text
 
 # Texture assets — binary, not code
 textures/** linguist-vendored
