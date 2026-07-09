@@ -12,6 +12,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         legacy: resolve(__dirname, 'index.html'),
+        v2Index: resolve(__dirname, 'v2/index.html'),
         earthMoonV2: resolve(__dirname, 'v2/earth-moon/index.html'),
         innerSolarSystemV2: resolve(__dirname, 'v2/inner-solar-system/index.html'),
         aboutV2: resolve(__dirname, 'v2/about/index.html'),
