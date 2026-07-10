@@ -1,4 +1,5 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 import { makeEnvelope, quantity, refuse } from '../envelope/index.js';
@@ -30,29 +31,34 @@ export const porkchopScanInputSchema = z.object({
   gridDeparture: z.number().int().positive().default(DEFAULT_GRID_DEPARTURE),
   gridTof: z.number().int().positive().default(DEFAULT_GRID_TOF),
   topN: z.number().int().min(1).max(50).default(DEFAULT_TOP_N)
-}).superRefine((value, ctx) => {
-  if (value.departureStart >= value.departureEnd) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'departureStart must be earlier than departureEnd',
-      path: ['departureEnd']
-    });
-  }
-  if (value.tofMinDays >= value.tofMaxDays) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'tofMinDays must be less than tofMaxDays',
-      path: ['tofMaxDays']
-    });
-  }
-  if (value.gridDeparture * value.gridTof > MAX_GRID_CELLS) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: `gridDeparture*gridTof must be <= ${MAX_GRID_CELLS}`,
-      path: ['gridTof']
-    });
-  }
 });
+
+// Cross-field rules are enforced in the handler (validatePorkchopScanCrossFields),
+// NOT via .superRefine here: a ZodEffects wrapper made the SDK render this tool's
+// inputSchema as empty properties, so agents could not learn its parameters
+// (Phase E finding E3-a). The plain z.object above renders; the checks below run
+// at the top of runPorkchopScan and throw the same InvalidParams error class the
+// SDK surfaces for input errors (never an envelope refusal — DEC-15-8).
+function validatePorkchopScanCrossFields(args: z.output<typeof porkchopScanInputSchema>): void {
+  if (args.departureStart >= args.departureEnd) {
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      'Invalid arguments for tool porkchop_scan: departureStart must be earlier than departureEnd'
+    );
+  }
+  if (args.tofMinDays >= args.tofMaxDays) {
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      'Invalid arguments for tool porkchop_scan: tofMinDays must be less than tofMaxDays'
+    );
+  }
+  if (args.gridDeparture * args.gridTof > MAX_GRID_CELLS) {
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      `Invalid arguments for tool porkchop_scan: gridDeparture*gridTof must be <= ${MAX_GRID_CELLS}`
+    );
+  }
+}
 
 export function registerPorkchopScanTool(server: McpServer): void {
   server.registerTool(
@@ -69,6 +75,8 @@ export function registerPorkchopScanTool(server: McpServer): void {
 }
 
 export async function runPorkchopScan(args: z.output<typeof porkchopScanInputSchema>) {
+  validatePorkchopScanCrossFields(args);
+
   const [body, computeContext] = await Promise.all([
     resolveBodyByDesignation(args.designation),
     loadComputeContext()

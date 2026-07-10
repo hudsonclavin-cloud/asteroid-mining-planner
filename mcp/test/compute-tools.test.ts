@@ -118,18 +118,25 @@ test('T15 porkchop_scan tiny grid reports coverage, sorted best cells, and infea
   }
 });
 
-test('T16 porkchop_scan grid cap is a Zod error and ephemeris miss is an out_of_envelope refusal', async () => {
-  assert.throws(
-    () =>
-      porkchopScanInputSchema.parse({
-        designation: '433',
-        departureStart: '2032-06-10',
-        departureEnd: '2032-06-11',
-        tofMinDays: 200,
-        tofMaxDays: 300,
-        gridDeparture: 201,
-        gridTof: 100
-      }),
+test('T16 porkchop_scan grid cap is an input error and ephemeris miss is an out_of_envelope refusal', async () => {
+  // E3-a regression guard: the input schema must be a plain ZodObject (has .shape)
+  // so tools/list renders its properties. A .superRefine() wrapper (ZodEffects) has
+  // no .shape and rendered empty properties — do not reintroduce it.
+  assert.ok(porkchopScanInputSchema.shape.tofMinDays, 'porkchop_scan input schema must expose properties');
+
+  // Cross-field cap now enforced in the handler as an InvalidParams input error.
+  await assert.rejects(
+    runPorkchopScan({
+      designation: '433',
+      departureStart: '2032-06-10',
+      departureEnd: '2032-06-11',
+      tofMinDays: 200,
+      tofMaxDays: 300,
+      M: 0,
+      gridDeparture: 201,
+      gridTof: 100,
+      topN: 5
+    }),
     /<= 20000/
   );
 
