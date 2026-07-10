@@ -15,7 +15,7 @@ export function registerGetBodyTool(server: McpServer): void {
     'get_body',
     {
       title: 'Get catalog body',
-      description: 'Return one full Slice 9 catalog body record with Lambert screening status and quantity leaves.',
+      description: 'Return one full Slice 9 catalog body record with Lambert screening status and quantity leaves. Unknown bodies return not_found.',
       inputSchema: getBodyInputSchema,
       outputSchema: evidenceEnvelopeOutputSchema,
       annotations: CLOSED_WORLD_TOOL_ANNOTATIONS
