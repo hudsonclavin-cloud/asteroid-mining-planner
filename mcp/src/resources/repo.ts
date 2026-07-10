@@ -38,7 +38,8 @@ export function gitCommitForPath(relativePath: string): string {
   try {
     return execFileSync('git', ['log', '-1', '--format=%H', '--', relativePath], {
       cwd: REPO_ROOT,
-      encoding: 'utf8'
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
     }).trim();
   } catch {
     const baked = readBakedProvenance();
