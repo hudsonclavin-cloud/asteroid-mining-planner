@@ -32,6 +32,7 @@
   },
   "scripts": {
     "build": "tsc -p .",
+    "postbuild": "node scripts/bake-provenance.mjs",
     "eval": "tsc --target ES2022 --lib ES2022 --module NodeNext --moduleResolution NodeNext --esModuleInterop --skipLibCheck --strict --rootDir . --outDir dist eval/run-eval.ts && node dist/eval/run-eval.js",
     "test": "npm run build && node --test dist/mcp/test/*.js"
   },
