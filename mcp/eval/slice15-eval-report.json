@@ -1,0 +1,80 @@
+{
+  "reportVersion": "1",
+  "generatedAt": "2026-07-10T04:03:40.164Z",
+  "origin": "5d4f8966ef504f5e1f0ccbc2fc5d4adc4097d183",
+  "totalPairs": 10,
+  "passed": 10,
+  "failed": 0,
+  "pairs": [
+    {
+      "id": "P1",
+      "category": "provenance",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.value.sections.lambert_m0.label === 'M=0 vs poliastro' && result.structuredContent.value.sections.lambert_m0.maxRelError.value === 3.428650990914828e-14 && result.structuredContent.value.sections.lambert_m0.maxRelError.confidence === 'measured' && result.structuredContent.value.sections.lambert_m0.validationPasses === true && result.structuredContent.provenance.some((p) => p.path === 'tools/slice11-research/data/poliastro-validation.json')"
+    },
+    {
+      "id": "P2",
+      "category": "class-label",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.value.sections.lambert_multirev.label.toLowerCase().includes('magnitude') && result.structuredContent.value.sections.lambert_multirev.maxRelError.value === 3.5979389805439233e-12 && result.structuredContent.provenance.some((p) => p.path === 'tools/slice11-research/data/multi-rev-poliastro-validation.json')"
+    },
+    {
+      "id": "P3",
+      "category": "class-label",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.value.sections.cost_oracle.strict.label === 'STRICT' && result.structuredContent.value.sections.cost_oracle.observed.label === 'OBSERVED' && result.structuredContent.value.sections.cost_oracle.strict.maxErrorPct.value === 1.18 && result.structuredContent.value.sections.cost_oracle.strict.rmsErrorPct.value === 0.55 && result.structuredContent.value.sections.cost_oracle.observed.maxErrorPct.value === 3.11 && result.structuredContent.value.sections.cost_oracle.observed.rmsErrorPct.value === 2.1 && result.structuredContent.value.sections.cost_oracle.strict.maxErrorPct.value !== result.structuredContent.value.sections.cost_oracle.observed.maxErrorPct.value"
+    },
+    {
+      "id": "P4",
+      "category": "refusal",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.refusal.code === 'out_of_envelope' && result.structuredContent.refusal.reason.includes('0 through 55 km^2/s^2') && result.structuredContent.refusal.reason.includes('C3=2928.933') && result.structuredContent.value === null"
+    },
+    {
+      "id": "P5",
+      "category": "refusal",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.refusal.code === 'out_of_envelope' && result.structuredContent.refusal.reason.includes('2050-01-01 through 2050-01-10') && result.structuredContent.refusal.reason.includes('2025-12-31 through 2040-12-30') && result.structuredContent.value === null"
+    },
+    {
+      "id": "P6",
+      "category": "refusal",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.refusal.code === 'not_found' && result.structuredContent.refusal.reason === 'NO_SUCH_BODY_ABC123 is not in the catalog' && result.structuredContent.refusal.what_would_help.includes('search_bodies') && result.structuredContent.value === null"
+    },
+    {
+      "id": "P7",
+      "category": "boundary",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.isError === true && result.content[0].text.includes('MCP error -32602') && result.content[0].text.includes('tofMinDays must be less than tofMaxDays') && result.structuredContent === undefined"
+    },
+    {
+      "id": "P8",
+      "category": "provenance",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.value.physical.estimatedRadius.value === 270.0417833762203 && result.structuredContent.value.physical.estimatedRadius.confidence === 'assumed' && result.structuredContent.value.physical.absoluteMagnitudeH.value === 19.09 && result.structuredContent.value.physical.estimatedRadius.sourceIds.includes('catalog-boundary')"
+    },
+    {
+      "id": "P9",
+      "category": "boundary",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.refusal === undefined && result.structuredContent.value.sites.length === 1 && result.structuredContent.value.sites[0].siteId === 'cape-canaveral' && result.structuredContent.value.sites[0].feasible === false && result.structuredContent.value.sites[0].verdict === 'RED' && result.structuredContent.value.sites[0].marginDeg.value === -17.868682593370664"
+    },
+    {
+      "id": "P10",
+      "category": "catalog",
+      "passed": true,
+      "reason": "",
+      "gradingCheck": "result.structuredContent.coverage.returned === 5 && result.structuredContent.coverage.total === 41906 && result.structuredContent.coverage.returned < result.structuredContent.coverage.total && result.structuredContent.coverage.selection_rule === 'offset 0; limit 5'"
+    }
+  ]
+}
