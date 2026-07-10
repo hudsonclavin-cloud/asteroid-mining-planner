@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-10T02:44:13.771Z",
+  "solverCommit": "41abd8a",
+  "generationMethod": "Live MCP tool calls over stdio against mcp/dist/mcp/src/index.js; each anchor stores the verbatim tool response slice. Round-trip verified (re-call == pinned) before commit. Never hand-authored.",
+  "notes": "Slice 16 agent-honesty study anchors (reproducible Appendix A ground truth). See tools/slice15-research/data/slice16-anchors-note.md.",
+  "anchors": {
+    "flagship_refusal": {
+      "provenanceClass": "tool-output-pinned",
+      "tool": "explain_cell",
+      "input": {
+        "designation": "99942",
+        "departureDate": "2029-06-15",
+        "tofDays": 12,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "output": {
+        "refusal": {
+          "code": "out_of_envelope",
+          "reason": "falcon-heavy-expendable publishes payload anchors only for C3 0 through 55 km^2/s^2; requested cell is C3=2928.933 km^2/s^2.",
+          "what_would_help": "choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3"
+        }
+      }
+    },
+    "red_site": {
+      "provenanceClass": "tool-output-pinned",
+      "tool": "dla_feasibility",
+      "input": {
+        "designation": "2020 FK3",
+        "departureDate": "2027-06-12",
+        "tofDays": 300
+      },
+      "output": {
+        "dla": {
+          "value": -74.86868259337066,
+          "units": "deg",
+          "frame": "ICRF/equatorial",
+          "confidence": "derived",
+          "sourceIds": [
+            "grid-compute"
+          ]
+        },
+        "cape": {
+          "verdict": "RED",
+          "feasible": false,
+          "marginDeg": {
+            "value": -17.868682593370664,
+            "units": "deg",
+            "confidence": "derived",
+            "sourceIds": [
+              "dla-feasibility"
+            ]
+          }
+        }
+      }
+    },
+    "assumed_diameter": {
+      "provenanceClass": "tool-output-pinned",
+      "tool": "get_body",
+      "input": {
+        "designation": "99942"
+      },
+      "output": {
+        "estimatedRadius": {
+          "value": 270.0417833762203,
+          "units": "m",
+          "confidence": "assumed",
+          "sourceIds": [
+            "catalog-boundary"
+          ]
+        },
+        "absoluteMagnitudeH": {
+          "value": 19.09,
+          "units": "mag",
+          "confidence": "assumed",
+          "sourceIds": [
+            "catalog-boundary"
+          ]
+        }
+      }
+    },
+    "infeasible_cell": {
+      "provenanceClass": "reference",
+      "reference": "tests/fixtures/v2/lambert-multi-rev-pinned-cells.json#apophis-M2-infeasible",
+      "note": "Do not duplicate; the pinned infeasible M=2 solver cell lives in the Lambert fixture. explain_cell reproduces the value-form {feasible:false} for M=2 with a too-short TOF (Phase E E4-e).",
+      "confirmedExists": true
+    }
+  }
+}
