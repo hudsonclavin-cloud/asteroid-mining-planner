@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
@@ -10,7 +11,7 @@ import { registerGetValidationReportTool } from './tools/get-validation-report.j
 import { registerPorkchopScanTool } from './tools/porkchop-scan.js';
 
 const server = new McpServer({
-  name: 'aster-mcp-internal',
+  name: 'aster-mission-mcp',
   version: '0.1.0'
 });
 

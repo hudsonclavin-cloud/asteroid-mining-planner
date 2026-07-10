@@ -1,9 +1,32 @@
 {
-  "name": "aster-mcp-internal",
+  "name": "aster-mission-mcp",
   "version": "0.1.0",
+  "description": "Evidence-carrying MCP server for validated asteroid mission planning.",
   "private": true,
   "type": "module",
   "main": "dist/mcp/src/index.js",
+  "bin": {
+    "aster-mission-mcp": "dist/mcp/src/index.js"
+  },
+  "files": [
+    "dist/mcp/src",
+    "dist/src",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hudsonclavin-cloud/asteroid-mining-planner.git",
+    "directory": "mcp"
+  },
+  "keywords": [
+    "asteroids",
+    "astrodynamics",
+    "lambert",
+    "mcp",
+    "mission-planning"
+  ],
   "engines": {
     "node": ">=18"
   },
