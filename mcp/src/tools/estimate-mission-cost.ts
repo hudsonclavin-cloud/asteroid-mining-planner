@@ -7,8 +7,6 @@ import { evidenceEnvelopeOutputSchema } from './envelope-schema.js';
 import { gitCommitForPath } from '../resources/repo.js';
 import { CLOSED_WORLD_TOOL_ANNOTATIONS, toolResult } from './common.js';
 import {
-  SITE_ID_VALUES,
-  VEHICLE_ID_VALUES,
   baseComputeProvenance,
   buildOneWayMissionCost,
   classifyDlaForSite,
@@ -32,8 +30,8 @@ export const estimateMissionCostInputSchema = z.object({
   departureDate: z.string().regex(utcDateSchemaPattern()),
   tofDays: z.number().positive(),
   M: z.union([z.literal(0), z.literal(1), z.literal(2)]).default(0),
-  vehicleId: z.enum(VEHICLE_ID_VALUES),
-  siteId: z.enum(SITE_ID_VALUES).optional()
+  vehicleId: z.string().trim().min(1),
+  siteId: z.string().trim().min(1).optional()
 });
 
 export function registerEstimateMissionCostTool(server: McpServer): void {
@@ -98,6 +96,19 @@ export async function runEstimateMissionCost(args: z.output<typeof estimateMissi
   }
 
   const site = args.siteId ? findSiteById(args.siteId) : undefined;
+  if (args.siteId && !site) {
+    return refuse(
+      'estimate_mission_cost',
+      'not_found',
+      `${args.siteId} is not a known siteId`,
+      'choose a siteId from the dla-site-bands reference resource',
+      {
+        provenance: baseComputeProvenance({ includeVehicle: true, includeDeltaV: true }),
+        validity_envelope: 'Closed-world launch-site reference set.'
+      }
+    );
+  }
+
   const grid = await computeGridForBody(
     body,
     {

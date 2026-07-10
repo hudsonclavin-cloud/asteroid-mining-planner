@@ -271,6 +271,45 @@ test('T21 estimate_mission_cost refuses out_of_envelope beyond a vehicle curve d
   assert.match(envelope.refusal?.reason ?? '', /0 through 55 km\^2\/s\^2/);
 });
 
+test('T21b estimate_mission_cost unknown well-formed ids return structured refusals', async () => {
+  assert.doesNotThrow(() =>
+    estimateMissionCostInputSchema.parse({
+      designation: '99942',
+      departureDate: '2032-06-10',
+      tofDays: 272,
+      M: 0,
+      vehicleId: 'not-a-real-vehicle'
+    })
+  );
+
+  const vehicleEnvelope = await runEstimateMissionCost({
+    designation: '99942',
+    departureDate: '2032-06-10',
+    tofDays: 272,
+    M: 0,
+    vehicleId: 'not-a-real-vehicle'
+  });
+
+  assert.equal(vehicleEnvelope.refusal?.code, 'not_found');
+  assert.match(vehicleEnvelope.refusal?.reason ?? '', /not-a-real-vehicle is not a known vehicleId/);
+  assert.match(vehicleEnvelope.refusal?.what_would_help ?? '', /launch-vehicles reference resource/);
+  assert.equal(vehicleEnvelope.value, null);
+
+  const siteEnvelope = await runEstimateMissionCost({
+    designation: '99942',
+    departureDate: '2032-06-10',
+    tofDays: 272,
+    M: 0,
+    vehicleId: 'falcon-heavy-expendable',
+    siteId: 'not-a-real-site'
+  });
+
+  assert.equal(siteEnvelope.refusal?.code, 'not_found');
+  assert.match(siteEnvelope.refusal?.reason ?? '', /not-a-real-site is not a known siteId/);
+  assert.match(siteEnvelope.refusal?.what_would_help ?? '', /dla-site-bands reference resource/);
+  assert.equal(siteEnvelope.value, null);
+});
+
 test('T22 estimate_mission_cost flags RED selected sites without hiding the mass math', async () => {
   const envelope = await runEstimateMissionCost({
     designation: '99942',
