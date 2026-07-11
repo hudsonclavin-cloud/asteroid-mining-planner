@@ -2,7 +2,9 @@
  * Householder iteration (third-order) for solving T(x) - T_star = 0.
  *
  * Reference: Izzo (2014), "Revisiting Lambert's Problem", arXiv:1403.2705 Eq. (24)
- * Mirrors: poliastro/core/iod.py householder()
+ * Householder iteration from Izzo 2014 (arXiv:1403.2705).
+ * Validation-oracle correspondence: poliastro core/iod.py
+ * householder() (INV-024 - oracle only, no code ported).
  *
  * The iteration formula:
  *   delta = f * (f'^2 - f * f'' / 2) / (f' * (f'^2 - f * f'') + f''' * f^2 / 6)

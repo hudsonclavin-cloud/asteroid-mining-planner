@@ -6,7 +6,11 @@
  * under central gravity with parameter k (= GM of the central body).
  *
  * Reference: Izzo (2014), "Revisiting Lambert's Problem", arXiv:1403.2705
- * Implementation mirrors poliastro/core/iod.py:izzo()
+ * Clean-room TypeScript implementation of Izzo 2014
+ * (arXiv:1403.2705), written from the paper's math per DEC-1 Rev 2
+ * (Slice 10 founding doc). poliastro core/iod.py izzo() is the
+ * validation oracle for this function (INV-015, INV-024 - oracle
+ * only, no code ported).
  *
  * Returns a discriminated union:
  *   { ok: true, v1, v2, iterations, x }  on success
