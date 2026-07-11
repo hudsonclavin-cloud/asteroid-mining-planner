@@ -11,7 +11,7 @@
 **Live site:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/solar-system/
 **About route:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/about/
 **Porkchop route:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/
-**MCP package name:** `aster-mission-mcp` (`mcp/package.json`, version `0.1.0`, still `"private": true` until Hudson's manual publish)
+**MCP package:** `aster-mission-mcp@0.1.0` - PUBLISHED on npm, publisher `hudsoclavin`, handshake-verified 2026-07-10
 
 ---
 
@@ -19,14 +19,14 @@
 
 | Item | Commit | State |
 |------|--------|-------|
-| **Current HEAD before this STATUS/HANDOFF commit** | `b52d823` | Slice 15 close-record append committed locally |
-| **origin/main at G2 start** | `84fefe8` | Slice 15 G1 pushed: publish-prep stack complete |
+| **Current HEAD before this STATUS commit** | `c4e53a9` | OQ-15-5 published disposition + deferred-items log |
+| **origin/main before this close stack push** | `c6438df` | Publish fix: removed `private` from `mcp/package.json`; root remains private |
 | **Slice 15 G1 final** | `84fefe8` | README aligned with Phase G skeleton |
 | **Slice 15 eval gate** | `c8a139a` | `mcp/eval/slice15-eval-summary.md`: `Result: 10/10 PASS` |
 | **Slice 16 pre-registration anchor** | `7cd761b1` | `src/v2/SLICE_16_FOUNDING.md` DRAFT committed |
 
-**Push state:** this G2 docs stack is local until Hudson reviews and pushes.
-**Active founding doc:** `src/v2/SLICE_15_FOUNDING.md` (LOCKED; marker advanced additively to `S15-FOUNDING-LOCKED-2026-07-07-C` in `b52d823`).
+**Push state:** this paper-close stack is local until Hudson reviews and pushes.
+**Active founding doc:** `src/v2/SLICE_15_FOUNDING.md` (LOCKED; OQ-15-5 publish disposition appended additively in `c4e53a9`).
 **Invariant ceiling:** `INV-033`.
 
 ---
@@ -41,7 +41,7 @@
 | Mission planning | Slice 12 (DLA overlay) | COMPLETE + DEPLOYED |
 | Mission planning | Slice 13 (mission cost card) | COMPLETE + DEPLOYED |
 | Packaging / demo | Slice 14 (About + validation card + FK3 tour + CI) | CLOSED + DEPLOYED |
-| MCP / agent surface | Slice 15 | CLOSED ON PAPER through G1; publish remains Hudson manual act |
+| MCP / agent surface | Slice 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`, 2026-07-10) |
 | Agent-honesty study | Slice 16 | PRE-REGISTERED DRAFT at `7cd761b1`; not locked |
 
 **Slice 15 shipped repo surface:**
@@ -49,6 +49,7 @@
 - 4 MCP resources: `aster://reference/launch-vehicles`, `aster://reference/dla-site-bands`, `aster://reference/catalog-schema`, `aster://reference/dv-stack-model`.
 - Evidence envelopes with Quantity leaves, structured refusals, convention-(g) infeasibility-as-value, and baked provenance fallback for no-git package installs.
 - Eval gate: `10/10 PASS` in `mcp/eval/slice15-eval-summary.md` and `mcp/eval/slice15-eval-report.json` (`c8a139a`).
+- npm publish: `aster-mission-mcp@0.1.0`, publisher `hudsoclavin`, tarball shasum `c912f2b`, handshake-verified 2026-07-10 (`serverInfo` name/version match, protocolVersion `2025-11-25`).
 
 **Slice 15 phase anchors:**
 - A/B: `3be36bb`, `c5d1173`, `32d2801`
@@ -59,21 +60,17 @@
 - F1/F2: `5d4f896`, `c8a139a`
 - G1: `2a1357f`, `7b9eda3`, `2b0c751`, `cb62ab9`, `2cf7526`, `202bae9`, `50b9ad9`, `84fefe8`
 - G2 close record: `b52d823`
+- Publish fix: `c6438df`
+- Published OQ-15-5 paper seal: `c4e53a9`
 
 ---
 
 ## Next Session
 
-1. **Review/push G2 docs stack.** Hudson reviews `b52d823` plus the STATUS/HANDOFF commit, then pushes.
-2. **Publish gate O2: npm account.** Hudson confirms npm auth/account, then manually publishes:
-   ```powershell
-   npm whoami
-   cd mcp
-   npm publish --access public
-   npm view aster-mission-mcp version
-   ```
-3. **Slice 16 lock prep.** Use `src/v2/SLICE_16_FOUNDING.md` as the pre-registration anchor. Appendix A is not in-repo yet; the expected Fable draft filename is `SLICE_16_APPENDIX_A_scenarios.md` if Hudson supplies the draft set.
-4. **Dossier planning.** `DOSSIER_FOUNDING.md` is not currently in the repo or `Downloads`; do not mark Dossier Phase A ready until that draft is supplied/ingested.
+1. **Review/push paper-close docs stack.** Hudson reviews `c4e53a9` plus this STATUS commit, then pushes.
+2. **Next fork A - Dossier founding-doc lock.** Ungated; can dogfood the shipped MCP.
+3. **Next fork B - Slice 16 design lock.** Gated by O1: API keys + budget for the multi-model study.
+4. **Appendix A / Fable draft ingestion.** Appendix A is not in-repo yet; the expected Fable draft filename is `SLICE_16_APPENDIX_A_scenarios.md` if Hudson supplies the draft set.
 
 ---
 
