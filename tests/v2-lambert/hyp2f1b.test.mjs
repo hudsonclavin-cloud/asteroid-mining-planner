@@ -1,8 +1,8 @@
 import { strict as assert } from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { runTsc } from '../helpers/run-tsc.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -11,10 +11,8 @@ const tempOutDir = path.join(repoRoot, '.tmp-tests', 'v2-lambert-hyp2f1b');
 fs.rmSync(tempOutDir, { recursive: true, force: true });
 fs.mkdirSync(tempOutDir, { recursive: true });
 
-const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
-const tscResult = spawnSync(
-  tscBin,
-  [
+const tscResult = runTsc(
+[
     '--pretty', 'false',
     '--outDir', tempOutDir,
     '--rootDir', path.join(repoRoot, 'src', 'v2'),
