@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { spawnSync } from 'node:child_process';
+import { runTsc } from './helpers/run-tsc.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -29,10 +29,8 @@ async function loadModules() {
       fs.rmSync(tempOutDir, { recursive: true, force: true });
       fs.mkdirSync(tempOutDir, { recursive: true });
 
-      const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
-      const result = spawnSync(
-        tscBin,
-        [
+      const result = runTsc(
+[
           '--pretty', 'false',
           '--outDir', tempOutDir,
           '--rootDir', path.join(repoRoot, 'src', 'v2'),
