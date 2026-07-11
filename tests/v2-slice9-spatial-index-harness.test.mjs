@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { Worker } from 'node:worker_threads';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { COMMON_EPOCH_TDB_JD } from '../tools/slice9-research/common.mjs';
 import { propagateKeplerian } from '../tools/slice9-research/keplerian-offline.mjs';
 import { propagateSlice9Batch } from '../tools/slice9-research/slice9-node-propagation-batch.mjs';
+import { runTsc } from './helpers/run-tsc.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -32,10 +32,8 @@ function compileModules() {
   fs.rmSync(tempOutDir, { recursive: true, force: true });
   fs.mkdirSync(tempOutDir, { recursive: true });
 
-  const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
-  const result = spawnSync(
-    tscBin,
-    [
+  const result = runTsc(
+[
       '--pretty',
       'false',
       '--outDir',

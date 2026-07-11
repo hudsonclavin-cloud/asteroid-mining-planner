@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { runTsc } from './helpers/run-tsc.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -61,10 +62,8 @@ console.log('Compiling Saturn runtime and ring helpers for Slice 5 cutover...');
 fs.rmSync(tempOutDir, { recursive: true, force: true });
 fs.mkdirSync(tempOutDir, { recursive: true });
 
-const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
-const tscResult = spawnSync(
-  tscBin,
-  [
+const tscResult = runTsc(
+[
     '--pretty', 'false',
     '--outDir', tempOutDir,
     '--rootDir', path.join(repoRoot, 'src', 'v2'),

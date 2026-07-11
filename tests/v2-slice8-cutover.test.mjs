@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
@@ -9,6 +8,7 @@ import {
   INV013_BARS_KM,
   SLICE8_CUTOVER_PER_BAND_COUNT,
 } from '../tools/slice8-ingestion/slice8-cutover-sample.mjs';
+import { runTsc } from './helpers/run-tsc.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -83,10 +83,8 @@ console.log('Compiling v2 core and boundary for Slice 8 cutover...');
 fs.rmSync(tempOutDir, { recursive: true, force: true });
 fs.mkdirSync(tempOutDir, { recursive: true });
 
-const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
-const tscResult = spawnSync(
-  tscBin,
-  [
+const tscResult = runTsc(
+[
     '--pretty', 'false',
     '--outDir', tempOutDir,
     '--rootDir', path.join(repoRoot, 'src', 'v2'),
