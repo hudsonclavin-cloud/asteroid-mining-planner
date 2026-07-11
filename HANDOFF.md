@@ -41,7 +41,7 @@ npm view aster-mission-mcp version
 Package facts verified from `mcp/package.json`:
 - name `aster-mission-mcp`
 - version `0.1.0`
-- `"private": true` until publish act
+- mcp/package.json "private" field REMOVED at c6438df to enable publish; aster-mission-mcp@0.1.0 live on npm since 2026-07-10 (shasum c912f2b, handshake-verified).
 - bin `aster-mission-mcp -> dist/mcp/src/index.js`
 - Node floor `>=18`
 - files whitelist: `dist/mcp/src`, `dist/src`, `README.md`, `LICENSE`
