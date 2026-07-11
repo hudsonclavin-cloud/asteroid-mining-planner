@@ -9,6 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test tests/*.test.mjs",
+    "test:all": "node tools/run-tests.mjs",
+    "typecheck:v2": "tsc --noEmit",
+    "verify": "npm run typecheck:v2 && npm run test:all",
     "research:slice2": "node tools/slice2-research/fetch-horizons.mjs && node tools/slice2-research/measure-interpolation.mjs"
   },
   "devDependencies": {
