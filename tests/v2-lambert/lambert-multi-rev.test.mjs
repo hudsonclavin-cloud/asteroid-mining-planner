@@ -54,7 +54,7 @@ const { propagateKeplerianStateVectors } = await importJs('core/propagators/kepl
 const referenceMultiRev = await loadReferenceMultiRev(tempOutDir);
 
 const NEA_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');
-const HORIZONS_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-inner-solar-system-2026-2040.json');
+const HORIZONS_FIXTURE = path.join(repoRoot, 'src', 'v2', 'data', 'horizons-inner-solar-system-2026-2040.json');
 const MU_EARTH = 398600.0;
 const MU_SUN = 1.32712440018e11;
 const SECONDS_PER_DAY = 86400;
