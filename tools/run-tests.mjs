@@ -22,7 +22,7 @@ for (const file of testFiles) {
   console.log(file);
 }
 
-const child = spawn(process.execPath, ['--test', ...testFiles], {
+const child = spawn(process.execPath, ['--test', '--test-timeout=120000', ...testFiles], {
   stdio: 'inherit',
   cwd: repoRoot,
 });
