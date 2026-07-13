@@ -27,6 +27,12 @@ const ANOMALY_TAIL_CLASSES = new Set(['ETC', 'HTC', 'JFC']);
 const STALE_THRESHOLD_DAYS = 90;
 const RESIDUAL_ALERT_RATE = 0.05;
 const ENVELOPE_KM = 50_000;
+const RETIRED_REASON =
+  'RETIRED 2026-07-12: fixture slice9-cutover-sample.json was never ' +
+  'committed (.gitignore:17), unrecoverable, no generator. Expected ' +
+  'values 26/58/66/61 were measured from the lost sample; a regenerated ' +
+  'sample would reset them while faking continuity. See ' +
+  'SLICE_9_FOUNDING.md amendment.';
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -94,7 +100,7 @@ function nearlyPct(numerator, denominator) {
   return denominator === 0 ? 0 : (numerator / denominator) * 100;
 }
 
-test('Slice 9 Phase A.3 three-gate cutover harness validates the committed contract and documents residual envelope exceedance', async (t) => {
+test('Slice 9 Phase A.3 three-gate cutover harness validates the committed contract and documents residual envelope exceedance', { skip: RETIRED_REASON }, async (t) => {
   const fixture = readJson(fixturePath);
   const sample = readJson(samplePath);
   const cutoverTruth = readJson(cutoverTruthPath);
