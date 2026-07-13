@@ -287,7 +287,8 @@ function renderPorkchopModal(): ReturnType<typeof h> | null {
             {
               type: 'button',
               onClick: () => {
-                const base = (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL;
+                // Guarded for non-Vite runtimes (node --test); statically replaced by Vite — see RR1E.
+                const base = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
                 const url = `${base}v2/porkchop/?body=${encodeURIComponent(body.bodyId)}`;
                 window.open(url, '_blank', 'noopener,noreferrer');
               },

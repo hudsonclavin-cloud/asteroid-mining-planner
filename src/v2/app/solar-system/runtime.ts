@@ -95,7 +95,10 @@ export const TOP_DOWN_PRESET_DURATION_MS = 1_000;
 export const INTERACTIVE_MIN_ORBIT_POLAR_RAD = 0.001;
 export const INTERACTIVE_MAX_ORBIT_POLAR_RAD = Math.PI - INTERACTIVE_MIN_ORBIT_POLAR_RAD;
 const OUTER_SYSTEM_OVERVIEW = 'outer-system-overview' as const;
-const TEXTURE_BASE_URL = (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL;
+// Guarded for non-Vite runtimes (node --test): env is absent there, so ?. + ?? '/'
+// keeps module load safe. Under `vite build` the whole chain is statically replaced
+// by the literal base and the ?? folds away — bundle byte-identical (RR1E build gate).
+const TEXTURE_BASE_URL = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
 const EARTH_DAY_TEXTURE_URL = `${TEXTURE_BASE_URL}2k_earth_daymap.jpg`;
 const EARTH_NIGHT_TEXTURE_URL = `${TEXTURE_BASE_URL}2k_earth_nightmap.jpg`;
 const EARTH_NORMAL_TEXTURE_URL = `${TEXTURE_BASE_URL}2k_earth_normal.jpg`;
