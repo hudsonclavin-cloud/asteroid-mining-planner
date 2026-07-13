@@ -419,3 +419,29 @@ production runtime. Slice 9 visualization tier is shippable.
 - Star catalog filename rename (mag75.bin → containing 40k @ V_T ≤ 8.1)
 - Phase C.2 catalog list UI (next slice work)
 - Phase C.3 quality down-rank visual treatment (next slice work)
+
+## Amendment (2026-07-12, RR wave) -- Slice 9 A.3 cutover fixture provenance correction
+
+The Slice 9 A.3 cutover harness references
+`tools/slice9-research/data/slice9-cutover-sample.json` as "the committed
+162-body set." That file was NEVER COMMITTED -- `.gitignore:17` excludes
+`tools/slice9-research/data/*` with five `!` exceptions that do not include it.
+Verified: zero commits in `git log --all` (including `--diff-filter=D`) ever
+touched the path; no generator exists; disk-wide recovery found nothing. The
+"committed" provenance claim in this document was FALSE from the start.
+
+Disposition: OPT-2 RETIRE. The A.3 sample-dependent harness is retired, not
+fixed. Its expected values `26/58/66/61` were measured from the lost sample; a
+regenerated 162-body sample would reset those values while faking continuity.
+The test file is retained as historical record, and the sample-dependent test is
+skipped with an explicit reason rather than silently removed.
+
+Coverage LOST: sampled per-body three-gate proof plus the sampled Horizons-truth
+residual `<=5%` guard. Coverage RETAINED: `tests/v2-boundary-slice9.test.mjs`
+continues to cover the full-catalog fixture, tier distribution, and ingestion
+preservation; `tests/v2-slice9-spatial-index-harness.test.mjs` continues to cover
+body conservation and occupancy reproduction. Carry-forward: replacement
+propagation-accuracy guard against committed Horizons truth only, using committed
+artifacts and no recovered/synthesized A.3 sample.
+
+This amendment corrects the record; no prior line is deleted.
