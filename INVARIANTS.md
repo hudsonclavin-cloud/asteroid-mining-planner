@@ -161,6 +161,16 @@ this cross-platform. The Unix `touch` command does not exist on Windows.
 `magick.exe` explicitly. Do NOT use `convert` — Windows ships a `convert.exe` filesystem tool
 that is not ImageMagick.
 
+### Evidence artifact tracking (INV-034)
+
+Any file referenced by a founding document, INVARIANTS.md, or a test as
+committed evidence MUST be git-tracked. Evidence directories under an ignored
+glob require an explicit `!` exception at commit time. Verification:
+`git check-ignore -v <path>` returns nothing for every claimed-committed
+artifact. Born from the Slice 9 A.3 cutover sample -- described as "the
+committed 162-body set" (`SLICE_9_FOUNDING.md:202`, `:350-353`), silently
+excluded by `.gitignore:17`, never committed, unrecoverable.
+
 ---
 
 ## §6. Invariant index
@@ -188,4 +198,5 @@ that is not ImageMagick.
 | INV-031 | `src/v2/SLICE_15_FOUNDING.md` | Eval gate before publish: the 10-pair eval must pass with answers verified against the repo, never model memory |
 | INV-032 | `src/v2/SLICE_15_FOUNDING.md` | No non-finite numbers cross the wire; NaN/Infinity reaching an envelope value path is a bug-class refusal or error, never serialized |
 | INV-033 | `src/v2/SLICE_15_FOUNDING.md` | Anti-fabrication: no SourceRef path, commit, count, or URL enters any envelope, fixture, or provenance artifact unless confirmed to exist and match |
+| INV-034 | `src/v2/SLICE_9_FOUNDING.md` amendment 2026-07-12 | Evidence-artifact tracking: any file claimed as committed evidence by a founding doc, INVARIANTS.md, or a test must be git-tracked; ignored evidence directories require explicit `!` exceptions and `git check-ignore -v <path>` must return nothing |
 | INV-V1-001 | `src/v2/SLICE_V1_FOUNDING.md` | Visual asset provenance must be confirmed before shipping (CC/public domain) |

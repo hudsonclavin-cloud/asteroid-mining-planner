@@ -14,6 +14,8 @@ tools/slice8-ingestion/full-run.log
 tools/slice8-ingestion/caffeinate.log
 tools/slice8-ingestion/full-run.pid
 tools/slice8-5-research/data/*
+# Evidence artifacts under this ignored glob must get explicit ! exceptions
+# before any doc/test may describe them as committed evidence.
 tools/slice9-research/data/*
 !tools/slice9-research/data/cad-flags.json
 !tools/slice9-research/data/inv014-truth.json
