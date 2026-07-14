@@ -104,7 +104,11 @@ function runOne(file) {
     const child = spawn(
       process.execPath,
       ['--test', `--test-timeout=${PER_TEST_TIMEOUT_MS}`, file],
-      { cwd: repoRoot, stdio: ['ignore', 'pipe', 'pipe'] },
+      {
+        cwd: repoRoot,
+        detached: process.platform !== 'win32',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
     );
 
     let output = '';
@@ -151,7 +155,9 @@ function killTree(pid) {
     spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
   } else {
     try {
-      process.kill(pid, 'SIGKILL');
+      // POSIX children are spawned detached, so the direct child is a process
+      // group leader. Killing -pid reaps node --test plus any descendants.
+      process.kill(-pid, 'SIGKILL');
     } catch {
       // already gone
     }
