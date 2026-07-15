@@ -12,6 +12,9 @@ const runtimeSource = fs.readFileSync(
   path.join(repoRoot, 'src', 'v2', 'app', 'solar-system', 'runtime.ts'),
   'utf8',
 );
+const FAKE_VIEWPORT_WIDTH_PX = 380;
+const FAKE_VIEWPORT_HEIGHT_PX = 600;
+const FAKE_SCROLL_HEIGHT_PX = 1200;
 
 function compileOverlayModule() {
   fs.rmSync(tempOutDir, { recursive: true, force: true });
@@ -152,6 +155,7 @@ class FakeElement extends FakeNode {
     this.style = { cssText: '', setProperty() {} };
     this.ownerSVGElement = undefined;
     this.className = '';
+    this._scrollTop = 0;
   }
 
   setAttribute(name, value) {
@@ -176,6 +180,68 @@ class FakeElement extends FakeNode {
   dispatchEvent() {
     return true;
   }
+
+  get clientHeight() {
+    // src/v2/app/catalog-list/panel.ts:144 reads clientHeight into viewportHeightSignal.
+    return FAKE_VIEWPORT_HEIGHT_PX;
+  }
+
+  get clientWidth() {
+    return FAKE_VIEWPORT_WIDTH_PX;
+  }
+
+  get offsetHeight() {
+    return this.clientHeight;
+  }
+
+  get offsetTop() {
+    return 0;
+  }
+
+  get scrollHeight() {
+    return FAKE_SCROLL_HEIGHT_PX;
+  }
+
+  get scrollTop() {
+    // src/v2/app/catalog-list/panel.ts:158 reads scrollTop into scrollTopSignal.
+    return this._scrollTop;
+  }
+
+  set scrollTop(value) {
+    const numericValue = Number(value);
+    const maxScrollTop = Math.max(0, this.scrollHeight - this.clientHeight);
+    this._scrollTop = Number.isFinite(numericValue)
+      ? Math.min(Math.max(0, numericValue), maxScrollTop)
+      : 0;
+  }
+
+  getBoundingClientRect() {
+    return {
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: this.clientWidth,
+      bottom: this.clientHeight,
+      width: this.clientWidth,
+      height: this.clientHeight,
+    };
+  }
+
+  scrollTo(optionsOrX = 0, y = 0) {
+    this.scrollTop =
+      typeof optionsOrX === 'object' && optionsOrX !== null
+        ? optionsOrX.top ?? this.scrollTop
+        : y;
+  }
+
+  scrollBy(optionsOrX = 0, y = 0) {
+    const delta =
+      typeof optionsOrX === 'object' && optionsOrX !== null
+        ? optionsOrX.top ?? 0
+        : y;
+    this.scrollTop += delta;
+  }
 }
 
 class FakeDocument {
@@ -194,6 +260,23 @@ class FakeDocument {
 
   createTextNode(text) {
     return new FakeTextNode(this, String(text));
+  }
+}
+
+class FakeWindow {
+  constructor(document) {
+    this.document = document;
+    this._listeners = new Map();
+  }
+
+  addEventListener(type, handler) {
+    const listeners = this._listeners.get(type) ?? new Set();
+    listeners.add(handler);
+    this._listeners.set(type, listeners);
+  }
+
+  removeEventListener(type, handler) {
+    this._listeners.get(type)?.delete(handler);
   }
 }
 
@@ -224,7 +307,7 @@ async function loadFreshOverlayModules() {
   return { overlay, store };
 }
 
-test('Phase C overlay mounts with real Preact, reflects store subscriptions, and cleans up', async () => {
+async function withFakeOverlayDom(callback) {
   const previousDocument = globalThis.document;
   const previousWindow = globalThis.window;
   const previousNode = globalThis.Node;
@@ -233,12 +316,24 @@ test('Phase C overlay mounts with real Preact, reflects store subscriptions, and
   const document = new FakeDocument();
 
   globalThis.document = document;
-  globalThis.window = { document };
+  globalThis.window = new FakeWindow(document);
   globalThis.Node = FakeNode;
   globalThis.Element = FakeElement;
   globalThis.HTMLElement = FakeElement;
 
   try {
+    return await callback(document);
+  } finally {
+    globalThis.document = previousDocument;
+    globalThis.window = previousWindow;
+    globalThis.Node = previousNode;
+    globalThis.Element = previousElement;
+    globalThis.HTMLElement = previousHTMLElement;
+  }
+}
+
+test('Phase C overlay mounts with real Preact, reflects store subscriptions, and cleans up', async () => {
+  await withFakeOverlayDom(async (document) => {
     const { overlay, store } = await loadFreshOverlayModules();
     const mount = document.createElement('div');
 
@@ -268,13 +363,45 @@ test('Phase C overlay mounts with real Preact, reflects store subscriptions, and
 
     dispose();
     assert.equal(findByTestId(mount, overlay.PHASE_C_OVERLAY_HOST_TEST_ID), null);
-  } finally {
-    globalThis.document = previousDocument;
-    globalThis.window = previousWindow;
-    globalThis.Node = previousNode;
-    globalThis.Element = previousElement;
-    globalThis.HTMLElement = previousHTMLElement;
-  }
+  });
+});
+
+test('Phase C overlay converges through repeated store updates with finite fake-DOM layout metrics', async () => {
+  await withFakeOverlayDom(async (document) => {
+    const { overlay, store } = await loadFreshOverlayModules();
+    const mount = document.createElement('div');
+    const startedAt = Date.now();
+    const dispose = overlay.mountPhaseCOverlay(mount);
+    const initialFocusRequestId = store.readFocusRequestId();
+
+    try {
+      const host = findByTestId(mount, overlay.PHASE_C_OVERLAY_HOST_TEST_ID);
+      assert.ok(host, 'expected overlay host to mount');
+      assert.equal(Number.isFinite(host.clientHeight), true);
+      assert.equal(host.clientHeight, FAKE_VIEWPORT_HEIGHT_PX);
+
+      store.selectBody('433');
+      store.requestFocus();
+      store.selectBody('99942');
+      store.requestFocus();
+      store.selectBody(null);
+      await Promise.resolve();
+
+      const root = findByTestId(mount, overlay.PHASE_C_OVERLAY_ROOT_TEST_ID);
+      const selectionState = findByTestId(mount, overlay.PHASE_C_OVERLAY_SELECTION_TEST_ID);
+      const focusRequest = findByTestId(mount, overlay.PHASE_C_OVERLAY_FOCUS_REQUEST_TEST_ID);
+
+      assert.ok(root, 'expected overlay root after repeated updates');
+      assert.equal(root.getAttribute('data-selected-body-state'), 'none');
+      assert.equal(selectionState.textContent, 'none');
+      assert.equal(focusRequest.textContent, String(initialFocusRequestId + 2));
+      assert.ok(Date.now() - startedAt < 10_000, 'overlay should converge under a 10s wall-clock guard');
+    } finally {
+      dispose();
+    }
+
+    assert.equal(findByTestId(mount, overlay.PHASE_C_OVERLAY_HOST_TEST_ID), null);
+  });
 });
 
 test('runtime wires the Phase C.1 overlay mount and focus-request bridge without changing scene ownership', () => {
