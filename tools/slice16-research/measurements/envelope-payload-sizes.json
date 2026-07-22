@@ -1,0 +1,121 @@
+{
+  "marker": "S16-ENVELOPE-MEASURE-2026-07-21-A",
+  "head_at_measurement": "564ebbf3efcb46316265a5611449fd59c230afd0",
+  "measured_at": "2026-07-22T01:33:04.226Z",
+  "method": "replay of committed slice15-eval-pairs tool_call inputs against locally built server; sizes in bytes and chars; est_tokens = ceil(chars/4), stated heuristic, not a tokenizer count",
+  "tools_list_payload": {
+    "bytes": 20753,
+    "chars": 20753,
+    "est_tokens": 5189
+  },
+  "responses": [
+    {
+      "pair_id": "P1",
+      "tool": "get_validation_report",
+      "bytes": 8977,
+      "chars": 8977,
+      "est_tokens": 2245,
+      "kind": "value"
+    },
+    {
+      "pair_id": "P2",
+      "tool": "get_validation_report",
+      "bytes": 8977,
+      "chars": 8977,
+      "est_tokens": 2245,
+      "kind": "value"
+    },
+    {
+      "pair_id": "P3",
+      "tool": "get_validation_report",
+      "bytes": 8977,
+      "chars": 8977,
+      "est_tokens": 2245,
+      "kind": "value"
+    },
+    {
+      "pair_id": "P4",
+      "tool": "explain_cell",
+      "bytes": 4436,
+      "chars": 4436,
+      "est_tokens": 1109,
+      "kind": "refusal"
+    },
+    {
+      "pair_id": "P5",
+      "tool": "porkchop_scan",
+      "bytes": 4333,
+      "chars": 4333,
+      "est_tokens": 1084,
+      "kind": "refusal"
+    },
+    {
+      "pair_id": "P6",
+      "tool": "get_body",
+      "bytes": 1949,
+      "chars": 1949,
+      "est_tokens": 488,
+      "kind": "refusal"
+    },
+    {
+      "pair_id": "P7",
+      "tool": "porkchop_scan",
+      "bytes": 153,
+      "chars": 153,
+      "est_tokens": 39,
+      "kind": "error"
+    },
+    {
+      "pair_id": "P8",
+      "tool": "get_body",
+      "bytes": 9361,
+      "chars": 9361,
+      "est_tokens": 2341,
+      "kind": "value"
+    },
+    {
+      "pair_id": "P9",
+      "tool": "dla_feasibility",
+      "bytes": 5901,
+      "chars": 5901,
+      "est_tokens": 1476,
+      "kind": "value"
+    },
+    {
+      "pair_id": "P10",
+      "tool": "search_bodies",
+      "bytes": 6731,
+      "chars": 6731,
+      "est_tokens": 1683,
+      "kind": "value"
+    }
+  ],
+  "summary": {
+    "count": 10,
+    "responses": {
+      "min": 153,
+      "median": 6316,
+      "max": 9361
+    },
+    "by_kind": {
+      "value": {
+        "count": 6,
+        "min": 5901,
+        "median": 8977,
+        "max": 9361
+      },
+      "refusal": {
+        "count": 3,
+        "min": 1949,
+        "median": 4333,
+        "max": 4436
+      },
+      "error": {
+        "count": 1,
+        "min": 153,
+        "median": 153,
+        "max": 153
+      }
+    }
+  }
+}
