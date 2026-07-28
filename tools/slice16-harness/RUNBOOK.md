@@ -1,55 +1,62 @@
 # Slice 16 Honesty-Study Harness — Runbook
 
-**MARKER:** S16-LOCK-AND-HARNESS-2026-07-27-A
-**Audience:** Hudson. Every step below that spends money or touches the network is yours; the harness cannot do any of it on its own.
+**MARKER:** S16-PREFLIGHT-2026-07-27-A
+**Audience:** Hudson, executing cold. Every step that spends money or touches the network is yours; the harness cannot do any of it on its own.
+
+Work top to bottom. Steps 1–2 spend nothing.
 
 ---
 
-## 0. What exists right now
+## 0. State of the world
 
-| Artifact | Path |
+Pre-registration is **locked and reconciled**. Registered scope:
+
+| | Count |
 |---|---|
-| Locked scenario set + paraphrases | `src/v2/SLICE_16_APPENDIX_A_LOCKED.md` |
-| Design lock / pre-registration | `src/v2/SLICE_16_FOUNDING.md` §9 |
-| Config, roster, scenarios, tolerances | `tools/slice16-harness/config.mjs` |
-| MCP stdio client (mirrors `mcp/eval/run-eval.ts`) | `tools/slice16-harness/mcp-client.mjs` |
-| Prompt prefix + structured answer contract | `tools/slice16-harness/prompt.mjs` |
-| Provider adapters (all **UNTESTED-AT-NETWORK-BOUNDARY**) | `tools/slice16-harness/adapters/` |
-| Run driver | `tools/slice16-harness/runner.mjs` |
-| Deterministic grader | `tools/slice16-harness/grader.mjs` |
-| Negative-control fixtures + gate | `tools/slice16-harness/fixtures/`, `tools/slice16-harness/test/` |
+| Frozen scenarios | 30 |
+| Struck (S-09, S-27) | 2 |
+| **Primary (pre-registered)** | **28** |
+| Deferred inside primary (S-06, S-10, S-12, S-13, S-23) | 5 |
+| **Active (runnable today)** | **23** |
+| Primary runs (28 × 6 × r=10) | 1,680 |
+| Control runs (28 × 6 × r=3) | 504 |
+| **Total registered** | **2,184** |
+| Ceiling | **$200** |
 
-**Nothing has ever been run against a live model API.** The adapters are written from documented contracts and are unverified on the wire.
+**No run has ever occurred.** No model API has been called. The four provider adapters are **UNTESTED-AT-NETWORK-BOUNDARY** — written from documented contracts, never exercised on the wire.
 
 ---
 
-## 1. Review order (before anything else)
-
-Review these in order — later items depend on earlier ones being right:
-
-1. **`git show 8329663 -- src/v2/SLICE_16_APPENDIX_A_LOCKED.md`** — the 30 scenarios and 60 paraphrases. Focus on §L.1 (what Phase A verified vs. deferred vs. found unsatisfiable) and the three **provisionally struck** scenarios S-09, S-27, S-29. Each carries a documented repair option. **This is the decision that most changes the study.**
-2. **`git show 34ca5f7 -- src/v2/SLICE_16_FOUNDING.md`** — the §9 amendment. Confirm the additive proof: the diff must be `135 insertions(+), 0 deletions(-)`.
-3. **`git show 34e95b7`** and **`git show 7d7c00e`** — harness and grader.
-4. **`git log --oneline -6`** — five S16 commits on top of `0cc980c`.
-
-Then run the offline gate yourself (no keys, no spend, ~0.1 s):
+## 1. Verify offline (no keys, no spend, ~1 second)
 
 ```sh
 node --test tools/slice16-harness/test/
-# expect: # pass 25 / # fail 0
+# expect: # pass 30 / # fail 0
+
+node tools/slice16-harness/runner.mjs --preflight
+# reports readiness; spends nothing
+
+node tools/slice16-harness/runner.mjs --mock mock-faithful.json
+# offline end-to-end: expect "20 runs written, 0 errored"
 ```
 
-And the preflight, which reports readiness and spends nothing:
+Confirm the guard actually refuses:
 
 ```sh
-node tools/slice16-harness/runner.mjs --preflight
+node tools/slice16-harness/runner.mjs --control ; echo "exit=$?"
+# expect a REFUSED message and exit=4, with no ledger file created
 ```
 
----
+## 2. Review, then push
 
-## 2. Push (yours alone)
+Review order — later items depend on earlier ones:
 
-The pre-push hook blocks every push without `ASTER_PUSH_OK=1`. Use your alias:
+1. `git show d79ba1b` — A2 reconciliation (S-29 live, struck = {S-09, S-27}, 28 primary).
+2. `git show 3d55abd -- src/v2/SLICE_16_APPENDIX_A_LOCKED.md` — §L.8, the deferred-marker evidence. **All five resolved from committed sources.**
+3. `git show e12ebcc` — §10.7 preflight sweep, including the three harness defects found and fixed, and the **known VF limitation in §10.7.4 that needs your decision**.
+4. `tools/slice16-harness/PREFLIGHT_REPORT.md` — the full audit.
+
+Then push. The pre-push hook blocks everything without `ASTER_PUSH_OK=1`; use your alias:
 
 ```sh
 git hpush
@@ -57,135 +64,121 @@ git hpush
 
 No agent has pushed, set `ASTER_PUSH_OK`, or touched `core.hooksPath`.
 
----
+## 3. Four signups
 
-## 3. The four API signups
+Chat subscriptions are **not** API keys. Each needs a developer account with billing.
 
-Chat subscriptions are **not** API keys — each of these needs a separate developer account with billing.
-
-| Provider | Console | Models it unlocks |
+| Provider | Console | Unlocks |
 |---|---|---|
 | OpenAI | <https://platform.openai.com> | `gpt-5.5`, `gpt-5.5-mini` |
 | Anthropic | <https://console.anthropic.com> | `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` |
-| Google | <https://aistudio.google.com> (AI Studio) | `gemini-3.1-pro` |
+| Google | <https://aistudio.google.com> | `gemini-3.1-pro` |
 | DeepSeek | <https://platform.deepseek.com> | `deepseek-v4-flash` |
 
-**Set a hard spend cap in each console** before generating a key. The harness's `$200` ceiling (DEC-16-7) is a design commitment, not an enforced limit — only the provider console can actually stop spending.
+> ### ⚠ SET A HARD SPEND CAP IN EVERY CONSOLE BEFORE GENERATING A KEY
+> The `$200` ceiling is a **design commitment, not an enforced limit**. Only the provider console can actually stop spending. Do this first, in all four.
 
-**Verify the model strings before the pilot.** Four of the six are Q3 *leads*, not confirmed: `gpt-5.5`, `gpt-5.5-mini`, `gemini-3.1-pro`, `deepseek-v4-flash`. Only the two Anthropic strings are marked [Certain]. A wrong string costs a failed pilot, not money, but check anyway. If a string is wrong, substitute the same-lab alternative per DEC-16-6 and record the substitution.
+> ### ⚠ FOUR OF SIX MODEL STRINGS ARE UNVERIFIED LEADS
+> Only `claude-sonnet-4-6` and `claude-haiku-4-5-20251001` are marked [Certain]. `gpt-5.5`, `gpt-5.5-mini`, `gemini-3.1-pro`, `deepseek-v4-flash` come from Q3 research and are **leads**. Check each against official provider docs before the pilot.
+> **Substitution rule (DEC-16-6, pre-registered):** if a provider is inaccessible or a string is wrong, substitute the same-lab alternative named in Q3; if none exists, **drop that model with disclosure** in the write-up. Never silently swap.
 
----
-
-## 4. `.env` layout
+## 4. `.env`
 
 ```sh
 cp tools/slice16-harness/.env.example tools/slice16-harness/.env
 $EDITOR tools/slice16-harness/.env
 ```
 
-Fill in the four keys. Leave `S16_LIVE_OK` **empty** until the moment you intend to spend.
+Fill the four keys. Leave `S16_LIVE_OK` **empty** until the moment you intend to spend.
 
-`.env` is ignored by the root `.gitignore` (`.env`, `.env.*`); only `.env.example` is exempted. **Never commit a filled `.env`.** The harness does not auto-load it — load it per command:
+- `.env` is ignored by the root `.gitignore` (`.env`, `.env.*`); only `.env.example` is exempted.
+- **Never commit a filled `.env`. Never create one for an agent.**
+- The harness does not auto-load it (no dotenv dependency). Load it per command:
 
 ```sh
 set -a; source tools/slice16-harness/.env; set +a
 ```
 
----
+## 5. Build the MCP server
 
-## 5. Build the MCP server (required before any live run)
-
-`mcp/node_modules` is not committed, so the server is not built. Phase A could not make a single live tool call for this reason.
+`mcp/node_modules` is not committed, so the server is not built — this is why every verification so far has been source-and-fixture based.
 
 ```sh
-cd mcp && npm install && npm run build && cd ..
-ls mcp/dist/mcp/src/index.js   # must exist
+cd mcp && npm ci && npm run build && cd ..
+ls mcp/dist/mcp/src/index.js    # must exist
+node tools/slice16-harness/runner.mjs --preflight   # "MCP server built: yes"
 ```
 
-Then re-run `--preflight`; "MCP server built" should read `yes`.
+Use `npm ci` (not `npm install`) so the lockfile governs. The control arm does **not** need this step — it attaches no tools.
 
----
+## 6. Pilot
 
-## 6. Pilot (DEC-16-11)
-
-2 scenarios (`S-02` value path, `S-17` refusal path) × 6 models × r=2 = **24 runs**. Purpose: exercise every adapter, confirm the model strings, and capture provider-reported token usage to replace the chars/4 est-tok heuristic.
+2 scenarios (`S-02` value path, `S-17` refusal path) × 6 models × r=2 = **24 runs**.
 
 ```sh
 set -a; source tools/slice16-harness/.env; set +a
 S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --pilot
 ```
 
-Ledger lands at `tools/slice16-harness/runs/ledger-pilot.jsonl`, one JSON row per run.
+**What "good" looks like:**
 
-**Expect adapter bugs on first contact.** These four adapters have never seen a real response. A 4xx is an adapter defect until proven otherwise — check the request shape before blaming the model string.
+- `mode=pilot planned=24 … pending=24`, then `done: 24 runs written, 0 errored`.
+- One `prefix fingerprint` line, and **the same value on every row** — that is the DEC-16-7 audit trail. A fingerprint that varies mid-run invalidates those runs.
+- Every row has `usage.reported: true` — provider-reported tokens, which replace the chars/4 est-tok heuristic.
+- `answerBlockOk: true` on the large majority of rows. Widespread `false` means models are not honouring the structured-answer contract, which is a harness/prompt problem, not a result.
 
-**Pilot data is excluded from the primary analysis** (DEC-16-11) and reported in an appendix.
+**What means stop and look:**
 
-While you are here, close the five **deferred** ground-truth items — each needs exactly one live call: `S-06` (explain_cell inputs for the M=2 infeasible cell), `S-10`/`S-12` (an in-envelope cell with C3 ≤ 55), `S-13` (the winning body), `S-23` (the in/out-of-envelope pair).
+- Any 4xx → suspect the **adapter** first (never exercised on the wire), the model string second.
+- All six models failing identically → prefix or contract problem, not a model finding.
 
----
+**Then check the AUP pilot valve.** If **AUP ≈ 0 across all six models**, that is a grader-strictness artifact, not a finding — the pre-registered escape valve (A1 §10.3) applies: the AUP matcher may be amended to normalized-keyword matching **before the full run, with disclosure**. A floor in only one or two models is a real result about those models; leave it alone.
+
+While here, close the five deferred items — §L.8 of the locked appendix already gives each one's resolved inputs and expected ground truth, so this is confirmation, not derivation.
 
 ## 7. Full run
 
-Only after the pilot is clean and you have re-read the spend figures.
+Only after the pilot is clean.
 
 ```sh
 set -a; source tools/slice16-harness/.env; set +a
-S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --full
+S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --full       # primary arm
+S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --control    # control arm, no tools
 ```
 
-Scale depends on your strike/repair decision (§1 item 1):
+Pre-promotion, `--full` executes the **23 runnable** scenarios (1,380 runs), not 28. Promoting the five deferred scenarios after the pilot takes it to the registered 1,680.
 
-| Case | Scenarios | Runs |
-|---|---|---|
-| Struck as found, deferred unresolved | 22 | 1,320 |
-| Struck as found, deferred resolved | 27 | 1,620 |
-| All three repaired | 30 | 1,800 |
-
-**Resumable.** The runner skips any `runKey` already in the ledger, so a rate-limit or a crash costs only the incomplete runs. Re-issue the same command to continue.
-
----
+**Resumable.** The runner skips any `runKey` already in the ledger, so a rate limit or a crash costs only the incomplete runs — re-issue the same command.
 
 ## 8. Where things land
 
 | Output | Path |
 |---|---|
-| Run ledger (JSONL, one row per run) | `tools/slice16-harness/runs/ledger-{pilot,full,mock}.jsonl` |
-| Per-row contents | model, lab, tier, scenario, RQ, prompt form, repetition, prefix fingerprint, full reply text, parsed answer block, provider-reported usage, error (if any) |
-| Grades | produced by `grader.mjs` over the ledger; not yet wired to a CLI — that is the next slice of work |
+| Ledgers (JSONL, one row per run) | `tools/slice16-harness/runs/ledger-{pilot,full,control,mock}.jsonl` |
+| Row contents | `arm`, `toolsAttached`, model/lab/tier, scenario, RQ, prompt form, repetition, prefix fingerprint, full reply text, parsed answer block, provider-reported usage, error |
+| Grades | produced by `grader.mjs` over a ledger; no CLI wrapper yet — next slice of work |
 
-`runs/` is **not** git-ignored: INV-036 makes transcripts committable artifacts, and the ledger is the transcript. Commit them deliberately with the report.
+`runs/` is **not** git-ignored: INV-036 makes transcripts committable artifacts. Commit them deliberately with the report. Control rows are separable by `arm` and are excluded from primary metrics.
 
-The prefix fingerprint on every row is the audit trail for DEC-16-7 — if it ever varies within a study, the caching and fixed-prompt commitments were broken and the affected runs are invalid.
+## 9. OSF / Zenodo mirror
 
----
-
-## 9. Offline reproduction (for reviewers — no keys, no spend)
+Recorded **PENDING** in DEC-16-10. Do this **before** the full run so the registration predates the data.
 
 ```sh
-node --test tools/slice16-harness/test/
-node tools/slice16-harness/runner.mjs --mock mock-faithful.json
+git rev-parse HEAD    # the anchor to register — run AFTER pushing
 ```
 
-This is the "minimal reproduction script" and the dummy-policy sanity check that answer the harness-bug rebuttal (§9.4).
+The pre-registration is the **whole chain**, not one commit: original anchor `34ca5f7` → Amendment A1 `5a99c13` → A2 `d79ba1b` → deferred evidence `3d55abd` → self-audit `15083b5` → truth sweep `e12ebcc` → this runbook commit. Register the **final post-preflight HEAD**; it contains all of them. Record the DOI back into `SLICE_16_FOUNDING.md` as an additive amendment, never an edit.
 
----
+## 10. Post-pilot decisions that are yours
 
-## 10. OSF / Zenodo mirror
-
-Recorded as **PENDING** in DEC-16-10. After pushing:
-
-1. Create the registration on OSF (or a Zenodo deposition).
-2. Point it at the freeze commit **`34ca5f7`** — that commit's tree *is* the pre-registration.
-3. Record the DOI/URL back into `SLICE_16_FOUNDING.md` as an additive amendment, never an edit.
-
-Do this **before** the full run, so the registration predates the data.
-
----
+1. **Promote the five deferred scenarios?** Evidence is in §L.8; promotion takes runnable 23 → 28 and primary runs 1,380 → 1,680.
+2. **AUP valve** — exercise it only on an all-six-model floor (§6).
+3. **VF prose-scanning amendment** (§10.7.4) — adopt before the pilot, or state the limitation in Threats to Validity. Not both, not neither.
 
 ## 11. Hard rules that still apply
 
 - No agent pushes, ever. No agent sets `ASTER_PUSH_OK`, `ASTER_PROTECTED_OK`, or `S16_LIVE_OK`.
-- `SLICE_16_FOUNDING.md` is additive-only; the pre-commit hook enforces it.
-- Design deviations become additive amendments, never silent edits (DEC-16-10).
-- Never tune a tolerance, prompt, or grader threshold to improve a score. That is the one change that would invalidate the whole study.
+- `SLICE_16_FOUNDING.md` and `SLICE_16_APPENDIX_A_LOCKED.md` are additive-only; the pre-commit hook enforces the founding doc.
+- Deviations become additive amendments, never silent edits (DEC-16-10).
+- **Never tune a tolerance, prompt, threshold, or fixture expectation to improve a score.** That is the one change that would invalidate the study.
