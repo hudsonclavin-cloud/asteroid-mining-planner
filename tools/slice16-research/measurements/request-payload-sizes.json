@@ -1,0 +1,118 @@
+{
+  "marker": "S16-AMEND-A1-2026-07-27-A",
+  "head_at_derivation": "9aca68ef260c7ff162733b0bfb9f28be37654bc2",
+  "derived_at": "2026-07-28T01:27:48.811Z",
+  "method": "Derived (not measured on the wire) from the committed mcp/eval/slice15-eval-pairs.json tool_call fields. For each of the 10 pairs the request is reconstructed exactly as mcp/eval/run-eval.ts and tools/slice16-harness/mcp-client.mjs send it, then measured with Buffer.byteLength(..., \"utf8\").",
+  "serialization": {
+    "primary": "jsonrpc_line_bytes",
+    "primary_definition": "JSON.stringify({jsonrpc:\"2.0\", id, method:\"tools/call\", params:{name, arguments}}) — compact (no whitespace), key order as written, UTF-8 bytes. This is the exact newline-delimited line written to server stdin; the trailing newline is NOT counted.",
+    "id_caveat": "id is assigned 2..11 (0=initialize, 1=tools/list), mirroring tools/slice16-research/measurements/measure-envelopes.mjs. Ids 10 and 11 are two digits, so those lines carry 1 extra byte. The id is part of the wire payload and is therefore counted.",
+    "secondary_definitions": {
+      "params_object_bytes": "JSON.stringify({name, arguments}) — id-independent, the tool call proper.",
+      "arguments_object_bytes": "JSON.stringify(arguments) — the argument payload alone."
+    },
+    "median_convention": "For even n, the mean of the two central order statistics — the same convention used by envelope-payload-sizes.json."
+  },
+  "requests": [
+    {
+      "pair_id": "P1",
+      "tool": "get_validation_report",
+      "rpc_id": 2,
+      "jsonrpc_line_bytes": 118,
+      "params_object_bytes": 62,
+      "arguments_object_bytes": 17
+    },
+    {
+      "pair_id": "P2",
+      "tool": "get_validation_report",
+      "rpc_id": 3,
+      "jsonrpc_line_bytes": 118,
+      "params_object_bytes": 62,
+      "arguments_object_bytes": 17
+    },
+    {
+      "pair_id": "P3",
+      "tool": "get_validation_report",
+      "rpc_id": 4,
+      "jsonrpc_line_bytes": 118,
+      "params_object_bytes": 62,
+      "arguments_object_bytes": 17
+    },
+    {
+      "pair_id": "P4",
+      "tool": "explain_cell",
+      "rpc_id": 5,
+      "jsonrpc_line_bytes": 195,
+      "params_object_bytes": 139,
+      "arguments_object_bytes": 103
+    },
+    {
+      "pair_id": "P5",
+      "tool": "porkchop_scan",
+      "rpc_id": 6,
+      "jsonrpc_line_bytes": 253,
+      "params_object_bytes": 197,
+      "arguments_object_bytes": 160
+    },
+    {
+      "pair_id": "P6",
+      "tool": "get_body",
+      "rpc_id": 7,
+      "jsonrpc_line_bytes": 125,
+      "params_object_bytes": 69,
+      "arguments_object_bytes": 37
+    },
+    {
+      "pair_id": "P7",
+      "tool": "porkchop_scan",
+      "rpc_id": 8,
+      "jsonrpc_line_bytes": 253,
+      "params_object_bytes": 197,
+      "arguments_object_bytes": 160
+    },
+    {
+      "pair_id": "P8",
+      "tool": "get_body",
+      "rpc_id": 9,
+      "jsonrpc_line_bytes": 111,
+      "params_object_bytes": 55,
+      "arguments_object_bytes": 23
+    },
+    {
+      "pair_id": "P9",
+      "tool": "dla_feasibility",
+      "rpc_id": 10,
+      "jsonrpc_line_bytes": 191,
+      "params_object_bytes": 134,
+      "arguments_object_bytes": 95
+    },
+    {
+      "pair_id": "P10",
+      "tool": "search_bodies",
+      "rpc_id": 11,
+      "jsonrpc_line_bytes": 105,
+      "params_object_bytes": 48,
+      "arguments_object_bytes": 11
+    }
+  ],
+  "summary": {
+    "count": 10,
+    "jsonrpc_line_bytes": {
+      "min": 105,
+      "median": 121.5,
+      "max": 253
+    },
+    "params_object_bytes": {
+      "min": 48,
+      "median": 65.5,
+      "max": 197
+    },
+    "arguments_object_bytes": {
+      "min": 11,
+      "median": 30,
+      "max": 160
+    }
+  },
+  "discrepancy_note": "A prior chat-reported figure of min/median/max 127/202/297 B was cited as house-measured request sizes. It does not reproduce under any serialization derived here (closest is jsonrpc_line_bytes at 105/121.5/253) and no such measurement exists anywhere in the repo. The 127/202/297 figures are therefore NOT adopted; the values in this file supersede them. No transformation reconciling the two was found, and none was manufactured.",
+  "relation_to_est_tok": "est-tok elsewhere in Slice 16 remains a labeled chars/4 heuristic, never a tokenizer count. No est-tok figure is derived in this file: request payloads are small relative to the 20,753 B tools/list prefix and do not change the order of magnitude of the cost model."
+}
