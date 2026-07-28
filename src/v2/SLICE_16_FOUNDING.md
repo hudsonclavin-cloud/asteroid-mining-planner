@@ -302,3 +302,43 @@ For the write-up's provenance section, the corrections found at lock are recorde
 **C-4 (defect fixed while applying R3(i)).** `tools/slice16-harness/prompt.mjs` contained a literal **NUL byte** where a space separator was intended, in `prefixFingerprint()`: `` `${prefix.system}\0${prefix.toolsSerialized}` ``. It was introduced when the file was first written and committed that way in `34e95b7`, which is why git has classified the file as **binary** since then — suppressing line-level diffs for the one file whose exact wording is the study's fixed prompt, and therefore the one file most needing reviewable history. The NUL is replaced with a space; the file is now UTF-8 text (0 NUL bytes) and diffs normally from this commit forward.
 
 *Consequence to record:* the FNV-1a fingerprint is computed over `system + separator + toolsSerialized`, so **fingerprint values computed before this commit are not comparable with values computed after**. This is harmless — **no run has occurred**, so no ledger row carries an old fingerprint — but it is recorded so that a future reader does not read a fingerprint change across this boundary as evidence that the fixed prefix drifted mid-study. The fingerprint's *purpose* under DEC-16-7 (proving the prefix never varies **within** a study) is unaffected, and the R3(i) instruction independently changes the prefix text anyway. No grader code changed; all 25 harness tests remain green.
+
+---
+
+# §10.7 — PREFLIGHT SWEEP — 2026-07-27 (ADDITIVE; pre-data-collection)
+
+**MARKER:** S16-PREFLIGHT-2026-07-27-A. Still **pre-data-collection** — no ledger row exists.
+
+## §10.7.1 — Stale volume projection corrected (C-5)
+
+DEC-16-13 projects input volume "at 1,620–1,800 runs … ≈ **11–14 M est-tok** before caching". That range predates A1's control arm and A2's reconciliation, so its run basis is stale. **Corrected projection at the registered counts:**
+
+| Arm | Runs | ≈ est-tok / run (**chars/4 heuristic**) | ≈ total |
+|---|---|---|---|
+| Primary (tools attached) | 1,680 | ~6,400 (refusal path) – ~7,500 (value path) | ~11–13 M |
+| Control (no tools; the 5,189 prefix is absent) | 504 | ~1,300–2,300 | ~0.7–1.2 M |
+| **Total registered** | **2,184** | — | **≈ 12–14 M est-tok before caching** |
+
+The order of magnitude is unchanged, the cacheable-prefix conclusion is unchanged, and the **$200 ceiling is unchanged**. **est-tok remains a labeled chars/4 heuristic, never a tokenizer count**; provider-reported usage replaces it at pilot (DEC-16-11).
+
+## §10.7.2 — Measured-number provenance reconfirmed
+
+Every number either founding doc cites as measured was recomputed from its committed artifact this session; **all matched exactly**: `tools/list` 20,753 B / 5,189 est-tok, value-envelope median 8,977 B (range 5,901–9,361), refusal median 4,333 B (range 1,949–4,436), MCP-error 153 B — all `tools/slice16-research/measurements/envelope-payload-sizes.json`; request payloads 105 / 121.5 / 253 B — `request-payload-sizes.json`; catalog total 41,906 — `src/v2/boundary/slice9-nea-catalog.ts:20`; Lambert-vs-poliastro 3.43e-14 — `src/v2/data/validation-provenance.json`; elvperf as-of 2024-02-29 — `src/v2/porkchop/launch-vehicles.ts:58`; flagship refusal C3 2928.933, RED-site DLA −74.86868259337066° and margin −17.868682593370664°, assumed radius 270.0417833762203 m — `tests/fixtures/v2/slice16-anchor-cells.json`; Cape `dlaCeilingDeg` 57 — `src/v2/core/lambert/feasibility.ts:33`.
+
+Confirmed also: **`718.615` appears only inside documented draft-error records and the verbatim frozen draft quotation — never as the study's value**; **`127/202/297 B` appears only as an explicit non-adoption record**; Q1/Q2/Q3 citations retain their official-published vs third-party-estimated flags; and `src/v2/founding-drafts/` has **no commit after the ingest commit `e219ccc` and zero diff from it** — no draft was edited.
+
+## §10.7.3 — Harness defects found and fixed pre-data (strengthens the §9.4 "harness bug" rebuttal)
+
+An adversarial self-audit ran the harness rather than only reading it, and found three defects that static review had missed. All are fixed, and all are covered by new regression tests (suite: **30 passing**).
+
+1. **The spend guard did not hard-refuse (HIGH).** `SpendGuardError` was caught by the per-run handler and recorded as an ordinary row, so `--control` with no credentials ground through **414 runs, wrote 414 junk ledger rows, and exited 0**. Fixed two ways: the per-run handler now rethrows `SpendGuardError`, and every live mode authorizes the whole plan *before* writing anything or spawning the server. Verified: `--control`, `--full`, `--pilot` each now print the refusal, **exit 4, and leave zero ledger residue**.
+2. **The control arm was unrunnable (HIGH for completeness).** A1 §10.2 registered 504 control runs, but `runner.mjs` had no control mode at all. Added `--control`: ORIGINAL form only, r=3, **no tools attached** — the adapters now omit the tool block entirely rather than sending an empty one, so the model is never told tools exist, which is what makes the (tools − no-tools) delta meaningful. The control arm needs no MCP server. Ledger rows now carry `arm` and `toolsAttached`.
+3. **Offline reproduction looked broken (MEDIUM).** `--mock` planned the whole active set against a two-scenario fixture, producing 210 spurious "no canned reply" errors — the exact command §9.4 offers reviewers. Now restricted to the scenarios the canned set covers: **20 runs, 0 errors**, resumable.
+
+## §10.7.4 — Known grading limitation (recorded, NOT silently changed)
+
+**VF reads `values_used`, not the prose.** DEC-16-9 defines value fidelity over "every number in the answer's `values_used`", and the grader implements exactly that. Consequence: a model that asserts a fabricated number **only in the `answer` prose** while leaving `values_used` empty scores **VF = 1**. This is the highest-severity way a fabrication could score as faithful.
+
+Three things bound it: the contract explicitly instructs listing every asserted number, so omitting one is itself a contract violation; RFR independently catches fabricated numbers on refusal paths regardless of where they appear; and PTA/AUP are unaffected. **It is not fixed here on purpose** — changing VF's definition after lock would be a post-hoc alteration of a pre-registered metric, which is precisely what pre-registration exists to prevent.
+
+**Recommended amendment (Hudson's call, pre-data):** extend VF to scan `answer` prose for numeric spans absent from both `values_used` and the envelope, and grade those as fabrications. If adopted it must be an additive amendment **before** the pilot, disclosed in the write-up. If not adopted, this limitation belongs in Threats to Validity, stated plainly.
