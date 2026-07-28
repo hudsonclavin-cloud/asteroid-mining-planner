@@ -643,3 +643,40 @@ RFR is graded over the **two refusal codes the instrument actually emits** — `
 | **Total study runs** | **2,184** | ceiling unchanged at $200 |
 
 Supersedes the §L.5 C-1 tally (22/5/3), which counted the five deferred scenarios outside the executable set. Under A1 they are inside it, contingent on pilot resolution; if a deferred parameter proves unresolvable, that scenario is struck with disclosure and the count drops.
+
+---
+
+## L.7 — AMENDMENT A2 (additive; 2026-07-27; pre-data-collection)
+
+**MARKER:** S16-PREFLIGHT-2026-07-27-A
+**Purpose:** close A1's open item O-1 by reconciling the harness to the pre-registration, and record correction C-3 in this appendix as well as in the founding doc.
+
+### L.7.1 — C-3 correction: the "no measured class" claim was too broad
+
+The §L.2 annotation on **S-12** states, as a correction to the draft, that the instrument emits *"vehicle-curve-derived leaves without a `measured` class anywhere in the catalog path"*, and the surrounding session note generalised this to "no measured class anywhere". **The original line is left exactly as written above; this is the correction of record.**
+
+**Narrowed, correct statement:** there is **no `measured` class on the `get_body` catalog path** — every physical leaf is emitted `confidence:"assumed"`, per the standing envelope assumption at `mcp/src/tools/get-body.ts:48` ("the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field") and `mcp/src/tools/catalog-shared.ts:195-201`. However, the **vehicle-curve path does carry a measured-class source**: `baseComputeProvenance()` gives the `launch-vehicles` SourceRef `confidence: 'measured'` (`mcp/src/tools/compute-shared.ts`, `includeVehicle` branch, noted "NASA LSP elvperf payload anchors, as-of 2024-02-29").
+
+**Consequences, stated precisely:**
+
+- **S-09's strike is UNAFFECTED.** S-09 turns entirely on the `get_body` catalog path, where the get-body.ts:48 statement is exact and no measured diameter exists. A measured-class source on a *different* tool path cannot supply a measured *diameter*.
+- **S-12's grading is UNAFFECTED.** Envelope-level confidence is MIN across provenance (DEC-15-4 commitment (b)); with `derived` sources present, an `estimate_mission_cost` envelope still resolves to `derived`, so the weakest-link conclusion and the AUP rule are unchanged. Only the overbroad phrasing is corrected.
+- **The draft was closer to right than the correction claimed.** The draft's description of the payload curve as measured-provenance is defensible; what does not hold is treating the *whole envelope* as measured. Recorded so the write-up does not repeat an overcorrection.
+
+### L.7.2 — Harness reconciled to the pre-registration (closes A1 O-1)
+
+`tools/slice16-harness/config.mjs` and `tools/slice16-harness/test/pipeline.test.mjs` encoded the pre-A1 state (S-29 struck, 22 active, `STRUCK_SCENARIOS.length === 3`). A1 could not change them — they were outside its declared staging set — so it recorded the divergence as O-1. A2 closes it. **Set memberships are now, and are asserted to be:**
+
+| Set | Count | Members |
+|---|---|---|
+| Frozen scenarios | 30 | unchanged; nothing deleted |
+| **Struck** | **2** | S-09, S-27 |
+| **Primary (pre-registered scope)** | **28** | everything not struck |
+| **Deferred** (inside primary, not yet runnable) | **5** | S-06, S-10, S-12, S-13, S-23 |
+| **Active** (runnable now) | **23** | primary minus deferred |
+
+Three distinct sets are now named in code, because conflating "pre-registered scope" with "runnable now" is exactly what produced O-1. Registered run counts are asserted in the test suite: primary **1,680** (28 × 6 × 10), control **504** (28 × 6 × 3), total **2,184**. Budget, control-arm spec, deferred membership, and the **$200 ceiling are unchanged**.
+
+**S-29 is live**, `status: 'active'`, carrying `gradedDimensions: ['VF','PTA','AUP']` and `rfrApplicable: false`. A test asserts both the config declaration and that the grader independently leaves RFR inapplicable for a value envelope, so the two cannot drift apart silently.
+
+**Deferred scenarios are NOT promoted.** They remain inside the primary 28 and outside the runnable 23. Promotion is a post-pilot decision reserved for Hudson; the harness never self-promotes. Conservative choice, recorded: pre-pilot, `--full` executes the 23 runnable scenarios, not 28 — the five deferred cannot be graded until their parameters resolve.

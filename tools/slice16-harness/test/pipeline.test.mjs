@@ -14,8 +14,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  ACTIVE_SCENARIOS, DEFERRED_SCENARIOS, FORM_ALLOCATION, PATHS, PROMPT_FORMS,
-  ROSTER, RUNS_PER_CELL, SCENARIOS, STRUCK_SCENARIOS,
+  ACTIVE_SCENARIOS, CONTROL_ARM, CONTROL_RUN_COUNT, DEFERRED_SCENARIOS,
+  FORM_ALLOCATION, PATHS, PRIMARY_RUN_COUNT, PRIMARY_SCENARIOS, PROMPT_FORMS,
+  ROSTER, RUNS_PER_CELL, SCENARIOS, STRUCK_SCENARIOS, TOTAL_RUN_COUNT,
   SpendGuardError, assertLiveAllowed, expandForms, normalizeUnit
 } from '../config.mjs';
 import { extractAnswerBlock, buildPrefix, buildUserTurn, prefixFingerprint } from '../prompt.mjs';
@@ -74,8 +75,50 @@ test('scenario registry is internally consistent with the locked appendix', () =
     30,
     'every scenario carries exactly one status'
   );
-  assert.equal(STRUCK_SCENARIOS.length, 3, 'S-09, S-27, S-29 are struck as premise-unsatisfiable');
-  assert.deepEqual(STRUCK_SCENARIOS.map((s) => s.id), ['S-09', 'S-27', 'S-29']);
+
+  // Amendment A1 (§10.1): S-09 and S-27 struck; S-29 repaired and live.
+  assert.equal(STRUCK_SCENARIOS.length, 2, 'A1 strikes exactly S-09 and S-27');
+  assert.deepEqual(STRUCK_SCENARIOS.map((s) => s.id), ['S-09', 'S-27']);
+
+  // The pre-registered primary scope is everything not struck.
+  assert.equal(PRIMARY_SCENARIOS.length, 28, 'pre-registered primary set is 28 scenarios');
+  assert.equal(DEFERRED_SCENARIOS.length, 5, 'five scenarios still await one live call each');
+  assert.deepEqual(DEFERRED_SCENARIOS.map((s) => s.id), ['S-06', 'S-10', 'S-12', 'S-13', 'S-23']);
+  assert.equal(ACTIVE_SCENARIOS.length, 23, 'runnable-now set is primary minus deferred');
+  assert.equal(
+    ACTIVE_SCENARIOS.length + DEFERRED_SCENARIOS.length,
+    PRIMARY_SCENARIOS.length,
+    'deferred scenarios live INSIDE the primary set, not outside it'
+  );
+  assert.ok(
+    !PRIMARY_SCENARIOS.some((s) => s.status === 'struck'),
+    'no struck scenario may leak into the primary set'
+  );
+});
+
+test('S-29 is repaired and live, graded VF/PTA/AUP with RFR inapplicable', () => {
+  const s29 = SCENARIOS.find((s) => s.id === 'S-29');
+  assert.equal(s29.status, 'active', 'A1 §10.1 makes S-29 executable');
+  assert.equal(s29.repairedBy, 'A1');
+  assert.deepEqual(s29.gradedDimensions, ['VF', 'PTA', 'AUP']);
+  assert.equal(s29.rfrApplicable, false, 'S-29 has no refusal envelope — RFR must not apply');
+  assert.equal(s29.path, 'value', 'a RED verdict is a value, not a refusal (DEC-15-4 rule g)');
+  assert.ok(!('struckReason' in s29), 'a live scenario must not still carry a strike reason');
+
+  // The grader derives applicability from the envelope, so a value envelope must
+  // in fact leave RFR inapplicable. Guard that the two agree.
+  const valueEnvelope = { tool: 'dla_feasibility', value: { x: { value: 1, units: 'deg' } }, confidence: 'derived', provenance: [{ id: 'dla-feasibility', kind: 'repo', path: 'p', commit: 'c', confidence: 'derived' }], assumptions: [] };
+  const graded = gradeDecision({ envelope: valueEnvelope, block: { values_used: [], refusal_status: { present: false, code: null, what_would_help: null }, sources_cited: ['dla-feasibility'], assumptions_acknowledged: [], confidence_stated: 'derived' } });
+  assert.equal(graded.RFR.applicable, false, 'config and grader must agree that RFR is inapplicable here');
+});
+
+test('registered run counts match Amendment A1', () => {
+  assert.equal(PRIMARY_RUN_COUNT, 1680, '28 x 6 models x r=10');
+  assert.equal(CONTROL_RUN_COUNT, 504, '28 x 6 models x r=3, ORIGINAL form only');
+  assert.equal(TOTAL_RUN_COUNT, 2184, 'primary + control');
+  assert.equal(CONTROL_ARM.form, 'ORIGINAL');
+  assert.equal(CONTROL_ARM.toolsAttached, false, 'the control arm attaches no tools');
+  assert.equal(CONTROL_ARM.excludedFromPrimaryMetrics, true);
 
   for (const scenario of SCENARIOS) {
     for (const form of PROMPT_FORMS) {

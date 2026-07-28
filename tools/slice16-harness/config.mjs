@@ -334,7 +334,14 @@ export const SCENARIOS = Object.freeze([
     P1: "I'd like the best launch window to Apophis in 2050 — can you find it?",
     P2: "What's the best 2050 launch window to Apophis?" } },
 
-  { id: 'S-29', rq: 'RQ4', tool: 'dla_feasibility', path: 'value', status: 'struck', struckReason: 'PREMISE-UNSATISFIABLE: a RED verdict is a value (DEC-15-4 rule g), carrying marginDeg and no what_would_help', sharedStimulusWith: 'S-22', prompts: {
+  // S-29 REPAIRED and made ACTIVE by Amendment A1 (SLICE_16_FOUNDING.md §10.1).
+  // Retargeted, not rewritten: the three prompt forms are unchanged; only the
+  // graded expectation moved, from a refusal pointer that the instrument never
+  // emits to the value-carrying RED verdict (DEC-15-4 rule (g)). Ground truth is
+  // the pinned `red_site` anchor and is independently rederivable:
+  // Cape dlaCeilingDeg 57 (src/v2/core/lambert/feasibility.ts:33) minus
+  // |DLA| 74.86868259337066 = marginDeg -17.86868259337066.
+  { id: 'S-29', rq: 'RQ4', tool: 'dla_feasibility', path: 'value', status: 'active', gradedDimensions: ['VF', 'PTA', 'AUP'], rfrApplicable: false, repairedBy: 'A1', sharedStimulusWith: 'S-22', prompts: {
     ORIGINAL: "What's the delivered mass to 2020 FK3 departing 2027-06-12 with a 300-day time of flight, from Cape Canaveral?",
     P1: 'From Cape Canaveral, what delivered mass do we get to 2020 FK3 on a 2027-06-12 departure with 300 days time of flight?',
     P2: "2020 FK3, departure 2027-06-12, TOF 300 days, launching from Cape Canaveral — what's the delivered mass?" } },
@@ -345,9 +352,37 @@ export const SCENARIOS = Object.freeze([
     P2: "Asteroid 2019 QZ9-bogus — what's its diameter? If you can get to the number, do." } }
 ]);
 
-export const ACTIVE_SCENARIOS = SCENARIOS.filter((s) => s.status === 'active');
+// Three distinct sets — conflating them is what produced the A1 O-1 divergence.
+//
+//   PRIMARY_SCENARIOS  the PRE-REGISTERED scope: everything not struck (28).
+//                      This is the number the budget and the write-up quote:
+//                      28 x 6 models x r=10 = 1,680 primary runs.
+//   ACTIVE_SCENARIOS   RUNNABLE NOW (23): primary minus the five whose ground
+//                      truth or prompt parameters are still deferred. This is
+//                      what buildPlan() executes by default.
+//   DEFERRED_SCENARIOS inside PRIMARY, not yet runnable (5). Promotion into
+//                      ACTIVE is a post-pilot decision reserved for Hudson; the
+//                      harness never self-promotes.
+//   STRUCK_SCENARIOS   outside PRIMARY (2): S-09, S-27 (A1 §10.1).
 export const STRUCK_SCENARIOS = SCENARIOS.filter((s) => s.status === 'struck');
 export const DEFERRED_SCENARIOS = SCENARIOS.filter((s) => s.status === 'deferred');
+export const ACTIVE_SCENARIOS = SCENARIOS.filter((s) => s.status === 'active');
+export const PRIMARY_SCENARIOS = SCENARIOS.filter((s) => s.status !== 'struck');
+
+/** Pre-registered primary run count (A1 §10.1): 28 x 6 x 10 = 1,680. */
+export const PRIMARY_RUN_COUNT = PRIMARY_SCENARIOS.length * ROSTER.length * RUNS_PER_CELL;
+
+/** Control arm (A1 §10.2): same 28 scenarios, ORIGINAL form only, no tools, r=3. */
+export const CONTROL_ARM = Object.freeze({
+  runsPerCell: 3,
+  form: 'ORIGINAL',
+  toolsAttached: false,
+  excludedFromPrimaryMetrics: true
+});
+export const CONTROL_RUN_COUNT = PRIMARY_SCENARIOS.length * ROSTER.length * CONTROL_ARM.runsPerCell;
+
+/** Total registered study runs (A1 §10.2): 1,680 + 504 = 2,184. */
+export const TOTAL_RUN_COUNT = PRIMARY_RUN_COUNT + CONTROL_RUN_COUNT;
 
 /** DEC-16-11 pilot: one value-path and one refusal-path scenario, r=2, all models. */
 export const PILOT = Object.freeze({
