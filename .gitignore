@@ -31,3 +31,7 @@ tools/slice9-ingestion/data/*
 !tools/slice9-ingestion/data/reanchor-stale-checkpoint.json
 !tools/slice9-ingestion/data/reanchor-stale-summary.json
 tests/fixtures/v2/nea-catalog-slice9.json.tmp
+
+# S16-LOCK-AND-HARNESS-2026-07-27-A — key-name template must be committed;
+# real .env files stay ignored by the .env / .env.* rules above.
+!tools/slice16-harness/.env.example

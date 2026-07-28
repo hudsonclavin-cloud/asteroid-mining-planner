@@ -536,3 +536,43 @@ LD-2 locks the 30/1,800 figure. Phase A found three premises unsatisfiable again
 ## L.4 — What Phase A could not do (disclosed)
 
 No live MCP call was made: `mcp/node_modules` is absent, `npm run build` fails on missing `zod` and `@modelcontextprotocol/sdk`, and installs are prohibited by the dispatch. Everything above is sourced from committed source literals, committed fixtures, and the committed live-capture anchor file. The three DEFERRED items (S-10/S-12 cell selection, S-13 winning body, S-23 B8/B9) each need exactly one live call and are the first work of the pilot. None of them blocks harness construction, because grading is performed against the envelope returned at run time rather than against a hardcoded expectation.
+
+---
+
+## L.5 — Post-lock corrections (additive; discovered during Phase D/E, same session)
+
+Per DEC-16-10 a deviation discovered during implementation becomes an additive amendment, never a silent change. Two were found while building the harness. **The §L.2 scenario text above is left exactly as frozen**; these entries are the corrections of record, and `tools/slice16-harness/config.mjs` implements the corrected forms.
+
+### C-1 — Deferred count understated (§L.1 summary and DEC-16-12)
+
+§L.1 reports "24 VERIFIED · 3 DEFERRED · 3 PREMISE-UNSATISFIABLE". That undercounts deferrals: **S-06, S-10 and S-12** each carry a *deferred parameter* (respectively the `explain_cell` argument set reproducing the pinned M=2 infeasible cell, and an in-envelope cell with C3 ≤ 55 for S-10/S-12) while their draft `[VERIFIED]` markers referred only to the *rule* being verified. Their per-scenario annotations state this correctly; the summary tally folded them into VERIFIED.
+
+**Corrected tally — 22 immediately executable · 5 deferred · 3 premise-unsatisfiable (= 30):**
+
+| Status | Count | Scenarios |
+|---|---|---|
+| Executable now (fully verified ground truth) | 22 | all not listed below |
+| Deferred (one live call each unblocks) | 5 | S-06, S-10, S-12, S-13, S-23 |
+| Premise-unsatisfiable (provisionally struck) | 3 | S-09, S-27, S-29 |
+
+**Corrected run arithmetic:**
+
+| Case | Scenarios | Runs (× 6 models × 10) |
+|---|---|---|
+| Deferred unresolved, struck as found | 22 | **1,320** |
+| Deferred resolved, struck as found | 27 | 1,620 |
+| Deferred resolved + all three repaired | 30 | 1,800 |
+
+Nothing about the design changes — only the count. The deferred five were always described as needing a live call; they were miscounted in the summary line, not misanalysed.
+
+### C-2 — S-07 P1 violated the LD-3 length bound
+
+LD-3 requires each paraphrase within ±40% of ORIGINAL. The frozen S-07 P1 —
+
+> "Can you tell me the spectral type of 1866?" (42 chars)
+
+— is **1.556×** the 27-char ORIGINAL ("What spectral type is 1866?"), outside the bound. Corrected **pre-run**, which DEC-16-10 permits with disclosure:
+
+> **S-07 P1 (corrected):** "Do you know 1866's spectral type?" (33 chars, ratio 1.222 ✓)
+
+Parameter identity is unchanged — designation `1866` ✓, quantity `spectral type` ✓ — so this is a surface-form correction only, and semantic equivalence is unaffected. The bound is now machine-checked for all 30 scenarios by `test/pipeline.test.mjs`, so no other paraphrase can drift out of range unnoticed. All other 59 paraphrases pass unchanged.

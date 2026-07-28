@@ -212,3 +212,14 @@ Order-of-magnitude input volume: a value-path run ≈ 5,189 (prefix) + ~100 (sce
 
 **LOCKED 2026-07-27 — freeze commit = pre-registration anchor; tree includes `SLICE_16_APPENDIX_A_LOCKED.md`.**
 No matrix run precedes this commit (§6 Phase C, honoured). OSF/Zenodo mirror: **PENDING**, Hudson-manual.
+
+# §9.6 — Post-lock corrections (ADDITIVE; same session, discovered during harness build)
+
+DEC-16-10 requires that a deviation discovered during implementation become an additive amendment rather than a silent change. Two were found while building the harness, after §9.1–§9.5 were committed. Both are recorded in full in `SLICE_16_APPENDIX_A_LOCKED.md` §L.5; neither alters any locked design decision.
+
+**C-1 — DEC-16-12's deferred count was understated.** DEC-16-12 lists three deferred scenarios (S-10, S-12, S-13, S-23 — itself four names against a stated three) and folds **S-06, S-10, S-12** into VERIFIED. Those three carry a verified *rule* but an unresolved *parameter*. Corrected tally: **22 immediately executable · 5 deferred (S-06, S-10, S-12, S-13, S-23) · 3 premise-unsatisfiable (S-09, S-27, S-29)**.
+Corrected run arithmetic: **1,320** runs executable today (22 × 6 × 10); **1,620** once the five deferred parameters are resolved by one live call each; **1,800** if all three struck scenarios are also repaired. DEC-16-12's substantive findings — which scenarios are unsatisfiable and why — are unchanged; only the tally was wrong.
+
+**C-2 — one paraphrase violated the LD-3 length bound.** S-07's P1 was 1.556× the ORIGINAL, outside ±40%. Corrected pre-run (permitted by DEC-16-10, with disclosure) from "Can you tell me the spectral type of 1866?" to **"Do you know 1866's spectral type?"**; task-relevant parameters unchanged. The bound is now machine-checked across all 30 scenarios in `tools/slice16-harness/test/pipeline.test.mjs`, so this class of drift cannot recur silently. The other 59 paraphrases pass unchanged.
+
+**Verification-environment note carried forward:** no live MCP or provider call was made in the lock session. `mcp/node_modules` is absent, `npm run build` fails on missing `zod`/`@modelcontextprotocol/sdk`, and installs were prohibited. All Phase-A evidence is committed source literals, committed fixtures, and the committed live-capture anchor file. The four provider adapters are marked **UNTESTED-AT-NETWORK-BOUNDARY** in their own headers; the pilot (DEC-16-11) is their first real test.
