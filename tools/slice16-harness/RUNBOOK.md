@@ -31,7 +31,7 @@ Pre-registration is **locked and reconciled**. Registered scope:
 
 ```sh
 node --test tools/slice16-harness/test/
-# expect: # pass 30 / # fail 0
+# expect: # pass 36 / # fail 0
 
 node tools/slice16-harness/runner.mjs --preflight
 # reports readiness; spends nothing
@@ -99,9 +99,9 @@ Fill the four keys. Leave `S16_LIVE_OK` **empty** until the moment you intend to
 set -a; source tools/slice16-harness/.env; set +a
 ```
 
-## 5. Build the MCP server
+## 5. Build the MCP server — ⚠ STILL PENDING as of 2026-07-28
 
-`mcp/node_modules` is not committed, so the server is not built — this is why every verification so far has been source-and-fixture based.
+**Checked this session: `mcp/node_modules` is ABSENT and the server is NOT built.** Every verification to date has therefore been source-and-fixture based, and **no live MCP tool response has ever been observed by any agent**. This step is yours and nothing downstream of it can run without it.
 
 ```sh
 cd mcp && npm ci && npm run build && cd ..
@@ -109,7 +109,7 @@ ls mcp/dist/mcp/src/index.js    # must exist
 node tools/slice16-harness/runner.mjs --preflight   # "MCP server built: yes"
 ```
 
-Use `npm ci` (not `npm install`) so the lockfile governs. The control arm does **not** need this step — it attaches no tools.
+Use `npm ci` (not `npm install`) so the lockfile governs. Agents are barred from installing, which is why this has stayed pending. The control arm does **not** need this step — it attaches no tools.
 
 ## 6. Pilot
 
@@ -158,6 +158,9 @@ Pre-promotion, `--full` executes the **23 runnable** scenarios (1,380 runs), not
 | Row contents | `arm`, `toolsAttached`, model/lab/tier, scenario, RQ, prompt form, repetition, prefix fingerprint, full reply text, parsed answer block, provider-reported usage, error |
 | Grades | produced by `grader.mjs` over a ledger; no CLI wrapper yet — next slice of work |
 
+> ### ⚠ When the grading CLI is written, it MUST pass `scenarioId`
+> Amendment A3 grades VF on each scenario's declared quantity slot, and slot grading engages **only** when `gradeDecision` receives a `scenarioId`. Called without one it silently falls back to pre-A3 `values_used`-only behaviour and the amendment does nothing. Every graded result carries `VF.slotMode`; assert `slot-graded` for the 22 prose-matchable scenarios as an acceptance test. See founding doc §11.5.
+
 `runs/` is **not** git-ignored: INV-036 makes transcripts committable artifacts. Commit them deliberately with the report. Control rows are separable by `arm` and are excluded from primary metrics.
 
 ## 9. OSF / Zenodo mirror
@@ -168,7 +171,11 @@ Recorded **PENDING** in DEC-16-10. Do this **before** the full run so the regist
 git rev-parse HEAD    # the anchor to register — run AFTER pushing
 ```
 
-The pre-registration is the **whole chain**, not one commit: original anchor `34ca5f7` → Amendment A1 `5a99c13` → A2 `d79ba1b` → deferred evidence `3d55abd` → self-audit `15083b5` → truth sweep `e12ebcc` → this runbook commit. Register the **final post-preflight HEAD**; it contains all of them. Record the DOI back into `SLICE_16_FOUNDING.md` as an additive amendment, never an edit.
+The pre-registration is the **whole chain**, not one commit: original anchor `34ca5f7` → A1 `5a99c13` → A2 `d79ba1b` → deferred evidence `3d55abd` → self-audit `15083b5` → truth sweep `e12ebcc` → preflight `8452d1e` → **A3 `195d8ea` + this commit**. Register the **current final HEAD** (`git rev-parse HEAD` after pushing) — **not `8452d1e`**, which is now superseded: it carries the pre-A3 VF definition with the prose-fabrication hole still open.
+
+**The amendment log is part of the pre-registration record, not an appendix to it.** `8452d1e` is already public and still shows the flawed VF definition; §11 of the founding doc discloses the defect, the date, that zero runs had occurred, and both definitions verbatim. A reader diffing `8452d1e` against the registered HEAD sees exactly what changed and when — that transparency is the point, so register the chain rather than trying to present a single clean anchor.
+
+Record the DOI back into `SLICE_16_FOUNDING.md` as an additive amendment, never an edit.
 
 ## 10. Post-pilot decisions that are yours
 
