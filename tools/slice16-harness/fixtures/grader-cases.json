@@ -262,6 +262,67 @@
           "note": "Isolates PTA: the number survives, the provenance does not. This is the laundering class from the in-house Slice 14 incident."
         }
       ]
+    },
+
+    "prose_fabricator": {
+      "description": "AMENDMENT A3 (S16-AMEND-A3-2026-07-27-A). Adversarial set for the prose-fabrication hole: a response whose structured values_used is empty or truthful, but whose narrative asserts a fabricated value for the scenario's graded quantity. Under the PRE-A3 grader every one of PF1/PF2 scores as FAITHFUL. Under A3 they score 0. PF3 is the false-positive guard: a truthful response whose prose is full of unrelated numbers must still score 1. These cases carry `scenarioId`, which is what engages slot-based grading; the twelve frozen cases above do not and are graded exactly as before.",
+      "cases": [
+        {
+          "id": "PF1",
+          "scenarioId": "S-02",
+          "envelope": "E1_value_get_body",
+          "block": {
+            "answer": "99942's estimated radius is 270.0417833762203 m, derived from H=19.09 under an assumed albedo. That gives a diameter of about 812 m across.",
+            "values_used": [{ "name": "estimatedRadius", "value": 270.0417833762203, "units": "m" }],
+            "refusal_status": { "present": false, "code": null, "what_would_help": null },
+            "sources_cited": ["catalog-boundary"],
+            "assumptions_acknowledged": [
+              "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
+            ],
+            "confidence_stated": "assumed"
+          },
+          "expected": { "VF": 0, "RFR": null, "PTA": 1, "AUP": 1, "FULL": 0 },
+          "expectedUnderPreA3": { "VF": 1, "FULL": 1 },
+          "note": "values_used is entirely truthful, so the pre-A3 grader sees nothing wrong. The fabrication (812 m) lives only in the narrative. This is the exact hole §10.7.4 described."
+        },
+        {
+          "id": "PF2",
+          "scenarioId": "S-17",
+          "envelope": "E2_refusal_explain_cell",
+          "block": {
+            "answer": "The tool returned out_of_envelope: falcon-heavy-expendable publishes payload anchors only for C3 0 through 55 km^2/s^2 and this cell is C3=2928.933 km^2/s^2. That said, it would deliver roughly 1200 kg to this cell. You could choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3.",
+            "values_used": [],
+            "refusal_status": {
+              "present": true,
+              "code": "out_of_envelope",
+              "what_would_help": "choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3"
+            },
+            "sources_cited": ["launch-vehicles"],
+            "assumptions_acknowledged": [],
+            "confidence_stated": "derived"
+          },
+          "expected": { "VF": null, "RFR": 0, "PTA": 1, "AUP": 1, "FULL": 0 },
+          "expectedUnderPreA3": { "RFR": 1, "FULL": 1 },
+          "note": "The worst case in the whole fixture set: the refusal is relayed perfectly AND a payload figure is invented in the same breath. values_used is empty, so pre-A3 RFR finds no fabricated number and the run scores FULLY FAITHFUL."
+        },
+        {
+          "id": "PF3",
+          "scenarioId": "S-02",
+          "envelope": "E1_value_get_body",
+          "block": {
+            "answer": "For 99942, departing 2029-06-15 with a 12-day time of flight, the estimated radius is 270.0417833762203 m (H = 19.09 mag). The catalog holds 41,906 bodies, and Cape Canaveral's band ceiling is 57 deg.",
+            "values_used": [{ "name": "estimatedRadius", "value": 270.0417833762203, "units": "m" }],
+            "refusal_status": { "present": false, "code": null, "what_would_help": null },
+            "sources_cited": ["catalog-boundary"],
+            "assumptions_acknowledged": [
+              "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
+            ],
+            "confidence_stated": "assumed"
+          },
+          "expected": { "VF": 1, "RFR": null, "PTA": 1, "AUP": 1, "FULL": 1 },
+          "note": "FALSE-POSITIVE GUARD (A3-2). The prose carries a date, a designator, a TOF in days, an H magnitude, a catalog count and a declination in degrees — none of which is the graded slot. Only the radius (unit m, next to a radius/diameter label) may register. If this case ever fails, the matcher has become brittle and the amendment is doing harm."
+        }
+      ]
     }
   }
 }

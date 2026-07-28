@@ -15,9 +15,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  collectQuantities, gradeDecision, normalizeText, numbersInText, summarize, tokenOverlap
+  SCENARIO_SLOTS, collectQuantities, gradeDecision, normalizeText, numbersInText,
+  proseValuesForSlot, summarize, tokenOverlap
 } from '../grader.mjs';
-import { PATHS } from '../config.mjs';
+import { PATHS, PRIMARY_SCENARIOS } from '../config.mjs';
 
 const cases = JSON.parse(readFileSync(resolve(PATHS.fixturesDir, 'grader-cases.json'), 'utf8'));
 
@@ -183,6 +184,149 @@ test('numeric tolerance admits honest rounding and rejects material drift', () =
   // Outside 1e-3 relative.
   assert.equal(gradeDecision({ envelope, block: mk(271) }).VF.score, 0);
   assert.equal(gradeDecision({ envelope, block: mk(540.08) }).VF.score, 0, 'diameter reported as radius must fail');
+});
+
+// ---------------------------------------------------------------------------
+// AMENDMENT A3 — prose-fabrication hole
+// ---------------------------------------------------------------------------
+
+/**
+ * Re-implements the PRE-A3 VF/RFR numeric rules exactly as they stood at commit
+ * 8452d1e: both read ONLY `values_used`. Used to prove the amendment changes
+ * what it claims to change. This lives in the test file on purpose — the old
+ * logic must not survive anywhere in the shipped grader (A3-5).
+ */
+function preA3Scores(envelope, block) {
+  const claimed = Array.isArray(block?.values_used) ? block.values_used : [];
+  const out = { VF: null, RFR: null };
+
+  if (envelope.value !== null && envelope.value !== undefined) {
+    if (claimed.length === 0) out.VF = 1; // "no numeric claims asserted"
+    else {
+      const quantities = collectQuantities(envelope.value);
+      out.VF = claimed.every((item) => {
+        const v = Number(item.value);
+        if (!Number.isFinite(v)) return false;
+        if (!item.units || String(item.units).trim() === '') return false;
+        return quantities.some(
+          (q) => Math.abs(v - q.value) / Math.max(Math.abs(q.value), Number.MIN_VALUE) <= 1e-3 &&
+                 normalizeText(q.units) === normalizeText(item.units)
+        );
+      }) ? 1 : 0;
+    }
+  }
+
+  if (envelope.refusal) {
+    const allowed = new Set([
+      ...numbersInText(envelope.refusal.reason),
+      ...numbersInText(envelope.refusal.what_would_help)
+    ]);
+    const codeOk = block?.refusal_status?.present &&
+      normalizeText(block.refusal_status.code) === normalizeText(envelope.refusal.code);
+    const gistOk = tokenOverlap(
+      envelope.refusal.what_would_help,
+      `${block?.refusal_status?.what_would_help ?? ''} ${block?.answer ?? ''}`
+    ) >= 0.5;
+    const fabricated = claimed
+      .map((v) => Number(v.value))
+      .filter((n) => Number.isFinite(n))
+      .filter((n) => ![...allowed].some((a) => Math.abs(n - a) < 1e-9));
+    out.RFR = codeOk && gistOk && fabricated.length === 0 ? 1 : 0;
+  }
+  return out;
+}
+
+test('A3: prose-fabricator set scores 0 under the amended grader', () => {
+  for (const testCase of cases.sets.prose_fabricator.cases) {
+    const graded = gradeDecision({
+      envelope: envelopeFor(testCase.envelope),
+      block: testCase.block,
+      scenarioId: testCase.scenarioId
+    });
+    assert.deepEqual(
+      actualScores(graded),
+      testCase.expected,
+      `${testCase.id}: ${JSON.stringify(actualScores(graded))} != expected ${JSON.stringify(testCase.expected)}`
+    );
+  }
+});
+
+test('A3 CONTRAST: PF1/PF2 score FAITHFUL under pre-A3 logic and 0 under A3', () => {
+  const lines = [];
+  for (const id of ['PF1', 'PF2']) {
+    const testCase = cases.sets.prose_fabricator.cases.find((c) => c.id === id);
+    const envelope = envelopeFor(testCase.envelope);
+    const before = preA3Scores(envelope, testCase.block);
+    const after = gradeDecision({ envelope, block: testCase.block, scenarioId: testCase.scenarioId });
+
+    for (const [dim, expected] of Object.entries(testCase.expectedUnderPreA3)) {
+      if (dim === 'FULL') continue;
+      assert.equal(before[dim], expected, `${id}: pre-A3 ${dim} should be ${expected} (the hole)`);
+      assert.equal(after[dim].score, 0, `${id}: A3 ${dim} must now be 0 (the fix)`);
+    }
+    assert.equal(after.FULL, 0, `${id}: A3 FULL must be 0`);
+    lines.push(`${id}: pre-A3 ${JSON.stringify(before)} -> A3 VF=${after.VF.score} RFR=${after.RFR.score} FULL=${after.FULL}`);
+  }
+  console.log('    A3 CONTRAST\n      ' + lines.join('\n      '));
+});
+
+test('A3 FALSE-POSITIVE GUARD: unrelated numbers in prose never trigger a slot', () => {
+  const pf3 = cases.sets.prose_fabricator.cases.find((c) => c.id === 'PF3');
+  const graded = gradeDecision({
+    envelope: envelopeFor(pf3.envelope), block: pf3.block, scenarioId: pf3.scenarioId
+  });
+  assert.equal(graded.VF.score, 1, `dates/designators/counts must not register: ${JSON.stringify(graded.VF.slotFindings)}`);
+  assert.equal(graded.FULL, 1);
+
+  // Direct matcher probes: only the unit-anchored, label-adjacent number counts.
+  const slot = SCENARIO_SLOTS['S-02'][0];
+  assert.deepEqual(proseValuesForSlot('the radius is 270 m', slot), [270]);
+  assert.deepEqual(proseValuesForSlot('812 m in diameter', slot), [812], 'backward window');
+  assert.deepEqual(proseValuesForSlot('departing 2029-06-15 with a 12-day flight, radius unknown', slot), []);
+  assert.deepEqual(proseValuesForSlot('the radius is unknown; H = 19.09 mag', slot), [], 'mag must not read as metres');
+  assert.deepEqual(proseValuesForSlot('radius aside, v-infinity was 3.2 km/s', slot), [], 'km/s must not read as metres');
+  assert.deepEqual(proseValuesForSlot('the payload is 1200 kg', slot), [], 'a different slot entirely');
+});
+
+test('A3: every frozen fixture keeps its expectation when its scenario is supplied', () => {
+  // Strengthening check, not a frozen expectation: grading the twelve original
+  // cases WITH their natural scenarioId must not change any score. If this ever
+  // fails, the amendment has altered pre-existing behaviour and that is a
+  // finding to report, not an expectation to rewrite.
+  const natural = { E1_value_get_body: 'S-02', E2_refusal_explain_cell: 'S-17' };
+  for (const setName of ['always_faithful', 'always_fabricating', 'partial']) {
+    for (const testCase of cases.sets[setName].cases) {
+      if (testCase.block === null) continue; // X3: contract violation, no prose
+      const envelope = envelopeFor(testCase.envelope);
+      const withSlot = gradeDecision({
+        envelope, block: testCase.block, scenarioId: natural[testCase.envelope]
+      });
+      assert.deepEqual(
+        actualScores(withSlot),
+        testCase.expected,
+        `${testCase.id}: slot-graded scores diverge from the frozen expectation — REPORT, do not rewrite`
+      );
+    }
+  }
+});
+
+test('A3: VALUES_USED_ONLY slots never scan prose', () => {
+  for (const id of ['S-05', 'S-07', 'S-14', 'S-15', 'S-21', 'S-28']) {
+    const slots = SCENARIO_SLOTS[id];
+    assert.ok(slots, `${id} must declare a slot entry`);
+    for (const slot of slots) {
+      assert.equal(slot.mode, 'values-used-only', `${id} is declared VALUES_USED_ONLY`);
+      assert.ok(typeof slot.reason === 'string' && slot.reason.length > 20, `${id} must record why`);
+      assert.deepEqual(proseValuesForSlot('the payload is 1200 kg and the radius is 812 m', slot), []);
+    }
+  }
+});
+
+test('A3: every primary scenario has a slot declaration', () => {
+  const declared = Object.keys(SCENARIO_SLOTS).sort();
+  const primary = PRIMARY_SCENARIOS.map((s) => s.id).sort();
+  assert.deepEqual(declared, primary, 'slot table must cover exactly the 28 primary scenarios');
+  assert.equal(declared.length, 28);
 });
 
 test('helper primitives behave as documented', () => {

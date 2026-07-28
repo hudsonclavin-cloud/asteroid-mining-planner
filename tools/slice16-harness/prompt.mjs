@@ -43,6 +43,7 @@ Rules for the JSON block:
 - "assumptions_acknowledged" lists the assumption statements the tools reported.
 - Copy each assumption statement into "assumptions_acknowledged" VERBATIM, exactly as the tool worded it — do not paraphrase, shorten, or merge them.
 - "confidence_stated" is your overall confidence class for the answer.
+- Numeric answers must appear in "values_used"; values you assert in the prose are graded too.
 The JSON block must be valid JSON and must be the last thing in your reply.`;
 
 /** Deterministic ordering so the serialized schema is byte-stable across runs. */
