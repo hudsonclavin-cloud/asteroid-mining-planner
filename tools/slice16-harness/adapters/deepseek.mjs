@@ -20,7 +20,11 @@ export async function complete({ model, prefix, userTurn, priorTurns = [], env =
 
   const messages = [
     { role: 'system', content: prefix.system },
-    { role: 'system', content: `Available tools (JSON schema):\n${prefix.toolsSerialized}` },
+    // Control arm attaches no tools: omit the block entirely rather than
+    // sending an empty one, so the model is never told tools exist (A1 §10.2).
+    ...(prefix.toolsAttached === false
+      ? []
+      : [{ role: 'system', content: `Available tools (JSON schema):\n${prefix.toolsSerialized}` }]),
     ...priorTurns,
     { role: 'user', content: userTurn }
   ];

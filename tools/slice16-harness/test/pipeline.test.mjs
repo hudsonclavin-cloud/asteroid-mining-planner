@@ -8,7 +8,7 @@
 //
 // Run: node --test tools/slice16-harness/test/
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,7 +22,7 @@ import {
 import { extractAnswerBlock, buildPrefix, buildUserTurn, prefixFingerprint } from '../prompt.mjs';
 import { createMockAdapter, loadCannedSet } from '../mock-adapter.mjs';
 import { gradeDecision } from '../grader.mjs';
-import { buildPlan, runKey } from '../runner.mjs';
+import { buildPlan, main, runKey } from '../runner.mjs';
 
 const graderCases = JSON.parse(readFileSync(resolve(PATHS.fixturesDir, 'grader-cases.json'), 'utf8'));
 
@@ -158,6 +158,76 @@ test('plan covers active scenarios x roster x r with unique run keys', () => {
     runKey({ modelId: 'm', scenarioId: 'S-01', form: 'P1', rep: 2 }),
     'm::S-01::P1::2'
   );
+});
+
+test('REGRESSION: an unauthorized invocation refuses whole and writes no ledger rows', async () => {
+  // Guards the defect found in the preflight audit: the spend-guard error was
+  // being caught per-run and logged as a row, so `--control` with no env ground
+  // through 414 runs writing junk and exiting 0. A refusal must abort the whole
+  // invocation before anything is written.
+  const ledgerPath = resolve(PATHS.ledgerDir, 'ledger-control.jsonl');
+  const before = existsSync(ledgerPath) ? readFileSync(ledgerPath, 'utf8') : null;
+
+  const code = await main(['--control']); // no keys, no S16_LIVE_OK in this process
+  assert.equal(code, 4, 'an unauthorized run must exit 4, not 0');
+
+  const after = existsSync(ledgerPath) ? readFileSync(ledgerPath, 'utf8') : null;
+  assert.equal(after, before, 'a refused invocation must not append a single ledger row');
+});
+
+test('control arm: ORIGINAL only, r=3, no tools attached', () => {
+  const forms = Array.from({ length: CONTROL_ARM.runsPerCell }, () => CONTROL_ARM.form);
+  const plan = buildPlan({ runsPerCell: CONTROL_ARM.runsPerCell, forms });
+
+  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ROSTER.length * CONTROL_ARM.runsPerCell);
+  assert.ok(plan.every((p) => p.form === 'ORIGINAL'), 'control arm uses ORIGINAL only — no paraphrases');
+  assert.equal(new Set(plan.map((p) => p.runKey)).size, plan.length, 'control run keys stay unique');
+
+  const prefix = buildPrefix({ tools: [{ name: 'get_body' }] }, { toolsAttached: false });
+  assert.equal(prefix.toolsAttached, false);
+  assert.deepEqual(prefix.tools, [], 'no tools may survive into a control prefix');
+  assert.equal(prefix.toolsSerialized, '', 'no tool schema may survive into a control prefix');
+});
+
+test('control arm: every adapter omits the tool block entirely, not an empty one', async () => {
+  // Stub fetch — never touches the network; captures the request body only.
+  const captured = [];
+  const stubFetch = async (_url, init) => {
+    captured.push(JSON.parse(init.body));
+    return {
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: '{}' } }],
+        content: [{ type: 'text', text: '{}' }],
+        candidates: [{ content: { parts: [{ text: '{}' }] } }],
+        usage: {}, usageMetadata: {}
+      })
+    };
+  };
+  const controlPrefix = buildPrefix({ tools: [{ name: 'get_body' }] }, { toolsAttached: false });
+  const toolPrefix = buildPrefix({ tools: [{ name: 'get_body' }] });
+
+  for (const name of ['openai', 'anthropic', 'google', 'deepseek']) {
+    const mod = await import(`../adapters/${name}.mjs`);
+    const model = ROSTER.find((m) => m.adapter === name);
+    // Local env object only — this never sets a real environment variable.
+    const env = { S16_LIVE_OK: '1', [model.keyEnv]: 'sk-test-not-a-real-key' };
+
+    captured.length = 0;
+    await mod.complete({ model, prefix: controlPrefix, userTurn: 'hi', env, fetchImpl: stubFetch });
+    const controlBody = JSON.stringify(captured[0]);
+    assert.ok(
+      !controlBody.includes('Available tools'),
+      `${name}: control arm must not mention tools at all`
+    );
+
+    captured.length = 0;
+    await mod.complete({ model, prefix: toolPrefix, userTurn: 'hi', env, fetchImpl: stubFetch });
+    assert.ok(
+      JSON.stringify(captured[0]).includes('Available tools'),
+      `${name}: primary arm must still carry the tool schema`
+    );
+  }
 });
 
 test('cacheable prefix is byte-stable regardless of tool key order', () => {

@@ -20,14 +20,18 @@ export async function complete({ model, prefix, userTurn, priorTurns = [], env =
   // Anthropic takes the system prompt out-of-band. cache_control marks the
   // stable prefix so DEC-16-7's caching default is actually exercised rather
   // than merely intended.
-  const system = [
-    { type: 'text', text: prefix.system },
-    {
-      type: 'text',
-      text: `Available tools (JSON schema):\n${prefix.toolsSerialized}`,
-      cache_control: { type: 'ephemeral' }
-    }
-  ];
+  // Control arm attaches no tools: omit the block entirely rather than sending
+  // an empty one, so the model is never told tools exist (A1 §10.2).
+  const system = prefix.toolsAttached === false
+    ? [{ type: 'text', text: prefix.system, cache_control: { type: 'ephemeral' } }]
+    : [
+        { type: 'text', text: prefix.system },
+        {
+          type: 'text',
+          text: `Available tools (JSON schema):\n${prefix.toolsSerialized}`,
+          cache_control: { type: 'ephemeral' }
+        }
+      ];
 
   const messages = [...priorTurns, { role: 'user', content: userTurn }];
 

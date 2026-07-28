@@ -58,13 +58,17 @@ function stableStringify(value) {
  * frozen server; it is serialized with sorted keys so an incidental key-order
  * change in the SDK cannot silently break cache hits mid-study.
  */
-export function buildPrefix(toolsList) {
+export function buildPrefix(toolsList, { toolsAttached = true } = {}) {
   const tools = Array.isArray(toolsList?.tools) ? toolsList.tools : [];
   const sorted = [...tools].sort((a, b) => String(a?.name).localeCompare(String(b?.name)));
   return {
     system: SYSTEM_PROMPT,
-    tools: sorted,
-    toolsSerialized: stableStringify(sorted)
+    // Control arm (A1 §10.2) attaches NO tools. This is not "an empty tool list"
+    // — the adapters omit the tool block entirely, so the model is never told
+    // tools exist. That is what makes the (tools − no-tools) delta meaningful.
+    toolsAttached,
+    tools: toolsAttached ? sorted : [],
+    toolsSerialized: toolsAttached ? stableStringify(sorted) : ''
   };
 }
 

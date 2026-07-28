@@ -28,7 +28,11 @@ export async function complete({ model, prefix, userTurn, priorTurns = [], env =
     // Tool schemas are carried in the system position as a stable text block so
     // the cacheable prefix is byte-identical across providers. The study grades
     // answer faithfulness, not native tool-calling ergonomics.
-    { role: 'system', content: `Available tools (JSON schema):\n${prefix.toolsSerialized}` },
+    // Control arm attaches no tools: omit the block entirely rather than
+    // sending an empty one, so the model is never told tools exist (A1 §10.2).
+    ...(prefix.toolsAttached === false
+      ? []
+      : [{ role: 'system', content: `Available tools (JSON schema):\n${prefix.toolsSerialized}` }]),
     ...priorTurns,
     { role: 'user', content: userTurn }
   ];
