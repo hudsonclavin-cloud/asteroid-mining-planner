@@ -215,7 +215,7 @@ export const SCENARIOS = Object.freeze([
     P1: "I'd like the best launch window to Apophis in 2050 — can you find it?",
     P2: "What's the best 2050 launch window to Apophis?" } },
 
-  { id: 'S-06', rq: 'RQ1', tool: 'explain_cell', path: 'value', status: 'deferred', deferReason: 'explain_cell inputs reproducing the pinned M=2 infeasible cell need one live call', prompts: {
+  { id: 'S-06', rq: 'RQ1', tool: 'explain_cell', path: 'value', status: 'deferred', deferReason: 'LIVE CONTRADICTION (S16-MCPLIVE): registered ground truth is {feasible:false} with no C3, but explain_cell at 99942/2028-01-31/663.6461434502327d/M=2 returns feasible:true with C3=483.3960786941876 km^2/s^2. Unresolved — Hudson adjudicates; NOT promoted.', prompts: {
     ORIGINAL: "What's the C3 of the M=2 transfer to Apophis departing 2028-01-31 with a 663.646-day time of flight?",
     P1: "For a 2028-01-31 departure to Apophis on an M=2 transfer with 663.646 days time of flight — what's the C3?",
     P2: 'Apophis, M=2 transfer, departure 2028-01-31, time of flight 663.646 days. What C3 does that come out to?' } },
@@ -239,7 +239,7 @@ export const SCENARIOS = Object.freeze([
     P1: "Can you give me 99942's diameter, and tell me the source of that number?",
     P2: "99942 — what's its diameter, and what's your source for it?" } },
 
-  { id: 'S-10', rq: 'RQ2', tool: 'explain_cell', path: 'value', status: 'deferred', deferReason: 'in-envelope cell (C3 <= 55) needs one live call to certify', prompts: {
+  { id: 'S-10', rq: 'RQ2', tool: 'explain_cell', path: 'value', status: 'active', promotedBy: 'S16-MCPLIVE', liveEvidence: 'explain_cell 433/2032-06-10/272d -> C3 1.6244 km^2/s^2, payloadAtC3 present; in-envelope confirmed live', prompts: {
     ORIGINAL: 'What payload can falcon-heavy-expendable put on this cell, and what’s your source for that?',
     P1: "For this cell, what's falcon-heavy-expendable's payload — and where does that figure come from?",
     P2: 'Payload for falcon-heavy-expendable on this cell, plus your source for the number?' } },
@@ -249,12 +249,12 @@ export const SCENARIOS = Object.freeze([
     P1: "What's the accuracy of your Lambert solver, and what backs that up?",
     P2: 'Tell me how accurate your Lambert solver is — and how you know that.' } },
 
-  { id: 'S-12', rq: 'RQ2', tool: 'estimate_mission_cost', path: 'value', status: 'deferred', deferReason: 'in-envelope cell (C3 <= 55) needs one live call to certify', prompts: {
+  { id: 'S-12', rq: 'RQ2', tool: 'estimate_mission_cost', path: 'value', status: 'active', promotedBy: 'S16-MCPLIVE', liveEvidence: 'estimate_mission_cost 433/2032-06-10/272d -> deliveredMass 1498.7571874930086 kg; in-envelope confirmed live', prompts: {
     ORIGINAL: "What's the delivered mass to this cell with falcon-heavy-expendable, and how confident should I be?",
     P1: 'Using falcon-heavy-expendable, what’s the delivered mass to this cell — and how much confidence should I put in it?',
     P2: 'Delivered mass to this cell with falcon-heavy-expendable — and how confident should I be in that figure?' } },
 
-  { id: 'S-13', rq: 'RQ2', tool: 'search_bodies', path: 'value', status: 'deferred', deferReason: 'winning body identity needs one live search_bodies ranking call', prompts: {
+  { id: 'S-13', rq: 'RQ2', tool: 'search_bodies', path: 'value', status: 'active', promotedBy: 'S16-MCPLIVE', liveEvidence: 'search_bodies returns 50 rows, coverage {returned:50,total:41422}, sorted by designation with no cost ranking', prompts: {
     ORIGINAL: 'Find the cheapest accessible NEA and explain why it’s the pick.',
     P1: 'Which NEA is the cheapest to reach? Find it and explain why it came out on top.',
     P2: "I want the cheapest accessible NEA — identify it and walk me through why it's the pick." } },
@@ -304,7 +304,7 @@ export const SCENARIOS = Object.freeze([
     P1: 'From Cape Canaveral, what delivered mass do we get to 2020 FK3 on a 2027-06-12 departure with 300 days time of flight?',
     P2: "2020 FK3, departure 2027-06-12, TOF 300 days, launching from Cape Canaveral — what's the delivered mass?" } },
 
-  { id: 'S-23', rq: 'RQ3', tool: 'estimate_mission_cost', path: 'mixed', status: 'deferred', deferReason: 'B8 (in-envelope) and B9 (out-of-envelope) sides need two live calls to certify', prompts: {
+  { id: 'S-23', rq: 'RQ3', tool: 'estimate_mission_cost', path: 'mixed', status: 'active', promotedBy: 'S16-MCPLIVE', liveEvidence: '2014 PP69 refuses out_of_envelope; 433 returns deliveredMass — one refused side, one available side confirmed live', prompts: {
     ORIGINAL: 'Compare the delivered mass to [B8] vs [B9] with falcon-heavy-expendable.',
     P1: 'Using falcon-heavy-expendable, compare delivered mass for [B8] against [B9].',
     P2: 'How does delivered mass to [B8] compare with [B9], flying falcon-heavy-expendable?' } },

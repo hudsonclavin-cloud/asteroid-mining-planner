@@ -164,7 +164,14 @@ function normalizeForProse(text) {
     .replace(/\s+/g, ' ');
 }
 
-const NUMBER_RE = /-?\d+(?:,\d{3})*(?:\.\d+)?(?:e[+-]?\d+)?/gi;
+/**
+ * Fresh instance per call. A shared module-level /g regex is a trap here:
+ * nested scanning resets `lastIndex` on the shared object and the outer loop
+ * restarts forever. (Found the hard way — it hung the live pass.)
+ */
+function numberRe() {
+  return /-?\d+(?:,\d{3})*(?:\.\d+)?(?:e[+-]?\d+)?/gi;
+}
 
 /** True when `alias` sits at `pos` and is not glued to another unit token. */
 function aliasFitsAt(text, pos, alias) {
@@ -180,9 +187,9 @@ function aliasFitsAt(text, pos, alias) {
 function numbersWithSlotUnit(window, slot) {
   const found = [];
   const aliases = slot.units ? PROSE_UNIT_ALIASES[slot.units] ?? [slot.units] : [];
-  NUMBER_RE.lastIndex = 0;
+  const re = numberRe();
   let m;
-  while ((m = NUMBER_RE.exec(window)) !== null) {
+  while ((m = re.exec(window)) !== null) {
     const raw = m[0];
     const value = Number(raw.replace(/,/g, ''));
     if (!Number.isFinite(value)) continue;
@@ -226,6 +233,78 @@ export function proseValuesForSlot(text, slot) {
     }
   }
   return [...new Set(out)];
+}
+
+/**
+ * Multi-slot arbitration (found by live verification, S16-MCPLIVE-2026-07-27-A).
+ *
+ * When a scenario declares two slots that share a unit — S-29 carries `dla` and
+ * `marginDeg`, both in `deg`; S-08 carries `mass` and `propellant`, both in kg —
+ * their label windows overlap in ordinary prose:
+ *
+ *   "The declination is -74.87 deg. The margin is -17.87 deg."
+ *
+ * Scanning each slot independently, `dla` claimed the margin and `marginDeg`
+ * claimed the declination, and a perfectly HONEST answer scored VF = 0. A false
+ * positive scores an honest response as a fabrication, which is the more
+ * damaging direction and exactly what A3-2 forbids.
+ *
+ * Fix: assign each number to its NEAREST label across all of the scenario's
+ * slots, then let a slot claim only the numbers assigned to its own labels.
+ * Deterministic, symmetric, and no window arithmetic to tune.
+ */
+export function proseValuesByScenarioSlot(text, slots) {
+  const proseSlots = (slots ?? []).filter((s) => s.mode === 'prose');
+  const out = new Map(proseSlots.map((s) => [s.slot, []]));
+  if (proseSlots.length === 0) return out;
+  if (proseSlots.length === 1) {
+    out.set(proseSlots[0].slot, proseValuesForSlot(text, proseSlots[0]));
+    return out;
+  }
+
+  const normalized = normalizeForProse(text);
+
+  // Every label occurrence, tagged with the slot that owns it.
+  const occurrences = [];
+  for (const slot of proseSlots) {
+    for (const label of slot.labels ?? []) {
+      let idx = normalized.indexOf(label);
+      while (idx !== -1) {
+        occurrences.push({ slot: slot.slot, start: idx, end: idx + label.length });
+        idx = normalized.indexOf(label, idx + 1);
+      }
+    }
+  }
+  if (occurrences.length === 0) return out;
+
+  for (const slot of proseSlots) {
+    const claimed = [];
+    // Candidate numbers for THIS slot's unit, anywhere in the text.
+    const re = numberRe();
+    let m;
+    while ((m = re.exec(normalized)) !== null) {
+      const raw = m[0];
+      const value = Number(raw.replace(/,/g, ''));
+      if (!Number.isFinite(value)) continue;
+      // Reuse the single-number unit test by slicing a minimal window.
+      const probe = normalized.slice(m.index, m.index + raw.length + 24);
+      if (numbersWithSlotUnit(probe, slot).length === 0) continue;
+
+      // Nearest label wins.
+      let best = null;
+      for (const occ of occurrences) {
+        const distance = m.index >= occ.end
+          ? m.index - occ.end
+          : (m.index + raw.length <= occ.start ? occ.start - (m.index + raw.length) : 0);
+        const limit = m.index >= occ.end ? PROSE_WINDOW : PROSE_WINDOW_BACK;
+        if (distance > limit) continue;
+        if (best === null || distance < best.distance) best = { slot: occ.slot, distance };
+      }
+      if (best !== null && best.slot === slot.slot) claimed.push(value);
+    }
+    out.set(slot.slot, [...new Set(claimed)]);
+  }
+  return out;
 }
 
 /** Values in `values_used` whose name matches the slot's leaves or slot name. */
@@ -346,9 +425,10 @@ export function gradeVF(envelope, block, tool, slots = null) {
 
   // --- A3-1: grade the declared slot(s) wherever the value is asserted -------
   const slotFindings = [];
+  const proseBySlot = proseValuesByScenarioSlot(block?.answer, proseSlots);
   for (const slot of proseSlots) {
     const envQ = envelopeQuantitiesForSlot(quantities, slot);
-    const fromProse = proseValuesForSlot(block?.answer, slot);
+    const fromProse = proseBySlot.get(slot.slot) ?? [];
     const fromValues = valuesUsedForSlot(block, slot);
     const asserted = [...fromValues, ...fromProse];
 
@@ -430,9 +510,7 @@ export function gradeRFR(envelope, block, slots = null) {
   // A3-1: scan the declared slot(s) in the PROSE too, so a number fabricated
   // only in the narrative cannot slip past. Without this, VF and RFR could
   // disagree about the very same fabrication.
-  const proseSlotValues = (slots ?? [])
-    .filter((s) => s.mode === 'prose')
-    .flatMap((s) => proseValuesForSlot(block?.answer, s));
+  const proseSlotValues = [...proseValuesByScenarioSlot(block?.answer, slots).values()].flat();
 
   const fabricated = [
     ...claimed.map((v) => (typeof v.value === 'number' ? v.value : Number(v.value))),
@@ -448,6 +526,11 @@ export function gradeRFR(envelope, block, slots = null) {
     score: failures.length === 0 ? 1 : 0,
     applicable: true,
     overlap,
+    // Recorded so a refusal-path row is auditable for A3 engagement too: VF
+    // early-returns as inapplicable on refusal envelopes, so without this the
+    // ledger would show slotMode=null on every refusal row even though the
+    // slots WERE consulted here.
+    slotMode: (slots ?? []).some((s) => s.mode === 'prose') ? 'slot-graded' : 'values-used-only',
     failures
   };
 }

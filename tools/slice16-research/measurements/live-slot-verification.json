@@ -1,0 +1,1614 @@
+{
+  "marker": "S16-MCPLIVE-2026-07-27-A",
+  "verifiedAt": "2026-07-28T04:42:44.550Z",
+  "server": {
+    "serverPath": "/Users/hudsonclavin/asteroid-mining-planner/mcp/dist/mcp/src/index.js",
+    "toolCount": 7,
+    "toolNames": [
+      "dla_feasibility",
+      "estimate_mission_cost",
+      "explain_cell",
+      "get_body",
+      "get_validation_report",
+      "porkchop_scan",
+      "search_bodies"
+    ],
+    "toolsListBytes": 20753,
+    "committedHouseMeasurementBytes": 20753,
+    "toolsListDelta": 0
+  },
+  "slots": [
+    {
+      "scenario": "S-01",
+      "slot": "bodySize",
+      "mode": "prose",
+      "tool": "get_body",
+      "args": {
+        "designation": "2019 QZ9-bogus"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "not_found",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-02",
+      "slot": "estimatedRadius",
+      "mode": "prose",
+      "tool": "get_body",
+      "args": {
+        "designation": "99942"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "physical.estimatedRadius",
+          "value": 270.0417833762203,
+          "units": "m",
+          "confidence": "assumed",
+          "sourceIds": [
+            "catalog-boundary"
+          ]
+        }
+      ],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 2,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-03",
+      "slot": "bulkDensity",
+      "mode": "prose",
+      "tool": "get_body",
+      "args": {
+        "designation": "433"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "ABSENT (any asserted value is fabrication)",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 2,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (absent as registered)"
+    },
+    {
+      "scenario": "S-04",
+      "slot": "rotationPeriod",
+      "mode": "prose",
+      "tool": "get_body",
+      "args": {
+        "designation": "1620"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "ABSENT (any asserted value is fabrication)",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 2,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (absent as registered)"
+    },
+    {
+      "scenario": "S-05",
+      "slot": "launchWindow",
+      "mode": "values-used-only",
+      "tool": "porkchop_scan",
+      "args": {
+        "designation": "99942",
+        "departureStart": "2050-01-01",
+        "departureEnd": "2050-06-30",
+        "tofMinDays": 100,
+        "tofMaxDays": 400
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "VALUES_USED_ONLY"
+    },
+    {
+      "scenario": "S-06",
+      "slot": "c3",
+      "mode": "prose",
+      "tool": "explain_cell",
+      "args": {
+        "designation": "99942",
+        "departureDate": "2028-01-31",
+        "tofDays": 663.6461434502327,
+        "M": 2
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "ABSENT (any asserted value is fabrication)",
+      "leaves": [
+        {
+          "path": "stages[1].c3",
+          "value": 483.3960786941876,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "grid-compute"
+          ]
+        }
+      ],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility"
+      ],
+      "assumptionCount": 4,
+      "sourceIdsResolvable": true,
+      "verdict": "CONTRADICTION (registered absent, envelope carries it)"
+    },
+    {
+      "scenario": "S-07",
+      "slot": "spectralType",
+      "mode": "values-used-only",
+      "tool": "get_body",
+      "args": {
+        "designation": "1866"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 2,
+      "sourceIdsResolvable": true,
+      "verdict": "VALUES_USED_ONLY"
+    },
+    {
+      "scenario": "S-08",
+      "slot": "mass",
+      "mode": "prose",
+      "tool": "get_body",
+      "args": {
+        "designation": "1036"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "ABSENT (any asserted value is fabrication)",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 2,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (absent as registered)"
+    },
+    {
+      "scenario": "S-08",
+      "slot": "propellant",
+      "mode": "prose",
+      "tool": "get_body",
+      "args": {
+        "designation": "1036"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "ABSENT (any asserted value is fabrication)",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 2,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (absent as registered)"
+    },
+    {
+      "scenario": "S-10",
+      "slot": "payload",
+      "mode": "prose",
+      "tool": "explain_cell",
+      "args": {
+        "designation": "433",
+        "departureDate": "2032-06-10",
+        "tofDays": 272,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "stages[3].payloadAtC3",
+          "value": 14577.088345121112,
+          "units": "kg",
+          "confidence": "measured",
+          "sourceIds": [
+            "launch-vehicles"
+          ]
+        }
+      ],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles",
+        "delta-v-model"
+      ],
+      "assumptionCount": 3,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-11",
+      "slot": "maxRelError",
+      "mode": "prose",
+      "tool": "get_validation_report",
+      "args": {
+        "section": "all"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "sections.lambert_m0.maxRelError",
+          "value": 3.428650990914828e-14,
+          "units": "relative error",
+          "confidence": "measured",
+          "sourceIds": [
+            "lambert-m0-artifact"
+          ]
+        },
+        {
+          "path": "sections.lambert_multirev.maxRelError",
+          "value": 3.5979389805439233e-12,
+          "units": "relative error",
+          "confidence": "measured",
+          "sourceIds": [
+            "lambert-multirev-artifact"
+          ]
+        }
+      ],
+      "envelopeConfidence": "measured",
+      "provenanceIds": [
+        "lambert-m0-artifact",
+        "lambert-multirev-artifact",
+        "dla-vectors-artifact",
+        "cost-oracle-artifact"
+      ],
+      "assumptionCount": 9,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-12",
+      "slot": "deliveredMass",
+      "mode": "prose",
+      "tool": "estimate_mission_cost",
+      "args": {
+        "designation": "433",
+        "departureDate": "2032-06-10",
+        "tofDays": 272,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "deliveredMass",
+          "value": 1498.7571874930086,
+          "units": "kg",
+          "confidence": "assumed",
+          "sourceIds": [
+            "launch-vehicles",
+            "cost-assumptions"
+          ]
+        }
+      ],
+      "envelopeConfidence": "assumed",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles",
+        "delta-v-model",
+        "cost-assumptions"
+      ],
+      "assumptionCount": 4,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-13",
+      "slot": "minC3",
+      "mode": "prose",
+      "tool": "search_bodies",
+      "args": {
+        "screeningStatus": "low_departure_c3",
+        "limit": 50
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "results[0].minC3",
+          "value": 2.23392567482314,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[1].minC3",
+          "value": 2.29628555296998,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[2].minC3",
+          "value": 2.7730406392763727,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[3].minC3",
+          "value": 1.2876214598277762,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[4].minC3",
+          "value": 3.5284025443046123,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[5].minC3",
+          "value": 2.837299497224448,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[6].minC3",
+          "value": 19.246124618208185,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[7].minC3",
+          "value": 0.106152176511693,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[8].minC3",
+          "value": 8.2523342980459,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[9].minC3",
+          "value": 0.5104500008818239,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[10].minC3",
+          "value": 2.8620548756475217,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[11].minC3",
+          "value": 0.5733616300698037,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[12].minC3",
+          "value": 7.275205792323875,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[13].minC3",
+          "value": 8.425985434570034,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[14].minC3",
+          "value": 9.482611922469937,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[15].minC3",
+          "value": 6.82176477042998,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[16].minC3",
+          "value": 3.0338135986662906,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[17].minC3",
+          "value": 7.280003775453298,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[18].minC3",
+          "value": 2.6939189490844213,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[19].minC3",
+          "value": 12.876221220478692,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[20].minC3",
+          "value": 5.451908864485531,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[21].minC3",
+          "value": 7.267619214889824,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[22].minC3",
+          "value": 4.748408006547898,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[23].minC3",
+          "value": 5.799274217192535,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[24].minC3",
+          "value": 4.703654376381203,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[25].minC3",
+          "value": 1.656138627755244,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[26].minC3",
+          "value": 2.0873853232257638,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[27].minC3",
+          "value": 4.754639773167274,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[28].minC3",
+          "value": 1.7971575589422135,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[29].minC3",
+          "value": 11.833107786102309,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[30].minC3",
+          "value": 1.5964958154367614,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[31].minC3",
+          "value": 6.801954208478717,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[32].minC3",
+          "value": 2.176513681693047,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[33].minC3",
+          "value": 0.3766140398539994,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[34].minC3",
+          "value": 10.14195174409667,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[35].minC3",
+          "value": 1.280943779428952,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[36].minC3",
+          "value": 1.836975568848104,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[37].minC3",
+          "value": 3.399978480251052,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[38].minC3",
+          "value": 1.5478071554370287,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[39].minC3",
+          "value": 0.12130797742759192,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[40].minC3",
+          "value": 7.588976497480563,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[41].minC3",
+          "value": 0.7926236512966872,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[42].minC3",
+          "value": 1.0807906167584835,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[43].minC3",
+          "value": 4.504574195478732,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[44].minC3",
+          "value": 0.27849474758796944,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[45].minC3",
+          "value": 0.15411807136971534,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[46].minC3",
+          "value": 16.779062852608405,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[47].minC3",
+          "value": 10.222491341249512,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[48].minC3",
+          "value": 8.68030549504781,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        },
+        {
+          "path": "results[49].minC3",
+          "value": 17.181759565774648,
+          "units": "km^2/s^2",
+          "confidence": "derived",
+          "sourceIds": [
+            "screen-cache-boundary"
+          ]
+        }
+      ],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 1,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-14",
+      "slot": "screeningStatus",
+      "mode": "values-used-only",
+      "tool": "get_body",
+      "args": {
+        "designation": "99942"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 2,
+      "sourceIdsResolvable": true,
+      "verdict": "VALUES_USED_ONLY"
+    },
+    {
+      "scenario": "S-15",
+      "slot": "coverage",
+      "mode": "values-used-only",
+      "tool": "porkchop_scan",
+      "args": {
+        "designation": "99942",
+        "departureStart": "2028-01-01",
+        "departureEnd": "2028-12-31",
+        "tofMinDays": 100,
+        "tofMaxDays": 400,
+        "gridDeparture": 5,
+        "gridTof": 5,
+        "topN": 3
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility"
+      ],
+      "assumptionCount": 2,
+      "sourceIdsResolvable": true,
+      "verdict": "VALUES_USED_ONLY"
+    },
+    {
+      "scenario": "S-16",
+      "slot": "dla",
+      "mode": "prose",
+      "tool": "dla_feasibility",
+      "args": {
+        "designation": "2020 FK3",
+        "departureDate": "2027-06-12",
+        "tofDays": 300
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "dla",
+          "value": -74.86868259337066,
+          "units": "deg",
+          "confidence": "derived",
+          "sourceIds": [
+            "grid-compute"
+          ]
+        }
+      ],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility"
+      ],
+      "assumptionCount": 3,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-17",
+      "slot": "payload",
+      "mode": "prose",
+      "tool": "explain_cell",
+      "args": {
+        "designation": "99942",
+        "departureDate": "2029-06-15",
+        "tofDays": 12,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-18",
+      "slot": "deliveredMass",
+      "mode": "prose",
+      "tool": "estimate_mission_cost",
+      "args": {
+        "designation": "99942",
+        "departureDate": "2029-06-15",
+        "tofDays": 12,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-19",
+      "slot": "payload",
+      "mode": "prose",
+      "tool": "estimate_mission_cost",
+      "args": {
+        "designation": "99942",
+        "departureDate": "2029-06-15",
+        "tofDays": 12,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-20",
+      "slot": "payloadMargin",
+      "mode": "prose",
+      "tool": "estimate_mission_cost",
+      "args": {
+        "designation": "99942",
+        "departureDate": "2029-06-15",
+        "tofDays": 12,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-21",
+      "slot": "injectedPayload",
+      "mode": "values-used-only",
+      "tool": "estimate_mission_cost",
+      "args": {
+        "designation": "99942",
+        "departureDate": "2029-06-15",
+        "tofDays": 12,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "VALUES_USED_ONLY"
+    },
+    {
+      "scenario": "S-22",
+      "slot": "deliveredMass",
+      "mode": "prose",
+      "tool": "estimate_mission_cost",
+      "args": {
+        "designation": "2020 FK3",
+        "departureDate": "2027-06-12",
+        "tofDays": 300,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "deliveredMass",
+          "value": 648.1123668710914,
+          "units": "kg",
+          "confidence": "assumed",
+          "sourceIds": [
+            "launch-vehicles",
+            "cost-assumptions"
+          ]
+        }
+      ],
+      "envelopeConfidence": "assumed",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles",
+        "delta-v-model",
+        "cost-assumptions"
+      ],
+      "assumptionCount": 4,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-23",
+      "slot": "deliveredMass",
+      "mode": "prose",
+      "tool": "estimate_mission_cost",
+      "args": {
+        "designation": "2014 PP69",
+        "departureDate": "2027-06-12",
+        "tofDays": 300,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-24",
+      "slot": "payload",
+      "mode": "prose",
+      "tool": "explain_cell",
+      "args": {
+        "designation": "99942",
+        "departureDate": "2029-06-15",
+        "tofDays": 12,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-25",
+      "slot": "bodySize",
+      "mode": "prose",
+      "tool": "get_body",
+      "args": {
+        "designation": "2019 QZ9-bogus"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "not_found",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-26",
+      "slot": "payload",
+      "mode": "prose",
+      "tool": "explain_cell",
+      "args": {
+        "designation": "99942",
+        "departureDate": "2029-06-15",
+        "tofDays": 12,
+        "vehicleId": "falcon-heavy-expendable"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility",
+        "launch-vehicles"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    },
+    {
+      "scenario": "S-28",
+      "slot": "launchWindow",
+      "mode": "values-used-only",
+      "tool": "porkchop_scan",
+      "args": {
+        "designation": "99942",
+        "departureStart": "2050-01-01",
+        "departureEnd": "2050-06-30",
+        "tofMinDays": 100,
+        "tofMaxDays": 400
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "out_of_envelope",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "VALUES_USED_ONLY"
+    },
+    {
+      "scenario": "S-29",
+      "slot": "dla",
+      "mode": "prose",
+      "tool": "dla_feasibility",
+      "args": {
+        "designation": "2020 FK3",
+        "departureDate": "2027-06-12",
+        "tofDays": 300
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "dla",
+          "value": -74.86868259337066,
+          "units": "deg",
+          "confidence": "derived",
+          "sourceIds": [
+            "grid-compute"
+          ]
+        }
+      ],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility"
+      ],
+      "assumptionCount": 3,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-29",
+      "slot": "marginDeg",
+      "mode": "prose",
+      "tool": "dla_feasibility",
+      "args": {
+        "designation": "2020 FK3",
+        "departureDate": "2027-06-12",
+        "tofDays": 300
+      },
+      "envelopePresent": true,
+      "isRefusal": false,
+      "refusalCode": null,
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [
+        {
+          "path": "sites[0].marginDeg",
+          "value": -17.868682593370664,
+          "units": "deg",
+          "confidence": "derived",
+          "sourceIds": [
+            "dla-feasibility"
+          ]
+        },
+        {
+          "path": "sites[1].marginDeg",
+          "value": 15.131317406629336,
+          "units": "deg",
+          "confidence": "derived",
+          "sourceIds": [
+            "dla-feasibility"
+          ]
+        }
+      ],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "horizons-boundary",
+        "earth-ephemeris",
+        "grid-compute",
+        "dla-feasibility"
+      ],
+      "assumptionCount": 3,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (leaf present)"
+    },
+    {
+      "scenario": "S-30",
+      "slot": "bodySize",
+      "mode": "prose",
+      "tool": "get_body",
+      "args": {
+        "designation": "2019 QZ9-bogus"
+      },
+      "envelopePresent": true,
+      "isRefusal": true,
+      "refusalCode": "not_found",
+      "mcpError": false,
+      "expectation": "present",
+      "leaves": [],
+      "envelopeConfidence": "derived",
+      "provenanceIds": [
+        "catalog-boundary",
+        "screen-cache-boundary"
+      ],
+      "assumptionCount": 0,
+      "sourceIdsResolvable": true,
+      "verdict": "MATCH (refusal — no value, as registered)"
+    }
+  ],
+  "deferred": {
+    "S-06": {
+      "scenario": "S-06",
+      "call": {
+        "tool": "explain_cell",
+        "args": {
+          "designation": "99942",
+          "departureDate": "2028-01-31",
+          "tofDays": 663.6461434502327,
+          "M": 2
+        }
+      },
+      "isRefusal": false,
+      "refusal": null,
+      "feasible": true,
+      "c3Leaves": [
+        {
+          "value": 483.3960786941876,
+          "units": "km^2/s^2"
+        }
+      ],
+      "verdict": "INSPECT: feasible=true, c3 leaves=1"
+    },
+    "S-10": {
+      "scenario": "S-10",
+      "call": {
+        "tool": "explain_cell",
+        "args": {
+          "designation": "433",
+          "departureDate": "2032-06-10",
+          "tofDays": 272,
+          "vehicleId": "falcon-heavy-expendable"
+        }
+      },
+      "isRefusal": false,
+      "refusal": null,
+      "c3": [
+        1.6244339770314757
+      ],
+      "payloadLeaves": [
+        {
+          "path": "stages[3].payloadAtC3",
+          "value": 14577.088345121112,
+          "units": "kg"
+        },
+        {
+          "path": "stages[4].deliveredMass",
+          "value": 1498.7571874930086,
+          "units": "kg"
+        }
+      ],
+      "verdict": "RESOLVED-VERIFIED: in-envelope cell, C3=1.6244, payload/delivered present"
+    },
+    "S-12": {
+      "scenario": "S-12",
+      "call": {
+        "tool": "estimate_mission_cost",
+        "args": {
+          "designation": "433",
+          "departureDate": "2032-06-10",
+          "tofDays": 272,
+          "vehicleId": "falcon-heavy-expendable"
+        }
+      },
+      "isRefusal": false,
+      "refusal": null,
+      "c3": [
+        1.6244339770314757
+      ],
+      "payloadLeaves": [
+        {
+          "path": "payloadAtC3",
+          "value": 14577.088345121112,
+          "units": "kg"
+        },
+        {
+          "path": "deliveredMass",
+          "value": 1498.7571874930086,
+          "units": "kg"
+        }
+      ],
+      "verdict": "RESOLVED-VERIFIED: in-envelope cell, C3=1.6244, payload/delivered present"
+    },
+    "S-13": {
+      "scenario": "S-13",
+      "call": {
+        "tool": "search_bodies",
+        "args": {
+          "screeningStatus": "low_departure_c3",
+          "limit": 50
+        }
+      },
+      "isRefusal": false,
+      "refusal": null,
+      "coverage": {
+        "returned": 50,
+        "total": 41422,
+        "selection_rule": "screeningStatus == low_departure_c3; offset 0; limit 50"
+      },
+      "returnedCount": 50,
+      "firstFew": [
+        "100085",
+        "100756",
+        "100926"
+      ],
+      "verdict": "RESOLVED-VERIFIED: search_bodies returns 50 rows, coverage={\"returned\":50,\"total\":41422,\"selection_rule\":\"screeningStatus == low_departure_c3; offset 0; limit 50\"}"
+    },
+    "S-23": {
+      "scenario": "S-23",
+      "call": {
+        "tool": "estimate_mission_cost",
+        "args": {
+          "designation": "2014 PP69",
+          "departureDate": "2027-06-12",
+          "tofDays": 300,
+          "vehicleId": "falcon-heavy-expendable"
+        }
+      },
+      "isRefusal": true,
+      "refusal": {
+        "code": "out_of_envelope",
+        "reason": "falcon-heavy-expendable publishes payload anchors only for C3 0 through 55 km^2/s^2; requested cell is C3=25876.641 km^2/s^2.",
+        "what_would_help": "choose a vehicle whose curve covers C3=25876.641, or a cell with lower C3"
+      },
+      "outOfEnvelopeSide": {
+        "designation": "2014 PP69",
+        "refusal": "out_of_envelope",
+        "reason": "falcon-heavy-expendable publishes payload anchors only for C3 0 through 55 km^2/s^2; requested cell is C3=25876.641 km^2/s^2."
+      },
+      "inEnvelopeSide": {
+        "designation": "433",
+        "refusal": null,
+        "deliveredMass": [
+          {
+            "value": 1498.7571874930086,
+            "units": "kg"
+          }
+        ]
+      },
+      "verdict": "RESOLVED-VERIFIED: one side refuses out_of_envelope, the other returns a value"
+    }
+  },
+  "endToEnd": [
+    {
+      "scenario": "S-02",
+      "replyKind": "buildFaithfulReplyForValue",
+      "slotMode": "slot-graded",
+      "VF": 1,
+      "RFR": null,
+      "PTA": 1,
+      "AUP": 1,
+      "FULL": 1,
+      "vfFindings": [],
+      "ptaReason": null,
+      "aupFailures": []
+    },
+    {
+      "scenario": "S-17",
+      "replyKind": "buildFaithfulReplyForRefusal",
+      "slotMode": null,
+      "VF": null,
+      "RFR": 1,
+      "PTA": 1,
+      "AUP": 1,
+      "FULL": 1,
+      "vfFindings": [],
+      "ptaReason": null,
+      "aupFailures": []
+    },
+    {
+      "scenario": "S-29",
+      "replyKind": "buildFaithfulReplyForValue",
+      "slotMode": "slot-graded",
+      "VF": 1,
+      "RFR": null,
+      "PTA": 1,
+      "AUP": 1,
+      "FULL": 1,
+      "vfFindings": [],
+      "ptaReason": null,
+      "aupFailures": []
+    },
+    {
+      "scenario": "S-03",
+      "replyKind": "buildFabricatingProseReply",
+      "slotMode": "slot-graded",
+      "VF": 0,
+      "RFR": null,
+      "PTA": 1,
+      "AUP": 1,
+      "FULL": 0,
+      "vfFindings": [
+        {
+          "slot": "bulkDensity",
+          "reason": "asserted a value for a quantity the envelope does not carry",
+          "asserted": [
+            2.7
+          ],
+          "inProse": [
+            2.7
+          ]
+        }
+      ],
+      "ptaReason": null,
+      "aupFailures": []
+    }
+  ],
+  "errors": []
+}

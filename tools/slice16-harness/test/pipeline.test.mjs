@@ -82,9 +82,12 @@ test('scenario registry is internally consistent with the locked appendix', () =
 
   // The pre-registered primary scope is everything not struck.
   assert.equal(PRIMARY_SCENARIOS.length, 28, 'pre-registered primary set is 28 scenarios');
-  assert.equal(DEFERRED_SCENARIOS.length, 5, 'five scenarios still await one live call each');
-  assert.deepEqual(DEFERRED_SCENARIOS.map((s) => s.id), ['S-06', 'S-10', 'S-12', 'S-13', 'S-23']);
-  assert.equal(ACTIVE_SCENARIOS.length, 23, 'runnable-now set is primary minus deferred');
+  // S16-MCPLIVE: live verification resolved S-10/S-12/S-13/S-23, which promoted
+  // them into the runnable set. S-06 stays deferred — the live envelope
+  // CONTRADICTS its registered ground truth and Hudson adjudicates.
+  assert.equal(DEFERRED_SCENARIOS.length, 1, 'only S-06 remains unresolved');
+  assert.deepEqual(DEFERRED_SCENARIOS.map((s) => s.id), ['S-06']);
+  assert.equal(ACTIVE_SCENARIOS.length, 27, 'runnable-now set is primary minus deferred');
   assert.equal(
     ACTIVE_SCENARIOS.length + DEFERRED_SCENARIOS.length,
     PRIMARY_SCENARIOS.length,

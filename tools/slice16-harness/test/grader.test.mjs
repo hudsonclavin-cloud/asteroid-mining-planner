@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 
 import {
   SCENARIO_SLOTS, collectQuantities, gradeDecision, normalizeText, numbersInText,
-  proseValuesForSlot, summarize, tokenOverlap
+  proseValuesForSlot, proseValuesByScenarioSlot, summarize, tokenOverlap
 } from '../grader.mjs';
 import { PATHS, PRIMARY_SCENARIOS } from '../config.mjs';
 
@@ -320,6 +320,28 @@ test('A3: VALUES_USED_ONLY slots never scan prose', () => {
       assert.deepEqual(proseValuesForSlot('the payload is 1200 kg and the radius is 812 m', slot), []);
     }
   }
+});
+
+test('REGRESSION: two same-unit slots do not steal each other\'s values', () => {
+  // Found by live verification (S16-MCPLIVE): S-29 carries `dla` and `marginDeg`,
+  // both in deg, and their label windows overlap in ordinary prose. Scanned
+  // independently, each slot claimed the other's number and an HONEST answer
+  // scored VF = 0 — a false positive, the damaging direction.
+  const slots = SCENARIO_SLOTS['S-29'];
+  const prose = 'The declination is -74.86868259337066 deg. The margin is -17.868682593370664 deg.';
+  const byslot = proseValuesByScenarioSlot(prose, slots);
+
+  assert.deepEqual(byslot.get('dla'), [-74.86868259337066], 'dla must not claim the margin');
+  assert.deepEqual(byslot.get('marginDeg'), [-17.868682593370664], 'marginDeg must not claim the declination');
+
+  // Same guard for S-08, whose two slots are both kg.
+  const s08 = proseValuesByScenarioSlot('The mass is 1000 kg and the propellant is 250 kg.', SCENARIO_SLOTS['S-08']);
+  assert.deepEqual(s08.get('mass'), [1000]);
+  assert.deepEqual(s08.get('propellant'), [250]);
+
+  // Single-slot scenarios keep the simple path and identical results.
+  const single = proseValuesByScenarioSlot('the radius is 270 m', SCENARIO_SLOTS['S-02']);
+  assert.deepEqual(single.get('estimatedRadius'), [270]);
 });
 
 test('A3: every primary scenario has a slot declaration', () => {
