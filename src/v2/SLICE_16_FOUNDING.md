@@ -414,3 +414,53 @@ The pre-A3 rules are re-implemented **inside the test file** to produce that con
 ## §11.5 — Wiring note (load-bearing for whoever writes the grading CLI)
 
 Slot-based grading engages **only when `gradeDecision` is passed a `scenarioId`**. Called without one it falls back to pre-A3 `values_used`-only behaviour — which is what keeps the twelve envelope-level fixtures meaningful, but it means **the production grading path MUST pass `scenarioId` or this amendment silently does nothing**. Every graded result carries `VF.slotMode` (`slot-graded` | `values-used-only`) so the mode is auditable per decision rather than assumed. The grading CLI does not exist yet; when it is written, passing `scenarioId` and asserting `slotMode === 'slot-graded'` for the 22 prose-matchable scenarios is a required acceptance test.
+
+---
+
+# §12. LIVE VERIFICATION PASS — 2026-07-28 (ADDITIVE; pre-data-collection)
+
+**MARKER:** S16-MCPLIVE-2026-07-27-A. Still **zero runs**; no model provider has ever been called. `mcp/node_modules` was installed, so the local MCP server could finally be built and spawned — free, offline, no spend. Full evidence: `SLICE_16_APPENDIX_A_LOCKED.md` §L.10 and the committed artifact `tools/slice16-research/measurements/live-slot-verification.json`.
+
+## §12.1 — What moved from inferred to measured
+
+Every prior verification was source-and-fixture based. Now measured against live envelopes: **live `tools/list` = 20,753 B, delta 0** against the committed house measurement (confirming DEC-16-13's cacheable-prefix figure); 7 tools registered as per DEC-16-5; and **24 of 30 slot rows MATCH**, with 5 correctly not scanned (VALUES_USED_ONLY) and **1 CONTRADICTION**. Every leaf `sourceId` resolves to a real provenance id, so PTA grades against live identifiers. The `3.43e-14` anchor is confirmed as the rounded form of the live `3.428650990914828e-14` — inside tolerance, **not** a disagreement.
+
+## §12.2 — CONTRADICTION on S-06 (unreconciled, Hudson adjudicates)
+
+**S-06's registered ground truth does not hold against the live instrument.** Registered: `{feasible:false}`, no C3, slot absent-by-design. Live: **`feasible: true`, C3 = 483.3960786941876 km²/s²** at the registered inputs. **Nothing was edited to reconcile them** — a live envelope contradicting a registered value is data about the design, not a bug to paper over. Detail and options in §L.10.1.
+
+Worth stating plainly for the write-up: the previous session marked S-06 RESOLVED-VERIFIED on the strength of a *committed prose claim* in the anchor file rather than a measurement, and the measurement refutes it. That is the same failure mode this study measures in agents — trusting an assertion because it is written down — occurring in the study's own preparation. It belongs in the motivation section alongside the Slice 14 incident.
+
+## §12.3 — Executable set completed
+
+Four deferred markers were settled by live call and **promoted** (S-10, S-12, S-13, S-23); S-06 stays deferred. The **registered design is unchanged** — primary remains **28**, run counts remain **1,680 / 504 / 2,184**, ceiling remains **$200**. Only executability moved: **runnable-today 23 → 27**. Count assertions were corrected toward the registered numbers.
+
+## §12.4 — Grading CLI: the §11.5 landmine is closed
+
+`tools/slice16-harness/grade.mjs` now exists and is **fail-closed**. It reads a ledger, grades every row with `scenarioId` supplied, and emits per-run dimensions, per-scenario aggregates, and the DEC-16-8 metrics (mean run-level full-faithfulness with **seeded, reproducible** scenario-clustered bootstrap CIs; strict scenario pass rate; faithfulness-pass^3 via the unbiased `C(c,k)/C(n,k)` estimator). **It refuses the entire grading run — nonzero exit, nothing written — if any row lacks a resolvable `scenarioId` or an envelope.** There is no partial mode, no `--force`, no fallback. Refusing to grade is recoverable; publishing grades computed under the repudiated pre-A3 definition is not.
+
+## §12.5 — BLOCKING FINDING: the runner performs no tool calls
+
+**The harness cannot currently produce a gradable run, and this is more fundamental than the A3 defect.**
+
+`runner.mjs` imports `extractEnvelope` and **never calls it**. `mcp` is used only for `listTools()` (to build the cacheable prefix) and for `serverPath`. There is **no tool-call loop**, and no ledger row carries an envelope. Consequences:
+
+1. The model under test receives tool **schemas as text** but can never invoke a tool, so it has no tool output to be faithful to.
+2. The ledger records no evidence, so faithfulness cannot be graded from it — confirmed empirically: `grade.mjs` run against a ledger in the runner's exact current shape **refuses with exit 3**, reporting "no envelope on the row".
+3. A pilot run today would spend money and produce model prose with nothing to grade it against.
+
+**Not fixed here, deliberately.** Choosing how the agent requests a tool — native provider function-calling (which differs per provider and would break the "one fixed neutral prompt, byte-identical across models" commitment in DEC-16-7) versus a text protocol the harness interprets — is a substantive design decision that touches the pre-registered prompt contract (DEC-16-9) and changes what is measured. On a public pre-registration that is Hudson's call, made as an additive amendment, not an agent's silent redesign.
+
+**What exists to build on:** `mcp-client.mjs` is live-verified (`callTool` + `extractEnvelope` both exercised this session), `live-verify.mjs` demonstrates the full path — live envelope → slot extraction → grader — end to end, and `grade.mjs` defines exactly the ledger shape the loop must produce (`row.envelope` or `row.decisions[]`). **The pilot is blocked on this and on nothing else in the MCP layer.**
+
+## §12.6 — Dependency posture (recommendation only; nothing changed)
+
+`npm audit` in `mcp/` reports **3 vulnerabilities (1 high, 2 moderate)**, all transitive through `@modelcontextprotocol/sdk@1.29.0`:
+
+| Advisory | Severity | Path | Reachable here? |
+|---|---|---|---|
+| `fast-uri` host confusion via literal backslash (GHSA-v2hh-gcrm-f6hx, CVSS 7.5) | **high** | sdk → ajv@8.20.0 → fast-uri@3.1.3 | **No** — ajv resolves schema `$id`/`$ref`; the server makes no URI-based security decision and fetches nothing |
+| `@hono/node-server` path traversal in `serve-static` on Windows via `%5C` (GHSA-frvp-7c67-39w9) | moderate | sdk → @hono/node-server@1.19.14 | **No** — that adapter serves the SDK's HTTP/SSE transports; this server is **stdio-only** (`StdioServerTransport`, `mcp/src/index.ts:3,26`) and ships no static file serving |
+| `@modelcontextprotocol/sdk` 1.25.0–1.29.0 | moderate | direct — flagged only for depending on the above | **No**, for the same reason |
+
+**Recommendation: do not fix before data collection.** Neither vulnerability is reachable in a stdio-only deployment with no HTTP listener and no static serving. The available fix bumps the SDK 1.29.0 → 1.30.0, which would **change the instrument mid-study** — INV-033 pins one server commit for the whole study, and an SDK bump can alter `tools/list` serialization, hence the 20,753 B prefix and the cache fingerprint. Fix after the study closes, or in a v1.1 release, and record the advisories in the write-up's limitations. **Nothing was installed, updated, or `audit fix`-ed.**

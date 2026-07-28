@@ -16,14 +16,16 @@ Pre-registration is **locked and reconciled**. Registered scope:
 | Frozen scenarios | 30 |
 | Struck (S-09, S-27) | 2 |
 | **Primary (pre-registered)** | **28** |
-| Deferred inside primary (S-06, S-10, S-12, S-13, S-23) | 5 |
-| **Active (runnable today)** | **23** |
+| Deferred inside primary (S-06 only — live-verification CONTRADICTION) | 1 |
+| **Active (runnable today)** | **27** |
 | Primary runs (28 × 6 × r=10) | 1,680 |
 | Control runs (28 × 6 × r=3) | 504 |
 | **Total registered** | **2,184** |
 | Ceiling | **$200** |
 
-**No run has ever occurred.** No model API has been called. The four provider adapters are **UNTESTED-AT-NETWORK-BOUNDARY** — written from documented contracts, never exercised on the wire.
+**No run has ever occurred.** No model API has been called. The four provider adapters are **UNTESTED-AT-NETWORK-BOUNDARY** — written from documented contracts, never exercised on the wire. The MCP layer, by contrast, is now **live-verified** (§5).
+
+⛔ **The pilot is blocked on a harness gap — see §5b before spending anything.**
 
 ---
 
@@ -31,7 +33,7 @@ Pre-registration is **locked and reconciled**. Registered scope:
 
 ```sh
 node --test tools/slice16-harness/test/
-# expect: # pass 36 / # fail 0
+# expect: # pass 48 / # fail 0
 
 node tools/slice16-harness/runner.mjs --preflight
 # reports readiness; spends nothing
@@ -99,9 +101,15 @@ Fill the four keys. Leave `S16_LIVE_OK` **empty** until the moment you intend to
 set -a; source tools/slice16-harness/.env; set +a
 ```
 
-## 5. Build the MCP server — ⚠ STILL PENDING as of 2026-07-28
+## 5. Build the MCP server — ✅ DONE (2026-07-28)
 
-**Checked this session: `mcp/node_modules` is ABSENT and the server is NOT built.** Every verification to date has therefore been source-and-fixture based, and **no live MCP tool response has ever been observed by any agent**. This step is yours and nothing downstream of it can run without it.
+`mcp/node_modules` is installed and the server **builds, spawns and answers** — verified live: handshake at protocolVersion `2025-11-25`, 7 tools, `tools/list` = 20,753 B (delta 0 vs the committed measurement). Re-run any time with:
+
+```sh
+node tools/slice16-harness/live-verify.mjs
+```
+
+Rebuild only if `mcp/src` changes (it must not during the study — INV-033 pins the instrument):
 
 ```sh
 cd mcp && npm ci && npm run build && cd ..
@@ -109,7 +117,17 @@ ls mcp/dist/mcp/src/index.js    # must exist
 node tools/slice16-harness/runner.mjs --preflight   # "MCP server built: yes"
 ```
 
-Use `npm ci` (not `npm install`) so the lockfile governs. Agents are barred from installing, which is why this has stayed pending. The control arm does **not** need this step — it attaches no tools.
+Use `npm ci` (not `npm install`) so the lockfile governs. The control arm does **not** need this step — it attaches no tools.
+
+**Dependency note:** `npm audit` reports 3 vulnerabilities (1 high, 2 moderate), all transitive through the MCP SDK. **None is reachable in a stdio-only server** and the recommendation is to leave them until after data collection — fixing bumps the SDK and would change the pinned instrument. Founding doc §12.6. Do not run `npm audit fix`.
+
+## 5b. ⛔ THE PILOT IS BLOCKED — read before spending anything
+
+**`runner.mjs` performs no tool calls.** It imports `extractEnvelope` and never calls it; `mcp` is used only for `listTools()` and `serverPath`. So the model gets tool *schemas as text* but can never invoke a tool, and **no ledger row carries an envelope**. A pilot run today would spend real money and produce model prose with nothing to grade it against — confirmed empirically: `grade.mjs` on a ledger in the runner's current shape refuses with exit 3, "no envelope on the row".
+
+This is **not** fixed for you, on purpose: choosing how the agent requests a tool (native per-provider function-calling vs a text protocol) changes what the study measures and touches the pre-registered prompt contract. On a public pre-registration that is your call, as an additive amendment. See founding doc §12.5.
+
+**What is ready:** `mcp-client.mjs` is live-verified, `live-verify.mjs` demonstrates live envelope → slot extraction → grader end-to-end, and `grade.mjs` defines the exact ledger shape the loop must emit (`row.envelope` or `row.decisions[]`). Nothing else in the MCP layer blocks the pilot.
 
 ## 6. Pilot
 
@@ -134,7 +152,7 @@ S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --pilot
 
 **Then check the AUP pilot valve.** If **AUP ≈ 0 across all six models**, that is a grader-strictness artifact, not a finding — the pre-registered escape valve (A1 §10.3) applies: the AUP matcher may be amended to normalized-keyword matching **before the full run, with disclosure**. A floor in only one or two models is a real result about those models; leave it alone.
 
-While here, close the five deferred items — §L.8 of the locked appendix already gives each one's resolved inputs and expected ground truth, so this is confirmation, not derivation.
+Four of the five deferred items were already closed by live MCP calls (§L.10.3). **S-06 remains open and is a CONTRADICTION**, not a deferral: the live envelope returns `feasible:true, C3=483.3960786941876` where the pre-registration says `{feasible:false}` with no C3. Decide its fate (re-pin, retarget, or strike) before the full run — §L.10.1.
 
 ## 7. Full run
 
@@ -156,10 +174,10 @@ Pre-promotion, `--full` executes the **23 runnable** scenarios (1,380 runs), not
 |---|---|
 | Ledgers (JSONL, one row per run) | `tools/slice16-harness/runs/ledger-{pilot,full,control,mock}.jsonl` |
 | Row contents | `arm`, `toolsAttached`, model/lab/tier, scenario, RQ, prompt form, repetition, prefix fingerprint, full reply text, parsed answer block, provider-reported usage, error |
-| Grades | produced by `grader.mjs` over a ledger; no CLI wrapper yet — next slice of work |
+| Grades | `node tools/slice16-harness/grade.mjs <ledger.jsonl>` → writes `<ledger>-grades.json` |
 
-> ### ⚠ When the grading CLI is written, it MUST pass `scenarioId`
-> Amendment A3 grades VF on each scenario's declared quantity slot, and slot grading engages **only** when `gradeDecision` receives a `scenarioId`. Called without one it silently falls back to pre-A3 `values_used`-only behaviour and the amendment does nothing. Every graded result carries `VF.slotMode`; assert `slot-graded` for the 22 prose-matchable scenarios as an acceptance test. See founding doc §11.5.
+> ### ✅ Grading is fail-closed
+> `grade.mjs` grades every row with its `scenarioId` supplied, so Amendment A3's slot grading is always active. If any row lacks a resolvable `scenarioId` **or an envelope**, it refuses the whole run with a nonzero exit and writes nothing — there is no partial mode and no fallback to the repudiated pre-A3 definition. Each run records `slotMode` so engagement is auditable after the fact. See founding doc §11.5 and §12.4.
 
 `runs/` is **not** git-ignored: INV-036 makes transcripts committable artifacts. Commit them deliberately with the report. Control rows are separable by `arm` and are excluded from primary metrics.
 
@@ -171,7 +189,7 @@ Recorded **PENDING** in DEC-16-10. Do this **before** the full run so the regist
 git rev-parse HEAD    # the anchor to register — run AFTER pushing
 ```
 
-The pre-registration is the **whole chain**, not one commit: original anchor `34ca5f7` → A1 `5a99c13` → A2 `d79ba1b` → deferred evidence `3d55abd` → self-audit `15083b5` → truth sweep `e12ebcc` → preflight `8452d1e` → **A3 `195d8ea` + this commit**. Register the **current final HEAD** (`git rev-parse HEAD` after pushing) — **not `8452d1e`**, which is now superseded: it carries the pre-A3 VF definition with the prose-fabrication hole still open.
+The pre-registration is the **whole chain**, not one commit: `34ca5f7` → A1 `5a99c13` → A2 `d79ba1b` → deferred evidence `3d55abd` → self-audit `15083b5` → truth sweep `e12ebcc` → preflight `8452d1e` → A3 `195d8ea`/`9c61a52` → **live pass `6cb06a1`/`7657c89` + this commit**. Register the **current final HEAD** (`git rev-parse HEAD` after pushing) — **not `8452d1e`** (pre-A3 VF, hole open) and **not `9c61a52`** (pre-live-pass: S-06's ground truth is contradicted by the live instrument, and the grading CLI did not yet exist).
 
 **The amendment log is part of the pre-registration record, not an appendix to it.** `8452d1e` is already public and still shows the flawed VF definition; §11 of the founding doc discloses the defect, the date, that zero runs had occurred, and both definitions verbatim. A reader diffing `8452d1e` against the registered HEAD sees exactly what changed and when — that transparency is the point, so register the chain rather than trying to present a single clean anchor.
 
