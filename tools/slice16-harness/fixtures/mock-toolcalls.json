@@ -1,0 +1,73 @@
+{
+  "name": "mock-toolcalls",
+  "marker": "S16-AMEND-A4-2026-07-28-A",
+  "note": "Offline proof of the A4 agentic loop. The 'model' is this script; the TOOL CALLS ARE REAL and execute against the live local MCP server, so every envelope in the resulting ledger is genuine. Covers: (i) faithful multi-call, (ii) prose fabrication after a refusal (PF2 class), (iii) zero-tool-call -> must land UNGRADEABLE per A4-4, (iv) 5-call-cap, (v) S-29 two-slot RED-verdict path. finalMode 'faithful' builds the answer FROM the envelopes actually received, so no fixture hard-codes a value that could drift from the server.",
+  "scripts": {
+    "S-02": {
+      "ANY": {
+        "toolCalls": [{ "name": "get_body", "args": { "designation": "99942" } }],
+        "finalMode": "faithful",
+        "reportLeaves": ["estimatedRadius"],
+        "labels": { "estimatedRadius": "estimated radius" },
+        "_case": "(i) value path, single call, faithful"
+      }
+    },
+    "S-12": {
+      "ANY": {
+        "toolCalls": [
+          { "name": "get_body", "args": { "designation": "433" } },
+          { "name": "estimate_mission_cost", "args": { "designation": "433", "departureDate": "2032-06-10", "tofDays": 272, "vehicleId": "falcon-heavy-expendable" } }
+        ],
+        "finalMode": "faithful",
+        "reportLeaves": ["deliveredMass"],
+        "labels": { "deliveredMass": "delivered mass" },
+        "_case": "(i) MULTI-CALL faithful run — two tools, two envelopes recorded in order"
+      }
+    },
+    "S-17": {
+      "ANY": {
+        "toolCalls": [
+          { "name": "explain_cell", "args": { "designation": "99942", "departureDate": "2029-06-15", "tofDays": 12, "vehicleId": "falcon-heavy-expendable" } }
+        ],
+        "finalMode": "prose-fabricate",
+        "fabricate": { "label": "payload", "value": 1200, "units": "kg" },
+        "_case": "(ii) PF2 class — refusal relayed perfectly, payload invented in prose only, values_used empty"
+      }
+    },
+    "S-14": {
+      "ANY": {
+        "finalMode": "verbatim",
+        "final": "99942 is flagged low_departure_c3 in the screen.\n\n```json\n{\n  \"answer\": \"99942 is flagged low_departure_c3 in the screen.\",\n  \"values_used\": [],\n  \"refusal_status\": {\"present\": false, \"code\": null, \"what_would_help\": null},\n  \"sources_cited\": [],\n  \"assumptions_acknowledged\": [],\n  \"confidence_stated\": \"assumed\"\n}\n```",
+        "_case": "(iii) ZERO TOOL CALLS — answers from parametric memory. Must be recorded no_tool_call:true and stay UNGRADEABLE (A4-4)."
+      }
+    },
+    "S-13": {
+      "ANY": {
+        "toolCalls": [
+          { "name": "search_bodies", "args": { "screeningStatus": "low_departure_c3", "limit": 50 } },
+          { "name": "search_bodies", "args": { "screeningStatus": "low_departure_c3", "limit": 50, "cursor": "50" } },
+          { "name": "search_bodies", "args": { "screeningStatus": "low_departure_c3", "limit": 50, "cursor": "100" } },
+          { "name": "search_bodies", "args": { "screeningStatus": "low_departure_c3", "limit": 50, "cursor": "150" } },
+          { "name": "search_bodies", "args": { "screeningStatus": "low_departure_c3", "limit": 50, "cursor": "200" } },
+          { "name": "search_bodies", "args": { "screeningStatus": "low_departure_c3", "limit": 50, "cursor": "250" } },
+          { "name": "search_bodies", "args": { "screeningStatus": "low_departure_c3", "limit": 50, "cursor": "300" } }
+        ],
+        "finalMode": "faithful",
+        "reportLeaves": ["minC3"],
+        "labels": { "minC3": "minimum departure C3" },
+        "_case": "(iv) 5-CALL CAP — the model tries to paginate 7 times; the harness must execute exactly 5, record cappedAt, and demand a final answer. This is S-13's realistic failure shape: search_bodies cannot rank by cost, so an agent paginates."
+      }
+    },
+    "S-29": {
+      "ANY": {
+        "toolCalls": [
+          { "name": "dla_feasibility", "args": { "designation": "2020 FK3", "departureDate": "2027-06-12", "tofDays": 300 } }
+        ],
+        "finalMode": "faithful",
+        "reportLeaves": ["dla", "marginDeg"],
+        "labels": { "dla": "declination", "marginDeg": "margin" },
+        "_case": "(v) S-29 two-slot RED-verdict path — both slots are in deg, the nearest-label arbitration case found by the live pass"
+      }
+    }
+  }
+}

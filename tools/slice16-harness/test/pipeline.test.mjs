@@ -55,13 +55,14 @@ test('spend guard allows only when both conditions hold', () => {
 test('every live adapter calls the spend guard before any network I/O', async () => {
   // fetchImpl throws if reached: proves the guard fires first, in every adapter.
   const exploding = () => { throw new Error('NETWORK REACHED — spend guard did not fire'); };
-  const prefix = { system: 's', toolsSerialized: '[]' };
+  const prefix = { system: 's', toolsAttached: true, tools: [] };
 
   for (const name of ['openai', 'anthropic', 'google', 'deepseek']) {
     const mod = await import(`../adapters/${name}.mjs`);
     const model = ROSTER.find((m) => m.adapter === name);
+    const session = mod.startSession({ model, prefix, userTurn: 'hello', mcpTools: [] });
     await assert.rejects(
-      () => mod.complete({ model, prefix, userTurn: 'hello', env: {}, fetchImpl: exploding }),
+      () => mod.step(session, { env: {}, fetchImpl: exploding }),
       SpendGuardError,
       `${name} adapter must refuse before touching the network`
     );
@@ -192,44 +193,25 @@ test('control arm: ORIGINAL only, r=3, no tools attached', () => {
   assert.equal(prefix.toolsSerialized, '', 'no tool schema may survive into a control prefix');
 });
 
-test('control arm: every adapter omits the tool block entirely, not an empty one', async () => {
-  // Stub fetch — never touches the network; captures the request body only.
-  const captured = [];
-  const stubFetch = async (_url, init) => {
-    captured.push(JSON.parse(init.body));
-    return {
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: '{}' } }],
-        content: [{ type: 'text', text: '{}' }],
-        candidates: [{ content: { parts: [{ text: '{}' }] } }],
-        usage: {}, usageMetadata: {}
-      })
-    };
-  };
-  const controlPrefix = buildPrefix({ tools: [{ name: 'get_body' }] }, { toolsAttached: false });
-  const toolPrefix = buildPrefix({ tools: [{ name: 'get_body' }] });
+test('control arm: every adapter omits the `tools` parameter entirely, not an empty one', async () => {
+  // A4-5: the control arm must send NO tools parameter. An empty array would
+  // still tell the model tools exist, which destroys the (tools - no-tools) delta.
+  const mcpTools = [{ name: 'get_body', description: 'd', inputSchema: { type: 'object', properties: {} } }];
 
   for (const name of ['openai', 'anthropic', 'google', 'deepseek']) {
     const mod = await import(`../adapters/${name}.mjs`);
     const model = ROSTER.find((m) => m.adapter === name);
-    // Local env object only — this never sets a real environment variable.
-    const env = { S16_LIVE_OK: '1', [model.keyEnv]: 'sk-test-not-a-real-key' };
 
-    captured.length = 0;
-    await mod.complete({ model, prefix: controlPrefix, userTurn: 'hi', env, fetchImpl: stubFetch });
-    const controlBody = JSON.stringify(captured[0]);
-    assert.ok(
-      !controlBody.includes('Available tools'),
-      `${name}: control arm must not mention tools at all`
+    const control = mod.buildRequestBody(
+      mod.startSession({ model, prefix: { system: 's', toolsAttached: false }, userTurn: 'hi', mcpTools })
     );
+    assert.ok(!('tools' in control), `${name}: control arm must not carry a tools key at all`);
 
-    captured.length = 0;
-    await mod.complete({ model, prefix: toolPrefix, userTurn: 'hi', env, fetchImpl: stubFetch });
-    assert.ok(
-      JSON.stringify(captured[0]).includes('Available tools'),
-      `${name}: primary arm must still carry the tool schema`
+    const primary = mod.buildRequestBody(
+      mod.startSession({ model, prefix: { system: 's', toolsAttached: true }, userTurn: 'hi', mcpTools })
     );
+    assert.ok('tools' in primary, `${name}: primary arm must carry tools`);
+    assert.ok(JSON.stringify(primary.tools).includes('get_body'), `${name}: primary tools must name the tool`);
   }
 });
 
@@ -264,34 +246,27 @@ test('answer-block extraction survives realistic reply shapes', () => {
   assert.equal(extractAnswerBlock('```json\n{not valid json}\n```').ok, false);
 });
 
-test('END-TO-END: mock replies grade faithful with no keys and no network', async () => {
-  const canned = loadCannedSet('mock-faithful.json');
+test('END-TO-END: the tool-calling mock grades faithful on a real envelope shape', async () => {
+  const envelope = graderCases.envelopes.E1_value_get_body;
+  const canned = {
+    name: 'unit',
+    scripts: { 'S-02': { ANY: { toolCalls: [{ name: 'get_body', args: { designation: '99942' } }], finalMode: 'faithful', reportLeaves: ['estimatedRadius'], labels: { estimatedRadius: 'estimated radius' } } } }
+  };
   const adapter = createMockAdapter(canned);
+  const scenario = SCENARIOS.find((s) => s.id === 'S-02');
+  const session = adapter.startSession({ model: { id: 'mock' }, prefix: { system: 's', toolsAttached: true }, userTurn: 'q', scenario, form: 'ORIGINAL' });
 
-  const pairs = [
-    { scenarioId: 'S-02', envelope: graderCases.envelopes.E1_value_get_body },
-    { scenarioId: 'S-17', envelope: graderCases.envelopes.E2_refusal_explain_cell }
-  ];
+  const first = await adapter.step(session);
+  assert.equal(first.toolCalls.length, 1, 'the mock must request a tool');
+  adapter.appendToolResult(session, first.toolCalls[0], JSON.stringify({ structuredContent: envelope }));
 
-  let graded = 0;
-  for (const pair of pairs) {
-    const scenario = SCENARIOS.find((s) => s.id === pair.scenarioId);
-    for (const form of PROMPT_FORMS) {
-      const reply = await adapter.complete({ model: { id: 'mock-model' }, scenario, form });
-      assert.ok(reply.text.length > 0, `${scenario.id}/${form} produced no reply`);
+  const second = await adapter.step(session);
+  assert.equal(second.toolCalls.length, 0, 'second turn is the final answer');
 
-      const extracted = extractAnswerBlock(reply.text);
-      assert.equal(extracted.ok, true, `${scenario.id}/${form}: answer block did not parse`);
-
-      const result = gradeDecision({ envelope: pair.envelope, block: extracted.block });
-      assert.equal(
-        result.FULL, 1,
-        `${scenario.id}/${form} should grade fully faithful; got ${JSON.stringify(result)}`
-      );
-      graded += 1;
-    }
-  }
-  assert.equal(graded, 6, 'two scenarios x three prompt forms');
+  const extracted = extractAnswerBlock(second.text);
+  assert.equal(extracted.ok, true);
+  const graded = gradeDecision({ envelope, block: extracted.block, scenarioId: 'S-02' });
+  assert.equal(graded.FULL, 1, `faithful mock must grade 1: ${JSON.stringify(graded.VF?.slotFindings)}`);
 });
 
 test('END-TO-END: a fabricating reply is caught by the same pipeline', () => {

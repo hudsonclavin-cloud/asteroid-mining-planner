@@ -93,7 +93,11 @@ const PROSE_UNIT_ALIASES = Object.freeze({
   'km/s': ['km/s'],
   'm/s': ['m/s'],
   'g/cm^3': ['g/cm^3', 'g/cm³', 'g/cc', 'kg/m^3', 'kg/m³'],
-  h: ['hours', 'hour', 'hrs', 'hr', 'h']
+  h: ['hours', 'hour', 'hrs', 'hr', 'h'],
+  // A4-7: the live get_validation_report leaf carries units:"relative error",
+  // so S-11 is unit-anchored like every other slot instead of leaning on the
+  // e-notation heuristic. Measured, not assumed — see appendix L.10.4.
+  'relative error': ['relative error', 'rel error', 'relative-error']
 });
 
 /**
@@ -122,7 +126,9 @@ export const SCENARIO_SLOTS = Object.freeze({
 
   // --- RQ2 ---
   'S-10': [{ slot: 'payload', leaves: ['payloadAtC3'], units: 'kg', labels: ['payload'], mode: 'prose' }],
-  'S-11': [{ slot: 'maxRelError', leaves: ['maxRelError', 'value'], units: null, labels: ['relative error', 'rel error', 'accuracy', 'agreement', 'error'], mode: 'prose', scientificOnly: true }],
+  // A4-7: unit-anchored (units:"relative error" confirmed live), with the
+  // e-notation anchor RETAINED as a fallback so a bare "3.43e-14" still counts.
+  'S-11': [{ slot: 'maxRelError', leaves: ['maxRelError', 'value'], units: 'relative error', labels: ['relative error', 'rel error', 'accuracy', 'agreement', 'error'], mode: 'prose', scientificOnly: true }],
   'S-12': [{ slot: 'deliveredMass', leaves: ['deliveredMass'], units: 'kg', labels: ['delivered mass', 'delivered'], mode: 'prose' }],
   'S-13': [{ slot: 'minC3', leaves: ['minC3'], units: 'km^2/s^2', labels: ['c3', 'minc3', 'departure energy'], mode: 'prose' }],
   'S-14': [{ slot: 'screeningStatus', leaves: [], units: null, mode: 'values-used-only', reason: 'the graded quantity is an enum value (low_departure_c3 etc.), not numeric' }],
@@ -194,10 +200,10 @@ function numbersWithSlotUnit(window, slot) {
     const value = Number(raw.replace(/,/g, ''));
     if (!Number.isFinite(value)) continue;
 
-    if (slot.scientificOnly) {
-      // e-notation is essentially never incidental prose, so it is a safe anchor
-      // for an otherwise unitless quantity.
-      if (/e[+-]?\d+$/i.test(raw)) found.push(value);
+    if (slot.scientificOnly && /e[+-]?\d+$/i.test(raw)) {
+      // e-notation is essentially never incidental prose, so it stays a safe
+      // anchor even when the slot also has a unit (A4-7).
+      found.push(value);
       continue;
     }
     if (aliases.length === 0) continue;
@@ -227,7 +233,13 @@ export function proseValuesForSlot(text, slot) {
     while (idx !== -1) {
       const start = idx + label.length;
       out.push(...numbersWithSlotUnit(normalized.slice(start, start + PROSE_WINDOW), slot));
-      const backFrom = Math.max(0, idx - PROSE_WINDOW_BACK);
+      // The backward window must not begin INSIDE a number: slicing mid-token
+      // manufactures a value that was never written ("...828e-14" -> 828e-14).
+      // Advance past any partial token at the cut.
+      let backFrom = Math.max(0, idx - PROSE_WINDOW_BACK);
+      while (backFrom > 0 && backFrom < idx && /[0-9.eE+-]/.test(normalized[backFrom - 1]) && /[0-9.]/.test(normalized[backFrom])) {
+        backFrom += 1;
+      }
       out.push(...numbersWithSlotUnit(normalized.slice(backFrom, idx), slot));
       idx = normalized.indexOf(label, idx + 1);
     }

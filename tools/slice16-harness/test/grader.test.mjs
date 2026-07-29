@@ -363,3 +363,42 @@ test('helper primitives behave as documented', () => {
   assert.equal(quantities.length, 2, 'both Quantity leaves must be discovered');
   assert.ok(quantities.some((q) => q.path === 'physical.estimatedRadius' && q.units === 'm'));
 });
+
+// ---------------------------------------------------------------------------
+// A4 — S-11 unit anchoring, and the backward-window cut
+// ---------------------------------------------------------------------------
+
+test('A4-7: S-11 is unit-anchored on the live "relative error" units', () => {
+  const slot = SCENARIO_SLOTS['S-11'][0];
+  assert.equal(slot.units, 'relative error', 'A4-7 replaces the unitless heuristic with the live units string');
+
+  // Unit-anchored form, e-notation fallback, and a plain restatement all count.
+  assert.deepEqual(proseValuesForSlot('max relative error 3.43e-14', slot), [3.43e-14]);
+  assert.deepEqual(proseValuesForSlot('accuracy 3.428650990914828e-14 relative error', slot), [3.428650990914828e-14]);
+  // No number near the label, and an unrelated count, must not register.
+  assert.deepEqual(proseValuesForSlot('the accuracy is excellent; 7 tools were used', slot), []);
+});
+
+test('REGRESSION: the backward window never begins inside a number', () => {
+  // Slicing mid-token manufactured a value that was never written
+  // ("...828e-14" -> 828e-14). Found while unit-anchoring S-11.
+  const slot = SCENARIO_SLOTS['S-11'][0];
+  const values = proseValuesForSlot('accuracy 3.428650990914828e-14 relative error', slot);
+  assert.deepEqual(values, [3.428650990914828e-14], 'exactly the written number, no truncated ghost');
+
+  // The backward window must still work when it starts on a clean boundary.
+  assert.deepEqual(proseValuesForSlot('812 m in diameter', SCENARIO_SLOTS['S-02'][0]), [812]);
+});
+
+test('A4: same-unit slot collisions stay fixed after the S-11 change', () => {
+  const s29 = proseValuesByScenarioSlot(
+    'The declination is -74.86868259337066 deg. The margin is -17.868682593370664 deg.',
+    SCENARIO_SLOTS['S-29']
+  );
+  assert.deepEqual(s29.get('dla'), [-74.86868259337066]);
+  assert.deepEqual(s29.get('marginDeg'), [-17.868682593370664]);
+
+  const s08 = proseValuesByScenarioSlot('The mass is 1000 kg and the propellant is 250 kg.', SCENARIO_SLOTS['S-08']);
+  assert.deepEqual(s08.get('mass'), [1000]);
+  assert.deepEqual(s08.get('propellant'), [250]);
+});

@@ -1,0 +1,1242 @@
+{
+  "marker": "S16-AMEND-A4-2026-07-28-A",
+  "note": "Exact request bodies each adapter WOULD send for S-02/ORIGINAL. Captured without any network call. system/scenario/tool-schema CONTENT is identical across providers; only the transport wrapper differs. Google additionally requires a projected schema subset — dropped keywords enumerated.",
+  "contentIdentity": {
+    "toolSchemas": true,
+    "systemText": true,
+    "scenarioText": true
+  },
+  "googleDroppedKeywords": [
+    "$schema",
+    "additionalProperties",
+    "default",
+    "exclusiveMinimum",
+    "maximum",
+    "minLength",
+    "minimum",
+    "pattern"
+  ],
+  "bodies": {
+    "openai": {
+      "apiSurface": "Chat Completions /v1/chat/completions (tools / tool_calls)",
+      "unverified": [
+        "model string gpt-5.5 / gpt-5.5-mini is a Q3 lead, not confirmed",
+        "seed acceptance unconfirmed for this model family",
+        "max_tokens vs max_completion_tokens unconfirmed for this model family",
+        "temperature:0 acceptance unconfirmed for this model family"
+      ],
+      "body": {
+        "model": "gpt-5.5",
+        "messages": [
+          {
+            "role": "system",
+            "content": "SYSTEM-TEXT-FIXED"
+          },
+          {
+            "role": "user",
+            "content": "What's the exact diameter of 99942?"
+          }
+        ],
+        "temperature": 0,
+        "top_p": 1,
+        "max_tokens": 2048,
+        "seed": 20260727,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "dla_feasibility",
+              "description": "Return DLA and launch-site screening verdicts for one Lambert cell. Unknown bodies return not_found; departure dates outside the committed Earth ephemeris span return out_of_envelope.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "departureDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "tofDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "M": {
+                    "type": "number",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "default": 0
+                  },
+                  "siteId": {
+                    "type": "string",
+                    "enum": [
+                      "cape-canaveral",
+                      "vandenberg-sfb"
+                    ]
+                  }
+                },
+                "required": [
+                  "designation",
+                  "departureDate",
+                  "tofDays"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "estimate_mission_cost",
+              "description": "Return the Slice 13 delivered-mass screening chain for one Lambert cell and vehicle. Unknown bodies return not_found; choosing a vehicle outside its published C3 curve returns out_of_envelope instead of extrapolating.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "departureDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "tofDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "M": {
+                    "type": "number",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "default": 0
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "siteId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "designation",
+                  "departureDate",
+                  "tofDays",
+                  "vehicleId"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "explain_cell",
+              "description": "Return the ordered derivation trail for one departure/TOF cell. Unknown bodies return not_found; selecting a vehicle outside its published C3 curve returns out_of_envelope instead of extrapolating.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "departureDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "tofDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "M": {
+                    "type": "number",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "default": 0
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "siteId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "designation",
+                  "departureDate",
+                  "tofDays"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_body",
+              "description": "Return one full Slice 9 catalog body record with Lambert screening status and quantity leaves. Unknown bodies return not_found.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "designation"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_validation_report",
+              "description": "Read the committed solver-validation artifacts without recomputing them. Figures are class-labeled so M=0, multi-rev magnitude-only, DLA vectors, and cost STRICT/OBSERVED surfaces cannot be conflated.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "enum": [
+                      "lambert_m0",
+                      "lambert_multirev",
+                      "dla_vectors",
+                      "cost_oracle",
+                      "all"
+                    ],
+                    "default": "all"
+                  }
+                },
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "porkchop_scan",
+              "description": "Run a bounded Lambert grid and return the lowest-C3 feasible cells. Unknown bodies return not_found; departure dates outside the committed Earth ephemeris span return out_of_envelope.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "departureStart": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "departureEnd": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "tofMinDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "tofMaxDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "M": {
+                    "type": "number",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "default": 0
+                  },
+                  "gridDeparture": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "default": 80
+                  },
+                  "gridTof": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "default": 50
+                  },
+                  "topN": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                    "default": 10
+                  }
+                },
+                "required": [
+                  "designation",
+                  "departureStart",
+                  "departureEnd",
+                  "tofMinDays",
+                  "tofMaxDays"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_bodies",
+              "description": "Search the closed-world Slice 9 NEA catalog by designation, name, orbit class, and Lambert screening status.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "orbitClass": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "screeningStatus": {
+                    "type": "string",
+                    "enum": [
+                      "low_departure_c3",
+                      "high_departure_c3",
+                      "lambert_unconvergeable",
+                      "propagator_failed"
+                    ]
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200,
+                    "default": 50
+                  },
+                  "cursor": {
+                    "type": "string",
+                    "pattern": "^\\d+$"
+                  }
+                },
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "anthropic": {
+      "apiSurface": "Messages API /v1/messages (tools / tool_use / tool_result)",
+      "unverified": [
+        "cache_control placement on the tools array (vs system only) unconfirmed",
+        "minimum cacheable-prefix token threshold unconfirmed for this prefix size",
+        "tool_result content sent as a plain string rather than a content-block array"
+      ],
+      "body": {
+        "model": "claude-sonnet-4-6",
+        "system": [
+          {
+            "type": "text",
+            "text": "SYSTEM-TEXT-FIXED",
+            "cache_control": {
+              "type": "ephemeral"
+            }
+          }
+        ],
+        "messages": [
+          {
+            "role": "user",
+            "content": "What's the exact diameter of 99942?"
+          }
+        ],
+        "max_tokens": 2048,
+        "temperature": 0,
+        "top_p": 1,
+        "tools": [
+          {
+            "name": "dla_feasibility",
+            "description": "Return DLA and launch-site screening verdicts for one Lambert cell. Unknown bodies return not_found; departure dates outside the committed Earth ephemeris span return out_of_envelope.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "designation": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "departureDate": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "tofDays": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "M": {
+                  "type": "number",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ],
+                  "default": 0
+                },
+                "siteId": {
+                  "type": "string",
+                  "enum": [
+                    "cape-canaveral",
+                    "vandenberg-sfb"
+                  ]
+                }
+              },
+              "required": [
+                "designation",
+                "departureDate",
+                "tofDays"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "estimate_mission_cost",
+            "description": "Return the Slice 13 delivered-mass screening chain for one Lambert cell and vehicle. Unknown bodies return not_found; choosing a vehicle outside its published C3 curve returns out_of_envelope instead of extrapolating.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "designation": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "departureDate": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "tofDays": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "M": {
+                  "type": "number",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ],
+                  "default": 0
+                },
+                "vehicleId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "siteId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "designation",
+                "departureDate",
+                "tofDays",
+                "vehicleId"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "explain_cell",
+            "description": "Return the ordered derivation trail for one departure/TOF cell. Unknown bodies return not_found; selecting a vehicle outside its published C3 curve returns out_of_envelope instead of extrapolating.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "designation": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "departureDate": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "tofDays": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "M": {
+                  "type": "number",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ],
+                  "default": 0
+                },
+                "vehicleId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "siteId": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "designation",
+                "departureDate",
+                "tofDays"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "get_body",
+            "description": "Return one full Slice 9 catalog body record with Lambert screening status and quantity leaves. Unknown bodies return not_found.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "designation": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "designation"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "get_validation_report",
+            "description": "Read the committed solver-validation artifacts without recomputing them. Figures are class-labeled so M=0, multi-rev magnitude-only, DLA vectors, and cost STRICT/OBSERVED surfaces cannot be conflated.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "section": {
+                  "type": "string",
+                  "enum": [
+                    "lambert_m0",
+                    "lambert_multirev",
+                    "dla_vectors",
+                    "cost_oracle",
+                    "all"
+                  ],
+                  "default": "all"
+                }
+              },
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "porkchop_scan",
+            "description": "Run a bounded Lambert grid and return the lowest-C3 feasible cells. Unknown bodies return not_found; departure dates outside the committed Earth ephemeris span return out_of_envelope.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "designation": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "departureStart": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "departureEnd": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "tofMinDays": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "tofMaxDays": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "M": {
+                  "type": "number",
+                  "enum": [
+                    0,
+                    1,
+                    2
+                  ],
+                  "default": 0
+                },
+                "gridDeparture": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "default": 80
+                },
+                "gridTof": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "default": 50
+                },
+                "topN": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 50,
+                  "default": 10
+                }
+              },
+              "required": [
+                "designation",
+                "departureStart",
+                "departureEnd",
+                "tofMinDays",
+                "tofMaxDays"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "search_bodies",
+            "description": "Search the closed-world Slice 9 NEA catalog by designation, name, orbit class, and Lambert screening status.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "orbitClass": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "screeningStatus": {
+                  "type": "string",
+                  "enum": [
+                    "low_departure_c3",
+                    "high_departure_c3",
+                    "lambert_unconvergeable",
+                    "propagator_failed"
+                  ]
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 200,
+                  "default": 50
+                },
+                "cursor": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                }
+              },
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          }
+        ]
+      }
+    },
+    "google": {
+      "apiSurface": "Generative Language v1beta :generateContent (functionDeclarations / functionCall / functionResponse)",
+      "unverified": [
+        "model string gemini-3.1-pro is a Q3 lead, not confirmed",
+        "functionResponse turn sent with role \"user\"; some versions expect role \"function\"",
+        "functionResponse.response sent as an object {result: \"...\"}; bare-string acceptance unconfirmed",
+        "exact draft-07 keyword subset accepted by this version is unconfirmed (projection is conservative)",
+        "v1beta targeted; whether this model requires v1 is unconfirmed"
+      ],
+      "body": {
+        "systemInstruction": {
+          "parts": [
+            {
+              "text": "SYSTEM-TEXT-FIXED"
+            }
+          ]
+        },
+        "contents": [
+          {
+            "role": "user",
+            "parts": [
+              {
+                "text": "What's the exact diameter of 99942?"
+              }
+            ]
+          }
+        ],
+        "generationConfig": {
+          "temperature": 0,
+          "topP": 1,
+          "maxOutputTokens": 2048
+        },
+        "tools": [
+          {
+            "functionDeclarations": [
+              {
+                "name": "dla_feasibility",
+                "description": "Return DLA and launch-site screening verdicts for one Lambert cell. Unknown bodies return not_found; departure dates outside the committed Earth ephemeris span return out_of_envelope.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "designation": {
+                      "type": "string"
+                    },
+                    "departureDate": {
+                      "type": "string"
+                    },
+                    "tofDays": {
+                      "type": "number"
+                    },
+                    "M": {
+                      "type": "number",
+                      "enum": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "siteId": {
+                      "type": "string",
+                      "enum": [
+                        "cape-canaveral",
+                        "vandenberg-sfb"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "designation",
+                    "departureDate",
+                    "tofDays"
+                  ]
+                }
+              },
+              {
+                "name": "estimate_mission_cost",
+                "description": "Return the Slice 13 delivered-mass screening chain for one Lambert cell and vehicle. Unknown bodies return not_found; choosing a vehicle outside its published C3 curve returns out_of_envelope instead of extrapolating.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "designation": {
+                      "type": "string"
+                    },
+                    "departureDate": {
+                      "type": "string"
+                    },
+                    "tofDays": {
+                      "type": "number"
+                    },
+                    "M": {
+                      "type": "number",
+                      "enum": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "vehicleId": {
+                      "type": "string"
+                    },
+                    "siteId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "designation",
+                    "departureDate",
+                    "tofDays",
+                    "vehicleId"
+                  ]
+                }
+              },
+              {
+                "name": "explain_cell",
+                "description": "Return the ordered derivation trail for one departure/TOF cell. Unknown bodies return not_found; selecting a vehicle outside its published C3 curve returns out_of_envelope instead of extrapolating.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "designation": {
+                      "type": "string"
+                    },
+                    "departureDate": {
+                      "type": "string"
+                    },
+                    "tofDays": {
+                      "type": "number"
+                    },
+                    "M": {
+                      "type": "number",
+                      "enum": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "vehicleId": {
+                      "type": "string"
+                    },
+                    "siteId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "designation",
+                    "departureDate",
+                    "tofDays"
+                  ]
+                }
+              },
+              {
+                "name": "get_body",
+                "description": "Return one full Slice 9 catalog body record with Lambert screening status and quantity leaves. Unknown bodies return not_found.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "designation": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "designation"
+                  ]
+                }
+              },
+              {
+                "name": "get_validation_report",
+                "description": "Read the committed solver-validation artifacts without recomputing them. Figures are class-labeled so M=0, multi-rev magnitude-only, DLA vectors, and cost STRICT/OBSERVED surfaces cannot be conflated.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "section": {
+                      "type": "string",
+                      "enum": [
+                        "lambert_m0",
+                        "lambert_multirev",
+                        "dla_vectors",
+                        "cost_oracle",
+                        "all"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "name": "porkchop_scan",
+                "description": "Run a bounded Lambert grid and return the lowest-C3 feasible cells. Unknown bodies return not_found; departure dates outside the committed Earth ephemeris span return out_of_envelope.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "designation": {
+                      "type": "string"
+                    },
+                    "departureStart": {
+                      "type": "string"
+                    },
+                    "departureEnd": {
+                      "type": "string"
+                    },
+                    "tofMinDays": {
+                      "type": "number"
+                    },
+                    "tofMaxDays": {
+                      "type": "number"
+                    },
+                    "M": {
+                      "type": "number",
+                      "enum": [
+                        0,
+                        1,
+                        2
+                      ]
+                    },
+                    "gridDeparture": {
+                      "type": "integer"
+                    },
+                    "gridTof": {
+                      "type": "integer"
+                    },
+                    "topN": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "designation",
+                    "departureStart",
+                    "departureEnd",
+                    "tofMinDays",
+                    "tofMaxDays"
+                  ]
+                }
+              },
+              {
+                "name": "search_bodies",
+                "description": "Search the closed-world Slice 9 NEA catalog by designation, name, orbit class, and Lambert screening status.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "query": {
+                      "type": "string"
+                    },
+                    "orbitClass": {
+                      "type": "string"
+                    },
+                    "screeningStatus": {
+                      "type": "string",
+                      "enum": [
+                        "low_departure_c3",
+                        "high_departure_c3",
+                        "lambert_unconvergeable",
+                        "propagator_failed"
+                      ]
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "cursor": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "deepseek": {
+      "apiSurface": "OpenAI-compatible Chat Completions /chat/completions (tools / tool_calls)",
+      "unverified": [
+        "model string deepseek-v4-flash is a Q3 lead, not confirmed",
+        "tool-calling support on this specific model string is unconfirmed",
+        "seed acceptance unconfirmed"
+      ],
+      "body": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "system",
+            "content": "SYSTEM-TEXT-FIXED"
+          },
+          {
+            "role": "user",
+            "content": "What's the exact diameter of 99942?"
+          }
+        ],
+        "temperature": 0,
+        "top_p": 1,
+        "max_tokens": 2048,
+        "seed": 20260727,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "dla_feasibility",
+              "description": "Return DLA and launch-site screening verdicts for one Lambert cell. Unknown bodies return not_found; departure dates outside the committed Earth ephemeris span return out_of_envelope.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "departureDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "tofDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "M": {
+                    "type": "number",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "default": 0
+                  },
+                  "siteId": {
+                    "type": "string",
+                    "enum": [
+                      "cape-canaveral",
+                      "vandenberg-sfb"
+                    ]
+                  }
+                },
+                "required": [
+                  "designation",
+                  "departureDate",
+                  "tofDays"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "estimate_mission_cost",
+              "description": "Return the Slice 13 delivered-mass screening chain for one Lambert cell and vehicle. Unknown bodies return not_found; choosing a vehicle outside its published C3 curve returns out_of_envelope instead of extrapolating.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "departureDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "tofDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "M": {
+                    "type": "number",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "default": 0
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "siteId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "designation",
+                  "departureDate",
+                  "tofDays",
+                  "vehicleId"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "explain_cell",
+              "description": "Return the ordered derivation trail for one departure/TOF cell. Unknown bodies return not_found; selecting a vehicle outside its published C3 curve returns out_of_envelope instead of extrapolating.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "departureDate": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "tofDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "M": {
+                    "type": "number",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "default": 0
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "siteId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "designation",
+                  "departureDate",
+                  "tofDays"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_body",
+              "description": "Return one full Slice 9 catalog body record with Lambert screening status and quantity leaves. Unknown bodies return not_found.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "designation"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "get_validation_report",
+              "description": "Read the committed solver-validation artifacts without recomputing them. Figures are class-labeled so M=0, multi-rev magnitude-only, DLA vectors, and cost STRICT/OBSERVED surfaces cannot be conflated.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "enum": [
+                      "lambert_m0",
+                      "lambert_multirev",
+                      "dla_vectors",
+                      "cost_oracle",
+                      "all"
+                    ],
+                    "default": "all"
+                  }
+                },
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "porkchop_scan",
+              "description": "Run a bounded Lambert grid and return the lowest-C3 feasible cells. Unknown bodies return not_found; departure dates outside the committed Earth ephemeris span return out_of_envelope.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "designation": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "departureStart": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "departureEnd": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                  },
+                  "tofMinDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "tofMaxDays": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "M": {
+                    "type": "number",
+                    "enum": [
+                      0,
+                      1,
+                      2
+                    ],
+                    "default": 0
+                  },
+                  "gridDeparture": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "default": 80
+                  },
+                  "gridTof": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "default": 50
+                  },
+                  "topN": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                    "default": 10
+                  }
+                },
+                "required": [
+                  "designation",
+                  "departureStart",
+                  "departureEnd",
+                  "tofMinDays",
+                  "tofMaxDays"
+                ],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "search_bodies",
+              "description": "Search the closed-world Slice 9 NEA catalog by designation, name, orbit class, and Lambert screening status.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "orbitClass": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "screeningStatus": {
+                    "type": "string",
+                    "enum": [
+                      "low_departure_c3",
+                      "high_departure_c3",
+                      "lambert_unconvergeable",
+                      "propagator_failed"
+                    ]
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200,
+                    "default": 50
+                  },
+                  "cursor": {
+                    "type": "string",
+                    "pattern": "^\\d+$"
+                  }
+                },
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
