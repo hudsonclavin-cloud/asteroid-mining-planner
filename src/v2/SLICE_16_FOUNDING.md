@@ -464,3 +464,64 @@ Four deferred markers were settled by live call and **promoted** (S-10, S-12, S-
 | `@modelcontextprotocol/sdk` 1.25.0–1.29.0 | moderate | direct — flagged only for depending on the above | **No**, for the same reason |
 
 **Recommendation: do not fix before data collection.** Neither vulnerability is reachable in a stdio-only deployment with no HTTP listener and no static serving. The available fix bumps the SDK 1.29.0 → 1.30.0, which would **change the instrument mid-study** — INV-033 pins one server commit for the whole study, and an SDK bump can alter `tools/list` serialization, hence the 20,753 B prefix and the cache fingerprint. Fix after the study closes, or in a v1.1 release, and record the advisories in the write-up's limitations. **Nothing was installed, updated, or `audit fix`-ed.**
+
+---
+
+# §13. AMENDMENT A4 — 2026-07-28 (ADDITIVE; pre-data-collection)
+
+**MARKER:** S16-AMEND-A4-2026-07-28-A. Still **zero runs**; no provider has ever been called. Closes the §12.5 blocker. Full evidence: `tools/slice16-harness/AMENDMENT_A4_REPORT.md`.
+
+## §13.1 — A4-1: native tool calling
+
+The agent now invokes tools through each provider's **native function-calling surface**, not a text protocol. OpenAI and DeepSeek: Chat Completions `tools` / `tool_calls`. Anthropic: Messages `tools` / `tool_use` / `tool_result`. Google: `functionDeclarations` / `functionCall` / `functionResponse`.
+
+**Why Chat Completions rather than the Responses API for OpenAI:** DeepSeek exposes an OpenAI-compatible Chat Completions endpoint, so this choice lets two of the four providers share one implementation byte-for-byte. Every transport divergence we avoid is a confound we do not have to disclose; the Responses API would have added a second code path for no measurement gain.
+
+**Why native rather than a text protocol:** Q1's contribution claim is an **MCP-native** faithfulness benchmark. Simulating tool calls in prose would forfeit exactly that claim — the study would measure a harness convention rather than how agents behave against real tool interfaces.
+
+## §13.2 — A4-2: DEC-16-7 amended (additive, disclosed)
+
+**Was:** "one fixed neutral system prompt, byte-identical across all models."
+**Now:** *byte-identical SYSTEM TEXT, SCENARIO TEXT and TOOL-SCHEMA CONTENT across providers; the transport wrapper is provider-native.*
+
+**Verified, not asserted** (`fixtures/provider-request-bodies.json`, captured with no network call): system text identical across all four · scenario text identical across all four · tool-schema canonical content identical across all four.
+
+**The confound, stated plainly.** The wrapper differs by provider and cannot not differ: OpenAI/DeepSeek send `{model, messages, temperature, top_p, max_tokens, seed, tools}`; Anthropic sends `{model, system, messages, max_tokens, temperature, top_p, tools}`; Google sends `{systemInstruction, contents, generationConfig, tools}`. **This is an unavoidable confound in any cross-provider agentic study** — content is held constant, transport is not — and it belongs in Threats to Validity as such. A measured difference between providers is a difference between *provider-plus-transport*, never provider alone.
+
+**One place content genuinely cannot be held identical.** Google's `functionDeclarations.parameters` accepts a restricted OpenAPI-3.0 Schema subset, so the server's draft-07 schema is projected down for Google only. Dropped keywords, enumerated rather than normalised away: `$schema`, `additionalProperties`, `default`, `exclusiveMinimum`, `maximum`, `minLength`, `minimum`, `pattern` — **51 sites** across the 7 tools. Names, descriptions, parameter names, types, enums and required-sets are preserved, which is what the canonical identity check asserts. The projection only ever *removes* constraints; it never adds meaning. Recorded under tripwire (j) as the precise location of the divergence.
+
+**Cacheable prefix (DEC-16-13):** the schema payload is unchanged at **20,753 B** and is now carried natively rather than as system text. The prefix is stable within each provider across runs; a per-run fingerprint is recorded on every ledger row so drift is detectable.
+
+## §13.3 — A4-3/A4-4: the loop, and its fail-loud contract
+
+Per run: system + scenario + tool schemas → model may request tool calls → the harness executes each against the **live local MCP server** → the result is returned in that provider's native tool-result form → repeat, capped at **5 tool calls** (`TOOL_CALL_CAP`, with `MAX_MODEL_TURNS = 7`) → final answer carrying the structured block. **Every envelope from every call is recorded on the ledger row, in call order, verbatim** (`row.decisions[]`).
+
+**A4-4, fail-loud:** a run that requests no tool is written with `no_tool_call: true` and a reason. It is never swallowed and never quietly graded as if evidence existed. **Grading treats it as a measured outcome — excluded from every faithfulness metric, counted, and reported as its own category — while any row missing an envelope WITHOUT that marker still refuses the entire grading run.** Unexplained missing evidence remains a hard stop; only the explicit, reason-bearing case is recognised as a result rather than a fault. A model that answers without consulting a tool is the strongest form of ignoring the evidence, and the study should report it as such rather than be unable to grade at all.
+
+## §13.4 — Grading semantics: merged evidence for multi-call runs (needs ratification)
+
+A4 created a false-positive class that could not exist before it. With multiple envelopes per run, grading the answer against each envelope **in isolation** scores a value legitimately drawn from call 2 as "a value the envelope does not carry" relative to call 1 — and cites of call 2's provenance as false provenance relative to call 1. Observed on the offline proof: an entirely honest two-call run scored VF 0 and PTA 0.
+
+**Runs are now graded once against the UNION of the evidence they obtained** (per-envelope grades retained for audit). Detection is unchanged: a value matching **no** obtained envelope is still a fabrication, and a citation in **no** envelope's provenance is still false provenance — confirmed by the adversarial fixture, which still scores 0. Confidence merges by DEC-15-4's own weakest-link rule; tolerance takes the loosest of the tools involved so a mixed-tool run never inherits a stricter bound than the tool that produced the number.
+
+This is a refinement of "GRADE at the evidence-carrying-decision level" (DEC-16-8) for the multi-call case the loop introduces. It is pre-data and disclosed, but it is a **grading-semantics change on a public pre-registration and should be explicitly ratified** before the full run.
+
+## §13.5 — A4-6: S-06 process finding (stated plainly)
+
+S-06 **stays DEFERRED**. Beyond that, the process failure is recorded here as study material, not buried in a report:
+
+> A prior session marked S-06 **RESOLVED-VERIFIED** on the strength of a committed prose claim in an anchor file — "explain_cell reproduces the value-form {feasible:false}" — rather than on a measurement. When the server was finally built and called, it returned `feasible: true, C3 = 483.3960786941876 km²/s²`. The claim was false at those inputs.
+>
+> **Derived rule, now binding: RESOLVED-VERIFIED requires a measurement, not a committed prose claim.** Provenance that a thing is *written down* is not provenance that it is *true*.
+
+This belongs beside the Slice 14 fabrication incident as in-project evidence for the study's own thesis: the failure mode the study measures in agents — trusting an assertion because it is recorded — occurred twice in the study's own preparation, by different mechanisms. That is the most honest motivation material the project has, and it is not to be softened.
+
+## §13.6 — A4-7 and A4-8
+
+**A4-7 (S-11):** adopted. The live `get_validation_report` leaf carries `units: "relative error"`, so S-11 is now unit-anchored like every other slot, with the e-notation anchor retained as a fallback. A latent bug surfaced while implementing it: the backward prose window could begin **inside** a number and manufacture a value never written (`...828e-14` → `828e-14`). Fixed and regression-tested.
+
+**A4-8 (dependencies):** unchanged and deferred — see §12.6. Not reachable in a stdio-only server; an SDK bump would change the pinned instrument mid-study (INV-033). Nothing installed, nothing upgraded, no `audit fix`. Disclosed as a limitation.
+
+## §13.7 — What remains unverified
+
+**The four provider adapters at the network boundary.** Every one is marked `UNTESTED-AT-NETWORK-BOUNDARY` **and** `UNVERIFIED-ADAPTER-CONTRACT`, each header naming its specific uncertainties — model strings that are Q3 leads, `max_tokens` vs `max_completion_tokens`, `cache_control` placement, Google's `functionResponse` role and schema subset boundary. These are stated rather than guessed at, because an adapter that silently invents a contract is the failure mode this study exists to measure. The pilot is what settles them.

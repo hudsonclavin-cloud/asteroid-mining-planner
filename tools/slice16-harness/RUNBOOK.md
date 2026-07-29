@@ -25,7 +25,7 @@ Pre-registration is **locked and reconciled**. Registered scope:
 
 **No run has ever occurred.** No model API has been called. The four provider adapters are **UNTESTED-AT-NETWORK-BOUNDARY** — written from documented contracts, never exercised on the wire. The MCP layer, by contrast, is now **live-verified** (§5).
 
-⛔ **The pilot is blocked on a harness gap — see §5b before spending anything.**
+✅ **The pilot is UNBLOCKED** (Amendment A4 implemented the tool-call loop). Run the readiness checklist in §5b before spending anything.
 
 ---
 
@@ -33,7 +33,7 @@ Pre-registration is **locked and reconciled**. Registered scope:
 
 ```sh
 node --test tools/slice16-harness/test/
-# expect: # pass 48 / # fail 0
+# expect: # pass 51 / # fail 0
 
 node tools/slice16-harness/runner.mjs --preflight
 # reports readiness; spends nothing
@@ -121,13 +121,47 @@ Use `npm ci` (not `npm install`) so the lockfile governs. The control arm does *
 
 **Dependency note:** `npm audit` reports 3 vulnerabilities (1 high, 2 moderate), all transitive through the MCP SDK. **None is reachable in a stdio-only server** and the recommendation is to leave them until after data collection — fixing bumps the SDK and would change the pinned instrument. Founding doc §12.6. Do not run `npm audit fix`.
 
-## 5b. ⛔ THE PILOT IS BLOCKED — read before spending anything
+## 5b. ✅ PRE-PILOT READINESS CHECKLIST — run these, do not trust this document
 
-**`runner.mjs` performs no tool calls.** It imports `extractEnvelope` and never calls it; `mcp` is used only for `listTools()` and `serverPath`. So the model gets tool *schemas as text* but can never invoke a tool, and **no ledger row carries an envelope**. A pilot run today would spend real money and produce model prose with nothing to grade it against — confirmed empirically: `grade.mjs` on a ledger in the runner's current shape refuses with exit 3, "no envelope on the row".
+The pilot was blocked on a missing tool-call loop. **Amendment A4 implemented it**, so the pilot is unblocked. Verify that by RUNNING the checks, not by believing the report — the same standard this study applies to its subjects. Every line below costs nothing.
 
-This is **not** fixed for you, on purpose: choosing how the agent requests a tool (native per-provider function-calling vs a text protocol) changes what the study measures and touches the pre-registered prompt contract. On a public pre-registration that is your call, as an additive amendment. See founding doc §12.5.
+```sh
+# [ ] 1. loop validated offline (live MCP server + mocked model)
+node tools/slice16-harness/runner.mjs --mock mock-toolcalls.json
+#     expect: "done: 60 runs written, 0 errored"
 
-**What is ready:** `mcp-client.mjs` is live-verified, `live-verify.mjs` demonstrates live envelope → slot extraction → grader end-to-end, and `grade.mjs` defines the exact ledger shape the loop must emit (`row.envelope` or `row.decisions[]`). Nothing else in the MCP layer blocks the pilot.
+# [ ] 2. every tool-involving ledger row carries its envelope(s)
+node -e "const r=require('fs').readFileSync('tools/slice16-harness/runs/ledger-mock.jsonl','utf8').trim().split('\n').map(JSON.parse); \
+const bad=r.filter(x=>!x.no_tool_call && !(x.decisions||[]).some(d=>d.envelope)); \
+console.log('rows',r.length,'| missing envelope (excl. no_tool_call):',bad.length)"
+#     expect: "rows 60 | missing envelope (excl. no_tool_call): 0"
+
+# [ ] 3. grade.mjs GRADES a real ledger (no EXIT=3)
+node tools/slice16-harness/grade.mjs tools/slice16-harness/runs/ledger-mock.jsonl; echo "exit=$?"
+#     expect: "graded 50 runs — 40 slot-graded (A3 active)", 10 no-tool-call reported, exit=0
+
+# [ ] 4. grade.mjs still refuses fail-closed on a row missing scenarioId
+node -e "const {gradeLedger}=await import('./tools/slice16-harness/grade.mjs'); \
+try{gradeLedger([{_line:1,runKey:'x',envelope:{envelope_version:'1'},answerBlock:{}}]);console.log('NOT REFUSED — BAD')} \
+catch(e){console.log('refused:',/no scenario id/.test(e.message))}" --input-type=module
+#     expect: "refused: true"
+
+# [ ] 5. grade.mjs still refuses fail-closed on a row missing an envelope
+node tools/slice16-harness/grade.mjs /tmp/s16-nolegdger.jsonl 2>/dev/null; \
+printf '{"runKey":"x","scenario":"S-02","answerBlock":{}}\n' > /tmp/s16-noenv.jsonl; \
+node tools/slice16-harness/grade.mjs /tmp/s16-noenv.jsonl; echo "exit=$?"
+#     expect: "GRADING REFUSED ... no envelope on the row", exit=3
+
+# [ ] 6. spend gate refuses the WHOLE run without S16_LIVE_OK + keys
+node tools/slice16-harness/runner.mjs --pilot; echo "exit=$?"
+#     expect: "REFUSED: no live provider call for gpt-5.5", exit=4, no ledger written
+
+# [ ] 7. control arm sends NO tools parameter (absent, not empty)
+node --test tools/slice16-harness/test/ 2>&1 | grep "control arm: every adapter omits"
+#     expect: "ok ... control arm: every adapter omits the `tools` parameter entirely, not an empty one"
+```
+
+Only when all seven pass, continue to the pilot.
 
 ## 6. Pilot
 
@@ -144,6 +178,17 @@ S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --pilot
 - One `prefix fingerprint` line, and **the same value on every row** — that is the DEC-16-7 audit trail. A fingerprint that varies mid-run invalidates those runs.
 - Every row has `usage.reported: true` — provider-reported tokens, which replace the chars/4 est-tok heuristic.
 - `answerBlockOk: true` on the large majority of rows. Widespread `false` means models are not honouring the structured-answer contract, which is a harness/prompt problem, not a result.
+- **`decisions[]` non-empty on every tool-involving row** — that array is the envelopes, in call order. An empty `decisions` with no `no_tool_call` marker means the loop broke.
+- **`toolCallCount` between 1 and 5**, `cappedAt: null` on most rows. `cappedAt: 5` means the model exhausted the cap.
+- **`usage.reported: true`** with non-zero `inputTokens`/`outputTokens`, summed across turns in `usageTurns`.
+
+**How to spot the no-tool-call case:** rows carry `no_tool_call: true` plus `no_tool_call_reason`. `grade.mjs` prints them under `!! N run(s) made NO TOOL CALL — excluded from all metrics (A4-4)`. **This is a result, not an error** — the model answered without consulting a tool. If it is widespread across every model, suspect the adapter (tools not reaching the provider) before concluding anything about behaviour.
+
+**Grade the pilot:**
+
+```sh
+node tools/slice16-harness/grade.mjs tools/slice16-harness/runs/ledger-pilot.jsonl
+```
 
 **What means stop and look:**
 
