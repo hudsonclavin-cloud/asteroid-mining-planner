@@ -147,8 +147,7 @@ catch(e){console.log('refused:',/no scenario id/.test(e.message))}" --input-type
 #     expect: "refused: true"
 
 # [ ] 5. grade.mjs still refuses fail-closed on a row missing an envelope
-node tools/slice16-harness/grade.mjs /tmp/s16-nolegdger.jsonl 2>/dev/null; \
-printf '{"runKey":"x","scenario":"S-02","answerBlock":{}}\n' > /tmp/s16-noenv.jsonl; \
+printf '{"runKey":"x","scenario":"S-02","answerBlock":{}}\n' > /tmp/s16-noenv.jsonl
 node tools/slice16-harness/grade.mjs /tmp/s16-noenv.jsonl; echo "exit=$?"
 #     expect: "GRADING REFUSED ... no envelope on the row", exit=3
 
@@ -162,6 +161,8 @@ node --test tools/slice16-harness/test/ 2>&1 | grep "control arm: every adapter 
 ```
 
 Only when all seven pass, continue to the pilot.
+
+> **Do not pipe these into `head`/`grep` if you care about the exit code** — `$?` would then report the pipe's last stage, not the command's. Every check above was executed verbatim on 2026-07-29 and produced exactly the expected output; check 6 additionally leaves **no ledger file behind**, which is part of what "refuses the whole run" means.
 
 ## 6. Pilot
 
