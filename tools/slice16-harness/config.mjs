@@ -50,6 +50,21 @@ export const FORM_ALLOCATION = Object.freeze({
 export const PROMPT_FORMS = Object.freeze(['ORIGINAL', 'P1', 'P2']);
 
 // ---------------------------------------------------------------------------
+// A4-3 — agentic tool-call loop
+// ---------------------------------------------------------------------------
+
+/** Max tool calls per run. Matches the 1–5 call scenario design. */
+export const TOOL_CALL_CAP = 5;
+
+/** Safety bound on model turns, so a pathological loop cannot bill forever. */
+export const MAX_MODEL_TURNS = TOOL_CALL_CAP + 2;
+
+/** Sent once the cap is reached, asking for the final answer without more tools. */
+export const CAP_NOTICE =
+  'You have reached the maximum number of tool calls for this task. ' +
+  'Do not request any further tools. Give your final answer now, ending with the required JSON block.';
+
+// ---------------------------------------------------------------------------
 // DEC-16-6 — model roster (k=6, 4 labs)
 // ---------------------------------------------------------------------------
 //

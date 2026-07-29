@@ -22,6 +22,7 @@ import { resolve } from 'node:path';
 import {
   ACTIVE_SCENARIOS, CONTROL_ARM, CONTROL_RUN_COUNT, DEFERRED_SCENARIOS,
   PRIMARY_RUN_COUNT, PRIMARY_SCENARIOS, STRUCK_SCENARIOS, SCENARIOS, TOTAL_RUN_COUNT,
+  CAP_NOTICE, MAX_MODEL_TURNS, TOOL_CALL_CAP,
   MARKER, PATHS, PILOT, ROSTER, RUNS_PER_CELL,
   SpendGuardError, assertLiveAllowed, expandForms, liveReadiness, modelById
 } from './config.mjs';
@@ -121,16 +122,81 @@ async function executeRun({ model, scenario, form, rep, prefix, adapter, mcp, ar
 
   try {
     const userTurn = buildUserTurn(scenario, form);
-    const reply = await adapter.complete({ model, prefix, userTurn, scenario, form });
-    const extracted = extractAnswerBlock(reply.text);
+    const session = adapter.startSession({ model, prefix, userTurn, mcpTools: prefix.tools, scenario, form });
 
-    row.replyText = reply.text;
-    row.usage = reply.usage ?? { reported: false };
+    const decisions = [];   // envelopes, in call order — what the grader reads
+    const toolCallLog = []; // full call record, including failures
+    const usageTurns = [];
+    let calls = 0;
+    let finalText = '';
+    let stopReason = null;
+    let cappedAt = null;
+
+    for (let turn = 0; turn < MAX_MODEL_TURNS; turn += 1) {
+      const step = await adapter.step(session, {});
+      usageTurns.push(step.usage ?? { reported: false });
+      stopReason = step.stopReason ?? stopReason;
+
+      if (!step.toolCalls || step.toolCalls.length === 0) {
+        finalText = step.text ?? '';
+        break;
+      }
+
+      for (const call of step.toolCalls) {
+        if (calls >= TOOL_CALL_CAP) break;
+        calls += 1;
+        let raw;
+        let envelope = null;
+        let callError = null;
+        try {
+          raw = await mcp.callTool(call.name, call.args);
+          envelope = extractEnvelope(raw);
+        } catch (error) {
+          callError = error instanceof Error ? error.message : String(error);
+          raw = { isError: true, error: { message: callError } };
+        }
+        // Every envelope is recorded verbatim, in call order (A4-3).
+        decisions.push({ index: calls, tool: call.name, args: call.args, envelope, mcpError: Boolean(raw?.isError), callError });
+        toolCallLog.push({ index: calls, id: call.id, tool: call.name, args: call.args, mcpError: Boolean(raw?.isError), callError });
+        adapter.appendToolResult(session, call, JSON.stringify(raw));
+      }
+
+      if (calls >= TOOL_CALL_CAP) {
+        cappedAt = calls;
+        adapter.appendCapNotice(session, CAP_NOTICE);
+        const closing = await adapter.step(session, {});
+        usageTurns.push(closing.usage ?? { reported: false });
+        finalText = closing.text ?? '';
+        stopReason = closing.stopReason ?? stopReason;
+        break;
+      }
+    }
+
+    const extracted = extractAnswerBlock(finalText);
+
+    row.replyText = finalText;
+    row.toolCallCount = calls;
+    row.toolCalls = toolCallLog;
+    row.decisions = decisions;
+    row.cappedAt = cappedAt;
+    row.stopReason = stopReason;
+    row.usageTurns = usageTurns;
+    row.usage = sumUsage(usageTurns);
     row.answerBlock = extracted.block;
     row.answerBlockOk = extracted.ok;
     row.answerBlockReason = extracted.reason;
     row.finishedAt = new Date().toISOString();
     row.error = null;
+
+    // A4-4 FAIL-LOUD: a run that never called a tool is marked, not swallowed
+    // and not quietly graded as though evidence existed. With no `decisions`,
+    // grade.mjs leaves the row UNGRADEABLE — which is the intended outcome.
+    if (calls === 0 && prefix.toolsAttached !== false) {
+      row.no_tool_call = true;
+      row.no_tool_call_reason =
+        `model produced a final answer without requesting any tool (stopReason=${stopReason ?? 'null'}); ` +
+        'no envelope was obtained, so this run carries no evidence and is not gradeable';
+    }
   } catch (error) {
     // A spend-guard refusal is NOT a per-run error to be logged and stepped
     // over — it means the whole invocation is unauthorized. Rethrow so the
@@ -145,6 +211,21 @@ async function executeRun({ model, scenario, form, rep, prefix, adapter, mcp, ar
   }
 
   return row;
+}
+
+/** Adds up per-turn provider usage so the ledger carries a run total. */
+function sumUsage(turns) {
+  const reported = turns.filter((u) => u && u.reported);
+  if (reported.length === 0) return { reported: false, turns: turns.length };
+  const add = (key) => reported.reduce((acc, u) => acc + (Number(u[key]) || 0), 0);
+  return {
+    reported: true,
+    turns: turns.length,
+    inputTokens: add('inputTokens'),
+    outputTokens: add('outputTokens'),
+    totalTokens: add('totalTokens'),
+    cachedInputTokens: add('cachedInputTokens')
+  };
 }
 
 /**
@@ -219,13 +300,20 @@ export async function main(argv = process.argv.slice(2)) {
     const mockAdapter = createMockAdapter(canned);
     adapterFor = async () => mockAdapter;
     models = [{ id: `mock:${canned.name}`, lab: 'mock', tier: 'mock', adapter: 'mock', keyEnv: 'NONE' }];
-    // Only replay scenarios the canned set actually covers. Planning the whole
-    // active set against a two-scenario fixture produced 210 spurious "no canned
-    // reply" errors and made the offline reproduction look broken to reviewers.
-    mockScenarioIds = Object.keys(canned.replies ?? {});
-    // Offline: no server, so the prefix carries an empty tool list. The prefix
-    // fingerprint still proves stability across the mock run.
-    prefix = buildPrefix({ tools: [] });
+    mockScenarioIds = Object.keys(canned.scripts ?? {});
+    // A4: the mock emits REAL tool calls, so mock mode now spawns the local MCP
+    // server too. Only the model text is canned; every envelope is genuine.
+    try {
+      mcp = await connectMcp();
+    } catch (error) {
+      if (error instanceof McpServerUnavailableError) {
+        console.error(error.message);
+        return 3;
+      }
+      throw error;
+    }
+    const mockToolsList = await mcp.listTools();
+    prefix = buildPrefix(mockToolsList, { toolsAttached: !canned.controlArm });
     prefix.fingerprint = prefixFingerprint(prefix);
     // fall through to planning
   } else if (wantsControl) {

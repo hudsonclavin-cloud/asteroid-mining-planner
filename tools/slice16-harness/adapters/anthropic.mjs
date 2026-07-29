@@ -1,72 +1,128 @@
-// Slice 16 harness — Anthropic provider adapter.
-// MARKER: S16-LOCK-AND-HARNESS-2026-07-27-A
+// Slice 16 harness — Anthropic adapter (native tool calling).
+// MARKER: S16-AMEND-A4-2026-07-28-A
 //
 // !!! UNTESTED-AT-NETWORK-BOUNDARY !!!
-// Never executed against the live API in this session (paid calls prohibited).
-// Shapes follow the documented Messages API contract but are unconfirmed on the
-// wire. The pilot (DEC-16-11) is the first real test.
+// !!! UNVERIFIED-ADAPTER-CONTRACT  !!!
 //
-// Dependencies: none. Uses global fetch (Node >= 18).
+// API SURFACE TARGETED: Messages API, `POST https://api.anthropic.com/v1/messages`,
+// header `anthropic-version: 2023-06-01`. Tools declared as
+// `tools: [{name, description, input_schema}]`; the model requests a call via a
+// `{type:'tool_use', id, name, input}` block in `content` with
+// `stop_reason: 'tool_use'`; results are returned as a USER message containing
+// `{type:'tool_result', tool_use_id, content}` blocks.
+//
+// SPECIFIC UNCERTAINTIES (tripwire (k)):
+//   1. `cache_control` PLACEMENT. Prompt caching is a DEC-16-7 design default, so
+//      the system block is marked `{type:'ephemeral'}`. Whether the tools array
+//      should ALSO carry a cache_control breakpoint (and whether marking both is
+//      accepted) is unconfirmed. If the pilot rejects it, drop cache_control —
+//      caching is an economy, not a measurement, and losing it costs money but
+//      not validity.
+//   2. MINIMUM CACHEABLE PREFIX. Caching has a minimum token threshold; whether
+//      our system block alone clears it is unconfirmed. A cache that never hits
+//      is a cost surprise, not a correctness problem.
+//   3. TOOL-RESULT CONTENT TYPE. `content` is sent as a plain string. The API
+//      also accepts an array of content blocks; the string form is the simpler
+//      documented shape and is what is used here.
+// The two Anthropic MODEL STRINGS are the only [Certain] entries in the roster,
+// so unlike the other three adapters, model identity is not a suspect here.
 
 import { assertLiveAllowed, SAMPLING } from '../config.mjs';
+import { toAnthropicTools } from '../tool-schema.mjs';
 
 export const PROVIDER = 'anthropic';
 export const ENDPOINT = 'https://api.anthropic.com/v1/messages';
 export const API_VERSION = '2023-06-01';
+export const API_SURFACE = 'Messages API /v1/messages (tools / tool_use / tool_result)';
+export const UNVERIFIED_CONTRACT = [
+  'cache_control placement on the tools array (vs system only) unconfirmed',
+  'minimum cacheable-prefix token threshold unconfirmed for this prefix size',
+  'tool_result content sent as a plain string rather than a content-block array'
+];
 
-export async function complete({ model, prefix, userTurn, priorTurns = [], env = process.env, fetchImpl = globalThis.fetch }) {
-  assertLiveAllowed(model, env); // hard spend guard — throws before any network I/O
+export function startSession({ model, prefix, userTurn, mcpTools }) {
+  return {
+    provider: PROVIDER,
+    model,
+    prefix,
+    // Control arm (A4-5): `tools` ABSENT, not empty.
+    tools: prefix.toolsAttached === false ? null : toAnthropicTools(mcpTools ?? prefix.tools ?? []),
+    // Anthropic takes the system prompt out-of-band, so it never occupies a turn.
+    system: [{ type: 'text', text: prefix.system, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content: userTurn }]
+  };
+}
 
-  // Anthropic takes the system prompt out-of-band. cache_control marks the
-  // stable prefix so DEC-16-7's caching default is actually exercised rather
-  // than merely intended.
-  // Control arm attaches no tools: omit the block entirely rather than sending
-  // an empty one, so the model is never told tools exist (A1 §10.2).
-  const system = prefix.toolsAttached === false
-    ? [{ type: 'text', text: prefix.system, cache_control: { type: 'ephemeral' } }]
-    : [
-        { type: 'text', text: prefix.system },
-        {
-          type: 'text',
-          text: `Available tools (JSON schema):\n${prefix.toolsSerialized}`,
-          cache_control: { type: 'ephemeral' }
-        }
-      ];
-
-  const messages = [...priorTurns, { role: 'user', content: userTurn }];
-
+/** Pure — no network. Exposed so Task 4 can capture the exact wire body. */
+export function buildRequestBody(session) {
   const body = {
-    model: model.id,
-    system,
-    messages,
+    model: session.model.id,
+    system: session.system,
+    messages: session.messages,
     max_tokens: SAMPLING.maxOutputTokens,
     temperature: SAMPLING.temperature,
     top_p: SAMPLING.top_p
     // No seed parameter on this API; determinism is best-effort and disclosed
     // (DEC-16-7). Repetitions, not seeds, are the variance control.
   };
+  if (session.tools !== null) body.tools = session.tools;
+  return body;
+}
+
+export async function step(session, { env = process.env, fetchImpl = globalThis.fetch } = {}) {
+  assertLiveAllowed(session.model, env); // hard spend guard, before any I/O
 
   const response = await fetchImpl(ENDPOINT, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': env[model.keyEnv],
+      'x-api-key': env[session.model.keyEnv],
       'anthropic-version': API_VERSION
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(buildRequestBody(session))
   });
-
   if (!response.ok) {
     const detail = await response.text().catch(() => '<unreadable>');
     throw new Error(`anthropic ${response.status}: ${detail.slice(0, 500)}`);
   }
 
   const json = await response.json();
-  const text = Array.isArray(json?.content)
-    ? json.content.filter((b) => b?.type === 'text').map((b) => b.text).join('')
-    : '';
+  const content = Array.isArray(json?.content) ? json.content : [];
 
-  return { text, usage: normalizeUsage(json?.usage), raw: json };
+  // The assistant turn must be echoed back before tool results.
+  session.messages.push({ role: 'assistant', content });
+
+  const toolCalls = content
+    .filter((block) => block?.type === 'tool_use')
+    .map((block) => ({ id: block.id, name: block.name, args: block.input ?? {} }));
+
+  return {
+    text: content.filter((b) => b?.type === 'text').map((b) => b.text).join(''),
+    toolCalls,
+    stopReason: json?.stop_reason ?? null,
+    usage: normalizeUsage(json?.usage),
+    raw: json
+  };
+}
+
+/**
+ * Anthropic returns tool results inside a USER message. Consecutive results are
+ * merged into one user turn, which is the documented shape when a single
+ * assistant turn requested several tools at once.
+ */
+export function appendToolResult(session, toolCall, resultText) {
+  const block = {
+    type: 'tool_result',
+    tool_use_id: toolCall.id,
+    content: typeof resultText === 'string' ? resultText : JSON.stringify(resultText)
+  };
+  const last = session.messages[session.messages.length - 1];
+  if (last?.role === 'user' && Array.isArray(last.content)) last.content.push(block);
+  else session.messages.push({ role: 'user', content: [block] });
+}
+
+export function appendCapNotice(session, text) {
+  session.messages.push({ role: 'user', content: text });
 }
 
 function normalizeUsage(usage) {

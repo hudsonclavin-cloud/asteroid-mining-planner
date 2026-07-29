@@ -1,82 +1,47 @@
-// Slice 16 harness — OpenAI provider adapter.
-// MARKER: S16-LOCK-AND-HARNESS-2026-07-27-A
+// Slice 16 harness — OpenAI adapter (native tool calling).
+// MARKER: S16-AMEND-A4-2026-07-28-A
 //
 // !!! UNTESTED-AT-NETWORK-BOUNDARY !!!
-// No request in this file has ever been executed against the live API. The
-// request/response shapes below are written from the documented Chat Completions
-// contract but have NOT been confirmed on the wire, because this session was
-// prohibited from making paid calls. The pilot (DEC-16-11) is what tests it.
-// Treat any 4xx from this adapter as an adapter bug first, a model-string
-// problem second.
+// !!! UNVERIFIED-ADAPTER-CONTRACT  !!!
 //
-// Dependencies: none. Uses global fetch (Node >= 18).
+// API SURFACE TARGETED: OpenAI Chat Completions, `POST /v1/chat/completions`,
+// function calling via the `tools` request field and `choices[].message.tool_calls`
+// in the response; tool results returned as `{role:'tool', tool_call_id, content}`.
+// Rationale for this surface over the Responses API: see openai-compatible.mjs.
+//
+// SPECIFIC UNCERTAINTIES (tripwire (k)) — each is a place a 400 could originate:
+//   1. MODEL STRING. `gpt-5.5` / `gpt-5.5-mini` come from Q3 research and are
+//      LEADS, not confirmed. If either is wrong the call fails before tools
+//      matter. Confirm against the models endpoint first.
+//   2. `seed` SUPPORT. Sent because Chat Completions has historically accepted
+//      it for best-effort determinism (DEC-16-7). If this model family rejects
+//      or ignores it, drop the field — determinism is already disclosed as
+//      best-effort and repetitions are the real variance control.
+//   3. `max_tokens` vs `max_completion_tokens`. Newer OpenAI model families have
+//      moved to `max_completion_tokens` and reject `max_tokens`. WHICH ONE
+//      `gpt-5.5` WANTS IS UNCONFIRMED. If the pilot 400s on an unknown/unsupported
+//      parameter, this is the first thing to change.
+//   4. TEMPERATURE. Some newer families accept only the default temperature and
+//      reject `temperature: 0`. Unconfirmed for this string.
+// What would confirm all four: one successful pilot call, or the provider's
+// current model-reference page for the exact string.
 
-import { assertLiveAllowed, SAMPLING } from '../config.mjs';
+import { createOpenAICompatibleAdapter } from './openai-compatible.mjs';
 
-export const PROVIDER = 'openai';
-export const ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+const adapter = createOpenAICompatibleAdapter({
+  provider: 'openai',
+  endpoint: 'https://api.openai.com/v1/chat/completions',
+  apiSurface: 'Chat Completions /v1/chat/completions (tools / tool_calls)',
+  unverified: [
+    'model string gpt-5.5 / gpt-5.5-mini is a Q3 lead, not confirmed',
+    'seed acceptance unconfirmed for this model family',
+    'max_tokens vs max_completion_tokens unconfirmed for this model family',
+    'temperature:0 acceptance unconfirmed for this model family'
+  ]
+});
 
-/**
- * @param {{model: object, prefix: object, userTurn: string, priorTurns?: Array, env?: object, fetchImpl?: Function}} args
- * @returns {Promise<{text: string, usage: object, raw: object}>}
- */
-export async function complete({ model, prefix, userTurn, priorTurns = [], env = process.env, fetchImpl = globalThis.fetch }) {
-  assertLiveAllowed(model, env); // hard spend guard — throws before any network I/O
-
-  const messages = [
-    { role: 'system', content: prefix.system },
-    // Tool schemas are carried in the system position as a stable text block so
-    // the cacheable prefix is byte-identical across providers. The study grades
-    // answer faithfulness, not native tool-calling ergonomics.
-    // Control arm attaches no tools: omit the block entirely rather than
-    // sending an empty one, so the model is never told tools exist (A1 §10.2).
-    ...(prefix.toolsAttached === false
-      ? []
-      : [{ role: 'system', content: `Available tools (JSON schema):\n${prefix.toolsSerialized}` }]),
-    ...priorTurns,
-    { role: 'user', content: userTurn }
-  ];
-
-  const body = {
-    model: model.id,
-    messages,
-    temperature: SAMPLING.temperature,
-    top_p: SAMPLING.top_p,
-    max_tokens: SAMPLING.maxOutputTokens,
-    seed: SAMPLING.seed
-  };
-
-  const response = await fetchImpl(ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${env[model.keyEnv]}`
-    },
-    body: JSON.stringify(body)
-  });
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '<unreadable>');
-    throw new Error(`openai ${response.status}: ${detail.slice(0, 500)}`);
-  }
-
-  const json = await response.json();
-  const text = json?.choices?.[0]?.message?.content ?? '';
-  return {
-    text,
-    usage: normalizeUsage(json?.usage),
-    raw: json
-  };
-}
-
-/** Provider-reported usage — replaces the chars/4 est-tok heuristic (DEC-16-13). */
-function normalizeUsage(usage) {
-  if (!usage || typeof usage !== 'object') return { reported: false };
-  return {
-    reported: true,
-    inputTokens: usage.prompt_tokens ?? null,
-    outputTokens: usage.completion_tokens ?? null,
-    totalTokens: usage.total_tokens ?? null,
-    cachedInputTokens: usage.prompt_tokens_details?.cached_tokens ?? null
-  };
-}
+export const PROVIDER = adapter.PROVIDER;
+export const API_SURFACE = adapter.API_SURFACE;
+export const UNVERIFIED_CONTRACT = adapter.UNVERIFIED_CONTRACT;
+export const ENDPOINT = adapter.ENDPOINT;
+export const { startSession, buildRequestBody, step, appendToolResult, appendCapNotice } = adapter;
