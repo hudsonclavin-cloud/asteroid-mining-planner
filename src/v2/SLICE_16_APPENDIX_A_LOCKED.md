@@ -938,3 +938,17 @@ S-06 was marked RESOLVED-VERIFIED on the strength of an anchor file's sentence r
 Scenarios may now legitimately involve up to **5 tool calls** (`TOOL_CALL_CAP`), and every envelope is recorded in call order. A run is graded **once against the union of the evidence it obtained**, not against each envelope in isolation — otherwise a value drawn from the second call reads as a fabrication against the first (founding §13.4). Slot declarations in §L.9 are unchanged; only the evidence they are matched against is now the merged set.
 
 A run that requests **no tool at all** carries no evidence, is marked `no_tool_call`, and is excluded from every faithfulness metric while being counted and reported separately. It is never graded as though evidence existed.
+
+---
+
+## L.12 — AMENDMENT A5: the grading unit is RATIFIED (additive; 2026-07-29; pre-data-collection)
+
+**MARKER:** S16-AMEND-A5-2026-07-29-A. Full ratification text: `SLICE_16_FOUNDING.md` §14.
+
+§L.11.3 above states the union-of-run-evidence rule as A4 implemented it. That statement was **descriptive of an unratified change**; it is now **ratified**, and §L.11.3 stands unaltered as the description of record.
+
+**Ratified:** for a multi-tool-call run, faithfulness is graded once against the **union of all envelopes returned within that run** — Quantity leaves, provenance, and assumptions unioned; confidence by DEC-15-4's weakest-link rule; tolerance the loosest of the tools involved. Per-envelope grades are retained for audit. **Single-call runs are unaffected** — the union of one envelope is that envelope, verified by object identity.
+
+**Safeguard, re-observed 2026-07-29 (frozen fixtures re-run, expectations untouched):** PF1, PF2, X1, X2, X3 all score FULL 0 under the current code, and PF2's prose-fabricated 1200 kg still scores RFR 0 / FULL 0 **when graded against a two-envelope union**. Detection was not weakened.
+
+**Two limitations recorded at ratification (§14.5.1), both measured:** intra-run cross-attribution now passes PTA (citing one call's provenance for another call's value), and a residual false positive scores an honest citation of the *second* tool's name as false provenance. The second is **reported, not fixed** — it needs a decision before the full run. Slot declarations in §L.9 are unchanged; only the evidence set they match against is the merged one.
