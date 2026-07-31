@@ -131,9 +131,21 @@ The pilot was blocked on a missing tool-call loop. **Amendment A4 implemented it
 ```sh
 # [ ] 1. loop validated offline (live MCP server + mocked model)
 node tools/slice16-harness/runner.mjs --mock mock-toolcalls.json
-#     expect: "done: 60 runs written, 0 errored"
+#     BOTH of these are a PASS — the runner is resumable, so a re-run legitimately
+#     writes nothing. Which one you get depends only on whether the mock ledger
+#     already exists:
+#       first run  -> "planned=60 already-done=0  pending=60" ... "done: 60 runs written, 0 errored"
+#       re-run     -> "planned=60 already-done=60 pending=0"  ... "done: 0 runs written, 0 errored"
+#     FAIL is: a non-zero "errored" count, or planned != 60.
+#     Want the first-run output? Delete just the mock ledger, never the directory:
+#       rm -f tools/slice16-harness/runs/ledger-mock.jsonl
+#     (Do NOT `rm -rf .../runs` — after the pilot that directory holds
+#      ledger-pilot.jsonl, i.e. real paid data that INV-036 treats as an artifact.)
 
 # [ ] 2. every tool-involving ledger row carries its envelope(s)
+#     REQUIRES check 1 to have run: this reads the ledger check 1 writes.
+#     On a cleared runs/ it fails with ENOENT — that means "run check 1 first",
+#     not "the harness is broken".
 node -e "const r=require('fs').readFileSync('tools/slice16-harness/runs/ledger-mock.jsonl','utf8').trim().split('\n').map(JSON.parse); \
 const bad=r.filter(x=>!x.no_tool_call && !(x.decisions||[]).some(d=>d.envelope)); \
 console.log('rows',r.length,'| missing envelope (excl. no_tool_call):',bad.length)"
@@ -156,8 +168,20 @@ node tools/slice16-harness/grade.mjs /tmp/s16-noenv.jsonl; echo "exit=$?"
 
 # [ ] 5b. keys present for the four active providers (names only, no values)
 node tools/slice16-harness/runner.mjs --preflight | sed -n '/Provider keys/,/Scenario set/p'
-#     expect: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, TOGETHER_API_KEY listed
-#     expect: the Together slot shows [pending] until you fill its model string
+#     expect: all four key names listed — OPENAI_API_KEY, ANTHROPIC_API_KEY,
+#             GOOGLE_API_KEY, TOGETHER_API_KEY
+#     expect: the Together slot's STATUS column reads DEFERRED (not ABSENT), with
+#             its deferral reason printed on the following lines, and certainty
+#             [pending] because its model string is still a sentinel.
+#
+#     WITH YOUR .env SOURCED the output differs, and that is correct:
+#       - the three funded providers' status column reads `present`, not ABSENT
+#       - Together still reads DEFERRED — it is excluded by roster status, not by
+#         a missing key, so adding a TOGETHER_API_KEY would not change this line
+#       - and check 6 below then refuses on the MISSING S16_LIVE_OK alone, rather
+#         than on a missing key. Its exit code is still 4.
+#     A keyless verification run (all ABSENT) and a keyed run (three present) are
+#     both healthy; they simply report different things.
 
 # [ ] 6. spend gate refuses the WHOLE run without S16_LIVE_OK + keys
 node tools/slice16-harness/runner.mjs --pilot; echo "exit=$?"
@@ -170,7 +194,11 @@ node --test tools/slice16-harness/test/ 2>&1 | grep "control arm: every adapter 
 
 Only when all of these pass, continue to the pilot.
 
-> **Do not pipe these into `head`/`grep` if you care about the exit code** — `$?` would then report the pipe's last stage, not the command's. Every check above was executed verbatim on 2026-07-29 and produced exactly the expected output; check 6 additionally leaves **no ledger file behind**, which is part of what "refuses the whole run" means.
+> **Do not pipe these into `head`/`grep` if you care about the exit code** — `$?` would then report the pipe's last stage, not the command's.
+>
+> **Execution record.** All eight commands were run verbatim on 2026-07-30 (the list is numbered 1–7 but carries an inserted `5b`, so there are eight). Seven matched their expected output exactly. Check 1 reported `0 runs written` because a mock ledger from an earlier run was still present and resumability correctly skipped all 60 — the harness behaving properly, not a failure. Clearing the mock ledger and re-running gave `60 runs written, 0 errored`. Check 1's expected text above was widened on 2026-07-30 to cover both outcomes rather than leave that reading as a false alarm.
+>
+> Check 6 additionally leaves **no `ledger-pilot.jsonl` behind**, which is part of what "refuses the whole run" means. Any `ledger-mock*` files you see in `runs/` afterwards are checks 1 and 3's output, not check 6's.
 
 ## 6. Pilot
 
