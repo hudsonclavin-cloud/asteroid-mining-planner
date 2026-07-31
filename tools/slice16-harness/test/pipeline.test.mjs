@@ -14,7 +14,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  ACTIVE_SCENARIOS, CONTROL_ARM, CONTROL_RUN_COUNT, DEFERRED_SCENARIOS,
+  ACTIVE_SCENARIOS, CONTRASTS, CONTROL_ARM, CONTROL_RUN_COUNT, DEFERRED_SCENARIOS,
   FORM_ALLOCATION, PATHS, PRIMARY_RUN_COUNT, PRIMARY_SCENARIOS, PROMPT_FORMS,
   ROSTER, RUNS_PER_CELL, SCENARIOS, STRUCK_SCENARIOS, TOTAL_RUN_COUNT,
   SpendGuardError, assertLiveAllowed, expandForms, normalizeUnit
@@ -57,7 +57,7 @@ test('every live adapter calls the spend guard before any network I/O', async ()
   const exploding = () => { throw new Error('NETWORK REACHED — spend guard did not fire'); };
   const prefix = { system: 's', toolsAttached: true, tools: [] };
 
-  for (const name of ['openai', 'anthropic', 'google', 'deepseek']) {
+  for (const name of ['openai', 'anthropic', 'google', 'together']) {
     const mod = await import(`../adapters/${name}.mjs`);
     const model = ROSTER.find((m) => m.adapter === name);
     const session = mod.startSession({ model, prefix, userTurn: 'hello', mcpTools: [] });
@@ -198,7 +198,7 @@ test('control arm: every adapter omits the `tools` parameter entirely, not an em
   // still tell the model tools exist, which destroys the (tools - no-tools) delta.
   const mcpTools = [{ name: 'get_body', description: 'd', inputSchema: { type: 'object', properties: {} } }];
 
-  for (const name of ['openai', 'anthropic', 'google', 'deepseek']) {
+  for (const name of ['openai', 'anthropic', 'google', 'together']) {
     const mod = await import(`../adapters/${name}.mjs`);
     const model = ROSTER.find((m) => m.adapter === name);
 
@@ -297,4 +297,55 @@ test('unit normalization accepts notation variants, not magnitude changes', () =
   assert.equal(normalizeUnit('meters'), 'm');
   assert.equal(normalizeUnit('DEGREES'), 'deg');
   assert.notEqual(normalizeUnit('m'), normalizeUnit('km'), 'm and km must stay distinct');
+});
+
+// ---------------------------------------------------------------------------
+// AMENDMENT A6 — roster substitution DeepSeek -> Together.ai (R-A6-3)
+// ---------------------------------------------------------------------------
+
+test('A6: roster is k=6 across 4 labs, with Together in the open-weight slot', () => {
+  assert.equal(ROSTER.length, 6, 'k=6 is preserved by the substitution');
+  assert.equal(new Set(ROSTER.map((m) => m.lab)).size, 4, 'still four labs');
+  assert.ok(!ROSTER.some((m) => m.adapter === 'deepseek'), 'DeepSeek is dropped from the active roster');
+
+  const together = ROSTER.find((m) => m.adapter === 'together');
+  assert.ok(together, 'Together occupies the open-weight slot');
+  assert.equal(together.keyEnv, 'TOGETHER_API_KEY');
+  assert.equal(together.lab, 'together-open-weight');
+  assert.equal(together.certainty, 'pending', 'the model string is a sentinel, not a lead');
+});
+
+test('A6: the Together model string is a loud sentinel, never an invented id', () => {
+  const together = ROSTER.find((m) => m.adapter === 'together');
+  assert.match(together.id, /^PENDING-/, 'must be visibly pending, not a plausible-looking fake');
+  // Every contrast referencing it must reference the same sentinel, so filling
+  // the string in one place cannot leave a stale id behind in the other.
+  for (const c of CONTRASTS) {
+    for (const side of [c.a, c.b]) {
+      if (side.startsWith('PENDING-')) assert.equal(side, together.id, `${c.name} must track the roster sentinel`);
+    }
+  }
+});
+
+test('A6: deepseek adapter is retired-not-deleted and unreferenced by the roster', async () => {
+  // The file must still load — the substitution is reversible and the record complete.
+  const retired = await import('../adapters/deepseek.mjs');
+  assert.equal(retired.PROVIDER, 'deepseek');
+  assert.ok(!ROSTER.some((m) => m.adapter === 'deepseek'), 'but nothing in the roster points at it');
+});
+
+test('A6: Together request body is structurally identical to OpenAI (same surface)', async () => {
+  const openai = await import('../adapters/openai.mjs');
+  const together = await import('../adapters/together.mjs');
+  const mcpTools = [{ name: 'get_body', description: 'd', inputSchema: { type: 'object', properties: {} } }];
+  const prefix = { system: 'SYS', toolsAttached: true };
+
+  const mk = (mod, model) => mod.buildRequestBody(mod.startSession({ model, prefix, userTurn: 'q', mcpTools }));
+  const o = mk(openai, { id: 'M', keyEnv: 'OPENAI_API_KEY' });
+  const t = mk(together, { id: 'M', keyEnv: 'TOGETHER_API_KEY' });
+
+  assert.deepEqual(Object.keys(t).sort(), Object.keys(o).sort(), 'same top-level request keys');
+  assert.deepEqual(t, o, 'with the same model id, the bodies are byte-identical — only the base URL differs');
+  assert.notEqual(together.ENDPOINT, openai.ENDPOINT, 'the endpoint is the one intended difference');
+  assert.match(together.ENDPOINT, /api\.together\.xyz/);
 });

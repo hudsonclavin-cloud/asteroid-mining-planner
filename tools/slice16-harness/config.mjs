@@ -71,6 +71,8 @@ export const CAP_NOTICE =
 // certainty: 'certain'  -> string marked [Certain] in Q3
 //            'lead'     -> UNVERIFIED lead; confirm against official provider
 //                          docs at access time before spending money.
+//            'pending'  -> SENTINEL, not a real id. Must be filled before the
+//                          pilot; it is designed to fail loudly if not.
 
 export const ROSTER = Object.freeze([
   { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'lead' },
@@ -78,14 +80,18 @@ export const ROSTER = Object.freeze([
   { id: 'claude-sonnet-4-6', lab: 'anthropic', tier: 'frontier', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'certain' },
   { id: 'claude-haiku-4-5-20251001', lab: 'anthropic', tier: 'small', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'certain' },
   { id: 'gemini-3.1-pro', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'lead' },
-  { id: 'deepseek-v4-flash', lab: 'deepseek', tier: 'small', adapter: 'deepseek', keyEnv: 'DEEPSEEK_API_KEY', certainty: 'lead' }
+  // A6 (R-A6-3): DeepSeek dropped for jurisdiction; Together.ai takes the
+  // open-weight slot (US-hosted open weights). k=6 unchanged.
+  // certainty 'pending' => the model string is a SENTINEL, not a lead:
+  // it must be filled from Together's live model list before the pilot.
+  { id: 'PENDING-SET-TOGETHER-MODEL-STRING', lab: 'together-open-weight', tier: 'small', adapter: 'together', keyEnv: 'TOGETHER_API_KEY', certainty: 'pending' }
 ]);
 
 /** The three Holm-corrected contrasts. Everything else is estimation + tiers. */
 export const CONTRASTS = Object.freeze([
   { name: 'openai-frontier-vs-small', a: 'gpt-5.5', b: 'gpt-5.5-mini' },
   { name: 'anthropic-frontier-vs-small', a: 'claude-sonnet-4-6', b: 'claude-haiku-4-5-20251001' },
-  { name: 'google-vs-deepseek', a: 'gemini-3.1-pro', b: 'deepseek-v4-flash' }
+  { name: 'google-vs-together-open-weight', a: 'gemini-3.1-pro', b: 'PENDING-SET-TOGETHER-MODEL-STRING' }
 ]);
 
 // ---------------------------------------------------------------------------
