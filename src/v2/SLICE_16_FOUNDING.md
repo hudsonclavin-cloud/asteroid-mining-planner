@@ -665,3 +665,60 @@ CT1 is the false positive being closed. CT2 is the safeguard: had it flipped to 
 ## §15.4 — Closure
 
 Per R-A6-4 this is the final pre-pilot amendment. The design is **closed pending live results**. Remaining pre-pilot actions are operational, not design: fill the Together model string, add keys, run the readiness checklist, mirror to OSF, and run the pilot.
+
+---
+
+# §16. OPERATIONAL NOTE + DOC CORRECTIONS — 2026-07-30 (ADDITIVE; pre-data-collection)
+
+**MARKER:** S16-ROSTER-STATUS-2026-07-30-B · **Amends:** A6 at `23ef1c2` (public)
+**Nature:** an **operational** change plus two **corrections to inaccuracies in this public document**. Not a design change — A6 remains the last design amendment (R-A6-4). **Zero paid runs have occurred.**
+
+## §16.1 — Correction: there is no runtime guard on the PENDING sentinel
+
+§15.2 states, verbatim:
+
+> "The sentinel is chosen to fail loudly rather than let a plausible-looking fake reach the wire."
+
+**Correction.** That sentence reads as though the harness stops a run carrying an unfilled sentinel. **It does not — no runtime guard exists.** What A6 actually shipped is:
+
+1. a **test** assertion that the roster id begins with `PENDING-`;
+2. `certainty: 'pending'` surfaced by `--preflight`.
+
+At run time an unfilled sentinel would simply have been sent as a model id and failed **provider-side** with a 4xx. That is a real failure and it is loud, but it is the *provider's* refusal, not the harness's, and it would have occurred mid-run after other models had already been billed. The original sentence overstated the mechanism; this correction records what exists. **The sentinel is now moot in practice** because the slot is deferred (§16.3) and deferred models never enter a plan.
+
+## §16.2 — Correction: skip-on-missing-key is design intent, not implemented behaviour
+
+DEC-16-6 states, verbatim:
+
+> "**Substitution rule:** if a provider is inaccessible at run time, substitute the same-lab alternative named in Q3; if none is available, drop the model **with disclosure** in the report."
+
+**Correction.** That describes the **design intent**. The **implemented** behaviour is different and stricter: `assertPlanAuthorized()` authorises every model in the plan **before any row is written**, and throws on the first unauthorised one — **whole-run refusal, exit 4**. This is deliberate, from the A4 self-audit (§10.7.3 item 1), where the absence of that guard let a mis-invocation grind through 414 runs writing junk rows and exit 0.
+
+The consequence, measured: with three providers funded and Together unfunded, **all five funded models authorised and Together alone forced exit 4 before a single row was written.** A missing key does *not* produce a disclosed skip; it blocks everything.
+
+**Therefore Together is deferred by roster STATUS, not by key absence.** The two mechanisms must not be confused: key absence is a hard stop; status deferral is a recorded, disclosed non-participation. Nothing about the whole-run-refusal guard changed — it simply no longer considers a deferred model.
+
+## §16.3 — Operational: Together deferred for cost
+
+**Together.ai is DEFERRED, not dropped.** No Together deposit is being made before the pilot proves the harness. This is a funding decision.
+
+| | Registered design | This run |
+|---|---|---|
+| Roster | **k=6, four labs — UNCHANGED** | **5 active models, 3 labs** (OpenAI ×2, Anthropic ×2, Google ×1) |
+| Primary runs | **1,680** (28 × 6 × 10) | **1,350** (27 × 5 × 10) |
+| Control runs | **504** (28 × 6 × 3) | **405** (27 × 5 × 3) |
+| Total | **2,184** | **1,755** |
+
+Both dimensions now carry the registered/executed split — scenarios (28 registered primary, 27 runnable with S-06 deferred) and models (6 registered, 5 active with Together deferred). The counts are **distinctly named in code** (`REGISTERED_*` vs `ACTIVE_*`) precisely so they can never be silently interchanged; that conflation is what produced the A2 O-1 divergence at the scenario level and it is not repeated here.
+
+**Contrast 3 (`google-vs-together-open-weight`) is NOT EVALUABLE this run** and is disclosed as such rather than quietly dropped. All three registered contrasts remain declared; `EVALUABLE_CONTRASTS` exposes the two that are computable. Holm correction at write-up time applies over the contrasts actually evaluated, and the write-up must state that one registered contrast went unevaluated and why.
+
+**Model status now mirrors the scenario convention exactly** — `status: 'active' | 'deferred'` with a recorded `deferReason`, and three derived sets: `REGISTERED_ROSTER` (6), `ACTIVE_ROSTER` (5), `DEFERRED_MODELS` (1). Precedent over novelty: this is the same vocabulary scenarios have used since A2.
+
+**Re-activation path — three things, no design change:** a real model string from Together's live model list; `TOGETHER_API_KEY` in the environment; `status` back to `'active'`. The entry, its adapter, and `adapters/deepseek.mjs` (retired-not-deleted) all remain on disk.
+
+**Disclosure requirement:** results must report Together as a **registered participant that contributed zero runs**, deferred for cost — not omit it. The grades artifact carries a `deferredModels` block for exactly this reason, and `byModel` is seeded from the REGISTERED roster so a deferred model is visibly present-with-zero rather than silently absent.
+
+## §16.4 — A gap in A6, found and closed
+
+A6 added `adapters/together.mjs` and swapped the roster, but **never registered `together` in the runner's `ADAPTER_MODULES` map** — so the adapter was unreachable and a re-activated Together would have failed with "no adapter module for together". Found while wiring this change; fixed, with a test that now asserts every rostered adapter resolves to a loadable module.

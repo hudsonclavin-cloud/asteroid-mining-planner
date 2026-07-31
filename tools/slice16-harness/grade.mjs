@@ -26,7 +26,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 
-import { MARKER as HARNESS_MARKER, ROSTER, STATS, toleranceForTool } from './config.mjs';
+import { MARKER as HARNESS_MARKER, DEFERRED_MODELS, REGISTERED_ROSTER, STATS, toleranceForTool } from './config.mjs';
 import { SCENARIO_SLOTS, gradeDecision, summarize } from './grader.mjs';
 
 export const MARKER = 'S16-MCPLIVE-2026-07-27-A';
@@ -339,8 +339,12 @@ function aggregate(graded, noToolCall = []) {
   const primary = graded.filter((g) => g.arm === 'primary' && !NON_BINARY_SCENARIOS.has(g.scenario));
   const control = graded.filter((g) => g.arm === 'control');
 
+  // Seeded from the REGISTERED roster, deliberately: a deferred model must be
+  // VISIBLE in the output as a registered participant that contributed zero
+  // runs, not silently missing. A reader comparing the grades artifact to the
+  // pre-registered k=6 would otherwise have to infer the absence.
   const byModel = {};
-  for (const model of ROSTER) byModel[model.id] = { runs: 0, faithful: 0, byScenario: {} };
+  for (const model of REGISTERED_ROSTER) byModel[model.id] = { runs: 0, faithful: 0, byScenario: {} };
   byModel['(unknown)'] = { runs: 0, faithful: 0, byScenario: {} };
 
   for (const g of primary) {
@@ -396,6 +400,11 @@ function aggregate(graded, noToolCall = []) {
 
   return {
     primaryArm: perModel,
+    // Registered-but-not-run models, stated explicitly so a deferred slot can
+    // never be mistaken for a model that was simply never planned.
+    deferredModels: DEFERRED_MODELS.map((m) => ({
+      id: m.id, lab: m.lab, keyEnv: m.keyEnv, runs: 0, reason: m.deferReason ?? null
+    })),
     controlArm: controlByModel,
     noToolCallRuns: { total: noToolCall.length, byModel: noToolCallByModel, runs: noToolCall },
     nonBinaryScenarios: threeBin,
@@ -405,6 +414,7 @@ function aggregate(graded, noToolCall = []) {
       'Control-arm rows are reported separately and excluded from primary metrics (A1 §10.2).',
       `${[...NON_BINARY_SCENARIOS].join(', ')} yields a 3-bin outcome and is excluded from the binary rate (DEC-16-9).`,
       'No Holm correction is applied here: the three pre-specified contrasts are computed at write-up time, not per-ledger.',
+      'deferredModels lists registered models that contributed zero runs (e.g. deferred for cost). Registered k and executed k differ; both are reported.',
       'Runs marked no_tool_call are EXCLUDED from every faithfulness metric and reported separately (A4-4). They are a measured outcome — the model answered without consulting a tool — not a harness fault, and never a silent pass.'
     ]
   };

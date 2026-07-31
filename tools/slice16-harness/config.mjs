@@ -68,6 +68,11 @@ export const CAP_NOTICE =
 // DEC-16-6 — model roster (k=6, 4 labs)
 // ---------------------------------------------------------------------------
 //
+// status:    'active'   -> participates in runs
+//            'deferred' -> in the REGISTERED design, NOT run right now, with a
+//                          recorded deferReason. Mirrors the scenario status
+//                          convention below — same vocabulary, same intent.
+//
 // certainty: 'certain'  -> string marked [Certain] in Q3
 //            'lead'     -> UNVERIFIED lead; confirm against official provider
 //                          docs at access time before spending money.
@@ -75,24 +80,43 @@ export const CAP_NOTICE =
 //                          pilot; it is designed to fail loudly if not.
 
 export const ROSTER = Object.freeze([
-  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'lead' },
-  { id: 'gpt-5.5-mini', lab: 'openai', tier: 'small', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'lead' },
-  { id: 'claude-sonnet-4-6', lab: 'anthropic', tier: 'frontier', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'certain' },
-  { id: 'claude-haiku-4-5-20251001', lab: 'anthropic', tier: 'small', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'certain' },
-  { id: 'gemini-3.1-pro', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'lead' },
+  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'lead', status: 'active' },
+  { id: 'gpt-5.5-mini', lab: 'openai', tier: 'small', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'lead', status: 'active' },
+  { id: 'claude-sonnet-4-6', lab: 'anthropic', tier: 'frontier', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'certain', status: 'active' },
+  { id: 'claude-haiku-4-5-20251001', lab: 'anthropic', tier: 'small', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'certain', status: 'active' },
+  { id: 'gemini-3.1-pro', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'lead', status: 'active' },
   // A6 (R-A6-3): DeepSeek dropped for jurisdiction; Together.ai takes the
   // open-weight slot (US-hosted open weights). k=6 unchanged.
   // certainty 'pending' => the model string is a SENTINEL, not a lead:
   // it must be filled from Together's live model list before the pilot.
-  { id: 'PENDING-SET-TOGETHER-MODEL-STRING', lab: 'together-open-weight', tier: 'small', adapter: 'together', keyEnv: 'TOGETHER_API_KEY', certainty: 'pending' }
+  { id: 'PENDING-SET-TOGETHER-MODEL-STRING', lab: 'together-open-weight', tier: 'small', adapter: 'together', certainty: 'pending', keyEnv: 'TOGETHER_API_KEY',
+    status: 'deferred',
+    deferReason: 'DEFERRED FOR COST (S16-ROSTER-STATUS-2026-07-30-B): no Together deposit is being made before the pilot proves the harness. This is a funding decision, NOT a design change — the slot stays in REGISTERED_ROSTER and k=6 remains the registered design. Re-activation needs three things: a real model string from Together\'s live model list, TOGETHER_API_KEY in the environment, and status back to \'active\'.' }
 ]);
+
+// Three distinctly named model sets, mirroring the scenario convention exactly.
+// Conflating "what we registered" with "what we ran" is what produced the A2
+// O-1 divergence at the scenario level; the same mistake is not repeated here.
+//
+//   REGISTERED_ROSTER — the pre-registered design. k=6. Drives REGISTERED_* counts.
+//   ACTIVE_ROSTER     — what actually runs right now. Drives ACTIVE_* counts and buildPlan.
+//   DEFERRED_MODELS   — inside REGISTERED, not run right now. Drives disclosure.
+export const REGISTERED_ROSTER = ROSTER;
+export const ACTIVE_ROSTER = ROSTER.filter((m) => m.status === 'active');
+export const DEFERRED_MODELS = ROSTER.filter((m) => m.status === 'deferred');
 
 /** The three Holm-corrected contrasts. Everything else is estimation + tiers. */
 export const CONTRASTS = Object.freeze([
   { name: 'openai-frontier-vs-small', a: 'gpt-5.5', b: 'gpt-5.5-mini' },
   { name: 'anthropic-frontier-vs-small', a: 'claude-sonnet-4-6', b: 'claude-haiku-4-5-20251001' },
+  // NOT EVALUABLE while Together is deferred — disclosed, not silently dropped.
   { name: 'google-vs-together-open-weight', a: 'gemini-3.1-pro', b: 'PENDING-SET-TOGETHER-MODEL-STRING' }
 ]);
+
+/** Contrasts computable from the ACTIVE roster alone. */
+export const EVALUABLE_CONTRASTS = CONTRASTS.filter(
+  (c) => ACTIVE_ROSTER.some((m) => m.id === c.a) && ACTIVE_ROSTER.some((m) => m.id === c.b)
+);
 
 // ---------------------------------------------------------------------------
 // DEC-16-7 — budget, caching, sampling
@@ -390,8 +414,17 @@ export const DEFERRED_SCENARIOS = SCENARIOS.filter((s) => s.status === 'deferred
 export const ACTIVE_SCENARIOS = SCENARIOS.filter((s) => s.status === 'active');
 export const PRIMARY_SCENARIOS = SCENARIOS.filter((s) => s.status !== 'struck');
 
-/** Pre-registered primary run count (A1 §10.1): 28 x 6 x 10 = 1,680. */
-export const PRIMARY_RUN_COUNT = PRIMARY_SCENARIOS.length * ROSTER.length * RUNS_PER_CELL;
+// COUNTS: registered vs executed, never interchangeable.
+//   REGISTERED_* = PRIMARY_SCENARIOS x REGISTERED_ROSTER  (the pre-registered design)
+//   ACTIVE_*     = ACTIVE_SCENARIOS  x ACTIVE_ROSTER      (what this run executes)
+// Both dimensions carry the split: scenarios (28 registered / 27 runnable, S-06
+// deferred) and models (6 registered / 5 active, Together deferred).
+
+/** Pre-registered primary run count (A1 §10.1): 28 x 6 x 10 = 1,680. UNCHANGED. */
+export const REGISTERED_PRIMARY_RUN_COUNT = PRIMARY_SCENARIOS.length * REGISTERED_ROSTER.length * RUNS_PER_CELL;
+
+/** Executable today: 27 runnable scenarios x 5 active models x 10 = 1,350. */
+export const ACTIVE_PRIMARY_RUN_COUNT = ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * RUNS_PER_CELL;
 
 /** Control arm (A1 §10.2): same 28 scenarios, ORIGINAL form only, no tools, r=3. */
 export const CONTROL_ARM = Object.freeze({
@@ -400,10 +433,16 @@ export const CONTROL_ARM = Object.freeze({
   toolsAttached: false,
   excludedFromPrimaryMetrics: true
 });
-export const CONTROL_RUN_COUNT = PRIMARY_SCENARIOS.length * ROSTER.length * CONTROL_ARM.runsPerCell;
+export const REGISTERED_CONTROL_RUN_COUNT = PRIMARY_SCENARIOS.length * REGISTERED_ROSTER.length * CONTROL_ARM.runsPerCell;
 
-/** Total registered study runs (A1 §10.2): 1,680 + 504 = 2,184. */
-export const TOTAL_RUN_COUNT = PRIMARY_RUN_COUNT + CONTROL_RUN_COUNT;
+/** Executable today: 27 x 5 x 3 = 405. */
+export const ACTIVE_CONTROL_RUN_COUNT = ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * CONTROL_ARM.runsPerCell;
+
+/** Total registered study runs (A1 §10.2): 1,680 + 504 = 2,184. UNCHANGED. */
+export const REGISTERED_TOTAL_RUN_COUNT = REGISTERED_PRIMARY_RUN_COUNT + REGISTERED_CONTROL_RUN_COUNT;
+
+/** Total executable today: 1,350 + 405 = 1,755. */
+export const ACTIVE_TOTAL_RUN_COUNT = ACTIVE_PRIMARY_RUN_COUNT + ACTIVE_CONTROL_RUN_COUNT;
 
 /** DEC-16-11 pilot: one value-path and one refusal-path scenario, r=2, all models. */
 export const PILOT = Object.freeze({
@@ -456,17 +495,23 @@ export function assertLiveAllowed(model, env = process.env) {
 export function liveReadiness(env = process.env) {
   return {
     liveOk: liveEnabled(env),
-    models: ROSTER.map((m) => ({
+    // Reports the REGISTERED roster so a deferred model is visibly deferred
+    // rather than silently absent from readiness output.
+    models: REGISTERED_ROSTER.map((m) => ({
       id: m.id,
       keyEnv: m.keyEnv,
       keyPresent: Boolean(env[m.keyEnv] && String(env[m.keyEnv]).trim() !== ''),
-      certainty: m.certainty
+      certainty: m.certainty,
+      status: m.status,
+      deferReason: m.deferReason ?? null
     }))
   };
 }
 
 export function modelById(id) {
-  return ROSTER.find((m) => m.id === id);
+  // Resolves across the REGISTERED roster, so a deferred model can still be
+  // looked up when re-grading an older ledger that contains its rows.
+  return REGISTERED_ROSTER.find((m) => m.id === id);
 }
 
 /** Expands a scenario into its r prompt-form slots per FORM_ALLOCATION. */

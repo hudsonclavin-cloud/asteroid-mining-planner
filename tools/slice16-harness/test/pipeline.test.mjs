@@ -14,9 +14,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  ACTIVE_SCENARIOS, CONTRASTS, CONTROL_ARM, CONTROL_RUN_COUNT, DEFERRED_SCENARIOS,
-  FORM_ALLOCATION, PATHS, PRIMARY_RUN_COUNT, PRIMARY_SCENARIOS, PROMPT_FORMS,
-  ROSTER, RUNS_PER_CELL, SCENARIOS, STRUCK_SCENARIOS, TOTAL_RUN_COUNT,
+  ACTIVE_SCENARIOS, CONTRASTS, CONTROL_ARM, DEFERRED_SCENARIOS,
+  FORM_ALLOCATION, PATHS, PRIMARY_SCENARIOS, PROMPT_FORMS,
+  RUNS_PER_CELL, SCENARIOS, STRUCK_SCENARIOS,
+  ACTIVE_ROSTER, DEFERRED_MODELS, REGISTERED_ROSTER, EVALUABLE_CONTRASTS,
+  ACTIVE_PRIMARY_RUN_COUNT, ACTIVE_CONTROL_RUN_COUNT, ACTIVE_TOTAL_RUN_COUNT,
+  REGISTERED_PRIMARY_RUN_COUNT, REGISTERED_CONTROL_RUN_COUNT, REGISTERED_TOTAL_RUN_COUNT,
   SpendGuardError, assertLiveAllowed, expandForms, normalizeUnit
 } from '../config.mjs';
 import { extractAnswerBlock, buildPrefix, buildUserTurn, prefixFingerprint } from '../prompt.mjs';
@@ -27,7 +30,7 @@ import { buildPlan, main, runKey } from '../runner.mjs';
 const graderCases = JSON.parse(readFileSync(resolve(PATHS.fixturesDir, 'grader-cases.json'), 'utf8'));
 
 test('spend guard refuses without S16_LIVE_OK, even when a key is present', () => {
-  const model = ROSTER[0];
+  const model = ACTIVE_ROSTER[0];
   assert.throws(
     () => assertLiveAllowed(model, { [model.keyEnv]: 'sk-test-not-a-real-key' }),
     SpendGuardError,
@@ -36,7 +39,7 @@ test('spend guard refuses without S16_LIVE_OK, even when a key is present', () =
 });
 
 test('spend guard refuses with S16_LIVE_OK but no key', () => {
-  const model = ROSTER[0];
+  const model = ACTIVE_ROSTER[0];
   assert.throws(
     () => assertLiveAllowed(model, { S16_LIVE_OK: '1' }),
     SpendGuardError,
@@ -45,7 +48,7 @@ test('spend guard refuses with S16_LIVE_OK but no key', () => {
 });
 
 test('spend guard allows only when both conditions hold', () => {
-  const model = ROSTER[0];
+  const model = ACTIVE_ROSTER[0];
   assert.equal(
     assertLiveAllowed(model, { S16_LIVE_OK: '1', [model.keyEnv]: 'sk-test-not-a-real-key' }),
     true
@@ -59,7 +62,7 @@ test('every live adapter calls the spend guard before any network I/O', async ()
 
   for (const name of ['openai', 'anthropic', 'google', 'together']) {
     const mod = await import(`../adapters/${name}.mjs`);
-    const model = ROSTER.find((m) => m.adapter === name);
+    const model = REGISTERED_ROSTER.find((m) => m.adapter === name);
     const session = mod.startSession({ model, prefix, userTurn: 'hello', mcpTools: [] });
     await assert.rejects(
       () => mod.step(session, { env: {}, fetchImpl: exploding }),
@@ -117,9 +120,21 @@ test('S-29 is repaired and live, graded VF/PTA/AUP with RFR inapplicable', () =>
 });
 
 test('registered run counts match Amendment A1', () => {
-  assert.equal(PRIMARY_RUN_COUNT, 1680, '28 x 6 models x r=10');
-  assert.equal(CONTROL_RUN_COUNT, 504, '28 x 6 models x r=3, ORIGINAL form only');
-  assert.equal(TOTAL_RUN_COUNT, 2184, 'primary + control');
+  // REGISTERED counts are the pre-registered design and must NOT move when a
+  // model is deferred — k=6 stays true of the registration.
+  assert.equal(REGISTERED_PRIMARY_RUN_COUNT, 1680, '28 primary scenarios x k=6 registered x r=10');
+  assert.equal(REGISTERED_CONTROL_RUN_COUNT, 504, '28 x k=6 x r=3, ORIGINAL only');
+  assert.equal(REGISTERED_TOTAL_RUN_COUNT, 2184, 'registered primary + registered control');
+
+  // EXECUTED counts reflect what actually runs: 27 runnable scenarios (S-06
+  // deferred) x 5 active models (Together deferred).
+  assert.equal(ACTIVE_PRIMARY_RUN_COUNT, 1350, '27 runnable scenarios x k=5 active x r=10');
+  assert.equal(ACTIVE_CONTROL_RUN_COUNT, 405, '27 x k=5 x r=3');
+  assert.equal(ACTIVE_TOTAL_RUN_COUNT, 1755, 'executed primary + executed control');
+
+  // The two must never be equal by accident — that would mean the split collapsed.
+  assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, ACTIVE_TOTAL_RUN_COUNT,
+    'registered and executed totals must stay distinguishable while anything is deferred');
   assert.equal(CONTROL_ARM.form, 'ORIGINAL');
   assert.equal(CONTROL_ARM.toolsAttached, false, 'the control arm attaches no tools');
   assert.equal(CONTROL_ARM.excludedFromPrimaryMetrics, true);
@@ -155,7 +170,7 @@ test('form allocation is 4/3/3 and sums to r', () => {
 
 test('plan covers active scenarios x roster x r with unique run keys', () => {
   const plan = buildPlan();
-  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ROSTER.length * RUNS_PER_CELL);
+  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * RUNS_PER_CELL);
   const keys = new Set(plan.map((p) => p.runKey));
   assert.equal(keys.size, plan.length, 'run keys must be unique — resumability depends on it');
   assert.equal(
@@ -183,7 +198,7 @@ test('control arm: ORIGINAL only, r=3, no tools attached', () => {
   const forms = Array.from({ length: CONTROL_ARM.runsPerCell }, () => CONTROL_ARM.form);
   const plan = buildPlan({ runsPerCell: CONTROL_ARM.runsPerCell, forms });
 
-  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ROSTER.length * CONTROL_ARM.runsPerCell);
+  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * CONTROL_ARM.runsPerCell);
   assert.ok(plan.every((p) => p.form === 'ORIGINAL'), 'control arm uses ORIGINAL only — no paraphrases');
   assert.equal(new Set(plan.map((p) => p.runKey)).size, plan.length, 'control run keys stay unique');
 
@@ -200,7 +215,7 @@ test('control arm: every adapter omits the `tools` parameter entirely, not an em
 
   for (const name of ['openai', 'anthropic', 'google', 'together']) {
     const mod = await import(`../adapters/${name}.mjs`);
-    const model = ROSTER.find((m) => m.adapter === name);
+    const model = REGISTERED_ROSTER.find((m) => m.adapter === name);
 
     const control = mod.buildRequestBody(
       mod.startSession({ model, prefix: { system: 's', toolsAttached: false }, userTurn: 'hi', mcpTools })
@@ -304,11 +319,11 @@ test('unit normalization accepts notation variants, not magnitude changes', () =
 // ---------------------------------------------------------------------------
 
 test('A6: roster is k=6 across 4 labs, with Together in the open-weight slot', () => {
-  assert.equal(ROSTER.length, 6, 'k=6 is preserved by the substitution');
-  assert.equal(new Set(ROSTER.map((m) => m.lab)).size, 4, 'still four labs');
-  assert.ok(!ROSTER.some((m) => m.adapter === 'deepseek'), 'DeepSeek is dropped from the active roster');
+  assert.equal(REGISTERED_ROSTER.length, 6, 'k=6 is preserved by the substitution');
+  assert.equal(new Set(REGISTERED_ROSTER.map((m) => m.lab)).size, 4, 'still four labs');
+  assert.ok(!REGISTERED_ROSTER.some((m) => m.adapter === 'deepseek'), 'DeepSeek is dropped from the roster entirely');
 
-  const together = ROSTER.find((m) => m.adapter === 'together');
+  const together = REGISTERED_ROSTER.find((m) => m.adapter === 'together');
   assert.ok(together, 'Together occupies the open-weight slot');
   assert.equal(together.keyEnv, 'TOGETHER_API_KEY');
   assert.equal(together.lab, 'together-open-weight');
@@ -316,7 +331,7 @@ test('A6: roster is k=6 across 4 labs, with Together in the open-weight slot', (
 });
 
 test('A6: the Together model string is a loud sentinel, never an invented id', () => {
-  const together = ROSTER.find((m) => m.adapter === 'together');
+  const together = REGISTERED_ROSTER.find((m) => m.adapter === 'together');
   assert.match(together.id, /^PENDING-/, 'must be visibly pending, not a plausible-looking fake');
   // Every contrast referencing it must reference the same sentinel, so filling
   // the string in one place cannot leave a stale id behind in the other.
@@ -331,7 +346,7 @@ test('A6: deepseek adapter is retired-not-deleted and unreferenced by the roster
   // The file must still load — the substitution is reversible and the record complete.
   const retired = await import('../adapters/deepseek.mjs');
   assert.equal(retired.PROVIDER, 'deepseek');
-  assert.ok(!ROSTER.some((m) => m.adapter === 'deepseek'), 'but nothing in the roster points at it');
+  assert.ok(!REGISTERED_ROSTER.some((m) => m.adapter === 'deepseek'), 'but nothing in the roster points at it');
 });
 
 test('A6: Together request body is structurally identical to OpenAI (same surface)', async () => {
@@ -348,4 +363,63 @@ test('A6: Together request body is structurally identical to OpenAI (same surfac
   assert.deepEqual(t, o, 'with the same model id, the bodies are byte-identical — only the base URL differs');
   assert.notEqual(together.ENDPOINT, openai.ENDPOINT, 'the endpoint is the one intended difference');
   assert.match(together.ENDPOINT, /api\.together\.xyz/);
+});
+
+// ---------------------------------------------------------------------------
+// ROSTER STATUS CONVENTION — S16-ROSTER-STATUS-2026-07-30-B
+// ---------------------------------------------------------------------------
+
+test('roster models carry a status, mirroring the scenario convention', () => {
+  for (const m of REGISTERED_ROSTER) {
+    assert.ok(['active', 'deferred'].includes(m.status), `${m.id} must declare a status`);
+  }
+  assert.equal(REGISTERED_ROSTER.length, 6, 'registered design is k=6 — unchanged by any deferral');
+  assert.equal(ACTIVE_ROSTER.length, 5, 'five models run right now');
+  assert.equal(DEFERRED_MODELS.length, 1, 'exactly one model is deferred');
+  assert.equal(
+    ACTIVE_ROSTER.length + DEFERRED_MODELS.length,
+    REGISTERED_ROSTER.length,
+    'every registered model is either active or deferred — none may vanish'
+  );
+});
+
+test('Together is PRESENT-but-DEFERRED, never deleted', () => {
+  // A future deletion must fail here rather than quietly shrink the registration.
+  const together = REGISTERED_ROSTER.find((m) => m.adapter === 'together');
+  assert.ok(together, 'the Together slot must remain in the REGISTERED roster');
+  assert.equal(together.status, 'deferred');
+  assert.ok(
+    typeof together.deferReason === 'string' && together.deferReason.length > 40,
+    'a deferral must carry a recorded reason'
+  );
+  assert.match(together.deferReason, /cost/i, 'the real reason is cost, and it is stated');
+  assert.ok(!ACTIVE_ROSTER.some((m) => m.adapter === 'together'), 'but it does not run');
+  assert.ok(DEFERRED_MODELS.some((m) => m.adapter === 'together'));
+});
+
+test('deferred models never enter a run plan', () => {
+  const plan = buildPlan();
+  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * RUNS_PER_CELL);
+  assert.ok(
+    !plan.some((p) => DEFERRED_MODELS.some((m) => m.id === p.modelId)),
+    'no deferred model may appear in a plan'
+  );
+});
+
+test('a contrast naming a deferred model is disclosed as not evaluable', () => {
+  assert.equal(CONTRASTS.length, 3, 'all three registered contrasts remain declared');
+  assert.equal(EVALUABLE_CONTRASTS.length, 2, 'only two are computable while Together is deferred');
+  assert.ok(
+    !EVALUABLE_CONTRASTS.some((c) => c.name === 'google-vs-together-open-weight'),
+    'the Together contrast is excluded from evaluable, not deleted from CONTRASTS'
+  );
+});
+
+test('every roster adapter resolves to a module', async () => {
+  // Guards the A6 gap this session found: together.mjs existed but was never
+  // registered in ADAPTER_MODULES, so it was unreachable by the runner.
+  for (const m of REGISTERED_ROSTER) {
+    const mod = await import(`../adapters/${m.adapter}.mjs`);
+    assert.equal(typeof mod.startSession, 'function', `${m.adapter} must expose the adapter interface`);
+  }
 });

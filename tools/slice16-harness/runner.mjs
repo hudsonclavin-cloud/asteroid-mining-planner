@@ -20,10 +20,13 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import {
-  ACTIVE_SCENARIOS, CONTROL_ARM, CONTROL_RUN_COUNT, DEFERRED_SCENARIOS,
-  PRIMARY_RUN_COUNT, PRIMARY_SCENARIOS, STRUCK_SCENARIOS, SCENARIOS, TOTAL_RUN_COUNT,
+  ACTIVE_SCENARIOS, CONTROL_ARM, DEFERRED_SCENARIOS, PRIMARY_SCENARIOS,
+  STRUCK_SCENARIOS, SCENARIOS,
+  ACTIVE_ROSTER, DEFERRED_MODELS, REGISTERED_ROSTER,
+  ACTIVE_PRIMARY_RUN_COUNT, ACTIVE_CONTROL_RUN_COUNT, ACTIVE_TOTAL_RUN_COUNT,
+  REGISTERED_PRIMARY_RUN_COUNT, REGISTERED_CONTROL_RUN_COUNT, REGISTERED_TOTAL_RUN_COUNT,
   CAP_NOTICE, MAX_MODEL_TURNS, TOOL_CALL_CAP,
-  MARKER, PATHS, PILOT, ROSTER, RUNS_PER_CELL,
+  MARKER, PATHS, PILOT, RUNS_PER_CELL,
   SpendGuardError, assertLiveAllowed, expandForms, liveReadiness, modelById
 } from './config.mjs';
 import { connectMcp, extractEnvelope, McpServerUnavailableError } from './mcp-client.mjs';
@@ -34,6 +37,13 @@ const ADAPTER_MODULES = {
   openai: () => import('./adapters/openai.mjs'),
   anthropic: () => import('./adapters/anthropic.mjs'),
   google: () => import('./adapters/google.mjs'),
+  // A6 added adapters/together.mjs and swapped the roster, but never registered
+  // it here — so the Together adapter was unreachable by the runner. Found while
+  // wiring the status convention; harmless while Together is deferred, but it
+  // would have failed on re-activation with "no adapter module for together".
+  together: () => import('./adapters/together.mjs'),
+  // Retired-not-deleted (A6): unreferenced by the roster, kept so the DeepSeek
+  // substitution stays reversible.
   deepseek: () => import('./adapters/deepseek.mjs')
 };
 
@@ -63,7 +73,7 @@ function appendLedger(ledgerPath, row) {
 }
 
 /** Builds the plan without executing anything — used by --preflight and tests. */
-export function buildPlan({ scenarioIds = null, runsPerCell = RUNS_PER_CELL, models = ROSTER, forms: formsOverride = null } = {}) {
+export function buildPlan({ scenarioIds = null, runsPerCell = RUNS_PER_CELL, models = ACTIVE_ROSTER, forms: formsOverride = null } = {}) {
   const pool = scenarioIds
     ? SCENARIOS.filter((s) => scenarioIds.includes(s.id))
     : ACTIVE_SCENARIOS;
@@ -241,16 +251,24 @@ function reportPreflight() {
   const readiness = liveReadiness();
   console.log(`Slice 16 harness preflight — ${MARKER}`);
   console.log(`  S16_LIVE_OK=1 : ${readiness.liveOk ? 'YES' : 'NO  (no live call is possible)'}`);
+  console.log(`  Roster: registered k=${REGISTERED_ROSTER.length}, ACTIVE k=${ACTIVE_ROSTER.length}` +
+    (DEFERRED_MODELS.length ? `, deferred ${DEFERRED_MODELS.length}` : ''));
   console.log('  Provider keys:');
   for (const m of readiness.models) {
-    console.log(`    ${m.id.padEnd(30)} ${m.keyEnv.padEnd(18)} ${m.keyPresent ? 'present' : 'ABSENT'}  [${m.certainty}]`);
+    const state = m.status === 'deferred' ? 'DEFERRED' : (m.keyPresent ? 'present' : 'ABSENT');
+    console.log(`    ${m.id.padEnd(34)} ${m.keyEnv.padEnd(18)} ${state.padEnd(9)} [${m.certainty}]`);
+  }
+  for (const m of DEFERRED_MODELS) {
+    console.log(`    ^ ${m.id} is DEFERRED, not missing — it is excluded from every run.`);
+    console.log(`      reason: ${String(m.deferReason).slice(0, 160)}...`);
   }
   console.log('  Scenario set:');
-  console.log(`    primary (pre-registered) : ${PRIMARY_SCENARIOS.length}  -> ${PRIMARY_RUN_COUNT} primary runs at r=${RUNS_PER_CELL}, k=${ROSTER.length}`);
-  console.log(`    active  (runnable now)   : ${ACTIVE_SCENARIOS.length}  -> ${ACTIVE_SCENARIOS.length * ROSTER.length * RUNS_PER_CELL} runs executable today`);
+  console.log(`    primary (pre-registered) : ${PRIMARY_SCENARIOS.length}  -> ${REGISTERED_PRIMARY_RUN_COUNT} REGISTERED primary runs (${PRIMARY_SCENARIOS.length} x k=${REGISTERED_ROSTER.length} x r=${RUNS_PER_CELL})`);
+  console.log(`    active  (runnable now)   : ${ACTIVE_SCENARIOS.length}  -> ${ACTIVE_PRIMARY_RUN_COUNT} EXECUTED primary runs (${ACTIVE_SCENARIOS.length} x k=${ACTIVE_ROSTER.length} x r=${RUNS_PER_CELL})`);
   console.log(`    deferred (inside primary): ${DEFERRED_SCENARIOS.length}  (${DEFERRED_SCENARIOS.map((s) => s.id).join(', ')})`);
   console.log(`    struck  (outside primary): ${STRUCK_SCENARIOS.length}  (${STRUCK_SCENARIOS.map((s) => s.id).join(', ')})`);
-  console.log(`  Control arm: ${CONTROL_RUN_COUNT} runs (r=${CONTROL_ARM.runsPerCell}, ${CONTROL_ARM.form} only, no tools) -> total registered ${TOTAL_RUN_COUNT}`);
+  console.log(`  Control arm: ${REGISTERED_CONTROL_RUN_COUNT} REGISTERED / ${ACTIVE_CONTROL_RUN_COUNT} EXECUTED (r=${CONTROL_ARM.runsPerCell}, ${CONTROL_ARM.form} only, no tools)`);
+  console.log(`  Totals: ${REGISTERED_TOTAL_RUN_COUNT} registered / ${ACTIVE_TOTAL_RUN_COUNT} executable today`);
   console.log(`  MCP server built: ${existsSync(PATHS.mcpServer) ? 'yes' : 'NO — cd mcp && npm install && npm run build'}`);
   if (!readiness.liveOk) {
     console.log('\nNo spend is possible in this state. This is the default and is correct.');
@@ -287,7 +305,7 @@ export async function main(argv = process.argv.slice(2)) {
   let mcp = null;
   let prefix = null;
   let adapterFor = null;
-  let models = ROSTER;
+  let models = ACTIVE_ROSTER;   // deferred models never enter a plan
   let mockScenarioIds = null;
 
   if (wantsMock) {
