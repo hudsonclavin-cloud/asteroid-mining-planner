@@ -23,7 +23,7 @@ Pre-registration is **locked and reconciled**. Registered scope:
 | **Total registered** | **2,184** |
 | Ceiling | **$200** |
 
-**No run has ever occurred.** No model API has been called. The four provider adapters are **UNTESTED-AT-NETWORK-BOUNDARY** — written from documented contracts, never exercised on the wire. The MCP layer, by contrast, is now **live-verified** (§5).
+**No run has ever occurred.** No model API has been called. The four active provider adapters — `openai`, `anthropic`, `google`, `together` — are **UNTESTED-AT-NETWORK-BOUNDARY** — written from documented contracts, never exercised on the wire. The MCP layer, by contrast, is now **live-verified** (§5).
 
 ✅ **The pilot is UNBLOCKED** (Amendment A4 implemented the tool-call loop). Run the readiness checklist in §5b before spending anything.
 
@@ -33,13 +33,13 @@ Pre-registration is **locked and reconciled**. Registered scope:
 
 ```sh
 node --test tools/slice16-harness/test/
-# expect: # pass 51 / # fail 0
+# expect: # pass 59 / # fail 0
 
 node tools/slice16-harness/runner.mjs --preflight
 # reports readiness; spends nothing
 
-node tools/slice16-harness/runner.mjs --mock mock-faithful.json
-# offline end-to-end: expect "20 runs written, 0 errored"
+node tools/slice16-harness/runner.mjs --mock mock-toolcalls.json
+# offline end-to-end (live MCP + mocked models): expect "60 runs written, 0 errored"
 ```
 
 Confirm the guard actually refuses:
@@ -75,13 +75,16 @@ Chat subscriptions are **not** API keys. Each needs a developer account with bil
 | OpenAI | <https://platform.openai.com> | `gpt-5.5`, `gpt-5.5-mini` |
 | Anthropic | <https://console.anthropic.com> | `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` |
 | Google | <https://aistudio.google.com> | `gemini-3.1-pro` |
-| DeepSeek | <https://platform.deepseek.com> | `deepseek-v4-flash` |
+| **Together.ai** | <https://api.together.ai> | the open-weight slot — **model string PENDING**, see below (A6: replaces DeepSeek, US jurisdiction) |
 
 > ### ⚠ SET A HARD SPEND CAP IN EVERY CONSOLE BEFORE GENERATING A KEY
 > The `$200` ceiling is a **design commitment, not an enforced limit**. Only the provider console can actually stop spending. Do this first, in all four.
 
 > ### ⚠ FOUR OF SIX MODEL STRINGS ARE UNVERIFIED LEADS
-> Only `claude-sonnet-4-6` and `claude-haiku-4-5-20251001` are marked [Certain]. `gpt-5.5`, `gpt-5.5-mini`, `gemini-3.1-pro`, `deepseek-v4-flash` come from Q3 research and are **leads**. Check each against official provider docs before the pilot.
+> Only `claude-sonnet-4-6` and `claude-haiku-4-5-20251001` are marked [Certain]. `gpt-5.5`, `gpt-5.5-mini` and `gemini-3.1-pro` come from Q3 research and are **leads** — check each against official provider docs before the pilot.
+>
+> ### ⛔ THE TOGETHER MODEL STRING IS A PENDING SENTINEL
+> The roster carries `PENDING-SET-TOGETHER-MODEL-STRING` (`certainty: 'pending'`), deliberately not invented. **Fill it in `tools/slice16-harness/config.mjs` from Together's live model list before the pilot**, and confirm the chosen model's endpoint actually implements tool calling — open-weight endpoints vary. A model that ignores `tools` returns prose with no tool calls, which lands as `no_tool_call: true` and stays ungradeable (A4-4). `--preflight` shows the slot as `[pending]`.
 > **Substitution rule (DEC-16-6, pre-registered):** if a provider is inaccessible or a string is wrong, substitute the same-lab alternative named in Q3; if none exists, **drop that model with disclosure** in the write-up. Never silently swap.
 
 ## 4. `.env`
@@ -151,6 +154,11 @@ printf '{"runKey":"x","scenario":"S-02","answerBlock":{}}\n' > /tmp/s16-noenv.js
 node tools/slice16-harness/grade.mjs /tmp/s16-noenv.jsonl; echo "exit=$?"
 #     expect: "GRADING REFUSED ... no envelope on the row", exit=3
 
+# [ ] 5b. keys present for the four active providers (names only, no values)
+node tools/slice16-harness/runner.mjs --preflight | sed -n '/Provider keys/,/Scenario set/p'
+#     expect: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, TOGETHER_API_KEY listed
+#     expect: the Together slot shows [pending] until you fill its model string
+
 # [ ] 6. spend gate refuses the WHOLE run without S16_LIVE_OK + keys
 node tools/slice16-harness/runner.mjs --pilot; echo "exit=$?"
 #     expect: "REFUSED: no live provider call for gpt-5.5", exit=4, no ledger written
@@ -160,7 +168,7 @@ node --test tools/slice16-harness/test/ 2>&1 | grep "control arm: every adapter 
 #     expect: "ok ... control arm: every adapter omits the `tools` parameter entirely, not an empty one"
 ```
 
-Only when all seven pass, continue to the pilot.
+Only when all of these pass, continue to the pilot.
 
 > **Do not pipe these into `head`/`grep` if you care about the exit code** — `$?` would then report the pipe's last stage, not the command's. Every check above was executed verbatim on 2026-07-29 and produced exactly the expected output; check 6 additionally leaves **no ledger file behind**, which is part of what "refuses the whole run" means.
 
