@@ -180,6 +180,12 @@ export function mergeEvidence(decisions) {
     envelope: {
       envelope_version: '1',
       tool: envelopes[0].tool ?? null,
+      // A6 (R-A6-1): every tool identity actually invoked in this run. The
+      // singular `tool` field above keeps the DEC-15-4 envelope shape (a string),
+      // so the full set is carried alongside it and consumed by gradePTA. Without
+      // this, an HONEST citation of the second tool called scored as false
+      // provenance (founding §14.5.1(ii)).
+      toolsInvoked: [...new Set(decisions.map((d) => d.tool ?? d.envelope?.tool).filter(Boolean))],
       mergedFrom: envelopes.length,
       value: values.length > 0 ? Object.fromEntries(values) : null,
       confidence,

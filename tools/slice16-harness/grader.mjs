@@ -569,6 +569,20 @@ export function gradePTA(envelope, block) {
     if (ref?.code?.path) allowed.add(normalizeText(ref.code.path));
   }
   if (envelope?.tool) allowed.add(normalizeText(envelope.tool));
+  // AMENDMENT A6 (R-A6-1): a run's allowed set includes EVERY tool actually
+  // invoked during it, not just the first. PTA exists to catch FABRICATED
+  // provenance — attribution to a source never consulted. A tool the agent
+  // genuinely called in-run is by definition not fabricated, so scoring an
+  // honest citation of it as false provenance measured nothing real and landed
+  // hardest on multi-tool runs (founding §14.5.1(ii)).
+  //
+  // BOUNDED (R-A6-2): this admits the invoked tools and their real provenance,
+  // nothing more. A citation naming a tool that was never called, or a source
+  // present in no returned envelope, still fails — proven by the cross_tool
+  // fixture set, not asserted.
+  for (const invoked of envelope?.toolsInvoked ?? []) {
+    if (invoked) allowed.add(normalizeText(invoked));
+  }
 
   const cited = Array.isArray(block?.sources_cited) ? block.sources_cited : [];
   if (cited.length === 0) {
