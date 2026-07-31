@@ -22,7 +22,7 @@ import { toOpenAITools } from '../tool-schema.mjs';
  * The returned object is the provider-agnostic interface the runner drives:
  * startSession / buildRequestBody / step / appendToolResult.
  */
-export function createOpenAICompatibleAdapter({ provider, endpoint, apiSurface, unverified }) {
+export function createOpenAICompatibleAdapter({ provider, endpoint, apiSurface, unverified, maxTokensField = 'max_completion_tokens' }) {
   /** Opens a conversation. Tools are attached natively, never as system text. */
   function startSession({ model, prefix, userTurn, mcpTools }) {
     return {
@@ -43,10 +43,18 @@ export function createOpenAICompatibleAdapter({ provider, endpoint, apiSurface, 
     const body = {
       model: session.model.id,
       messages: session.messages,
-      temperature: SAMPLING.temperature,
-      top_p: SAMPLING.top_p,
-      max_tokens: SAMPLING.maxOutputTokens
+      // A7-3: temperature ONLY. `top_p` is no longer sent to ANY provider —
+      // Anthropic rejects the pair, and sending different sampling configs per
+      // provider would undermine the cross-provider comparability DEC-16-7
+      // exists to protect. top_p:1.0 is the default and inert at temperature 0.
+      temperature: SAMPLING.temperature
     };
+    // A7-1: the newer OpenAI families reject `max_tokens` and require
+    // `max_completion_tokens` (pilot: 400 unsupported_parameter on gpt-5.5).
+    // The field NAME is configuration, not branching logic — one code path,
+    // one configured key — because Together's OpenAI-compatible surface is
+    // documented against `max_tokens` and would break under a uniform rename.
+    body[maxTokensField] = SAMPLING.maxOutputTokens;
     if (SAMPLING.seed !== undefined) body.seed = SAMPLING.seed;
     if (session.tools !== null) body.tools = session.tools;
     return body;

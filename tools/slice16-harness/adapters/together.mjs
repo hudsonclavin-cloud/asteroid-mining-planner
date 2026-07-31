@@ -49,11 +49,15 @@ const adapter = createOpenAICompatibleAdapter({
   provider: 'together',
   endpoint: 'https://api.together.xyz/v1/chat/completions',
   apiSurface: 'OpenAI-compatible Chat Completions /v1/chat/completions (tools / tool_calls)',
+  // Together's compatible surface is documented against `max_tokens`; OpenAI's
+  // newer families require `max_completion_tokens` (A7-1). Same code path, one
+  // configured field name. UNVERIFIED until Together is funded and run.
+  maxTokensField: 'max_tokens',
   unverified: [
     'MODEL STRING IS PENDING — sentinel in place, must be filled from Together\'s live model list before the pilot',
     'tool-calling support is per-model on Together; unconfirmed for the model finally chosen',
     'seed acceptance unconfirmed on this surface',
-    'max_tokens field acceptance unconfirmed for the model finally chosen'
+    'max_tokens (not max_completion_tokens) is sent on this surface — unconfirmed for the model finally chosen'
   ]
 });
 

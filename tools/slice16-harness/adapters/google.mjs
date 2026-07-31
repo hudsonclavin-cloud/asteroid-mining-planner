@@ -74,8 +74,8 @@ export function buildRequestBody(session) {
     systemInstruction: session.systemInstruction,
     contents: session.contents,
     generationConfig: {
+      // A7-3: temperature ONLY; topP is no longer sent to any provider.
       temperature: SAMPLING.temperature,
-      topP: SAMPLING.top_p,
       maxOutputTokens: SAMPLING.maxOutputTokens
       // No seed on this API; determinism best-effort and disclosed (DEC-16-7).
     }

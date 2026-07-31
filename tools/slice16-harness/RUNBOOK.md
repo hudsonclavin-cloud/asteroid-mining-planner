@@ -23,9 +23,13 @@ Pre-registration is **locked and reconciled**. Registered scope:
 | **Total registered** | **2,184** |
 | Ceiling | **$200** |
 
-**No run has ever occurred.** No model API has been called. The four active provider adapters — `openai`, `anthropic`, `google`, `together` — are **UNTESTED-AT-NETWORK-BOUNDARY** — written from documented contracts, never exercised on the wire. The MCP layer, by contrast, is now **live-verified** (§5).
+**The pilot ran on 2026-07-31 and every run errored — at ~zero cost, since 400/404 reject before inference bills.** Four provider-contract faults, all fixed in Amendment A7 (founding §17). **Zero SUCCESSFUL runs exist**, so no faithfulness datum has been produced yet and the study is still pre-data-collection.
 
-✅ **The pilot is UNBLOCKED** (Amendment A4 implemented the tool-call loop). Run the readiness checklist in §5b before spending anything.
+First contact confirmed four model strings (a 400 proves the string resolved; a 404 proves it did not) and **refuted `gpt-5.5-mini`, which does not exist**. `openai`, `anthropic` and `google` have now been exercised on the wire and corrected; `together` remains **UNTESTED-AT-NETWORK-BOUNDARY**. The MCP layer is live-verified (§5).
+
+**This run: 4 active models, not 6.** Together is deferred for cost (§16.3) and `gpt-5.5-mini` is deferred pending your choice of a small-tier model (§17.6). Registered k=6 is unchanged.
+
+⚠ **Two of three pre-registered contrasts are currently unevaluable** — only `anthropic-frontier-vs-small` can be computed. See §17.7.
 
 ---
 
@@ -33,7 +37,7 @@ Pre-registration is **locked and reconciled**. Registered scope:
 
 ```sh
 node --test tools/slice16-harness/test/
-# expect: # pass 59 / # fail 0
+# expect: # pass 69 / # fail 0
 
 node tools/slice16-harness/runner.mjs --preflight
 # reports readiness; spends nothing
@@ -72,16 +76,17 @@ Chat subscriptions are **not** API keys. Each needs a developer account with bil
 
 | Provider | Console | Unlocks |
 |---|---|---|
-| OpenAI | <https://platform.openai.com> | `gpt-5.5`, `gpt-5.5-mini` |
-| Anthropic | <https://console.anthropic.com> | `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` |
-| Google | <https://aistudio.google.com> | `gemini-3.1-pro` |
+| OpenAI | <https://platform.openai.com> | `gpt-5.5` ✅ confirmed. **`gpt-5.5-mini` does NOT exist** — small-tier slot deferred, see §17.6 |
+| Anthropic | <https://console.anthropic.com> | `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` — both ✅ confirmed |
+| Google | <https://aistudio.google.com> | `gemini-3.1-pro` ✅ confirmed |
 | **Together.ai** | <https://api.together.ai> | the open-weight slot — **model string PENDING**, see below (A6: replaces DeepSeek, US jurisdiction) |
 
 > ### ⚠ SET A HARD SPEND CAP IN EVERY CONSOLE BEFORE GENERATING A KEY
 > The `$200` ceiling is a **design commitment, not an enforced limit**. Only the provider console can actually stop spending. Do this first, in all four.
 
-> ### ⚠ FOUR OF SIX MODEL STRINGS ARE UNVERIFIED LEADS
-> Only `claude-sonnet-4-6` and `claude-haiku-4-5-20251001` are marked [Certain]. `gpt-5.5`, `gpt-5.5-mini` and `gemini-3.1-pro` come from Q3 research and are **leads** — check each against official provider docs before the pilot.
+> ### ✅ MODEL STRINGS — SETTLED BY THE PILOT (A7)
+> `gpt-5.5`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` and `gemini-3.1-pro` are **confirmed**: each returned a 400, which only a resolved string can do.
+> **`gpt-5.5-mini` is REFUTED** — 404 `model_not_found`. `GET /v1/models` shows the 5.5 generation ships only `gpt-5.5` and `gpt-5.5-pro`; there is no same-generation small sibling. **You choose** from `gpt-5.4-mini`, `gpt-5.4-nano`, `gpt-5-mini`, `gpt-5-nano` — all a generation behind, which confounds tier with generation — or leave the slot deferred. §17.6.
 >
 > ### ⛔ THE TOGETHER MODEL STRING IS A PENDING SENTINEL
 > The roster carries `PENDING-SET-TOGETHER-MODEL-STRING` (`certainty: 'pending'`), deliberately not invented. **Fill it in `tools/slice16-harness/config.mjs` from Together's live model list before the pilot**, and confirm the chosen model's endpoint actually implements tool calling — open-weight endpoints vary. A model that ignores `tools` returns prose with no tool calls, which lands as `no_tool_call: true` and stays ungradeable (A4-4). `--preflight` shows the slot as `[pending]`.
@@ -201,6 +206,28 @@ Only when all of these pass, continue to the pilot.
 > Check 6 additionally leaves **no `ledger-pilot.jsonl` behind**, which is part of what "refuses the whole run" means. Any `ledger-mock*` files you see in `runs/` afterwards are checks 1 and 3's output, not check 6's.
 
 ## 6. Pilot
+
+> ### RE-RUNNING THE PILOT AFTER FIXES (A7)
+> The first pilot ran 2026-07-31 and **every run errored** on four provider-contract
+> faults — all fixed in Amendment A7 (founding §17). Re-running is expected.
+>
+> **The catch:** resumability keys on `runKey` **regardless of whether the row errored**.
+> If a previous `ledger-pilot.jsonl` is still in place, a re-run reports
+> `already-done=N pending=0` and **silently does nothing**. Move it aside first:
+>
+> ```sh
+> mv tools/slice16-harness/runs/ledger-pilot.jsonl \
+>    tools/slice16-harness/runs/ledger-pilot-$(date +%F)-errored.jsonl
+> ```
+>
+> **Never `rm -rf tools/slice16-harness/runs/`** — INV-036 makes these ledgers
+> evidence artifacts, and the first-contact errored ledger is already preserved
+> there as `ledger-pilot-2026-07-31-first-contact-ERRORED.jsonl`.
+>
+> **Expect fewer errors, not zero.** Some may remain; that is still the pilot
+> working. Note the run is now **16, not 20** — `gpt-5.5-mini` joined Together in
+> deferral after its 404 (4 active models × 2 scenarios × r=2).
+
 
 2 scenarios (`S-02` value path, `S-17` refusal path) × 6 models × r=2 = **24 runs**.
 

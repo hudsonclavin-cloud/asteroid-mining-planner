@@ -94,6 +94,25 @@ export function projectForGoogle(schema, path = '', dropped = []) {
       dropped.push(`${path ? `${path}.` : ''}${key}`);
       continue;
     }
+    // A7-4: Google's Schema declares `enum` as REPEATED STRING. A numeric enum
+    // (the MCP `M` parameter is {type:'number', enum:[0,1,2]}) cannot be carried:
+    // the pilot returned 400 "Invalid value at ...enum[0] (TYPE_STRING), 0".
+    //
+    // Stringifying to ["0","1","2"] was considered and REJECTED as lossy: Google
+    // would then have the model emit the STRING "2", while the MCP server's zod
+    // schema requires the NUMBER 2. That is an input-validation failure, which
+    // DEC-15-8 classifies as an MCP ERROR rather than a refusal — it would
+    // corrupt the measurement rather than fix the call.
+    //
+    // So a non-string enum is DROPPED, exactly as every other unsupported
+    // keyword is. The parameter keeps its correct `type`, only the value
+    // constraint is lost, and the constraint is still enforced server-side —
+    // an out-of-range M produces a loud MCP error, never silent bad data.
+    // Disclosed, not normalised away.
+    if (key === 'enum' && Array.isArray(value) && !value.every((v) => typeof v === 'string')) {
+      dropped.push(`${path ? `${path}.` : ''}enum(non-string:${JSON.stringify(value)})`);
+      continue;
+    }
     if (key === 'properties') {
       out.properties = {};
       for (const [propName, propSchema] of Object.entries(value)) {

@@ -76,15 +76,20 @@ export const CAP_NOTICE =
 // certainty: 'certain'  -> string marked [Certain] in Q3
 //            'lead'     -> UNVERIFIED lead; confirm against official provider
 //                          docs at access time before spending money.
+//            'confirmed'-> the live pilot proved the string resolves (a 400 means
+//                          the request reached the model; a 404 means it did not).
+//            'refuted'  -> the pilot proved the string does NOT resolve (404).
 //            'pending'  -> SENTINEL, not a real id. Must be filled before the
 //                          pilot; it is designed to fail loudly if not.
 
 export const ROSTER = Object.freeze([
-  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'lead', status: 'active' },
-  { id: 'gpt-5.5-mini', lab: 'openai', tier: 'small', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'lead', status: 'active' },
-  { id: 'claude-sonnet-4-6', lab: 'anthropic', tier: 'frontier', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'certain', status: 'active' },
-  { id: 'claude-haiku-4-5-20251001', lab: 'anthropic', tier: 'small', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'certain', status: 'active' },
-  { id: 'gemini-3.1-pro', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'lead', status: 'active' },
+  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 pilot 400 + present in GET /v1/models', status: 'active' },
+  { id: 'gpt-5.5-mini', lab: 'openai', tier: 'small', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'refuted',
+    status: 'deferred',
+    deferReason: 'REFUTED BY PILOT (A7): openai 404 model_not_found. GET /v1/models confirms the 5.5 generation ships ONLY gpt-5.5 and gpt-5.5-pro — there is NO gpt-5.5-mini or gpt-5.5-nano, so no same-generation small sibling exists. R-A7-2 forbids inventing one, so the slot is deferred pending Hudson\'s choice from the live listing. Nearest small-tier candidates, all a GENERATION BEHIND (which would confound capability-tier with generation in the DEC-16-6 frontier-vs-small contrast): gpt-5.4-mini, gpt-5.4-nano, gpt-5-mini, gpt-5-nano. Re-activate by setting a chosen id + status active.' },
+  { id: 'claude-sonnet-4-6', lab: 'anthropic', tier: 'frontier', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 pilot 400 (sampling-param rejection, i.e. string resolved)', status: 'active' },
+  { id: 'claude-haiku-4-5-20251001', lab: 'anthropic', tier: 'small', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 pilot 400 (sampling-param rejection, i.e. string resolved)', status: 'active' },
+  { id: 'gemini-3.1-pro', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 pilot 400 (schema rejection, i.e. string resolved)', status: 'active' },
   // A6 (R-A6-3): DeepSeek dropped for jurisdiction; Together.ai takes the
   // open-weight slot (US-hosted open weights). k=6 unchanged.
   // certainty 'pending' => the model string is a SENTINEL, not a lead:
@@ -130,6 +135,11 @@ export const BUDGET = Object.freeze({
 
 export const SAMPLING = Object.freeze({
   temperature: 0,
+  // RETIRED BY A7-3 — no longer sent to ANY provider. Kept so the registered
+  // value stays visible in the record. Anthropic rejects temperature+top_p
+  // together; top_p:1.0 is the default and inert at temperature 0, so dropping
+  // it loses no determinism and makes the sampling config uniform across the
+  // roster. A test asserts no adapter emits it.
   top_p: 1.0,
   seed: 20260727, // used only where the provider supports it; disclosed as best-effort
   maxOutputTokens: 2048

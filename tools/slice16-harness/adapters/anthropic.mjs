@@ -60,8 +60,11 @@ export function buildRequestBody(session) {
     system: session.system,
     messages: session.messages,
     max_tokens: SAMPLING.maxOutputTokens,
-    temperature: SAMPLING.temperature,
-    top_p: SAMPLING.top_p
+    // A7-3: temperature ONLY. This API REJECTS temperature and top_p together
+    // (pilot: 400 "`temperature` and `top_p` cannot both be specified"), and the
+    // fix is applied uniformly to every provider rather than only here, so the
+    // sampling config stays identical across the roster.
+    temperature: SAMPLING.temperature
     // No seed parameter on this API; determinism is best-effort and disclosed
     // (DEC-16-7). Repetitions, not seeds, are the variance control.
   };

@@ -722,3 +722,94 @@ Both dimensions now carry the registered/executed split — scenarios (28 regist
 ## §16.4 — A gap in A6, found and closed
 
 A6 added `adapters/together.mjs` and swapped the roster, but **never registered `together` in the runner's `ADAPTER_MODULES` map** — so the adapter was unreachable and a re-activated Together would have failed with "no adapter module for together". Found while wiring this change; fixed, with a test that now asserts every rostered adapter resolves to a loadable module.
+
+---
+
+# §17. AMENDMENT A7 — 2026-07-31 (ADDITIVE; pre-data-collection)
+
+**MARKER:** S16-AMEND-A7-2026-07-31-A · **Amends:** §16 at `3f52b0c`
+**Status:** **ZERO SUCCESSFUL RUNS EXIST.** The pilot executed and every run errored, so no faithfulness datum has ever been produced. Everything below is still pre-data-collection.
+
+## §17.1 — The pilot's first contact: 20/20 errored, ~zero cost, and that is the pilot working
+
+`mode=pilot planned=20 already-done=0 pending=20` — **20, not 24**, because Together is deferred (§16.3): 5 models × 2 scenarios × r=2. All 20 errored. **Cost was effectively zero: every failure was a 400 or 404, which reject before inference bills.**
+
+**The DEC-16-7 audit trail held.** A single `prefix fingerprint: 71ec9e6e426337f8` across all 20 rows — the cacheable prefix did not vary, which is exactly what that fingerprint exists to prove.
+
+Four distinct causes, verbatim from the ledger:
+
+| Models | Error |
+|---|---|
+| `gpt-5.5` (4 runs) | openai 400 — *"Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead."* (`unsupported_parameter`) |
+| `gpt-5.5-mini` (4) | openai 404 — *"The model `gpt-5.5-mini` does not exist or you do not have access to it."* (`model_not_found`) |
+| `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` (4+4) | anthropic 400 — *"`temperature` and `top_p` cannot both be specified for this model. Please use only one."* |
+| `gemini-3.1-pro` (4) | google 400 — *"Invalid value at 'tools[0].function_declarations[0].parameters.properties[3].value.enum[0]' (TYPE_STRING), 0 …"* |
+
+**A diagnostic worth preserving as method:** the error TYPE discriminates model-string validity. A **400** means the string resolved and the request reached the model; a **404** means it did not. First contact therefore doubles as string verification at no cost — a cheap technique this study should state in its methods section.
+
+**The errored ledger is preserved** as `runs/ledger-pilot-2026-07-31-first-contact-ERRORED.jsonl` (INV-036). It was moved aside rather than left in place because `loadLedger()` keys resumability on `runKey` **regardless of `error`** — leaving it would have made a re-run report `pending=0` and silently do nothing.
+
+## §17.2 — A7-1: OpenAI token parameter
+
+`max_tokens` → **`max_completion_tokens`**. The field NAME is now a per-adapter configuration value on the shared OpenAI-compatible core, not a branch: one code path, one configured key. **Documented reason for not making it uniform:** Together's OpenAI-compatible surface is documented against `max_tokens`, so a blanket rename would plant a failure for Together's re-activation. OpenAI sends `max_completion_tokens`; Together sends `max_tokens`; both recorded, and Together's remains UNVERIFIED until funded.
+
+## §17.3 — A7-3: SAMPLING AMENDED — uniform temperature-only
+
+**OLD (as registered in DEC-16-7):**
+
+> `temperature: 0`, `top_p: 1.0`, `seed` where the API supports it.
+
+**NEW (governing from this commit):**
+
+> `temperature: 0` **only**. `top_p` is **not sent to any provider**. `seed` unchanged — still sent where supported.
+
+**Rationale.** Anthropic rejects `temperature` and `top_p` together. The narrow fix would be to drop `top_p` for Anthropic alone — but that would give one provider a different sampling configuration from the others, undermining precisely the cross-provider comparability DEC-16-7 exists to protect. `top_p: 1.0` is the API default and is **inert at temperature 0**, so dropping it everywhere loses no determinism and makes the configuration *more* uniform than what was registered. This **strengthens** comparability relative to the registered design rather than weakening it.
+
+`SAMPLING.top_p` remains in `config.mjs`, marked RETIRED, so the registered value stays visible in the record. A test asserts no adapter emits `top_p` or `topP`, and that all four still send `temperature: 0`.
+
+**This is a pre-data-collection amendment to a pre-registered parameter.** Zero successful runs exist; no result can have informed it.
+
+## §17.4 — A7-4: Google enum projection
+
+Google's Schema declares `enum` as **repeated string**. The live MCP schemas carry four **numeric** enums — the `M` revolution parameter, `{type:'number', enum:[0,1,2]}`, on `porkchop_scan`, `explain_cell`, `dla_feasibility` and `estimate_mission_cost` — which is what the 400 named.
+
+**Stringifying to `["0","1","2"]` was considered and REJECTED as lossy.** Google would then have the model emit the STRING `"2"`, while the MCP server's zod schema requires the NUMBER `2`. That is an input-validation failure, which DEC-15-8 classifies as an **MCP error, never a refusal** — it would corrupt the measurement rather than fix the call. Per R-A7-4's own instruction not to silently coerce something lossy, the enum is instead **dropped for Google only**, exactly as every other unsupported keyword already is.
+
+*Deviation recorded:* R-A7-4's primary instruction was to emit enum members as strings. That is done for the three enums that are **already** string-valued (`screeningStatus`, `siteId`, `section`) — they pass through untouched. It is **not** done for the four numeric ones, for the reason above. **The parameter keeps its correct `type: 'number'`; only the value constraint is lost, and it is still enforced server-side** — an out-of-range `M` produces a loud MCP error, never silent bad data. The drop is recorded in the projection's `dropped` list and asserted by test. **No file under `mcp/src/**` was touched; the instrument is unchanged.**
+
+This extends the A4-2 Google divergence disclosure: the projection now also drops non-string enums, and **tool-schema content is no longer identical across all four providers** in that one respect.
+
+## §17.5 — A7-5: four model strings CONFIRMED, one REFUTED
+
+| Model | Pilot evidence | Certainty |
+|---|---|---|
+| `gpt-5.5` | 400 + present in `GET /v1/models` | `lead` → **`confirmed`** |
+| `claude-sonnet-4-6` | 400 (sampling-param rejection ⇒ string resolved) | `certain` → **`confirmed`** |
+| `claude-haiku-4-5-20251001` | 400 (same) | `certain` → **`confirmed`** |
+| `gemini-3.1-pro` | 400 (schema rejection ⇒ string resolved) | `lead` → **`confirmed`** |
+| `gpt-5.5-mini` | **404 `model_not_found`** | `lead` → **`refuted`** |
+
+Each entry carries a `confirmedBy` field citing this pilot. Two new certainty classes are introduced: `confirmed` (the pilot proved the string resolves) and `refuted` (the pilot proved it does not).
+
+## §17.6 — The small-tier OpenAI slot: UNRESOLVED, deferred, not guessed
+
+An authorized **metadata** read — `GET https://api.openai.com/v1/models`, HTTP 200, 125 models, **no tokens billed, no inference call** — established that:
+
+> **The gpt-5.5 generation ships only `gpt-5.5` and `gpt-5.5-pro`. There is no `gpt-5.5-mini` and no `gpt-5.5-nano`.**
+
+DEC-16-6's contrast is **frontier vs small within the same lab and family generation**. No same-generation small sibling exists, so **no valid choice is available and none was invented** (R-A7-2, tripwire (c)). The nearest candidates are all a generation behind, which would confound capability-tier with generation:
+
+`gpt-5.4-mini` · `gpt-5.4-nano` · `gpt-5-mini` · `gpt-5-nano` · (`gpt-5.1-codex-mini`, a codex variant)
+
+**The slot is DEFERRED**, using the §16 status mechanism, with the refuted id and the full candidate list preserved in its `deferReason`. Hudson chooses; re-activation is a model id plus `status: 'active'`.
+
+## §17.7 — Consequences for the run
+
+| | Registered | This run |
+|---|---|---|
+| Roster | **k=6, unchanged** | **4 active** (gpt-5.5, both Anthropic, gemini-3.1-pro) |
+| Deferred | — | 2 — Together (cost, §16.3) and gpt-5.5-mini (refuted string) |
+| Primary runs | **1,680** | **1,080** (27 × 4 × 10) |
+| Control runs | **504** | **324** (27 × 4 × 3) |
+
+**Two of the three pre-registered contrasts are now unevaluable** — `openai-frontier-vs-small` (needs the deferred mini) and `google-vs-together-open-weight` (needs deferred Together). Only **`anthropic-frontier-vs-small`** survives. All three remain DECLARED in `CONTRASTS`; `EVALUABLE_CONTRASTS` exposes the one that is computable. **This is the most consequential open item before the full run** — a within-lab capability contrast is central to DEC-16-6, and only one of three can currently be measured. Resolving either deferral restores a second.

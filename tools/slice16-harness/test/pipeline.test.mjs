@@ -20,6 +20,7 @@ import {
   ACTIVE_ROSTER, DEFERRED_MODELS, REGISTERED_ROSTER, EVALUABLE_CONTRASTS,
   ACTIVE_PRIMARY_RUN_COUNT, ACTIVE_CONTROL_RUN_COUNT, ACTIVE_TOTAL_RUN_COUNT,
   REGISTERED_PRIMARY_RUN_COUNT, REGISTERED_CONTROL_RUN_COUNT, REGISTERED_TOTAL_RUN_COUNT,
+  SAMPLING,
   SpendGuardError, assertLiveAllowed, expandForms, normalizeUnit
 } from '../config.mjs';
 import { extractAnswerBlock, buildPrefix, buildUserTurn, prefixFingerprint } from '../prompt.mjs';
@@ -128,9 +129,11 @@ test('registered run counts match Amendment A1', () => {
 
   // EXECUTED counts reflect what actually runs: 27 runnable scenarios (S-06
   // deferred) x 5 active models (Together deferred).
-  assert.equal(ACTIVE_PRIMARY_RUN_COUNT, 1350, '27 runnable scenarios x k=5 active x r=10');
-  assert.equal(ACTIVE_CONTROL_RUN_COUNT, 405, '27 x k=5 x r=3');
-  assert.equal(ACTIVE_TOTAL_RUN_COUNT, 1755, 'executed primary + executed control');
+  // A7: gpt-5.5-mini deferred (pilot 404, no same-generation sibling exists), so
+  // the active roster is 4, not 5. REGISTERED counts above are untouched.
+  assert.equal(ACTIVE_PRIMARY_RUN_COUNT, 1080, '27 runnable scenarios x k=4 active x r=10');
+  assert.equal(ACTIVE_CONTROL_RUN_COUNT, 324, '27 x k=4 x r=3');
+  assert.equal(ACTIVE_TOTAL_RUN_COUNT, 1404, 'executed primary + executed control');
 
   // The two must never be equal by accident — that would mean the split collapsed.
   assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, ACTIVE_TOTAL_RUN_COUNT,
@@ -359,8 +362,13 @@ test('A6: Together request body is structurally identical to OpenAI (same surfac
   const o = mk(openai, { id: 'M', keyEnv: 'OPENAI_API_KEY' });
   const t = mk(together, { id: 'M', keyEnv: 'TOGETHER_API_KEY' });
 
-  assert.deepEqual(Object.keys(t).sort(), Object.keys(o).sort(), 'same top-level request keys');
-  assert.deepEqual(t, o, 'with the same model id, the bodies are byte-identical — only the base URL differs');
+  // A7-1: the ONE intended body difference is the max-tokens field name —
+  // OpenAI's newer families require max_completion_tokens, Together's compatible
+  // surface is documented against max_tokens. Everything else stays identical.
+  assert.equal(o.max_completion_tokens, SAMPLING.maxOutputTokens, 'openai uses max_completion_tokens');
+  assert.equal(t.max_tokens, SAMPLING.maxOutputTokens, 'together uses max_tokens');
+  const strip = (b) => { const c = { ...b }; delete c.max_tokens; delete c.max_completion_tokens; return c; };
+  assert.deepEqual(strip(t), strip(o), 'apart from the max-tokens field name, the bodies are identical');
   assert.notEqual(together.ENDPOINT, openai.ENDPOINT, 'the endpoint is the one intended difference');
   assert.match(together.ENDPOINT, /api\.together\.xyz/);
 });
@@ -374,8 +382,8 @@ test('roster models carry a status, mirroring the scenario convention', () => {
     assert.ok(['active', 'deferred'].includes(m.status), `${m.id} must declare a status`);
   }
   assert.equal(REGISTERED_ROSTER.length, 6, 'registered design is k=6 — unchanged by any deferral');
-  assert.equal(ACTIVE_ROSTER.length, 5, 'five models run right now');
-  assert.equal(DEFERRED_MODELS.length, 1, 'exactly one model is deferred');
+  assert.equal(ACTIVE_ROSTER.length, 4, 'four models run right now (A7 deferred gpt-5.5-mini)');
+  assert.equal(DEFERRED_MODELS.length, 2, 'Together (cost) and gpt-5.5-mini (refuted string)');
   assert.equal(
     ACTIVE_ROSTER.length + DEFERRED_MODELS.length,
     REGISTERED_ROSTER.length,
@@ -408,11 +416,14 @@ test('deferred models never enter a run plan', () => {
 
 test('a contrast naming a deferred model is disclosed as not evaluable', () => {
   assert.equal(CONTRASTS.length, 3, 'all three registered contrasts remain declared');
-  assert.equal(EVALUABLE_CONTRASTS.length, 2, 'only two are computable while Together is deferred');
-  assert.ok(
-    !EVALUABLE_CONTRASTS.some((c) => c.name === 'google-vs-together-open-weight'),
-    'the Together contrast is excluded from evaluable, not deleted from CONTRASTS'
-  );
+  // A7: with BOTH gpt-5.5-mini and Together deferred, only the Anthropic
+  // frontier-vs-small contrast survives. Recorded, not silently dropped.
+  assert.equal(EVALUABLE_CONTRASTS.length, 1, 'only Anthropic frontier-vs-small is computable');
+  assert.deepEqual(EVALUABLE_CONTRASTS.map((c) => c.name), ['anthropic-frontier-vs-small']);
+  for (const name of ['google-vs-together-open-weight', 'openai-frontier-vs-small']) {
+    assert.ok(CONTRASTS.some((c) => c.name === name), `${name} stays DECLARED`);
+    assert.ok(!EVALUABLE_CONTRASTS.some((c) => c.name === name), `${name} is excluded from evaluable`);
+  }
 });
 
 test('every roster adapter resolves to a module', async () => {
@@ -422,4 +433,86 @@ test('every roster adapter resolves to a module', async () => {
     const mod = await import(`../adapters/${m.adapter}.mjs`);
     assert.equal(typeof mod.startSession, 'function', `${m.adapter} must expose the adapter interface`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// AMENDMENT A7 — pilot first-contact fixes
+// ---------------------------------------------------------------------------
+
+test('A7-1: OpenAI sends max_completion_tokens, never max_tokens', async () => {
+  const openai = await import('../adapters/openai.mjs');
+  const model = REGISTERED_ROSTER.find((m) => m.id === 'gpt-5.5');
+  const body = openai.buildRequestBody(openai.startSession({
+    model, prefix: { system: 's', toolsAttached: true }, userTurn: 'q', mcpTools: []
+  }));
+  assert.ok('max_completion_tokens' in body, 'the pilot 400 was: max_tokens is not supported with this model');
+  assert.ok(!('max_tokens' in body), 'max_tokens must not be sent to this family');
+  assert.equal(body.max_completion_tokens, SAMPLING.maxOutputTokens);
+});
+
+test('A7-3: NO adapter sends top_p / topP — temperature only, uniformly', async () => {
+  const mcpTools = [{ name: 'get_body', description: 'd', inputSchema: { type: 'object', properties: {} } }];
+  for (const name of ['openai', 'anthropic', 'google', 'together']) {
+    const mod = await import(`../adapters/${name}.mjs`);
+    const model = REGISTERED_ROSTER.find((m) => m.adapter === name);
+    const body = mod.buildRequestBody(mod.startSession({
+      model, prefix: { system: 's', toolsAttached: true }, userTurn: 'q', mcpTools
+    }));
+    const flat = JSON.stringify(body);
+    assert.ok(!/"top_p"/.test(flat), `${name} must not send top_p`);
+    assert.ok(!/"topP"/.test(flat), `${name} must not send topP`);
+    // temperature IS still sent, and is still 0.
+    assert.ok(/"temperature":0/.test(flat), `${name} must still send temperature: 0`);
+  }
+});
+
+test('A7-3: seed is unchanged — still sent where the provider supports it', async () => {
+  const openai = await import('../adapters/openai.mjs');
+  const model = REGISTERED_ROSTER.find((m) => m.id === 'gpt-5.5');
+  const body = openai.buildRequestBody(openai.startSession({
+    model, prefix: { system: 's', toolsAttached: true }, userTurn: 'q', mcpTools: []
+  }));
+  assert.equal(body.seed, SAMPLING.seed, 'seed remains on the surfaces that accept it');
+});
+
+test('A7-4: Google emits no non-string enum member', async () => {
+  const { connectMcp } = await import('../mcp-client.mjs');
+  const { toGoogleTools } = await import('../tool-schema.mjs');
+  const mcp = await connectMcp();
+  const list = await mcp.listTools();
+  mcp.close();
+
+  const { tools, dropped } = toGoogleTools(list.tools);
+  // The live schemas DO contain numeric enums (M: {type:number, enum:[0,1,2]}),
+  // which is what produced the pilot's 400.
+  const hadNumeric = list.tools.some((t) =>
+    Object.values(t.inputSchema?.properties ?? {}).some((v) => Array.isArray(v.enum) && !v.enum.every((x) => typeof x === 'string')));
+  assert.ok(hadNumeric, 'guard the guard: the source schemas must still contain a numeric enum');
+
+  const walk = (node, hit = []) => {
+    if (!node || typeof node !== 'object') return hit;
+    if (Array.isArray(node.enum)) for (const v of node.enum) if (typeof v !== 'string') hit.push(v);
+    for (const v of Object.values(node)) if (v && typeof v === 'object') walk(v, hit);
+    return hit;
+  };
+  assert.deepEqual(walk(tools), [], 'no non-string enum member may reach Google');
+  assert.ok(dropped.some((d) => d.includes('enum(non-string')), 'and the drop is RECORDED, not silent');
+
+  // String enums must survive untouched — the fix is targeted, not a blanket strip.
+  const flat = JSON.stringify(tools);
+  assert.ok(flat.includes('low_departure_c3'), 'string enums are preserved');
+  assert.ok(flat.includes('cape-canaveral'), 'string enums are preserved');
+});
+
+test('A7-5: roster certainty matches the pilot evidence', () => {
+  const by = (id) => REGISTERED_ROSTER.find((m) => m.id === id);
+  for (const id of ['gpt-5.5', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'gemini-3.1-pro']) {
+    assert.equal(by(id).certainty, 'confirmed', `${id} returned a 400 in the pilot — the string resolved`);
+    assert.match(by(id).confirmedBy, /A7 pilot/, 'and the evidence is cited on the entry');
+  }
+  const mini = by('gpt-5.5-mini');
+  assert.equal(mini.certainty, 'refuted', 'gpt-5.5-mini 404d — the string does not exist');
+  assert.equal(mini.status, 'deferred', 'so its slot is deferred, not filled with a guess');
+  assert.match(mini.deferReason, /404|model_not_found/, 'with the pilot evidence recorded');
+  assert.ok(!/^gpt-5\.5-(mini|nano)$/.test(mini.id) === false, 'the refuted id is preserved, not overwritten');
 });
