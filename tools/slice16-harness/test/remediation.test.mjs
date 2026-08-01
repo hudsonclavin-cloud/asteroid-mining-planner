@@ -21,6 +21,8 @@ import {
   stripAnswerBlockFences, numbersWithUnitContext, normalizeText
 } from '../grader.mjs';
 import { clusterScenarios, clusterBootstrapCI, CLUSTER_OF } from '../grade.mjs';
+import { buildPrefix, buildUserTurn, SYSTEM_PROMPT, CONTROL_SYSTEM_PROMPT } from '../prompt.mjs';
+import { SCENARIOS } from '../config.mjs';
 
 // --- shared synthetic evidence (mirrors the frozen envelopes' shapes) --------
 
@@ -249,6 +251,68 @@ test('3.3c: negation guards and window bounds', () => {
 // ---------------------------------------------------------------------------
 // 3.4 — shared-stimulus clustering (audit L5-11)
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// 4.1 — scenario instantiation (audit L5-9)
+// ---------------------------------------------------------------------------
+
+test('4.1: S-10/S-12 ship the appendix-resolved cell, never the literal "this cell"', () => {
+  for (const id of ['S-10', 'S-12']) {
+    const s = SCENARIOS.find((x) => x.id === id);
+    for (const form of ['ORIGINAL', 'P1', 'P2']) {
+      const turn = buildUserTurn(s, form);
+      assert.ok(!turn.includes('this cell'), `${id}/${form} must not ship the unresolved referent`);
+      assert.ok(turn.includes('433') && turn.includes('2032-06-10') && turn.includes('272'),
+        `${id}/${form} must carry the L.8-resolved cell parameters`);
+    }
+  }
+});
+
+test('4.1: S-23 ships 433 vs 2014 PP69, never the literal [B8]/[B9]', () => {
+  const s = SCENARIOS.find((x) => x.id === 'S-23');
+  for (const form of ['ORIGINAL', 'P1', 'P2']) {
+    const turn = buildUserTurn(s, form);
+    assert.ok(!/\[B\d+\]/.test(turn), `${form}: no bracket placeholder may reach the wire`);
+    assert.ok(turn.includes('433') && turn.includes('2014 PP69'), `${form}: both resolved designations present`);
+  }
+});
+
+test('4.1 FAIL-CLOSED: an unresolved bracket placeholder refuses to build', () => {
+  const bad = { id: 'S-XX', prompts: { ORIGINAL: 'Compare [B8] with something.' } };
+  assert.throws(() => buildUserTurn(bad, 'ORIGINAL'), /unresolved bracket placeholder/);
+});
+
+test('4.1 FAIL-CLOSED: a declared resolution whose placeholder is absent refuses to build', () => {
+  const bad = { id: 'S-XX', resolutions: { 'this cell': 'X' }, prompts: { ORIGINAL: 'No referent here.' } };
+  assert.throws(() => buildUserTurn(bad, 'ORIGINAL'), /not present in the frozen prompt/);
+});
+
+test('4.1: the four mis-instantiable scenarios are deferred with recorded reasons (S-06 precedent)', () => {
+  for (const id of ['S-15', 'S-18', 'S-20', 'S-24']) {
+    const s = SCENARIOS.find((x) => x.id === id);
+    assert.equal(s.status, 'deferred', `${id} must not run until its stimulus can be instantiated as registered`);
+    assert.match(s.deferReason, /MIS-INSTANTIATED AS REGISTERED/);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 4.3 — control-arm prompt neutrality (audit L5-10, determinate half)
+// ---------------------------------------------------------------------------
+
+test('4.3: the control-arm system prompt never mentions tools', () => {
+  const control = buildPrefix({ tools: [] }, { toolsAttached: false });
+  assert.equal(control.system, CONTROL_SYSTEM_PROMPT);
+  assert.ok(!/\btools?\b/i.test(control.system),
+    'the registered control design is "never told tools exist" — the prose must comply');
+  const primary = buildPrefix({ tools: [] }, { toolsAttached: true });
+  assert.equal(primary.system, SYSTEM_PROMPT, 'the primary-arm prompt is unchanged');
+});
+
+test('4.3: both prompts carry a byte-identical JSON contract skeleton', () => {
+  const skeleton = (text) => text.slice(text.indexOf('```json'), text.indexOf('```', text.indexOf('```json') + 7) + 3);
+  assert.equal(skeleton(CONTROL_SYSTEM_PROMPT), skeleton(SYSTEM_PROMPT),
+    'control replies must stay parseable by the same extractor under the same contract');
+});
 
 test('3.4: the four registered pairs map to four clusters, exactly as DEC-16-8 lists them', () => {
   assert.equal(CLUSTER_OF['S-25'], 'S-01');

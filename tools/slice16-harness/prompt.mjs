@@ -46,6 +46,47 @@ Rules for the JSON block:
 - Numeric answers must appear in "values_used"; values you assert in the prose are graded too.
 The JSON block must be valid JSON and must be the last thing in your reply.`;
 
+/**
+ * REMEDIATION 4.3 (audit L5-10, S16-REMEDIATE-2026-08-01-A): the control-arm
+ * system prompt. The registered control design (§10.2 / DEC-16-2(b)) is "no
+ * tools ... never told tools exist" — but the single SYSTEM_PROMPT above
+ * opens with "with access to a set of astrodynamics tools" and instructs
+ * "use the tools", so every control run CONTRADICTED its own arm's design:
+ * the model was told tools exist while the adapter attached none. This
+ * variant removes every tool reference while keeping the JSON contract
+ * skeleton byte-identical, so control replies remain parseable by the same
+ * extractor. The full text is disclosed verbatim in founding §24.
+ *
+ * (The control-arm prefix fingerprint changes as a result; it already
+ * differed from the primary arm's via the empty tool serialization, and the
+ * two arms' fingerprints were never comparable to each other.)
+ */
+export const CONTROL_SYSTEM_PROMPT = `You are a mission-analysis assistant.
+
+Answer the user's question.
+
+After your explanation, end every reply with a single fenced JSON code block in exactly this form:
+
+\`\`\`json
+{
+  "answer": "<your answer in plain prose>",
+  "values_used": [{"name": "<quantity name>", "value": <number>, "units": "<units>"}],
+  "refusal_status": {"present": <true|false>, "code": "<code or null>", "what_would_help": "<text or null>"},
+  "sources_cited": ["<source id or path>"],
+  "assumptions_acknowledged": ["<assumption text>"],
+  "confidence_stated": "<measured|derived|assumed>"
+}
+\`\`\`
+
+Rules for the JSON block:
+- "values_used" lists every numeric quantity your answer asserts, with units. If you assert no numbers, use an empty list.
+- "refusal_status.present" is true only if you are declining to provide something you were asked for; give a short code and what would help.
+- "sources_cited" lists the identifiers or paths of the sources your answer relies on.
+- "assumptions_acknowledged" lists the assumptions your answer makes.
+- "confidence_stated" is your overall confidence class for the answer.
+- Numeric answers must appear in "values_used"; values you assert in the prose count too.
+The JSON block must be valid JSON and must be the last thing in your reply.`;
+
 /** Deterministic ordering so the serialized schema is byte-stable across runs. */
 function stableStringify(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
@@ -63,10 +104,11 @@ export function buildPrefix(toolsList, { toolsAttached = true } = {}) {
   const tools = Array.isArray(toolsList?.tools) ? toolsList.tools : [];
   const sorted = [...tools].sort((a, b) => String(a?.name).localeCompare(String(b?.name)));
   return {
-    system: SYSTEM_PROMPT,
-    // Control arm (A1 §10.2) attaches NO tools. This is not "an empty tool list"
-    // — the adapters omit the tool block entirely, so the model is never told
-    // tools exist. That is what makes the (tools − no-tools) delta meaningful.
+    // Control arm (A1 §10.2) attaches NO tools, and since remediation 4.3 the
+    // control SYSTEM TEXT carries no tool references either — "never told
+    // tools exist" now holds for the prose as well as the schema block, which
+    // is what makes the (tools − no-tools) delta meaningful.
+    system: toolsAttached ? SYSTEM_PROMPT : CONTROL_SYSTEM_PROMPT,
     toolsAttached,
     tools: toolsAttached ? sorted : [],
     toolsSerialized: toolsAttached ? stableStringify(sorted) : ''
@@ -87,13 +129,39 @@ export function prefixFingerprint(prefix) {
   return hash.toString(16).padStart(16, '0');
 }
 
-/** The user turn. Scenario text lives here and nowhere else. */
+/**
+ * The user turn. Scenario text lives here and nowhere else.
+ *
+ * REMEDIATION 4.1 (audit L5-9, S16-REMEDIATE-2026-08-01-A): placeholder
+ * RESOLUTION. The locked appendix froze prompt texts containing referents
+ * ("this cell", "[B8]", "[B9]") and later resolved them in §L.8 — but nothing
+ * ever substituted the resolutions, so the wire carried the literal
+ * placeholder text: S-10/S-12 asked about "this cell" with no cell anywhere in
+ * the conversation, and S-23 asked about "[B8]" vs "[B9]". The frozen prompt
+ * strings stay untouched in config; a scenario's `resolutions` map (taken
+ * verbatim from the appendix's own §L.8 resolutions) is applied here at build
+ * time, and the INSTANTIATED text is what ships and what the transcript
+ * records. A scenario declaring `resolutions` whose placeholder is missing
+ * from the prompt, or a prompt still carrying an UNRESOLVED bracket
+ * placeholder, throws — a mis-instantiated stimulus must never reach a paid
+ * call again.
+ */
 export function buildUserTurn(scenario, form) {
   const text = scenario?.prompts?.[form];
   if (typeof text !== 'string' || text.length === 0) {
     throw new Error(`scenario ${scenario?.id} has no prompt for form ${form}`);
   }
-  return text;
+  let resolved = text;
+  for (const [placeholder, replacement] of Object.entries(scenario?.resolutions ?? {})) {
+    if (!resolved.includes(placeholder)) {
+      throw new Error(`scenario ${scenario.id}/${form}: declared placeholder "${placeholder}" not present in the frozen prompt`);
+    }
+    resolved = resolved.split(placeholder).join(replacement);
+  }
+  if (/\[B\d+\]/.test(resolved)) {
+    throw new Error(`scenario ${scenario.id}/${form}: unresolved bracket placeholder in "${resolved}" — refusing to ship a mis-instantiated stimulus`);
+  }
+  return resolved;
 }
 
 /**
