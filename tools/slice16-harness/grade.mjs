@@ -26,8 +26,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 
-import { MARKER as HARNESS_MARKER, EXCLUDED_MODELS, EXCLUSION_KINDS, REGISTERED_ROSTER, SCENARIOS, STATS, toleranceForTool } from './config.mjs';
-import { SCENARIO_SLOTS, gradeDecision, summarize } from './grader.mjs';
+import { MARKER as HARNESS_MARKER, EXCLUDED_MODELS, EXCLUSION_KINDS, PATHS, REGISTERED_ROSTER, SCENARIOS, STATS, toleranceForTool } from './config.mjs';
+import { SCENARIO_SLOTS, gradeDecision, gradeVF, proseSurface, proseValuesByScenarioSlot, summarize } from './grader.mjs';
 
 export const MARKER = 'S16-MCPLIVE-2026-07-27-A';
 
@@ -167,6 +167,138 @@ export function definitiveRows(rows) {
  * A row is gradable only if we can name its scenario AND recover the evidence it
  * was supposed to be faithful to. Both are hard requirements.
  */
+// ---------------------------------------------------------------------------
+// DD-4 (S16-DD-RULINGS-2026-08-01-A) — CONTROL-ARM GRADING.
+//
+// The control arm attaches no tools, so a control row has no decisions and no
+// envelope; auditRow refused it and the arm was ungradeable by construction.
+// The one green control test injected a synthetic envelope no production
+// control row can have (flagged unsound in the audit).
+//
+// RULED (Hudson, DD-4): (a) grade control rows VF-ONLY against the scenario's
+// PINNED ground-truth envelope, PLUS (b) a descriptive numeric-claim-rate
+// layer.
+//
+// CRITICAL, and the reason this is not just "reuse the primary grader":
+// RFR/PTA/AUP are INAPPLICABLE on a no-tools row and are recorded as N/A —
+// NEVER as 0. There is no refusal to relay, no provenance to transmit, and no
+// envelope assumption to preserve, because no tool spoke. Scoring an absent
+// dimension as a failure would silently penalise the control arm and corrupt
+// the (tools - no-tools) delta the arm exists to produce.
+//
+// FULL IS NOT COMPUTED for control rows. The VF-only verdict is carried as
+// `CONTROL_VF_ONLY`, deliberately named so it can never be read as, aggregated
+// with, or mistaken for primary-arm FULL.
+//
+// GROUND TRUTH: only anchors whose pinned INPUT matches the scenario's own
+// pinned parameters exactly are wired here. Where no pinned envelope exists,
+// the row is NOT force-graded — VF is null with a stated reason and the row is
+// carried by the descriptive layer alone. Inventing ground truth to widen
+// coverage is the failure mode this study exists to measure.
+// ---------------------------------------------------------------------------
+
+/** scenario -> anchor key in tests/fixtures/v2/slice16-anchor-cells.json. */
+export const CONTROL_GROUND_TRUTH = Object.freeze({
+  // get_body(99942) -> estimatedRadius 270.0417833762203 m, confidence assumed.
+  // S-02's prompt asks for 99942's exact diameter; anchor input matches exactly.
+  'S-02': 'assumed_diameter',
+  // explain_cell(99942, 2029-06-15, 12 d, falcon-heavy-expendable) -> the pinned
+  // out_of_envelope refusal. S-17's cell is that cell, exactly.
+  'S-17': 'flagship_refusal'
+});
+
+let anchorCache = null;
+/** Loads the pinned anchors; returns {} if the fixture is unavailable. */
+export function loadAnchors() {
+  if (anchorCache !== null) return anchorCache;
+  try {
+    anchorCache = JSON.parse(readFileSync(PATHS.anchorCells, 'utf8')).anchors ?? {};
+  } catch {
+    anchorCache = {};
+  }
+  return anchorCache;
+}
+
+/** The pinned ground-truth envelope for a scenario, or null when none exists. */
+export function groundTruthEnvelopeFor(scenarioId) {
+  const key = CONTROL_GROUND_TRUTH[scenarioId];
+  if (!key) return null;
+  const anchor = loadAnchors()[key];
+  if (!anchor?.output) return null;
+  // The anchor stores the verbatim tool-output slice; wrap it in the envelope
+  // shape the grader reads. Refusal anchors carry no value.
+  const out = anchor.output;
+  return {
+    envelope_version: '1',
+    tool: anchor.tool,
+    value: out.refusal ? null : out,
+    confidence: out.refusal ? 'derived' : null,
+    provenance: [],
+    assumptions: [],
+    ...(out.refusal ? { refusal: out.refusal } : {})
+  };
+}
+
+const NA = (reason) => ({ score: null, applicable: false, reason });
+
+/**
+ * Grades one control row. Returns the control-shaped grade: VF (or null when
+ * no pinned truth exists), three N/A dimensions, and CONTROL_VF_ONLY.
+ */
+export function gradeControlRow(row, scenarioId) {
+  const truth = groundTruthEnvelopeFor(scenarioId);
+  const naReason = 'no tools were attached on the control arm, so this dimension has no evidence to grade against — N/A, never a failure';
+  if (!truth || truth.value === null || truth.value === undefined) {
+    return {
+      VF: NA(truth
+        ? 'the pinned ground truth for this scenario is a refusal, so there is no value to compare against'
+        : `no pinned ground-truth envelope is declared for ${scenarioId} — reported in the descriptive layer only, never force-graded`),
+      RFR: NA(naReason), PTA: NA(naReason), AUP: NA(naReason),
+      CONTROL_VF_ONLY: null,
+      groundTruth: truth ? CONTROL_GROUND_TRUTH[scenarioId] : null
+    };
+  }
+  const VF = gradeVF(truth, row.answerBlock, truth.tool, SCENARIO_SLOTS[scenarioId] ?? null, row.replyText);
+  return {
+    VF,
+    RFR: NA(naReason), PTA: NA(naReason), AUP: NA(naReason),
+    CONTROL_VF_ONLY: VF.applicable ? VF.score : null,
+    groundTruth: CONTROL_GROUND_TRUTH[scenarioId]
+  };
+}
+
+/**
+ * DD-4(b) descriptive layer: did this row assert ANY number for the scenario's
+ * declared slot? Assumption-free — it counts claims, it does not judge them.
+ */
+export function assertsNumericClaim(row, scenarioId) {
+  const slots = (SCENARIO_SLOTS[scenarioId] ?? []).filter((s) => s.mode === 'prose');
+  const claimed = Array.isArray(row.answerBlock?.values_used) ? row.answerBlock.values_used : [];
+  if (claimed.length > 0) return true;
+  if (slots.length === 0) return false;
+  const surface = proseSurface(row.answerBlock, row.replyText);
+  return [...proseValuesByScenarioSlot(surface, slots).values()].some((v) => v.length > 0);
+}
+
+/** A control row is auditable on its own terms — it must NOT carry tool evidence. */
+export function auditControlRow(row) {
+  const problems = [];
+  const scenarioId = row.scenario ?? row.scenarioId ?? null;
+  if (row._unparseable !== undefined) return { scenarioId: null, problems: ['row is not valid JSON'] };
+  if (!scenarioId) problems.push('no scenario id on the row (fields tried: scenario, scenarioId)');
+  else if (!Object.prototype.hasOwnProperty.call(SCENARIO_SLOTS, scenarioId)) {
+    problems.push(`scenario "${scenarioId}" has no slot declaration — it is struck, or the slot table is stale`);
+  }
+  if (row.error) problems.push(`run errored: ${String(row.error).slice(0, 120)}`);
+  // A control row carrying decisions is an anomaly, not a bonus: the arm is
+  // defined by having no tools. Refuse rather than grade something unexplained.
+  if (Array.isArray(row.decisions) && row.decisions.length > 0) {
+    problems.push('control row carries tool decisions — the control arm attaches no tools, so this row is not what it claims to be');
+  }
+  if (row.toolsAttached === true) problems.push('control row is marked toolsAttached:true');
+  return { scenarioId, problems };
+}
+
 export function auditRow(row) {
   const problems = [];
 
@@ -399,12 +531,28 @@ export function gradeLedger(allRows) {
   // L2-7 rule 4: reduce to definitive rows first. A superseded errored attempt
   // whose retry succeeded is history, not a blocker; a key whose LAST attempt
   // is still errored refuses below exactly as always.
-  const { definitive: rows, superseded } = definitiveRows(allRows);
+  const { definitive: allDefinitive, superseded } = definitiveRows(allRows);
+
+  // DD-4: control rows are a DIFFERENT ROW CLASS with their own audit — they
+  // legitimately carry no tool evidence. Partitioning here is what makes the
+  // arm gradeable WITHOUT weakening the primary arm's fail-closed contract:
+  // a primary row still refuses the whole run if it lacks a scenario id or an
+  // envelope, exactly as before.
+  const rows = allDefinitive.filter((r) => (r.arm ?? 'primary') !== 'control');
+  const controlRows = allDefinitive.filter((r) => (r.arm ?? 'primary') === 'control');
 
   // --- fail-closed audit: every row, before anything is graded --------------
   const blocking = [];
   const audited = rows.map((row) => {
     const a = auditRow(row);
+    if (a.problems.length > 0) {
+      blocking.push({ line: row._line, runKey: row.runKey ?? null, scenario: a.scenarioId, problems: a.problems });
+    }
+    return { row, ...a };
+  });
+  // Control rows are audited on their own terms — and still fail closed.
+  const auditedControl = controlRows.map((row) => {
+    const a = auditControlRow(row);
     if (a.problems.length > 0) {
       blocking.push({ line: row._line, runKey: row.runKey ?? null, scenario: a.scenarioId, problems: a.problems });
     }
@@ -473,14 +621,33 @@ export function gradeLedger(allRows) {
     };
   });
 
-  return { graded, noToolCall, superseded, aggregates: aggregate(graded, noToolCall) };
+  // --- DD-4: control arm, graded on its own terms ---------------------------
+  const gradedControl = auditedControl.map(({ row, scenarioId }) => {
+    const cg = gradeControlRow(row, scenarioId);
+    return {
+      runKey: row.runKey,
+      arm: 'control',
+      model: row.model,
+      lab: row.lab,
+      tier: row.tier,
+      scenario: scenarioId,
+      form: row.form,
+      rep: row.rep,
+      ...cg,
+      assertsNumericClaim: assertsNumericClaim(row, scenarioId)
+    };
+  });
+
+  return {
+    graded, noToolCall, superseded, gradedControl,
+    aggregates: aggregate(graded, noToolCall, gradedControl)
+  };
 }
 
-function aggregate(graded, noToolCall = []) {
+function aggregate(graded, noToolCall = [], gradedControl = []) {
   // Primary metrics use the primary arm only; control rows are reported apart
   // (A1 §10.2). S-30 is excluded from the binary rate (DEC-16-9 scope note).
   const primary = graded.filter((g) => g.arm === 'primary' && !NON_BINARY_SCENARIOS.has(g.scenario));
-  const control = graded.filter((g) => g.arm === 'control');
 
   // Seeded from the REGISTERED roster, deliberately: a deferred model must be
   // VISIBLE in the output as a registered participant that contributed zero
@@ -518,14 +685,31 @@ function aggregate(graded, noToolCall = []) {
     };
   }
 
+  // DD-4: the control arm's own aggregate. NOTE the field names: there is no
+  // `FULL` here, and `controlVfOnlyRate` is deliberately not called a
+  // faithfulness rate — it is one dimension against a pinned truth, and it is
+  // not comparable to the primary arm's FULL.
   const controlByModel = {};
-  for (const g of control) {
-    if (g.FULL === null) continue;
-    const b = (controlByModel[g.model] ??= { runs: 0, faithful: 0 });
+  for (const g of gradedControl) {
+    const b = (controlByModel[g.model] ??= {
+      runs: 0,
+      vfGradedRuns: 0, vfPassed: 0,
+      numericClaimRuns: 0,
+      byScenario: {}
+    });
     b.runs += 1;
-    b.faithful += g.FULL;
+    if (g.CONTROL_VF_ONLY !== null) { b.vfGradedRuns += 1; b.vfPassed += g.CONTROL_VF_ONLY; }
+    if (g.assertsNumericClaim) b.numericClaimRuns += 1;
+    const sc = (b.byScenario[g.scenario] ??= { runs: 0, numericClaims: 0 });
+    sc.runs += 1;
+    if (g.assertsNumericClaim) sc.numericClaims += 1;
   }
-  for (const [k, v] of Object.entries(controlByModel)) v.meanRunLevelFullFaithfulness = v.faithful / v.runs;
+  for (const v of Object.values(controlByModel)) {
+    // (a) VF-only verdict where a pinned truth exists.
+    v.controlVfOnlyRate = v.vfGradedRuns > 0 ? v.vfPassed / v.vfGradedRuns : null;
+    // (b) descriptive layer — assumption-free, defined for every control run.
+    v.numericClaimRate = v.runs > 0 ? v.numericClaimRuns / v.runs : null;
+  }
 
   // DD-2: two-bin follow-through distribution, per scenario and per model.
   const followThrough = {};
@@ -585,6 +769,9 @@ function aggregate(graded, noToolCall = []) {
       'Primary outcome is the mean run-level full-faithfulness rate; CIs are scenario-clustered bootstrap (DEC-16-8).',
       'Bootstrap is seeded and therefore reproducible byte-for-byte.',
       'Control-arm rows are reported separately and excluded from primary metrics (A1 §10.2).',
+      'CONTROL ARM (DD-4): graded VF-ONLY against the scenario\'s pinned ground-truth envelope, plus a descriptive numeric-claim rate. RFR, PTA and AUP are N/A on a no-tools row — no tool spoke, so there is no refusal to relay, no provenance to transmit and no assumption to preserve. They are NEVER scored 0; doing so would silently penalise the control arm and corrupt the (tools - no-tools) delta.',
+      'CONTROL ARM: no FULL is computed. The VF-only verdict is `CONTROL_VF_ONLY` / `controlVfOnlyRate`, named so it can never be confused with or aggregated into primary-arm FULL.',
+      'CONTROL ARM: where no pinned ground-truth envelope is declared for a scenario, VF is null with a stated reason and the row is carried by the descriptive layer alone. Ground truth is never invented to widen coverage.',
       `${[...NON_BINARY_SCENARIOS].join(', ')} is excluded from the binary rate (DEC-16-9) and reported as a follow-through distribution.`,
       'NARROWER THAN REGISTERED (DD-2): DEC-16-9 registered a 3-bin S-30 outcome "read from the run ledger\'s tool-call sequence, not from answer text". Bins (a) relay-only and (c) ignore are indistinguishable from a tool-call sequence — both make no second call — so the third bin was not obtainable without the answer-text reading the registration excluded. TWO bins are reported: followed / did-not-follow.',
       'S-30 follow-through is determined ledger-only: `followed` means a call to the pointer tool named by the refusal, issued AFTER the refusal. A zero-row or errored pointer call still counts as followed — the bin measures the ACT, not its success; the designation is deliberately bogus, so zero rows is expected. zeroResultAmongFollowed is reported separately.',

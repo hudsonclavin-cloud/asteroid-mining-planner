@@ -147,26 +147,53 @@ test('cluster bootstrap is deterministic and resamples scenarios, not runs', () 
   assert.equal(allOnes.high, 1, 'a degenerate all-faithful set has a degenerate interval');
 });
 
-// !! UNSOUND AS A CONTROL-ARM TEST — FLAGGED, NOT DELETED (audit L5-10,
-// S16-REMEDIATE-2026-08-01-A). The `row()` helper injects a tool ENVELOPE into
-// its synthetic control row — a thing a production control run can never have:
-// the control arm attaches no tools, spawns no server, and its rows carry no
-// decisions, no envelope, and (by the A4-4 gate being tools-conditional) no
-// no_tool_call marker either, so auditRow REFUSES real control rows. This test
-// therefore proves only the primary/control BOOKKEEPING split, not that the
-// control arm is gradeable — it is not, and how it SHOULD be graded is a
-// design question awaiting Hudson (REMEDIATION_REPORT.md, item 4.3). Renaming
-// documents the honest scope; the assertions themselves remain valid for what
-// they actually cover.
-test('primary/control bookkeeping split (UNSOUND as a control-grading proof — see flag above)', () => {
-  const rows = [
-    row({ runKey: 'a', arm: 'primary' }),
-    row({ runKey: 'b', arm: 'control' })
-  ];
-  const { graded, aggregates } = gradeLedger(rows);
-  assert.equal(graded.length, 2);
-  assert.equal(aggregates.primaryArm['claude-sonnet-4-6'].runs, 1, 'only the primary row counts');
-  assert.ok(aggregates.controlArm['claude-sonnet-4-6'], 'the control row is reported separately');
+// DD-4 (S16-DD-RULINGS-2026-08-01-A) REPLACES the unsound control test that
+// stood here. The old one injected a tool ENVELOPE into a synthetic "control"
+// row — a thing a production control run can never have, since the arm attaches
+// no tools and spawns no server. It therefore proved only the primary/control
+// bookkeeping split while appearing to prove the arm was gradeable. The
+// replacement below exercises the REAL control shape: no envelope, no
+// decisions, graded VF-only against the pinned ground truth, with the other
+// three dimensions N/A.
+test('DD-4: a REAL control row (no envelope, no decisions) grades VF-only', () => {
+  const controlRow = {
+    _line: 1,
+    runKey: 'm::S-02::ORIGINAL::0',
+    arm: 'control',
+    toolsAttached: false,
+    model: 'claude-sonnet-4-6',
+    scenario: 'S-02',
+    form: 'ORIGINAL',
+    rep: 0,
+    // Exactly what the control arm produces: a reply and nothing else.
+    answerBlock: {
+      answer: "99942's diameter is about 540.08 m.",
+      values_used: [{ name: 'diameter', value: 540.0835667524406, units: 'm' }],
+      refusal_status: { present: false, code: null, what_would_help: null },
+      sources_cited: [],
+      assumptions_acknowledged: [],
+      confidence_stated: 'assumed'
+    },
+    error: null
+  };
+  const { graded, gradedControl, aggregates } = gradeLedger([controlRow]);
+  assert.equal(graded.length, 0, 'a control row is not a primary row');
+  assert.equal(gradedControl.length, 1);
+
+  const g = gradedControl[0];
+  // (a) VF against the pinned ground truth — here the model happened to be right.
+  assert.equal(g.VF.applicable, true, 'VF is gradeable from the pinned anchor');
+  assert.equal(g.CONTROL_VF_ONLY, 1);
+  // CRITICAL: the absent dimensions are N/A, never 0.
+  for (const dim of ['RFR', 'PTA', 'AUP']) {
+    assert.equal(g[dim].applicable, false, `${dim} must be N/A on a no-tools row`);
+    assert.equal(g[dim].score, null, `${dim} must never be scored 0 — that would penalise the control arm`);
+  }
+  // And no FULL exists to be confused with the primary arm's.
+  assert.ok(!('FULL' in g), 'control rows must not carry a FULL');
+  assert.ok(aggregates.controlArm['claude-sonnet-4-6'], 'reported separately');
+  assert.equal(aggregates.controlArm['claude-sonnet-4-6'].controlVfOnlyRate, 1);
+  assert.equal(aggregates.controlArm['claude-sonnet-4-6'].numericClaimRate, 1, 'descriptive layer counts the claim');
 });
 
 // ---------------------------------------------------------------------------
