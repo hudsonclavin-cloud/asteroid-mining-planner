@@ -25,6 +25,7 @@ import {
   ACTIVE_ROSTER, EXCLUDED_MODELS, EXCLUSION_KINDS, REGISTERED_ROSTER,
   EXECUTED_PRIMARY_RUN_COUNT, EXECUTED_CONTROL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,
   REGISTERED_PRIMARY_RUN_COUNT, REGISTERED_CONTROL_RUN_COUNT, REGISTERED_TOTAL_RUN_COUNT,
+  BUDGET, estimateRowCostUsd,
   CAP_NOTICE, MAX_MODEL_TURNS, TOOL_CALL_CAP,
   MARKER, PATHS, PILOT, REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL,
   SpendGuardError, assertLiveAllowed, expandForms, liveReadiness, modelById
@@ -173,6 +174,55 @@ export function sameCauseHalt(failuresByCause, attempted) {
     if (count / attempted > SAME_CAUSE_HALT_THRESHOLD) return { cause, count, attempted };
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Spend halt — L5-3 remediation (S16-REMEDIATE-2026-08-01-A)
+//
+// Halts the arm when ACCRUED spend crosses the ceiling, or when PROJECTED
+// spend (accrued scaled to the full plan at the observed per-run average)
+// crosses it. Projection is the early-warning half: the halted full run's
+// per-run cost was 2.94x its projection because 4-5-call scenarios resend the
+// whole conversation per turn — a projection halt catches that class of
+// surprise while most of the budget is still unspent. A projection halt is
+// resumable and costs nothing extra; an accrued halt means the ceiling is
+// genuinely exhausted.
+// ---------------------------------------------------------------------------
+
+/**
+ * Pure predicate.
+ *   priorUsd   — priced spend already in the ledger before this invocation
+ *                (a resumed run must not restart the meter at $0)
+ *   thisRunUsd — priced spend accrued by this invocation
+ *   attempted  — rows attempted this invocation
+ *   planTotal  — rows this invocation set out to run (pending at start)
+ * Accrued halt: prior + this-run spend crosses the ceiling.
+ * Projected halt: prior + (this invocation's per-run average x its full plan)
+ * crosses the ceiling — the early warning while budget remains.
+ * Returns {kind:'accrued'|'projected', accruedUsd, projectedUsd, ceilingUsd} or null.
+ */
+export function spendHalt({ priorUsd = 0, thisRunUsd, attempted, planTotal, ceilingUsd = BUDGET.ceilingUsd }) {
+  const accruedUsd = priorUsd + thisRunUsd;
+  if (accruedUsd > ceilingUsd) {
+    return { kind: 'accrued', accruedUsd, projectedUsd: accruedUsd, ceilingUsd };
+  }
+  if (attempted > 0 && planTotal > attempted) {
+    const projectedUsd = priorUsd + (thisRunUsd / attempted) * planTotal;
+    if (projectedUsd > ceilingUsd) return { kind: 'projected', accruedUsd, projectedUsd, ceilingUsd };
+  }
+  return null;
+}
+
+/** Prices every parseable row already in a ledger — the resume seed for the guard. */
+export function priorLedgerSpendUsd(ledgerPath) {
+  if (!existsSync(ledgerPath)) return 0;
+  let usd = 0;
+  for (const line of readFileSync(ledgerPath, 'utf8').split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed === '') continue;
+    try { usd += estimateRowCostUsd(JSON.parse(trimmed)).usd; } catch { /* priced as 0; 1.5's loader owns malformed-line policy */ }
+  }
+  return usd;
 }
 
 /** Builds the plan without executing anything — used by --preflight and tests. */
@@ -504,6 +554,10 @@ export async function main(argv = process.argv.slice(2)) {
 
   let completed = 0;
   let failed = 0;
+  let thisRunUsd = 0;
+  let unpricedRows = 0;
+  const priorUsd = priorLedgerSpendUsd(ledgerPath);
+  if (priorUsd > 0) console.log(`prior spend already in this ledger: $${priorUsd.toFixed(2)} (counts toward the $${BUDGET.ceilingUsd} ceiling)`);
   const failuresByCause = new Map();
 
   try {
@@ -528,6 +582,29 @@ export async function main(argv = process.argv.slice(2)) {
 
       appendLedger(ledgerPath, row);
       completed += 1;
+
+      // L5-3: price this row from provider-reported usage and halt if the
+      // budget ceiling is crossed — accrued or projected.
+      const cost = estimateRowCostUsd(row);
+      thisRunUsd += cost.usd;
+      if (cost.unpriced) {
+        unpricedRows += 1;
+        console.error(`  !! row for ${row.model} has reported usage but NO price entry — spend guard is undercounting (${unpricedRows} such rows)`);
+      }
+      const budgetHalt = spendHalt({ priorUsd, thisRunUsd, attempted: completed, planTotal: pending.length });
+      if (budgetHalt) {
+        console.error(
+          `\nSPEND HALT (${budgetHalt.kind}): accrued $${budgetHalt.accruedUsd.toFixed(2)}` +
+          (budgetHalt.kind === 'projected'
+            ? `, projected $${budgetHalt.projectedUsd.toFixed(2)} over the full plan of ${pending.length}`
+            : '') +
+          ` crosses the $${budgetHalt.ceilingUsd} ceiling (DEC-16-7, BUDGET.ceilingUsd).\n` +
+          `Prices are third-party-estimated — verify against console billing. The ledger is preserved; ` +
+          `a resumed run re-prices only NEW rows, so raising the ceiling (a config change, Hudson's call) ` +
+          `and re-issuing the command continues from here.\n`
+        );
+        return 6;
+      }
 
       if (row.error) {
         failed += 1;

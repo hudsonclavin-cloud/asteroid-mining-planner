@@ -18,8 +18,10 @@ import { join } from 'node:path';
 
 import {
   main, parseCliMode, UsageError,
-  errorCauseKey, sameCauseHalt, SAME_CAUSE_HALT_THRESHOLD
+  errorCauseKey, sameCauseHalt, SAME_CAUSE_HALT_THRESHOLD,
+  spendHalt, priorLedgerSpendUsd
 } from '../runner.mjs';
+import { ACTIVE_ROSTER, BUDGET, PRICES_USD_PER_MTOK, estimateRowCostUsd } from '../config.mjs';
 
 // ---------------------------------------------------------------------------
 // L5-14 — strict CLI
@@ -114,4 +116,84 @@ test('L5-1: cause grouping strips the provider JSON body, keeping the status hea
 
 test('L5-1: the threshold constant is the registered 25%', () => {
   assert.equal(SAME_CAUSE_HALT_THRESHOLD, 0.25);
+});
+
+// ---------------------------------------------------------------------------
+// L5-3 — spend guard (synthetic usage only; no network, no live pricing calls)
+// ---------------------------------------------------------------------------
+
+test('L5-3: every ACTIVE model has a price entry — the guard cannot silently undercount the roster', () => {
+  for (const m of ACTIVE_ROSTER) {
+    assert.ok(PRICES_USD_PER_MTOK[m.id], `${m.id} must be priced for the spend guard`);
+  }
+});
+
+test('L5-3: a row is priced from provider-reported usage at the flagged Q3 prices', () => {
+  // gpt-5.5 at $5/M in, $30/M out: 1M input + 100k output = $5 + $3 = $8.
+  const { usd, unpriced } = estimateRowCostUsd({
+    model: 'gpt-5.5',
+    usage: { reported: true, inputTokens: 1_000_000, outputTokens: 100_000 }
+  });
+  assert.equal(unpriced, false);
+  assert.ok(Math.abs(usd - 8) < 1e-9, `expected $8, got $${usd}`);
+});
+
+test('L5-3: rows without reported usage cost 0; unknown priced models are flagged, not ignored', () => {
+  assert.deepEqual(estimateRowCostUsd({ model: 'gpt-5.5', usage: { reported: false } }), { usd: 0, unpriced: false });
+  assert.deepEqual(estimateRowCostUsd({ model: 'mock:x', usage: { reported: false } }), { usd: 0, unpriced: false });
+  const unknown = estimateRowCostUsd({ model: 'not-in-table', usage: { reported: true, inputTokens: 10, outputTokens: 10 } });
+  assert.equal(unknown.usd, 0);
+  assert.equal(unknown.unpriced, true, 'reported usage with no price entry must be flagged loudly');
+});
+
+test('L5-3: ACCRUED crossing the ceiling halts', () => {
+  const halt = spendHalt({ priorUsd: 0, thisRunUsd: 201, attempted: 100, planTotal: 810, ceilingUsd: 200 });
+  assert.equal(halt?.kind, 'accrued');
+});
+
+test('L5-3: PROJECTED crossing the ceiling halts while most budget is unspent', () => {
+  // The halted run's actual class of surprise: per-run cost 2.94x projection.
+  // $30 spent over 100 of 810 runs projects to $243 > $200 — halt NOW, with
+  // $170 still unspent, instead of discovering it at exhaustion.
+  const halt = spendHalt({ priorUsd: 0, thisRunUsd: 30, attempted: 100, planTotal: 810, ceilingUsd: 200 });
+  assert.equal(halt?.kind, 'projected');
+  assert.ok(Math.abs(halt.projectedUsd - 243) < 1e-9);
+});
+
+test('L5-3: within budget on both measures, no halt', () => {
+  assert.equal(spendHalt({ priorUsd: 0, thisRunUsd: 20, attempted: 100, planTotal: 810, ceilingUsd: 200 }), null,
+    '$20/100 projects to $162 < $200');
+});
+
+test('L5-3: a resumed run counts prior ledger spend toward the ceiling', () => {
+  // $190 already in the ledger + $11 this run = $201 accrued > $200.
+  const halt = spendHalt({ priorUsd: 190, thisRunUsd: 11, attempted: 5, planTotal: 500, ceilingUsd: 200 });
+  assert.equal(halt?.kind, 'accrued');
+  // And projection includes the prior as a constant, not scaled:
+  // prior $100 + ($1/run x 500 planned) = $600 > $200.
+  const proj = spendHalt({ priorUsd: 100, thisRunUsd: 5, attempted: 5, planTotal: 500, ceilingUsd: 200 });
+  assert.equal(proj?.kind, 'projected');
+});
+
+test('L5-3: priorLedgerSpendUsd prices an existing ledger file (synthetic)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 's16-spend-'));
+  const p = join(dir, 'ledger.jsonl');
+  writeFileSync(p, [
+    JSON.stringify({ runKey: 'a', model: 'gpt-5.5', usage: { reported: true, inputTokens: 1_000_000, outputTokens: 0 } }),
+    JSON.stringify({ runKey: 'b', model: 'claude-haiku-4-5-20251001', usage: { reported: true, inputTokens: 0, outputTokens: 1_000_000 } }),
+    JSON.stringify({ runKey: 'c', model: 'gpt-5.5', error: 'x', usage: { reported: false } })
+  ].join('\n') + '\n');
+  try {
+    // $5 (1M in at gpt-5.5) + $5 (1M out at haiku) + $0 (no reported usage) = $10
+    assert.ok(Math.abs(priorLedgerSpendUsd(p) - 10) < 1e-9);
+    assert.equal(priorLedgerSpendUsd(join(dir, 'absent.jsonl')), 0);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('L5-3: the configured ceiling default is the registered $200', () => {
+  assert.equal(BUDGET.ceilingUsd, 200);
+  assert.equal(spendHalt({ priorUsd: 0, thisRunUsd: 199, attempted: 10, planTotal: 10 }), null,
+    'defaults to BUDGET.ceilingUsd when no ceiling is passed');
 });

@@ -230,6 +230,47 @@ export const BUDGET = Object.freeze({
   expectedUsdHigh: 150
 });
 
+// ---------------------------------------------------------------------------
+// Runtime spend guard — L5-3 remediation (S16-REMEDIATE-2026-08-01-A)
+//
+// Until now BUDGET had NO consumer: the $200 ceiling was a design commitment
+// enforced by nothing but provider consoles, and the halted full run proved the
+// consoles' version of "enforcement" is running out of credit mid-arm. This
+// gives the ceiling an executable meaning: the runner accumulates
+// provider-reported usage priced by the table below and halts the arm when
+// accrued or projected spend crosses the ceiling.
+//
+// PRICES ARE THIRD-PARTY-ESTIMATED (Q3, query-3-model-matrix-cost.md), the same
+// figures the cost model uses. They are a GUARD input, not a billing record —
+// console billing remains the ground truth. If a price is wrong the guard halts
+// early or late by that factor, which is why the ceiling also stays set well
+// below the account's real credit line.
+// ---------------------------------------------------------------------------
+
+export const PRICES_USD_PER_MTOK = Object.freeze({
+  'gpt-5.5': { input: 5.00, output: 30.00 },
+  'claude-sonnet-4-6': { input: 3.00, output: 15.00 },
+  'claude-haiku-4-5-20251001': { input: 1.00, output: 5.00 }
+});
+
+/**
+ * Prices one ledger row from its provider-reported usage. Rows without
+ * reported usage (mock rows, errored rows that never reached a provider)
+ * cost 0. A priced ACTIVE model missing from the table is a config error the
+ * test suite catches; at runtime such a row also returns 0 but sets
+ * `unpriced`, which the runner surfaces loudly rather than ignoring.
+ */
+export function estimateRowCostUsd(row) {
+  const usage = row?.usage;
+  if (!usage || usage.reported !== true) return { usd: 0, unpriced: false };
+  const price = PRICES_USD_PER_MTOK[row.model];
+  if (!price) return { usd: 0, unpriced: true };
+  const usd =
+    (Number(usage.inputTokens) || 0) / 1e6 * price.input +
+    (Number(usage.outputTokens) || 0) / 1e6 * price.output;
+  return { usd, unpriced: false };
+}
+
 // SAMPLING — the registered values are KEPT VISIBLE but two of them are RETIRED.
 // Neither is sent to any provider any more; a test asserts that. This is the
 // third sampling amendment, and the chain is disclosed rather than compressed:
