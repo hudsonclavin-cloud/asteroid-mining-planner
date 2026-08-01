@@ -1078,3 +1078,49 @@ This is the **first and only session permitted to spend**. The boundary, recorde
 - `S16_LIVE_OK=1` inline on the two authorized commands only, **never exported** to the environment.
 
 **Spend-guard finding.** The RUNBOOK's setup line is `set -a; source tools/slice16-harness/.env; set +a`, and `.env` **contains an `S16_LIVE_OK` entry**. Sourcing it therefore places `S16_LIVE_OK` into the exported environment. In practice the entry is **empty**, so it grants nothing and the guard still holds — but "the flag is only ever set inline" and "the flag is exported empty by the documented setup step" are different security properties, and only the first is what the guard is supposed to provide. This run supplied the two required provider keys individually instead of sourcing the file, following the same practice A7 and A8 used for metadata calls. Recorded rather than fixed: `.env` is untracked and operator-owned.
+
+# §21 — Full-run attempt 1 (2026-08-01): halted by credit exhaustion
+
+**Marker:** `S16-FULLRUN-2026-07-31-A` · **Additive.** No design change; this records what happened.
+
+**The study did not collect its data.** The primary arm stopped at **275 of 810 runs** — 114 succeeded, 161 errored, **58.5%** — when the OpenAI account ran out of credit (160 × `429 "You have no credits remaining"`). The pre-registered halt condition (>25% of an arm failing for one cause) fired and the arm was stopped rather than retried. **Actual spend $13.82.** The control arm was **not started**: it would fail identically for the same diagnosed cause.
+
+**No faithfulness figures exist, and none are reported.** `grade.mjs` refused fail-closed (exit 3) on the 161 evidence-less rows. The refusal was **not** worked around by grading the survivors: those are the first ~11 scenarios in plan order, so any rate computed from them would describe that subset and not the study. **No AUP valve verdict is possible** — the valve requires a floor across all three models, and two have essentially no data.
+
+## §21.1 — The cost model was wrong by ~3×, and the reason is a new failure mode
+
+| | gpt-5.5 $/run |
+|---|---|
+| §19.6 projection, from the pilot ledger | $0.04297 |
+| Observed over 109 full-study runs | **$0.1262** |
+
+**Input tokens grow roughly quadratically with tool-call count**, because every model turn resends the whole conversation including all prior tool results, and envelopes are large:
+
+| Tool calls | 0 | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|---|
+| Avg input tokens | 1,402 | 5,226 | 8,465 | 10,444 | **57,638** | **193,544** |
+
+S-13 alone costs **$9.61 at r=10** on one model — more than a third of the entire projected study budget.
+
+**The pilot could not have caught this.** It ran two scenarios, S-02 and S-17, both 1–2 call; the full set spans 1–5 calls. This extends the study-preparation findings with a case the earlier ones do not cover:
+
+| Finding | Error | Corrective |
+|---|---|---|
+| S-06 ground truth | prose contradicted by the live tool | check the artifact |
+| A7 certainty | a 400 read as proving a model string | check the artifact |
+| A9 estimate (~$67) | asserted, never recomputed | check the artifact |
+| **§19.6 estimate ($22.48)** | **correctly computed from an unrepresentative sample** | **check that the sample spans the driver** |
+
+The first three are cured by doing the arithmetic. **This one is not — the arithmetic was correct.** A measured number inherits the coverage of what it was measured on, and a pilot chosen to validate *mechanism* is not automatically valid for estimating *cost*. Recorded because "house-measured" was treated as sufficient warrant, and it was not.
+
+**Any re-funding decision needs measured per-scenario cost, not extrapolation:** 16 of 27 scenarios have zero observations, and if any resemble S-13 the remaining cost is materially higher than a per-run average implies.
+
+## §21.2 — Harness defect, reported not fixed
+
+In `runner.mjs`, `if (calls >= TOOL_CALL_CAP) break;` sits **inside** the loop over one assistant turn's `tool_calls`. When a turn's calls cross the cap boundary, the remaining `tool_call_id`s never receive `tool` messages and the next OpenAI request 400s. Observed once, on `gpt-5.5::S-13::ORIGINAL::3` — S-13 being the 4–5 call scenario. **Reachable only at ≥4 calls in a turn, so the pilot could never hit it.** Not fixed here: it is a harness change outside this dispatch's scope and needs its own amendment.
+
+## §21.3 — What held
+
+Prefix fingerprint **`71ec9e6e426337f8`** was identical across all 275 rows *and* all three pilot rounds — instrument stability is intact. `usage.reported` was true on every successful row. The 20 runs with no envelopes were all correctly flagged `no_tool_call` (S-10, S-12), which A4-4 treats as a result rather than an error. 14 of 114 successful runs had `answerBlockOk: false`, all gpt-5.5 — ~12%, confined to one model, so a finding about that model rather than a harness fault, though `maxOutputTokens: 2048` may be truncating answers on the high-context scenarios.
+
+**Every ledger is preserved unmodified.** `ledger-full.jsonl` was deliberately left in place, so the resume trap (`loadLedger()` counts errored rows as done) must be resolved before any re-run — otherwise the re-run reports `pending=0` and silently produces a dataset missing 161 cells.
