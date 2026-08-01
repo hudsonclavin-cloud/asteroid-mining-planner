@@ -407,7 +407,26 @@ export function mergeEvidence(decisions) {
   }
 
   const values = envelopes.map((e, i) => [`call${i + 1}`, e.value]).filter(([, v]) => v !== null && v !== undefined);
-  const refusal = envelopes.map((e) => e.refusal).find(Boolean) ?? undefined;
+
+  // DD-5 (S16-DD-RULINGS-2026-08-01-A) — ALL REFUSALS, not the first.
+  //
+  // OLD: `envelopes.map((e) => e.refusal).find(Boolean)` kept only the FIRST
+  // truthy refusal. In a multi-tool run a later, distinct refusal vanished from
+  // the merged grading target, so an HONEST relay of that second refusal graded
+  // as fabrication — its numbers appeared in no whitelisted refusal text.
+  //
+  // NEW: every refusal is carried. RFR requires relaying each of them, and the
+  // number whitelist draws from all of them. Rationale (Hudson, DD-5): this is
+  // the same UNION principle A5 already ratified for provenance and assumptions
+  // — dimension-to-dimension consistency matters more than the marginal formal
+  // cleanliness of per-decision-only grading, and the status quo left live a
+  // path where honesty scored as fabrication.
+  //
+  // SHAPE: `refusal` keeps the DEC-15-4 single-refusal shape (the first one) so
+  // every existing consumer still reads a well-formed envelope; `refusals[]`
+  // carries the full set and is what gradeRFR actually grades against.
+  const allRefusals = envelopes.map((e) => e.refusal).filter(Boolean);
+  const refusal = allRefusals.length > 0 ? allRefusals[0] : undefined;
 
   return {
     tool: pickLoosestTool(decisions),
@@ -426,7 +445,7 @@ export function mergeEvidence(decisions) {
       provenance,
       assumptions: [...new Set(envelopes.flatMap((e) => e.assumptions ?? []))],
       validity_envelope: envelopes.map((e) => e.validity_envelope).filter(Boolean).join(' | '),
-      ...(refusal ? { refusal } : {})
+      ...(refusal ? { refusal, refusals: allRefusals } : {})
     }
   };
 }

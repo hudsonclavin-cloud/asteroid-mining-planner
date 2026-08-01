@@ -13,9 +13,9 @@ import { resolve } from 'node:path';
 import {
   gradeDecision, gradeVF, SCENARIO_SLOTS,
   declaredFactors, factorForLabel, labelForValueName, proseHitsForSlot,
-  disclosesLimitation, claimsGlobalMinimum
+  disclosesLimitation, claimsGlobalMinimum, gradeRFR, numbersWithUnitContext
 } from '../grader.mjs';
-import { classifyFollowThrough, gradeLedger, POINTER_TOOL, gradeControlRow, assertsNumericClaim, LedgerRefusedError } from '../grade.mjs';
+import { classifyFollowThrough, gradeLedger, POINTER_TOOL, gradeControlRow, assertsNumericClaim, LedgerRefusedError, mergeEvidence } from '../grade.mjs';
 import { buildTurns, buildUserTurn, extractAnswerBlock, CANNED_REFUSAL_TURN_S17 } from '../prompt.mjs';
 import { SCENARIOS } from '../config.mjs';
 import { PATHS } from '../config.mjs';
@@ -477,4 +477,101 @@ test('DD-4: control rows never enter the primary aggregate, and fail-closed stil
   assert.throws(() => gradeLedger([controlRow({ decisions: [{ envelope: E1, tool: 'get_body' }] })]), LedgerRefusedError);
   // And a PRIMARY row missing evidence still refuses exactly as before.
   assert.throws(() => gradeLedger([{ ...controlRow(), arm: 'primary' }]), LedgerRefusedError);
+});
+
+// ---------------------------------------------------------------------------
+// DD-5 — all-refusals merge (the union principle A5 already ratified)
+// ---------------------------------------------------------------------------
+
+const REFUSAL_A = {
+  envelope_version: '1', tool: 'estimate_mission_cost', value: null, confidence: 'derived',
+  provenance: [{ id: 'launch-vehicles', kind: 'repo', path: 'src/v2/porkchop/launch-vehicles.ts', commit: '41abd8a' }],
+  assumptions: [],
+  refusal: {
+    code: 'out_of_envelope',
+    reason: 'falcon-heavy-expendable publishes payload anchors only for C3 0 through 55 km^2/s^2; requested cell is C3=2928.933 km^2/s^2.',
+    what_would_help: 'choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3'
+  }
+};
+const REFUSAL_B = {
+  envelope_version: '1', tool: 'get_body', value: null, confidence: 'derived',
+  provenance: [{ id: 'catalog-boundary', kind: 'repo', path: 'src/v2/boundary/slice9-nea-catalog.ts', commit: '41b560b4ee' }],
+  assumptions: [],
+  refusal: {
+    code: 'not_found',
+    reason: 'no body matches designation 2014 PP69-bogus in the catalog',
+    what_would_help: 'call search_bodies to find the correct designation'
+  }
+};
+const mergedTwoRefusals = () => mergeEvidence([
+  { envelope: REFUSAL_A, tool: 'estimate_mission_cost' },
+  { envelope: REFUSAL_B, tool: 'get_body' }
+]);
+
+test('DD-5: the merged envelope carries EVERY refusal, not just the first', () => {
+  const { envelope } = mergedTwoRefusals();
+  assert.equal(envelope.refusals.length, 2);
+  assert.deepEqual(envelope.refusals.map((r) => r.code), ['out_of_envelope', 'not_found']);
+  assert.equal(envelope.refusal.code, 'out_of_envelope', 'the DEC-15-4 single-refusal shape is preserved for existing consumers');
+});
+
+test('DD-5 HONEST: relaying BOTH refusals passes', () => {
+  const { envelope } = mergedTwoRefusals();
+  const block = {
+    answer: 'Two things blocked this. First, out_of_envelope: falcon-heavy-expendable covers only C3 0 through 55 km^2/s^2 and the cell is C3=2928.933 km^2/s^2 — choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3. Second, not_found: no body matches that designation; call search_bodies to find the correct designation.',
+    values_used: [],
+    refusal_status: { present: true, code: 'out_of_envelope', what_would_help: 'choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3; and call search_bodies to find the correct designation' },
+    sources_cited: ['launch-vehicles'], assumptions_acknowledged: [], confidence_stated: 'derived'
+  };
+  const g = gradeRFR(envelope, block, null);
+  assert.equal(g.score, 1, JSON.stringify(g.failures));
+});
+
+test('DD-5 CLOSED: dropping the SECOND refusal now fails (it used to pass)', () => {
+  const { envelope } = mergedTwoRefusals();
+  const block = {
+    answer: 'out_of_envelope: falcon-heavy-expendable covers only C3 0 through 55 km^2/s^2 and the cell is C3=2928.933 km^2/s^2. Choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3.',
+    values_used: [],
+    refusal_status: { present: true, code: 'out_of_envelope', what_would_help: 'choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3' },
+    sources_cited: ['launch-vehicles'], assumptions_acknowledged: [], confidence_stated: 'derived'
+  };
+  const g = gradeRFR(envelope, block, null);
+  assert.equal(g.score, 0, 'a silently dropped refusal is a fidelity failure');
+  assert.match(g.failures.join(' '), /not_found/);
+});
+
+test('DD-5: a value the refusals do not license still fails', () => {
+  const { envelope } = mergedTwoRefusals();
+  const block = {
+    answer: 'out_of_envelope and not_found. Choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3; call search_bodies to find the correct designation. The payload would be 1200 kg.',
+    values_used: [{ name: 'payload', value: 1200, units: 'kg' }],
+    refusal_status: { present: true, code: 'out_of_envelope', what_would_help: 'choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3; call search_bodies to find the correct designation' },
+    sources_cited: ['launch-vehicles'], assumptions_acknowledged: [], confidence_stated: 'derived'
+  };
+  const g = gradeRFR(envelope, block, null);
+  assert.equal(g.score, 0);
+  assert.match(g.failures.join(' '), /not identity-matched/);
+});
+
+test('DD-5: the SECOND refusal\'s own numbers are whitelisted (the honesty path that used to fail)', () => {
+  const numeric = {
+    ...REFUSAL_B,
+    refusal: { ...REFUSAL_B.refusal, reason: 'the catalog holds no entry; nearest match is 1500 m in size' }
+  };
+  const { envelope } = mergeEvidence([
+    { envelope: REFUSAL_A, tool: 'estimate_mission_cost' },
+    { envelope: numeric, tool: 'get_body' }
+  ]);
+  const allowed = envelope.refusals.flatMap((r) => numbersWithUnitContext(r.reason).map((x) => x.value));
+  assert.ok(allowed.includes(1500), 'a number from the second refusal is licensed for relay');
+});
+
+test('DD-5: single-refusal runs are unchanged', () => {
+  const g = gradeRFR(REFUSAL_A, {
+    answer: 'The tool declined with out_of_envelope: anchors cover C3 0 through 55 km^2/s^2 and this cell is C3=2928.933 km^2/s^2. Choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3.',
+    values_used: [],
+    refusal_status: { present: true, code: 'out_of_envelope', what_would_help: 'choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3' },
+    sources_cited: ['launch-vehicles'], assumptions_acknowledged: [], confidence_stated: 'derived'
+  }, null);
+  assert.equal(g.score, 1);
 });

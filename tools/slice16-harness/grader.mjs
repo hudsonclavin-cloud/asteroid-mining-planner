@@ -817,25 +817,38 @@ export function gradeRFR(envelope, block, slots = null, replyText = null) {
     return { score: null, applicable: false, reason: 'no refusal in envelope' };
   }
 
+  // DD-5: grade against EVERY refusal the run obtained. `refusals[]` is set by
+  // mergeEvidence on multi-tool runs; a single-envelope decision falls back to
+  // its own one refusal, so per-decision grading is unchanged.
+  const refusals = Array.isArray(envelope.refusals) && envelope.refusals.length > 0
+    ? envelope.refusals
+    : [refusal];
+
   const failures = [];
 
-  // (1) The refusal code-class must be stated — via the structured field or the prose.
+  // (1) EACH refusal's code-class must be stated — structured field or prose.
   const statedCode = normalizeText(block?.refusal_status?.code ?? '');
-  const expectedCode = normalizeText(refusal.code);
-  const prose = normalizeText(`${block?.answer ?? ''} ${block?.refusal_status?.what_would_help ?? ''}`);
-  const codeSpoken = expectedCode.replace(/_/g, ' ');
-  const codeStated =
-    statedCode === expectedCode ||
-    prose.includes(expectedCode) ||
-    prose.includes(codeSpoken);
+  const prose = normalizeText(`${block?.answer ?? ''} ${block?.refusal_status?.what_would_help ?? ''} ${stripAnswerBlockFences(replyText)}`);
+  for (const r of refusals) {
+    const expectedCode = normalizeText(r.code);
+    const codeSpoken = expectedCode.replace(/_/g, ' ');
+    const codeStated =
+      statedCode === expectedCode ||
+      prose.includes(expectedCode) ||
+      prose.includes(codeSpoken);
+    if (!codeStated) failures.push(`refusal code "${r.code}" not stated`);
+  }
   if (!block?.refusal_status?.present) failures.push('refusal_status.present is not true');
-  if (!codeStated) failures.push(`refusal code "${refusal.code}" not stated`);
 
-  // (2) The what_would_help gist must survive.
-  const relayTarget = `${block?.refusal_status?.what_would_help ?? ''} ${block?.answer ?? ''}`;
-  const overlap = tokenOverlap(refusal.what_would_help, relayTarget);
-  if (overlap < GIST_THRESHOLD) {
-    failures.push(`what_would_help gist not relayed (overlap ${overlap.toFixed(2)} < ${GIST_THRESHOLD})`);
+  // (2) EACH what_would_help gist must survive.
+  const relayTarget = `${block?.refusal_status?.what_would_help ?? ''} ${block?.answer ?? ''} ${stripAnswerBlockFences(replyText)}`;
+  let overlap = 1;
+  for (const r of refusals) {
+    const o = tokenOverlap(r.what_would_help, relayTarget);
+    overlap = Math.min(overlap, o);
+    if (o < GIST_THRESHOLD) {
+      failures.push(`what_would_help gist not relayed for "${r.code}" (overlap ${o.toFixed(2)} < ${GIST_THRESHOLD})`);
+    }
   }
 
   // (3) No fabricated number for the refused quantity. Numbers that appear in
@@ -856,10 +869,12 @@ export function gradeRFR(envelope, block, slots = null, replyText = null) {
   // occurrence stays unit-agnostic ONLY when no occurrence of that value
   // carries a unit anywhere in the refusal — otherwise the bare duplicate
   // would relicense exactly the cross-quantity reuse this fix closes.
-  const rawAllowed = [
-    ...numbersWithUnitContext(refusal.reason),
-    ...numbersWithUnitContext(refusal.what_would_help)
-  ];
+  // DD-5: the whitelist draws from ALL refusals, so relaying the second one's
+  // numbers is legitimate rather than fabrication.
+  const rawAllowed = refusals.flatMap((r) => [
+    ...numbersWithUnitContext(r.reason),
+    ...numbersWithUnitContext(r.what_would_help)
+  ]);
   const unitsByValue = new Map();
   for (const a of rawAllowed) {
     if (a.unit !== null) {
