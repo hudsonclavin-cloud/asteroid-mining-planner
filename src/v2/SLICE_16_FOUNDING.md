@@ -1325,3 +1325,28 @@ Investigated because incremental caching attacks the §21.1 cost driver directly
 **Precision note on the guard, recorded not fixed:** `estimateRowCostUsd` reads `usage.inputTokens`. OpenAI *includes* cached tokens there, so the guard **over**-counts OpenAI; Anthropic *excludes* them (cache reads are a separate field), so the guard **under**-counts Anthropic by the cache-read and cache-write cost. Both errors are small in absolute terms on the observed data (cents), and the guard remains a ceiling rather than an accounting record.
 
 **NOT IMPLEMENTED, deliberately.** Caching the *growing conversation* — which is what would attack the quadratic driver, since the static prefix is already cached — requires incremental cache breakpoints moved per turn, within Anthropic's 4-breakpoint limit, and changes what is on the wire every turn. That interacts directly with **DEC-16-7's prefix-identity commitment**: the prefix fingerprint proves the cacheable prefix never varied, and per-turn breakpoints add cache markers *inside* the conversation, so what "identical prefix" means would need restating. Marking the tools array is likewise unconfirmed (A6 uncertainty #1) and could be rejected outright. This is more than a documented parameter addition, so it is written up as a dispatch rather than shipped: see `DD_RULINGS_REPORT.md`.
+
+# §27 — Public pre-registration seal (2026-08-01): DONE
+
+**Marker:** `S16-FINISH-2026-08-01-A` · **Additive.**
+
+DEC-16-10's OSF/Zenodo mirror — registered PENDING at lock, still pending through the halted first attempt (§25.1), and made a blocking precondition by §25.2 — is now **DONE**.
+
+| | |
+|---|---|
+| **Version DOI (immutable, this seal)** | **`10.5281/zenodo.21752617`** |
+| Concept DOI (always latest version) | `10.5281/zenodo.21752616` |
+| Record | <https://zenodo.org/records/21752617> |
+| **Sealed commit** | **`670b039cd6a0e8d2f8a31350f4ecf22524b4a0e2`** |
+| Sealed via tag | `slice16-prereg-v1` |
+| Published (Zenodo, exact) | `2026-08-01T23:44:23.499178+00:00` |
+| Deposit | 107,309,820 B archive of the full repository tree |
+| Instrument | Amendment A12 (§26) — corrected grader, corrected stimulus, runtime guards |
+
+**Binding verified, not assumed.** Three facts were checked rather than taken on trust: the record resolves and reports `state: published`; its related identifier is `isSupplementTo .../tree/slice16-prereg-v1`; and `git tag --points-at 670b039` returns `slice16-prereg-v1` in this repository. So the DOI archives the exact tree this study runs, and a reader can go from the DOI to the tag to the commit without relying on any claim made here.
+
+**What this closes.** §25.2 required, before any further data collection, that the corrected chain be *both* pushed to the public remote *and* sealed externally, with the URL/DOI and commit recorded here. `origin/main` was at `670b039` when the deposit was made, so the sealed tree was already public at seal time — the precise defect §25.1 disclosed (a local-only commit 74 seconds before collection) is not repeated. **PRE_RUN_GATE box 1 is satisfied.**
+
+**Scope of the seal.** It covers the revised pre-registration: the founding document with its complete amendment chain A1–A12, the locked 30-scenario appendix, the deterministic grader with its adversarial negative-control fixtures, the run harness with its spend and same-cause halt guards, and the 183-test offline suite. The original 2026-07-27 lock commit remains the first-registration anchor; every amendment between it and this seal is public and additive.
+
+**Recorded honestly:** this seal precedes the first collection under the corrected instrument. No faithfulness result existed at seal time. The 114 successful rows from the halted attempt remain excluded from all analysis — they were collected under the superseded instrument and are not study data.
