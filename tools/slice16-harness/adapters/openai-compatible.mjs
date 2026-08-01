@@ -42,12 +42,13 @@ export function createOpenAICompatibleAdapter({ provider, endpoint, apiSurface, 
   function buildRequestBody(session) {
     const body = {
       model: session.model.id,
-      messages: session.messages,
-      // A7-3: temperature ONLY. `top_p` is no longer sent to ANY provider —
-      // Anthropic rejects the pair, and sending different sampling configs per
-      // provider would undermine the cross-provider comparability DEC-16-7
-      // exists to protect. top_p:1.0 is the default and inert at temperature 0.
-      temperature: SAMPLING.temperature
+      messages: session.messages
+      // A8-1: NO temperature, NO top_p — provider defaults everywhere. gpt-5.5
+      // rejects temperature 0 outright ("does not support 0 with this model");
+      // Anthropic rejects temperature+top_p together. Rather than branch the
+      // sampling config per provider — which would confound the cross-model
+      // contrast this study exists to measure — both parameters are dropped for
+      // the whole roster. See SAMPLING in config.mjs for the full chain.
     };
     // A7-1: the newer OpenAI families reject `max_tokens` and require
     // `max_completion_tokens` (pilot: 400 unsupported_parameter on gpt-5.5).

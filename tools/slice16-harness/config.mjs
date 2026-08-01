@@ -83,13 +83,31 @@ export const CAP_NOTICE =
 //                          pilot; it is designed to fail loudly if not.
 
 export const ROSTER = Object.freeze([
-  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 pilot 400 + present in GET /v1/models', status: 'active' },
+  // A8-3 re-derived this one too. It SURVIVES, but on the metadata listing, not
+  // on the 400: presence in GET /v1/models is direct evidence of the string,
+  // independent of any request-body inference. (Round 2's 400 corroborates it —
+  // "does not support 0 WITH THIS MODEL" requires the model to have been
+  // resolved — but the listing alone is what makes this sound.) No successful
+  // call yet: nothing past request validation has ever run on this provider.
+  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 GET /v1/models listing (direct); A8 round-2 400 "with this model" corroborates. NO successful call yet.', status: 'active' },
   { id: 'gpt-5.5-mini', lab: 'openai', tier: 'small', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'refuted',
     status: 'deferred',
     deferReason: 'REFUTED BY PILOT (A7): openai 404 model_not_found. GET /v1/models confirms the 5.5 generation ships ONLY gpt-5.5 and gpt-5.5-pro — there is NO gpt-5.5-mini or gpt-5.5-nano, so no same-generation small sibling exists. R-A7-2 forbids inventing one, so the slot is deferred pending Hudson\'s choice from the live listing. Nearest small-tier candidates, all a GENERATION BEHIND (which would confound capability-tier with generation in the DEC-16-6 frontier-vs-small contrast): gpt-5.4-mini, gpt-5.4-nano, gpt-5-mini, gpt-5-nano. Re-activate by setting a chosen id + status active.' },
-  { id: 'claude-sonnet-4-6', lab: 'anthropic', tier: 'frontier', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 pilot 400 (sampling-param rejection, i.e. string resolved)', status: 'active' },
-  { id: 'claude-haiku-4-5-20251001', lab: 'anthropic', tier: 'small', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 pilot 400 (sampling-param rejection, i.e. string resolved)', status: 'active' },
-  { id: 'gemini-3.1-pro', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 pilot 400 (schema rejection, i.e. string resolved)', status: 'active' },
+  // A8-3 re-derived BOTH Anthropic certainties. A7 justified them with "pilot 400
+  // (sampling-param rejection, i.e. string resolved)" — the SAME unsound inference
+  // that wrongly confirmed gemini-3.1-pro, since a body-validation 400 can be
+  // raised before the model is ever resolved. They are re-confirmed here on
+  // evidence that actually carries: both COMPLETED FULL RUNS in pilot round 2 —
+  // 200s, real tool calls, real envelopes, valid answer blocks. A successful
+  // completion is the only evidence that confirms a string without inference.
+  { id: 'claude-sonnet-4-6', lab: 'anthropic', tier: 'frontier', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'confirmed', confirmedBy: 'A8: 4 SUCCESSFUL round-2 pilot runs (200, tool calls + envelopes + valid answer block)', status: 'active' },
+  { id: 'claude-haiku-4-5-20251001', lab: 'anthropic', tier: 'small', adapter: 'anthropic', keyEnv: 'ANTHROPIC_API_KEY', certainty: 'confirmed', confirmedBy: 'A8: 4 SUCCESSFUL round-2 pilot runs (200, tool calls + envelopes + valid answer block)', status: 'active' },
+  // A8-2: `gemini-3.1-pro` REFUTED (round-2 404; absent from ListModels) and
+  // replaced with the string the live listing actually carries. certainty
+  // 'confirmed' here means THE STRING RESOLVES — nothing more. Function calling
+  // on this model has never been exercised; see adapters/google.mjs for why the
+  // tool-tuned `-customtools` variant was deliberately NOT chosen.
+  { id: 'gemini-3.1-pro-preview', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'confirmed', confirmedBy: 'A8 ListModels (metadata): present, version 3.1-pro-preview-01-2026, supports generateContent. Resolution only — no successful call yet.', status: 'active' },
   // A6 (R-A6-3): DeepSeek dropped for jurisdiction; Together.ai takes the
   // open-weight slot (US-hosted open weights). k=6 unchanged.
   // certainty 'pending' => the model string is a SENTINEL, not a lead:
@@ -115,7 +133,9 @@ export const CONTRASTS = Object.freeze([
   { name: 'openai-frontier-vs-small', a: 'gpt-5.5', b: 'gpt-5.5-mini' },
   { name: 'anthropic-frontier-vs-small', a: 'claude-sonnet-4-6', b: 'claude-haiku-4-5-20251001' },
   // NOT EVALUABLE while Together is deferred — disclosed, not silently dropped.
-  { name: 'google-vs-together-open-weight', a: 'gemini-3.1-pro', b: 'PENDING-SET-TOGETHER-MODEL-STRING' }
+  // A8-2 updated side `a` to the resolved Gemini string; the SLOT is unchanged
+  // (Google frontier), only the identifier that names it.
+  { name: 'google-vs-together-open-weight', a: 'gemini-3.1-pro-preview', b: 'PENDING-SET-TOGETHER-MODEL-STRING' }
 ]);
 
 /** Contrasts computable from the ACTIVE roster alone. */
@@ -133,13 +153,32 @@ export const BUDGET = Object.freeze({
   expectedUsdHigh: 150
 });
 
+// SAMPLING — the registered values are KEPT VISIBLE but two of them are RETIRED.
+// Neither is sent to any provider any more; a test asserts that. This is the
+// third sampling amendment, and the chain is disclosed rather than compressed:
+//
+//   registered  temperature: 0  +  top_p: 1.0
+//   A7-3        temperature: 0  only        (Anthropic 400s on the pair)
+//   A8-1        NEITHER — provider defaults (OpenAI gpt-5.5 400s on temperature 0:
+//               "Unsupported value: 'temperature' does not support 0 with this model")
+//
+// WHY UNIFORM RATHER THAN PER-PROVIDER: the alternative was to keep temperature 0
+// everywhere except OpenAI. That buys marginally more determinism for four models
+// and costs the thing the comparison is FOR — a cross-model faithfulness
+// difference would be confounded with a sampling difference, and no amount of
+// disclosure repairs a confound sitting on the primary contrast. Uniform default
+// sampling is the honest instrument (DEC-16-7).
+//
+// WHAT IS LOST: run-to-run determinism is now weaker. It was already best-effort —
+// Anthropic and Google expose no seed at all, so three of four providers were
+// never reproducible by seed. Variance control was ALREADY the k repetitions per
+// cell, not the sampling config, so the design's actual variance instrument is
+// untouched. Disclosed in the limitations section, not silently absorbed.
 export const SAMPLING = Object.freeze({
+  // RETIRED BY A8-1 — not sent to any provider. Kept so the registered value
+  // stays in the record and the amendment chain remains auditable.
   temperature: 0,
-  // RETIRED BY A7-3 — no longer sent to ANY provider. Kept so the registered
-  // value stays visible in the record. Anthropic rejects temperature+top_p
-  // together; top_p:1.0 is the default and inert at temperature 0, so dropping
-  // it loses no determinism and makes the sampling config uniform across the
-  // roster. A test asserts no adapter emits it.
+  // RETIRED BY A7-3 — not sent to any provider, for the same reason.
   top_p: 1.0,
   seed: 20260727, // used only where the provider supports it; disclosed as best-effort
   maxOutputTokens: 2048

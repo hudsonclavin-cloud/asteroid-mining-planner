@@ -450,7 +450,7 @@ test('A7-1: OpenAI sends max_completion_tokens, never max_tokens', async () => {
   assert.equal(body.max_completion_tokens, SAMPLING.maxOutputTokens);
 });
 
-test('A7-3: NO adapter sends top_p / topP — temperature only, uniformly', async () => {
+test('A8-1: NO adapter sends temperature OR top_p — provider defaults, uniformly', async () => {
   const mcpTools = [{ name: 'get_body', description: 'd', inputSchema: { type: 'object', properties: {} } }];
   for (const name of ['openai', 'anthropic', 'google', 'together']) {
     const mod = await import(`../adapters/${name}.mjs`);
@@ -459,11 +459,44 @@ test('A7-3: NO adapter sends top_p / topP — temperature only, uniformly', asyn
       model, prefix: { system: 's', toolsAttached: true }, userTurn: 'q', mcpTools
     }));
     const flat = JSON.stringify(body);
-    assert.ok(!/"top_p"/.test(flat), `${name} must not send top_p`);
-    assert.ok(!/"topP"/.test(flat), `${name} must not send topP`);
-    // temperature IS still sent, and is still 0.
-    assert.ok(/"temperature":0/.test(flat), `${name} must still send temperature: 0`);
+    // Substring match, not key match: `temperature` must not appear ANYWHERE,
+    // including nested under Google's generationConfig.
+    assert.ok(!flat.includes('temperature'), `${name} must not send temperature (A8-1: gpt-5.5 rejects 0)`);
+    assert.ok(!flat.includes('top_p'), `${name} must not send top_p (A7-3)`);
+    assert.ok(!flat.includes('topP'), `${name} must not send topP (A7-3)`);
   }
+});
+
+test('A8-1: retired sampling values stay VISIBLE in config even though unsent', () => {
+  // The registered values are part of the pre-registration record. Deleting them
+  // would erase the amendment chain; the test pins "kept but unsent".
+  assert.equal(SAMPLING.temperature, 0, 'registered temperature must remain in the record');
+  assert.equal(SAMPLING.top_p, 1.0, 'registered top_p must remain in the record');
+});
+
+test('A8-3: every roster certainty is backed by evidence of the right kind', () => {
+  for (const model of REGISTERED_ROSTER) {
+    if (model.certainty === 'confirmed') {
+      assert.ok(model.confirmedBy, `${model.id}: certainty 'confirmed' requires confirmedBy`);
+      // The A7 inference error: a body-validation 400 was read as proof the model
+      // string resolved, when such a 400 can be raised BEFORE model resolution.
+      // Only a successful call or a metadata listing confirms a string outright.
+      const sound = /successful|ListModels|\/v1\/models|listing/i.test(model.confirmedBy);
+      assert.ok(sound, `${model.id}: confirmedBy must cite a successful call or a metadata listing, not a bare 400 — got "${model.confirmedBy}"`);
+    }
+    if (model.certainty === 'refuted' || model.certainty === 'pending') {
+      assert.equal(model.status, 'deferred', `${model.id}: non-confirmed strings must not be active`);
+      assert.ok(model.deferReason, `${model.id}: deferred entries must say why`);
+    }
+  }
+});
+
+test('A8-2: the refuted gemini string is gone and the resolved one is in place', () => {
+  const ids = REGISTERED_ROSTER.map((m) => m.id);
+  assert.ok(!ids.includes('gemini-3.1-pro'), 'gemini-3.1-pro was REFUTED by a 404 — must not remain');
+  assert.ok(ids.includes('gemini-3.1-pro-preview'), 'the ListModels-resolved string must be in the roster');
+  // The tool-tuned variant would confound the construct being measured.
+  assert.ok(!ids.some((id) => id.includes('customtools')), 'the tool-optimized variant must not be used — it confounds tool-evidence faithfulness');
 });
 
 test('A7-3: seed is unchanged — still sent where the provider supports it', async () => {
@@ -504,12 +537,33 @@ test('A7-4: Google emits no non-string enum member', async () => {
   assert.ok(flat.includes('cape-canaveral'), 'string enums are preserved');
 });
 
-test('A7-5: roster certainty matches the pilot evidence', () => {
+// SUPERSEDED BY A8-3 — the original A7-5 test asserted, for four strings:
+//     assert.equal(by(id).certainty, 'confirmed',
+//                  `${id} returned a 400 in the pilot — the string resolved`)
+// That message IS the inference error. A 400 can be raised during request-body
+// validation, BEFORE the model is resolved, so it proves nothing about the
+// string. Round 2 demonstrated it: gemini-3.1-pro, "confirmed" by exactly this
+// reasoning, 404'd. The bad inference had been pinned by a passing test, which
+// is precisely why it read as verified — a green suite certifying a guess.
+// The replacement below asserts the EVIDENCE KIND, not the status code.
+test('A8-3 (supersedes A7-5): roster certainty rests on sound evidence only', () => {
   const by = (id) => REGISTERED_ROSTER.find((m) => m.id === id);
-  for (const id of ['gpt-5.5', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'gemini-3.1-pro']) {
-    assert.equal(by(id).certainty, 'confirmed', `${id} returned a 400 in the pilot — the string resolved`);
-    assert.match(by(id).confirmedBy, /A7 pilot/, 'and the evidence is cited on the entry');
+
+  // Confirmed by a SUCCESSFUL CALL — the strongest evidence, and the only kind
+  // that also proves the transport contract works end to end.
+  for (const id of ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001']) {
+    assert.equal(by(id).certainty, 'confirmed');
+    assert.match(by(id).confirmedBy, /SUCCESSFUL/, `${id} completed real round-2 runs`);
   }
+
+  // Confirmed by a METADATA LISTING — proves the string resolves, and nothing
+  // more. Both entries must still disclose that no call has succeeded.
+  for (const id of ['gpt-5.5', 'gemini-3.1-pro-preview']) {
+    assert.equal(by(id).certainty, 'confirmed');
+    assert.match(by(id).confirmedBy, /ListModels|\/v1\/models|listing/i, `${id} rests on a listing`);
+    assert.match(by(id).confirmedBy, /no successful call/i, `${id} must not overclaim`);
+  }
+
   const mini = by('gpt-5.5-mini');
   assert.equal(mini.certainty, 'refuted', 'gpt-5.5-mini 404d — the string does not exist');
   assert.equal(mini.status, 'deferred', 'so its slot is deferred, not filled with a guess');

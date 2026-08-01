@@ -813,3 +813,84 @@ DEC-16-6's contrast is **frontier vs small within the same lab and family genera
 | Control runs | **504** | **324** (27 × 4 × 3) |
 
 **Two of the three pre-registered contrasts are now unevaluable** — `openai-frontier-vs-small` (needs the deferred mini) and `google-vs-together-open-weight` (needs deferred Together). Only **`anthropic-frontier-vs-small`** survives. All three remain DECLARED in `CONTRASTS`; `EVALUABLE_CONTRASTS` exposes the one that is computable. **This is the most consequential open item before the full run** — a within-lab capability contrast is central to DEC-16-6, and only one of three can currently be measured. Resolving either deferral restores a second.
+
+# §18 — Amendment A8 (2026-07-31): pilot round 2
+
+**Marker:** `S16-AMEND-A8-2026-07-31-A` · **Additive.** Nothing above is rewritten.
+
+Round 2 ran under the A7 fixes. **8 of 16 runs succeeded** — the first real data this study has produced — and **8 errored**, in exactly two ways, each pointing at a different fault.
+
+## §18.1 — What round 2 PROVED, which matters more than what it broke
+
+Both Anthropic models completed full agentic runs against the live MCP server: **200s, real tool calls, real envelopes captured per call, and a valid answer block on every one.** Four runs made one tool call, four made two. Token usage ran 4,820–8,847 per run.
+
+That is the first end-to-end confirmation that the A4 tool-calling loop, the envelope capture path, the tool-result turn shape and the structured-answer contract all work against a real model rather than a mock. Every prior claim about them rested on offline fixtures. **They now rest on live evidence** — for Anthropic. For OpenAI and Google, they remain entirely unproven: no call on either provider has ever survived request validation.
+
+## §18.2 — A8-1: SAMPLING AMENDED A THIRD TIME — provider defaults
+
+`gpt-5.5` returned `400 Unsupported value: 'temperature' does not support 0 with this model`. The full chain, disclosed rather than compressed:
+
+| | temperature | top_p | cause |
+|---|---|---|---|
+| Registered | 0 | 1.0 | design default (DEC-16-7) |
+| A7-3 | 0 | — | Anthropic rejects the pair |
+| **A8-1** | **—** | **—** | **gpt-5.5 rejects temperature 0 itself** |
+
+**Why uniform rather than per-provider.** The cheap fix was to keep `temperature: 0` for the four models that accept it and drop it only for OpenAI. That was rejected. This study's primary output is a *comparison between models*; if one arm runs at temperature 0 and another at the provider default, any faithfulness difference is confounded with a sampling difference, and **no amount of disclosure repairs a confound sitting directly on the primary contrast.** A uniformly weaker instrument is worth more here than a non-uniformly sharper one.
+
+**What is lost, stated plainly:** run-to-run determinism is now weaker. It was already best-effort — Anthropic and Google expose no seed, so three of four providers were never seed-reproducible. The design's actual variance control was always the *k* repetitions per cell, and that is untouched. `seed` is still sent where accepted.
+
+Both retired values stay visible in `SAMPLING`, unsent, so the chain stays auditable. A test asserts no adapter emits either.
+
+## §18.3 — A8-2: the Gemini string, and a variant deliberately NOT chosen
+
+`gemini-3.1-pro` returned `404 not found for API version v1beta`. An authorized **ListModels metadata call** (no inference, no tokens) confirmed it is **absent entirely**. Resolved to **`gemini-3.1-pro-preview`**, version `3.1-pro-preview-01-2026`, which the listing shows supports `generateContent`.
+
+The listing also offered **`gemini-3.1-pro-preview-customtools`** — "optimized for custom tool usage." **Rejected, and the reason is methodological rather than technical.** This study measures how faithfully a model carries *tool evidence* into its answer. A variant specifically tuned for tool use would make the Google cell a different instrument from the other five. It would plausibly have **scored better** — which is precisely the reason it must not be chosen. `gemini-pro-latest` was rejected as a moving alias: a pre-registered study needs a frozen instrument, and an alias can be repointed mid-run without the ledger showing it.
+
+**Scope of this evidence:** presence in a listing proves the string *resolves*. It does not prove function calling works, nor validate the schema projection, the `functionResponse` role, or the response shape. Those still need one successful call.
+
+## §18.4 — A8-3: an inference error in A7, and the test that pinned it
+
+A7 marked four strings `confirmed` on this reasoning: *"returned a 400 in the pilot — the string resolved."*
+
+**That inference is unsound.** A 400 can be raised during request-body validation, *before* the model is ever resolved. Round 2 demonstrated it: `gemini-3.1-pro` had been confirmed by exactly this argument, and it does not exist.
+
+The error was not specific to Gemini. It was a **systematic reasoning error applied to three strings at once** — two Anthropic and one Google — which happened to be right twice and wrong once. Being right about the Anthropic pair was luck, not method.
+
+**It had also been written into a passing test**, which asserted `certainty === 'confirmed'` with the message *"returned a 400 in the pilot — the string resolved."* A green suite was certifying a guess. That is the more uncomfortable half of this finding: the bad inference was not merely recorded, it was *defended by automation*.
+
+Every certainty is re-derived on evidence of a stated kind:
+
+| Model | Evidence | Sound? |
+|---|---|---|
+| `claude-sonnet-4-6` | **4 successful round-2 runs** | Yes — a completed call is the only inference-free confirmation |
+| `claude-haiku-4-5-20251001` | **4 successful round-2 runs** | Yes |
+| `gpt-5.5` | `GET /v1/models` listing (direct) | Yes — the listing, *not* the 400 |
+| `gemini-3.1-pro-preview` | ListModels listing | Yes, for **resolution only** |
+| `gpt-5.5-mini` | 404 `model_not_found` | Yes — a 404 *does* refute |
+
+A refutation from a 404 remains sound: it names the model as the fault. Only *confirmation* from a 400 was ever the error. The replacement test asserts the **kind of evidence**, not the status code, and requires listing-based entries to disclose that no call has yet succeeded.
+
+**`seed` acceptance on OpenAI is still unconfirmed** — no 400 named it, but a 400 stops at the first fault, so every parameter validated after the named one remains untested. Recorded as open rather than assumed.
+
+## §18.5 — Round 2's successful runs are QUARANTINED, not used
+
+The 8 successful Anthropic runs were produced under A7-3 sampling (`temperature: 0`). Post-A8 runs use provider defaults. **They are not comparable, so they are not study data.**
+
+Both ledgers are preserved as INV-036 artifacts:
+- `runs/ledger-pilot-2026-07-31-first-contact-ERRORED.jsonl` — round 1, 20 rows, 0 successful
+- `runs/ledger-pilot-2026-07-31-round2-QUARANTINED-pre-A8-sampling.jsonl` — round 2, 16 rows, 8 successful
+
+**Quarantined rather than deleted.** They are worthless as measurements and valuable as evidence: they are the proof that the loop works live (§18.1) and the record of what the sampling config was when it did. Moving round 2 aside is also operationally required — `loadLedger()` counts errored rows as done, so leaving it in place would make a re-run report `pending=0` and silently do nothing.
+
+## §18.6 — Consequences for the run
+
+| | Registered | This run |
+|---|---|---|
+| Roster | **k=6, unchanged** | **4 active** — gpt-5.5, both Anthropic, gemini-3.1-pro-preview |
+| Primary runs | **1,680** | **1,080** (27 × 4 × 10) |
+| Control runs | **504** | **324** (27 × 4 × 3) |
+| Total | 2,184 | **1,404** |
+
+**Still one of three contrasts evaluable.** A8 resolved the Gemini string rather than losing it, so the active roster held at 4 and the count is unchanged from §17.7 — but `anthropic-frontier-vs-small` remains the only computable contrast. **This is the outstanding threat to the study's stated aims and it is unchanged by A8**, because neither deferral it depends on is a technical fault: `gpt-5.5-mini` does not exist and Together is unfunded. Both need a decision, not a fix.

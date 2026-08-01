@@ -59,12 +59,13 @@ export function buildRequestBody(session) {
     model: session.model.id,
     system: session.system,
     messages: session.messages,
-    max_tokens: SAMPLING.maxOutputTokens,
-    // A7-3: temperature ONLY. This API REJECTS temperature and top_p together
-    // (pilot: 400 "`temperature` and `top_p` cannot both be specified"), and the
-    // fix is applied uniformly to every provider rather than only here, so the
-    // sampling config stays identical across the roster.
-    temperature: SAMPLING.temperature
+    max_tokens: SAMPLING.maxOutputTokens
+    // A8-1: NO temperature, NO top_p — provider defaults. This API rejected the
+    // PAIR at A7-3; gpt-5.5 then rejected temperature 0 itself, so rather than
+    // give OpenAI a different sampling config from everyone else, both params are
+    // dropped roster-wide. Anthropic's runs were succeeding under temperature 0,
+    // so this change is made for CROSS-MODEL COMPARABILITY, not because this
+    // provider required it — the alternative confounds the primary contrast.
     // No seed parameter on this API; determinism is best-effort and disclosed
     // (DEC-16-7). Repetitions, not seeds, are the variance control.
   };

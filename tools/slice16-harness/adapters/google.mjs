@@ -19,7 +19,31 @@
 // the required-set — is preserved and asserted identical across all providers.
 //
 // SPECIFIC UNCERTAINTIES (tripwire (k)):
-//   1. MODEL STRING. `gemini-3.1-pro` is a Q3 LEAD, not confirmed.
+//   1. MODEL STRING — RESOLVED BY A8-2. `gemini-3.1-pro` was REFUTED (round-2
+//      pilot 404; absent from ListModels). The string is now
+//      `gemini-3.1-pro-preview`, version `3.1-pro-preview-01-2026`, taken from a
+//      live ListModels response that shows it supports `generateContent`.
+//
+//      WHY NOT THE OTHER CANDIDATES, all of which were present and would have
+//      worked — the choice is a measurement decision, not a convenience one:
+//        * `gemini-3.1-pro-preview-customtools` — described by the provider as
+//          "optimized for custom tool usage". REJECTED: this study measures how
+//          faithfully a model carries TOOL EVIDENCE into its answer. A variant
+//          specifically tuned for tool use would make the Google cell a
+//          different instrument from the other five, confounding the primary
+//          contrast with a tuning difference. It would likely have SCORED
+//          BETTER, which is exactly why it must not be chosen.
+//        * `gemini-pro-latest` — REJECTED: a moving alias. A pre-registered study
+//          needs a frozen instrument; an alias can be repointed mid-run and the
+//          ledger would not show it.
+//        * `gemini-3-pro-preview` / `gemini-2.5-pro` — REJECTED: earlier
+//          generations. The registered slot is the Google FRONTIER model, and
+//          3.1-pro-preview is the current frontier of that line.
+//
+//      WHAT THIS EVIDENCE DOES *NOT* ESTABLISH: presence in ListModels with
+//      `generateContent` proves the string RESOLVES. It does not prove function
+//      calling works, nor that the schema projection, the functionResponse role
+//      or the response shape below are right. Those still need one live call.
 //   2. functionResponse ROLE. The tool-result part is sent on a `user` turn.
 //      Some versions of this API document/accept a `function` role instead.
 //      WHICH ONE THIS VERSION WANTS IS UNCONFIRMED — if the pilot 400s on an
@@ -44,7 +68,7 @@ export const PROVIDER = 'google';
 export const ENDPOINT_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 export const API_SURFACE = 'Generative Language v1beta :generateContent (functionDeclarations / functionCall / functionResponse)';
 export const UNVERIFIED_CONTRACT = [
-  'model string gemini-3.1-pro is a Q3 lead, not confirmed',
+  'model string gemini-3.1-pro-preview resolves (present in ListModels, supports generateContent) but has NEVER completed a call — function-calling support unproven',
   'functionResponse turn sent with role "user"; some versions expect role "function"',
   'functionResponse.response sent as an object {result: "..."}; bare-string acceptance unconfirmed',
   'exact draft-07 keyword subset accepted by this version is unconfirmed (projection is conservative)',
@@ -74,8 +98,8 @@ export function buildRequestBody(session) {
     systemInstruction: session.systemInstruction,
     contents: session.contents,
     generationConfig: {
-      // A7-3: temperature ONLY; topP is no longer sent to any provider.
-      temperature: SAMPLING.temperature,
+      // A8-1: NO temperature, NO topP — provider defaults, uniformly across the
+      // roster. See SAMPLING in config.mjs for the three-step amendment chain.
       maxOutputTokens: SAMPLING.maxOutputTokens
       // No seed on this API; determinism best-effort and disclosed (DEC-16-7).
     }

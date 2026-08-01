@@ -1,30 +1,40 @@
 // Slice 16 harness — OpenAI adapter (native tool calling).
 // MARKER: S16-AMEND-A4-2026-07-28-A
 //
-// !!! UNTESTED-AT-NETWORK-BOUNDARY !!!
-// !!! UNVERIFIED-ADAPTER-CONTRACT  !!!
+// !!! STILL UNTESTED-AT-NETWORK-BOUNDARY — no SUCCESSFUL call yet !!!
 //
 // API SURFACE TARGETED: OpenAI Chat Completions, `POST /v1/chat/completions`,
 // function calling via the `tools` request field and `choices[].message.tool_calls`
 // in the response; tool results returned as `{role:'tool', tool_call_id, content}`.
 // Rationale for this surface over the Responses API: see openai-compatible.mjs.
 //
-// SPECIFIC UNCERTAINTIES (tripwire (k)) — each is a place a 400 could originate:
-//   1. MODEL STRING. `gpt-5.5` / `gpt-5.5-mini` come from Q3 research and are
-//      LEADS, not confirmed. If either is wrong the call fails before tools
-//      matter. Confirm against the models endpoint first.
-//   2. `seed` SUPPORT. Sent because Chat Completions has historically accepted
-//      it for best-effort determinism (DEC-16-7). If this model family rejects
-//      or ignores it, drop the field — determinism is already disclosed as
-//      best-effort and repetitions are the real variance control.
-//   3. `max_tokens` vs `max_completion_tokens`. Newer OpenAI model families have
-//      moved to `max_completion_tokens` and reject `max_tokens`. WHICH ONE
-//      `gpt-5.5` WANTS IS UNCONFIRMED. If the pilot 400s on an unknown/unsupported
-//      parameter, this is the first thing to change.
-//   4. TEMPERATURE. Some newer families accept only the default temperature and
-//      reject `temperature: 0`. Unconfirmed for this string.
-// What would confirm all four: one successful pilot call, or the provider's
-// current model-reference page for the exact string.
+// STATUS OF THE FOUR REGISTERED UNCERTAINTIES after two pilot rounds. Each is
+// marked with the evidence that settled it — and NOT settled further than the
+// evidence reaches, which is the A8-3 lesson (a 400 only tells you about the
+// parameter it names; everything validated AFTER it is still untested):
+//
+//   1. MODEL STRING `gpt-5.5` — CONFIRMED, two independent ways: present in
+//      GET /v1/models (A7 metadata call), and round 2's 400 read "does not
+//      support 0 WITH THIS MODEL", which requires the model to have been
+//      resolved and its capabilities consulted. `gpt-5.5-mini` — REFUTED,
+//      404 model_not_found; deferred in the roster, not silently swapped.
+//   2. `seed` SUPPORT — STILL UNCONFIRMED. Neither 400 mentioned it, but that
+//      is NOT acceptance: a 400 returns on the first fault found, so every
+//      parameter validated after the named one remains untested. Kept, because
+//      determinism is already disclosed as best-effort and repetitions are the
+//      real variance control. If round 3 400s on `seed`, drop it.
+//   3. `max_tokens` vs `max_completion_tokens` — RESOLVED. Round 1 rejected
+//      `max_tokens` and named `max_completion_tokens` as the replacement; round 2
+//      sent that and the complaint moved on to a different parameter.
+//   4. TEMPERATURE — REFUTED, and the reason this adapter's header was right to
+//      list it. Round 2: 400 "Unsupported value: 'temperature' does not support
+//      0 with this model". A8-1 drops temperature for the WHOLE roster rather
+//      than only here, so the sampling config stays uniform and the cross-model
+//      contrast stays unconfounded. See SAMPLING in config.mjs.
+//
+// What is still needed: ONE SUCCESSFUL CALL. Nothing below the temperature fault
+// has ever been exercised on this provider — tools, tool_calls, the tool-result
+// turn shape and the answer contract are all still unproven here.
 
 import { createOpenAICompatibleAdapter } from './openai-compatible.mjs';
 
@@ -33,10 +43,8 @@ const adapter = createOpenAICompatibleAdapter({
   endpoint: 'https://api.openai.com/v1/chat/completions',
   apiSurface: 'Chat Completions /v1/chat/completions (tools / tool_calls)',
   unverified: [
-    'model string gpt-5.5 / gpt-5.5-mini is a Q3 lead, not confirmed',
-    'seed acceptance unconfirmed for this model family',
-    'max_tokens vs max_completion_tokens unconfirmed for this model family',
-    'temperature:0 acceptance unconfirmed for this model family'
+    'seed acceptance STILL UNCONFIRMED — no 400 named it, but a 400 stops at the first fault, so later-validated params remain untested',
+    'tools / tool_calls / tool-result turn shape NEVER EXERCISED — every pilot call failed before reaching them'
   ]
 });
 

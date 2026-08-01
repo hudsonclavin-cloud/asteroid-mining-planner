@@ -78,14 +78,18 @@ Chat subscriptions are **not** API keys. Each needs a developer account with bil
 |---|---|---|
 | OpenAI | <https://platform.openai.com> | `gpt-5.5` ✅ confirmed. **`gpt-5.5-mini` does NOT exist** — small-tier slot deferred, see §17.6 |
 | Anthropic | <https://console.anthropic.com> | `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` — both ✅ confirmed |
-| Google | <https://aistudio.google.com> | `gemini-3.1-pro` ✅ confirmed |
+| Google | <https://aistudio.google.com> | `gemini-3.1-pro-preview` ✅ resolves (`gemini-3.1-pro` **does not exist** — 404, A8-2) |
 | **Together.ai** | <https://api.together.ai> | the open-weight slot — **model string PENDING**, see below (A6: replaces DeepSeek, US jurisdiction) |
 
 > ### ⚠ SET A HARD SPEND CAP IN EVERY CONSOLE BEFORE GENERATING A KEY
 > The `$200` ceiling is a **design commitment, not an enforced limit**. Only the provider console can actually stop spending. Do this first, in all four.
 
-> ### ✅ MODEL STRINGS — SETTLED BY THE PILOT (A7)
-> `gpt-5.5`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001` and `gemini-3.1-pro` are **confirmed**: each returned a 400, which only a resolved string can do.
+> ### ✅ MODEL STRINGS — RE-DERIVED IN A8 (this table's A7 version was wrong)
+> **A7 said: "each returned a 400, which only a resolved string can do." That is false**, and `gemini-3.1-pro` disproved it by 404ing in round 2 after being "confirmed" this way. A 400 can come from request-body validation *before* the model is resolved. Founding §18.4. Certainty now cites the evidence kind:
+> - **Confirmed by a successful call** (inference-free, and also proves the transport works): `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`.
+> - **Confirmed by a metadata listing** — the string *resolves*, nothing more; neither has ever completed a call: `gpt-5.5` (`GET /v1/models`), `gemini-3.1-pro-preview` (ListModels).
+>
+> Not chosen for Google, deliberately: **`gemini-3.1-pro-preview-customtools`** ("optimized for custom tool usage") would make the Google cell a tool-tuned instrument unlike the other five and would likely score *better* — which is why it is disqualified; and **`gemini-pro-latest`**, a moving alias, which a pre-registered study cannot pin.
 > **`gpt-5.5-mini` is REFUTED** — 404 `model_not_found`. `GET /v1/models` shows the 5.5 generation ships only `gpt-5.5` and `gpt-5.5-pro`; there is no same-generation small sibling. **You choose** from `gpt-5.4-mini`, `gpt-5.4-nano`, `gpt-5-mini`, `gpt-5-nano` — all a generation behind, which confounds tier with generation — or leave the slot deferred. §17.6.
 >
 > ### ⛔ THE TOGETHER MODEL STRING IS A PENDING SENTINEL
@@ -207,29 +211,45 @@ Only when all of these pass, continue to the pilot.
 
 ## 6. Pilot
 
-> ### RE-RUNNING THE PILOT AFTER FIXES (A7)
-> The first pilot ran 2026-07-31 and **every run errored** on four provider-contract
-> faults — all fixed in Amendment A7 (founding §17). Re-running is expected.
+> ### PILOT ROUND 3 — after Amendment A8
 >
-> **The catch:** resumability keys on `runKey` **regardless of whether the row errored**.
-> If a previous `ledger-pilot.jsonl` is still in place, a re-run reports
+> **History so far.** Round 1 (2026-07-31): 20 runs, **all errored**, four
+> provider-contract faults → fixed in A7 (founding §17). Round 2: 16 runs,
+> **8 succeeded, 8 errored** on two remaining faults → fixed in A8 (founding §18).
+>
+> **What round 2 proved.** Both Anthropic models completed full agentic runs —
+> real tool calls, envelopes captured, valid answer blocks, 4.8k–8.8k tokens each.
+> The loop works live. **OpenAI and Google have still never completed a call**, so
+> round 3 is really their first-contact test, not Anthropic's.
+>
+> **What round 3 is expected to expose.** A8 fixed what round 2's errors *named*.
+> A 400 stops at the first fault, so on both providers everything validated after
+> the fixed parameter is still untested — OpenAI's `seed`, and on Google the whole
+> function-calling path (schema projection, `functionResponse` role, response
+> shape). **New errors here are the pilot working**, not A8 failing.
+>
+> **The re-run catch:** resumability keys on `runKey` **regardless of whether the
+> row errored**. If a `ledger-pilot.jsonl` is in place, a re-run reports
 > `already-done=N pending=0` and **silently does nothing**. Move it aside first:
 >
 > ```sh
 > mv tools/slice16-harness/runs/ledger-pilot.jsonl \
->    tools/slice16-harness/runs/ledger-pilot-$(date +%F)-errored.jsonl
+>    tools/slice16-harness/runs/ledger-pilot-$(date +%F)-round3.jsonl
 > ```
 >
 > **Never `rm -rf tools/slice16-harness/runs/`** — INV-036 makes these ledgers
-> evidence artifacts, and the first-contact errored ledger is already preserved
-> there as `ledger-pilot-2026-07-31-first-contact-ERRORED.jsonl`.
+> evidence artifacts. Two are already preserved there:
+> `ledger-pilot-2026-07-31-first-contact-ERRORED.jsonl` (round 1) and
+> `ledger-pilot-2026-07-31-round2-QUARANTINED-pre-A8-sampling.jsonl` (round 2).
 >
-> **Expect fewer errors, not zero.** Some may remain; that is still the pilot
-> working. Note the run is now **16, not 20** — `gpt-5.5-mini` joined Together in
-> deferral after its 404 (4 active models × 2 scenarios × r=2).
+> **Round 2's 8 successes are QUARANTINED, not study data** (founding §18.5): they
+> ran under A7-3 sampling (`temperature: 0`) and post-A8 runs use provider
+> defaults, so they are not comparable. Do not merge them into any analysis.
 
 
-2 scenarios (`S-02` value path, `S-17` refusal path) × 6 models × r=2 = **24 runs**.
+2 scenarios (`S-02` value path, `S-17` refusal path) × **4 active models** × r=2 =
+**16 runs** (the registered design is 6 models = 24; `gpt-5.5-mini` and Together
+are deferred — see founding §18.6 for registered-vs-executed).
 
 ```sh
 set -a; source tools/slice16-harness/.env; set +a
@@ -238,7 +258,7 @@ S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --pilot
 
 **What "good" looks like:**
 
-- `mode=pilot planned=24 … pending=24`, then `done: 24 runs written, 0 errored`.
+- `mode=pilot planned=16 … pending=16`, then `done: 16 runs written, 0 errored`. (16, not the registered 24 — two models are deferred. `0 errored` is the ideal; **round 3 realistically will not hit it**, since OpenAI and Google have never completed a call and everything past their fixed parameter is untested.)
 - One `prefix fingerprint` line, and **the same value on every row** — that is the DEC-16-7 audit trail. A fingerprint that varies mid-run invalidates those runs.
 - Every row has `usage.reported: true` — provider-reported tokens, which replace the chars/4 est-tok heuristic.
 - `answerBlockOk: true` on the large majority of rows. Widespread `false` means models are not honouring the structured-answer contract, which is a harness/prompt problem, not a result.
