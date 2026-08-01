@@ -1350,3 +1350,44 @@ DEC-16-10's OSF/Zenodo mirror — registered PENDING at lock, still pending thro
 **Scope of the seal.** It covers the revised pre-registration: the founding document with its complete amendment chain A1–A12, the locked 30-scenario appendix, the deterministic grader with its adversarial negative-control fixtures, the run harness with its spend and same-cause halt guards, and the 183-test offline suite. The original 2026-07-27 lock commit remains the first-registration anchor; every amendment between it and this seal is public and additive.
 
 **Recorded honestly:** this seal precedes the first collection under the corrected instrument. No faithfulness result existed at seal time. The 114 successful rows from the halted attempt remain excluded from all analysis — they were collected under the superseded instrument and are not study data.
+
+# §28 — Cost probe, attempt 1 (2026-08-01): halted at row 1, OpenAI credits exhausted
+
+**Marker:** `S16-FINISH-2026-08-01-A` · **Additive.** No design change; this records an operational event and one piece of evidence about the instrument.
+
+The scenario-stratified cost probe required by PRE_RUN_GATE box 11 (26 active scenarios × 4 active models × r=1 = **104 planned runs**) was launched immediately after the §27 seal. It **halted on its first run**:
+
+```
+mode=probe planned=104 already-done=0 pending=104
+SAME-CAUSE HALT (registered, SLICE_16_FOUNDING.md §20.6):
+  1/1 attempted runs in this arm failed for one cause (100.0% > 25%).
+  cause: Error: openai 429:
+        "You have no credits remaining. Add credits to continue using the API"
+exit 5
+```
+
+**Spend: $0.00.** A 429 is rejected before inference bills.
+
+## §28.1 — The remediated guard worked, and the contrast is the point
+
+This is the **same fault class** that ended full-run attempt 1 on the same day — OpenAI credit exhaustion — and the two outcomes are not comparable:
+
+| | Attempt 1 (pre-remediation) | Probe (post-remediation) |
+|---|---|---|
+| Condition first true at | row 147 (37/147 = 25.17%) | row 1 (1/1 = 100%) |
+| Harness behaviour | **continued for 128 more attempts**, reaching 275 rows | **halted immediately**, exit 5 |
+| Stopped by | a human reading a monitor | the registered halt, automatically |
+| Wasted attempts | 128 | 0 |
+
+The L5-1 remediation implemented DEC's registered ">25% of attempted runs in an arm failing for the same cause" as an actual runtime halt. This is its first production firing, and it did in one row what previously took a human 128 rows to notice. The L2-7 retry fix is also confirmed: the errored row is **not** marked done (`loadLedger` → 0 keys), so re-issuing the identical command after a top-up resumes cleanly rather than skipping the cell.
+
+## §28.2 — What this does and does not tell us
+
+- **OpenAI is out of credit.** Established directly.
+- **Anthropic and Google are UNVERIFIED.** The probe halted before reaching them (roster order runs OpenAI first). Provider credit cannot be checked without a billing call, so their status is genuinely unknown — not assumed good.
+- **Gemini's quota is likewise unresolved.** It was re-activated for this probe precisely to measure it, and the probe never got there. Its status reverts to *unmeasured*, not *working*.
+- **No scenario cost data was obtained.** Box 11 remains open; the projections in §26.8 and the run reports remain estimates.
+
+## §28.3 — Consequence for scope, recorded because it is not obvious
+
+The study's **only evaluable contrast — `anthropic-frontier-vs-small` — does not involve OpenAI.** `openai-frontier-vs-small` has been unevaluable since A7 refuted `gpt-5.5-mini` (no same-generation small sibling exists), and `google-vs-together-open-weight` needs the unfunded Together slot. So proceeding without OpenAI would cost **one frontier model and one lab of descriptive breadth, and zero contrasts.** That is a materially different trade from the one a reader might assume, and it is Hudson's call, not the harness's.
