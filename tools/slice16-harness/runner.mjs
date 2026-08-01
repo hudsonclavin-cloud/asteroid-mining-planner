@@ -126,6 +126,55 @@ function appendLedger(ledgerPath, row) {
   appendFileSync(ledgerPath, `${JSON.stringify(row)}\n`, 'utf8');
 }
 
+// ---------------------------------------------------------------------------
+// Same-cause halt — L5-1 remediation (S16-REMEDIATE-2026-08-01-A)
+//
+// The registered condition, quoted verbatim from SLICE_16_FOUNDING.md §20.6:
+//   "Mid-run halt condition: >25% of attempted runs in an arm failing for the
+//    same cause. A systematic fault must not be paid for repeatedly."
+//
+// Until now this existed only as prose: the run loop counted failures and
+// ground on. In the halted full run the threshold was crossed at row 147
+// (37/147 = 25.17% same-cause) and the harness allowed 128 MORE paid attempts
+// before a human stopped it. This implements the registered condition as an
+// actual runtime halt, checked after every attempted run.
+//
+// Two operationalizations the registered text leaves open, decided here and
+// disclosed rather than hidden:
+//   * "same cause" — grouped by the error's provider/status head, i.e. the text
+//     before the first `{` (provider JSON body), whitespace-normalized. The 160
+//     identical `openai 429` errors in the halted run group to ONE cause under
+//     this key; errors from different providers or with different statuses do
+//     not group together.
+//   * no minimum-attempt floor — the registered text has none, so none is
+//     added (adding one would be a re-interpretation). The condition is
+//     therefore deliberately eager at small n: one failure in the first
+//     attempted run is 100% > 25% and halts. That is the fail-SAFE direction —
+//     a false halt is resumable and costs nothing; a missed halt burns budget.
+// ---------------------------------------------------------------------------
+
+export const SAME_CAUSE_HALT_THRESHOLD = 0.25;
+
+/** Stable cause key: everything before the provider's JSON error body. */
+export function errorCauseKey(error) {
+  const s = String(error);
+  const brace = s.indexOf('{');
+  const head = brace > 0 ? s.slice(0, brace) : s;
+  return head.replace(/\s+/g, ' ').trim().slice(0, 160) || 'unknown-cause';
+}
+
+/**
+ * Returns the halting cause {cause, count, attempted} when any single cause
+ * exceeds the registered threshold of attempted runs, else null.
+ */
+export function sameCauseHalt(failuresByCause, attempted) {
+  if (attempted <= 0) return null;
+  for (const [cause, count] of failuresByCause) {
+    if (count / attempted > SAME_CAUSE_HALT_THRESHOLD) return { cause, count, attempted };
+  }
+  return null;
+}
+
 /** Builds the plan without executing anything — used by --preflight and tests. */
 export function buildPlan({ scenarioIds = null, runsPerCell = EXECUTED_RUNS_PER_CELL, models = ACTIVE_ROSTER, forms: formsOverride = null } = {}) {
   const pool = scenarioIds
@@ -455,6 +504,7 @@ export async function main(argv = process.argv.slice(2)) {
 
   let completed = 0;
   let failed = 0;
+  const failuresByCause = new Map();
 
   try {
     for (const item of pending) {
@@ -477,8 +527,26 @@ export async function main(argv = process.argv.slice(2)) {
       }
 
       appendLedger(ledgerPath, row);
-      if (row.error) failed += 1;
       completed += 1;
+
+      if (row.error) {
+        failed += 1;
+        const cause = errorCauseKey(row.error);
+        failuresByCause.set(cause, (failuresByCause.get(cause) ?? 0) + 1);
+        const halt = sameCauseHalt(failuresByCause, completed);
+        if (halt) {
+          console.error(
+            `\nSAME-CAUSE HALT (registered, SLICE_16_FOUNDING.md §20.6): ` +
+            `${halt.count}/${halt.attempted} attempted runs in this arm failed for one cause ` +
+            `(${(100 * halt.count / halt.attempted).toFixed(1)}% > ${100 * SAME_CAUSE_HALT_THRESHOLD}%).\n` +
+            `  cause: ${halt.cause}\n` +
+            `A systematic fault must not be paid for repeatedly. The ledger is preserved ` +
+            `(${completed} rows this invocation); fix the cause, then re-issue the same command — ` +
+            `the runner resumes from the ledger.\n`
+          );
+          return 5;
+        }
+      }
 
       if (completed % 25 === 0 || completed === pending.length) {
         console.log(`  ${completed}/${pending.length} complete (${failed} errored)`);

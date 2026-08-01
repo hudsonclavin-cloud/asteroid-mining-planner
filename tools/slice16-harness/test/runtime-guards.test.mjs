@@ -16,7 +16,10 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { main, parseCliMode, UsageError } from '../runner.mjs';
+import {
+  main, parseCliMode, UsageError,
+  errorCauseKey, sameCauseHalt, SAME_CAUSE_HALT_THRESHOLD
+} from '../runner.mjs';
 
 // ---------------------------------------------------------------------------
 // L5-14 — strict CLI
@@ -62,4 +65,53 @@ test('L5-14: every documented mode parses to itself and nothing else', () => {
   for (const mode of ['preflight', 'pilot', 'full', 'control']) {
     assert.deepEqual(parseCliMode([`--${mode}`]), { mode, fixture: null });
   }
+});
+
+// ---------------------------------------------------------------------------
+// L5-1 — registered same-cause halt (>25% of attempted runs, one cause)
+// ---------------------------------------------------------------------------
+
+test('L5-1: the halted run\'s actual crossing point triggers the halt', () => {
+  // The audit measured the real run: threshold crossed at row 147 with 37
+  // same-cause failures (25.17%). The harness then allowed 128 more attempts.
+  // This pins the exact registered predicate at the exact observed crossing.
+  const causes = new Map([['Error: openai 429:', 37]]);
+  const halt = sameCauseHalt(causes, 147);
+  assert.ok(halt, '37/147 = 25.17% > 25% must halt');
+  assert.equal(halt.count, 37);
+  assert.equal(halt.cause, 'Error: openai 429:');
+});
+
+test('L5-1: at or below the registered threshold there is no halt', () => {
+  // 36/147 = 24.49% — under. And exactly 25% is NOT >25%: the registered text
+  // says "more than", so the boundary itself does not halt.
+  assert.equal(sameCauseHalt(new Map([['Error: openai 429:', 36]]), 147), null);
+  assert.equal(sameCauseHalt(new Map([['x', 1]]), 4), null, '1/4 = exactly 25% is not >25%');
+});
+
+test('L5-1: the literal condition is eager at small n — and that is disclosed, not a bug', () => {
+  // The registered text has no minimum-attempts floor, so none was added.
+  // 1/1 = 100% > 25% halts. Fail-safe: a false halt is resumable and free.
+  const halt = sameCauseHalt(new Map([['Error: anthropic 500:', 1]]), 1);
+  assert.ok(halt);
+});
+
+test('L5-1: failures spread across DIFFERENT causes do not halt', () => {
+  // 3 causes x 10 failures in 60 attempts = 50% total failure rate but only
+  // 16.7% per cause — the registered condition is per-cause, so no halt.
+  const causes = new Map([['a', 10], ['b', 10], ['c', 10]]);
+  assert.equal(sameCauseHalt(causes, 60), null);
+});
+
+test('L5-1: cause grouping strips the provider JSON body, keeping the status head', () => {
+  const a = errorCauseKey('Error: openai 429: { "error": { "message": "You have no credits remaining. Add credits..." } }');
+  const b = errorCauseKey('Error: openai 429: { "error": { "message": "Rate limit reached for gpt-5.5 on tokens" } }');
+  const c = errorCauseKey('Error: anthropic 429: { "error": {} }');
+  assert.equal(a, 'Error: openai 429:');
+  assert.equal(a, b, 'same provider+status groups together regardless of body detail');
+  assert.notEqual(a, c, 'different providers never group');
+});
+
+test('L5-1: the threshold constant is the registered 25%', () => {
+  assert.equal(SAME_CAUSE_HALT_THRESHOLD, 0.25);
 });
