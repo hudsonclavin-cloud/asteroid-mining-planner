@@ -137,11 +137,12 @@ test('registered run counts match Amendment A1', () => {
 
   // EXECUTED counts reflect what actually runs, along all three dimensions:
   //   scenarios 26 runnable (S-06 contradiction; S-15 prior turn unspecified)
-  //   models     3 active   (1 deferred, 1 refuted, 1 quota-blocked)
+  //   models     4 active   (1 deferred, 1 refuted; Gemini RE-ACTIVATED by
+  //                          S16-FINISH on Hudson's instruction)
   //   r         10 executed (A10-1 restored the registered value)
-  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 780, '26 runnable x k=3 active x r=10 executed');
-  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 234, '26 x k=3 x control r=3 (control r is its own constant)');
-  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 1014, 'executed primary + executed control');
+  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 1040, '26 runnable x k=4 active x r=10 executed');
+  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 312, '26 x k=4 x control r=3 (control r is its own constant)');
+  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 1352, 'executed primary + executed control');
 
   // The two must never be equal by accident — that would mean the split collapsed.
   assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,
@@ -419,8 +420,8 @@ test('roster models carry a status, mirroring the scenario convention', () => {
     assert.ok(['active', 'deferred', 'refuted', 'blocked'].includes(m.status), `${m.id} must declare a status`);
   }
   assert.equal(REGISTERED_ROSTER.length, 6, 'registered design is k=6 — unchanged by any exclusion');
-  assert.equal(ACTIVE_ROSTER.length, 3, 'three models run right now (A9-3 moved Gemini to quota-blocked)');
-  assert.equal(EXCLUDED_MODELS.length, 3, 'Together (cost), gpt-5.5-mini (refuted), Gemini (quota)');
+  assert.equal(ACTIVE_ROSTER.length, 4, 'four models run right now (S16-FINISH re-activated Gemini)');
+  assert.equal(EXCLUDED_MODELS.length, 2, 'Together (cost) and gpt-5.5-mini (refuted)');
   assert.equal(
     ACTIVE_ROSTER.length + EXCLUDED_MODELS.length,
     REGISTERED_ROSTER.length,
@@ -428,10 +429,12 @@ test('roster models carry a status, mirroring the scenario convention', () => {
   );
 });
 
-test('A9-3: the three exclusion reasons stay DISTINGUISHABLE, never collapsed', () => {
-  // The point of the split: each of these needs a DIFFERENT action to reverse.
-  // Money, a different model, and a quota bump are not the same problem, and a
-  // reader who sees one label for all three learns the wrong thing.
+test('A9-3: exclusion reasons stay DISTINGUISHABLE, never collapsed into one label', () => {
+  // The point of A9-3: each exclusion needs a DIFFERENT action to reverse, so
+  // one label for all of them teaches a reader the wrong thing. Gemini proved
+  // the mechanism works — it was 'blocked' (quota; A9-3 predicted "no code
+  // change") and S16-FINISH re-activated it with exactly no code change. The
+  // 'blocked' KIND stays defined so it can be used again if quota returns.
   const byId = (id) => REGISTERED_ROSTER.find((m) => m.id === id);
 
   const together = byId('PENDING-SET-TOGETHER-MODEL-STRING');
@@ -442,20 +445,23 @@ test('A9-3: the three exclusion reasons stay DISTINGUISHABLE, never collapsed', 
   assert.equal(mini.status, 'refuted', 'gpt-5.5-mini DOES NOT EXIST');
   assert.match(mini.exclusionReason, /404|model_not_found/);
 
-  const gemini = byId('gemini-3.1-pro-preview');
-  assert.equal(gemini.status, 'blocked', 'Gemini is blocked on an EXTERNAL QUOTA');
-  assert.match(gemini.exclusionReason, /429|quota/i);
-  assert.match(gemini.exclusionReason, /no code change/i,
-    'and the record must say the fix needs no code change — that is what makes it distinct');
+  // Every kind the convention defines stays available and described.
+  for (const kind of ['deferred', 'refuted', 'blocked']) {
+    assert.ok(EXCLUSION_KINDS[kind], `the '${kind}' exclusion kind must stay defined`);
+  }
 
-  // All three statuses distinct, and each has a human-readable kind.
+  // No two excluded models share a kind, and each says why.
   const kinds = new Set(EXCLUDED_MODELS.map((m) => m.status));
-  assert.equal(kinds.size, 3, 'three models, three different exclusion kinds');
+  assert.equal(kinds.size, EXCLUDED_MODELS.length, 'each exclusion has its own kind');
   for (const m of EXCLUDED_MODELS) {
-    assert.ok(EXCLUSION_KINDS[m.status], `${m.id}: status '${m.status}' must have a described kind`);
     assert.ok(typeof m.exclusionReason === 'string' && m.exclusionReason.length > 40,
       `${m.id}: an exclusion must carry a recorded reason`);
   }
+
+  // A re-activation is as much a part of the record as the exclusion was.
+  const gemini = byId('gemini-3.1-pro-preview');
+  assert.equal(gemini.status, 'active');
+  assert.match(gemini.reactivatedBy, /S16-FINISH/);
 });
 
 test('Together is PRESENT-but-EXCLUDED, never deleted', () => {

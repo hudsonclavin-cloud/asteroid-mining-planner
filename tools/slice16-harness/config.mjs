@@ -160,16 +160,25 @@ export const ROSTER = Object.freeze([
   // on this model has never been exercised; see adapters/google.mjs for why the
   // tool-tuned `-customtools` variant was deliberately NOT chosen.
   //
-  // A9-3: BLOCKED ON PROVIDER QUOTA, not on anything in this repo. All four
-  // round-3 pilot runs returned `google 429: You exceeded your current quota`.
-  // A 429 is itself further evidence the string is right — the request got past
-  // model resolution all the way to quota enforcement, which a bad string never
-  // reaches. Nothing here needs fixing: raise the quota (or enable billing) and
-  // flip status back to 'active'. NO CODE CHANGE. That is precisely why this is
-  // 'blocked' and not 'deferred' or 'refuted'.
+  // A9-3 recorded this BLOCKED ON PROVIDER QUOTA: all four round-3 pilot runs
+  // returned `google 429: You exceeded your current quota`. A 429 is itself
+  // evidence the string is right — the request reached quota enforcement,
+  // which a bad string never gets to. A9-3 predicted re-activation would need
+  // "a quota/billing increase and status back to 'active' — NO CODE CHANGE",
+  // and that is exactly what happened.
+  //
+  // S16-FINISH-2026-08-01-A: RE-ACTIVATED on Hudson's explicit instruction
+  // ("probe including Gemini"), restoring a 4th model and a second lab to the
+  // frontier tier. The quota state is NOT verifiable without spending — a
+  // metadata listing proves the string resolves but says nothing about quota,
+  // and a 429 only appears on a billing call. So this re-activation is a
+  // MEASUREMENT, not a confirmation: the cost probe is the test. If Google
+  // 429s again the probe stops that model and reports (tripwire b); the other
+  // three models' probe data is unaffected because the roster order runs
+  // Google last.
   { id: 'gemini-3.1-pro-preview', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'confirmed', confirmedBy: 'A8 ListModels (metadata): present, version 3.1-pro-preview-01-2026, supports generateContent. A9: round-3 429 (quota) corroborates resolution. Still NO successful call — function calling on this model remains unexercised.',
-    status: 'blocked',
-    exclusionReason: 'BLOCKED ON PROVIDER QUOTA (A9-3): all 4 round-3 pilot runs returned google 429 "You exceeded your current quota". This is NOT a code fault and NOT a refuted string — the request reached quota enforcement, which requires the model to have resolved. Distinct from Together (deferred by cost choice) and gpt-5.5-mini (refuted, does not exist). Re-activation needs a quota/billing increase on the Google account and status back to \'active\' — no code change, no model substitution.' },
+    status: 'active',
+    reactivatedBy: 'S16-FINISH-2026-08-01-A: Hudson instructed "probe including Gemini". Quota state unverified without spending — the cost probe is the test, not a prior confirmation.' },
   // A6 (R-A6-3): DeepSeek dropped for jurisdiction; Together.ai takes the
   // open-weight slot (US-hosted open weights). k=6 unchanged.
   // certainty 'pending' => the model string is a SENTINEL, not a lead:
@@ -250,7 +259,13 @@ export const BUDGET = Object.freeze({
 export const PRICES_USD_PER_MTOK = Object.freeze({
   'gpt-5.5': { input: 5.00, output: 30.00 },
   'claude-sonnet-4-6': { input: 3.00, output: 15.00 },
-  'claude-haiku-4-5-20251001': { input: 1.00, output: 5.00 }
+  'claude-haiku-4-5-20251001': { input: 1.00, output: 5.00 },
+  // Added when Gemini was re-activated (S16-FINISH). Q3 short-context tier;
+  // third-party-estimated like every other row here. NOTE: Q3 also lists a
+  // >200K-context tier at 4.00/18.00 — S-13 sends ~173K input tokens, so a
+  // long-context run could be priced ~2x what this row models. The guard is a
+  // ceiling, not an invoice; console billing remains the ground truth.
+  'gemini-3.1-pro-preview': { input: 2.00, output: 12.00 }
 });
 
 /**
