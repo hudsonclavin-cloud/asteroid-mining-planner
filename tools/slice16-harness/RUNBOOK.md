@@ -319,12 +319,24 @@ S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --control    # control arm, 
 
 | | Registered | **Executed** |
 |---|---|---|
-| Scenarios | 28 | **27** (S-06 deferred) |
+| Scenarios | 28 | **26** (S-06 and S-15 deferred) |
 | Models (k) | 6 | **3** |
 | Repetitions (r) | 10 | **10** (A10-1 restored the registered value) |
-| `--full` | 1,680 | **810 runs** |
-| `--control` | 504 | **243 runs** |
-| Total | 2,184 | **1,053** |
+| `--full` | 1,680 | **780 runs** |
+| `--control` | 504 | **234 runs** |
+| Total | 2,184 | **1,014** |
+
+**A12 changed the instrument** (founding §26): S-13 grades the disclosure, S-30
+reports two bins, S-18/S-20/S-24 are genuinely two-turn, the control arm is
+gradeable VF-only, refusals merge as a union, and the radius/diameter doubling
+is fixed. Verify counts against `--preflight`, not against this table.
+
+**Caching is already working** (founding §26.8, measured): OpenAI cached 70.3%
+of gpt-5.5's input automatically with no parameters sent; Anthropic's
+system-block cache_control works on Sonnet but got **zero** hits on Haiku. Real
+OpenAI spend is ~74% of the guard's estimate, so the guard over-estimates —
+the safe direction. Caching the GROWING conversation (the quadratic driver) is
+NOT implemented; do not assume caching solves cost.
 
 **Cost: DO NOT trust a projection derived from the pilot.** The A10 projection
 ($22.48 primary) was ~3× low because input tokens grow ~quadratically with
