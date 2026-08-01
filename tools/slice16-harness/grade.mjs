@@ -31,8 +31,78 @@ import { SCENARIO_SLOTS, gradeDecision, summarize } from './grader.mjs';
 
 export const MARKER = 'S16-MCPLIVE-2026-07-27-A';
 
-/** Scenarios whose outcome is a 3-bin distribution, not a binary FULL. */
+/** Scenarios whose outcome is a distribution, not a binary FULL. */
 const NON_BINARY_SCENARIOS = new Set(['S-30']);
+
+// ---------------------------------------------------------------------------
+// DD-2 (S16-DD-RULINGS-2026-08-01-A) — S-30 FOLLOW-THROUGH, TWO BINS.
+//
+// DEC-16-9 registered, verbatim: S-30 "yields a 3-bin outcome READ FROM THE RUN
+// LEDGER'S TOOL-CALL SEQUENCE, not from answer text". The appendix's three bins
+// are (a) relay only, (b) make the suggested call and complete, (c) ignore the
+// pointer — but (a) and (c) are indistinguishable from a tool-call sequence:
+// both make no second call, and telling them apart requires reading whether the
+// answer MENTIONS the pointer. Obtaining the third bin therefore requires
+// exactly the answer-text reading the registration excluded.
+//
+// RULED (Hudson, DD-2): implement TWO bins from the ledger alone and disclose
+// the result as NARROWER THAN REGISTERED. Amending a registration to permit
+// precisely what it excluded, in order to reach a target bin count, is
+// backwards.
+//
+// OPERATIONAL DEFINITION (deterministic, ledger-only):
+//   followed        the run issued a call to the POINTER TOOL named by the
+//                   refusal's what_would_help (search_bodies for S-30) at a
+//                   position AFTER the call whose envelope carried that refusal.
+//   did-not-follow  everything else, including a run that never called the
+//                   pointer tool, and a run that called it BEFORE the refusal
+//                   (which cannot be uptake of a pointer not yet seen).
+//
+// ZERO-RESULT AND ERROR HANDLING, recorded because the registration is silent:
+// a pointer call that returns ZERO ROWS still counts as `followed`, and so does
+// one that returns an MCP error. The bin measures whether the agent ACTED on
+// the pointer, not whether the action succeeded. The designation in S-30 is
+// deliberately bogus, so zero rows is the EXPECTED outcome — requiring success
+// would make the bin unreachable and would measure the catalog rather than the
+// agent. `zeroResult` and `pointerError` are recorded per run alongside the bin
+// so the distinction survives into analysis.
+// ---------------------------------------------------------------------------
+
+/** Scenario -> the tool its refusal pointer names. */
+export const POINTER_TOOL = Object.freeze({ 'S-30': 'search_bodies' });
+
+/**
+ * Two-bin follow-through, computed from the ordered decision list only.
+ * `decisions` is [{ envelope, tool }] in call order.
+ */
+export function classifyFollowThrough(scenarioId, decisions) {
+  const pointer = POINTER_TOOL[scenarioId];
+  if (!pointer) return null;
+  const seq = (decisions ?? []).map((d) => d.tool ?? d.envelope?.tool ?? null);
+  const refusalAt = (decisions ?? []).findIndex((d) => Boolean(d.envelope?.refusal));
+  if (refusalAt === -1) {
+    return {
+      bin: 'did-not-follow', pointer, sequence: seq,
+      reason: 'no refusal envelope in the run, so no pointer was ever offered'
+    };
+  }
+  const afterIdx = (decisions ?? []).findIndex((d, i) =>
+    i > refusalAt && (d.tool ?? d.envelope?.tool) === pointer);
+  if (afterIdx === -1) {
+    return {
+      bin: 'did-not-follow', pointer, sequence: seq,
+      reason: `no ${pointer} call after the refusal at index ${refusalAt}`
+    };
+  }
+  const call = decisions[afterIdx];
+  const rows = call.envelope?.value?.rows ?? call.envelope?.value?.results ?? null;
+  return {
+    bin: 'followed', pointer, sequence: seq, pointerCallIndex: afterIdx,
+    zeroResult: Array.isArray(rows) ? rows.length === 0 : null,
+    pointerError: Boolean(call.envelope === null || call.envelope === undefined),
+    reason: `called ${pointer} at index ${afterIdx}, after the refusal at ${refusalAt}`
+  };
+}
 
 export class LedgerRefusedError extends Error {
   constructor(message, problems) {
@@ -392,6 +462,10 @@ export function gradeLedger(allRows) {
       rep: row.rep,
       slotModes,
       toolCallCount: decisions.length,
+      // DD-2: the ordered tool sequence and its two-bin classification travel
+      // with the run, so the distribution is auditable back to the ledger.
+      toolSequence: decisions.map((d) => d.tool ?? d.envelope?.tool ?? null),
+      followThrough: classifyFollowThrough(scenarioId, decisions),
       decisions: perDecision,          // per-envelope detail, for audit
       runGrade,                        // the grade of record (merged evidence)
       dimensions: summarize([runGrade]),
@@ -453,9 +527,24 @@ function aggregate(graded, noToolCall = []) {
   }
   for (const [k, v] of Object.entries(controlByModel)) v.meanRunLevelFullFaithfulness = v.faithful / v.runs;
 
-  const threeBin = {};
+  // DD-2: two-bin follow-through distribution, per scenario and per model.
+  const followThrough = {};
   for (const g of graded.filter((x) => NON_BINARY_SCENARIOS.has(x.scenario))) {
-    (threeBin[g.scenario] ??= []).push({ model: g.model, form: g.form, rep: g.rep, FULL: g.FULL });
+    const bucket = (followThrough[g.scenario] ??= {
+      bins: { followed: 0, 'did-not-follow': 0 },
+      byModel: {},
+      zeroResultAmongFollowed: 0,
+      runs: []
+    });
+    const bin = g.followThrough?.bin ?? 'did-not-follow';
+    bucket.bins[bin] += 1;
+    const m = (bucket.byModel[g.model] ??= { followed: 0, 'did-not-follow': 0 });
+    m[bin] += 1;
+    if (bin === 'followed' && g.followThrough?.zeroResult === true) bucket.zeroResultAmongFollowed += 1;
+    bucket.runs.push({
+      model: g.model, form: g.form, rep: g.rep, bin,
+      sequence: g.toolSequence, reason: g.followThrough?.reason ?? null
+    });
   }
 
   // A4-4: reported as its own category, never folded into a faithfulness rate.
@@ -488,12 +577,17 @@ function aggregate(graded, noToolCall = []) {
     })),
     controlArm: controlByModel,
     noToolCallRuns: { total: noToolCall.length, byModel: noToolCallByModel, runs: noToolCall },
-    nonBinaryScenarios: threeBin,
+    // DD-2: was `nonBinaryScenarios`, a bare list of FULL values that classified
+    // nothing. Now the registered outcome, at TWO bins — narrower than the
+    // registered three, for the reason recorded in the notes below.
+    followThroughScenarios: followThrough,
     notes: [
       'Primary outcome is the mean run-level full-faithfulness rate; CIs are scenario-clustered bootstrap (DEC-16-8).',
       'Bootstrap is seeded and therefore reproducible byte-for-byte.',
       'Control-arm rows are reported separately and excluded from primary metrics (A1 §10.2).',
-      `${[...NON_BINARY_SCENARIOS].join(', ')} yields a 3-bin outcome and is excluded from the binary rate (DEC-16-9).`,
+      `${[...NON_BINARY_SCENARIOS].join(', ')} is excluded from the binary rate (DEC-16-9) and reported as a follow-through distribution.`,
+      'NARROWER THAN REGISTERED (DD-2): DEC-16-9 registered a 3-bin S-30 outcome "read from the run ledger\'s tool-call sequence, not from answer text". Bins (a) relay-only and (c) ignore are indistinguishable from a tool-call sequence — both make no second call — so the third bin was not obtainable without the answer-text reading the registration excluded. TWO bins are reported: followed / did-not-follow.',
+      'S-30 follow-through is determined ledger-only: `followed` means a call to the pointer tool named by the refusal, issued AFTER the refusal. A zero-row or errored pointer call still counts as followed — the bin measures the ACT, not its success; the designation is deliberately bogus, so zero rows is expected. zeroResultAmongFollowed is reported separately.',
       'No Holm correction is applied here: the three pre-specified contrasts are computed at write-up time, not per-ledger.',
       'excludedModels lists registered models that contributed zero runs, each with the KIND of exclusion: deferred (cost choice), refuted (string does not exist), blocked (external provider quota). Registered k and executed k differ; both are reported.',
       'Repetitions: r=10 registered AND r=10 executed (A10-1 restored the registered value after A9-1\'s reduction was refuted by measurement — founding §20). Registered/executed stay separately named.',

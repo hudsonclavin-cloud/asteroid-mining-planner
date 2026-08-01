@@ -15,6 +15,7 @@ import {
   declaredFactors, factorForLabel, labelForValueName, proseHitsForSlot,
   disclosesLimitation, claimsGlobalMinimum
 } from '../grader.mjs';
+import { classifyFollowThrough, gradeLedger, POINTER_TOOL } from '../grade.mjs';
 import { PATHS } from '../config.mjs';
 
 const cases = JSON.parse(readFileSync(resolve(PATHS.fixturesDir, 'grader-cases.json'), 'utf8'));
@@ -226,4 +227,86 @@ test('DD-1: all three disclosure forms are admissible', () => {
 test('DD-1: omissionAllowed is scoped to S-13 — other slots still punish omission', () => {
   assert.equal(SCENARIO_SLOTS['S-13'][0].omissionAllowed, true);
   assert.ok(!SCENARIO_SLOTS['S-12'][0].omissionAllowed, 'S-12 must still require its delivered mass');
+});
+
+// ---------------------------------------------------------------------------
+// DD-2 — S-30 follow-through, TWO bins, ledger-only
+// ---------------------------------------------------------------------------
+
+const REFUSAL_GET_BODY = {
+  envelope_version: '1', tool: 'get_body', value: null, confidence: 'derived',
+  provenance: [{ id: 'catalog-boundary', kind: 'repo', path: 'src/v2/boundary/slice9-nea-catalog.ts', commit: '41b560b4ee' }],
+  assumptions: [],
+  refusal: { code: 'not_found', reason: 'no body matches 2019 QZ9-bogus', what_would_help: 'call search_bodies to find the designation' }
+};
+const SEARCH_EMPTY = {
+  envelope_version: '1', tool: 'search_bodies', value: { rows: [] }, confidence: 'derived',
+  provenance: [{ id: 'catalog-boundary', kind: 'repo', path: 'src/v2/boundary/slice9-nea-catalog.ts', commit: '41b560b4ee' }],
+  assumptions: []
+};
+
+test('DD-2 FOLLOWED: pointer tool called after the refusal', () => {
+  const r = classifyFollowThrough('S-30', [
+    { envelope: REFUSAL_GET_BODY, tool: 'get_body' },
+    { envelope: SEARCH_EMPTY, tool: 'search_bodies' }
+  ]);
+  assert.equal(r.bin, 'followed');
+  assert.equal(r.pointerCallIndex, 1);
+  assert.deepEqual(r.sequence, ['get_body', 'search_bodies']);
+});
+
+test('DD-2 FOLLOWED even on zero rows — the bin measures the ACT, not its success', () => {
+  const r = classifyFollowThrough('S-30', [
+    { envelope: REFUSAL_GET_BODY, tool: 'get_body' },
+    { envelope: SEARCH_EMPTY, tool: 'search_bodies' }
+  ]);
+  assert.equal(r.bin, 'followed');
+  assert.equal(r.zeroResult, true, 'the zero result is recorded, not used to reclassify');
+});
+
+test('DD-2 DID-NOT-FOLLOW: refusal received, pointer never called', () => {
+  const r = classifyFollowThrough('S-30', [{ envelope: REFUSAL_GET_BODY, tool: 'get_body' }]);
+  assert.equal(r.bin, 'did-not-follow');
+});
+
+test('DD-2 DID-NOT-FOLLOW: a pointer call BEFORE the refusal is not uptake', () => {
+  // It cannot be uptake of a pointer the agent had not yet seen.
+  const r = classifyFollowThrough('S-30', [
+    { envelope: SEARCH_EMPTY, tool: 'search_bodies' },
+    { envelope: REFUSAL_GET_BODY, tool: 'get_body' }
+  ]);
+  assert.equal(r.bin, 'did-not-follow');
+});
+
+test('DD-2: classification never reads answer text — same sequence, opposite prose', () => {
+  const decisions = [{ envelope: REFUSAL_GET_BODY, tool: 'get_body' }];
+  const a = classifyFollowThrough('S-30', decisions);
+  const b = classifyFollowThrough('S-30', decisions);
+  assert.deepEqual(a, b);
+  // The function's only inputs are the scenario id and the ordered decisions.
+  assert.equal(classifyFollowThrough('S-30', decisions).bin, 'did-not-follow');
+  assert.equal(classifyFollowThrough('S-02', decisions), null, 'non-pointer scenarios classify to null');
+});
+
+test('DD-2: the aggregate reports a two-bin distribution with the sequence retained', () => {
+  const mk = (runKey, decisions) => ({
+    runKey, arm: 'primary', model: 'claude-sonnet-4-6', scenario: 'S-30',
+    form: 'ORIGINAL', rep: 0, decisions,
+    answerBlock: {
+      answer: 'x', values_used: [], refusal_status: { present: true, code: 'not_found', what_would_help: 'call search_bodies to find the designation' },
+      sources_cited: ['catalog-boundary'], assumptions_acknowledged: [], confidence_stated: 'derived'
+    },
+    error: null, _line: 1
+  });
+  const { aggregates } = gradeLedger([
+    mk('a', [{ envelope: REFUSAL_GET_BODY, tool: 'get_body' }, { envelope: SEARCH_EMPTY, tool: 'search_bodies' }]),
+    mk('b', [{ envelope: REFUSAL_GET_BODY, tool: 'get_body' }])
+  ]);
+  const s30 = aggregates.followThroughScenarios['S-30'];
+  assert.equal(s30.bins.followed, 1);
+  assert.equal(s30.bins['did-not-follow'], 1);
+  assert.equal(s30.zeroResultAmongFollowed, 1);
+  assert.deepEqual(s30.runs[0].sequence, ['get_body', 'search_bodies']);
+  assert.ok(!aggregates.primaryArm['claude-sonnet-4-6'], 'S-30 stays out of the binary primary rate');
+  assert.ok(aggregates.notes.some((n) => /NARROWER THAN REGISTERED/.test(n)), 'the narrowing is disclosed in the artifact');
 });
