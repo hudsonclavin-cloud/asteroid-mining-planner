@@ -1,7 +1,13 @@
 // Slice 16 harness — OpenAI adapter (native tool calling).
 // MARKER: S16-AMEND-A4-2026-07-28-A
 //
-// !!! STILL UNTESTED-AT-NETWORK-BOUNDARY — no SUCCESSFUL call yet !!!
+// STATUS (L2-5 sync, S16-REMEDIATE-2026-08-01-A): VERIFIED BY EXECUTION.
+// The "no successful call yet" banner that stood here was disproved on
+// 2026-08-01: pilot round 3 completed 4 gpt-5.5 runs and full-run attempt 1
+// completed 109 — real tool_calls emitted, tool results returned on
+// role:"tool" turns, envelopes captured, structured answer blocks parsed.
+// The transport contract below is exercised, not hypothesized. (The RUN
+// remains without a usable dataset for other reasons — see founding §21.)
 //
 // API SURFACE TARGETED: OpenAI Chat Completions, `POST /v1/chat/completions`,
 // function calling via the `tools` request field and `choices[].message.tool_calls`
@@ -43,8 +49,11 @@ const adapter = createOpenAICompatibleAdapter({
   endpoint: 'https://api.openai.com/v1/chat/completions',
   apiSurface: 'Chat Completions /v1/chat/completions (tools / tool_calls)',
   unverified: [
-    'seed acceptance STILL UNCONFIRMED — no 400 named it, but a 400 stops at the first fault, so later-validated params remain untested',
-    'tools / tool_calls / tool-result turn shape NEVER EXERCISED — every pilot call failed before reaching them'
+    // L2-5 sync (2026-08-01): the former second entry — "tools / tool_calls /
+    // tool-result turn shape NEVER EXERCISED" — was retired after 109
+    // successful full-run rows exercised exactly that path. What remains open:
+    'seed ACCEPTED without complaint across 100+ successful calls, but its determinism effect is unmeasured (repetition, not seed, is the variance control)',
+    'tool-cap mid-turn break can orphan tool_call_ids and 400 (observed once on S-13; the A11/4.4 remediation addresses it)'
   ]
 });
 

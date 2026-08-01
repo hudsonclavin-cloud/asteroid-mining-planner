@@ -464,7 +464,7 @@ function aggregate(graded, noToolCall = []) {
       `${[...NON_BINARY_SCENARIOS].join(', ')} yields a 3-bin outcome and is excluded from the binary rate (DEC-16-9).`,
       'No Holm correction is applied here: the three pre-specified contrasts are computed at write-up time, not per-ledger.',
       'excludedModels lists registered models that contributed zero runs, each with the KIND of exclusion: deferred (cost choice), refuted (string does not exist), blocked (external provider quota). Registered k and executed k differ; both are reported.',
-      'Repetitions differ too: r=10 registered, r=3 executed (A9-1, resource constraints). Confidence intervals are correspondingly wider than the registered design anticipated.',
+      'Repetitions: r=10 registered AND r=10 executed (A10-1 restored the registered value after A9-1\'s reduction was refuted by measurement — founding §20). Registered/executed stay separately named.',
       'Runs marked no_tool_call are EXCLUDED from every faithfulness metric and reported separately (A4-4). They are a measured outcome — the model answered without consulting a tool — not a harness fault, and never a silent pass.'
     ]
   };

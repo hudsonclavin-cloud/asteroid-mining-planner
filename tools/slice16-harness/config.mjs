@@ -705,7 +705,8 @@ export function modelById(id) {
  * Expands a scenario into its r prompt-form slots per FORM_ALLOCATION.
  * The allocation is defined against the REGISTERED r and scaled to whatever r is
  * being run; the default is the EXECUTED r, since that is what the runner does.
- * At r=3 this gives one ORIGINAL, one P1, one P2.
+ * At the current executed r=10 the split is the registered 4/3/3, unscaled;
+ * scaling exists for the pilot (r=2) and any future reduced execution.
  */
 export function expandForms(runsPerCell = EXECUTED_RUNS_PER_CELL) {
   const scale = runsPerCell / REGISTERED_RUNS_PER_CELL;

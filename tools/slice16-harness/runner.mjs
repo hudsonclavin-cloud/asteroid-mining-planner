@@ -458,9 +458,11 @@ function reportPreflight() {
   console.log(`  S16_LIVE_OK=1 : ${readiness.liveOk ? 'YES' : 'NO  (no live call is possible)'}`);
   console.log(`  Roster: registered k=${REGISTERED_ROSTER.length}, ACTIVE k=${ACTIVE_ROSTER.length}` +
     (EXCLUDED_MODELS.length ? `, excluded ${EXCLUDED_MODELS.length}` : ''));
-  // A9-1: r is displayed on BOTH sides so a reader never has to infer which one
-  // a count used. This is the number most likely to be misread in the write-up.
-  console.log(`  Repetitions r: REGISTERED ${REGISTERED_RUNS_PER_CELL} / EXECUTED ${EXECUTED_RUNS_PER_CELL}  (A9-1, reduced for resource constraints — extensible, see RUNBOOK)`);
+  // r is displayed on BOTH sides so a reader never has to infer which one a
+  // count used. L2-2 sync: the old suffix still said "A9-1, reduced for
+  // resource constraints" after A10-1 had restored r=10 — preflight text was
+  // contradicting the executable values it sat next to.
+  console.log(`  Repetitions r: REGISTERED ${REGISTERED_RUNS_PER_CELL} / EXECUTED ${EXECUTED_RUNS_PER_CELL}  (A10-1: restored to the registered value — founding §20)`);
   console.log('  Provider keys:');
   for (const m of readiness.models) {
     const state = m.status === 'active' ? (m.keyPresent ? 'present' : 'ABSENT') : m.status.toUpperCase();
@@ -518,7 +520,9 @@ export async function main(argv = process.argv.slice(2)) {
   const mode = cli.mode;
   const runsPerCell = wantsControl
     ? CONTROL_ARM.runsPerCell
-    // A9-1: the full run uses the EXECUTED r (3), never the registered r (10).
+    // The full run uses EXECUTED_RUNS_PER_CELL — whatever the amendment chain
+    // currently sets it to (A10-1 restored it to the registered 10). Never a
+    // literal here: the constant is the single source of truth.
     : wantsPilot ? PILOT.runsPerCell : EXECUTED_RUNS_PER_CELL;
   const scenarioIds = wantsPilot ? PILOT.scenarioIds : null;
   // Control arm: ORIGINAL form only, repeated r=3 times.

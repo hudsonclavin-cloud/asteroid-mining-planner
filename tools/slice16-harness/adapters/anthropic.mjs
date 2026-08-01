@@ -1,8 +1,13 @@
 // Slice 16 harness — Anthropic adapter (native tool calling).
 // MARKER: S16-AMEND-A4-2026-07-28-A
 //
-// !!! UNTESTED-AT-NETWORK-BOUNDARY !!!
-// !!! UNVERIFIED-ADAPTER-CONTRACT  !!!
+// STATUS (L2-5 sync, S16-REMEDIATE-2026-08-01-A): VERIFIED BY EXECUTION.
+// The UNTESTED/UNVERIFIED banners that stood here were disproved across pilot
+// rounds 2-3 (16 successful runs, both models) and full-run attempt 1 (5 more):
+// tool_use blocks, tool_result user turns, cache_control placement as written,
+// and the answer contract all worked live. The three "SPECIFIC UNCERTAINTIES"
+// below are retained as history; all three were resolved in practice by those
+// runs accepting the request shapes exactly as coded.
 //
 // API SURFACE TARGETED: Messages API, `POST https://api.anthropic.com/v1/messages`,
 // header `anthropic-version: 2023-06-01`. Tools declared as
