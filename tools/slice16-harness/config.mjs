@@ -299,7 +299,18 @@ export const SAMPLING = Object.freeze({
   // RETIRED BY A7-3 — not sent to any provider, for the same reason.
   top_p: 1.0,
   seed: 20260727, // used only where the provider supports it; disclosed as best-effort
-  maxOutputTokens: 2048
+  // REMEDIATION 4.5 (S16-REMEDIATE-2026-08-01-A): raised 2048 -> 8192 on
+  // MEASURED evidence from the halted run's ledger (read-only, checksummed
+  // before and after): 12 of the 14 answerBlockOk:false rows — all gpt-5.5 —
+  // ended with finish_reason "length" and a final turn of EXACTLY 2048 output
+  // tokens and an EMPTY visible reply: the model's reasoning tokens consumed
+  // the whole budget before any text was emitted, so the cap was manufacturing
+  // contract violations, not containing cost. Every answerBlockOk:true gpt-5.5
+  // row ended with "stop". The remaining 2 failures ended "stop" with prose
+  // but no JSON block — genuine contract violations, correctly left graded as
+  // such. Cost note: output is the expensive side ($30/M on gpt-5.5); the L5-3
+  // runtime spend guard now bounds the exposure the old cap was pretending to.
+  maxOutputTokens: 8192
 });
 
 // ---------------------------------------------------------------------------
