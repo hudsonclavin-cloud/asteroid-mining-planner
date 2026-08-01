@@ -58,7 +58,11 @@ const ARTIFACTS = {
     label: 'SLICE_10_FOUNDING.md §OQ-8',
     commit: '3d5f1cd',
     path: 'src/v2/SLICE_10_FOUNDING.md',
-    anchor: 'oq-8-what-did-the-multi-agent-audit-find-before-implementation',
+    // L3-4 fix: fragment regenerated from the document's actual heading,
+    // "OQ-8 — Multi-agent audit cycle (engineering record)". The old fragment
+    // pointed at a heading that no longer exists, so the evidence jump 404'd
+    // to the top of the file.
+    anchor: 'oq-8--multi-agent-audit-cycle-engineering-record',
   },
   slice13Audit: {
     label: 'SLICE_13_FOUNDING.md §8',
@@ -257,7 +261,15 @@ function ValidationSection({ doc }: { readonly doc: ProvenanceDoc | null }): VNo
     h(
       'ul',
       { style: LIST_STYLE },
-      exhibit('Full validation report', '', ARTIFACTS.oracle),
+      // L3-3 fix: this artifact is the launch-vehicle cost-interpolation oracle
+      // ONLY. It was labelled "Full validation report", which falsely implied it
+      // covered the Lambert/multi-rev/DLA validation described above — those
+      // live in separate oracle artifacts surfaced by the validation panel.
+      exhibit(
+        'Launch-vehicle cost oracle report',
+        'delivered-mass interpolation vs published performance — one validation of several; the panel above links the rest.',
+        ARTIFACTS.oracle,
+      ),
     ),
     h(
       'div',
@@ -413,7 +425,11 @@ function AboutPage(): VNode {
           ),
           exhibit(
             'Per-slice engineering log',
-            'every shipped physics approximation, recorded.',
+            // L3-4 fix: the old caption claimed "every shipped physics
+            // approximation, recorded" — the canonical approximation record for
+            // Slices 10-13 lives in the per-slice founding documents, not the
+            // DEVLOG, so the universal claim was false on a trust surface.
+            'decisions and corrections, slice by slice.',
             ARTIFACTS.devlog,
           ),
         ),
