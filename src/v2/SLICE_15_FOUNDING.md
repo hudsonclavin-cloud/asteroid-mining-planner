@@ -202,3 +202,11 @@ DEFERRED (post-Slice-15, non-blocking):
 - Package size 97.2 MB unpacked / 18.1 MB packed. 89 MB is two fixtures: nea-catalog-slice9.json (54.9 MB) + lambert-screen-cache.json (34.5 MB). Honest (runtime data the tools require) but a Phase-H prune candidate — screen-cache prunable to served bodies; catalog gzip-at-rest + inflate-on-load. Not a defect.
 - Local git author email is hudsonclavin@gmauil.com (typo) on committed history; npm maintainer record is correct (hudsonclavin@gmail.com). Forward-fix only: `git config user.email` to correct address so future commits are right. Do NOT rewrite pushed history.
 - Five Fable-session founding DRAFTS (DECISIONS_2026-07-07, SLICE_16_APPENDIX_A_scenarios, DOSSIER_FOUNDING, SLICE_17_FOUNDING, SLICE_18_19_SEEDS) authored in the 2026-07-07/09 session remain in Nova's outputs, NOT yet downloaded to disk, NOT ingested. Land via the G2 Step-6 ingestion path when Dossier or Slice 16 begins.
+
+---
+
+## Post-lock correction (2026-08-01, additive) — module path in two citations
+
+**Marker:** `S16-REMEDIATE-2026-08-01-A` · audit finding L3-5.
+
+Two lines above cite the launch-vehicle module at **`src/v2/launch-vehicles.ts`** (the OQ-15-4 anchor list entry "Vehicle data: NASA LSP elvperf as-of 2024-02-29 — `src/v2/launch-vehicles.ts` @ bcf1738", and commitment (h)'s "the vehicle curves are literally 'as-of 2024-02-29' in `src/v2/launch-vehicles.ts`"). **That path has never existed in this repository.** The module is, and was at the cited commit, **`src/v2/porkchop/launch-vehicles.ts`**. The commit hash, the as-of date, and every technical claim in those lines are unaffected — only the directory segment was wrong. Recorded additively because this document is locked; the original lines stand as written, with this correction as the authoritative path.
