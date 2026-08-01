@@ -65,7 +65,11 @@ test('FAIL-CLOSED: a row with no envelope refuses the whole grading run', () => 
 });
 
 test('FAIL-CLOSED: refusal is all-or-nothing — one bad row blocks all good ones', () => {
-  const rows = [row(), row(), row({ scenario: undefined })];
+  // Distinct runKeys: these are three DIFFERENT runs. (Same-key rows are
+  // attempts of one run under the L2-7 retry policy, and only the last is
+  // definitive — that separate behavior has its own tests in
+  // runtime-guards.test.mjs.)
+  const rows = [row(), row({ runKey: 'm::S-02::P1::1' }), row({ scenario: undefined, runKey: 'm::?::P2::2' })];
   try {
     gradeLedger(rows);
     assert.fail('should have refused');

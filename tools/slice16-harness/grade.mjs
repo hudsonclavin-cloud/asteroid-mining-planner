@@ -55,10 +55,42 @@ export function readLedger(path) {
     try {
       rows.push({ ...JSON.parse(trimmed), _line: index + 1 });
     } catch {
+      // Kept as a poison row: auditRow refuses it, so ANY malformed line —
+      // including a hard-kill truncated tail — refuses the whole grading run.
+      // Grading is deliberately STRICTER than resume here (L2-7): the runner
+      // tolerates a truncated final line so an interrupted batch can continue,
+      // but grades must never be computed over a damaged file.
       rows.push({ _line: index + 1, _unparseable: trimmed.slice(0, 120) });
     }
   });
   return rows;
+}
+
+/**
+ * L2-7 rule 4 — definitive rows. Retries APPEND to a ledger (originals are
+ * never modified), so a runKey can legitimately appear more than once: an
+ * errored attempt followed by its successful re-run. The LAST row per key is
+ * definitive; earlier rows are preserved history and are excluded from
+ * grading. This does NOT weaken fail-closed grading: if a key's definitive
+ * row is still errored or evidence-less, auditRow refuses it exactly as
+ * before. Rows without a runKey cannot be correlated and all remain live for
+ * the audit to judge.
+ */
+export function definitiveRows(rows) {
+  const lastByKey = new Map();
+  for (const row of rows) {
+    if (row.runKey) lastByKey.set(row.runKey, row);
+  }
+  const definitive = [];
+  let superseded = 0;
+  for (const row of rows) {
+    if (row.runKey && lastByKey.get(row.runKey) !== row) {
+      superseded += 1;
+      continue;
+    }
+    definitive.push(row);
+  }
+  return { definitive, superseded };
 }
 
 /**
@@ -263,7 +295,12 @@ export function passAtK(c, n, k) {
 // Grading
 // ---------------------------------------------------------------------------
 
-export function gradeLedger(rows) {
+export function gradeLedger(allRows) {
+  // L2-7 rule 4: reduce to definitive rows first. A superseded errored attempt
+  // whose retry succeeded is history, not a blocker; a key whose LAST attempt
+  // is still errored refuses below exactly as always.
+  const { definitive: rows, superseded } = definitiveRows(allRows);
+
   // --- fail-closed audit: every row, before anything is graded --------------
   const blocking = [];
   const audited = rows.map((row) => {
@@ -330,7 +367,7 @@ export function gradeLedger(rows) {
     };
   });
 
-  return { graded, noToolCall, aggregates: aggregate(graded, noToolCall) };
+  return { graded, noToolCall, superseded, aggregates: aggregate(graded, noToolCall) };
 }
 
 function aggregate(graded, noToolCall = []) {
@@ -477,6 +514,9 @@ export async function main(argv = process.argv.slice(2)) {
     ledger: resolved,
     ledgerRows: rows.length,
     vfDefinition: 'Amendment A3 — slot-graded wherever asserted (values_used OR prose)',
+    // L2-7 rule 4: rows superseded by a later retry of the same runKey.
+    // Preserved in the ledger as history, excluded from grading.
+    supersededRows: result.superseded,
     bootstrapSeed: BOOTSTRAP_SEED,
     aggregates: result.aggregates,
     noToolCallRuns: result.noToolCall,

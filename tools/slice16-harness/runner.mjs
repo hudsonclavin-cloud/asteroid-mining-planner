@@ -106,19 +106,75 @@ export function parseCliMode(argv) {
   return { mode: modes[0], fixture };
 }
 
-export function loadLedger(ledgerPath) {
-  const done = new Set();
-  if (!existsSync(ledgerPath)) return done;
-  const text = readFileSync(ledgerPath, 'utf8');
-  for (const line of text.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed === '') continue;
+// ---------------------------------------------------------------------------
+// Ledger policy — L2-7 remediation (S16-REMEDIATE-2026-08-01-A)
+//
+// The old loader had two silent incoherences the audit called a recovery trap:
+// ANY malformed line was skipped (a corrupt middle row vanished from the done
+// set and was silently RE-BILLED on resume), while every parseable row counted
+// as done EVEN WHEN it recorded an error (a failed attempt was never retried —
+// the halted run's 161 errored rows would have been permanently skipped).
+//
+// ONE policy now, enforced here and mirrored by grade.mjs:
+//   1. A malformed line that is NOT the final line is FATAL (LedgerCorruptError)
+//      — the ledger is damaged and no run proceeds over it.
+//   2. A malformed FINAL line is a hard-kill truncation artifact: tolerated for
+//      resume, but REPORTED loudly, never silently.
+//   3. A runKey is done ⟺ at least one row with that key has no error.
+//      Errored-only keys are retried on resume — matching this file's own
+//      header promise that an interrupted batch "costs only the runs it did
+//      not complete".
+//   4. Retries append; they never modify. Where a key has several rows, the
+//      LAST row is definitive (grade.mjs applies the same rule); earlier rows
+//      are preserved history.
+// ---------------------------------------------------------------------------
+
+export class LedgerCorruptError extends Error {}
+
+/**
+ * Parses a ledger file under the policy above.
+ * Returns { rows, truncatedTail } — truncatedTail is the raw fragment of a
+ * malformed final line, or null.
+ */
+export function parseLedgerFile(ledgerPath) {
+  if (!existsSync(ledgerPath)) return { rows: [], truncatedTail: null };
+  const lines = readFileSync(ledgerPath, 'utf8').split('\n');
+  const nonEmpty = [];
+  lines.forEach((line, index) => {
+    if (line.trim() !== '') nonEmpty.push({ line: line.trim(), lineNo: index + 1 });
+  });
+  const rows = [];
+  let truncatedTail = null;
+  nonEmpty.forEach(({ line, lineNo }, i) => {
     try {
-      const row = JSON.parse(trimmed);
-      if (row?.runKey) done.add(row.runKey);
+      rows.push({ ...JSON.parse(line), _line: lineNo });
     } catch {
-      // A truncated final line from a hard kill is expected; skip it.
+      if (i === nonEmpty.length - 1) {
+        truncatedTail = line.slice(0, 120);
+      } else {
+        throw new LedgerCorruptError(
+          `ledger ${ledgerPath} line ${lineNo} is not valid JSON and is not the final line — ` +
+          `the file is damaged, not merely truncated. Refusing to run over it: a silently skipped ` +
+          `middle row would be re-billed on resume. Resolve the damage (Hudson) before re-running.`
+        );
+      }
     }
+  });
+  return { rows, truncatedTail };
+}
+
+/** Done keys under policy rule 3: only keys with at least one successful row. */
+export function loadLedger(ledgerPath) {
+  const { rows, truncatedTail } = parseLedgerFile(ledgerPath);
+  if (truncatedTail !== null) {
+    console.error(
+      `  !! ledger has a truncated final line (hard-kill artifact): "${truncatedTail}..." — ` +
+      'tolerated for resume; that interrupted run will be re-attempted.'
+    );
+  }
+  const done = new Set();
+  for (const row of rows) {
+    if (row?.runKey && !row.error) done.add(row.runKey);
   }
   return done;
 }
@@ -213,16 +269,12 @@ export function spendHalt({ priorUsd = 0, thisRunUsd, attempted, planTotal, ceil
   return null;
 }
 
-/** Prices every parseable row already in a ledger — the resume seed for the guard. */
+/** Prices every row already in a ledger — the resume seed for the guard. */
 export function priorLedgerSpendUsd(ledgerPath) {
-  if (!existsSync(ledgerPath)) return 0;
-  let usd = 0;
-  for (const line of readFileSync(ledgerPath, 'utf8').split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed === '') continue;
-    try { usd += estimateRowCostUsd(JSON.parse(trimmed)).usd; } catch { /* priced as 0; 1.5's loader owns malformed-line policy */ }
-  }
-  return usd;
+  // Shares parseLedgerFile so a damaged ledger blocks HERE too (L2-7 rule 1),
+  // not just at the done-set stage.
+  const { rows } = parseLedgerFile(ledgerPath);
+  return rows.reduce((usd, row) => usd + estimateRowCostUsd(row).usd, 0);
 }
 
 /** Builds the plan without executing anything — used by --preflight and tests. */
@@ -474,7 +526,16 @@ export async function main(argv = process.argv.slice(2)) {
     ? Array.from({ length: CONTROL_ARM.runsPerCell }, () => CONTROL_ARM.form)
     : null;
   const ledgerPath = resolve(PATHS.ledgerDir, `ledger-${mode}.jsonl`);
-  const alreadyDone = loadLedger(ledgerPath);
+  let alreadyDone;
+  try {
+    alreadyDone = loadLedger(ledgerPath);
+  } catch (error) {
+    if (error instanceof LedgerCorruptError) {
+      console.error(`\n${error.message}\n`);
+      return 7;
+    }
+    throw error;
+  }
 
   let mcp = null;
   let prefix = null;
@@ -556,7 +617,7 @@ export async function main(argv = process.argv.slice(2)) {
   let failed = 0;
   let thisRunUsd = 0;
   let unpricedRows = 0;
-  const priorUsd = priorLedgerSpendUsd(ledgerPath);
+  const priorUsd = priorLedgerSpendUsd(ledgerPath); // cannot throw here: loadLedger above already validated the file
   if (priorUsd > 0) console.log(`prior spend already in this ledger: $${priorUsd.toFixed(2)} (counts toward the $${BUDGET.ceilingUsd} ceiling)`);
   const failuresByCause = new Map();
 

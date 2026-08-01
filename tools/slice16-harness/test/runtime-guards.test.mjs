@@ -19,8 +19,10 @@ import { join } from 'node:path';
 import {
   main, parseCliMode, UsageError,
   errorCauseKey, sameCauseHalt, SAME_CAUSE_HALT_THRESHOLD,
-  spendHalt, priorLedgerSpendUsd
+  spendHalt, priorLedgerSpendUsd,
+  loadLedger, parseLedgerFile, LedgerCorruptError
 } from '../runner.mjs';
+import { definitiveRows, gradeLedger, LedgerRefusedError } from '../grade.mjs';
 import { ACTIVE_ROSTER, BUDGET, PRICES_USD_PER_MTOK, estimateRowCostUsd } from '../config.mjs';
 
 // ---------------------------------------------------------------------------
@@ -196,4 +198,82 @@ test('L5-3: the configured ceiling default is the registered $200', () => {
   assert.equal(BUDGET.ceilingUsd, 200);
   assert.equal(spendHalt({ priorUsd: 0, thisRunUsd: 199, attempted: 10, planTotal: 10 }), null,
     'defaults to BUDGET.ceilingUsd when no ceiling is passed');
+});
+
+// ---------------------------------------------------------------------------
+// L2-7 — one coherent ledger policy (synthetic files; runs/ is never touched)
+// ---------------------------------------------------------------------------
+
+function withLedger(lines, fn) {
+  const dir = mkdtempSync(join(tmpdir(), 's16-ledger-'));
+  const p = join(dir, 'ledger.jsonl');
+  writeFileSync(p, lines.join('\n') + '\n');
+  try { return fn(p); } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+test('L2-7 rule 3: errored rows do NOT count as done — the recovery trap is closed', () => {
+  withLedger([
+    JSON.stringify({ runKey: 'ok-key', error: null }),
+    JSON.stringify({ runKey: 'err-key', error: 'Error: openai 429: no credits' })
+  ], (p) => {
+    const done = loadLedger(p);
+    assert.ok(done.has('ok-key'), 'a successful run is done');
+    assert.ok(!done.has('err-key'), 'a failed attempt is NOT done — it must be retried on resume');
+  });
+});
+
+test('L2-7 rule 3: a key succeeds if ANY attempt succeeded (retry-after-error)', () => {
+  withLedger([
+    JSON.stringify({ runKey: 'k', error: 'first attempt failed' }),
+    JSON.stringify({ runKey: 'k', error: null })
+  ], (p) => {
+    assert.ok(loadLedger(p).has('k'));
+  });
+});
+
+test('L2-7 rule 1: a malformed MIDDLE line is FATAL, never silently re-billed', () => {
+  withLedger([
+    JSON.stringify({ runKey: 'a', error: null }),
+    '{"runKey":"b","error":null,  TRUNCATED-GARBAGE',
+    JSON.stringify({ runKey: 'c', error: null })
+  ], (p) => {
+    assert.throws(() => loadLedger(p), LedgerCorruptError);
+    assert.throws(() => priorLedgerSpendUsd(p), LedgerCorruptError, 'the spend seed refuses the same damage');
+  });
+});
+
+test('L2-7 rule 2: a malformed FINAL line is tolerated as hard-kill truncation', () => {
+  withLedger([
+    JSON.stringify({ runKey: 'a', error: null }),
+    '{"runKey":"b","error":null,  TRUNCA'
+  ], (p) => {
+    const { rows, truncatedTail } = parseLedgerFile(p);
+    assert.equal(rows.length, 1);
+    assert.ok(truncatedTail !== null, 'the truncation is surfaced, not hidden');
+    const done = loadLedger(p);
+    assert.ok(done.has('a'));
+    assert.equal(done.size, 1, 'the interrupted run is NOT done and will be re-attempted');
+  });
+});
+
+test('L2-7 rule 4: the LAST row per runKey is definitive; earlier rows are history', () => {
+  const rows = [
+    { runKey: 'k', error: 'attempt 1 failed', _line: 1 },
+    { runKey: 'k', error: null, _line: 2 },
+    { runKey: 'other', error: null, _line: 3 }
+  ];
+  const { definitive, superseded } = definitiveRows(rows);
+  assert.equal(superseded, 1);
+  assert.deepEqual(definitive.map((r) => r._line), [2, 3]);
+});
+
+test('L2-7 rule 4 does NOT weaken fail-closed grading (tripwire-i check)', () => {
+  // A key whose definitive (last) attempt is STILL errored must refuse the
+  // whole grading run exactly as before — dedup removes superseded history,
+  // never the failure itself.
+  const rows = [
+    { runKey: 'k', scenario: 'S-02', error: 'attempt 1 failed', _line: 1 },
+    { runKey: 'k', scenario: 'S-02', error: 'attempt 2 also failed', _line: 2 }
+  ];
+  assert.throws(() => gradeLedger(rows), LedgerRefusedError);
 });
