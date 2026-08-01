@@ -147,7 +147,18 @@ test('cluster bootstrap is deterministic and resamples scenarios, not runs', () 
   assert.equal(allOnes.high, 1, 'a degenerate all-faithful set has a degenerate interval');
 });
 
-test('control-arm rows are graded but kept out of the primary aggregate', () => {
+// !! UNSOUND AS A CONTROL-ARM TEST — FLAGGED, NOT DELETED (audit L5-10,
+// S16-REMEDIATE-2026-08-01-A). The `row()` helper injects a tool ENVELOPE into
+// its synthetic control row — a thing a production control run can never have:
+// the control arm attaches no tools, spawns no server, and its rows carry no
+// decisions, no envelope, and (by the A4-4 gate being tools-conditional) no
+// no_tool_call marker either, so auditRow REFUSES real control rows. This test
+// therefore proves only the primary/control BOOKKEEPING split, not that the
+// control arm is gradeable — it is not, and how it SHOULD be graded is a
+// design question awaiting Hudson (REMEDIATION_REPORT.md, item 4.3). Renaming
+// documents the honest scope; the assertions themselves remain valid for what
+// they actually cover.
+test('primary/control bookkeeping split (UNSOUND as a control-grading proof — see flag above)', () => {
   const rows = [
     row({ runKey: 'a', arm: 'primary' }),
     row({ runKey: 'b', arm: 'control' })
