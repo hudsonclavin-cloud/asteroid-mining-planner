@@ -16,13 +16,16 @@ import assert from 'node:assert/strict';
 import {
   ACTIVE_SCENARIOS, CONTRASTS, CONTROL_ARM, DEFERRED_SCENARIOS,
   FORM_ALLOCATION, PATHS, PRIMARY_SCENARIOS, PROMPT_FORMS,
-  RUNS_PER_CELL, SCENARIOS, STRUCK_SCENARIOS,
-  ACTIVE_ROSTER, DEFERRED_MODELS, REGISTERED_ROSTER, EVALUABLE_CONTRASTS,
-  ACTIVE_PRIMARY_RUN_COUNT, ACTIVE_CONTROL_RUN_COUNT, ACTIVE_TOTAL_RUN_COUNT,
+  SCENARIOS, STRUCK_SCENARIOS,
+  REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL,
+  ACTIVE_ROSTER, EXCLUDED_MODELS, EXCLUSION_KINDS, REGISTERED_ROSTER, EVALUABLE_CONTRASTS,
+  EXECUTED_PRIMARY_RUN_COUNT, EXECUTED_CONTROL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,
   REGISTERED_PRIMARY_RUN_COUNT, REGISTERED_CONTROL_RUN_COUNT, REGISTERED_TOTAL_RUN_COUNT,
   SAMPLING,
   SpendGuardError, assertLiveAllowed, expandForms, normalizeUnit
 } from '../config.mjs';
+// Namespace import so a test can assert a name is ABSENT (A9-1's removed bare r).
+import * as CONFIG from '../config.mjs';
 import { extractAnswerBlock, buildPrefix, buildUserTurn, prefixFingerprint } from '../prompt.mjs';
 import { createMockAdapter, loadCannedSet } from '../mock-adapter.mjs';
 import { gradeDecision } from '../grader.mjs';
@@ -127,17 +130,17 @@ test('registered run counts match Amendment A1', () => {
   assert.equal(REGISTERED_CONTROL_RUN_COUNT, 504, '28 x k=6 x r=3, ORIGINAL only');
   assert.equal(REGISTERED_TOTAL_RUN_COUNT, 2184, 'registered primary + registered control');
 
-  // EXECUTED counts reflect what actually runs: 27 runnable scenarios (S-06
-  // deferred) x 5 active models (Together deferred).
-  // A7: gpt-5.5-mini deferred (pilot 404, no same-generation sibling exists), so
-  // the active roster is 4, not 5. REGISTERED counts above are untouched.
-  assert.equal(ACTIVE_PRIMARY_RUN_COUNT, 1080, '27 runnable scenarios x k=4 active x r=10');
-  assert.equal(ACTIVE_CONTROL_RUN_COUNT, 324, '27 x k=4 x r=3');
-  assert.equal(ACTIVE_TOTAL_RUN_COUNT, 1404, 'executed primary + executed control');
+  // EXECUTED counts reflect what actually runs. A9 moved the third dimension:
+  //   scenarios 27 runnable (S-06 deferred, live contradiction)
+  //   models     3 active   (1 deferred, 1 refuted, 1 quota-blocked)
+  //   r          3 executed (A9-1, reduced from the registered 10)
+  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 243, '27 runnable x k=3 active x r=3 executed');
+  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 243, '27 x k=3 x control r=3 (control r NOT reduced by A9)');
+  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 486, 'executed primary + executed control');
 
   // The two must never be equal by accident — that would mean the split collapsed.
-  assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, ACTIVE_TOTAL_RUN_COUNT,
-    'registered and executed totals must stay distinguishable while anything is deferred');
+  assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,
+    'registered and executed totals must stay distinguishable');
   assert.equal(CONTROL_ARM.form, 'ORIGINAL');
   assert.equal(CONTROL_ARM.toolsAttached, false, 'the control arm attaches no tools');
   assert.equal(CONTROL_ARM.excludedFromPrimaryMetrics, true);
@@ -160,20 +163,39 @@ test('registered run counts match Amendment A1', () => {
   }
 });
 
-test('form allocation is 4/3/3 and sums to r', () => {
+test('form allocation is 4/3/3 and sums to the REGISTERED r', () => {
   assert.deepEqual(FORM_ALLOCATION, { ORIGINAL: 4, P1: 3, P2: 3 });
-  assert.equal(FORM_ALLOCATION.ORIGINAL + FORM_ALLOCATION.P1 + FORM_ALLOCATION.P2, RUNS_PER_CELL);
+  assert.equal(FORM_ALLOCATION.ORIGINAL + FORM_ALLOCATION.P1 + FORM_ALLOCATION.P2, REGISTERED_RUNS_PER_CELL);
 
-  const slots = expandForms(RUNS_PER_CELL);
-  assert.equal(slots.length, RUNS_PER_CELL);
+  const slots = expandForms(REGISTERED_RUNS_PER_CELL);
+  assert.equal(slots.length, REGISTERED_RUNS_PER_CELL);
   assert.equal(slots.filter((f) => f === 'ORIGINAL').length, 4);
   assert.equal(slots.filter((f) => f === 'P1').length, 3);
   assert.equal(slots.filter((f) => f === 'P2').length, 3);
 });
 
+test('A9-1: at the EXECUTED r every prompt form still gets exactly one run', () => {
+  // This is what makes r=3 usable rather than merely cheap: the paraphrase
+  // comparison (DEC-16-5) needs all three forms present in every cell. A naive
+  // "just take the first 3 slots" would have produced 3x ORIGINAL and dropped
+  // P1/P2 entirely, silently deleting the paraphrase-robustness question.
+  const slots = expandForms(EXECUTED_RUNS_PER_CELL);
+  assert.equal(slots.length, 3);
+  assert.deepEqual([...slots].sort(), ['ORIGINAL', 'P1', 'P2']);
+});
+
+test('A9-1: registered and executed r are distinct, both exported, never merged', () => {
+  assert.equal(REGISTERED_RUNS_PER_CELL, 10, 'the registered design is unchanged by A9');
+  assert.equal(EXECUTED_RUNS_PER_CELL, 3, 'the executed study runs r=3');
+  assert.notEqual(REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL);
+  // The bare name is GONE on purpose: one `r` meaning both is the A2 O-1 error.
+  assert.equal(CONFIG.RUNS_PER_CELL, undefined,
+    'a bare RUNS_PER_CELL must not exist — it would let a consumer silently mean either r');
+});
+
 test('plan covers active scenarios x roster x r with unique run keys', () => {
   const plan = buildPlan();
-  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * RUNS_PER_CELL);
+  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * EXECUTED_RUNS_PER_CELL);
   const keys = new Set(plan.map((p) => p.runKey));
   assert.equal(keys.size, plan.length, 'run keys must be unique — resumability depends on it');
   assert.equal(
@@ -379,38 +401,63 @@ test('A6: Together request body is structurally identical to OpenAI (same surfac
 
 test('roster models carry a status, mirroring the scenario convention', () => {
   for (const m of REGISTERED_ROSTER) {
-    assert.ok(['active', 'deferred'].includes(m.status), `${m.id} must declare a status`);
+    assert.ok(['active', 'deferred', 'refuted', 'blocked'].includes(m.status), `${m.id} must declare a status`);
   }
-  assert.equal(REGISTERED_ROSTER.length, 6, 'registered design is k=6 — unchanged by any deferral');
-  assert.equal(ACTIVE_ROSTER.length, 4, 'four models run right now (A7 deferred gpt-5.5-mini)');
-  assert.equal(DEFERRED_MODELS.length, 2, 'Together (cost) and gpt-5.5-mini (refuted string)');
+  assert.equal(REGISTERED_ROSTER.length, 6, 'registered design is k=6 — unchanged by any exclusion');
+  assert.equal(ACTIVE_ROSTER.length, 3, 'three models run right now (A9-3 moved Gemini to quota-blocked)');
+  assert.equal(EXCLUDED_MODELS.length, 3, 'Together (cost), gpt-5.5-mini (refuted), Gemini (quota)');
   assert.equal(
-    ACTIVE_ROSTER.length + DEFERRED_MODELS.length,
+    ACTIVE_ROSTER.length + EXCLUDED_MODELS.length,
     REGISTERED_ROSTER.length,
-    'every registered model is either active or deferred — none may vanish'
+    'every registered model is either active or excluded — none may vanish'
   );
 });
 
-test('Together is PRESENT-but-DEFERRED, never deleted', () => {
+test('A9-3: the three exclusion reasons stay DISTINGUISHABLE, never collapsed', () => {
+  // The point of the split: each of these needs a DIFFERENT action to reverse.
+  // Money, a different model, and a quota bump are not the same problem, and a
+  // reader who sees one label for all three learns the wrong thing.
+  const byId = (id) => REGISTERED_ROSTER.find((m) => m.id === id);
+
+  const together = byId('PENDING-SET-TOGETHER-MODEL-STRING');
+  assert.equal(together.status, 'deferred', 'Together is a COST CHOICE');
+  assert.match(together.exclusionReason, /cost/i);
+
+  const mini = byId('gpt-5.5-mini');
+  assert.equal(mini.status, 'refuted', 'gpt-5.5-mini DOES NOT EXIST');
+  assert.match(mini.exclusionReason, /404|model_not_found/);
+
+  const gemini = byId('gemini-3.1-pro-preview');
+  assert.equal(gemini.status, 'blocked', 'Gemini is blocked on an EXTERNAL QUOTA');
+  assert.match(gemini.exclusionReason, /429|quota/i);
+  assert.match(gemini.exclusionReason, /no code change/i,
+    'and the record must say the fix needs no code change — that is what makes it distinct');
+
+  // All three statuses distinct, and each has a human-readable kind.
+  const kinds = new Set(EXCLUDED_MODELS.map((m) => m.status));
+  assert.equal(kinds.size, 3, 'three models, three different exclusion kinds');
+  for (const m of EXCLUDED_MODELS) {
+    assert.ok(EXCLUSION_KINDS[m.status], `${m.id}: status '${m.status}' must have a described kind`);
+    assert.ok(typeof m.exclusionReason === 'string' && m.exclusionReason.length > 40,
+      `${m.id}: an exclusion must carry a recorded reason`);
+  }
+});
+
+test('Together is PRESENT-but-EXCLUDED, never deleted', () => {
   // A future deletion must fail here rather than quietly shrink the registration.
   const together = REGISTERED_ROSTER.find((m) => m.adapter === 'together');
   assert.ok(together, 'the Together slot must remain in the REGISTERED roster');
   assert.equal(together.status, 'deferred');
-  assert.ok(
-    typeof together.deferReason === 'string' && together.deferReason.length > 40,
-    'a deferral must carry a recorded reason'
-  );
-  assert.match(together.deferReason, /cost/i, 'the real reason is cost, and it is stated');
   assert.ok(!ACTIVE_ROSTER.some((m) => m.adapter === 'together'), 'but it does not run');
-  assert.ok(DEFERRED_MODELS.some((m) => m.adapter === 'together'));
+  assert.ok(EXCLUDED_MODELS.some((m) => m.adapter === 'together'));
 });
 
-test('deferred models never enter a run plan', () => {
+test('excluded models never enter a run plan', () => {
   const plan = buildPlan();
-  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * RUNS_PER_CELL);
+  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * EXECUTED_RUNS_PER_CELL);
   assert.ok(
-    !plan.some((p) => DEFERRED_MODELS.some((m) => m.id === p.modelId)),
-    'no deferred model may appear in a plan'
+    !plan.some((p) => EXCLUDED_MODELS.some((m) => m.id === p.modelId)),
+    'no excluded model may appear in a plan — for ANY of the three reasons'
   );
 });
 
@@ -485,8 +532,10 @@ test('A8-3: every roster certainty is backed by evidence of the right kind', () 
       assert.ok(sound, `${model.id}: confirmedBy must cite a successful call or a metadata listing, not a bare 400 — got "${model.confirmedBy}"`);
     }
     if (model.certainty === 'refuted' || model.certainty === 'pending') {
-      assert.equal(model.status, 'deferred', `${model.id}: non-confirmed strings must not be active`);
-      assert.ok(model.deferReason, `${model.id}: deferred entries must say why`);
+      // A9-3 widened this from `=== 'deferred'`: a non-confirmed string must not
+      // be ACTIVE, but which non-active status it carries now depends on WHY.
+      assert.notEqual(model.status, 'active', `${model.id}: non-confirmed strings must not be active`);
+      assert.ok(model.exclusionReason, `${model.id}: excluded entries must say why`);
     }
   }
 });
@@ -550,23 +599,24 @@ test('A8-3 (supersedes A7-5): roster certainty rests on sound evidence only', ()
   const by = (id) => REGISTERED_ROSTER.find((m) => m.id === id);
 
   // Confirmed by a SUCCESSFUL CALL — the strongest evidence, and the only kind
-  // that also proves the transport contract works end to end.
-  for (const id of ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001']) {
+  // that also proves the transport contract works end to end. A9 added gpt-5.5
+  // here: round 3 completed 4 of its runs, so it is no longer listing-only.
+  for (const id of ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'gpt-5.5']) {
     assert.equal(by(id).certainty, 'confirmed');
-    assert.match(by(id).confirmedBy, /SUCCESSFUL/, `${id} completed real round-2 runs`);
+    assert.match(by(id).confirmedBy, /SUCCESSFUL/, `${id} completed real pilot runs`);
   }
 
-  // Confirmed by a METADATA LISTING — proves the string resolves, and nothing
-  // more. Both entries must still disclose that no call has succeeded.
-  for (const id of ['gpt-5.5', 'gemini-3.1-pro-preview']) {
-    assert.equal(by(id).certainty, 'confirmed');
-    assert.match(by(id).confirmedBy, /ListModels|\/v1\/models|listing/i, `${id} rests on a listing`);
-    assert.match(by(id).confirmedBy, /no successful call/i, `${id} must not overclaim`);
-  }
+  // Confirmed by a METADATA LISTING only — proves the string resolves, nothing
+  // more. Gemini is the last entry in this weaker category, and it must still
+  // disclose that no call has ever succeeded.
+  const gemini = by('gemini-3.1-pro-preview');
+  assert.equal(gemini.certainty, 'confirmed');
+  assert.match(gemini.confirmedBy, /ListModels|listing/i, 'gemini rests on a listing');
+  assert.match(gemini.confirmedBy, /no successful call/i, 'and must not overclaim');
 
   const mini = by('gpt-5.5-mini');
   assert.equal(mini.certainty, 'refuted', 'gpt-5.5-mini 404d — the string does not exist');
-  assert.equal(mini.status, 'deferred', 'so its slot is deferred, not filled with a guess');
-  assert.match(mini.deferReason, /404|model_not_found/, 'with the pilot evidence recorded');
+  assert.equal(mini.status, 'refuted', 'and A9-3 labels the slot by WHY, not a generic deferral');
+  assert.match(mini.exclusionReason, /404|model_not_found/, 'with the pilot evidence recorded');
   assert.ok(!/^gpt-5\.5-(mini|nano)$/.test(mini.id) === false, 'the refuted id is preserved, not overwritten');
 });

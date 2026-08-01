@@ -43,7 +43,8 @@ node tools/slice16-harness/runner.mjs --preflight
 # reports readiness; spends nothing
 
 node tools/slice16-harness/runner.mjs --mock mock-toolcalls.json
-# offline end-to-end (live MCP + mocked models): expect "60 runs written, 0 errored"
+# offline end-to-end (live MCP + mocked models): expect "18 runs written, 0 errored"
+# (18, not the pre-A9 60 — the mock plan uses the EXECUTED r, now 3)
 ```
 
 Confirm the guard actually refuses:
@@ -143,9 +144,11 @@ node tools/slice16-harness/runner.mjs --mock mock-toolcalls.json
 #     BOTH of these are a PASS — the runner is resumable, so a re-run legitimately
 #     writes nothing. Which one you get depends only on whether the mock ledger
 #     already exists:
-#       first run  -> "planned=60 already-done=0  pending=60" ... "done: 60 runs written, 0 errored"
-#       re-run     -> "planned=60 already-done=60 pending=0"  ... "done: 0 runs written, 0 errored"
-#     FAIL is: a non-zero "errored" count, or planned != 60.
+#       first run  -> "planned=18 already-done=0  pending=18" ... "done: 18 runs written, 0 errored"
+#       re-run     -> "planned=18 already-done=18 pending=0"  ... "done: 0 runs written, 0 errored"
+#     FAIL is: a non-zero "errored" count, or planned != 18.
+#     A9 CHANGED THIS NUMBER from 60 to 18: the mock plan uses the EXECUTED r,
+#     which dropped from 10 to 3. If you see 60, you are on a pre-A9 checkout.
 #     Want the first-run output? Delete just the mock ledger, never the directory:
 #       rm -f tools/slice16-harness/runs/ledger-mock.jsonl
 #     (Do NOT `rm -rf .../runs` — after the pilot that directory holds
@@ -158,11 +161,12 @@ node tools/slice16-harness/runner.mjs --mock mock-toolcalls.json
 node -e "const r=require('fs').readFileSync('tools/slice16-harness/runs/ledger-mock.jsonl','utf8').trim().split('\n').map(JSON.parse); \
 const bad=r.filter(x=>!x.no_tool_call && !(x.decisions||[]).some(d=>d.envelope)); \
 console.log('rows',r.length,'| missing envelope (excl. no_tool_call):',bad.length)"
-#     expect: "rows 60 | missing envelope (excl. no_tool_call): 0"
+#     expect: "rows 18 | missing envelope (excl. no_tool_call): 0"   (was 60 pre-A9)
 
 # [ ] 3. grade.mjs GRADES a real ledger (no EXIT=3)
 node tools/slice16-harness/grade.mjs tools/slice16-harness/runs/ledger-mock.jsonl; echo "exit=$?"
-#     expect: "graded 50 runs — 40 slot-graded (A3 active)", 10 no-tool-call reported, exit=0
+#     expect: "graded 15 runs — 12 slot-graded (A3 active)", 3 no-tool-call reported, exit=0
+#     (was 50/40/10 pre-A9; all three scale with the executed r, now 3)
 
 # [ ] 4. grade.mjs still refuses fail-closed on a row missing scenarioId
 node -e "const {gradeLedger}=await import('./tools/slice16-harness/grade.mjs'); \
@@ -175,22 +179,28 @@ printf '{"runKey":"x","scenario":"S-02","answerBlock":{}}\n' > /tmp/s16-noenv.js
 node tools/slice16-harness/grade.mjs /tmp/s16-noenv.jsonl; echo "exit=$?"
 #     expect: "GRADING REFUSED ... no envelope on the row", exit=3
 
-# [ ] 5b. keys present for the four active providers (names only, no values)
-node tools/slice16-harness/runner.mjs --preflight | sed -n '/Provider keys/,/Scenario set/p'
-#     expect: all four key names listed — OPENAI_API_KEY, ANTHROPIC_API_KEY,
+# [ ] 5b. roster status + keys (names only, never values)
+node tools/slice16-harness/runner.mjs --preflight | sed -n '/Repetitions/,/Scenario set/p'
+#     expect the A9 header line first:
+#       "Repetitions r: REGISTERED 10 / EXECUTED 3"
+#     expect all four key names listed — OPENAI_API_KEY, ANTHROPIC_API_KEY,
 #             GOOGLE_API_KEY, TOGETHER_API_KEY
-#     expect: the Together slot's STATUS column reads DEFERRED (not ABSENT), with
-#             its deferral reason printed on the following lines, and certainty
-#             [pending] because its model string is still a sentinel.
+#     expect THREE DISTINCT exclusion labels in the STATUS column (A9-3) — these
+#     must NOT all read the same thing, because each needs a different fix:
+#       gpt-5.5-mini            REFUTED   [refuted]  -> the string does not exist
+#       gemini-3.1-pro-preview  BLOCKED   [confirmed]-> provider quota; no code change needed
+#       PENDING-SET-TOGETHER... DEFERRED  [pending]  -> cost choice; needs a real string too
+#     each followed by a "kind:" line and a "reason:" line.
 #
 #     WITH YOUR .env SOURCED the output differs, and that is correct:
-#       - the three funded providers' status column reads `present`, not ABSENT
-#       - Together still reads DEFERRED — it is excluded by roster status, not by
-#         a missing key, so adding a TOGETHER_API_KEY would not change this line
+#       - the ACTIVE providers' status column reads `present`, not ABSENT
+#       - the three excluded models still read REFUTED / BLOCKED / DEFERRED — they
+#         are excluded by roster status, not by a missing key, so supplying keys
+#         does not change those lines
 #       - and check 6 below then refuses on the MISSING S16_LIVE_OK alone, rather
 #         than on a missing key. Its exit code is still 4.
-#     A keyless verification run (all ABSENT) and a keyed run (three present) are
-#     both healthy; they simply report different things.
+#     A keyless verification run (ACTIVE all ABSENT) and a keyed run (ACTIVE all
+#     present) are both healthy; they simply report different things.
 
 # [ ] 6. spend gate refuses the WHOLE run without S16_LIVE_OK + keys
 node tools/slice16-harness/runner.mjs --pilot; echo "exit=$?"
@@ -285,7 +295,7 @@ Four of the five deferred items were already closed by live MCP calls (§L.10.3)
 
 ## 7. Full run
 
-Only after the pilot is clean.
+Pilot round 3 was clean enough to proceed: 12/16 succeeded, and the 4 failures were a Google **quota** 429, not a code fault (founding §19.1).
 
 ```sh
 set -a; source tools/slice16-harness/.env; set +a
@@ -293,9 +303,31 @@ S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --full       # primary arm
 S16_LIVE_OK=1 node tools/slice16-harness/runner.mjs --control    # control arm, no tools
 ```
 
-Pre-promotion, `--full` executes the **23 runnable** scenarios (1,380 runs), not 28. Promoting the five deferred scenarios after the pilot takes it to the registered 1,680.
+### What to expect (A9)
 
-**Resumable.** The runner skips any `runKey` already in the ledger, so a rate limit or a crash costs only the incomplete runs — re-issue the same command.
+| | Registered | **Executed** |
+|---|---|---|
+| Scenarios | 28 | **27** (S-06 deferred) |
+| Models (k) | 6 | **3** |
+| Repetitions (r) | 10 | **3** |
+| `--full` | 1,680 | **243 runs** |
+| `--control` | 504 | **243 runs** |
+| Total | 2,184 | **486** |
+
+**Expected cost ≈ $13.49** — $6.75 per arm, 6.7% of the $200 ceiling. Tokens are house-measured from the round-3 pilot; **prices are third-party-estimated, so check the consoles** (founding §19.6). At the registered r=10 it would be ≈$29.23.
+
+`--preflight` prints both r values and all three run counts, so verify against it rather than against this table.
+
+### ⭐ RESUMABLE — this is what makes r=3 a floor, not a ceiling
+
+The runner skips any `runKey` already in the ledger. Two consequences, and the second is the important one:
+
+1. A rate limit or crash costs only the incomplete runs — **re-issue the exact same command**.
+2. **Repetitions are extensible after the fact.** Raising `EXECUTED_RUNS_PER_CELL` in `config.mjs` and re-running `--full` pays *only for the added repetitions*; the first 3 are never bought twice. r=3 → r=5 costs the increment, about $4.50 more on the primary arm. So r=3 is where this run stops, not a limit of the design (founding §19.3).
+
+The same mechanism is the trap: a ledger left in place from an errored run makes a re-run report `pending=0` and do nothing. Move it aside first — see §6.
+
+**Gemini re-activation needs no code change.** It is `blocked`, not `deferred` or `refuted`: the string resolves and the adapter is built. Raise the Google quota, set its `status` back to `'active'`, and it rejoins — which also restores a second lab to the frontier tier.
 
 ## 8. Where things land
 

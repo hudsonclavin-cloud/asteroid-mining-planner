@@ -894,3 +894,118 @@ Both ledgers are preserved as INV-036 artifacts:
 | Total | 2,184 | **1,404** |
 
 **Still one of three contrasts evaluable.** A8 resolved the Gemini string rather than losing it, so the active roster held at 4 and the count is unchanged from §17.7 — but `anthropic-frontier-vs-small` remains the only computable contrast. **This is the outstanding threat to the study's stated aims and it is unchanged by A8**, because neither deferral it depends on is a technical fault: `gpt-5.5-mini` does not exist and Together is unfunded. Both need a decision, not a fix.
+
+# §19 — Amendment A9 (2026-07-31): executed r=3, and the last change before the full run
+
+**Marker:** `S16-AMEND-A9-2026-07-31-A` · **Additive.** Nothing above is rewritten.
+
+## §19.1 — Pilot round 3: the harness is validated
+
+16 planned, **12 succeeded, 4 errored**. The four failures were `google 429 "You exceeded your current quota"` — a billing limit, not a code fault (§19.4).
+
+| Check | Result |
+|---|---|
+| `usage.reported: true` | **12/12** |
+| `answerBlockOk: true` | **12/12** |
+| Prefix fingerprint | `71ec9e6e426337f8` — **identical across all three rounds** |
+| Models completing full agentic runs | **3**, across **2 labs** |
+
+The structured-answer contract now holds against real models, live, on every successful run. `gpt-5.5` completed runs for the first time, so its roster entry no longer rests on a metadata listing — its A8 disclaimer "NO successful call yet" was true when written and is now retired as stale.
+
+**Measured per-run token usage** (provider-reported, from `runs/ledger-pilot.jsonl`). These supersede the chars/4 heuristic **everywhere it appears in the cost model**:
+
+| Model | Input avg | Input range | Output avg | Output range |
+|---|---|---|---|---|
+| `gpt-5.5` | 4,934 | 4,318–5,552 | 610 | 528–727 |
+| `claude-sonnet-4-6` | 4,793 | 3,996–6,814 | 1,051 | 792–1,343 |
+| `claude-haiku-4-5-20251001` | 7,699 | 6,973–8,431 | 492 | 390–628 |
+
+House-measured, n=4 per model. The spread matters: Sonnet's input varies by 70% across four runs of two scenarios, so a single-point average is a planning tool, not a guarantee.
+
+## §19.2 — A9-1: repetitions, registered vs executed
+
+**Registered r stays 10. Executed r becomes 3.** Rationale, recorded as ruled:
+
+> reduced for resource constraints; the pilot's measured tokens put r=10 at roughly $67 for the primary arm versus roughly $20 at r=3; r=3 was the original pre-registration draft value before Q2 argued for r≈10; pre-registration explicitly permits a reduced execution with disclosure.
+
+The draft-value claim checks out against the registration: OQ-16-3 reads *"Proposed k=3 seeds per scenario×model."* **The two dollar figures do not reproduce from the ledger** — see §19.6, where the measured arithmetic gives $22.48 and $6.75. The decision stands as ruled; the numbers offered for it are corrected rather than repeated.
+
+**The reduction is not costless.** Confidence intervals widen and power to resolve differences below the registered 10-percentage-point minimum effect size falls. There is a second cost the headline number hides: at r=3 each prompt form gets **exactly one run per cell**, so within-cell per-form variance cannot be estimated from a cell at all — variance estimation now leans entirely on the across-scenario clustering in DEC-16-8.
+
+What survives intact: `expandForms(3)` yields **one ORIGINAL, one P1, one P2**. Every prompt form is still present in every cell, so the paraphrase-robustness comparison in DEC-16-5 remains measurable. A naive "take the first 3 slots" would have produced three ORIGINALs and silently deleted that question.
+
+**No bare `r` exists in the code any more.** `RUNS_PER_CELL` was **removed**, not aliased, and replaced by `REGISTERED_RUNS_PER_CELL` and `EXECUTED_RUNS_PER_CELL`. A single name meaning both is precisely the A2 O-1 failure; removing it turns any future conflation into a load-time error instead of a wrong number in a table. The same pass renamed `ACTIVE_*_RUN_COUNT` to `EXECUTED_*_RUN_COUNT`, so `ACTIVE_` now means membership and `EXECUTED_` means counts.
+
+## §19.3 — A9-2: r is a floor, not a ceiling
+
+The runner is resumable and skips completed `runKey`s. **Raising executed r and re-running pays only for the increment** — the first three repetitions are never bought twice. Going from r=3 to r=5 costs the two extra repetitions and nothing else. A reader should understand r=3 as where this run stops, not as a limit of the design.
+
+## §19.4 — A9-3: three exclusions, three different reasons
+
+Before A9, `status: 'deferred'` covered a cost decision *and* a refuted string, and a quota block had nowhere to go. One label for three situations misleads, because **what it takes to reverse each is different**:
+
+| Model | Status | Why | To reverse |
+|---|---|---|---|
+| `PENDING-SET-TOGETHER-MODEL-STRING` | `deferred` | cost choice | money + a real model string |
+| `gpt-5.5-mini` | `refuted` | the string does not exist (404) | choose a different model |
+| `gemini-3.1-pro-preview` | `blocked` | provider quota (429) | **a quota increase — no code change** |
+
+The 429 is itself evidence the Gemini string is right: the request reached quota enforcement, which a bad string never gets to.
+
+`DEFERRED_MODELS` was replaced by `EXCLUDED_MODELS`, and this is a **correctness fix, not a rename**. The old export filtered `status === 'deferred'`; once two of the three models carried other statuses, the disclosure block in `grade.mjs` and the preflight listing would have reported only Together and **silently dropped the other two**. A disclosure mechanism that quietly under-reports is worse than none.
+
+## §19.5 — A9-4: the pilot's 12 successful runs are NOT used
+
+The registered rule, verbatim from §8 of this document:
+
+> **Pilot data is excluded from the primary analysis** and reported in an appendix.
+
+**Complied with. The 12 rows are excluded from the primary analysis.**
+
+They are *technically* usable in a way round 2's were not — round 3 ran under the current post-A8 sampling config and the current adapters, so config-comparability genuinely holds, and merging them would have been free data. The registration says no. Following a pre-registered exclusion only when it costs nothing is not pre-registration, so they stay out and this paragraph records that the temptation was real and declined.
+
+`runs/ledger-pilot.jsonl` is preserved for the appendix report. Every earlier ledger is preserved too.
+
+## §19.6 — A9-5: measured cost model
+
+Tokens are **house-measured** (round-3 ledger). Prices are **third-party-estimated**, from Q3 `query-3-model-matrix-cost.md` — no price here is official-published, and **console billing should verify them before and during the run**.
+
+Cost per run = (input ÷ 10⁶) × P_in + (output ÷ 10⁶) × P_out
+
+| Model | P_in $/M | P_out $/M | in tok | out tok | input $ | output $ | **per run $** |
+|---|---|---|---|---|---|---|---|
+| `gpt-5.5` | 5.00 | 30.00 | 4,934 | 610 | 0.02467 | 0.01830 | **0.04297** |
+| `claude-sonnet-4-6` | 3.00 | 15.00 | 4,793 | 1,051 | 0.01438 | 0.01577 | **0.03014** |
+| `claude-haiku-4-5-20251001` | 1.00 | 5.00 | 7,699 | 492 | 0.00770 | 0.00246 | **0.01016** |
+| | | | | | | **per scenario-repetition (all 3)** | **0.08327** |
+
+**Executed primary** — 27 scenarios × 3 models × r=3 = **243 runs**
+ 27 × 3 = 81 scenario-repetitions × $0.08327 = **$6.75**
+
+**Executed control** — 27 × 3 × r=3 = **243 runs** = **$6.75**
+ *Deliberate overestimate:* control runs attach no tools, so their real input is smaller than the tool-carrying runs these averages come from. Overestimating the arm we cannot price precisely is the conservative direction.
+
+**GRAND TOTAL ≈ $13.49** — **6.7%** of the $200 ceiling (DEC-16-7).
+
+**Counterfactual at the registered r=10**, same 3 active models: primary $22.48 + control $6.75 = **$29.23**. So A9 saves about **$15.74**, and the registered r=10 would have cost roughly **15% of the ceiling**, not the ~$67-for-primary-alone the rationale assumed. Recorded because the study's rule is that every number is measured or pre-registered; the ruling is instantiated as given, and its supporting figures are corrected here rather than repeated.
+
+Excluded from these figures: pilot spend already incurred, retries, and any caching discount (all three push the real number down except retries).
+
+## §19.7 — The executed study, stated honestly
+
+| | Registered | Executed |
+|---|---|---|
+| Scenarios | 28 | **27** (S-06 deferred, live contradiction) |
+| Models (k) | 6 | **3** (1 deferred, 1 refuted, 1 quota-blocked) |
+| Repetitions (r) | 10 | **3** |
+| Primary runs | 1,680 | **243** |
+| Control runs | 504 | **243** |
+| **Total** | **2,184** | **486 — 22.3%** |
+
+**Contrasts: 1 of 3 evaluable.** `anthropic-frontier-vs-small` survives. `openai-frontier-vs-small` needs a model that does not exist; `google-vs-together-open-weight` needs both a funding decision and a quota increase. All three stay declared in `CONTRASTS`; `EVALUABLE_CONTRASTS` exposes the one that computes.
+
+**What this study can support when it reports:** a faithfulness estimate per model across 27 scenarios and three prompt forms, one within-lab capability contrast, and a tools-vs-no-tools control comparison — at intervals wider than the registered design intended.
+
+**What it cannot support:** cross-lab claims resting on more than three models, any frontier-vs-small claim outside Anthropic, any open-weight claim at all, and any difference smaller than the registered 10-percentage-point minimum effect size.
+
+Both lists belong in the write-up. The second one is the honest half.

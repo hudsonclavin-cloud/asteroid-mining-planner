@@ -26,7 +26,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 
-import { MARKER as HARNESS_MARKER, DEFERRED_MODELS, REGISTERED_ROSTER, STATS, toleranceForTool } from './config.mjs';
+import { MARKER as HARNESS_MARKER, EXCLUDED_MODELS, EXCLUSION_KINDS, REGISTERED_ROSTER, STATS, toleranceForTool } from './config.mjs';
 import { SCENARIO_SLOTS, gradeDecision, summarize } from './grader.mjs';
 
 export const MARKER = 'S16-MCPLIVE-2026-07-27-A';
@@ -400,10 +400,22 @@ function aggregate(graded, noToolCall = []) {
 
   return {
     primaryArm: perModel,
-    // Registered-but-not-run models, stated explicitly so a deferred slot can
+    // Registered-but-not-run models, stated explicitly so an excluded slot can
     // never be mistaken for a model that was simply never planned.
-    deferredModels: DEFERRED_MODELS.map((m) => ({
-      id: m.id, lab: m.lab, keyEnv: m.keyEnv, runs: 0, reason: m.deferReason ?? null
+    // A9-3: was DEFERRED_MODELS (status === 'deferred'), which after the status
+    // split would have reported ONLY Together and silently dropped the refuted
+    // and quota-blocked models from the disclosure. Now every non-active model
+    // appears, each with the KIND of exclusion, because "why" determines what a
+    // reader should conclude: a missing model string is a design gap, a quota
+    // block is an operational one, and a cost deferral is a choice.
+    excludedModels: EXCLUDED_MODELS.map((m) => ({
+      id: m.id,
+      lab: m.lab,
+      keyEnv: m.keyEnv,
+      runs: 0,
+      exclusionStatus: m.status,
+      exclusionKind: EXCLUSION_KINDS[m.status] ?? 'UNKNOWN EXCLUSION KIND',
+      reason: m.exclusionReason ?? null
     })),
     controlArm: controlByModel,
     noToolCallRuns: { total: noToolCall.length, byModel: noToolCallByModel, runs: noToolCall },
@@ -414,7 +426,8 @@ function aggregate(graded, noToolCall = []) {
       'Control-arm rows are reported separately and excluded from primary metrics (A1 §10.2).',
       `${[...NON_BINARY_SCENARIOS].join(', ')} yields a 3-bin outcome and is excluded from the binary rate (DEC-16-9).`,
       'No Holm correction is applied here: the three pre-specified contrasts are computed at write-up time, not per-ledger.',
-      'deferredModels lists registered models that contributed zero runs (e.g. deferred for cost). Registered k and executed k differ; both are reported.',
+      'excludedModels lists registered models that contributed zero runs, each with the KIND of exclusion: deferred (cost choice), refuted (string does not exist), blocked (external provider quota). Registered k and executed k differ; both are reported.',
+      'Repetitions differ too: r=10 registered, r=3 executed (A9-1, resource constraints). Confidence intervals are correspondingly wider than the registered design anticipated.',
       'Runs marked no_tool_call are EXCLUDED from every faithfulness metric and reported separately (A4-4). They are a measured outcome — the model answered without consulting a tool — not a harness fault, and never a silent pass.'
     ]
   };

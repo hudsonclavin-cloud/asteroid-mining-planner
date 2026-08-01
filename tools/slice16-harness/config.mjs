@@ -38,9 +38,44 @@ export const PATHS = {
 // DEC-16-5 — run budget and prompt-form allocation
 // ---------------------------------------------------------------------------
 
-export const RUNS_PER_CELL = 10; // r
+// A9-1 — REPETITIONS ARE SPLIT. There is deliberately NO bare `RUNS_PER_CELL`
+// export any more: a single `r` that means both things is exactly the A2 O-1
+// failure (registered and executed counts conflated in one name). Removing it
+// turns any conflation into a load-time error instead of a silent wrong number.
+// Every consumer must now say which r it means.
 
-/** Allocation inside r. Sums to RUNS_PER_CELL. Fixed per scenario per model. */
+/** REGISTERED r — the pre-registered design value (DEC-16-5). UNCHANGED by A9. */
+export const REGISTERED_RUNS_PER_CELL = 10;
+
+/**
+ * EXECUTED r — what this run actually performs (A9-1).
+ *
+ * REDUCED FOR RESOURCE CONSTRAINTS. The pilot's measured token usage puts the
+ * primary arm at roughly $67 at r=10 versus roughly $20 at r=3. r=3 was also the
+ * ORIGINAL pre-registration draft value (OQ-16-3, "Proposed k=3 seeds per
+ * scenario x model") before Q2 argued for r≈10, and the pre-registration
+ * explicitly permits a reduced execution with disclosure.
+ *
+ * THE REDUCTION IS NOT COSTLESS. Confidence intervals widen and power to resolve
+ * differences smaller than the registered 10-percentage-point minimum effect
+ * size falls. Additionally, at r=3 each prompt form gets exactly ONE run per
+ * cell (see expandForms), so within-cell per-form variance cannot be estimated
+ * from a cell at all — variance estimation leans entirely on the across-scenario
+ * clustering in DEC-16-8. Stated plainly, not minimised.
+ *
+ * IT IS A FLOOR, NOT A CEILING (A9-2). The runner is resumable and skips
+ * completed runKeys, so raising this value and re-running adds only the
+ * increment — the first 3 repetitions are never paid for twice.
+ */
+export const EXECUTED_RUNS_PER_CELL = 3;
+
+/**
+ * Allocation inside r, expressed against the REGISTERED r (sums to 10).
+ * expandForms() scales it to whatever r is actually being run. At the executed
+ * r=3 this yields exactly one ORIGINAL, one P1 and one P2 — every prompt form
+ * still covered in every cell, which is what keeps the paraphrase-robustness
+ * comparison in DEC-16-5 measurable at the reduced r.
+ */
 export const FORM_ALLOCATION = Object.freeze({
   ORIGINAL: 4,
   P1: 3,
@@ -69,9 +104,22 @@ export const CAP_NOTICE =
 // ---------------------------------------------------------------------------
 //
 // status:    'active'   -> participates in runs
-//            'deferred' -> in the REGISTERED design, NOT run right now, with a
-//                          recorded deferReason. Mirrors the scenario status
-//                          convention below — same vocabulary, same intent.
+//            'deferred' -> in the REGISTERED design, NOT run right now, BY CHOICE
+//                          (cost). Reversible by a funding decision.
+//            'refuted'  -> NOT run because the model string DOES NOT EXIST.
+//                          Reversible only by choosing a different model.
+//            'blocked'  -> NOT run because of an EXTERNAL PROVIDER LIMIT (quota /
+//                          billing). The string is fine and the code is fine.
+//                          Reversible with NO code change at all. (A9-3)
+//
+// A9-3 SPLIT THESE APART. Before A9, 'deferred' covered a cost decision AND a
+// refuted string, and a quota block had nowhere to go. Three different reasons
+// wearing one label misleads a reader about what it would take to fix each:
+// Together needs money, gpt-5.5-mini needs a different model, Gemini needs
+// neither — only a quota increase. Every non-active entry carries an
+// `exclusionReason` (renamed from `deferReason`, which was a misnomer for two of
+// the three kinds). Scenario-level `deferReason` is untouched; those really are
+// deferrals.
 //
 // certainty: 'certain'  -> string marked [Certain] in Q3
 //            'lead'     -> UNVERIFIED lead; confirm against official provider
@@ -83,16 +131,15 @@ export const CAP_NOTICE =
 //                          pilot; it is designed to fail loudly if not.
 
 export const ROSTER = Object.freeze([
-  // A8-3 re-derived this one too. It SURVIVES, but on the metadata listing, not
-  // on the 400: presence in GET /v1/models is direct evidence of the string,
-  // independent of any request-body inference. (Round 2's 400 corroborates it —
-  // "does not support 0 WITH THIS MODEL" requires the model to have been
-  // resolved — but the listing alone is what makes this sound.) No successful
-  // call yet: nothing past request validation has ever run on this provider.
-  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'confirmed', confirmedBy: 'A7 GET /v1/models listing (direct); A8 round-2 400 "with this model" corroborates. NO successful call yet.', status: 'active' },
+  // A9 UPGRADED this entry's evidence. A8 could only cite the metadata listing
+  // and had to disclose "NO successful call yet" — true then, STALE NOW. Round 3
+  // completed 4 gpt-5.5 runs, so the confirmation no longer rests on a listing
+  // at all. Leaving the old wording would have been a false disclaimer, which is
+  // the same class of error as a false claim: both misdescribe the evidence.
+  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'confirmed', confirmedBy: 'A9: 4 SUCCESSFUL round-3 pilot runs (200, tool calls + envelopes + valid answer block). Supersedes A7\'s GET /v1/models listing, which is now merely corroborating.', status: 'active' },
   { id: 'gpt-5.5-mini', lab: 'openai', tier: 'small', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'refuted',
-    status: 'deferred',
-    deferReason: 'REFUTED BY PILOT (A7): openai 404 model_not_found. GET /v1/models confirms the 5.5 generation ships ONLY gpt-5.5 and gpt-5.5-pro — there is NO gpt-5.5-mini or gpt-5.5-nano, so no same-generation small sibling exists. R-A7-2 forbids inventing one, so the slot is deferred pending Hudson\'s choice from the live listing. Nearest small-tier candidates, all a GENERATION BEHIND (which would confound capability-tier with generation in the DEC-16-6 frontier-vs-small contrast): gpt-5.4-mini, gpt-5.4-nano, gpt-5-mini, gpt-5-nano. Re-activate by setting a chosen id + status active.' },
+    status: 'refuted',
+    exclusionReason: 'REFUTED BY PILOT (A7): openai 404 model_not_found. GET /v1/models confirms the 5.5 generation ships ONLY gpt-5.5 and gpt-5.5-pro — there is NO gpt-5.5-mini or gpt-5.5-nano, so no same-generation small sibling exists. R-A7-2 forbids inventing one, so the slot is deferred pending Hudson\'s choice from the live listing. Nearest small-tier candidates, all a GENERATION BEHIND (which would confound capability-tier with generation in the DEC-16-6 frontier-vs-small contrast): gpt-5.4-mini, gpt-5.4-nano, gpt-5-mini, gpt-5-nano. Re-activate by setting a chosen id + status active.' },
   // A8-3 re-derived BOTH Anthropic certainties. A7 justified them with "pilot 400
   // (sampling-param rejection, i.e. string resolved)" — the SAME unsound inference
   // that wrongly confirmed gemini-3.1-pro, since a body-validation 400 can be
@@ -107,14 +154,24 @@ export const ROSTER = Object.freeze([
   // 'confirmed' here means THE STRING RESOLVES — nothing more. Function calling
   // on this model has never been exercised; see adapters/google.mjs for why the
   // tool-tuned `-customtools` variant was deliberately NOT chosen.
-  { id: 'gemini-3.1-pro-preview', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'confirmed', confirmedBy: 'A8 ListModels (metadata): present, version 3.1-pro-preview-01-2026, supports generateContent. Resolution only — no successful call yet.', status: 'active' },
+  //
+  // A9-3: BLOCKED ON PROVIDER QUOTA, not on anything in this repo. All four
+  // round-3 pilot runs returned `google 429: You exceeded your current quota`.
+  // A 429 is itself further evidence the string is right — the request got past
+  // model resolution all the way to quota enforcement, which a bad string never
+  // reaches. Nothing here needs fixing: raise the quota (or enable billing) and
+  // flip status back to 'active'. NO CODE CHANGE. That is precisely why this is
+  // 'blocked' and not 'deferred' or 'refuted'.
+  { id: 'gemini-3.1-pro-preview', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'confirmed', confirmedBy: 'A8 ListModels (metadata): present, version 3.1-pro-preview-01-2026, supports generateContent. A9: round-3 429 (quota) corroborates resolution. Still NO successful call — function calling on this model remains unexercised.',
+    status: 'blocked',
+    exclusionReason: 'BLOCKED ON PROVIDER QUOTA (A9-3): all 4 round-3 pilot runs returned google 429 "You exceeded your current quota". This is NOT a code fault and NOT a refuted string — the request reached quota enforcement, which requires the model to have resolved. Distinct from Together (deferred by cost choice) and gpt-5.5-mini (refuted, does not exist). Re-activation needs a quota/billing increase on the Google account and status back to \'active\' — no code change, no model substitution.' },
   // A6 (R-A6-3): DeepSeek dropped for jurisdiction; Together.ai takes the
   // open-weight slot (US-hosted open weights). k=6 unchanged.
   // certainty 'pending' => the model string is a SENTINEL, not a lead:
   // it must be filled from Together's live model list before the pilot.
   { id: 'PENDING-SET-TOGETHER-MODEL-STRING', lab: 'together-open-weight', tier: 'small', adapter: 'together', certainty: 'pending', keyEnv: 'TOGETHER_API_KEY',
     status: 'deferred',
-    deferReason: 'DEFERRED FOR COST (S16-ROSTER-STATUS-2026-07-30-B): no Together deposit is being made before the pilot proves the harness. This is a funding decision, NOT a design change — the slot stays in REGISTERED_ROSTER and k=6 remains the registered design. Re-activation needs three things: a real model string from Together\'s live model list, TOGETHER_API_KEY in the environment, and status back to \'active\'.' }
+    exclusionReason: 'DEFERRED FOR COST (S16-ROSTER-STATUS-2026-07-30-B): no Together deposit is being made before the pilot proves the harness. This is a funding decision, NOT a design change — the slot stays in REGISTERED_ROSTER and k=6 remains the registered design. Re-activation needs three things: a real model string from Together\'s live model list, TOGETHER_API_KEY in the environment, and status back to \'active\'.' }
 ]);
 
 // Three distinctly named model sets, mirroring the scenario convention exactly.
@@ -122,11 +179,26 @@ export const ROSTER = Object.freeze([
 // O-1 divergence at the scenario level; the same mistake is not repeated here.
 //
 //   REGISTERED_ROSTER — the pre-registered design. k=6. Drives REGISTERED_* counts.
-//   ACTIVE_ROSTER     — what actually runs right now. Drives ACTIVE_* counts and buildPlan.
-//   DEFERRED_MODELS   — inside REGISTERED, not run right now. Drives disclosure.
+//   ACTIVE_ROSTER     — what actually runs right now. Drives EXECUTED_* counts and buildPlan.
+//   EXCLUDED_MODELS   — inside REGISTERED, not run right now, FOR ANY of the three
+//                       reasons. Drives disclosure.
+//
+// A9-3 REPLACED `DEFERRED_MODELS` WITH `EXCLUDED_MODELS`, and the change is a
+// correctness fix, not a rename. DEFERRED_MODELS filtered `status === 'deferred'`;
+// once Gemini became 'blocked' and gpt-5.5-mini became 'refuted', that filter
+// would have matched only Together — so the disclosure block in grade.mjs and the
+// preflight listing would have SILENTLY OMITTED two of the three excluded models.
+// A disclosure mechanism that quietly under-reports is worse than none.
 export const REGISTERED_ROSTER = ROSTER;
 export const ACTIVE_ROSTER = ROSTER.filter((m) => m.status === 'active');
-export const DEFERRED_MODELS = ROSTER.filter((m) => m.status === 'deferred');
+export const EXCLUDED_MODELS = ROSTER.filter((m) => m.status !== 'active');
+
+/** Excluded models grouped by WHY, so the three reasons never collapse into one. */
+export const EXCLUSION_KINDS = Object.freeze({
+  deferred: 'excluded by CHOICE (cost) — reversible by a funding decision',
+  refuted: 'excluded because the model string DOES NOT EXIST — needs a different model',
+  blocked: 'excluded by an EXTERNAL PROVIDER LIMIT (quota) — reversible with no code change'
+});
 
 /** The three Holm-corrected contrasts. Everything else is estimation + tiers. */
 export const CONTRASTS = Object.freeze([
@@ -464,34 +536,52 @@ export const ACTIVE_SCENARIOS = SCENARIOS.filter((s) => s.status === 'active');
 export const PRIMARY_SCENARIOS = SCENARIOS.filter((s) => s.status !== 'struck');
 
 // COUNTS: registered vs executed, never interchangeable.
-//   REGISTERED_* = PRIMARY_SCENARIOS x REGISTERED_ROSTER  (the pre-registered design)
-//   ACTIVE_*     = ACTIVE_SCENARIOS  x ACTIVE_ROSTER      (what this run executes)
-// Both dimensions carry the split: scenarios (28 registered / 27 runnable, S-06
-// deferred) and models (6 registered / 5 active, Together deferred).
+//   REGISTERED_* = PRIMARY_SCENARIOS x REGISTERED_ROSTER x REGISTERED_RUNS_PER_CELL
+//   EXECUTED_*   = ACTIVE_SCENARIOS  x ACTIVE_ROSTER     x EXECUTED_RUNS_PER_CELL
+//
+// A9-1 renamed ACTIVE_*_RUN_COUNT to EXECUTED_*_RUN_COUNT. ACTIVE_ now means
+// MEMBERSHIP only (which scenarios, which models); EXECUTED_ means COUNTS. The
+// runner already printed these as "EXECUTED", so the names now match the words
+// the study reports. The rename is also a forcing function: every consumer had
+// to be revisited, so none can still be reading a count that silently changed
+// meaning when r split.
+//
+// ALL THREE dimensions now carry the registered/executed split:
+//   scenarios 28 registered / 27 runnable (S-06 deferred, live contradiction)
+//   models     6 registered /  3 active   (1 deferred, 1 refuted, 1 quota-blocked)
+//   r         10 registered /  3 executed (A9-1, resource constraints)
 
-/** Pre-registered primary run count (A1 §10.1): 28 x 6 x 10 = 1,680. UNCHANGED. */
-export const REGISTERED_PRIMARY_RUN_COUNT = PRIMARY_SCENARIOS.length * REGISTERED_ROSTER.length * RUNS_PER_CELL;
+/** Pre-registered primary run count (A1 §10.1): 28 x 6 x 10 = 1,680. UNCHANGED BY A9. */
+export const REGISTERED_PRIMARY_RUN_COUNT = PRIMARY_SCENARIOS.length * REGISTERED_ROSTER.length * REGISTERED_RUNS_PER_CELL;
 
-/** Executable today: 27 runnable scenarios x 5 active models x 10 = 1,350. */
-export const ACTIVE_PRIMARY_RUN_COUNT = ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * RUNS_PER_CELL;
+/** What this run executes: 27 runnable x 3 active x r=3 = 243. */
+export const EXECUTED_PRIMARY_RUN_COUNT = ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * EXECUTED_RUNS_PER_CELL;
 
-/** Control arm (A1 §10.2): same 28 scenarios, ORIGINAL form only, no tools, r=3. */
+/**
+ * Control arm (A1 §10.2): same scenarios, ORIGINAL form only, no tools.
+ * Its r is SEPARATELY REGISTERED at 3 and is NOT reduced by A9 — it was already
+ * 3, so there is no registered/executed gap on this arm. Left explicit rather
+ * than folded into EXECUTED_RUNS_PER_CELL, because they are equal today by
+ * coincidence and changing one must not silently move the other.
+ */
 export const CONTROL_ARM = Object.freeze({
   runsPerCell: 3,
   form: 'ORIGINAL',
   toolsAttached: false,
   excludedFromPrimaryMetrics: true
 });
+
+/** Pre-registered control count: 28 x 6 x 3 = 504. UNCHANGED BY A9. */
 export const REGISTERED_CONTROL_RUN_COUNT = PRIMARY_SCENARIOS.length * REGISTERED_ROSTER.length * CONTROL_ARM.runsPerCell;
 
-/** Executable today: 27 x 5 x 3 = 405. */
-export const ACTIVE_CONTROL_RUN_COUNT = ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * CONTROL_ARM.runsPerCell;
+/** What this run executes: 27 x 3 x 3 = 243. */
+export const EXECUTED_CONTROL_RUN_COUNT = ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * CONTROL_ARM.runsPerCell;
 
-/** Total registered study runs (A1 §10.2): 1,680 + 504 = 2,184. UNCHANGED. */
+/** Total registered study runs (A1 §10.2): 1,680 + 504 = 2,184. UNCHANGED BY A9. */
 export const REGISTERED_TOTAL_RUN_COUNT = REGISTERED_PRIMARY_RUN_COUNT + REGISTERED_CONTROL_RUN_COUNT;
 
-/** Total executable today: 1,350 + 405 = 1,755. */
-export const ACTIVE_TOTAL_RUN_COUNT = ACTIVE_PRIMARY_RUN_COUNT + ACTIVE_CONTROL_RUN_COUNT;
+/** Total this run executes: 243 + 243 = 486 — 22.3% of the registered 2,184. */
+export const EXECUTED_TOTAL_RUN_COUNT = EXECUTED_PRIMARY_RUN_COUNT + EXECUTED_CONTROL_RUN_COUNT;
 
 /** DEC-16-11 pilot: one value-path and one refusal-path scenario, r=2, all models. */
 export const PILOT = Object.freeze({
@@ -544,15 +634,17 @@ export function assertLiveAllowed(model, env = process.env) {
 export function liveReadiness(env = process.env) {
   return {
     liveOk: liveEnabled(env),
-    // Reports the REGISTERED roster so a deferred model is visibly deferred
-    // rather than silently absent from readiness output.
+    // Reports the REGISTERED roster so an excluded model is visibly excluded —
+    // and, since A9-3, visibly excluded FOR A NAMED REASON — rather than
+    // silently absent from readiness output.
     models: REGISTERED_ROSTER.map((m) => ({
       id: m.id,
       keyEnv: m.keyEnv,
       keyPresent: Boolean(env[m.keyEnv] && String(env[m.keyEnv]).trim() !== ''),
       certainty: m.certainty,
       status: m.status,
-      deferReason: m.deferReason ?? null
+      exclusionKind: m.status === 'active' ? null : EXCLUSION_KINDS[m.status] ?? 'UNKNOWN EXCLUSION KIND',
+      exclusionReason: m.exclusionReason ?? null
     }))
   };
 }
@@ -563,9 +655,14 @@ export function modelById(id) {
   return REGISTERED_ROSTER.find((m) => m.id === id);
 }
 
-/** Expands a scenario into its r prompt-form slots per FORM_ALLOCATION. */
-export function expandForms(runsPerCell = RUNS_PER_CELL) {
-  const scale = runsPerCell / RUNS_PER_CELL;
+/**
+ * Expands a scenario into its r prompt-form slots per FORM_ALLOCATION.
+ * The allocation is defined against the REGISTERED r and scaled to whatever r is
+ * being run; the default is the EXECUTED r, since that is what the runner does.
+ * At r=3 this gives one ORIGINAL, one P1, one P2.
+ */
+export function expandForms(runsPerCell = EXECUTED_RUNS_PER_CELL) {
+  const scale = runsPerCell / REGISTERED_RUNS_PER_CELL;
   const slots = [];
   for (const form of PROMPT_FORMS) {
     const n = Math.max(1, Math.round(FORM_ALLOCATION[form] * scale));

@@ -22,11 +22,11 @@ import { resolve } from 'node:path';
 import {
   ACTIVE_SCENARIOS, CONTROL_ARM, DEFERRED_SCENARIOS, PRIMARY_SCENARIOS,
   STRUCK_SCENARIOS, SCENARIOS,
-  ACTIVE_ROSTER, DEFERRED_MODELS, REGISTERED_ROSTER,
-  ACTIVE_PRIMARY_RUN_COUNT, ACTIVE_CONTROL_RUN_COUNT, ACTIVE_TOTAL_RUN_COUNT,
+  ACTIVE_ROSTER, EXCLUDED_MODELS, EXCLUSION_KINDS, REGISTERED_ROSTER,
+  EXECUTED_PRIMARY_RUN_COUNT, EXECUTED_CONTROL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,
   REGISTERED_PRIMARY_RUN_COUNT, REGISTERED_CONTROL_RUN_COUNT, REGISTERED_TOTAL_RUN_COUNT,
   CAP_NOTICE, MAX_MODEL_TURNS, TOOL_CALL_CAP,
-  MARKER, PATHS, PILOT, RUNS_PER_CELL,
+  MARKER, PATHS, PILOT, REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL,
   SpendGuardError, assertLiveAllowed, expandForms, liveReadiness, modelById
 } from './config.mjs';
 import { connectMcp, extractEnvelope, McpServerUnavailableError } from './mcp-client.mjs';
@@ -73,7 +73,7 @@ function appendLedger(ledgerPath, row) {
 }
 
 /** Builds the plan without executing anything — used by --preflight and tests. */
-export function buildPlan({ scenarioIds = null, runsPerCell = RUNS_PER_CELL, models = ACTIVE_ROSTER, forms: formsOverride = null } = {}) {
+export function buildPlan({ scenarioIds = null, runsPerCell = EXECUTED_RUNS_PER_CELL, models = ACTIVE_ROSTER, forms: formsOverride = null } = {}) {
   const pool = scenarioIds
     ? SCENARIOS.filter((s) => scenarioIds.includes(s.id))
     : ACTIVE_SCENARIOS;
@@ -252,23 +252,29 @@ function reportPreflight() {
   console.log(`Slice 16 harness preflight — ${MARKER}`);
   console.log(`  S16_LIVE_OK=1 : ${readiness.liveOk ? 'YES' : 'NO  (no live call is possible)'}`);
   console.log(`  Roster: registered k=${REGISTERED_ROSTER.length}, ACTIVE k=${ACTIVE_ROSTER.length}` +
-    (DEFERRED_MODELS.length ? `, deferred ${DEFERRED_MODELS.length}` : ''));
+    (EXCLUDED_MODELS.length ? `, excluded ${EXCLUDED_MODELS.length}` : ''));
+  // A9-1: r is displayed on BOTH sides so a reader never has to infer which one
+  // a count used. This is the number most likely to be misread in the write-up.
+  console.log(`  Repetitions r: REGISTERED ${REGISTERED_RUNS_PER_CELL} / EXECUTED ${EXECUTED_RUNS_PER_CELL}  (A9-1, reduced for resource constraints — extensible, see RUNBOOK)`);
   console.log('  Provider keys:');
   for (const m of readiness.models) {
-    const state = m.status === 'deferred' ? 'DEFERRED' : (m.keyPresent ? 'present' : 'ABSENT');
+    const state = m.status === 'active' ? (m.keyPresent ? 'present' : 'ABSENT') : m.status.toUpperCase();
     console.log(`    ${m.id.padEnd(34)} ${m.keyEnv.padEnd(18)} ${state.padEnd(9)} [${m.certainty}]`);
   }
-  for (const m of DEFERRED_MODELS) {
-    console.log(`    ^ ${m.id} is DEFERRED, not missing — it is excluded from every run.`);
-    console.log(`      reason: ${String(m.deferReason).slice(0, 160)}...`);
+  // A9-3: three exclusion kinds, never collapsed — what it takes to reverse each
+  // is different, and that is the whole point of keeping them apart.
+  for (const m of EXCLUDED_MODELS) {
+    console.log(`    ^ ${m.id} is ${m.status.toUpperCase()} — excluded from every run.`);
+    console.log(`      kind:   ${EXCLUSION_KINDS[m.status] ?? 'UNKNOWN EXCLUSION KIND'}`);
+    console.log(`      reason: ${String(m.exclusionReason).slice(0, 160)}...`);
   }
   console.log('  Scenario set:');
-  console.log(`    primary (pre-registered) : ${PRIMARY_SCENARIOS.length}  -> ${REGISTERED_PRIMARY_RUN_COUNT} REGISTERED primary runs (${PRIMARY_SCENARIOS.length} x k=${REGISTERED_ROSTER.length} x r=${RUNS_PER_CELL})`);
-  console.log(`    active  (runnable now)   : ${ACTIVE_SCENARIOS.length}  -> ${ACTIVE_PRIMARY_RUN_COUNT} EXECUTED primary runs (${ACTIVE_SCENARIOS.length} x k=${ACTIVE_ROSTER.length} x r=${RUNS_PER_CELL})`);
+  console.log(`    primary (pre-registered) : ${PRIMARY_SCENARIOS.length}  -> ${REGISTERED_PRIMARY_RUN_COUNT} REGISTERED primary runs (${PRIMARY_SCENARIOS.length} x k=${REGISTERED_ROSTER.length} x r=${REGISTERED_RUNS_PER_CELL})`);
+  console.log(`    active  (runnable now)   : ${ACTIVE_SCENARIOS.length}  -> ${EXECUTED_PRIMARY_RUN_COUNT} EXECUTED primary runs (${ACTIVE_SCENARIOS.length} x k=${ACTIVE_ROSTER.length} x r=${EXECUTED_RUNS_PER_CELL})`);
   console.log(`    deferred (inside primary): ${DEFERRED_SCENARIOS.length}  (${DEFERRED_SCENARIOS.map((s) => s.id).join(', ')})`);
   console.log(`    struck  (outside primary): ${STRUCK_SCENARIOS.length}  (${STRUCK_SCENARIOS.map((s) => s.id).join(', ')})`);
-  console.log(`  Control arm: ${REGISTERED_CONTROL_RUN_COUNT} REGISTERED / ${ACTIVE_CONTROL_RUN_COUNT} EXECUTED (r=${CONTROL_ARM.runsPerCell}, ${CONTROL_ARM.form} only, no tools)`);
-  console.log(`  Totals: ${REGISTERED_TOTAL_RUN_COUNT} registered / ${ACTIVE_TOTAL_RUN_COUNT} executable today`);
+  console.log(`  Control arm: ${REGISTERED_CONTROL_RUN_COUNT} REGISTERED / ${EXECUTED_CONTROL_RUN_COUNT} EXECUTED (r=${CONTROL_ARM.runsPerCell} both — A9 did not reduce the control arm, it was already 3)`);
+  console.log(`  Totals: ${REGISTERED_TOTAL_RUN_COUNT} registered / ${EXECUTED_TOTAL_RUN_COUNT} executed  (${(100 * EXECUTED_TOTAL_RUN_COUNT / REGISTERED_TOTAL_RUN_COUNT).toFixed(1)}% of the registered design)`);
   console.log(`  MCP server built: ${existsSync(PATHS.mcpServer) ? 'yes' : 'NO — cd mcp && npm install && npm run build'}`);
   if (!readiness.liveOk) {
     console.log('\nNo spend is possible in this state. This is the default and is correct.');
@@ -293,7 +299,8 @@ export async function main(argv = process.argv.slice(2)) {
   const mode = wantsMock ? 'mock' : wantsControl ? 'control' : wantsPilot ? 'pilot' : 'full';
   const runsPerCell = wantsControl
     ? CONTROL_ARM.runsPerCell
-    : wantsPilot ? PILOT.runsPerCell : RUNS_PER_CELL;
+    // A9-1: the full run uses the EXECUTED r (3), never the registered r (10).
+    : wantsPilot ? PILOT.runsPerCell : EXECUTED_RUNS_PER_CELL;
   const scenarioIds = wantsPilot ? PILOT.scenarioIds : null;
   // Control arm: ORIGINAL form only, repeated r=3 times.
   const formsOverride = wantsControl
