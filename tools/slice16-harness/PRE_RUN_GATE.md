@@ -30,15 +30,17 @@ run. A local commit is not a seal — that is the §25.1 lesson. If the founding
 doc does not yet contain the registration URL/DOI for the current HEAD, this
 box is UNCHECKED.
 
-## 2. ☐ Every design-decision STOP is resolved by Hudson, in writing
+## 2. ☑ Every design-decision STOP is resolved by Hudson, in writing
 
-`REMEDIATION_REPORT.md`'s DESIGN DECISIONS QUEUE (S-13 slot, S-30 bins,
-S-15/S-18/S-20/S-24 multi-turn, control-arm grading, merged-refusal semantics,
-frozen-fixture X1) must each be either resolved by a recorded Hudson ruling
-(additive founding amendment) or explicitly deferred-out-of-scope for the run
-being started. Scenarios still deferred stay deferred — the runner excludes
-them automatically; that is fine. What is NOT fine is running with a STOP
-silently unaddressed.
+**SATISFIED 2026-08-01.** All seven items in `REMEDIATION_REPORT.md`'s DESIGN
+DECISIONS QUEUE were ruled on and instantiated as Amendment A12
+(`SLICE_16_FOUNDING.md` §26; marker `S16-DD-RULINGS-2026-08-01-A`):
+DD-1 S-13 retargeted · DD-2 S-30 two-bin · DD-3 canned turn-1 (S-15 stays
+deferred) · DD-4 control arm VF-only + descriptive · DD-5 all-refusals ·
+DD-6 doubling fix + X1 amendment + INV-037 · DD-7 deferred with its dispatch.
+
+Re-check this box for any FUTURE stop, not for these. Scenarios still deferred
+(S-06, S-15) stay deferred — the runner excludes them automatically.
 
 ## 3. ☐ Local HEAD == origin/main (no unpushed instrument)
 
@@ -110,15 +112,30 @@ import('./tools/slice16-harness/config.mjs').then(async (c) => {
 fail-closed guards back this up at run time). Deferred scenarios are excluded
 by status and need no check.
 
-## 10. ☐ Control arm: only if its grading design is resolved
+## 10. ☑ Control arm grading design resolved (DD-4)
 
-The control arm is currently **ungradeable by design gap** (audit L5-10;
-report item 4.3). Until Hudson's ruling lands and its grading path has tests,
-`--control` collects rows that cannot be graded. Either the ruling is in
-place, or the control arm is explicitly out of scope for this run — recorded
-in the run's authorization.
+**SATISFIED 2026-08-01.** Control rows are graded VF-only against the pinned
+ground-truth envelope, with RFR/PTA/AUP recorded N/A (never 0) and no FULL;
+a descriptive numeric-claim rate covers every control run. Tested on the REAL
+control shape (no envelope, no decisions); the unsound synthetic-envelope test
+was replaced.
+
+**Remaining check before running `--control`:** only 4 pinned anchors exist
+against 26 active scenarios, so most control rows will be **descriptive-only**.
+Confirm that is acceptable for this run, or pin more ground truth first — a
+data-pinning task, not a grading change.
 
 ## 11. ☐ Cost model is scenario-stratified, not average-extrapolated
+
+> **Caching input, measured 2026-08-01 (founding §26.8).** Prompt caching is
+> ALREADY effective and needs no work before a run: OpenAI cached **70.3%** of
+> gpt-5.5's input tokens automatically with no parameters sent, and Anthropic's
+> system-block `cache_control` is working on Sonnet. Applying a 50% cached-input
+> discount puts real gpt-5.5 spend at ~**74%** of the guard's estimate — the
+> guard over-estimates OpenAI, which is the safe direction. Two caveats for the
+> probe: Haiku got **zero** cache hits (prefix below its minimum cacheable
+> size), and caching the GROWING conversation — the actual quadratic driver — is
+> NOT implemented. Do not assume caching solves the cost problem; measure.
 
 The §21.1 failure: a per-run average from 1–2-call scenarios missed the
 ~quadratic input growth of 4–5-call scenarios by ~3×. Before funding:
