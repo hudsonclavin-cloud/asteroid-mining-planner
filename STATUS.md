@@ -1,35 +1,34 @@
 # STATUS.md - Aster Project Current State
 
 > Updated at the end of each session. Keep entries short; agents read this before acting.
-> Target: under 1 minute to update.
+> Rewritten 2026-08-01 (S16-REMEDIATE, audit L3-1): the previous STATUS was 38 commits and a
+> full study phase stale, which forced a session-start stop-gate waiver. If you are reading
+> this and HEAD does not match, update this file before believing it.
 
 ---
 
 ## Identity
 
-**Canonical repo:** `C:\Users\hudso\asteroid-mining-planner`
+**Canonical repo:** `/Users/hudsonclavin/asteroid-mining-planner` (macOS; the old Windows path in earlier STATUS versions is historical)
 **Live site:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/solar-system/
 **About route:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/about/
 **Porkchop route:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/
-**MCP package:** `aster-mission-mcp@0.1.0` - PUBLISHED on npm, publisher `hudsoclavin`, handshake-verified 2026-07-10
+**MCP package:** `aster-mission-mcp@0.1.0` - PUBLISHED on npm, publisher `hudsoclavin`, handshake-verified 2026-07-10. Note: 0.1.0 was baked from a dirty worktree (audit L6-3); a `prepublishOnly` clean-worktree gate now blocks a repeat for the next release.
 
 ---
 
-## Git State
+## Git State (as of the 2026-08-01 remediation session)
 
 | Item | Commit | State |
 |------|--------|-------|
-| **Current HEAD before this STATUS commit** | `d690562` | RR wave close stack through CI full-tests + Node 24 unification |
-| **origin/main before this close stack push** | `89f492a` | Cross-platform test-runner watchdog kill; RR1I commits local until Hudson pushes |
-| **RR1I overlay fix** | `8892af7` | fake-DOM finite layout metrics; NaN signal loop closed; convergence guard added |
-| **RR1I CI** | `6cab3fb`, `d690562` | full-tests job live on Node 24; A1/A2/build/full-tests all Node 24 |
-| **Slice 15 G1 final** | `84fefe8` | README aligned with Phase G skeleton |
-| **Slice 15 eval gate** | `c8a139a` | `mcp/eval/slice15-eval-summary.md`: `Result: 10/10 PASS` |
-| **Slice 16 pre-registration anchor** | `7cd761b1` | `src/v2/SLICE_16_FOUNDING.md` DRAFT committed |
+| origin/main | `d0479f7` | Amendment A9 — the last commit Hudson pushed |
+| A10 (r restored to 10) | `b374243` | LOCAL, unpushed |
+| Full-run incident record | `63e18ab` | LOCAL, unpushed |
+| Remediation chain | `b3b9708`..HEAD | LOCAL, unpushed — one commit per audit finding, marker `S16-REMEDIATE-2026-08-01-A` |
 
-**Push state:** RR1I close stack is local until Hudson reviews and pushes.
-**Active founding doc:** `src/v2/SLICE_16_FOUNDING.md` is the next draft fork; RR wave work is maintenance/hardening.
-**Invariant ceiling:** `INV-034`.
+**Push state:** everything after `d0479f7` is local until Hudson reviews and pushes.
+**Active founding doc:** `src/v2/SLICE_16_FOUNDING.md` — LOCKED + amendments A1–A10 + incident §21 + remediation sections; additive-only, hook-enforced.
+**Invariant ceiling:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036` (INVARIANTS.md amendment 2026-08-01).
 
 ---
 
@@ -41,60 +40,37 @@
 | Mission planning | Slice 10 (Lambert, C3 screen) | COMPLETE |
 | Mission planning | Slice 11 (porkchop + dV) | COMPLETE + DEPLOYED |
 | Mission planning | Slice 12 (DLA overlay) | COMPLETE + DEPLOYED |
-| Mission planning | Slice 13 (mission cost card) | COMPLETE + DEPLOYED |
+| Mission planning | Slice 13 (mission cost card) | COMPLETE + DEPLOYED (showcase figures labelled unreproducible-pending-regeneration, L3-6) |
 | Packaging / demo | Slice 14 (About + validation card + FK3 tour + CI) | CLOSED + DEPLOYED |
 | MCP / agent surface | Slice 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`, 2026-07-10) |
-| Agent-honesty study | Slice 16 | PRE-REGISTERED DRAFT at `7cd761b1`; not locked |
+| Agent-honesty study | Slice 16 | **DESIGN LOCKED, NO DATA.** See below — this line is the one that was dangerously stale. |
 
-**Slice 15 shipped repo surface:**
-- 7 MCP tools: `search_bodies`, `get_body`, `porkchop_scan`, `explain_cell`, `dla_feasibility`, `estimate_mission_cost`, `get_validation_report`.
-- 4 MCP resources: `aster://reference/launch-vehicles`, `aster://reference/dla-site-bands`, `aster://reference/catalog-schema`, `aster://reference/dv-stack-model`.
-- Evidence envelopes with Quantity leaves, structured refusals, convention-(g) infeasibility-as-value, and baked provenance fallback for no-git package installs.
-- Eval gate: `10/10 PASS` in `mcp/eval/slice15-eval-summary.md` and `mcp/eval/slice15-eval-report.json` (`c8a139a`).
-- npm publish: `aster-mission-mcp@0.1.0`, publisher `hudsoclavin`, tarball shasum `c912f2b`, handshake-verified 2026-07-10 (`serverInfo` name/version match, protocolVersion `2025-11-25`).
+## Slice 16 — honest current state (2026-08-01)
 
-**Slice 15 phase anchors:**
-- A/B: `3be36bb`, `c5d1173`, `32d2801`
-- C: `0a76f39`
-- D1: `a4bb189`
-- D2: `142f8cc`
-- E fix: `41abd8a`
-- F1/F2: `5d4f896`, `c8a139a`
-- G1: `2a1357f`, `7b9eda3`, `2b0c751`, `cb62ab9`, `2cf7526`, `202bae9`, `50b9ad9`, `84fefe8`
-- G2 close record: `b52d823`
-- Publish fix: `c6438df`
-- Published OQ-15-5 paper seal: `c4e53a9`
+- **Locked** 2026-07-27 with appendix `SLICE_16_APPENDIX_A_LOCKED.md`; amendments A1–A10 all additive; harness under `tools/slice16-harness/`.
+- **Full-run attempt 1 (2026-08-01) HALTED** at 275/810 rows on OpenAI credit exhaustion; $13.82 spent; control arm never started (founding §21). **The 114 successful rows are NOT study data** — plan-order-biased subset, and the audit found instrument defects that predate them.
+- **Post-incident audit** (`tools/audit/REPO_AUDIT_2026-07-31.md`, marker ASTER-REPO-AUDIT-2026-07-31-A): grader false passes/failures (outer-prose fabrication ignored, S-02 radius/diameter inversion, RFR/PTA/AUP false-pass paths), six scenarios not instantiated as registered, control arm ungradeable, A10 committed locally but never publicly sealed, ledgers untracked.
+- **Remediation session 2026-08-01** (marker `S16-REMEDIATE-2026-08-01-A`): runtime guards implemented (strict CLI, registered same-cause halt, executable $200 spend guard, coherent ledger/retry policy), public-claim corrections landed, instrument/stimulus fixes and design-decision STOPs recorded in `tools/slice16-harness/REMEDIATION_REPORT.md`.
+- **There is no faithfulness result.** No grades exist; grade.mjs correctly refuses the halted ledger. Never present anything from attempt 1 as an outcome.
+- **Before any future paid run:** every item in `tools/slice16-harness/PRE_RUN_GATE.md` must pass, including a fresh public seal of the corrected instrument (the pre-incident A10 seal never existed publicly — local commit only, 74 s before data).
 
 ---
 
-## RR Wave Status
+## Test State
 
-**State:** CLOSED locally through `d690562`; waiting for Hudson push and first Actions run.
-
-**Closed chain:**
-- RR1 external review response verified the broad test-runner problem.
-- RR1D made the suite truthful across 59 files.
-- RR1E guarded `BASE_URL` and preserved bundle byte identity.
-- RR1F added the per-file watchdog and count accounting; `v2-ui-overlay` became an honest `LOAD-TIMEOUT` instead of vanishing.
-- S9DISP retired the unrecoverable Slice 9 A.3 sample harness with an explicit skip and added `INV-034` evidence-artifact tracking.
-- RR1H proved the overlay mechanism: fake-DOM layout reads returned `undefined`; `Math.max(0, undefined)` produced `NaN`; `NaN !== NaN` rewrote `viewportHeightSignal` every render. This supersedes RR1F's shim-invariant hypothesis while preserving the same production `NONE` verdict.
-- RR1I fixed the test shim with finite layout metrics, added a convergence stress guard, ran the scaled adversarial audit, and added CI full-tests.
-
-**Current suite:** `node tools/run-tests.mjs` measured `files discovered: 71`, `files passed: 71`, `files failed: 0`, `files LOAD-TIMEOUT: 0`, `tests passed: 210`, `tests failed: 0`, wall clock `252.4s`, accounting `71 == 71 + 0 + 0 OK`. One Slice 9 retired harness remains an intentional node:test skip with reason.
-
-**Production caveat verdict:** CLOSED. `src/v2/app/catalog-list/panel.ts` uses a guarded `scrollContainerEl` and then plain `scrollContainerEl.clientHeight`; there is no optional-chained nullable layout read. Browser `clientHeight` is numeric, so production NaN loop blast radius is `NONE [Certain]`.
-
-**Audit artifacts:** `C:\Users\hudso\aster-audit-reports\rr1i-audit\findings.md` and `hostile-overlay-probes.mjs`; no HIGH or MEDIUM repo fixes found.
+- Slice 16 harness suite: **103/103 pass** (measured this session; includes new runtime-guard and adversarial-fixture tests).
+- Root recursive suite (`node tools/run-tests.mjs`): audit-measured 71 files / 70 pass / 1 fail on Node v20 — the single failure is the documented Node-version false-red in `tests/v2-golden/launch-vehicles.golden.test.mjs` (needs Node ≥22.18; CI pins Node 24). Not a math regression (audit L4-2).
+- Known CI gaps (audit L4-1): CI does not run the MCP package tests or the Slice 16 suite; default `npm test` reaches 55/71 app files. Unremediated as of this session — candidates for a follow-up dispatch.
 
 ---
 
 ## Next Session
 
-1. **Hudson review/push RR1I close stack.** After push, watch the first Actions run; the `full-tests` job is the Linux field test for the POSIX process-group kill path.
-2. **RR2 renderer wave.** A7 evidence is ready; this is visual-gated work.
-3. **Next fork A - Dossier founding-doc lock.** Ungated; can dogfood the shipped MCP.
-4. **Next fork B - Slice 16 design lock.** Gated by O1: API keys + budget for the multi-model study.
-5. **Appendix A / Fable draft ingestion.** Appendix A is not in-repo yet; the expected Fable draft filename is `SLICE_16_APPENDIX_A_scenarios.md` if Hudson supplies the draft set.
+1. **Hudson: work the DESIGN DECISIONS QUEUE** in `tools/slice16-harness/REMEDIATION_REPORT.md` — several instrument questions are STOPPED awaiting research-design rulings (S-13, S-30 bins, multi-turn scenarios, control-arm grading, merged-refusal semantics).
+2. **Hudson: review + push** the local chain (`b374243`..HEAD).
+3. **Public seal** (OSF/Zenodo) of the corrected instrument BEFORE any collection — DEC-16-10 is still PENDING and the A10 lesson is recorded in founding §23.
+4. **PRE_RUN_GATE.md** must pass end-to-end before any `S16_LIVE_OK=1` command.
+5. CI hardening dispatch (L4-1/L4-3): MCP + Slice 16 suites into Actions; truthful default `npm test`.
 
 ---
 
@@ -111,6 +87,9 @@
 | C7 | F2 negative-control transcript was performed in-session but no committed artifact was found; do not cite it as repo evidence unless a future artifact records it. |
 | C8 | Re-land New Glenn C3=5 anchor only with elvperf screenshot + oracle row + DEC-13-1 amendment. |
 | C9 | Slice 9 replacement propagation-accuracy guard from committed Horizons truth only. |
+| C10 | (audit L6-3 second half) Propagate baked `dirty` into MCP SourceRefs — protected-path dispatch, next package release. |
+| C11 | (audit L1-1) `.claude/agents` legacy routing — see remediation report Phase 6 disposition. |
+| C12 | (audit L5-2/top-10 #1) Signed recovery dispatch for the halted ledger: checksum-pinned retry manifest; originals immutable. |
 
 ---
 
@@ -132,5 +111,6 @@
 ## Uncommitted / Local Notes
 
 - `.dispatch-scope` may be modified for the active dispatch and intentionally left unstaged.
-- `_rescued-agent-defs/` is intentionally local-only prior art.
+- Known-dirty, user-owned, never staged: two `.githooks` mode changes, three `docs/` CRLF files, `Untitled.canvas`, `tools/slice16-harness/runs/` (evidence — see checksum manifest in founding §23), `tools/slice16-harness/FULL_RUN_REPORT.md`, `tools/audit/`.
+- `_rescued-agent-defs/` was claimed by AGENTS.md but is ABSENT (audit L1-1); the live `.claude/agents/` definitions are the stale-routing hazard.
 - Local `.claude/skills/*.md` edits may appear in Hudson's working tree; they are not project state.
