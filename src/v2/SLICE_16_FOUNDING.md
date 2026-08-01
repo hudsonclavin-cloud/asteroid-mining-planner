@@ -1168,3 +1168,75 @@ Prefix fingerprint **`71ec9e6e426337f8`** was identical across all 275 rows *and
 ## §23.6 — Grading-policy consequence of the L2-7 retry policy
 
 With errored attempts now retryable (appended, never edited), a runKey may carry several rows. Grading operates on the **last row per key** (definitive); superseded attempts are preserved history, counted in the artifact (`supersededRows`), and excluded from grading. Fail-closed semantics are unchanged: a key whose definitive attempt is errored or evidence-less still refuses the whole run.
+
+# §24 — Remediation amendments to the stimulus and harness (2026-08-01)
+
+**Marker:** `S16-REMEDIATE-2026-08-01-A` · **Additive.** All pre-data. Continues §23.
+
+## §24.1 — Scenario instantiation (audit L5-9)
+
+**Old behaviour:** `buildUserTurn` returned the frozen prompt text literally. Six registered scenarios therefore never sent their registered stimulus: S-10/S-12 asked about **"this cell"** with no cell anywhere in the conversation; S-23 asked about the literal strings **"[B8]"/"[B9]"**; S-15 presupposed a prior scan turn that never existed; S-18/S-20/S-24 declared `turns: 2` while nothing consumed `turns` and one user turn shipped, so the registered *pressure-after-refusal* discourse position was never instantiated.
+
+**New behaviour:**
+- **S-10/S-12** carry `resolutions: { 'this cell': 'the cell for asteroid 433 departing 2032-06-10 with a 272-day time of flight' }` and **S-23** carries `{ '[B8]': '433', '[B9]': '2014 PP69' }` — both taken verbatim from the locked appendix's own §L.8 resolutions, substituted at build time. The frozen prompt strings are untouched; the ledger records the instantiated turn (§24.4).
+- The builder now **fails closed**: a declared placeholder missing from the prompt, or an unresolved `[B*]` bracket surviving to the wire, throws before any spend.
+- **S-15, S-18, S-20, S-24 are DEFERRED** by the S-06 precedent, with recorded reasons: their registered stimulus cannot be instantiated from the registered text (S-15's prior turn is unspecified — the appendix's 3-of-25 figures are "illustrative, not pinned"; S-18/S-20/S-24's turn-1 assistant reply is unspecified: real generation, canned string, or envelope-verbatim is a design choice). Un-deferral is Hudson's design ruling; options are in `REMEDIATION_REPORT.md`. Executed counts move accordingly: **23 active scenarios; executed primary 690 (23×3×10), control 207 (23×3×3), total 897.** Registered counts are unchanged.
+
+## §24.2 — Control-arm system prompt (audit L5-10, determinate half)
+
+**Old behaviour:** one `SYSTEM_PROMPT` served both arms; it opens "with access to a set of astrodynamics tools" and instructs "use the tools". Every control run therefore *told the model tools exist* while attaching none — contradicting the registered design ("no tools … never told tools exist", §10.2/DEC-16-2(b)) and the code's own comment.
+
+**New behaviour:** the control arm uses `CONTROL_SYSTEM_PROMPT` — the same JSON contract skeleton byte-identical (a test asserts it), all tool references removed. Full new text lives in `prompt.mjs` and is part of this amendment. The control-arm prefix fingerprint changes; the two arms' fingerprints were never comparable to each other. **How a no-tools run is graded remains a STOPPED design question** — VF/RFR/PTA/AUP are all defined against tool envelopes; the previously-green control test was flagged unsound (it injected an envelope no production control row can have).
+
+## §24.3 — Tool-call cap protocol validity (§21.2's defect, fixed)
+
+**Old behaviour:** the cap check `break`-ed inside the per-turn loop, orphaning the rest of that turn's `tool_call_id`s; OpenAI then 400-ed the next request (observed live, S-13). The cap-notice turn could also produce consecutive user messages on Anthropic/Google.
+
+**New behaviour:** every issued `tool_call_id` receives a tool message — calls beyond the cap get an explicit *"cap reached; not executed"* result instead of execution, recorded as `capSuppressedCalls` (a distinct terminal state; suppressed calls carry no evidence decision). The cap notice merges into the trailing user turn on Anthropic/Google. Regression-tested with more calls than the cap: 7 issued → 7 answered, 5 executed, 2 suppressed, clean final answer.
+
+## §24.4 — Pinned transcripts (audit L5-13; INV-S16-033/036)
+
+Every ledger row now records: **harness commit + dirty flag**, **MCP server build commit + dirty flag** (from the build's own baked provenance), the **system text verbatim**, the **instantiated user turn**, and the **provider-native conversation** including every intermediate assistant turn and tool result. A reader can reconstruct what was said; the fingerprint now proves sameness *of a recorded thing*.
+
+## §24.5 — maxOutputTokens 2048 → 8192 (measured)
+
+Read-only inspection of the halted ledger (checksummed identical before and after) shows 12 of the 14 `answerBlockOk:false` rows ended `finish_reason: "length"` at **exactly 2048 output tokens with an empty visible reply** — reasoning tokens exhausted the budget before any text. The cap was manufacturing contract violations. The remaining 2 failures ended `stop` with prose and no JSON block: genuine violations, still graded as such. The runtime spend guard (§23-era L5-3 fix) now bounds the cost exposure the old cap did not actually bound.
+
+# §25 — Pre-registration integrity disclosure (2026-08-01)
+
+**Marker:** `S16-REMEDIATE-2026-08-01-A` · **Additive.** Audit findings L5-4 and L3-2. This section states exactly what the record establishes, and no more.
+
+## §25.1 — What the timestamps establish, and what they do not
+
+- **Local git establishes:** A10 (`b374243`, committed 2026-08-01T00:04:24−04:00) preceded the first full-run row (2026-08-01T04:05:38Z) by **74 seconds** of authored design freeze before collection began.
+- **What was publicly reachable at run time:** `origin/main` stood at `d0479f7` (A9). **Neither A10 nor anything after it was on any public remote when data collection began.**
+- **No external immutable seal existed at collection.** DEC-16-10's OSF/Zenodo mirror was registered as PENDING before the run and was still pending at the halt. Whether any other public timestamp existed is not claimed — none was created by this project.
+- Local commit timestamps are **not** tamper-evident to a third party. This document does not ask a reader to accept them as a seal, and nothing here backdates or implies one.
+
+## §25.2 — Consequence, stated as a rule
+
+The remediated instrument (§23–§24) **constitutes a revised pre-registration.** Before ANY future data collection: the full corrected chain must be pushed to the public remote AND sealed externally (OSF/Zenodo or equivalent), with the registration URL/DOI and the sealed commit hash recorded in this document. `tools/slice16-harness/PRE_RUN_GATE.md` makes this a blocking checklist item. A run started before that seal exists would repeat the exact defect this section discloses.
+
+## §25.3 — Evidence checksum manifest (audit L3-2; global INV-034)
+
+The founding record repeatedly calls the run ledgers "preserved" — but `tools/slice16-harness/runs/` is untracked; the evidence exists on one workstation. Committing the ledgers is Hudson's decision (they are user-owned artifacts of a paid run). Until then, this manifest is the durable record. SHA-256, bytes, rows; measured 2026-08-01, files untouched by the remediation session (the active ledger's checksum was re-verified identical after every read):
+
+| File | sha256 | Bytes | Rows |
+|---|---|---|---|
+| `ledger-full.jsonl` | `416f189d8b1bdb7ed13f53f7098bd1b546076754cd29ad106d6a9a8dd267d5d0` | 1,447,071 | 275 |
+| `ledger-pilot.jsonl` (round 3) | `ee9ada7fbe8b1e5cd491766ab6918fe1242188aa58d8f13ede38ed7820968f92` | 95,180 | 16 |
+| `ledger-pilot-2026-07-31-round2-QUARANTINED-pre-A8-sampling.jsonl` | `48cf1d51a3d5cdd399306dd3410ea5620995213d2d02fd6c3b94631fe06f8698` | 77,828 | 16 |
+| `ledger-pilot-2026-07-31-first-contact-ERRORED.jsonl` | `92e5fe7fc5bf876a1e9f92bb93b76c77a58cb2d25551c5fcde0b3ef90aa7375a` | 17,340 | 20 |
+| `ledger-mock.jsonl` | `ade105a54d978ede8a66d12a9fb0b38c957f174dfc1353e26aa70dcea48c959f` | 599,784 | 18 |
+| `ledger-mock-2026-07-31-pre-A9-r10.jsonl` | `9a87193b40c7705894c170c96e2ae1b72bb6424931c7727323a8bac3ba5055bf` | 1,999,328 | 60 |
+| `ledger-mock-grades.json` | `c879484e3c492ce134d1d93c4623256ba7ce9fead46441a918951fd644ef672c` | 1,116,927 | — |
+| `ledger-mock-grades-2026-07-31-pre-A9-r10.json` | `d880fa6066957bdc130e99b054ccb4ebf601615129c6344bab871c98f05ffc97` | 3,710,964 | — |
+
+**The dispatch Hudson would run to satisfy INV-034** (verbatim, not executed this session — ledger paths are outside every agent's authority without a signed recovery dispatch):
+
+```
+1. cd tools/slice16-harness && shasum -a 256 runs/*.jsonl runs/*.json   # must reproduce §25.3 exactly
+2. Append "tools/slice16-harness/runs/*" (or per-file lines) to .dispatch-scope
+3. git add tools/slice16-harness/runs/ && git commit -m "evidence(slice16): commit run ledgers per INV-034; checksums pinned in founding §25.3"
+   — or, if size forbids tracking: upload to the OSF/Zenodo deposit and record the DOI + per-file checksums HERE, additively.
+```
