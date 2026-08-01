@@ -200,3 +200,23 @@ excluded by `.gitignore:17`, never committed, unrecoverable.
 | INV-033 | `src/v2/SLICE_15_FOUNDING.md` | Anti-fabrication: no SourceRef path, commit, count, or URL enters any envelope, fixture, or provenance artifact unless confirmed to exist and match |
 | INV-034 | `src/v2/SLICE_9_FOUNDING.md` amendment 2026-07-12 | Evidence-artifact tracking: any file claimed as committed evidence by a founding doc, INVARIANTS.md, or a test must be git-tracked; ignored evidence directories require explicit `!` exceptions and `git check-ignore -v <path>` must return nothing |
 | INV-V1-001 | `src/v2/SLICE_V1_FOUNDING.md` | Visual asset provenance must be confirmed before shipping (CC/public domain) |
+
+---
+
+## Amendment 2026-08-01 — invariant-number namespace mapping (additive; audit L2-1)
+
+**Marker:** `S16-REMEDIATE-2026-08-01-A`. A numbering collision exists above and is resolved by MAPPING, not by rewriting either source (both documents are additive-only):
+
+- **Global** INV-033 (anti-fabrication of SourceRefs; `SLICE_15_FOUNDING.md`) and INV-034 (evidence-artifact tracking; `SLICE_9_FOUNDING.md` amendment) retain those numbers **everywhere outside Slice 16 documents**.
+- `src/v2/SLICE_16_FOUNDING.md` §3 independently defined local INV-033…INV-036 (its §3 header itself flagged the numbers as provisional). Those four are hereby assigned the namespaced identifiers below. **Inside Slice 16 documents, a bare INV-033…036 reference means the S16-local invariant; everywhere else it means the global one.** New writing should use the namespaced forms.
+
+| Namespaced id | Bare id inside Slice 16 docs | Meaning | Source |
+|---|---|---|---|
+| INV-S16-033 | INV-033 | Frozen instrument — one pinned server commit per run set | `src/v2/SLICE_16_FOUNDING.md` §3 |
+| INV-S16-034 | INV-034 | Grading is programmatic-first (superseded detail: DEC-16-9 removed the LLM-judge entirely) | `src/v2/SLICE_16_FOUNDING.md` §3 |
+| INV-S16-035 | INV-035 | Pre-registered metrics only; exploratory labelled exploratory | `src/v2/SLICE_16_FOUNDING.md` §3 |
+| INV-S16-036 | INV-036 | Transcripts are artifacts; no claim a reader cannot check against a transcript | `src/v2/SLICE_16_FOUNDING.md` §3 |
+
+## Amendment 2026-08-01 — Lambert excess-vector frame prose corrected (additive; audit L2-3)
+
+The Slice 11 summary block near the top of this file labels `vInfDep`/`vInfArr` "heliocentric ECLIPTIC". **That label is wrong and is superseded by measurement**: the consuming-boundary measurement recorded under "DLA frame convention (DEC-12-2, LOCKED)" and INV-021 established the vector components as **ICRF/equatorial** (Earth velocity Z reaching 11.715 km/s is impossible in an ecliptic frame). The C3/|v∞| magnitudes in that block are frame-invariant and unaffected. **The measured ICRF/equatorial rule is the only authority; no ecliptic→equatorial obliquity rotation may be introduced anywhere in the Lambert/DLA path — applying the ~23.4° rotation is the exact rejected error.** The original lines stand unedited above because this file is additive-only; any future dispatch citing them must cite this correction with them.
