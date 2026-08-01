@@ -44,37 +44,42 @@ export const PATHS = {
 // turns any conflation into a load-time error instead of a silent wrong number.
 // Every consumer must now say which r it means.
 
-/** REGISTERED r — the pre-registered design value (DEC-16-5). UNCHANGED by A9. */
+/** REGISTERED r — the pre-registered design value (DEC-16-5). Never moved. */
 export const REGISTERED_RUNS_PER_CELL = 10;
 
 /**
- * EXECUTED r — what this run actually performs (A9-1).
+ * EXECUTED r — what this run actually performs.
  *
- * REDUCED FOR RESOURCE CONSTRAINTS. The pilot's measured token usage puts the
- * primary arm at roughly $67 at r=10 versus roughly $20 at r=3. r=3 was also the
- * ORIGINAL pre-registration draft value (OQ-16-3, "Proposed k=3 seeds per
- * scenario x model") before Q2 argued for r≈10, and the pre-registration
- * explicitly permits a reduced execution with disclosure.
+ * A10-1: RESTORED TO 10, matching the registered value. The full history, kept
+ * visible because the reasoning matters more than the final number:
  *
- * THE REDUCTION IS NOT COSTLESS. Confidence intervals widen and power to resolve
- * differences smaller than the registered 10-percentage-point minimum effect
- * size falls. Additionally, at r=3 each prompt form gets exactly ONE run per
- * cell (see expandForms), so within-cell per-form variance cannot be estimated
- * from a cell at all — variance estimation leans entirely on the across-scenario
- * clustering in DEC-16-8. Stated plainly, not minimised.
+ *   registered  r=10   DEC-16-5, argued for by Q2
+ *   A9-1        r=3    reduced "for resource constraints", on an estimate that
+ *                      the primary arm would cost ~$67 at r=10 vs ~$20 at r=3
+ *   A10-1       r=10   RESTORED — that estimate was WRONG. Costing the same
+ *                      pilot ledger it claimed to derive from gives $22.48 for
+ *                      the primary arm at r=10, not $67. The cost premise for
+ *                      reducing r did not survive contact with the measurement,
+ *                      and Hudson approved the full registered count once the
+ *                      real figure was known.
  *
- * IT IS A FLOOR, NOT A CEILING (A9-2). The runner is resumable and skips
- * completed runKeys, so raising this value and re-running adds only the
- * increment — the first 3 repetitions are never paid for twice.
+ * So the study now executes the repetition count it registered, and the A9
+ * reduction never reached data collection — it was reverted while still
+ * pre-data, which is the whole point of doing arithmetic before spending.
+ *
+ * THE NAMING SPLIT STAYS even though these two constants are now EQUAL. That is
+ * deliberate and is not dead code: the split is structural, and the other two
+ * dimensions still diverge (scenarios 28 registered / 27 executed, models 6 / 3).
+ * Collapsing r back to one name because today's values coincide would reinstate
+ * exactly the conflation A9-1 removed, and would silently break the moment any
+ * future amendment moved one of them again.
  */
-export const EXECUTED_RUNS_PER_CELL = 3;
+export const EXECUTED_RUNS_PER_CELL = 10;
 
 /**
  * Allocation inside r, expressed against the REGISTERED r (sums to 10).
- * expandForms() scales it to whatever r is actually being run. At the executed
- * r=3 this yields exactly one ORIGINAL, one P1 and one P2 — every prompt form
- * still covered in every cell, which is what keeps the paraphrase-robustness
- * comparison in DEC-16-5 measurable at the reduced r.
+ * expandForms() scales it to whatever r is actually being run. At r=10 this is
+ * the registered 4 ORIGINAL / 3 P1 / 3 P2 split (LD-3), applied unscaled.
  */
 export const FORM_ALLOCATION = Object.freeze({
   ORIGINAL: 4,
@@ -554,7 +559,7 @@ export const PRIMARY_SCENARIOS = SCENARIOS.filter((s) => s.status !== 'struck');
 /** Pre-registered primary run count (A1 §10.1): 28 x 6 x 10 = 1,680. UNCHANGED BY A9. */
 export const REGISTERED_PRIMARY_RUN_COUNT = PRIMARY_SCENARIOS.length * REGISTERED_ROSTER.length * REGISTERED_RUNS_PER_CELL;
 
-/** What this run executes: 27 runnable x 3 active x r=3 = 243. */
+/** What this run executes: 27 runnable x 3 active x r=10 = 810 (A10-1). */
 export const EXECUTED_PRIMARY_RUN_COUNT = ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length * EXECUTED_RUNS_PER_CELL;
 
 /**
@@ -580,7 +585,7 @@ export const EXECUTED_CONTROL_RUN_COUNT = ACTIVE_SCENARIOS.length * ACTIVE_ROSTE
 /** Total registered study runs (A1 §10.2): 1,680 + 504 = 2,184. UNCHANGED BY A9. */
 export const REGISTERED_TOTAL_RUN_COUNT = REGISTERED_PRIMARY_RUN_COUNT + REGISTERED_CONTROL_RUN_COUNT;
 
-/** Total this run executes: 243 + 243 = 486 — 22.3% of the registered 2,184. */
+/** Total this run executes: 810 + 243 = 1,053 — 48.2% of the registered 2,184. */
 export const EXECUTED_TOTAL_RUN_COUNT = EXECUTED_PRIMARY_RUN_COUNT + EXECUTED_CONTROL_RUN_COUNT;
 
 /** DEC-16-11 pilot: one value-path and one refusal-path scenario, r=2, all models. */

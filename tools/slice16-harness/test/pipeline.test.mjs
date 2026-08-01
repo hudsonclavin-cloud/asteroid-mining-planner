@@ -134,9 +134,9 @@ test('registered run counts match Amendment A1', () => {
   //   scenarios 27 runnable (S-06 deferred, live contradiction)
   //   models     3 active   (1 deferred, 1 refuted, 1 quota-blocked)
   //   r          3 executed (A9-1, reduced from the registered 10)
-  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 243, '27 runnable x k=3 active x r=3 executed');
-  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 243, '27 x k=3 x control r=3 (control r NOT reduced by A9)');
-  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 486, 'executed primary + executed control');
+  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 810, '27 runnable x k=3 active x r=10 executed (A10-1)');
+  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 243, '27 x k=3 x control r=3 (A10-2: control r is its own constant, never moved)');
+  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 1053, 'executed primary + executed control');
 
   // The two must never be equal by accident — that would mean the split collapsed.
   assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,
@@ -174,21 +174,31 @@ test('form allocation is 4/3/3 and sums to the REGISTERED r', () => {
   assert.equal(slots.filter((f) => f === 'P2').length, 3);
 });
 
-test('A9-1: at the EXECUTED r every prompt form still gets exactly one run', () => {
-  // This is what makes r=3 usable rather than merely cheap: the paraphrase
-  // comparison (DEC-16-5) needs all three forms present in every cell. A naive
-  // "just take the first 3 slots" would have produced 3x ORIGINAL and dropped
-  // P1/P2 entirely, silently deleting the paraphrase-robustness question.
+test('A10-4: the EXECUTED r=10 allocation is the registered 4/3/3 (LD-3)', () => {
+  // Checked BEFORE spending. A silent imbalance here would corrupt the
+  // paraphrase-robustness question across the entire study, and no amount of
+  // post-hoc analysis recovers a form that was never run.
   const slots = expandForms(EXECUTED_RUNS_PER_CELL);
-  assert.equal(slots.length, 3);
-  assert.deepEqual([...slots].sort(), ['ORIGINAL', 'P1', 'P2']);
+  assert.equal(slots.length, 10, 'r=10 must produce exactly 10 slots per cell');
+  assert.equal(slots.filter((f) => f === 'ORIGINAL').length, 4, 'ORIGINAL x4');
+  assert.equal(slots.filter((f) => f === 'P1').length, 3, 'P1 x3');
+  assert.equal(slots.filter((f) => f === 'P2').length, 3, 'P2 x3');
 });
 
-test('A9-1: registered and executed r are distinct, both exported, never merged', () => {
-  assert.equal(REGISTERED_RUNS_PER_CELL, 10, 'the registered design is unchanged by A9');
-  assert.equal(EXECUTED_RUNS_PER_CELL, 3, 'the executed study runs r=3');
-  assert.notEqual(REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL);
-  // The bare name is GONE on purpose: one `r` meaning both is the A2 O-1 error.
+test('A10-1: registered and executed r stay SEPARATELY NAMED even when equal', () => {
+  assert.equal(REGISTERED_RUNS_PER_CELL, 10, 'the registered design never moved');
+  assert.equal(EXECUTED_RUNS_PER_CELL, 10, 'A10-1 restored the executed value to it');
+
+  // NOTE: these are now EQUAL, and this test deliberately does NOT assert they
+  // differ. A9 asserted notEqual, which was true then but encoded the wrong
+  // invariant: the discipline is that the two are separately NAMED, not that
+  // they hold different values. Equality is a fact about today's design, not a
+  // collapse of the distinction — the other dimensions still diverge (scenarios
+  // 28/27, models 6/3), and either r may move again independently.
+  assert.ok('REGISTERED_RUNS_PER_CELL' in CONFIG, 'registered r must remain exported by name');
+  assert.ok('EXECUTED_RUNS_PER_CELL' in CONFIG, 'executed r must remain exported by name');
+
+  // The bare name stays GONE: one `r` meaning both is the A2 O-1 error.
   assert.equal(CONFIG.RUNS_PER_CELL, undefined,
     'a bare RUNS_PER_CELL must not exist — it would let a consumer silently mean either r');
 });

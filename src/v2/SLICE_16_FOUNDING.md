@@ -1009,3 +1009,72 @@ Excluded from these figures: pilot spend already incurred, retries, and any cach
 **What it cannot support:** cross-lab claims resting on more than three models, any frontier-vs-small claim outside Anthropic, any open-weight claim at all, and any difference smaller than the registered 10-percentage-point minimum effect size.
 
 Both lists belong in the write-up. The second one is the honest half.
+
+# §20 — Amendment A10 (2026-08-01): executed r restored to the registered 10
+
+**Marker:** `S16-FULLRUN-2026-07-31-A` · **Additive.** Nothing above is rewritten — including §19, which stands exactly as written.
+
+## §20.1 — A10-1: r returns to 10
+
+| | r | Why |
+|---|---|---|
+| Registered (DEC-16-5) | **10** | argued for by Q2; never moved |
+| A9-1 | 3 | "resource constraints" — the primary arm was estimated at ~$67 at r=10 vs ~$20 at r=3 |
+| **A10-1** | **10** | **that estimate was wrong; the measurement refuted it** |
+
+Costing the **same pilot ledger the A9 estimate claimed to derive from** gives **$22.48** for the primary arm at r=10 — not $67. With the real figure known, Hudson approved the full registered repetition count.
+
+The A9 reduction therefore **never reached data collection**. It was proposed, costed, refuted, and reverted while the study was still pre-data. That sequence is the intended behaviour of doing arithmetic before spending, not an embarrassment to be tidied away.
+
+## §20.2 — A10-3: this supersedes §19, it does not erase it
+
+§19 stays in the document verbatim, including its reduction rationale. A reader following the amendment log should be able to see **why r dropped and why it came back**, because the reasoning chain is part of the study's record. Deleting the superseded step would leave a document that looks like it always knew the answer.
+
+**The cost error is recorded as a study-preparation finding**, in the same family as the others caught before data collection:
+
+| Finding | What was wrong | How it was caught |
+|---|---|---|
+| S-06 ground truth | registered `{feasible:false}`; live tool returns `feasible:true, C3=483.396…` | live MCP call contradicted the prose |
+| A7 certainty inference | a 400 was read as proof a model string resolved | round-2 404 on a string "confirmed" that way |
+| **A9 cost estimate** | **~$67 for the primary arm at r=10** | **re-costing the cited ledger gave $22.48** |
+
+All three share a shape: **a claim asserted without recomputing it from the artifact it referenced.** The corrective in each case was the same and is cheap — open the artifact and do the arithmetic.
+
+## §20.3 — A10-2: the control arm is untouched
+
+Control r stays **3**. It is its own constant (`CONTROL_ARM.runsPerCell`), was never reduced by A9, and is not raised by A10. Primary and control r are equal to 3 only by coincidence in the A9 design and must never be folded together.
+
+## §20.4 — The naming discipline survives the values coinciding
+
+`REGISTERED_RUNS_PER_CELL` and `EXECUTED_RUNS_PER_CELL` are now **both 10**. They remain **separately named**, and the bare `RUNS_PER_CELL` removed by A9-1 stays removed.
+
+This is deliberate. The discipline is that the two are *separately named*, not that they *hold different values*; equality today is a fact about this design, not a collapse of the distinction. The other two dimensions still diverge — **scenarios 28 registered / 27 executed, models 6 registered / 3 active** — and either r may move again independently.
+
+The A9 test asserting `notEqual(REGISTERED, EXECUTED)` encoded the wrong invariant and was replaced by one asserting both names remain exported and no bare constant exists. A test that would break when two values legitimately coincide is testing the coincidence, not the rule.
+
+## §20.5 — Executed counts and projected cost
+
+| | Registered | Executed |
+|---|---|---|
+| Scenarios | 28 | 27 (S-06 deferred) |
+| Models (k) | 6 | 3 |
+| Primary r | 10 | **10** |
+| Control r | 3 | 3 |
+| Primary runs | 1,680 | **810** (27 × 3 × 10) |
+| Control runs | 504 | **243** (27 × 3 × 3) |
+| **Total** | **2,184** | **1,053 — 48.2%** |
+
+**Projected cost $29.23** — primary $22.48, control $6.74 (a deliberate overestimate: the control arm attaches no tools, so its inputs are smaller than the tool-carrying runs the averages came from). **14.6% of the $200 ceiling.** Tokens house-measured from the round-3 pilot; prices third-party-estimated per Q3 and not verified against console billing.
+
+**Paraphrase allocation verified before spending (A10-4):** `expandForms(10)` → 4 ORIGINAL / 3 P1 / 3 P2, and **all 81 cells** (27 scenarios × 3 models) carry that exact split. A silent imbalance would have corrupted the paraphrase-robustness question across the whole study, and no post-hoc analysis recovers a form that was never run.
+
+## §20.6 — The authorization this run executed under
+
+This is the **first and only session permitted to spend**. The boundary, recorded because a spend authorization should be auditable after the fact:
+
+- Authorized: the full study at primary r=10 + control r=3 on the 3 active models; measured estimate ~$29.23 against the $200 ceiling.
+- **Pre-spend halt conditions**, checked and reported before any call: >900 planned primary runs, or >$60 projected. Actual: **810** and **$29.23** — both clear.
+- **Mid-run halt condition:** >25% of attempted runs in an arm failing for the same cause. A systematic fault must not be paid for repeatedly.
+- `S16_LIVE_OK=1` inline on the two authorized commands only, **never exported** to the environment.
+
+**Spend-guard finding.** The RUNBOOK's setup line is `set -a; source tools/slice16-harness/.env; set +a`, and `.env` **contains an `S16_LIVE_OK` entry**. Sourcing it therefore places `S16_LIVE_OK` into the exported environment. In practice the entry is **empty**, so it grants nothing and the guard still holds — but "the flag is only ever set inline" and "the flag is exported empty by the documented setup step" are different security properties, and only the first is what the guard is supposed to provide. This run supplied the two required provider keys individually instead of sourcing the file, following the same practice A7 and A8 used for metadata calls. Recorded rather than fixed: `.env` is untracked and operator-owned.
