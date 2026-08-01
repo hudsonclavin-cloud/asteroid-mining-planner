@@ -1124,3 +1124,9 @@ In `runner.mjs`, `if (calls >= TOOL_CALL_CAP) break;` sits **inside** the loop o
 Prefix fingerprint **`71ec9e6e426337f8`** was identical across all 275 rows *and* all three pilot rounds — instrument stability is intact. `usage.reported` was true on every successful row. The 20 runs with no envelopes were all correctly flagged `no_tool_call` (S-10, S-12), which A4-4 treats as a result rather than an error. 14 of 114 successful runs had `answerBlockOk: false`, all gpt-5.5 — ~12%, confined to one model, so a finding about that model rather than a harness fault, though `maxOutputTokens: 2048` may be truncating answers on the high-context scenarios.
 
 **Every ledger is preserved unmodified.** `ledger-full.jsonl` was deliberately left in place, so the resume trap (`loadLedger()` counts errored rows as done) must be resolved before any re-run — otherwise the re-run reports `pending=0` and silently produces a dataset missing 161 cells.
+
+# §22 — Remediation session (2026-08-01): invariant namespace mapping
+
+**Marker:** `S16-REMEDIATE-2026-08-01-A` · **Additive.** Audit finding L2-1.
+
+§3's provisional numbers collided with the global registry, as §3's own header warned: INVARIANTS.md already assigns INV-033 (anti-fabrication) and INV-034 (evidence-artifact tracking) globally. Resolution, mirrored in INVARIANTS.md's 2026-08-01 amendment: **this document's four local invariants are namespaced as INV-S16-033 … INV-S16-036.** Inside Slice 16 documents a bare INV-033…036 keeps meaning the local invariant (nothing above is rewritten); outside them it means the global one; new writing uses the namespaced ids.
