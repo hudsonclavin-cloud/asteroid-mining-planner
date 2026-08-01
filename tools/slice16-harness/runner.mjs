@@ -51,6 +51,60 @@ export function runKey({ modelId, scenarioId, form, rep }) {
   return `${modelId}::${scenarioId}::${form}::${rep}`;
 }
 
+// ---------------------------------------------------------------------------
+// Strict CLI parsing — L5-14 remediation (S16-REMEDIATE-2026-08-01-A)
+//
+// The previous parser checked each recognized flag independently and FELL
+// THROUGH TO FULL for anything else. With credentials deliberately armed for a
+// run, a typo (`--ful`), `--help`, or a contradictory pair (`--preflight
+// --full`) silently became a LIVE FULL RUN. The audit rated this CRITICAL: the
+// two-factor spend gate protects the unarmed operator, not the armed one.
+//
+// Policy now: exactly ONE mode, every token must be recognized, anything else
+// errors out BEFORE any filesystem or network side effect. There is no
+// fallback mode. Full mode is reachable only by the exact token `--full`.
+// ---------------------------------------------------------------------------
+
+export class UsageError extends Error {}
+
+export const USAGE = `usage: node runner.mjs <MODE>
+  --preflight            report readiness; never spends (also the no-args default)
+  --pilot                DEC-16-11 pilot (needs S16_LIVE_OK=1 + keys)
+  --full                 primary matrix (needs S16_LIVE_OK=1 + keys)
+  --control              control arm: no tools, ORIGINAL only, r=3
+  --mock <fixture.json>  offline end-to-end, no keys, no spend
+  --help                 print this text and exit
+Exactly one mode per invocation. Unknown or combined flags are an error,
+never a fallback — a typo must not be able to start a paid run.`;
+
+/** Strict parse. Throws UsageError on anything unrecognized or contradictory. */
+export function parseCliMode(argv) {
+  if (argv.length === 0) return { mode: 'preflight', fixture: null };
+  const modes = [];
+  let fixture = null;
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--help' || arg === '-h') modes.push('help');
+    else if (arg === '--preflight') modes.push('preflight');
+    else if (arg === '--pilot') modes.push('pilot');
+    else if (arg === '--full') modes.push('full');
+    else if (arg === '--control') modes.push('control');
+    else if (arg === '--mock') {
+      modes.push('mock');
+      const next = argv[i + 1];
+      if (!next || next.startsWith('-')) throw new UsageError('--mock requires a fixture filename under fixtures/');
+      fixture = next;
+      i += 1;
+    } else {
+      throw new UsageError(`unknown argument: ${arg}`);
+    }
+  }
+  if (modes.length !== 1) {
+    throw new UsageError(`exactly one mode required, got: ${modes.join(' + ') || 'none'}`);
+  }
+  return { mode: modes[0], fixture };
+}
+
 export function loadLedger(ledgerPath) {
   const done = new Set();
   if (!existsSync(ledgerPath)) return done;
@@ -282,21 +336,35 @@ function reportPreflight() {
 }
 
 export async function main(argv = process.argv.slice(2)) {
-  const wantsPreflight = argv.includes('--preflight') || argv.length === 0;
-  const wantsPilot = argv.includes('--pilot');
-  const wantsFull = argv.includes('--full');
-  const wantsControl = argv.includes('--control');
-  const mockIndex = argv.indexOf('--mock');
-  const wantsMock = mockIndex !== -1;
+  // L5-14: strict parse BEFORE any side effect. A UsageError here means the
+  // invocation was malformed; nothing has been created, spawned, or spent.
+  let cli;
+  try {
+    cli = parseCliMode(argv);
+  } catch (error) {
+    if (error instanceof UsageError) {
+      console.error(`${error.message}\n\n${USAGE}`);
+      return 2;
+    }
+    throw error;
+  }
 
-  if (wantsPreflight && !wantsPilot && !wantsFull && !wantsControl && !wantsMock) {
+  if (cli.mode === 'help') {
+    console.log(USAGE);
+    return 0;
+  }
+  if (cli.mode === 'preflight') {
     reportPreflight();
     return 0;
   }
 
+  const wantsPilot = cli.mode === 'pilot';
+  const wantsControl = cli.mode === 'control';
+  const wantsMock = cli.mode === 'mock';
+
   mkdirSync(PATHS.ledgerDir, { recursive: true });
 
-  const mode = wantsMock ? 'mock' : wantsControl ? 'control' : wantsPilot ? 'pilot' : 'full';
+  const mode = cli.mode;
   const runsPerCell = wantsControl
     ? CONTROL_ARM.runsPerCell
     // A9-1: the full run uses the EXECUTED r (3), never the registered r (10).
@@ -316,12 +384,7 @@ export async function main(argv = process.argv.slice(2)) {
   let mockScenarioIds = null;
 
   if (wantsMock) {
-    const fixtureName = argv[mockIndex + 1];
-    if (!fixtureName) {
-      console.error('--mock requires a fixture filename under fixtures/');
-      return 2;
-    }
-    const canned = loadCannedSet(fixtureName);
+    const canned = loadCannedSet(cli.fixture);
     const mockAdapter = createMockAdapter(canned);
     adapterFor = async () => mockAdapter;
     models = [{ id: `mock:${canned.name}`, lab: 'mock', tier: 'mock', adapter: 'mock', keyEnv: 'NONE' }];
