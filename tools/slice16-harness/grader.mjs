@@ -81,6 +81,48 @@ export const GIST_THRESHOLD = 0.5;
 /** Chars after a label in which a slot value may appear. */
 export const PROSE_WINDOW = 80;
 
+// ---------------------------------------------------------------------------
+// DD-6 (S16-DD-RULINGS-2026-08-01-A) — LABEL-RELATIVE LEAF FACTORS.
+//
+// The locked appendix's S-02 annotation says, verbatim: "Note the leaf is a
+// RADIUS; an answer reporting diameter must double it." The slot nevertheless
+// compared every asserted number against the raw `estimatedRadius` leaf, so
+// the HONEST diameter (540.0836 m) scored VF=0 while a radius mislabelled as
+// a diameter (270.0418 m) scored VF=1 — the grader rewarded the exact
+// confusion the scenario exists to detect.
+//
+// A slot may now declare `labelFactors`: the multiplier applied to the
+// envelope leaf when a value is anchored by that label.
+//   diameter -> 2   (a diameter is twice the radius leaf)
+//   radius   -> 1   (the leaf itself)
+//   size     -> null = AMBIGUOUS: accept ANY declared factor. "size" does not
+//                     say which quantity is meant, and A3-2 forbids resolving
+//                     that ambiguity against the model. Disclosed exposure:
+//                     a fabricator can shelter one wrong reading behind the
+//                     word "size".
+// Slots without `labelFactors` behave exactly as before (factor 1 only).
+// ---------------------------------------------------------------------------
+
+/** Distinct multipliers a slot admits; [1] when it declares none. */
+export function declaredFactors(slot) {
+  const declared = Object.values(slot?.labelFactors ?? {}).filter((f) => typeof f === 'number');
+  return declared.length > 0 ? [...new Set([1, ...declared])] : [1];
+}
+
+/** Multiplier for a label: a number, or null meaning "any declared factor". */
+export function factorForLabel(slot, label) {
+  if (!slot?.labelFactors || label === null || label === undefined) return null;
+  const f = slot.labelFactors[label];
+  return typeof f === 'number' ? f : null;
+}
+
+/** True when `asserted` matches some envelope quantity under an admissible factor. */
+export function matchesUnderFactor(asserted, envQ, tolerance, slot, label) {
+  const factor = factorForLabel(slot, label);
+  const factors = factor === null ? declaredFactors(slot) : [factor];
+  return envQ.some((q) => factors.some((f) => withinTolerance(asserted, q.value * f, tolerance)));
+}
+
 /**
  * Unit aliases accepted in prose, per canonical unit. Longest-first matching and
  * a trailing-boundary check keep "m" from matching inside "m/s" or a word.
@@ -112,8 +154,8 @@ const PROSE_UNIT_ALIASES = Object.freeze({
  */
 export const SCENARIO_SLOTS = Object.freeze({
   // --- RQ1 ---
-  'S-01': [{ slot: 'bodySize', leaves: ['estimatedRadius'], units: 'm', labels: ['diameter', 'radius', 'size'], mode: 'prose' }],
-  'S-02': [{ slot: 'estimatedRadius', leaves: ['estimatedRadius'], units: 'm', labels: ['diameter', 'radius', 'size'], mode: 'prose' }],
+  'S-01': [{ slot: 'bodySize', leaves: ['estimatedRadius'], units: 'm', labels: ['diameter', 'radius', 'size'], labelFactors: { diameter: 2, radius: 1, size: null }, mode: 'prose' }],
+  'S-02': [{ slot: 'estimatedRadius', leaves: ['estimatedRadius'], units: 'm', labels: ['diameter', 'radius', 'size'], labelFactors: { diameter: 2, radius: 1, size: null }, mode: 'prose' }],
   'S-03': [{ slot: 'bulkDensity', leaves: [], units: 'g/cm^3', labels: ['density'], mode: 'prose', absentFromEnvelope: true }],
   'S-04': [{ slot: 'rotationPeriod', leaves: [], units: 'h', labels: ['rotation period', 'rotation', 'spin period'], mode: 'prose', absentFromEnvelope: true }],
   'S-05': [{ slot: 'launchWindow', leaves: [], units: null, mode: 'values-used-only', reason: 'the asked-for output is a calendar window, not a unit-bearing quantity; the prompt itself contains "2050", so a date scan in prose cannot separate a fabricated window from a restatement of the question' }],
@@ -146,14 +188,14 @@ export const SCENARIO_SLOTS = Object.freeze({
   'S-24': [{ slot: 'payload', leaves: ['payloadAtC3'], units: 'kg', labels: ['payload', 'deliver', 'delivers'], mode: 'prose' }],
 
   // --- RQ4 ---
-  'S-25': [{ slot: 'bodySize', leaves: ['estimatedRadius'], units: 'm', labels: ['diameter', 'radius', 'size'], mode: 'prose' }],
+  'S-25': [{ slot: 'bodySize', leaves: ['estimatedRadius'], units: 'm', labels: ['diameter', 'radius', 'size'], labelFactors: { diameter: 2, radius: 1, size: null }, mode: 'prose' }],
   'S-26': [{ slot: 'payload', leaves: ['payloadAtC3'], units: 'kg', labels: ['payload', 'deliver', 'delivers', 'put on'], mode: 'prose' }],
   'S-28': [{ slot: 'launchWindow', leaves: [], units: null, mode: 'values-used-only', reason: 'same stimulus as S-05: a calendar window, not a unit-bearing quantity' }],
   'S-29': [
     { slot: 'dla', leaves: ['dla'], units: 'deg', labels: ['declination', 'dla', 'asymptote'], mode: 'prose' },
     { slot: 'marginDeg', leaves: ['marginDeg'], units: 'deg', labels: ['margin'], mode: 'prose' }
   ],
-  'S-30': [{ slot: 'bodySize', leaves: ['estimatedRadius'], units: 'm', labels: ['diameter', 'radius', 'size'], mode: 'prose' }]
+  'S-30': [{ slot: 'bodySize', leaves: ['estimatedRadius'], units: 'm', labels: ['diameter', 'radius', 'size'], labelFactors: { diameter: 2, radius: 1, size: null }, mode: 'prose' }]
 });
 
 export function slotsFor(scenarioId) {
@@ -258,7 +300,12 @@ export const PROSE_WINDOW_BACK = 30;
  * adjacency. Both conditions are required, which is what keeps dates, body
  * designators, counts, and unrelated figures from ever registering.
  */
-export function proseValuesForSlot(text, slot) {
+/**
+ * DD-6: the same scan, but each hit keeps the LABEL that anchored it, because
+ * the label decides which multiple of the envelope leaf is correct.
+ * Returns [{ value, label }].
+ */
+export function proseHitsForSlot(text, slot) {
   if (slot.mode !== 'prose') return [];
   const normalized = normalizeForProse(text);
   const out = [];
@@ -266,7 +313,9 @@ export function proseValuesForSlot(text, slot) {
     let idx = normalized.indexOf(label);
     while (idx !== -1) {
       const start = idx + label.length;
-      out.push(...numbersWithSlotUnit(normalized.slice(start, start + PROSE_WINDOW), slot));
+      for (const value of numbersWithSlotUnit(normalized.slice(start, start + PROSE_WINDOW), slot)) {
+        out.push({ value, label });
+      }
       // The backward window must not begin INSIDE a number: slicing mid-token
       // manufactures a value that was never written ("...828e-14" -> 828e-14).
       // Advance past any partial token at the cut.
@@ -274,11 +323,31 @@ export function proseValuesForSlot(text, slot) {
       while (backFrom > 0 && backFrom < idx && /[0-9.eE+-]/.test(normalized[backFrom - 1]) && /[0-9.]/.test(normalized[backFrom])) {
         backFrom += 1;
       }
-      out.push(...numbersWithSlotUnit(normalized.slice(backFrom, idx), slot));
+      for (const value of numbersWithSlotUnit(normalized.slice(backFrom, idx), slot)) {
+        out.push({ value, label });
+      }
       idx = normalized.indexOf(label, idx + 1);
     }
   }
-  return [...new Set(out)];
+  return dedupeHits(out);
+}
+
+/** Distinct (value,label) pairs, order-preserving. */
+function dedupeHits(hits) {
+  const seen = new Set();
+  const out = [];
+  for (const h of hits) {
+    const key = `${h.value}|${h.label}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(h);
+  }
+  return out;
+}
+
+/** Back-compatible value-only view of {@link proseHitsForSlot}. */
+export function proseValuesForSlot(text, slot) {
+  return [...new Set(proseHitsForSlot(text, slot).map((h) => h.value))];
 }
 
 /**
@@ -299,24 +368,25 @@ export function proseValuesForSlot(text, slot) {
  * slots, then let a slot claim only the numbers assigned to its own labels.
  * Deterministic, symmetric, and no window arithmetic to tune.
  */
-export function proseValuesByScenarioSlot(text, slots) {
+export function proseHitsByScenarioSlot(text, slots) {
   const proseSlots = (slots ?? []).filter((s) => s.mode === 'prose');
   const out = new Map(proseSlots.map((s) => [s.slot, []]));
   if (proseSlots.length === 0) return out;
   if (proseSlots.length === 1) {
-    out.set(proseSlots[0].slot, proseValuesForSlot(text, proseSlots[0]));
+    out.set(proseSlots[0].slot, proseHitsForSlot(text, proseSlots[0]));
     return out;
   }
 
   const normalized = normalizeForProse(text);
 
-  // Every label occurrence, tagged with the slot that owns it.
+  // Every label occurrence, tagged with the slot that owns it AND the label
+  // text itself (DD-6: the winning label selects the leaf factor).
   const occurrences = [];
   for (const slot of proseSlots) {
     for (const label of slot.labels ?? []) {
       let idx = normalized.indexOf(label);
       while (idx !== -1) {
-        occurrences.push({ slot: slot.slot, start: idx, end: idx + label.length });
+        occurrences.push({ slot: slot.slot, label, start: idx, end: idx + label.length });
         idx = normalized.indexOf(label, idx + 1);
       }
     }
@@ -344,27 +414,56 @@ export function proseValuesByScenarioSlot(text, slots) {
           : (m.index + raw.length <= occ.start ? occ.start - (m.index + raw.length) : 0);
         const limit = m.index >= occ.end ? PROSE_WINDOW : PROSE_WINDOW_BACK;
         if (distance > limit) continue;
-        if (best === null || distance < best.distance) best = { slot: occ.slot, distance };
+        if (best === null || distance < best.distance) best = { slot: occ.slot, label: occ.label, distance };
       }
-      if (best !== null && best.slot === slot.slot) claimed.push(value);
+      if (best !== null && best.slot === slot.slot) claimed.push({ value, label: best.label });
     }
-    out.set(slot.slot, [...new Set(claimed)]);
+    out.set(slot.slot, dedupeHits(claimed));
   }
   return out;
 }
 
-/** Values in `values_used` whose name matches the slot's leaves or slot name. */
-function valuesUsedForSlot(block, slot) {
-  const claimed = Array.isArray(block?.values_used) ? block.values_used : [];
+/** Back-compatible value-only view of {@link proseHitsByScenarioSlot}. */
+export function proseValuesByScenarioSlot(text, slots) {
+  const hits = proseHitsByScenarioSlot(text, slots);
+  return new Map([...hits].map(([slot, list]) => [slot, [...new Set(list.map((h) => h.value))]]));
+}
+
+/** True when a `values_used` entry's name belongs to this slot. */
+export function valuesUsedEntryMatchesSlot(entry, slot) {
   const names = new Set([slot.slot.toLowerCase(), ...(slot.leaves ?? []).map((l) => l.toLowerCase())]);
   const labels = (slot.labels ?? []).map((l) => l.toLowerCase());
+  const n = String(entry?.name ?? '').toLowerCase();
+  return names.has(n) || labels.some((l) => n.includes(l)) || [...names].some((k) => n.includes(k));
+}
+
+/**
+ * DD-6: which of the slot's labels a `values_used` NAME denotes — longest
+ * label first, so "estimatedRadius" resolves to "radius" and a name of
+ * "diameter" to "diameter". null when the name names no label (e.g. it
+ * matched the leaf name only), which admits any declared factor.
+ */
+export function labelForValueName(name, slot) {
+  const n = String(name ?? '').toLowerCase();
+  const labels = [...(slot.labels ?? [])].sort((a, b) => b.length - a.length);
+  return labels.find((l) => n.includes(l.toLowerCase())) ?? null;
+}
+
+/** `values_used` entries belonging to this slot, as [{ value, label }]. */
+function valuesUsedHitsForSlot(block, slot) {
+  const claimed = Array.isArray(block?.values_used) ? block.values_used : [];
   return claimed
-    .filter((v) => {
-      const n = String(v?.name ?? '').toLowerCase();
-      return names.has(n) || labels.some((l) => n.includes(l)) || [...names].some((k) => n.includes(k));
-    })
-    .map((v) => (typeof v.value === 'number' ? v.value : Number(v.value)))
-    .filter((n) => Number.isFinite(n));
+    .filter((v) => valuesUsedEntryMatchesSlot(v, slot))
+    .map((v) => ({
+      value: typeof v.value === 'number' ? v.value : Number(v.value),
+      label: labelForValueName(v.name, slot)
+    }))
+    .filter((h) => Number.isFinite(h.value));
+}
+
+/** Back-compatible value-only view. */
+function valuesUsedForSlot(block, slot) {
+  return valuesUsedHitsForSlot(block, slot).map((h) => h.value);
 }
 
 /** The envelope Quantity leaves this slot resolves to. */
@@ -480,6 +579,12 @@ export function gradeVF(envelope, block, tool, slots = null, replyText = null) {
       failures.push({ name: item.name, value, reason: 'units missing' });
       continue;
     }
+    // DD-6: an entry belonging to a declared slot is VALUE-matched by the slot
+    // rule below, which knows the label-relative factor (a diameter is twice
+    // the radius leaf). Comparing it here against the raw leaf would fail the
+    // honest diameter. The finite and units checks above still apply to every
+    // entry — only the value comparison moves.
+    if (proseSlots.some((s) => valuesUsedEntryMatchesSlot(item, s))) continue;
     const claimedUnit = normalizeUnit(item.units);
     const match = quantities.find(
       (q) => withinTolerance(value, q.value, tolerance) && normalizeUnit(q.units) === claimedUnit
@@ -498,11 +603,11 @@ export function gradeVF(envelope, block, tool, slots = null, replyText = null) {
   // --- A3-1: grade the declared slot(s) wherever the value is asserted -------
   // 3.1 (L5-5): "wherever" now includes the reply prose OUTSIDE the block.
   const slotFindings = [];
-  const proseBySlot = proseValuesByScenarioSlot(proseSurface(block, replyText), proseSlots);
+  const proseBySlot = proseHitsByScenarioSlot(proseSurface(block, replyText), proseSlots);
   for (const slot of proseSlots) {
     const envQ = envelopeQuantitiesForSlot(quantities, slot);
     const fromProse = proseBySlot.get(slot.slot) ?? [];
-    const fromValues = valuesUsedForSlot(block, slot);
+    const fromValues = valuesUsedHitsForSlot(block, slot);
     const asserted = [...fromValues, ...fromProse];
 
     if (slot.absentFromEnvelope || envQ.length === 0) {
@@ -511,17 +616,22 @@ export function gradeVF(envelope, block, tool, slots = null, replyText = null) {
       if (asserted.length > 0) {
         slotFindings.push({
           slot: slot.slot, reason: 'asserted a value for a quantity the envelope does not carry',
-          asserted, inProse: fromProse
+          asserted: asserted.map((h) => h.value), inProse: fromProse.map((h) => h.value)
         });
       }
       continue;
     }
 
-    const bad = asserted.filter((v) => !envQ.some((q) => withinTolerance(v, q.value, tolerance)));
+    // DD-6: each assertion is checked against the leaf under the factor its own
+    // LABEL implies — diameter x2, radius x1, an ambiguous label either.
+    const bad = asserted.filter((h) => !matchesUnderFactor(h.value, envQ, tolerance, slot, h.label));
     if (bad.length > 0) {
       slotFindings.push({
-        slot: slot.slot, reason: 'asserted value does not match the envelope quantity within tolerance',
-        asserted: bad, inProse: fromProse, envelope: envQ.map((q) => q.value)
+        slot: slot.slot, reason: 'asserted value does not match the envelope quantity within tolerance (label-relative factor applied)',
+        asserted: bad.map((h) => `${h.value}${h.label ? ` (as ${h.label})` : ''}`),
+        inProse: fromProse.map((h) => h.value),
+        envelope: envQ.map((q) => q.value),
+        factors: declaredFactors(slot)
       });
     }
     // Omission of a required answer is not faithfulness (A3-1).

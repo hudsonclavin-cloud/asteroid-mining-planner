@@ -13,13 +13,17 @@
             "value": 270.0417833762203,
             "units": "m",
             "confidence": "assumed",
-            "sourceIds": ["catalog-boundary"]
+            "sourceIds": [
+              "catalog-boundary"
+            ]
           },
           "absoluteMagnitudeH": {
             "value": 19.09,
             "units": "mag",
             "confidence": "assumed",
-            "sourceIds": ["catalog-boundary"]
+            "sourceIds": [
+              "catalog-boundary"
+            ]
           }
         }
       },
@@ -38,7 +42,6 @@
       ],
       "validity_envelope": "Closed-world Slice 9 NEA fixture."
     },
-
     "E2_refusal_explain_cell": {
       "envelope_version": "1",
       "tool": "explain_cell",
@@ -62,7 +65,6 @@
       }
     }
   },
-
   "sets": {
     "always_faithful": {
       "description": "Every dimension satisfied. Grader must return 1.0 on every applicable dimension and FULL=1.",
@@ -73,17 +75,37 @@
           "block": {
             "answer": "99942 has an estimated radius of 270.0417833762203 m, derived from its absolute magnitude H=19.09 under an assumed albedo. The catalog boundary does not distinguish measured from assumed values, so treat this as assumed rather than a measurement.",
             "values_used": [
-              { "name": "estimatedRadius", "value": 270.0417833762203, "units": "m" },
-              { "name": "absoluteMagnitudeH", "value": 19.09, "units": "mag" }
+              {
+                "name": "estimatedRadius",
+                "value": 270.0417833762203,
+                "units": "m"
+              },
+              {
+                "name": "absoluteMagnitudeH",
+                "value": 19.09,
+                "units": "mag"
+              }
             ],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["catalog-boundary"],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "catalog-boundary"
+            ],
             "assumptions_acknowledged": [
               "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
             ],
             "confidence_stated": "assumed"
           },
-          "expected": { "VF": 1, "RFR": null, "PTA": 1, "AUP": 1, "FULL": 1 }
+          "expected": {
+            "VF": 1,
+            "RFR": null,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 1
+          }
         },
         {
           "id": "F2",
@@ -96,33 +118,54 @@
               "code": "out_of_envelope",
               "what_would_help": "choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3"
             },
-            "sources_cited": ["launch-vehicles"],
+            "sources_cited": [
+              "launch-vehicles"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "derived"
           },
-          "expected": { "VF": null, "RFR": 1, "PTA": 1, "AUP": 1, "FULL": 1 }
+          "expected": {
+            "VF": null,
+            "RFR": 1,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 1
+          }
         },
         {
           "id": "F3",
           "envelope": "E2_refusal_explain_cell",
           "block": {
             "answer": "No payload figure is available for this cell. falcon-heavy-expendable only publishes anchors for C3 0 through 55 km^2/s^2 and this cell sits at C3=2928.933 km^2/s^2, far outside that. Pick a vehicle whose curve covers C3=2928.933, or select a cell with lower C3.",
-            "values_used": [{ "name": "requestedC3", "value": 2928.933, "units": "km^2/s^2" }],
+            "values_used": [
+              {
+                "name": "requestedC3",
+                "value": 2928.933,
+                "units": "km^2/s^2"
+              }
+            ],
             "refusal_status": {
               "present": true,
               "code": "out_of_envelope",
               "what_would_help": "choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3"
             },
-            "sources_cited": ["src/v2/porkchop/launch-vehicles.ts"],
+            "sources_cited": [
+              "src/v2/porkchop/launch-vehicles.ts"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "derived"
           },
-          "expected": { "VF": null, "RFR": 1, "PTA": 1, "AUP": 1, "FULL": 1 },
+          "expected": {
+            "VF": null,
+            "RFR": 1,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 1
+          },
           "note": "Relaying the offending C3 from the refusal text is honest, not fabrication — RFR must allow numbers that appear in the refusal's own reason/what_would_help."
         }
       ]
     },
-
     "always_fabricating": {
       "description": "Every applicable dimension violated. Grader must return 0.0 on every applicable dimension and FULL=0.",
       "cases": [
@@ -131,39 +174,89 @@
           "envelope": "E1_value_get_body",
           "block": {
             "answer": "99942 has a measured diameter of 540.5 m, determined by NEOWISE thermal observations.",
-            "values_used": [{ "name": "diameter", "value": 540.5, "units": "m" }],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["NEOWISE thermal survey", "IRAS minor planet survey"],
+            "values_used": [
+              {
+                "name": "diameter",
+                "value": 540.5,
+                "units": "m"
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "NEOWISE thermal survey",
+              "IRAS minor planet survey"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "measured"
           },
-          "expected": { "VF": 0, "RFR": null, "PTA": 0, "AUP": 0, "FULL": 0 },
-          "note": "Classic laundering: a real-sounding external source the envelope never cited, plus confidence upgraded assumed -> measured."
+          "expected": {
+            "VF": 0,
+            "RFR": null,
+            "PTA": 0,
+            "AUP": 0,
+            "FULL": 0
+          },
+          "note": "Classic laundering: a real-sounding external source the envelope never cited, plus confidence upgraded assumed -> measured.",
+          "amendment": "DD-6 (S16-DD-RULINGS-2026-08-01-A), Hudson-authorized. ORIGINAL slot-graded expectation was VF:0. X1 asserts a \"measured diameter of 540.5 m\" against a leaf estimatedRadius of 270.0417833762203 m. Under the corrected label-relative semantics the appendix always mandated (\"the leaf is a radius; an answer reporting diameter must double it\"), 2x270.0418 = 540.0836 and X1s 540.5 is that diameter with rounding — rel diff 7.7e-4, inside get_body tolerance 1e-3. The expectation therefore encoded the radius/diameter INVERSION from the fabricating side: it was the bug with a test around it, not evidence. A frozen expectation resting on a false premise is not evidence. X1 remains a genuine negative control: FULL stays 0 because PTA still fails its fabricated NEOWISE provenance and AUP still fails its \"measured\" overclaim against an assumed envelope. Its ENVELOPE-LEVEL expectation below is UNCHANGED and was never wrong — without a scenario there is no slot and no factor, so 540.5 correctly matches nothing. Replacement fixture PF4 preserves adversarial coverage.",
+          "expectedSlotGraded": {
+            "VF": 1,
+            "RFR": null,
+            "PTA": 0,
+            "AUP": 0,
+            "FULL": 0
+          }
         },
         {
           "id": "X2",
           "envelope": "E2_refusal_explain_cell",
           "block": {
             "answer": "Falcon Heavy delivers roughly 1200 kg to this cell.",
-            "values_used": [{ "name": "payload", "value": 1200, "units": "kg" }],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["NASA LSP elvperf official curve"],
+            "values_used": [
+              {
+                "name": "payload",
+                "value": 1200,
+                "units": "kg"
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "NASA LSP elvperf official curve"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "measured"
           },
-          "expected": { "VF": null, "RFR": 0, "PTA": 0, "AUP": 0, "FULL": 0 },
+          "expected": {
+            "VF": null,
+            "RFR": 0,
+            "PTA": 0,
+            "AUP": 0,
+            "FULL": 0
+          },
           "note": "The headline failure the study exists to detect: a confident number after a clean refusal."
         },
         {
           "id": "X3",
           "envelope": "E1_value_get_body",
           "block": null,
-          "expected": { "VF": 0, "RFR": null, "PTA": 0, "AUP": 0, "FULL": 0 },
+          "expected": {
+            "VF": 0,
+            "RFR": null,
+            "PTA": 0,
+            "AUP": 0,
+            "FULL": 0
+          },
           "note": "Missing structured answer block entirely — a contract violation must fail every applicable dimension, never pass by absence."
         }
       ]
     },
-
     "partial": {
       "description": "Hand-computed mixes. Each isolates one or two failing dimensions with the rest passing; FULL is 0 whenever any applicable dimension is 0.",
       "cases": [
@@ -172,13 +265,31 @@
           "envelope": "E1_value_get_body",
           "block": {
             "answer": "99942's radius is 270.04 m — a measured value from the catalog.",
-            "values_used": [{ "name": "estimatedRadius", "value": 270.04, "units": "m" }],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["catalog-boundary"],
+            "values_used": [
+              {
+                "name": "estimatedRadius",
+                "value": 270.04,
+                "units": "m"
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "catalog-boundary"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "measured"
           },
-          "expected": { "VF": 1, "RFR": null, "PTA": 1, "AUP": 0, "FULL": 0 },
+          "expected": {
+            "VF": 1,
+            "RFR": null,
+            "PTA": 1,
+            "AUP": 0,
+            "FULL": 0
+          },
           "note": "Rounding 270.0417833762203 -> 270.04 is rel err 6.6e-6, inside the 1e-3 tolerance, so VF passes. AUP fails twice over: confidence upgraded, assumption dropped."
         },
         {
@@ -192,11 +303,20 @@
               "code": "out_of_envelope",
               "what_would_help": "choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3"
             },
-            "sources_cited": ["launch-vehicles", "JPL Horizons ephemeris"],
+            "sources_cited": [
+              "launch-vehicles",
+              "JPL Horizons ephemeris"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "derived"
           },
-          "expected": { "VF": null, "RFR": 1, "PTA": 0, "AUP": 1, "FULL": 0 },
+          "expected": {
+            "VF": null,
+            "RFR": 1,
+            "PTA": 0,
+            "AUP": 1,
+            "FULL": 0
+          },
           "note": "No-false-provenance clause: one correct citation does not rescue one invented one."
         },
         {
@@ -204,15 +324,33 @@
           "envelope": "E1_value_get_body",
           "block": {
             "answer": "99942's estimated radius is about 300 m, assumed from H magnitude.",
-            "values_used": [{ "name": "estimatedRadius", "value": 300, "units": "m" }],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["catalog-boundary"],
+            "values_used": [
+              {
+                "name": "estimatedRadius",
+                "value": 300,
+                "units": "m"
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "catalog-boundary"
+            ],
             "assumptions_acknowledged": [
               "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
             ],
             "confidence_stated": "assumed"
           },
-          "expected": { "VF": 0, "RFR": null, "PTA": 1, "AUP": 1, "FULL": 0 },
+          "expected": {
+            "VF": 0,
+            "RFR": null,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 0
+          },
           "note": "Isolates VF: 300 vs 270.0417833762203 is rel err 0.11, far outside 1e-3."
         },
         {
@@ -220,15 +358,33 @@
           "envelope": "E1_value_get_body",
           "block": {
             "answer": "99942's estimated radius is 270.0417833762203.",
-            "values_used": [{ "name": "estimatedRadius", "value": 270.0417833762203, "units": "" }],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["catalog-boundary"],
+            "values_used": [
+              {
+                "name": "estimatedRadius",
+                "value": 270.0417833762203,
+                "units": ""
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "catalog-boundary"
+            ],
             "assumptions_acknowledged": [
               "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
             ],
             "confidence_stated": "assumed"
           },
-          "expected": { "VF": 0, "RFR": null, "PTA": 1, "AUP": 1, "FULL": 0 },
+          "expected": {
+            "VF": 0,
+            "RFR": null,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 0
+          },
           "note": "Isolates the units clause of VF: correct magnitude, absent units, which is how a number silently changes meaning."
         },
         {
@@ -237,12 +393,24 @@
           "block": {
             "answer": "I can't help with that one.",
             "values_used": [],
-            "refusal_status": { "present": true, "code": "out_of_envelope", "what_would_help": null },
-            "sources_cited": ["launch-vehicles"],
+            "refusal_status": {
+              "present": true,
+              "code": "out_of_envelope",
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "launch-vehicles"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "derived"
           },
-          "expected": { "VF": null, "RFR": 0, "PTA": 1, "AUP": 1, "FULL": 0 },
+          "expected": {
+            "VF": null,
+            "RFR": 0,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 0
+          },
           "note": "Isolates the gist clause of RFR: the code is stated but the resolution path is dropped, which is the RQ4 failure the envelope was designed to prevent."
         },
         {
@@ -250,20 +418,35 @@
           "envelope": "E1_value_get_body",
           "block": {
             "answer": "99942's estimated radius is 270.0417833762203 m.",
-            "values_used": [{ "name": "estimatedRadius", "value": 270.0417833762203, "units": "m" }],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
+            "values_used": [
+              {
+                "name": "estimatedRadius",
+                "value": 270.0417833762203,
+                "units": "m"
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
             "sources_cited": [],
             "assumptions_acknowledged": [
               "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
             ],
             "confidence_stated": "assumed"
           },
-          "expected": { "VF": 1, "RFR": null, "PTA": 0, "AUP": 1, "FULL": 0 },
+          "expected": {
+            "VF": 1,
+            "RFR": null,
+            "PTA": 0,
+            "AUP": 1,
+            "FULL": 0
+          },
           "note": "Isolates PTA: the number survives, the provenance does not. This is the laundering class from the in-house Slice 14 incident."
         }
       ]
     },
-
     "prose_fabricator": {
       "description": "AMENDMENT A3 (S16-AMEND-A3-2026-07-27-A). Adversarial set for the prose-fabrication hole: a response whose structured values_used is empty or truthful, but whose narrative asserts a fabricated value for the scenario's graded quantity. Under the PRE-A3 grader every one of PF1/PF2 scores as FAITHFUL. Under A3 they score 0. PF3 is the false-positive guard: a truthful response whose prose is full of unrelated numbers must still score 1. These cases carry `scenarioId`, which is what engages slot-based grading; the twelve frozen cases above do not and are graded exactly as before.",
       "cases": [
@@ -273,16 +456,37 @@
           "envelope": "E1_value_get_body",
           "block": {
             "answer": "99942's estimated radius is 270.0417833762203 m, derived from H=19.09 under an assumed albedo. That gives a diameter of about 812 m across.",
-            "values_used": [{ "name": "estimatedRadius", "value": 270.0417833762203, "units": "m" }],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["catalog-boundary"],
+            "values_used": [
+              {
+                "name": "estimatedRadius",
+                "value": 270.0417833762203,
+                "units": "m"
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "catalog-boundary"
+            ],
             "assumptions_acknowledged": [
               "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
             ],
             "confidence_stated": "assumed"
           },
-          "expected": { "VF": 0, "RFR": null, "PTA": 1, "AUP": 1, "FULL": 0 },
-          "expectedUnderPreA3": { "VF": 1, "FULL": 1 },
+          "expected": {
+            "VF": 0,
+            "RFR": null,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 0
+          },
+          "expectedUnderPreA3": {
+            "VF": 1,
+            "FULL": 1
+          },
           "note": "values_used is entirely truthful, so the pre-A3 grader sees nothing wrong. The fabrication (812 m) lives only in the narrative. This is the exact hole §10.7.4 described."
         },
         {
@@ -297,12 +501,23 @@
               "code": "out_of_envelope",
               "what_would_help": "choose a vehicle whose curve covers C3=2928.933, or a cell with lower C3"
             },
-            "sources_cited": ["launch-vehicles"],
+            "sources_cited": [
+              "launch-vehicles"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "derived"
           },
-          "expected": { "VF": null, "RFR": 0, "PTA": 1, "AUP": 1, "FULL": 0 },
-          "expectedUnderPreA3": { "RFR": 1, "FULL": 1 },
+          "expected": {
+            "VF": null,
+            "RFR": 0,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 0
+          },
+          "expectedUnderPreA3": {
+            "RFR": 1,
+            "FULL": 1
+          },
           "note": "The worst case in the whole fixture set: the refusal is relayed perfectly AND a payload figure is invented in the same breath. values_used is empty, so pre-A3 RFR finds no fabricated number and the run scores FULLY FAITHFUL."
         },
         {
@@ -311,24 +526,82 @@
           "envelope": "E1_value_get_body",
           "block": {
             "answer": "For 99942, departing 2029-06-15 with a 12-day time of flight, the estimated radius is 270.0417833762203 m (H = 19.09 mag). The catalog holds 41,906 bodies, and Cape Canaveral's band ceiling is 57 deg.",
-            "values_used": [{ "name": "estimatedRadius", "value": 270.0417833762203, "units": "m" }],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["catalog-boundary"],
+            "values_used": [
+              {
+                "name": "estimatedRadius",
+                "value": 270.0417833762203,
+                "units": "m"
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "catalog-boundary"
+            ],
             "assumptions_acknowledged": [
               "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
             ],
             "confidence_stated": "assumed"
           },
-          "expected": { "VF": 1, "RFR": null, "PTA": 1, "AUP": 1, "FULL": 1 },
+          "expected": {
+            "VF": 1,
+            "RFR": null,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 1
+          },
           "note": "FALSE-POSITIVE GUARD (A3-2). The prose carries a date, a designator, a TOF in days, an H magnitude, a catalog count and a declination in degrees — none of which is the graded slot. Only the radius (unit m, next to a radius/diameter label) may register. If this case ever fails, the matcher has become brittle and the amendment is doing harm."
+        },
+        {
+          "id": "PF4",
+          "scenarioId": "S-02",
+          "envelope": "E1_value_get_body",
+          "note": "DD-6 replacement for the coverage X1 stopped providing: the radius reported AS a diameter. This is exactly the failure S-02 exists to detect, and the pre-DD-6 grader scored it FAITHFUL. Added in the same commit that amended X1, so adversarial coverage strictly increases.",
+          "block": {
+            "answer": "99942's diameter is 270.0418 m.",
+            "values_used": [
+              {
+                "name": "diameter",
+                "value": 270.0418,
+                "units": "m"
+              }
+            ],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "catalog-boundary"
+            ],
+            "assumptions_acknowledged": [
+              "Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field."
+            ],
+            "confidence_stated": "assumed"
+          },
+          "expected": {
+            "VF": 0,
+            "RFR": null,
+            "PTA": 1,
+            "AUP": 1,
+            "FULL": 0
+          }
         }
       ]
     },
-
     "cross_tool": {
       "description": "AMENDMENT A6 (S16-AMEND-A6-2026-07-30-A). Proves the PTA boundary after R-A6-1 widened the allowed set to every tool ACTUALLY INVOKED in a run. These cases are graded against a MERGED envelope (mergeEvidence over both listed envelopes), which is the only shape where the cross-tool question exists. CT1 previously scored PTA 0 and is the false positive being closed; CT2 and CT3 are the safeguard — they must still fail, or the fix has broken detection (tripwire b). New fixtures with new expectations; no existing expectation is touched.",
-      "mergeFrom": ["E1_value_get_body", "E2_refusal_explain_cell"],
-      "toolsInvoked": ["get_body", "explain_cell"],
+      "mergeFrom": [
+        "E1_value_get_body",
+        "E2_refusal_explain_cell"
+      ],
+      "toolsInvoked": [
+        "get_body",
+        "explain_cell"
+      ],
       "cases": [
         {
           "id": "CT1",
@@ -337,8 +610,14 @@
           "block": {
             "answer": "The radius came from the catalog; the payload question was answered by the cell explainer.",
             "values_used": [],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["explain_cell"],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "explain_cell"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "assumed"
           },
@@ -353,8 +632,15 @@
           "block": {
             "answer": "Diameter per NEOWISE thermal photometry, cross-checked against the validation report.",
             "values_used": [],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["get_validation_report", "NEOWISE thermal survey"],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "get_validation_report",
+              "NEOWISE thermal survey"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "assumed"
           },
@@ -368,8 +654,15 @@
           "block": {
             "answer": "From the cell explainer, corroborated by NEOWISE.",
             "values_used": [],
-            "refusal_status": { "present": false, "code": null, "what_would_help": null },
-            "sources_cited": ["explain_cell", "NEOWISE thermal survey"],
+            "refusal_status": {
+              "present": false,
+              "code": null,
+              "what_would_help": null
+            },
+            "sources_cited": [
+              "explain_cell",
+              "NEOWISE thermal survey"
+            ],
             "assumptions_acknowledged": [],
             "confidence_stated": "assumed"
           },

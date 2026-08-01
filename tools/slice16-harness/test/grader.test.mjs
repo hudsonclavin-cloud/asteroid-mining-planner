@@ -301,9 +301,15 @@ test('A3: every frozen fixture keeps its expectation when its scenario is suppli
       const withSlot = gradeDecision({
         envelope, block: testCase.block, scenarioId: natural[testCase.envelope]
       });
+      // DD-6: a case may carry a SEPARATE slot-graded expectation where the two
+      // grading modes legitimately differ. Exactly one case does (X1), by
+      // Hudson's explicit authorization, with its reasoning and a replacement
+      // fixture recorded in the fixture file. Everything else must still match
+      // its single frozen expectation in BOTH modes — and does.
+      const expected = testCase.expectedSlotGraded ?? testCase.expected;
       assert.deepEqual(
         actualScores(withSlot),
-        testCase.expected,
+        expected,
         `${testCase.id}: slot-graded scores diverge from the frozen expectation — REPORT, do not rewrite`
       );
     }

@@ -200,6 +200,7 @@ excluded by `.gitignore:17`, never committed, unrecoverable.
 | INV-033 | `src/v2/SLICE_15_FOUNDING.md` | Anti-fabrication: no SourceRef path, commit, count, or URL enters any envelope, fixture, or provenance artifact unless confirmed to exist and match |
 | INV-034 | `src/v2/SLICE_9_FOUNDING.md` amendment 2026-07-12 | Evidence-artifact tracking: any file claimed as committed evidence by a founding doc, INVARIANTS.md, or a test must be git-tracked; ignored evidence directories require explicit `!` exceptions and `git check-ignore -v <path>` must return nothing |
 | INV-V1-001 | `src/v2/SLICE_V1_FOUNDING.md` | Visual asset provenance must be confirmed before shipping (CC/public domain) |
+| INV-037 | `src/v2/SLICE_16_FOUNDING.md` Amendment A12 | Frozen-expectation amendment: a frozen negative-control expectation may be amended ONLY when the fixture is demonstrated to encode a defect in the instrument rather than a property of the subject, ONLY with Hudson's explicit authorization, and ONLY with the original expectation, the demonstrated defect, and a replacement fixture preserving or increasing adversarial coverage all recorded additively |
 
 ---
 
@@ -220,3 +221,17 @@ excluded by `.gitignore:17`, never committed, unrecoverable.
 ## Amendment 2026-08-01 — Lambert excess-vector frame prose corrected (additive; audit L2-3)
 
 The Slice 11 summary block near the top of this file labels `vInfDep`/`vInfArr` "heliocentric ECLIPTIC". **That label is wrong and is superseded by measurement**: the consuming-boundary measurement recorded under "DLA frame convention (DEC-12-2, LOCKED)" and INV-021 established the vector components as **ICRF/equatorial** (Earth velocity Z reaching 11.715 km/s is impossible in an ecliptic frame). The C3/|v∞| magnitudes in that block are frame-invariant and unaffected. **The measured ICRF/equatorial rule is the only authority; no ecliptic→equatorial obliquity rotation may be introduced anywhere in the Lambert/DLA path — applying the ~23.4° rotation is the exact rejected error.** The original lines stand unedited above because this file is additive-only; any future dispatch citing them must cite this correction with them.
+
+---
+
+## Amendment 2026-08-01 (second) — INV-037, frozen-expectation amendment
+
+**Marker:** `S16-DD-RULINGS-2026-08-01-A`. Added because "frozen" has now proven fallible in a specific, instructive way.
+
+**INV-037 (frozen-expectation amendment).** A frozen negative-control expectation may be amended **ONLY** when the fixture is demonstrated to encode a defect in the **instrument** rather than a property of the **subject**; **ONLY** with Hudson's explicit authorization; and **ONLY** with the original expectation, the demonstrated defect, and a replacement fixture preserving or increasing adversarial coverage, all recorded additively.
+
+**Number choice.** The global registry's ceiling was INV-034, so 035 would ordinarily be next — but the 2026-08-01 namespace-mapping amendment above assigns the bare forms `INV-035` and `INV-036` to Slice-16-local invariants *inside Slice 16 documents*, and this invariant governs Slice 16 fixtures and will be cited there. **035 and 036 are therefore skipped as ambiguous-on-sight, and INV-037 is the first unambiguous global number.** Skipping two integers is cheaper than a reference a reader must disambiguate by file location.
+
+**Occasioning case (the demonstration this invariant demands).** Fixture X1 asserted a "measured diameter of 540.5 m" against an envelope leaf `estimatedRadius = 270.0417833762203 m`, with a frozen `VF: 0`. The locked appendix had always said *"the leaf is a radius; an answer reporting diameter must double it"* — and 2 × 270.0418 = 540.0836, so X1's "fabricated" number is that diameter with rounding (relative difference 7.7e-4, inside `get_body`'s 1e-3 tolerance). The expectation encoded the radius/diameter inversion **from the fabricating side**: it was the bug with a test around it. **A frozen expectation resting on a false premise is not evidence.** Amended under this invariant with fixture PF4 added in the same commit, restoring the coverage X1 had been miscrediting: the radius reported *as* a diameter, expected `VF: 0`.
+
+**What this invariant does NOT license.** Amending an expectation because the instrument's output changed and the expectation became inconvenient. The demonstration must show the *fixture's premise* was false, independently of the new behaviour — as above, from the locked appendix's own words, which predate the fix.
