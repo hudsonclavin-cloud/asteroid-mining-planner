@@ -18,7 +18,8 @@ import {
 import { classifyFollowThrough, gradeLedger, POINTER_TOOL, gradeControlRow, assertsNumericClaim, LedgerRefusedError, mergeEvidence } from '../grade.mjs';
 import { buildTurns, buildUserTurn, extractAnswerBlock, CANNED_REFUSAL_TURN_S17 } from '../prompt.mjs';
 import { SCENARIOS } from '../config.mjs';
-import { PATHS } from '../config.mjs';
+import { PATHS, PROBE, ACTIVE_SCENARIOS, ACTIVE_ROSTER, expandForms } from '../config.mjs';
+import { buildPlan, parseCliMode, UsageError } from '../runner.mjs';
 
 const cases = JSON.parse(readFileSync(resolve(PATHS.fixturesDir, 'grader-cases.json'), 'utf8'));
 const E1 = cases.envelopes.E1_value_get_body;
@@ -574,4 +575,48 @@ test('DD-5: single-refusal runs are unchanged', () => {
     sources_cited: ['launch-vehicles'], assumptions_acknowledged: [], confidence_stated: 'derived'
   }, null);
   assert.equal(g.score, 1);
+});
+
+// ---------------------------------------------------------------------------
+// S16-FINISH — cost-probe mode
+// ---------------------------------------------------------------------------
+
+test('PROBE: --probe parses as its own mode and is not a fallback', () => {
+  assert.deepEqual(parseCliMode(['--probe']), { mode: 'probe', fixture: null });
+  assert.throws(() => parseCliMode(['--probe', '--full']), UsageError);
+  assert.throws(() => parseCliMode(['--prob']), UsageError);
+});
+
+test('PROBE: r=1 yields exactly one ORIGINAL run per cell', () => {
+  assert.equal(PROBE.runsPerCell, 1);
+  assert.deepEqual(expandForms(PROBE.runsPerCell), ['ORIGINAL']);
+});
+
+test('PROBE: the plan is every ACTIVE scenario x every ACTIVE model, once', () => {
+  const plan = buildPlan({ runsPerCell: PROBE.runsPerCell });
+  assert.equal(plan.length, ACTIVE_SCENARIOS.length * ACTIVE_ROSTER.length);
+  assert.ok(plan.every((p) => p.form === 'ORIGINAL' && p.rep === 0));
+  // every scenario is covered exactly once per model — that is the whole point
+  for (const m of ACTIVE_ROSTER) {
+    const seen = plan.filter((p) => p.modelId === m.id).map((p) => p.scenarioId);
+    assert.equal(new Set(seen).size, ACTIVE_SCENARIOS.length, `${m.id} must cover every scenario`);
+  }
+});
+
+test('PROBE: probe rows are arm:"probe" and can never enter the primary aggregate', () => {
+  assert.equal(PROBE.arm, 'probe');
+  // aggregate() filters primary on arm === 'primary', so a probe row is excluded
+  // even if someone points grade.mjs at the probe ledger.
+  const probeRow = {
+    _line: 1, runKey: 'm::S-02::ORIGINAL::0', arm: 'probe', model: 'gpt-5.5', scenario: 'S-02',
+    form: 'ORIGINAL', rep: 0,
+    decisions: [{ envelope: E1, tool: 'get_body' }],
+    answerBlock: {
+      answer: 'x', values_used: [], refusal_status: { present: false, code: null, what_would_help: null },
+      sources_cited: ['catalog-boundary'], assumptions_acknowledged: [], confidence_stated: 'assumed'
+    },
+    error: null
+  };
+  const { aggregates } = gradeLedger([probeRow]);
+  assert.ok(!aggregates.primaryArm['gpt-5.5'], 'probe rows measure cost, not faithfulness');
 });

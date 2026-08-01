@@ -28,7 +28,7 @@ import {
   REGISTERED_PRIMARY_RUN_COUNT, REGISTERED_CONTROL_RUN_COUNT, REGISTERED_TOTAL_RUN_COUNT,
   BUDGET, estimateRowCostUsd,
   CAP_NOTICE, MAX_MODEL_TURNS, TOOL_CALL_CAP,
-  MARKER, PATHS, PILOT, REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL,
+  MARKER, PATHS, PILOT, PROBE, REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL,
   SpendGuardError, assertLiveAllowed, expandForms, liveReadiness, modelById
 } from './config.mjs';
 import { connectMcp, extractEnvelope, McpServerUnavailableError } from './mcp-client.mjs';
@@ -105,6 +105,9 @@ export class UsageError extends Error {}
 
 export const USAGE = `usage: node runner.mjs <MODE>
   --preflight            report readiness; never spends (also the no-args default)
+  --probe                scenario-stratified COST probe: every active scenario x r=1
+                         (needs S16_LIVE_OK=1 + keys; writes ledger-probe.jsonl;
+                          rows are arm:'probe' and are NOT study data)
   --pilot                DEC-16-11 pilot (needs S16_LIVE_OK=1 + keys)
   --full                 primary matrix (needs S16_LIVE_OK=1 + keys)
   --control              control arm: no tools, ORIGINAL only, r=3
@@ -123,6 +126,7 @@ export function parseCliMode(argv) {
     if (arg === '--help' || arg === '-h') modes.push('help');
     else if (arg === '--preflight') modes.push('preflight');
     else if (arg === '--pilot') modes.push('pilot');
+    else if (arg === '--probe') modes.push('probe');
     else if (arg === '--full') modes.push('full');
     else if (arg === '--control') modes.push('control');
     else if (arg === '--mock') {
@@ -590,6 +594,7 @@ export async function main(argv = process.argv.slice(2)) {
   }
 
   const wantsPilot = cli.mode === 'pilot';
+  const wantsProbe = cli.mode === 'probe';
   const wantsControl = cli.mode === 'control';
   const wantsMock = cli.mode === 'mock';
 
@@ -601,7 +606,8 @@ export async function main(argv = process.argv.slice(2)) {
     // The full run uses EXECUTED_RUNS_PER_CELL — whatever the amendment chain
     // currently sets it to (A10-1 restored it to the registered 10). Never a
     // literal here: the constant is the single source of truth.
-    : wantsPilot ? PILOT.runsPerCell : EXECUTED_RUNS_PER_CELL;
+    : wantsProbe ? PROBE.runsPerCell
+      : wantsPilot ? PILOT.runsPerCell : EXECUTED_RUNS_PER_CELL;
   const scenarioIds = wantsPilot ? PILOT.scenarioIds : null;
   // Control arm: ORIGINAL form only, repeated r=3 times.
   const formsOverride = wantsControl
@@ -719,7 +725,7 @@ export async function main(argv = process.argv.slice(2)) {
       try {
         row = await executeRun({
           model, scenario, form: item.form, rep: item.rep, prefix, adapter, mcp,
-          arm: wantsControl ? 'control' : 'primary', provenance
+          arm: wantsControl ? 'control' : wantsProbe ? PROBE.arm : 'primary', provenance
         });
       } catch (error) {
         if (error instanceof SpendGuardError) {

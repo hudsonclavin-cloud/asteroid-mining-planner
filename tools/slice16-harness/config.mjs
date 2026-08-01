@@ -679,6 +679,24 @@ export const PILOT = Object.freeze({
   runsPerCell: 2
 });
 
+/**
+ * COST PROBE (S16-FINISH-2026-08-01-A) — the scenario-stratified measurement
+ * PRE_RUN_GATE box 11 requires before any full run is funded.
+ *
+ * WHY IT EXISTS: §21.1's failure was projecting the whole study from a
+ * two-scenario pilot that only ever exercised 1-2 tool calls, missing the
+ * ~quadratic input growth of 4-5-call scenarios by ~3x. A per-run average
+ * cannot be extrapolated across a scenario set whose cost driver varies by
+ * two orders of magnitude. So: EVERY active scenario, ONE run each, per model.
+ *
+ * r=1 yields exactly one ORIGINAL run per cell (expandForms(1) === ['ORIGINAL']).
+ *
+ * Probe rows are marked `arm: 'probe'` and written to their own ledger. They
+ * are NOT study data and can never enter the primary aggregate, which filters
+ * on `arm === 'primary'`. They measure cost, not faithfulness.
+ */
+export const PROBE = Object.freeze({ runsPerCell: 1, arm: 'probe' });
+
 // ---------------------------------------------------------------------------
 // SPEND GUARD (tripwire h). Nothing below ever sets S16_LIVE_OK or any key.
 // ---------------------------------------------------------------------------
