@@ -131,6 +131,16 @@ export function appendToolResult(session, toolCall, resultText) {
 }
 
 export function appendCapNotice(session, text) {
+  // 4.4 (S16-REMEDIATE): after tool results the last message is already a USER
+  // turn; pushing a second consecutive user message violates the Messages
+  // API's role alternation. Merge the notice into that turn as a text block —
+  // the same pattern appendToolResult uses. (Unreachable in the 1-2-call pilot;
+  // the cap path was never exercised on this provider.)
+  const last = session.messages[session.messages.length - 1];
+  if (last?.role === 'user' && Array.isArray(last.content)) {
+    last.content.push({ type: 'text', text });
+    return;
+  }
   session.messages.push({ role: 'user', content: text });
 }
 

@@ -16,8 +16,9 @@
 //
 // The harness NEVER sets S16_LIVE_OK or any API key. Both are Hudson's act.
 
+import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import {
   ACTIVE_SCENARIOS, CONTROL_ARM, DEFERRED_SCENARIOS, PRIMARY_SCENARIOS,
@@ -50,6 +51,40 @@ const ADAPTER_MODULES = {
 
 export function runKey({ modelId, scenarioId, form, rep }) {
   return `${modelId}::${scenarioId}::${form}::${rep}`;
+}
+
+// ---------------------------------------------------------------------------
+// Pinned-transcript provenance — 4.2 remediation (audit L5-13,
+// S16-REMEDIATE-2026-08-01-A).
+//
+// INV-S16-033 pins one server commit per run set; INV-S16-036 makes every
+// transcript an artifact "the reader can check". The old row recorded a
+// fingerprint and an absolute server path — proof of SAMENESS within a run,
+// but nothing a reader could RECONSTRUCT the conversation from: no commits,
+// no system text, no instantiated user turn, no intermediate turns, no
+// provider-native conversation. Every row now carries all of it.
+// ---------------------------------------------------------------------------
+
+/** Harness worktree commit + dirty flag, computed once per invocation. */
+export function harnessProvenance() {
+  try {
+    const cwd = dirname(new URL(import.meta.url).pathname);
+    const commit = execFileSync('git', ['log', '-1', '--format=%H'], { cwd, encoding: 'utf8' }).trim();
+    const dirty = execFileSync('git', ['status', '--porcelain'], { cwd, encoding: 'utf8' }).trim().length > 0;
+    return { commit, dirty };
+  } catch {
+    return { commit: null, dirty: null, note: 'git unavailable — provenance unrecorded, disclosed rather than invented' };
+  }
+}
+
+/** The MCP server build's own baked provenance (commit + dirty at build time). */
+export function serverBuildProvenance() {
+  try {
+    const baked = resolve(dirname(PATHS.mcpServer), 'generated', 'baked-provenance.json');
+    return JSON.parse(readFileSync(baked, 'utf8'));
+  } catch {
+    return { commit: null, dirty: null, note: 'baked-provenance.json unreadable — server build commit unrecorded' };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -312,10 +347,15 @@ async function resolveAdapter(model) {
  * Returns the ledger row; never throws for provider errors — a failed run is
  * recorded as a row with `error` set, so the ledger stays a complete census.
  */
-async function executeRun({ model, scenario, form, rep, prefix, adapter, mcp, arm = 'primary' }) {
+export async function executeRun({ model, scenario, form, rep, prefix, adapter, mcp, arm = 'primary', provenance = null }) {
   const startedAt = new Date().toISOString();
   const row = {
     marker: MARKER,
+    // 4.2 (L5-13): commit-pinned provenance on EVERY row.
+    harnessCommit: provenance?.harness?.commit ?? null,
+    harnessDirty: provenance?.harness?.dirty ?? null,
+    serverBuildCommit: provenance?.server?.commit ?? null,
+    serverBuildDirty: provenance?.server?.dirty ?? null,
     runKey: runKey({ modelId: model.id, scenarioId: scenario.id, form, rep }),
     // Which arm produced this row. Control rows are excluded from the primary
     // faithfulness metrics (A1 §10.2) and must be separable at analysis time.
@@ -343,6 +383,7 @@ async function executeRun({ model, scenario, form, rep, prefix, adapter, mcp, ar
     const toolCallLog = []; // full call record, including failures
     const usageTurns = [];
     let calls = 0;
+    let capSuppressed = 0;  // 4.4: issued-but-not-executed calls beyond the cap
     let finalText = '';
     let stopReason = null;
     let cappedAt = null;
@@ -357,8 +398,27 @@ async function executeRun({ model, scenario, form, rep, prefix, adapter, mcp, ar
         break;
       }
 
+      // REMEDIATION 4.4 (audit A11 carryover, S16-REMEDIATE-2026-08-01-A):
+      // the cap check used to `break` INSIDE this loop, abandoning the rest of
+      // the turn's tool_calls without tool messages — and OpenAI then rejected
+      // the next request with 400 "An assistant message with 'tool_calls' must
+      // be followed by tool messages responding to each 'tool_call_id'"
+      // (observed live on gpt-5.5::S-13::ORIGINAL::3, the 4-5-call scenario;
+      // unreachable in the 1-2-call pilot). Now EVERY issued tool_call_id
+      // receives a tool message: calls beyond the cap are answered with an
+      // explicit not-executed notice instead of being executed — the hard cap
+      // holds, the protocol contract holds, and the suppressed attempts are
+      // recorded (`capSuppressed`) as a distinct, clean terminal state.
       for (const call of step.toolCalls) {
-        if (calls >= TOOL_CALL_CAP) break;
+        if (calls >= TOOL_CALL_CAP) {
+          capSuppressed += 1;
+          toolCallLog.push({ index: null, id: call.id, tool: call.name, args: call.args, capSuppressed: true });
+          adapter.appendToolResult(session, call, JSON.stringify({
+            isError: true,
+            error: { message: 'tool-call cap reached for this task; this call was not executed' }
+          }));
+          continue;
+        }
         calls += 1;
         let raw;
         let envelope = null;
@@ -394,12 +454,24 @@ async function executeRun({ model, scenario, form, rep, prefix, adapter, mcp, ar
     row.toolCalls = toolCallLog;
     row.decisions = decisions;
     row.cappedAt = cappedAt;
+    row.capSuppressedCalls = capSuppressed; // 4.4: distinct cap-hit terminal state
     row.stopReason = stopReason;
     row.usageTurns = usageTurns;
     row.usage = sumUsage(usageTurns);
     row.answerBlock = extracted.block;
     row.answerBlockOk = extracted.ok;
     row.answerBlockReason = extracted.reason;
+    // 4.2 (L5-13): the FULL pinned transcript — system text, instantiated user
+    // turn, and the provider-native conversation including every intermediate
+    // assistant turn and tool result, exactly as the adapter accumulated it.
+    // A reader can now reconstruct what was said, not merely verify sameness.
+    row.systemText = prefix.system;
+    row.userTurnText = userTurn;
+    row.transcript = {
+      provider: session.provider ?? adapter.PROVIDER ?? null,
+      system: session.system ?? null,
+      messages: session.messages ?? session.contents ?? null
+    };
     row.finishedAt = new Date().toISOString();
     row.error = null;
 
@@ -617,6 +689,12 @@ export async function main(argv = process.argv.slice(2)) {
   console.log(`ledger: ${ledgerPath}`);
   console.log(`prefix fingerprint: ${prefix.fingerprint}`);
 
+  // 4.2 (L5-13): computed once per invocation, stamped on every row.
+  const provenance = {
+    harness: harnessProvenance(),
+    server: mcp !== null ? serverBuildProvenance() : { commit: null, dirty: null, note: 'no-tools arm: server not spawned' }
+  };
+
   let completed = 0;
   let failed = 0;
   let thisRunUsd = 0;
@@ -635,7 +713,7 @@ export async function main(argv = process.argv.slice(2)) {
       try {
         row = await executeRun({
           model, scenario, form: item.form, rep: item.rep, prefix, adapter, mcp,
-          arm: wantsControl ? 'control' : 'primary'
+          arm: wantsControl ? 'control' : 'primary', provenance
         });
       } catch (error) {
         if (error instanceof SpendGuardError) {

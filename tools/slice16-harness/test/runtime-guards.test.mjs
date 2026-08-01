@@ -20,7 +20,8 @@ import {
   main, parseCliMode, UsageError,
   errorCauseKey, sameCauseHalt, SAME_CAUSE_HALT_THRESHOLD,
   spendHalt, priorLedgerSpendUsd,
-  loadLedger, parseLedgerFile, LedgerCorruptError
+  loadLedger, parseLedgerFile, LedgerCorruptError,
+  executeRun, harnessProvenance, serverBuildProvenance
 } from '../runner.mjs';
 import { definitiveRows, gradeLedger, LedgerRefusedError } from '../grade.mjs';
 import { ACTIVE_ROSTER, BUDGET, PRICES_USD_PER_MTOK, estimateRowCostUsd } from '../config.mjs';
@@ -265,6 +266,90 @@ test('L2-7 rule 4: the LAST row per runKey is definitive; earlier rows are histo
   const { definitive, superseded } = definitiveRows(rows);
   assert.equal(superseded, 1);
   assert.deepEqual(definitive.map((r) => r._line), [2, 3]);
+});
+
+// ---------------------------------------------------------------------------
+// 4.4 — tool-call cap terminates the TURN, never orphans a tool_call_id
+// (audit A11 carryover). Stub adapter + stub MCP; no network, no ledger.
+// ---------------------------------------------------------------------------
+
+function stubHarness({ callsInFirstTurn }) {
+  const answered = [];
+  const FINAL = 'done\n```json\n{"answer":"x","values_used":[],"refusal_status":{"present":false,"code":null,"what_would_help":null},"sources_cited":[],"assumptions_acknowledged":[],"confidence_stated":"assumed"}\n```';
+  let turn = 0;
+  const adapter = {
+    PROVIDER: 'stub',
+    startSession: () => ({ provider: 'stub', messages: [] }),
+    step: async () => {
+      turn += 1;
+      if (turn === 1) {
+        return {
+          text: '',
+          toolCalls: Array.from({ length: callsInFirstTurn }, (_, i) => ({ id: `call-${i}`, name: 'get_body', args: { designation: '99942' } })),
+          stopReason: 'tool_use',
+          usage: { reported: false }
+        };
+      }
+      return { text: FINAL, toolCalls: [], stopReason: 'end', usage: { reported: false } };
+    },
+    appendToolResult: (session, call, resultText) => answered.push({ id: call.id, resultText }),
+    appendCapNotice: (session, text) => { session.messages.push({ role: 'user', content: text }); }
+  };
+  const mcp = { callTool: async () => ({ content: [{ type: 'text', text: '{"envelope_version":"1","tool":"get_body","value":null}' }] }), serverPath: '/stub' };
+  return { adapter, mcp, answered };
+}
+
+const STUB_MODEL = { id: 'stub-model', lab: 'stub', tier: 'stub' };
+const STUB_SCENARIO = { id: 'S-02', rq: 'RQ1', tool: 'get_body', path: 'value', prompts: { ORIGINAL: 'What is the exact diameter of 99942?' } };
+const STUB_PREFIX = { system: 'stub system text', toolsAttached: true, tools: [], toolsSerialized: '', fingerprint: 'stubfp' };
+
+test('4.4: a turn issuing more calls than the cap — EVERY tool_call_id is answered', async () => {
+  const { adapter, mcp, answered } = stubHarness({ callsInFirstTurn: 7 });
+  const row = await executeRun({ model: STUB_MODEL, scenario: STUB_SCENARIO, form: 'ORIGINAL', rep: 0, prefix: STUB_PREFIX, adapter, mcp });
+  assert.equal(row.error, null, `run must not error: ${row.error}`);
+  assert.equal(answered.length, 7, 'all 7 issued tool_call_ids received tool messages — none orphaned');
+  assert.equal(row.toolCallCount, 5, 'the hard cap of 5 EXECUTED calls holds');
+  assert.equal(row.capSuppressedCalls, 2, 'the 2 beyond-cap calls are recorded as suppressed, not executed');
+  assert.equal(row.cappedAt, 5, 'cap-hit is a recorded terminal state');
+  const suppressed = row.toolCalls.filter((c) => c.capSuppressed);
+  assert.equal(suppressed.length, 2);
+  assert.ok(answered.slice(5).every((a) => a.resultText.includes('cap reached')),
+    'suppressed ids are answered with an explicit not-executed notice');
+  assert.equal(row.decisions.length, 5, 'only executed calls carry evidence decisions');
+  assert.ok(row.answerBlockOk, 'the run still reaches a clean final answer');
+});
+
+test('4.4: under the cap, behaviour is unchanged', async () => {
+  const { adapter, mcp, answered } = stubHarness({ callsInFirstTurn: 2 });
+  const row = await executeRun({ model: STUB_MODEL, scenario: STUB_SCENARIO, form: 'ORIGINAL', rep: 0, prefix: STUB_PREFIX, adapter, mcp });
+  assert.equal(row.toolCallCount, 2);
+  assert.equal(row.capSuppressedCalls, 0);
+  assert.equal(row.cappedAt, null);
+  assert.equal(answered.length, 2);
+});
+
+// ---------------------------------------------------------------------------
+// 4.2 — pinned transcripts (audit L5-13)
+// ---------------------------------------------------------------------------
+
+test('4.2: every row carries commits, system text, instantiated turn, and the native conversation', async () => {
+  const { adapter, mcp } = stubHarness({ callsInFirstTurn: 1 });
+  const provenance = { harness: { commit: 'a'.repeat(40), dirty: false }, server: { commit: 'b'.repeat(40), dirty: false } };
+  const row = await executeRun({ model: STUB_MODEL, scenario: STUB_SCENARIO, form: 'ORIGINAL', rep: 0, prefix: STUB_PREFIX, adapter, mcp, provenance });
+  assert.equal(row.harnessCommit, 'a'.repeat(40));
+  assert.equal(row.serverBuildCommit, 'b'.repeat(40));
+  assert.equal(row.harnessDirty, false);
+  assert.equal(row.systemText, 'stub system text', 'the system prompt is recorded verbatim, not just fingerprinted');
+  assert.equal(row.userTurnText, 'What is the exact diameter of 99942?', 'the INSTANTIATED user turn is recorded');
+  assert.equal(row.transcript.provider, 'stub');
+  assert.ok(Array.isArray(row.transcript.messages), 'the provider-native conversation is recorded');
+});
+
+test('4.2: provenance helpers report real git state (or disclose unavailability)', () => {
+  const h = harnessProvenance();
+  assert.ok(h.commit === null || /^[0-9a-f]{40}$/.test(h.commit), 'a full commit hash or a disclosed null');
+  const s = serverBuildProvenance();
+  assert.ok(s.commit === null || typeof s.commit === 'string');
 });
 
 test('L2-7 rule 4 does NOT weaken fail-closed grading (tripwire-i check)', () => {

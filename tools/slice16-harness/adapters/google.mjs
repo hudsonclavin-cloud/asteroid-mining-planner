@@ -164,6 +164,14 @@ export function appendToolResult(session, toolCall, resultText) {
 }
 
 export function appendCapNotice(session, text) {
+  // 4.4 (S16-REMEDIATE): merge into a trailing user turn rather than emitting
+  // consecutive user turns — same protocol-validity reasoning as the Anthropic
+  // adapter; the cap path was never exercised on this provider either.
+  const last = session.contents[session.contents.length - 1];
+  if (last?.role === 'user' && Array.isArray(last.parts)) {
+    last.parts.push({ text });
+    return;
+  }
   session.contents.push({ role: 'user', parts: [{ text }] });
 }
 
