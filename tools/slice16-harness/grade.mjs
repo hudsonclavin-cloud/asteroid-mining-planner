@@ -26,7 +26,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 
-import { MARKER as HARNESS_MARKER, EXCLUDED_MODELS, EXCLUSION_KINDS, REGISTERED_ROSTER, STATS, toleranceForTool } from './config.mjs';
+import { MARKER as HARNESS_MARKER, EXCLUDED_MODELS, EXCLUSION_KINDS, REGISTERED_ROSTER, SCENARIOS, STATS, toleranceForTool } from './config.mjs';
 import { SCENARIO_SLOTS, gradeDecision, summarize } from './grader.mjs';
 
 export const MARKER = 'S16-MCPLIVE-2026-07-27-A';
@@ -252,13 +252,43 @@ function makeRng(seed) {
 
 export const BOOTSTRAP_SEED = 20260727;
 
+// ---------------------------------------------------------------------------
+// REMEDIATION 3.4 (audit L5-11, S16-REMEDIATE-2026-08-01-A) — shared-stimulus
+// clustering, exactly as registered.
+//
+// DEC-16-8's clustering note: the four shared-stimulus pairs (S-01/S-25,
+// S-05/S-28, S-17/S-26, S-22/S-29) "are different graded dimensions on one
+// envelope and must not be treated as independent scenarios when clustering."
+// clusterBootstrapCI previously resampled every scenario independently,
+// violating the registered analysis plan. Scenarios are now merged into their
+// shared-stimulus cluster BEFORE resampling; per-scenario metrics (strict pass
+// rate, pass^k) are unaffected — the registered rule is about the resampling
+// unit only.
+// ---------------------------------------------------------------------------
+
+/** scenario id -> canonical cluster id (the sharedStimulusWith target, or itself). */
+export const CLUSTER_OF = Object.freeze(Object.fromEntries(
+  SCENARIOS.map((s) => [s.id, s.sharedStimulusWith ?? s.id])
+));
+
+/** Merges byScenario buckets into shared-stimulus clusters (DEC-16-8). */
+export function clusterScenarios(byScenario) {
+  const byCluster = {};
+  for (const [scenarioId, bucket] of Object.entries(byScenario)) {
+    const key = CLUSTER_OF[scenarioId] ?? scenarioId;
+    (byCluster[key] ??= { runs: [] }).runs.push(...bucket.runs);
+  }
+  return byCluster;
+}
+
 /**
- * Scenario-clustered bootstrap: resample SCENARIOS with replacement (never
- * individual runs — runs within a scenario are not independent), recompute the
- * mean run-level rate, take percentile bounds.
+ * Scenario-clustered bootstrap: resample CLUSTERS with replacement (never
+ * individual runs — runs within a scenario are not independent, and paired
+ * scenarios share one stimulus), recompute the mean run-level rate, take
+ * percentile bounds.
  */
 export function clusterBootstrapCI(byScenario, { resamples = STATS.bootstrapResamples, seed = BOOTSTRAP_SEED, alpha = 0.05 } = {}) {
-  const clusters = Object.values(byScenario).filter((c) => c.runs.length > 0);
+  const clusters = Object.values(clusterScenarios(byScenario)).filter((c) => c.runs.length > 0);
   if (clusters.length === 0) return { low: null, high: null, resamples: 0 };
   const rng = makeRng(seed);
   const means = [];
@@ -339,12 +369,14 @@ export function gradeLedger(allRows) {
   const graded = gradable.map(({ row, scenarioId, decisions }) => {
     // Per-decision grades are retained for audit, but the RUN is graded once
     // against the MERGED evidence — see mergeEvidence() for why.
+    // 3.1 (L5-5): replyText reaches the grader so fabrication in the prose
+    // OUTSIDE the structured block is graded too.
     const perDecision = decisions.map((d) =>
-      gradeDecision({ envelope: d.envelope, block: row.answerBlock, tool: d.tool, scenarioId })
+      gradeDecision({ envelope: d.envelope, block: row.answerBlock, tool: d.tool, scenarioId, replyText: row.replyText })
     );
     const merged = mergeEvidence(decisions);
     const runGrade = gradeDecision({
-      envelope: merged.envelope, block: row.answerBlock, tool: merged.tool, scenarioId
+      envelope: merged.envelope, block: row.answerBlock, tool: merged.tool, scenarioId, replyText: row.replyText
     });
     const FULL = runGrade.FULL;
     const slotModes = perDecision.map((g) => g.VF?.slotMode ?? null);
