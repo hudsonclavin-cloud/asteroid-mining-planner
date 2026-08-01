@@ -16,18 +16,20 @@ Pre-registration is **locked and reconciled**. Registered scope:
 | Frozen scenarios | 30 |
 | Struck (S-09, S-27) | 2 |
 | **Primary (pre-registered)** | **28** |
-| Deferred inside primary (S-06 only — live-verification CONTRADICTION) | 1 |
-| **Active (runnable today)** | **27** |
+| Deferred inside primary (S-06 live CONTRADICTION; S-15 prior turn unspecified) | 2 |
+| **Active (runnable today)** | **26** |
 | Primary runs (28 × 6 × r=10) | 1,680 |
 | Control runs (28 × 6 × r=3) | 504 |
 | **Total registered** | **2,184** |
 | Ceiling | **$200** |
 
-**The pilot ran on 2026-07-31 and every run errored — at ~zero cost, since 400/404 reject before inference bills.** Four provider-contract faults, all fixed in Amendment A7 (founding §17). **Zero SUCCESSFUL runs exist**, so no faithfulness datum has been produced yet and the study is still pre-data-collection.
+**Pilot rounds 1-3 and full-run attempt 1 are history; the study remains PRE-DATA.** Attempt 1 halted at 275/810 on credit exhaustion (founding §21), and the post-incident audit found instrument defects that predated it. Those were remediated (§23-§25) and Hudson's seven design rulings instantiated as **Amendment A12** (§26). **No faithfulness datum has ever been produced, and the 114 successful attempt-1 rows are NOT study data.**
 
 First contact confirmed four model strings (a 400 proves the string resolved; a 404 proves it did not) and **refuted `gpt-5.5-mini`, which does not exist**. `openai`, `anthropic` and `google` have now been exercised on the wire and corrected; `together` remains **UNTESTED-AT-NETWORK-BOUNDARY**. The MCP layer is live-verified (§5).
 
-**This run: 4 active models, not 6.** Together is deferred for cost (§16.3) and `gpt-5.5-mini` is deferred pending your choice of a small-tier model (§17.6). Registered k=6 is unchanged.
+**This run: 3 active models, not 6.** Together deferred for cost (§16.3), `gpt-5.5-mini` refuted (does not exist, §17.6), `gemini-3.1-pro-preview` quota-blocked (§18/A9-3). Registered k=6 is unchanged.
+
+⛔ **No paid run may start until `PRE_RUN_GATE.md` passes end to end** — including a public pre-registration seal of the corrected instrument (§25.2).
 
 ⚠ **Two of three pre-registered contrasts are currently unevaluable** — only `anthropic-frontier-vs-small` can be computed. See §17.7.
 
@@ -37,7 +39,7 @@ First contact confirmed four model strings (a 400 proves the string resolved; a 
 
 ```sh
 node --test tools/slice16-harness/test/
-# expect: # pass 69 / # fail 0
+# expect: # fail 0  (179 tests as of Amendment A12)
 
 node tools/slice16-harness/runner.mjs --preflight
 # reports readiness; spends nothing
