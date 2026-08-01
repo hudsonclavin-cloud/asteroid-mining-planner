@@ -47,3 +47,25 @@ A vendoring attempt of PyKEP's C++ Lambert solver was investigated and
 abandoned in favor of clean-room TypeScript implementation. See
 src/v2/research/slice-10-lambert/pykep-vendor-attempt-postmortem.md
 for the engineering record.
+
+## Solar system body textures
+
+- Source: Solar System Scope (https://www.solarsystemscope.com/textures/)
+- License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+- Components used: 2K body texture maps shipped under textures/ and loaded by
+  the solar-system renderer (src/v2/app/solar-system/runtime.ts) — including
+  2k_earth_daymap.jpg, 2k_earth_clouds.jpg, 2k_earth_normal.jpg,
+  2k_earth_specular.jpg, and the planetary body maps listed in the DEC-V1-1
+  asset inventory (src/v2/SLICE_V1_FOUNDING.md).
+- Modifications: format conversion (TIFF -> JPEG) and resizing only, per the
+  processing steps recorded in DEC-V1-1. No content alterations.
+- Attribution statement: "Textures by Solar System Scope, licensed under
+  CC BY 4.0."
+
+## Earth night lights texture
+
+- Source: NASA Scientific Visualization Studio, ID 30003
+  (https://svs.gsfc.nasa.gov/30003)
+- License: Public domain (US Government work)
+- Component used: 2k_earth_nightmap.jpg, derived from earth_lights_4800.tif
+  by resize/convert per DEC-V1-1.
