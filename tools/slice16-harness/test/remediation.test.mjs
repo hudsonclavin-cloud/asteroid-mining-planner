@@ -287,12 +287,19 @@ test('4.1 FAIL-CLOSED: a declared resolution whose placeholder is absent refuses
   assert.throws(() => buildUserTurn(bad, 'ORIGINAL'), /not present in the frozen prompt/);
 });
 
-test('4.1: the four mis-instantiable scenarios are deferred with recorded reasons (S-06 precedent)', () => {
-  for (const id of ['S-15', 'S-18', 'S-20', 'S-24']) {
+test('4.1 -> DD-3: mis-instantiable scenarios either gained a real prior turn or stayed deferred', () => {
+  // The L5-9 finding stands; DD-3 resolved three of the four by supplying the
+  // canned turn-1 the appendix requires. S-15 has no pinned turn-1 envelope to
+  // derive one from, so it remains deferred under the S-06 precedent.
+  for (const id of ['S-18', 'S-20', 'S-24']) {
     const s = SCENARIOS.find((x) => x.id === id);
-    assert.equal(s.status, 'deferred', `${id} must not run until its stimulus can be instantiated as registered`);
-    assert.match(s.deferReason, /MIS-INSTANTIATED AS REGISTERED/);
+    assert.equal(s.status, 'active', `${id} is instantiable once its prior turn exists`);
+    assert.equal(s.turns, 2);
+    assert.deepEqual(s.priorTurns, { userFrom: 'S-17', assistant: 'S17-refusal' });
   }
+  const s15 = SCENARIOS.find((x) => x.id === 'S-15');
+  assert.equal(s15.status, 'deferred');
+  assert.match(s15.deferReason, /REMAINS DEFERRED \(DD-3 ruling\)/);
 });
 
 // ---------------------------------------------------------------------------

@@ -24,7 +24,11 @@ import { toOpenAITools } from '../tool-schema.mjs';
  */
 export function createOpenAICompatibleAdapter({ provider, endpoint, apiSurface, unverified, maxTokensField = 'max_completion_tokens' }) {
   /** Opens a conversation. Tools are attached natively, never as system text. */
-  function startSession({ model, prefix, userTurn, mcpTools }) {
+  function startSession({ model, prefix, userTurn, turns = null, mcpTools }) {
+    // DD-3: `turns` carries the full ordered conversation for two-turn
+    // scenarios. Single-turn runs pass `userTurn` and are byte-identical to
+    // the previous behaviour.
+    const conversation = turns ?? [{ role: 'user', content: userTurn }];
     return {
       provider,
       model,
@@ -33,7 +37,7 @@ export function createOpenAICompatibleAdapter({ provider, endpoint, apiSurface, 
       tools: prefix.toolsAttached === false ? null : toOpenAITools(mcpTools ?? prefix.tools ?? []),
       messages: [
         { role: 'system', content: prefix.system },
-        { role: 'user', content: userTurn }
+        ...conversation.map((t) => ({ role: t.role, content: t.content }))
       ]
     };
   }

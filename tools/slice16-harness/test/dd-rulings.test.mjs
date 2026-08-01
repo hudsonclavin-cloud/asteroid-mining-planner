@@ -16,6 +16,8 @@ import {
   disclosesLimitation, claimsGlobalMinimum
 } from '../grader.mjs';
 import { classifyFollowThrough, gradeLedger, POINTER_TOOL } from '../grade.mjs';
+import { buildTurns, buildUserTurn, extractAnswerBlock, CANNED_REFUSAL_TURN_S17 } from '../prompt.mjs';
+import { SCENARIOS } from '../config.mjs';
 import { PATHS } from '../config.mjs';
 
 const cases = JSON.parse(readFileSync(resolve(PATHS.fixturesDir, 'grader-cases.json'), 'utf8'));
@@ -309,4 +311,89 @@ test('DD-2: the aggregate reports a two-bin distribution with the sequence retai
   assert.deepEqual(s30.runs[0].sequence, ['get_body', 'search_bodies']);
   assert.ok(!aggregates.primaryArm['claude-sonnet-4-6'], 'S-30 stays out of the binary primary rate');
   assert.ok(aggregates.notes.some((n) => /NARROWER THAN REGISTERED/.test(n)), 'the narrowing is disclosed in the artifact');
+});
+
+// ---------------------------------------------------------------------------
+// DD-3 — canned turn-1 for the two-turn scenarios
+// ---------------------------------------------------------------------------
+
+test('DD-3: S-18/S-20/S-24 build THREE turns — user, canned assistant refusal, push', () => {
+  for (const id of ['S-18', 'S-20', 'S-24']) {
+    const s = SCENARIOS.find((x) => x.id === id);
+    for (const form of ['ORIGINAL', 'P1', 'P2']) {
+      const turns = buildTurns(s, form, SCENARIOS);
+      assert.equal(turns.length, 3, `${id}/${form}`);
+      assert.deepEqual(turns.map((t) => t.role), ['user', 'assistant', 'user']);
+      // turn-1 user is S-17's prompt in the SAME form (register consistency).
+      assert.equal(turns[0].content, buildUserTurn(SCENARIOS.find((x) => x.id === 'S-17'), form));
+      // turn-2 is the frozen canned refusal, identical across forms and models.
+      assert.equal(turns[1].content, CANNED_REFUSAL_TURN_S17);
+      // turn-3 is the scenario's own pressure turn.
+      assert.equal(turns[2].content, buildUserTurn(s, form));
+    }
+  }
+});
+
+test('DD-3: the canned refusal is a well-formed, honest relay of the pinned envelope', () => {
+  // The appendix requires "a clean out_of_envelope refusal" on the transcript.
+  assert.match(CANNED_REFUSAL_TURN_S17, /out_of_envelope/);
+  assert.match(CANNED_REFUSAL_TURN_S17, /2928\.933/, 'carries the pinned C3');
+  assert.match(CANNED_REFUSAL_TURN_S17, /2029-06-15/, 'and the pinned cell');
+  // It honours the structured-answer contract, so the transcript is realistic.
+  const extracted = extractAnswerBlock(CANNED_REFUSAL_TURN_S17);
+  assert.equal(extracted.ok, true, 'the canned turn must parse under the same contract');
+  assert.equal(extracted.block.refusal_status.present, true);
+  assert.equal(extracted.block.refusal_status.code, 'out_of_envelope');
+});
+
+test('DD-3: the canned turn is IDENTICAL across models — that is the whole point', () => {
+  // Uniformity is what keeps the cross-model contrast unconfounded. The turn
+  // list is a pure function of (scenario, form); no model input exists.
+  const s18 = SCENARIOS.find((x) => x.id === 'S-18');
+  const a = buildTurns(s18, 'ORIGINAL', SCENARIOS);
+  const b = buildTurns(s18, 'ORIGINAL', SCENARIOS);
+  assert.deepEqual(a, b);
+});
+
+test('DD-3: single-turn scenarios are unchanged — exactly one user turn', () => {
+  const s02 = SCENARIOS.find((x) => x.id === 'S-02');
+  const turns = buildTurns(s02, 'ORIGINAL', SCENARIOS);
+  assert.equal(turns.length, 1);
+  assert.deepEqual(turns[0], { role: 'user', content: buildUserTurn(s02, 'ORIGINAL') });
+});
+
+test('DD-3 FAIL-CLOSED: an unknown source scenario or canned key throws', () => {
+  assert.throws(() => buildTurns(
+    { id: 'S-XX', priorTurns: { userFrom: 'S-999', assistant: 'S17-refusal' }, prompts: { ORIGINAL: 'x' } },
+    'ORIGINAL', SCENARIOS
+  ), /not a known scenario/);
+  assert.throws(() => buildTurns(
+    { id: 'S-XX', priorTurns: { userFrom: 'S-17', assistant: 'not-frozen' }, prompts: { ORIGINAL: 'x' } },
+    'ORIGINAL', SCENARIOS
+  ), /not a frozen canned turn/);
+});
+
+test('DD-3: every adapter seeds its native conversation from the turn list', async () => {
+  const s18 = SCENARIOS.find((x) => x.id === 'S-18');
+  const turns = buildTurns(s18, 'ORIGINAL', SCENARIOS);
+  const prefix = { system: 'sys', toolsAttached: true, tools: [] };
+
+  const oa = await import('../adapters/openai.mjs');
+  const s1 = oa.startSession({ model: { id: 'm' }, prefix, userTurn: turns[2].content, turns, mcpTools: [] });
+  assert.deepEqual(s1.messages.map((m) => m.role), ['system', 'user', 'assistant', 'user']);
+
+  const an = await import('../adapters/anthropic.mjs');
+  const s2 = an.startSession({ model: { id: 'm' }, prefix, userTurn: turns[2].content, turns, mcpTools: [] });
+  assert.deepEqual(s2.messages.map((m) => m.role), ['user', 'assistant', 'user'], 'system is out-of-band here');
+
+  const go = await import('../adapters/google.mjs');
+  const s3 = go.startSession({ model: { id: 'm' }, prefix, userTurn: turns[2].content, turns, mcpTools: [] });
+  assert.deepEqual(s3.contents.map((c) => c.role), ['user', 'model', 'user'], 'assistant maps to "model"');
+  assert.equal(s3.contents[1].parts[0].text, CANNED_REFUSAL_TURN_S17);
+});
+
+test('DD-3: S-15 stays deferred — no pinned turn-1 envelope exists to derive one from', () => {
+  const s15 = SCENARIOS.find((x) => x.id === 'S-15');
+  assert.equal(s15.status, 'deferred');
+  assert.ok(!s15.priorTurns, 'and it must not have been given a fabricated prior turn');
 });

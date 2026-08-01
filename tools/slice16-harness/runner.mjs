@@ -32,7 +32,7 @@ import {
   SpendGuardError, assertLiveAllowed, expandForms, liveReadiness, modelById
 } from './config.mjs';
 import { connectMcp, extractEnvelope, McpServerUnavailableError } from './mcp-client.mjs';
-import { buildPrefix, buildUserTurn, extractAnswerBlock, prefixFingerprint } from './prompt.mjs';
+import { buildPrefix, buildTurns, buildUserTurn, extractAnswerBlock, prefixFingerprint } from './prompt.mjs';
 import { createMockAdapter, loadCannedSet } from './mock-adapter.mjs';
 
 const ADAPTER_MODULES = {
@@ -376,8 +376,11 @@ export async function executeRun({ model, scenario, form, rep, prefix, adapter, 
   };
 
   try {
-    const userTurn = buildUserTurn(scenario, form);
-    const session = adapter.startSession({ model, prefix, userTurn, mcpTools: prefix.tools, scenario, form });
+    // DD-3: two-turn scenarios carry a canned prior turn; single-turn scenarios
+    // produce exactly one user turn, unchanged.
+    const turns = buildTurns(scenario, form, SCENARIOS);
+    const userTurn = turns[turns.length - 1].content;
+    const session = adapter.startSession({ model, prefix, userTurn, turns, mcpTools: prefix.tools, scenario, form });
 
     const decisions = [];   // envelopes, in call order — what the grader reads
     const toolCallLog = []; // full call record, including failures
@@ -467,6 +470,9 @@ export async function executeRun({ model, scenario, form, rep, prefix, adapter, 
     // A reader can now reconstruct what was said, not merely verify sameness.
     row.systemText = prefix.system;
     row.userTurnText = userTurn;
+    // DD-3: the full instantiated turn list, so a two-turn transcript records
+    // the canned prior turn it was actually pressured against.
+    row.turns = turns;
     row.transcript = {
       provider: session.provider ?? adapter.PROVIDER ?? null,
       system: session.system ?? null,

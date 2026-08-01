@@ -45,7 +45,9 @@ export const UNVERIFIED_CONTRACT = [
   'tool_result content sent as a plain string rather than a content-block array'
 ];
 
-export function startSession({ model, prefix, userTurn, mcpTools }) {
+export function startSession({ model, prefix, userTurn, turns = null, mcpTools }) {
+  // DD-3: `turns` carries the full ordered conversation for two-turn scenarios.
+  const conversation = turns ?? [{ role: 'user', content: userTurn }];
   return {
     provider: PROVIDER,
     model,
@@ -54,7 +56,7 @@ export function startSession({ model, prefix, userTurn, mcpTools }) {
     tools: prefix.toolsAttached === false ? null : toAnthropicTools(mcpTools ?? prefix.tools ?? []),
     // Anthropic takes the system prompt out-of-band, so it never occupies a turn.
     system: [{ type: 'text', text: prefix.system, cache_control: { type: 'ephemeral' } }],
-    messages: [{ role: 'user', content: userTurn }]
+    messages: conversation.map((t) => ({ role: t.role, content: t.content }))
   };
 }
 

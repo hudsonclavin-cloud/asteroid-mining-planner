@@ -93,14 +93,14 @@ test('scenario registry is internally consistent with the locked appendix', () =
   // S16-MCPLIVE: live verification resolved S-10/S-12/S-13/S-23, which promoted
   // them into the runnable set. S-06 stays deferred — the live envelope
   // CONTRADICTS its registered ground truth and Hudson adjudicates.
-  // S16-REMEDIATE (audit L5-9): S-15/S-18/S-20/S-24 deferred by the S-06
-  // precedent — their registered stimulus cannot be instantiated from the
-  // registered text (unspecified prior turn / unimplemented turns:2), so
-  // running them single-turn is not running the registered scenario.
-  // Un-deferral is Hudson's design decision (REMEDIATION_REPORT.md).
-  assert.equal(DEFERRED_SCENARIOS.length, 5, 'S-06 (contradiction) + S-15/S-18/S-20/S-24 (mis-instantiated as registered)');
-  assert.deepEqual(DEFERRED_SCENARIOS.map((s) => s.id), ['S-06', 'S-15', 'S-18', 'S-20', 'S-24']);
-  assert.equal(ACTIVE_SCENARIOS.length, 23, 'runnable-now set is primary minus deferred');
+  // S16-REMEDIATE (audit L5-9) deferred S-15/S-18/S-20/S-24 as mis-instantiated.
+  // DD-3 then RE-ACTIVATED S-18/S-20/S-24 with a canned turn-1 (Hudson's ruling),
+  // instantiating the registered pressure-after-refusal discourse position.
+  // S-15 REMAINS DEFERRED: its prior scan turn is specified nowhere, so there is
+  // no pinned envelope to derive a canned reply from (S-06 precedent).
+  assert.equal(DEFERRED_SCENARIOS.length, 2, 'S-06 (live contradiction) + S-15 (prior turn unspecified)');
+  assert.deepEqual(DEFERRED_SCENARIOS.map((s) => s.id), ['S-06', 'S-15']);
+  assert.equal(ACTIVE_SCENARIOS.length, 26, 'runnable-now set is primary minus deferred');
   assert.equal(
     ACTIVE_SCENARIOS.length + DEFERRED_SCENARIOS.length,
     PRIMARY_SCENARIOS.length,
@@ -136,13 +136,12 @@ test('registered run counts match Amendment A1', () => {
   assert.equal(REGISTERED_TOTAL_RUN_COUNT, 2184, 'registered primary + registered control');
 
   // EXECUTED counts reflect what actually runs, along all three dimensions:
-  //   scenarios 23 runnable (S-06 contradiction; S-15/S-18/S-20/S-24
-  //                          mis-instantiated as registered — audit L5-9)
+  //   scenarios 26 runnable (S-06 contradiction; S-15 prior turn unspecified)
   //   models     3 active   (1 deferred, 1 refuted, 1 quota-blocked)
   //   r         10 executed (A10-1 restored the registered value)
-  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 690, '23 runnable x k=3 active x r=10 executed');
-  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 207, '23 x k=3 x control r=3 (control r is its own constant)');
-  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 897, 'executed primary + executed control');
+  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 780, '26 runnable x k=3 active x r=10 executed');
+  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 234, '26 x k=3 x control r=3 (control r is its own constant)');
+  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 1014, 'executed primary + executed control');
 
   // The two must never be equal by accident — that would mean the split collapsed.
   assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,

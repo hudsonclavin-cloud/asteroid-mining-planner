@@ -75,10 +75,13 @@ export const UNVERIFIED_CONTRACT = [
   'v1beta targeted; whether this model requires v1 is unconfirmed'
 ];
 
-export function startSession({ model, prefix, userTurn, mcpTools }) {
+export function startSession({ model, prefix, userTurn, turns = null, mcpTools }) {
   const attached = prefix.toolsAttached === false
     ? { tools: null, dropped: [] }
     : toGoogleTools(mcpTools ?? prefix.tools ?? []);
+  // DD-3: `turns` carries the full ordered conversation. This API names the
+  // assistant role "model", so roles are mapped rather than copied.
+  const conversation = turns ?? [{ role: 'user', content: userTurn }];
   return {
     provider: PROVIDER,
     model,
@@ -88,7 +91,10 @@ export function startSession({ model, prefix, userTurn, mcpTools }) {
     // Recorded so the A4 report can enumerate exactly what the projection removed.
     droppedSchemaKeywords: attached.dropped,
     systemInstruction: { parts: [{ text: prefix.system }] },
-    contents: [{ role: 'user', parts: [{ text: userTurn }] }]
+    contents: conversation.map((t) => ({
+      role: t.role === 'assistant' ? 'model' : t.role,
+      parts: [{ text: t.content }]
+    }))
   };
 }
 
