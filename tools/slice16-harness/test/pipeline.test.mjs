@@ -14,7 +14,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  ACTIVE_SCENARIOS, CONTRASTS, CONTROL_ARM, DEFERRED_SCENARIOS,
+  ACTIVE_SCENARIOS, CONTRASTS, CONTROL_ARM, DEFERRED_SCENARIOS, SEALED_AT,
   FORM_ALLOCATION, PATHS, PRIMARY_SCENARIOS, PROMPT_FORMS,
   SCENARIOS, STRUCK_SCENARIOS,
   REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL,
@@ -84,12 +84,20 @@ test('scenario registry is internally consistent with the locked appendix', () =
     'every scenario carries exactly one status'
   );
 
-  // Amendment A1 (§10.1): S-09 and S-27 struck; S-29 repaired and live.
-  assert.equal(STRUCK_SCENARIOS.length, 2, 'A1 strikes exactly S-09 and S-27');
-  assert.deepEqual(STRUCK_SCENARIOS.map((s) => s.id), ['S-09', 'S-27']);
+  // Amendment A1 (§10.1) struck S-09 and S-27 PRE-data. R-CLOSE-1 struck
+  // S-20/S-21/S-24 POST-data as structurally ungradeable (founding §31).
+  assert.equal(STRUCK_SCENARIOS.length, 5, 'A1 (2, pre-data) + R-CLOSE-1 (3, post-data)');
+  assert.deepEqual(STRUCK_SCENARIOS.map((s) => s.id), ['S-09', 'S-20', 'S-21', 'S-24', 'S-27']);
+  // Post-data strikes are MARKED as such — the distinction is load-bearing.
+  assert.deepEqual(STRUCK_SCENARIOS.filter((s) => s.struckPostData).map((s) => s.id), ['S-20', 'S-21', 'S-24']);
+  for (const s of STRUCK_SCENARIOS) {
+    assert.ok(typeof s.struckReason === 'string' && s.struckReason.length > 40, `${s.id} must record why`);
+  }
 
-  // The pre-registered primary scope is everything not struck.
-  assert.equal(PRIMARY_SCENARIOS.length, 28, 'pre-registered primary set is 28 scenarios');
+  // The primary scope AS AMENDED. The scope AS SEALED is pinned separately —
+  // §30's results were collected under the sealed numbers, not these.
+  assert.equal(PRIMARY_SCENARIOS.length, 25, 'primary set after the post-data strike');
+  assert.equal(SEALED_AT.primaryScenarios, 28, 'the SEALED registration is 28 and does not move');
   // S16-MCPLIVE: live verification resolved S-10/S-12/S-13/S-23, which promoted
   // them into the runnable set. S-06 stays deferred — the live envelope
   // CONTRADICTS its registered ground truth and Hudson adjudicates.
@@ -100,7 +108,7 @@ test('scenario registry is internally consistent with the locked appendix', () =
   // no pinned envelope to derive a canned reply from (S-06 precedent).
   assert.equal(DEFERRED_SCENARIOS.length, 2, 'S-06 (live contradiction) + S-15 (prior turn unspecified)');
   assert.deepEqual(DEFERRED_SCENARIOS.map((s) => s.id), ['S-06', 'S-15']);
-  assert.equal(ACTIVE_SCENARIOS.length, 26, 'runnable-now set is primary minus deferred');
+  assert.equal(ACTIVE_SCENARIOS.length, 23, 'runnable-now set is primary minus deferred');
   assert.equal(
     ACTIVE_SCENARIOS.length + DEFERRED_SCENARIOS.length,
     PRIMARY_SCENARIOS.length,
@@ -131,21 +139,32 @@ test('S-29 is repaired and live, graded VF/PTA/AUP with RFR inapplicable', () =>
 test('registered run counts match Amendment A1', () => {
   // REGISTERED counts are the pre-registered design and must NOT move when a
   // model is deferred — k=6 stays true of the registration.
-  assert.equal(REGISTERED_PRIMARY_RUN_COUNT, 1680, '28 primary scenarios x k=6 registered x r=10');
-  assert.equal(REGISTERED_CONTROL_RUN_COUNT, 504, '28 x k=6 x r=3, ORIGINAL only');
-  assert.equal(REGISTERED_TOTAL_RUN_COUNT, 2184, 'registered primary + registered control');
+  // As SEALED at 670b039 / DOI 10.5281/zenodo.21752617 — the registration
+  // §30's results were collected under. A historical fact; it never moves.
+  assert.equal(SEALED_AT.primaryRunCount, 1680, '28 x k=6 x r=10 as sealed');
+  assert.equal(SEALED_AT.controlRunCount, 504, '28 x k=6 x r=3 as sealed');
+  assert.equal(SEALED_AT.totalRunCount, 2184, 'sealed total');
+  // As AMENDED by R-CLOSE-1's post-data strike, for any FUTURE run.
+  assert.equal(REGISTERED_PRIMARY_RUN_COUNT, 1500, '25 primary x k=6 x r=10 after the strike');
+  assert.equal(REGISTERED_CONTROL_RUN_COUNT, 450, '25 x k=6 x r=3');
+  assert.equal(REGISTERED_TOTAL_RUN_COUNT, 1950, 'amended primary + control');
+  assert.ok(REGISTERED_TOTAL_RUN_COUNT < SEALED_AT.totalRunCount,
+    'the amendment may only ever REMOVE scope post-data, never add it');
 
   // EXECUTED counts reflect what actually runs, along all three dimensions:
-  //   scenarios 26 runnable (S-06 contradiction; S-15 prior turn unspecified)
+  //   scenarios 23 runnable (S-06, S-15 deferred; S-20/S-21/S-24 struck post-data)
   //   models     2 active   (gpt-5.5 blocked on credit and Gemini blocked on
   //                          quota, both MEASURED §28/§29; mini refuted;
   //                          Together deferred)
   //   r          6 executed (S16-FINISH sized it to the remaining $19 budget;
   //                          the largest affordable r with a BALANCED 2/2/2
   //                          form allocation)
-  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 312, '26 runnable x k=2 active x r=6 executed');
-  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 156, '26 x k=2 x control r=3 (control r is its own constant)');
-  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 468, 'executed primary + executed control');
+  // NOTE: these are FORWARD-LOOKING counts for a future run at the amended
+  // scope. The 468 runs actually collected (founding §30) were executed at 26
+  // active scenarios, BEFORE the post-data strike, and are not restated here.
+  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 276, '23 runnable x k=2 active x r=6');
+  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 138, '23 x k=2 x control r=3');
+  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 414, 'executed primary + executed control');
 
   // The two must never be equal by accident — that would mean the split collapsed.
   assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,

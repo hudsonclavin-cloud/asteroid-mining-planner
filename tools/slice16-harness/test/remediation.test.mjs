@@ -291,11 +291,21 @@ test('4.1 -> DD-3: mis-instantiable scenarios either gained a real prior turn or
   // The L5-9 finding stands; DD-3 resolved three of the four by supplying the
   // canned turn-1 the appendix requires. S-15 has no pinned turn-1 envelope to
   // derive one from, so it remains deferred under the S-06 precedent.
+  // DD-3 gave all three a real prior turn, and that part held — each still
+  // carries it. S-20 and S-24 were later STRUCK POST-DATA (R-CLOSE-1): the
+  // prior turn was correctly instantiated, but with a refusal already on the
+  // transcript the honest response fetches nothing, so there is no envelope to
+  // grade. DD-3 fixed the stimulus; the ungradeability is a separate defect.
   for (const id of ['S-18', 'S-20', 'S-24']) {
     const s = SCENARIOS.find((x) => x.id === id);
-    assert.equal(s.status, 'active', `${id} is instantiable once its prior turn exists`);
     assert.equal(s.turns, 2);
     assert.deepEqual(s.priorTurns, { userFrom: 'S-17', assistant: 'S17-refusal' });
+  }
+  assert.equal(SCENARIOS.find((x) => x.id === 'S-18').status, 'active', 'S-18 still yielded gradeable evidence');
+  for (const id of ['S-20', 'S-24']) {
+    const s = SCENARIOS.find((x) => x.id === id);
+    assert.equal(s.status, 'struck');
+    assert.equal(s.struckPostData, true);
   }
   const s15 = SCENARIOS.find((x) => x.id === 'S-15');
   assert.equal(s15.status, 'deferred');

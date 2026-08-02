@@ -350,11 +350,19 @@ test('REGRESSION: two same-unit slots do not steal each other\'s values', () => 
   assert.deepEqual(single.get('estimatedRadius'), [270]);
 });
 
-test('A3: every primary scenario has a slot declaration', () => {
-  const declared = Object.keys(SCENARIO_SLOTS).sort();
-  const primary = PRIMARY_SCENARIOS.map((s) => s.id).sort();
-  assert.deepEqual(declared, primary, 'slot table must cover exactly the 28 primary scenarios');
-  assert.equal(declared.length, 28);
+test('A3: the slot table covers every scenario that has ever been primary', () => {
+  // R-CLOSE-1's post-data strike removed S-20/S-21/S-24 from PRIMARY_SCENARIOS.
+  // Their slot declarations are DELIBERATELY RETAINED: grade.mjs refuses any row
+  // whose scenario has no slot, so dropping them would make the already-collected
+  // ledgers ungradeable — the data would become unreadable by its own instrument.
+  // The table is therefore a superset of the current primary set.
+  const covered = new Set(Object.keys(SCENARIO_SLOTS));
+  for (const s of PRIMARY_SCENARIOS) {
+    assert.ok(covered.has(s.id), `${s.id} is primary but has no slot declaration`);
+  }
+  for (const id of ['S-20', 'S-21', 'S-24']) {
+    assert.ok(covered.has(id), `${id} was struck post-data but must keep its slot so old ledgers stay gradeable`);
+  }
 });
 
 test('helper primitives behave as documented', () => {
