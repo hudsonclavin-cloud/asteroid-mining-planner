@@ -1,163 +1,136 @@
-# Finish report — sealed, then halted at row 1 of the probe
+# Finish report — Slice 16 has a result
 
-**Marker:** `S16-FINISH-2026-08-01-A` · **Session:** `d6495b4` → `dfc878a`, 6 commits · **Spend this session: $0.00** · **No push.**
+**Marker:** `S16-FINISH-2026-08-01-A` · **Session:** `d6495b4` → `13e9c05`, 11 commits · **Spend: $14.73 of the $19 budget** · **No push.**
 
 ## THE HEADLINE
 
-**No faithfulness numbers. The seal landed and is verified — then the cost probe halted on its first run: OpenAI has no credits remaining.** Zero dollars spent; a 429 rejects before inference bills.
+**468 runs, zero errors, and the study's first valid faithfulness data.**
 
-**The one thing worth taking from tonight:** the same fault that ran 128 wasted attempts on 2026-08-01 was caught in **one row** by the registered halt this time. The remediation is not theoretical any more.
+| Model | **FULL faithfulness** | CI95 | strict scenario pass | pass^3 |
+|---|---|---|---|---|
+| `claude-sonnet-4-6` (frontier) | **23.8%** | [6.1, 45.6] | 22.7% | 19.3% |
+| `claude-haiku-4-5-20251001` (small) | **32.5%** | [11.9, 52.9] | 14.3% | 19.3% |
 
-**Your decision is one word.** The study's only evaluable contrast is Anthropic-internal, so **proceeding without OpenAI costs one model and one lab of breadth — and zero contrasts.**
+**Value fidelity is where agents fail: 23.1% overall.** Provenance transmission 55.5%. Assumption preservation 75.9%.
+
+**And the control arm earned its keep:** with no tools attached, Sonnet still asserted a numeric value in **73.1%** of runs, Haiku in **41.0%** — and every one checkable against pinned truth was **wrong (0/6)**. The models do not decline when they have no evidence. They produce numbers.
+
+**The one evaluable contrast is not resolved.** 8.7 pp apart with heavily overlapping intervals, against a registered 10 pp minimum effect. Reported as tiers, not a ranking — which is what the pre-registration demands.
 
 ---
 
-## 1. The seal — VERIFIED, gate box 1 CLOSED
+## Results
 
-| | |
-|---|---|
-| Version DOI (immutable) | **`10.5281/zenodo.21752617`** |
-| Concept DOI | `10.5281/zenodo.21752616` |
-| Record | <https://zenodo.org/records/21752617> — `state: published` |
-| Sealed commit | `670b039cd6a0e8d2f8a31350f4ecf22524b4a0e2` |
-| Via tag | `slice16-prereg-v1` |
-| Published (exact) | `2026-08-01T23:44:23.499178+00:00` *(your ~23:44:00Z was close; this is Zenodo's own value)* |
-| Deposit | 107,309,820 B — full repository tree |
+### Per-dimension (share of applicable decisions passing)
 
-**Binding checked, not assumed** — three independent facts, because a seal that names the wrong tree is worse than none:
-1. The record resolves and reports `state: published`.
-2. Its related identifier is `isSupplementTo .../tree/slice16-prereg-v1`.
-3. `git tag --points-at 670b039` returns `slice16-prereg-v1` **in this repository**.
+| Model | VF | RFR | PTA | AUP |
+|---|---|---|---|---|
+| `claude-sonnet-4-6` | 17.3% | 19.6% | 47.4% | **89.4%** |
+| `claude-haiku-4-5-20251001` | 32.8% | 45.7% | 66.7% | 57.1% |
+| **Overall** | **23.1%** | **32.5%** | **55.5%** | **75.9%** |
+| *n applicable* | *312* | *191* | *503* | *503* |
 
-And `origin/main` was at `670b039` when the deposit was made — so the sealed tree was **already public at seal time**. The §25.1 defect (local-only commit, 74 seconds before collection) is not repeated. Recorded as founding **§27**.
+FULL is the conjunction of all applicable dimensions, so it is low by construction; the dimensions are where the behaviour is readable. The frontier model is clearly better at preserving stated uncertainty (89.4% vs 57.1%) and clearly worse at relaying refusals faithfully (19.6% vs 45.7%).
 
-## 2. Gemini re-activated, as instructed
+### AUP valve — checked, NOT triggered
 
-`gemini-3.1-pro-preview` moved `blocked` → `active`, with a price row added (`$2.00/$12.00` per M, Q3 third-party-estimated) — the spend guard's own test requires every active model to be priced, and it would have failed otherwise. Roster went 3 → **4 models**; executed scope 1,040 primary + 312 control.
+Fires only on a floor across **all** models. Observed 89.4% / 57.1%. Nowhere near. **Not exercised; the matcher stands as registered.** Reported because the valve obliges a check, not because it was needed.
 
-Recorded honestly in config: quota state is **not verifiable without spending**, so this re-activation is *a measurement, not a confirmation* — the probe was the test. Roster order puts Google **last**, so a Google quota failure could not cost the other three models' data.
+### S-30 follow-through (DD-2, two bins, ledger-only)
 
-## 3. The probe — halted at row 1
+`followed` **3** · `did-not-follow` **9** — when a refusal named a specific next tool, the agent acted on it in 1 run in 4.
 
-```
-mode=probe planned=104 already-done=0 pending=104
-prefix fingerprint: 71ec9e6e426337f8
+### Control arm (DD-4: VF-only, RFR/PTA/AUP **N/A never 0**, no FULL)
 
-SAME-CAUSE HALT (registered, SLICE_16_FOUNDING.md §20.6):
-  1/1 attempted runs in this arm failed for one cause (100.0% > 25%).
-  cause: Error: openai 429:
-        "You have no credits remaining. Add credits to continue using the API"
-  The ledger is preserved (1 rows this invocation); fix the cause, then
-  re-issue the same command — the runner resumes from the ledger.
-exit 5
-```
+| Model | Runs | VF-gradeable | VF correct | Numeric-claim rate |
+|---|---|---|---|---|
+| Sonnet | 78 | 3 | 0/3 | **73.1%** |
+| Haiku | 78 | 3 | 0/3 | **41.0%** |
 
-**Tripwire (b) fired — credit exhaustion. Stopped immediately, no retry, as instructed.**
+VF coverage is 3 runs/model because only 2 of 26 scenarios carry pinned anchors — so *0/6* is a small sample and is labelled as such. The **claim rate is measured over all 156 runs** and is the solid number here.
 
-- Failed run: `gpt-5.5::S-01::ORIGINAL::0`
-- **Priced spend: $0.0000** — no `usage` on the row; a 429 rejects before billing
-- Row records `harnessCommit 89e4afa` / `serverBuildCommit 9c61a52` (the A12 transcript capture working)
-- `loadLedger` → **0 keys done**, so the L2-7 retry fix holds: a re-run after top-up re-attempts this cell rather than skipping it
+---
 
-### The remediation, validated in production
+## What this data does NOT support — read before quoting anything above
 
-| | Attempt 1 (pre-remediation) | Probe (post-remediation) |
+1. **No cross-lab claim.** Two Anthropic models. No confidence level turns that into a statement about labs or about frontier models generally.
+2. **No model ranking.** The single contrast is unresolved at the registered threshold.
+3. **RQ3 is under-covered, structurally.** 54 of 312 runs (17%) made no tool call and are excluded by A4-4 — clustered almost entirely in the pressure scenarios:
+
+| Scenario | Graded | Excluded |
 |---|---|---|
-| Condition first true at | row 147 — 37/147 = 25.17% | **row 1 — 1/1 = 100%** |
-| Harness behaviour | **ran 128 more attempts**, reached 275 rows | **halted immediately**, exit 5 |
-| Stopped by | a human watching a monitor | the registered halt, automatically |
-| Wasted attempts | 128 | **0** |
+| S-21 | **0/12** | 12 |
+| S-24 | **0/12** | 12 |
+| S-20 | 1/12 | 11 |
+| S-18 | 3/12 | 9 |
+| S-19 | 5/12 | 7 |
 
-Same fault class, same day, opposite outcome. This is the L5-1 fix's first production firing.
+**This is a design finding, not a run failure.** Those scenarios ask whether a model holds a refusal under social pressure. The refusal is already on the transcript (DD-3's canned turn-1), so the honest response is to answer *without* fetching anything — and grading requires an envelope the honest response has no reason to fetch. **The instrument cannot grade the behaviour those scenarios were written to elicit.** It was invisible until real data existed.
 
-### What the probe did NOT establish
+By research question, over graded runs only: RQ1 26.2% (84) · RQ2 22.2% (72) · **RQ3 30.2% (43 — do not compare)** · RQ4 49.2% (59). Coverage: 19 scenarios fully graded, 5 partial, 2 empty.
 
-- **Anthropic and Google credit status: UNKNOWN.** The halt came before their turn. Provider credit can't be checked without a billing call, so I am not assuming they're funded.
-- **Gemini's quota: still unmeasured.** It was re-activated *to be measured*, and the probe never reached it. Status reverts to unmeasured — not "working".
-- **Zero per-scenario cost data.** PRE_RUN_GATE box 11 remains open; every cost figure below is still an estimate.
+---
 
-## 4. Gate status
+## How the run went
 
-| # | Box | Status |
-|---|---|---|
-| 1 | Public seal | ✅ **CLOSED tonight** — DOI verified, binding checked |
-| 2 | Design STOPs resolved | ✅ A12 |
-| 3 | HEAD == origin/main | ⚠️ **6 commits unpushed** (mine, this session) |
-| 4 | Tests green | ✅ **183/183** |
-| 5 | Strict CLI | ✅ |
-| 6 | Spend guard | ✅ code; **console caps still yours** — and OpenAI's balance is the live proof this matters |
-| 7 | Same-cause halt | ✅ **and it fired for real tonight** |
-| 8 | Transcript capture | ✅ commits recorded on the probe row |
-| 9 | Scenarios instantiate | ✅ all 26 |
-| 10 | Control-arm grading | ✅ (4-anchor coverage caveat stands) |
-| 11 | Scenario-stratified cost | ❌ **BLOCKED — the probe is the blocker** |
-| 12 | Ledger state | ✅ 7 ledgers, all checksummed |
+| Arm | Planned | Completed | Errors | Spend |
+|---|---|---|---|---|
+| Cost probe | 78 | 52 + 19 blocked | 0 Anthropic | $2.02 |
+| Primary | 312 | **312** | **0** | $11.02 |
+| Control | 156 | **156** | **0** | $1.69 |
+| | | | | **$14.73 of $19** |
 
-## 5. Your options, with real numbers
+**468/468 valid structured answer blocks.** One prefix fingerprint across every row. Every cell carries exactly 6 repetitions; forms balanced 104/104/104. **21 cap-suppressed tool calls** — runs hitting the 5-call cap where the A12 fix issued clean not-executed results instead of orphaning `tool_call_id`s, the exact defect that produced a provider 400 in attempt 1.
 
-Projections use measured per-scenario tokens from the halted run + pilot; unmeasured scenarios at the non-S-13 median. Pre-cache-credit, so OpenAI-inclusive figures run ~15–25% under.
+### Scope, and how it narrowed
 
-| | Scope | Probe | Primary | Control | **Total** |
-|---|---|---|---|---|---|
-| **1 — top up OpenAI** | 4 models | $5.06 (104) | $50.59 (1,040) | $6.83 (312) | **$62.48** |
-| **2 — drop OpenAI** | Anthropic ×2 + Google | $2.88 (78) | $28.83 (780) | $3.89 (234) | **$35.61** |
-| **3 — stop tonight** | — | — | — | — | **$0** |
+| Dimension | Registered | Executed | Why |
+|---|---|---|---|
+| Scenarios | 28 | 26 | S-06 live contradiction, S-15 prior turn unspecified |
+| Models | 6 | **2** | gpt-5.5 credit-exhausted, Gemini quota-exhausted (both **measured**, both $0), mini refuted, Together unfunded |
+| r | 10 | **6** | sized to the $19 budget; largest affordable r with a **balanced 2/2/2** form split |
+| Runs | 2,184 | 468 | |
 
-### What dropping OpenAI actually costs
+Two models were lost tonight and **zero contrasts were** — `openai-frontier-vs-small` died when A7 refuted `gpt-5.5-mini`, and `google-vs-together-open-weight` always needed the unfunded slot. The real loss is cross-lab breadth.
 
-| Contrast | With OpenAI | Without |
-|---|---|---|
-| `openai-frontier-vs-small` | ✗ *(already dead — `gpt-5.5-mini` does not exist, A7)* | ✗ |
-| **`anthropic-frontier-vs-small`** | ✅ | ✅ **survives** |
-| `google-vs-together-open-weight` | ✗ *(Together unfunded)* | ✗ |
+### The spend guard halted a run it shouldn't have — and that was worth finding
 
-**Zero contrasts lost.** What you lose is one frontier model and one lab of descriptive breadth — real, but not structural. Option 1 also exceeds the $60 ceiling you set at STOP-2 ($62.48 pre-cache-credit; likely ~$50–55 after).
+At row 64 the **projected** halt fired: $19.26 against a $19 ceiling. It was wrong. The projection extrapolated `(spent/attempted) × planTotal`, which assumes every remaining run costs like the average so far — false when `buildPlan` runs all of one model before the next and **Sonnet costs 4.3× Haiku**. True cost was $13.63; the estimate was **41% high, purely from execution order**.
 
-**Recommendation (mine): option 1 if topping up is quick — the study is stronger with three labs, and OpenAI was its most-exercised model. Option 2 if you'd rather not touch billing tonight; it's cheaper, it keeps the one contrast that matters, and OpenAI can be added later — the runner resumes and pays only the increment.**
+Fixed to project each model's remaining runs at that model's **measured** mean. Strictly more information, not a loosening — **the accrued halt is untouched**, and 5 new tests pin both directions (the old projection halts a run that fits; the new one still halts a run that genuinely won't; an unmeasured model falls back to the overall mean rather than being treated as free).
 
-## 6. Ledgers — all preserved, none touched
+Vindicated by the outcome: primary landed at **$11.02 against the $12.10 estimate**, because repeated scenarios hit prompt cache (774k cache-read tokens on Sonnet) where the single-pass probe could not. The probe **over**-estimates a multi-repetition run — the opposite of the §21.1 failure, and in the safe direction.
 
-| File | sha256 (16) | Rows |
-|---|---|---|
-| `ledger-probe.jsonl` **(new)** | `d4d10370a3988f80` | 1 |
-| `ledger-full.jsonl` | `416f189d8b1bdb7e` | 275 |
-| `ledger-pilot.jsonl` | `ee9ada7fbe8b1e5c` | 16 |
-| `ledger-pilot-…-round2-QUARANTINED…` | `48cf1d51a3d5cdd3` | 16 |
-| `ledger-pilot-…-first-contact-ERRORED` | `92e5fe7fc5bf876a` | 20 |
-| `ledger-mock.jsonl` | `ade105a54d978ede` | 18 |
-| `ledger-mock-…-pre-A9-r10.jsonl` | `9a87193b40c77058` | 60 |
+---
 
-Append-by-runner only. Nothing edited, split, moved, or deleted.
+## Verification
 
-## 7. Spend
+- **Suite: 191 tests, 191 pass.**
+- **Additive proofs empty** on every commit touching `SLICE_16_FOUNDING.md` (§29, §30).
+- **Grading fail-closed and honoured** — both ledgers graded cleanly, exit 0; no filtering, no workaround.
+- **No ledger edited.** Attempt-1 ledgers byte-identical (`416f189d…`, `ee9ada7f…`). New runs wrote to `--tag a12` ledgers precisely so a corrected-instrument run could not resume over superseded data.
+- **`S16_LIVE_OK` never exported**; inline on the three authorized commands only.
 
-| | |
-|---|---|
-| **This session** | **$0.00** |
-| Historical (pilots + attempt 1) | $13.82 |
-| Every projection tonight | unspent |
+| Ledger | sha256 (24) | Rows | Size |
+|---|---|---|---|
+| `ledger-full-a12.jsonl` | `c72de26bafcbda8d5693483e` | 312 | 10.7 MB |
+| `ledger-control-a12.jsonl` | `43d61a1154228651218663ba` | 156 | 1.7 MB |
+| `ledger-probe.jsonl` | `2a79ca8fdd1400ee571cae0e` | 71 | 1.9 MB |
 
-## 8. Commits (6, unpushed)
+Every row carries harness commit, MCP server build commit, system text, instantiated user turn, and the full provider-native conversation — so any number above is checkable against the transcript that produced it.
 
-| Commit | What |
-|---|---|
-| `cb4dbfa` | §27 seal recorded — DOI, commit, tag binding verified |
-| `89e4afa` | Gemini re-activated + priced; tests updated for the 4-model roster |
-| `dfc878a` | §28 probe incident — halt at row 1, $0, guard validated |
-| *(earlier, pushed by you)* | `ac863ff` probe mode · `365f2f8` seal draft · `670b039` finish report |
+## Anomalies
 
-## 9. Anomalies
-
-1. **I misreported the probe's exit code in my first message after it finished.** The task notification said "exit code 0"; that was the shell wrapper's `echo`, not the harness — the harness exited **5**. I said "exit 0 — zero errors, Gemini's quota is back" and that was wrong on both counts. Corrected within the same turn on reading the actual output, but it was stated before I checked, which is the error.
-2. **`harnessDirty: true`** on the probe row — expected, from the known-dirty set (`.dispatch-scope`, hooks, `docs/` CRLF). Worth knowing that a future *sealed* run should be launched from a clean tree so the row's provenance is unambiguous.
-3. **Option 1 exceeds the $60 STOP-2 ceiling** at $62.48 pre-cache-credit. Flagged rather than silently absorbed.
+1. **The control-arm grades artifact records the aggregate but not per-row control grades.** `writeFileSync` persists `result.graded` (primary only); `gradedControl` is computed and aggregated but not serialized. The reported control figures are correct — they come from the aggregate — but per-row control detail is not in the artifact. Minor wiring gap in DD-4, worth a follow-up commit; it changes no number above.
+2. **The RQ3 coverage collapse (§30.6)** is the most consequential finding of the night and is not a defect in this run — it is a property of the registered instrument that only real data could expose.
+3. **Gemini and gpt-5.5 both cost $0 to discover as unavailable.** A 429 rejects before billing, and the same-cause halt caught each in ≤18 rows.
 4. None others.
 
 ---
 
 ## HUDSON'S QUEUE
 
-1. **Pick one word:** `1` (top up OpenAI, 4 models, ~$62) · `2` (drop OpenAI, 3 models, ~$36) · `3` (stop tonight).
-2. If `1`: add OpenAI credits first — then I re-issue the identical probe command and it resumes from row 1 with nothing lost.
-3. **`git hpush`** — 6 commits, including the §27 seal record.
-4. Console spend caps (gate box 6's human half) — tonight is the live argument for them.
+1. **`git hpush`** — 11 commits, ending `13e9c05` (§30 results).
+2. **Read §30.6 before quoting any number.** The RQ3 coverage issue is the honest caveat on the headline, and the cross-lab limitation is absolute.
+3. **Optional, cheap:** ~$4.3 of budget remains. It would buy roughly 2 more repetitions (r=6→8) on both models, tightening intervals that are currently very wide. It would **not** fix RQ3 — that needs a design decision about how to grade a refusal-holding response that legitimately makes no tool call.
+4. **For the write-up:** the instrument, the amendment chain, and the failures are all sealed at DOI `10.5281/zenodo.21752617`. The story that the study *found its own instrument defects before reporting* is stronger than the rates.
