@@ -306,16 +306,72 @@ export function sameCauseHalt(failuresByCause, attempted) {
  * crosses the ceiling — the early warning while budget remains.
  * Returns {kind:'accrued'|'projected', accruedUsd, projectedUsd, ceilingUsd} or null.
  */
-export function spendHalt({ priorUsd = 0, thisRunUsd, attempted, planTotal, ceilingUsd = BUDGET.ceilingUsd }) {
+export function spendHalt({
+  priorUsd = 0, thisRunUsd, attempted, planTotal, ceilingUsd = BUDGET.ceilingUsd,
+  remainingByModel = null, meanByModel = null
+}) {
   const accruedUsd = priorUsd + thisRunUsd;
+  // ACCRUED: a hard stop on money actually spent. Never estimated, never
+  // adjusted, never model-aware — this is the real ceiling.
   if (accruedUsd > ceilingUsd) {
     return { kind: 'accrued', accruedUsd, projectedUsd: accruedUsd, ceilingUsd };
   }
+
+  // PROJECTED: the early warning. S16-FINISH CORRECTION — the first version
+  // projected `(thisRunUsd / attempted) * planTotal`, i.e. it assumed every
+  // remaining run costs the same as the average so far. That is false whenever
+  // the plan is ORDERED BY MODEL and models differ in price: buildPlan runs all
+  // of model A before any of model B, so early in the run the observed mean is
+  // model A's mean, not the plan's.
+  //
+  // It fired for real: 64 sonnet rows projected $19.26 against a $19 ceiling
+  // and halted a run whose true cost — sonnet at $0.0628/run, haiku at
+  // $0.0148/run, both MEASURED over a full 26-scenario probe sweep — was
+  // $13.63. A 41% overestimate produced purely by execution order.
+  //
+  // When per-model means and remaining counts are supplied, the projection is
+  // computed per model instead. This is strictly MORE information, not a
+  // loosening: it replaces one extrapolated average with several measured ones,
+  // and the accrued halt above is unchanged.
   if (attempted > 0 && planTotal > attempted) {
-    const projectedUsd = priorUsd + (thisRunUsd / attempted) * planTotal;
+    let projectedUsd;
+    if (remainingByModel && meanByModel) {
+      const overall = thisRunUsd / attempted;
+      let remainder = 0;
+      for (const [model, count] of Object.entries(remainingByModel)) {
+        // A model with no measurement anywhere falls back to the overall mean.
+        const mean = Number.isFinite(meanByModel[model]) ? meanByModel[model] : overall;
+        remainder += mean * count;
+      }
+      projectedUsd = priorUsd + thisRunUsd + remainder;
+    } else {
+      projectedUsd = priorUsd + (thisRunUsd / attempted) * planTotal;
+    }
     if (projectedUsd > ceilingUsd) return { kind: 'projected', accruedUsd, projectedUsd, ceilingUsd };
   }
   return null;
+}
+
+/**
+ * Measured mean cost per run, per model, across every session ledger.
+ * The probe deliberately swept all 26 scenarios for each model, so these means
+ * rest on a complete sample rather than whatever the current arm has reached.
+ */
+export function sessionMeanCostByModel(ledgerDir = PATHS.ledgerDir) {
+  const acc = {};
+  for (const name of SESSION_LEDGERS) {
+    const { rows } = parseLedgerFile(resolve(ledgerDir, name));
+    for (const row of rows) {
+      const { usd } = estimateRowCostUsd(row);
+      if (!row.model || !row.usage?.reported) continue;
+      const a = (acc[row.model] ??= { n: 0, usd: 0 });
+      a.n += 1;
+      a.usd += usd;
+    }
+  }
+  const means = {};
+  for (const [model, a] of Object.entries(acc)) if (a.n > 0) means[model] = a.usd / a.n;
+  return means;
 }
 
 /** Prices every row already in a ledger — the resume seed for the guard. */
@@ -738,6 +794,7 @@ export async function main(argv = process.argv.slice(2)) {
   let unpricedRows = 0;
   // S16-FINISH: the meter spans every session ledger, not just this one.
   const priorUsd = sessionSpendUsd();
+  const meanByModel = sessionMeanCostByModel();
   if (priorUsd > 0) console.log(`prior session spend (all arms): $${priorUsd.toFixed(2)} of the $${BUDGET.ceilingUsd} ceiling`);
   const failuresByCause = new Map();
 
@@ -772,7 +829,16 @@ export async function main(argv = process.argv.slice(2)) {
         unpricedRows += 1;
         console.error(`  !! row for ${row.model} has reported usage but NO price entry — spend guard is undercounting (${unpricedRows} such rows)`);
       }
-      const budgetHalt = spendHalt({ priorUsd, thisRunUsd, attempted: completed, planTotal: pending.length });
+      // Per-model remaining counts, so the projection is not distorted by the
+      // plan's model ordering (see spendHalt).
+      const remainingByModel = {};
+      for (let k = completed; k < pending.length; k += 1) {
+        remainingByModel[pending[k].modelId] = (remainingByModel[pending[k].modelId] ?? 0) + 1;
+      }
+      const budgetHalt = spendHalt({
+        priorUsd, thisRunUsd, attempted: completed, planTotal: pending.length,
+        remainingByModel, meanByModel
+      });
       if (budgetHalt) {
         console.error(
           `\nSPEND HALT (${budgetHalt.kind}): accrued $${budgetHalt.accruedUsd.toFixed(2)}` +

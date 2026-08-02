@@ -19,7 +19,7 @@ import { join } from 'node:path';
 import {
   main, parseCliMode, UsageError,
   errorCauseKey, sameCauseHalt, SAME_CAUSE_HALT_THRESHOLD,
-  spendHalt, priorLedgerSpendUsd, sessionSpendUsd,
+  spendHalt, priorLedgerSpendUsd, sessionSpendUsd, sessionMeanCostByModel,
   loadLedger, parseLedgerFile, LedgerCorruptError,
   executeRun, harnessProvenance, serverBuildProvenance
 } from '../runner.mjs';
@@ -386,4 +386,62 @@ test('L2-7 rule 4 does NOT weaken fail-closed grading (tripwire-i check)', () =>
     { runKey: 'k', scenario: 'S-02', error: 'attempt 2 also failed', _line: 2 }
   ];
   assert.throws(() => gradeLedger(rows), LedgerRefusedError);
+});
+
+// ---------------------------------------------------------------------------
+// S16-FINISH — the projected halt must not be fooled by model ordering
+// ---------------------------------------------------------------------------
+
+test('SPEND: the OLD projection halts a run that actually fits the budget', () => {
+  // The real event: 64 sonnet rows at $3.54, $2.02 prior, 312 planned.
+  // Flat extrapolation says $19.26 and halts against a $19 ceiling.
+  const flat = spendHalt({ priorUsd: 2.0165, thisRunUsd: 3.54, attempted: 64, planTotal: 312, ceilingUsd: 19 });
+  assert.equal(flat?.kind, 'projected', 'the flat projection halts');
+  assert.ok(flat.projectedUsd > 19);
+});
+
+test('SPEND: the model-aware projection does not, because it uses MEASURED per-model means', () => {
+  // Same moment, with the probe's measured means and the true remaining split.
+  const halt = spendHalt({
+    priorUsd: 2.0165, thisRunUsd: 3.54, attempted: 64, planTotal: 312, ceilingUsd: 19,
+    remainingByModel: { 'claude-sonnet-4-6': 92, 'claude-haiku-4-5-20251001': 156 },
+    meanByModel: { 'claude-sonnet-4-6': 0.06279, 'claude-haiku-4-5-20251001': 0.01477 }
+  });
+  assert.equal(halt, null, 'a run costing ~$13.6 must not be halted by a $19 ceiling');
+});
+
+test('SPEND: the model-aware projection STILL halts when the run genuinely will not fit', () => {
+  // Same shape, but the remaining work really is expensive.
+  const halt = spendHalt({
+    priorUsd: 2.0165, thisRunUsd: 3.54, attempted: 64, planTotal: 312, ceilingUsd: 19,
+    remainingByModel: { 'claude-sonnet-4-6': 248 },
+    meanByModel: { 'claude-sonnet-4-6': 0.06279 }
+  });
+  assert.equal(halt?.kind, 'projected');
+  assert.ok(halt.projectedUsd > 19);
+});
+
+test('SPEND: an unmeasured model falls back to the overall mean, never to zero', () => {
+  const halt = spendHalt({
+    priorUsd: 0, thisRunUsd: 10, attempted: 100, planTotal: 300, ceilingUsd: 19,
+    remainingByModel: { 'never-seen-model': 200 },
+    meanByModel: {}   // no measurement at all
+  });
+  // overall mean 0.10 x 200 = $20 remaining + $10 spent = $30 > $19
+  assert.equal(halt?.kind, 'projected', 'an unknown model must not be projected as free');
+});
+
+test('SPEND: the ACCRUED halt is untouched by the model-aware change', () => {
+  const halt = spendHalt({
+    priorUsd: 18, thisRunUsd: 2, attempted: 10, planTotal: 10, ceilingUsd: 19,
+    remainingByModel: {}, meanByModel: {}
+  });
+  assert.equal(halt?.kind, 'accrued', 'real money spent is still a hard stop');
+});
+
+test('SPEND: per-model means come from real session ledgers', () => {
+  const means = sessionMeanCostByModel();
+  for (const [model, mean] of Object.entries(means)) {
+    assert.ok(Number.isFinite(mean) && mean >= 0, `${model} mean must be a real number`);
+  }
 });
