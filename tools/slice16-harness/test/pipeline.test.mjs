@@ -137,13 +137,15 @@ test('registered run counts match Amendment A1', () => {
 
   // EXECUTED counts reflect what actually runs, along all three dimensions:
   //   scenarios 26 runnable (S-06 contradiction; S-15 prior turn unspecified)
-  //   models     3 active   (Gemini re-activated by S16-FINISH; gpt-5.5 then
-  //                          blocked on provider credit, §28; mini refuted;
+  //   models     2 active   (gpt-5.5 blocked on credit and Gemini blocked on
+  //                          quota, both MEASURED §28/§29; mini refuted;
   //                          Together deferred)
-  //   r         10 executed (A10-1 restored the registered value)
-  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 780, '26 runnable x k=3 active x r=10 executed');
-  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 234, '26 x k=3 x control r=3 (control r is its own constant)');
-  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 1014, 'executed primary + executed control');
+  //   r          6 executed (S16-FINISH sized it to the remaining $19 budget;
+  //                          the largest affordable r with a BALANCED 2/2/2
+  //                          form allocation)
+  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 312, '26 runnable x k=2 active x r=6 executed');
+  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 156, '26 x k=2 x control r=3 (control r is its own constant)');
+  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 468, 'executed primary + executed control');
 
   // The two must never be equal by accident — that would mean the split collapsed.
   assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,
@@ -181,27 +183,33 @@ test('form allocation is 4/3/3 and sums to the REGISTERED r', () => {
   assert.equal(slots.filter((f) => f === 'P2').length, 3);
 });
 
-test('A10-4: the EXECUTED r=10 allocation is the registered 4/3/3 (LD-3)', () => {
-  // Checked BEFORE spending. A silent imbalance here would corrupt the
+test('A10-4 / S16-FINISH: the EXECUTED allocation is BALANCED across prompt forms', () => {
+  // Checked BEFORE spending. A silent imbalance here would bias the
   // paraphrase-robustness question across the entire study, and no amount of
-  // post-hoc analysis recovers a form that was never run.
+  // post-hoc analysis recovers a form that was never run. r=6 was chosen over
+  // the marginally-affordable r=7 precisely because 6 divides evenly (2/2/2)
+  // and 7 does not (3/2/2).
   const slots = expandForms(EXECUTED_RUNS_PER_CELL);
-  assert.equal(slots.length, 10, 'r=10 must produce exactly 10 slots per cell');
-  assert.equal(slots.filter((f) => f === 'ORIGINAL').length, 4, 'ORIGINAL x4');
-  assert.equal(slots.filter((f) => f === 'P1').length, 3, 'P1 x3');
-  assert.equal(slots.filter((f) => f === 'P2').length, 3, 'P2 x3');
+  assert.equal(slots.length, EXECUTED_RUNS_PER_CELL);
+  const n = EXECUTED_RUNS_PER_CELL / 3;
+  assert.equal(slots.filter((f) => f === 'ORIGINAL').length, n, 'ORIGINAL share');
+  assert.equal(slots.filter((f) => f === 'P1').length, n, 'P1 share');
+  assert.equal(slots.filter((f) => f === 'P2').length, n, 'P2 share');
+  // The REGISTERED allocation is unchanged and still yields 4/3/3.
+  const reg = expandForms(REGISTERED_RUNS_PER_CELL);
+  assert.equal(reg.filter((f) => f === 'ORIGINAL').length, 4);
+  assert.equal(reg.filter((f) => f === 'P1').length, 3);
+  assert.equal(reg.filter((f) => f === 'P2').length, 3);
 });
 
-test('A10-1: registered and executed r stay SEPARATELY NAMED even when equal', () => {
+test('A10-1: registered and executed r stay SEPARATELY NAMED, equal or not', () => {
   assert.equal(REGISTERED_RUNS_PER_CELL, 10, 'the registered design never moved');
-  assert.equal(EXECUTED_RUNS_PER_CELL, 10, 'A10-1 restored the executed value to it');
+  assert.equal(EXECUTED_RUNS_PER_CELL, 6, 'S16-FINISH sized the executed r to the remaining budget');
 
-  // NOTE: these are now EQUAL, and this test deliberately does NOT assert they
-  // differ. A9 asserted notEqual, which was true then but encoded the wrong
-  // invariant: the discipline is that the two are separately NAMED, not that
-  // they hold different values. Equality is a fact about today's design, not a
-  // collapse of the distinction — the other dimensions still diverge (scenarios
-  // 28/27, models 6/3), and either r may move again independently.
+  // The invariant is that the two are separately NAMED, not that they hold any
+  // particular relation. A10 had them equal; S16-FINISH has them differing
+  // again — which is exactly the situation the split exists for, and the test
+  // must pass in both states rather than encoding one of them.
   assert.ok('REGISTERED_RUNS_PER_CELL' in CONFIG, 'registered r must remain exported by name');
   assert.ok('EXECUTED_RUNS_PER_CELL' in CONFIG, 'executed r must remain exported by name');
 
@@ -421,8 +429,8 @@ test('roster models carry a status, mirroring the scenario convention', () => {
     assert.ok(['active', 'deferred', 'refuted', 'blocked'].includes(m.status), `${m.id} must declare a status`);
   }
   assert.equal(REGISTERED_ROSTER.length, 6, 'registered design is k=6 — unchanged by any exclusion');
-  assert.equal(ACTIVE_ROSTER.length, 3, 'three models run right now (gpt-5.5 blocked on credit, §28)');
-  assert.equal(EXCLUDED_MODELS.length, 3, 'gpt-5.5 (credit), gpt-5.5-mini (refuted), Together (cost)');
+  assert.equal(ACTIVE_ROSTER.length, 2, 'two models run right now — both Anthropic');
+  assert.equal(EXCLUDED_MODELS.length, 4, 'gpt-5.5 (credit), gemini (quota), gpt-5.5-mini (refuted), Together (cost)');
   assert.equal(
     ACTIVE_ROSTER.length + EXCLUDED_MODELS.length,
     REGISTERED_ROSTER.length,
@@ -451,17 +459,26 @@ test('A9-3: exclusion reasons stay DISTINGUISHABLE, never collapsed into one lab
     assert.ok(EXCLUSION_KINDS[kind], `the '${kind}' exclusion kind must stay defined`);
   }
 
-  // No two excluded models share a kind, and each says why.
+  // The invariant is NOT "one kind per model" — two models can share a kind
+  // legitimately (gpt-5.5 and Gemini are both 'blocked', one on credit and one
+  // on quota). What A9-3 protects is that the kinds do not COLLAPSE into a
+  // single undifferentiated label, and that every exclusion states its own
+  // specific reason, because each needs a different thing to come back.
   const kinds = new Set(EXCLUDED_MODELS.map((m) => m.status));
-  assert.equal(kinds.size, EXCLUDED_MODELS.length, 'each exclusion has its own kind');
+  assert.ok(kinds.size >= 2, 'exclusions must not all wear one label');
+  const reasons = new Set();
   for (const m of EXCLUDED_MODELS) {
     assert.ok(typeof m.exclusionReason === 'string' && m.exclusionReason.length > 40,
       `${m.id}: an exclusion must carry a recorded reason`);
+    reasons.add(m.exclusionReason);
   }
+  assert.equal(reasons.size, EXCLUDED_MODELS.length,
+    'no two models may share a reason string — that would hide why each is out');
 
-  // A re-activation is as much a part of the record as the exclusion was.
+  // A re-activation is as much a part of the record as the exclusion was —
+  // and so is being re-blocked BY the measurement it was re-activated for.
   const gemini = byId('gemini-3.1-pro-preview');
-  assert.equal(gemini.status, 'active');
+  assert.equal(gemini.status, 'blocked');
   assert.match(gemini.reactivatedBy, /S16-FINISH/);
 
   // And the third kind is live again on a different model: gpt-5.5 is blocked
@@ -470,6 +487,11 @@ test('A9-3: exclusion reasons stay DISTINGUISHABLE, never collapsed into one lab
   assert.equal(gpt.status, 'blocked');
   assert.match(gpt.exclusionReason, /no credits remaining/);
   assert.equal(gpt.certainty, 'confirmed', 'the string is still confirmed by 109 successful runs');
+
+  // Two models are blocked for DIFFERENT external limits — credit vs quota —
+  // and each says which, because they need different things to come back.
+  assert.match(gemini.exclusionReason, /quota/i);
+  assert.match(gemini.exclusionReason, /MEASURED TWICE/);
 });
 
 test('Together is PRESENT-but-EXCLUDED, never deleted', () => {

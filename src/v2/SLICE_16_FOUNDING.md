@@ -1391,3 +1391,51 @@ The L5-1 remediation implemented DEC's registered ">25% of attempted runs in an 
 ## §28.3 — Consequence for scope, recorded because it is not obvious
 
 The study's **only evaluable contrast — `anthropic-frontier-vs-small` — does not involve OpenAI.** `openai-frontier-vs-small` has been unevaluable since A7 refuted `gpt-5.5-mini` (no same-generation small sibling exists), and `google-vs-together-open-weight` needs the unfunded Together slot. So proceeding without OpenAI would cost **one frontier model and one lab of descriptive breadth, and zero contrasts.** That is a materially different trade from the one a reader might assume, and it is Hudson's call, not the harness's.
+
+# §29 — Final executed scope (2026-08-02): two models, r=6, sized to the money that exists
+
+**Marker:** `S16-FINISH-2026-08-01-A` · **Additive.** Pre-data. This records the scope the study actually collects under, and why each reduction happened.
+
+## §29.1 — The roster collapsed to one lab, by measurement
+
+| Model | Status | Established how |
+|---|---|---|
+| `claude-sonnet-4-6` | **active** | 26/26 probe runs succeeded |
+| `claude-haiku-4-5-20251001` | **active** | 26/26 probe runs succeeded |
+| `gpt-5.5` | **blocked** — provider credit | probe row 1: `openai 429 "You have no credits remaining"` (§28) |
+| `gemini-3.1-pro-preview` | **blocked** — provider quota | 18/18 probe runs: `google 429 "You exceeded your current quota"`; halt fired at 25.7% |
+| `gpt-5.5-mini` | refuted | A7: 404, no such model |
+| Together slot | deferred | unfunded |
+
+Both blocks cost **$0** — a 429 is rejected before billing. Neither is a code fault: `gpt-5.5` has 109 successful runs behind it and Gemini's 429 proves its string resolves. They need money and quota respectively, not changes.
+
+**The study is now single-lab.** That is a real loss and is not softened here: cross-lab description is gone. What is *not* lost is any contrast — `anthropic-frontier-vs-small` was the only evaluable one before these blocks and remains so, because `openai-frontier-vs-small` died when A7 refuted `gpt-5.5-mini`, and `google-vs-together-open-weight` always needed the unfunded Together slot. **Two models were lost; zero contrasts were.**
+
+## §29.2 — r = 6, and why not 7
+
+The cost probe (PRE_RUN_GATE box 11) measured **one full sweep of the executable roster at $2.0165** — 26 scenarios × 2 models, every scenario individually priced. With a hard remaining budget of **$19** and no further top-ups:
+
+```
+probe $2.02  +  primary (2.0165 × r)  +  control (2.0165 × 3 × 0.45)  ≤  $19
+```
+
+| r | forms | total | headroom |
+|---|---|---|---|
+| 3 | 1/1/1 balanced | $10.79 | $8.21 |
+| 5 | 2/2/1 **unbalanced** | $14.82 | $4.18 |
+| **6** | **2/2/2 balanced** | **$16.84** | **$2.16** |
+| 7 | 3/2/2 **unbalanced** | $18.85 | $0.15 |
+
+**r=6 is chosen over r=7 for two reasons, and the second matters more.** $0.15 of headroom is "approaching the ceiling", not under it. And r=6 is the largest affordable r whose form allocation is **balanced** — `expandForms(6)` gives 2 ORIGINAL / 2 P1 / 2 P2, where 5 gives 2/2/1 and 7 gives 3/2/2. An unbalanced allocation quietly biases the paraphrase-robustness comparison LD-3 registered; buying one more repetition at the price of that balance is a bad trade.
+
+**Executed: 312 primary + 156 control = 468 runs.** Registered remains 28 × 6 × 10 = 2,184. The registered/executed split now differs on all three dimensions — scenarios 28/26, models 6/2, r 10/6 — which is precisely why A9-1 refused to let one name mean both.
+
+## §29.3 — Statistical cost, stated plainly
+
+r=6 rather than 10 means wider confidence intervals and less power to resolve differences below the registered 10-percentage-point minimum effect. `faithfulness-pass^3` is estimated from 6 runs per cell rather than 10. Two models rather than six means the pooled figures describe two Anthropic models and nothing else; no cross-lab claim is available from this data at any confidence.
+
+This is a **reduced execution of a registered design, disclosed** — the mechanism DEC-16-10 provides and A9 already exercised — not a redesign. The instrument, scenarios, grader, and analysis plan are those sealed at `670b039` under DOI `10.5281/zenodo.21752617`.
+
+## §29.4 — Instrument health observed in the probe
+
+52/52 successful runs produced a valid structured answer block. Seven runs made no tool call at all (S-21, S-24 and others) and were correctly marked `no_tool_call` — a measured outcome, not a fault. **Seven tool calls were cap-suppressed**, meaning runs reached the 5-call cap and the A12/§24.3 fix issued clean not-executed results instead of orphaning `tool_call_id`s — the defect that produced a provider 400 in attempt 1, now demonstrably handled in production. One prefix fingerprint across every row.

@@ -67,14 +67,22 @@ export const REGISTERED_RUNS_PER_CELL = 10;
  * reduction never reached data collection — it was reverted while still
  * pre-data, which is the whole point of doing arithmetic before spending.
  *
- * THE NAMING SPLIT STAYS even though these two constants are now EQUAL. That is
- * deliberate and is not dead code: the split is structural, and the other two
- * dimensions still diverge (scenarios 28 registered / 27 executed, models 6 / 3).
- * Collapsing r back to one name because today's values coincide would reinstate
- * exactly the conflation A9-1 removed, and would silently break the moment any
- * future amendment moved one of them again.
+ * S16-FINISH-2026-08-01-A: r = 6, SIZED TO THE REMAINING BUDGET (founding §29).
+ * Not an estimate this time — the cost probe measured one full sweep of the
+ * executable roster at $2.0165, so the arithmetic is exact:
+ *     probe $2.02 + primary (2.0165 x r) + control (2.0165 x 3 x 0.45) <= $19
+ * r=7 lands at $18.85, which is "approaching the ceiling", not under it. r=6
+ * lands at $16.84 with $2.16 of headroom.
+ *
+ * r=6 IS ALSO THE LARGEST AFFORDABLE r WITH A BALANCED FORM ALLOCATION:
+ * expandForms(6) -> 2 ORIGINAL / 2 P1 / 2 P2. r=5 gives 2/2/1 and r=7 gives
+ * 3/2/2, both of which quietly bias the paraphrase-robustness comparison LD-3
+ * registered. Choosing the balanced r is worth more than the extra repetition.
+ *
+ * THE NAMING SPLIT STAYS, and now the values DIFFER again (10 registered / 6
+ * executed) — which is exactly the situation the split exists for.
  */
-export const EXECUTED_RUNS_PER_CELL = 10;
+export const EXECUTED_RUNS_PER_CELL = 6;
 
 /**
  * Allocation inside r, expressed against the REGISTERED r (sums to 10).
@@ -192,9 +200,10 @@ export const ROSTER = Object.freeze([
   // 429s again the probe stops that model and reports (tripwire b); the other
   // three models' probe data is unaffected because the roster order runs
   // Google last.
-  { id: 'gemini-3.1-pro-preview', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'confirmed', confirmedBy: 'A8 ListModels (metadata): present, version 3.1-pro-preview-01-2026, supports generateContent. A9: round-3 429 (quota) corroborates resolution. Still NO successful call — function calling on this model remains unexercised.',
-    status: 'active',
-    reactivatedBy: 'S16-FINISH-2026-08-01-A: Hudson instructed "probe including Gemini". Quota state unverified without spending — the cost probe is the test, not a prior confirmation.' },
+  { id: 'gemini-3.1-pro-preview', lab: 'google', tier: 'frontier', adapter: 'google', keyEnv: 'GOOGLE_API_KEY', certainty: 'confirmed', confirmedBy: 'A8 ListModels (metadata): present, version 3.1-pro-preview-01-2026, supports generateContent. A9 and S16-FINISH: 429 quota responses corroborate resolution. Still NO successful call — function calling on this model remains unexercised after three attempts.',
+    status: 'blocked',
+    reactivatedBy: 'S16-FINISH-2026-08-01-A: re-activated on Hudson\'s instruction to be MEASURED, then re-blocked by the measurement.',
+    exclusionReason: 'BLOCKED ON PROVIDER QUOTA, MEASURED TWICE (A9-3, then S16-FINISH founding §29). The cost probe attempted 18 runs and every one returned google 429 "You exceeded your current quota"; the registered same-cause halt stopped the arm at 18/70 = 25.7%. Cost of the failed attempts: $0 — a 429 rejects before billing. NOT a code fault and NOT a refuted string: the request reaches quota enforcement, which a bad string never does. Re-activation needs a Google quota/billing increase and status back to \'active\' — no code change.' },
   // A6 (R-A6-3): DeepSeek dropped for jurisdiction; Together.ai takes the
   // open-weight slot (US-hosted open weights). k=6 unchanged.
   // certainty 'pending' => the model string is a SENTINEL, not a lead:
