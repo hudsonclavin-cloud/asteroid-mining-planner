@@ -141,7 +141,23 @@ export const ROSTER = Object.freeze([
   // completed 4 gpt-5.5 runs, so the confirmation no longer rests on a listing
   // at all. Leaving the old wording would have been a false disclaimer, which is
   // the same class of error as a false claim: both misdescribe the evidence.
-  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'confirmed', confirmedBy: 'A9: 4 SUCCESSFUL round-3 pilot runs (200, tool calls + envelopes + valid answer block). Supersedes A7\'s GET /v1/models listing, which is now merely corroborating.', status: 'active' },
+  //
+  // S16-FINISH-2026-08-01-A: BLOCKED ON PROVIDER CREDIT. The cost probe halted
+  // on its first row with `openai 429: "You have no credits remaining"` (§28).
+  // This is the A9-3 'blocked' kind exactly: the model string is confirmed by
+  // 109 successful runs, the adapter is exercised and correct, and nothing in
+  // this repository needs changing — an account balance does. Hudson chose to
+  // proceed on the remaining roster rather than top up tonight (option 2).
+  //
+  // COST OF THIS EXCLUSION, recorded so it is not misread: ZERO contrasts.
+  // `openai-frontier-vs-small` has been unevaluable since A7 refuted
+  // gpt-5.5-mini, so the only evaluable contrast — anthropic-frontier-vs-small
+  // — is untouched. What is lost is one frontier model and one lab of
+  // DESCRIPTIVE breadth. Re-activation needs credit and `status: 'active'`;
+  // no code change, and the runner resumes paying only the increment.
+  { id: 'gpt-5.5', lab: 'openai', tier: 'frontier', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'confirmed', confirmedBy: 'A9: 4 SUCCESSFUL round-3 pilot runs (200, tool calls + envelopes + valid answer block). Supersedes A7\'s GET /v1/models listing, which is now merely corroborating.',
+    status: 'blocked',
+    exclusionReason: 'BLOCKED ON PROVIDER CREDIT (S16-FINISH, founding §28): the cost probe halted at row 1 with openai 429 "You have no credits remaining. Add credits to continue using the API". NOT a code fault and NOT a refuted string — 109 successful runs confirm both. Distinct from Together (deferred by cost choice) and gpt-5.5-mini (refuted, does not exist). Re-activation needs account credit and status back to \'active\' — no code change, no model substitution, and the runner resumes paying only the increment.' },
   { id: 'gpt-5.5-mini', lab: 'openai', tier: 'small', adapter: 'openai', keyEnv: 'OPENAI_API_KEY', certainty: 'refuted',
     status: 'refuted',
     exclusionReason: 'REFUTED BY PILOT (A7): openai 404 model_not_found. GET /v1/models confirms the 5.5 generation ships ONLY gpt-5.5 and gpt-5.5-pro — there is NO gpt-5.5-mini or gpt-5.5-nano, so no same-generation small sibling exists. R-A7-2 forbids inventing one, so the slot is deferred pending Hudson\'s choice from the live listing. Nearest small-tier candidates, all a GENERATION BEHIND (which would confound capability-tier with generation in the DEC-16-6 frontier-vs-small contrast): gpt-5.4-mini, gpt-5.4-nano, gpt-5-mini, gpt-5-nano. Re-activate by setting a chosen id + status active.' },

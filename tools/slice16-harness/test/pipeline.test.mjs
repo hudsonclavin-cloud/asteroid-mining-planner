@@ -137,12 +137,13 @@ test('registered run counts match Amendment A1', () => {
 
   // EXECUTED counts reflect what actually runs, along all three dimensions:
   //   scenarios 26 runnable (S-06 contradiction; S-15 prior turn unspecified)
-  //   models     4 active   (1 deferred, 1 refuted; Gemini RE-ACTIVATED by
-  //                          S16-FINISH on Hudson's instruction)
+  //   models     3 active   (Gemini re-activated by S16-FINISH; gpt-5.5 then
+  //                          blocked on provider credit, §28; mini refuted;
+  //                          Together deferred)
   //   r         10 executed (A10-1 restored the registered value)
-  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 1040, '26 runnable x k=4 active x r=10 executed');
-  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 312, '26 x k=4 x control r=3 (control r is its own constant)');
-  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 1352, 'executed primary + executed control');
+  assert.equal(EXECUTED_PRIMARY_RUN_COUNT, 780, '26 runnable x k=3 active x r=10 executed');
+  assert.equal(EXECUTED_CONTROL_RUN_COUNT, 234, '26 x k=3 x control r=3 (control r is its own constant)');
+  assert.equal(EXECUTED_TOTAL_RUN_COUNT, 1014, 'executed primary + executed control');
 
   // The two must never be equal by accident — that would mean the split collapsed.
   assert.notEqual(REGISTERED_TOTAL_RUN_COUNT, EXECUTED_TOTAL_RUN_COUNT,
@@ -420,8 +421,8 @@ test('roster models carry a status, mirroring the scenario convention', () => {
     assert.ok(['active', 'deferred', 'refuted', 'blocked'].includes(m.status), `${m.id} must declare a status`);
   }
   assert.equal(REGISTERED_ROSTER.length, 6, 'registered design is k=6 — unchanged by any exclusion');
-  assert.equal(ACTIVE_ROSTER.length, 4, 'four models run right now (S16-FINISH re-activated Gemini)');
-  assert.equal(EXCLUDED_MODELS.length, 2, 'Together (cost) and gpt-5.5-mini (refuted)');
+  assert.equal(ACTIVE_ROSTER.length, 3, 'three models run right now (gpt-5.5 blocked on credit, §28)');
+  assert.equal(EXCLUDED_MODELS.length, 3, 'gpt-5.5 (credit), gpt-5.5-mini (refuted), Together (cost)');
   assert.equal(
     ACTIVE_ROSTER.length + EXCLUDED_MODELS.length,
     REGISTERED_ROSTER.length,
@@ -462,6 +463,13 @@ test('A9-3: exclusion reasons stay DISTINGUISHABLE, never collapsed into one lab
   const gemini = byId('gemini-3.1-pro-preview');
   assert.equal(gemini.status, 'active');
   assert.match(gemini.reactivatedBy, /S16-FINISH/);
+
+  // And the third kind is live again on a different model: gpt-5.5 is blocked
+  // on CREDIT, which is neither a refuted string nor a cost choice.
+  const gpt = byId('gpt-5.5');
+  assert.equal(gpt.status, 'blocked');
+  assert.match(gpt.exclusionReason, /no credits remaining/);
+  assert.equal(gpt.certainty, 'confirmed', 'the string is still confirmed by 109 successful runs');
 });
 
 test('Together is PRESENT-but-EXCLUDED, never deleted', () => {
