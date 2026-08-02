@@ -1439,3 +1439,77 @@ This is a **reduced execution of a registered design, disclosed** — the mechan
 ## §29.4 — Instrument health observed in the probe
 
 52/52 successful runs produced a valid structured answer block. Seven runs made no tool call at all (S-21, S-24 and others) and were correctly marked `no_tool_call` — a measured outcome, not a fault. **Seven tool calls were cap-suppressed**, meaning runs reached the 5-call cap and the A12/§24.3 fix issued clean not-executed results instead of orphaning `tool_call_id`s — the defect that produced a provider 400 in attempt 1, now demonstrably handled in production. One prefix fingerprint across every row.
+
+# §30 — RESULTS (2026-08-02): the study's first valid data
+
+**Marker:** `S16-FINISH-2026-08-01-A` · **Additive.** Collected under the instrument sealed at `670b039` / DOI `10.5281/zenodo.21752617`, at the scope recorded in §29. **468 runs, zero errors, $14.73.**
+
+## §30.1 — Primary outcome (DEC-16-8)
+
+Mean run-level full-faithfulness, scenario-clustered bootstrap CIs (seeded, reproducible), over **258 graded runs** of 312 attempted:
+
+| Model | Runs | Scen | **FULL** | CI95 | strict scenario pass | pass^3 |
+|---|---|---|---|---|---|---|
+| `claude-sonnet-4-6` (frontier) | 126 | 22 | **23.8%** | [6.1, 45.6] | 22.7% | 19.3% |
+| `claude-haiku-4-5-20251001` (small) | 120 | 21 | **32.5%** | [11.9, 52.9] | 14.3% | 19.3% |
+
+**FULL is the AND of every applicable dimension**, so it is conjunctive by construction and low rates are expected; the per-dimension table below is where the behaviour is legible.
+
+## §30.2 — Per-dimension (share of applicable decisions passing)
+
+| Model | VF | RFR | PTA | AUP |
+|---|---|---|---|---|
+| `claude-sonnet-4-6` | 17.3% | 19.6% | 47.4% | **89.4%** |
+| `claude-haiku-4-5-20251001` | 32.8% | 45.7% | 66.7% | 57.1% |
+| **Overall** | **23.1%** | **32.5%** | **55.5%** | **75.9%** |
+| *applicable decisions* | *312* | *191* | *503* | *503* |
+
+**Value fidelity is the weakest dimension** — under a quarter of applicable decisions carried the envelope's numbers correctly. Provenance transmission fails about half the time. Assumption/uncertainty preservation is the strongest, and is the one dimension where the frontier model is clearly ahead.
+
+## §30.3 — The one evaluable contrast
+
+`anthropic-frontier-vs-small`: small − frontier = **+8.7 pp** (32.5% vs 23.8%), CIs [11.9, 52.9] vs [6.1, 45.6] — **heavily overlapping**.
+
+**NOT RESOLVED at the registered 10-percentage-point minimum effect.** Per DEC-16-3 this is reported as tiers, never a ranking: on this evidence the two models are **not distinguishable** on full-faithfulness. The direction (small ≥ frontier) is noted and explicitly not claimed. The other two registered contrasts remain unevaluable — `openai-frontier-vs-small` since A7 refuted `gpt-5.5-mini`, `google-vs-together-open-weight` for want of a funded Together slot.
+
+## §30.4 — AUP valve: NOT triggered
+
+The pre-registered escape valve (A1 §10.3) fires only on an AUP floor across **all** models. Observed: 89.4% and 57.1%. **Nowhere near a floor; the valve is not exercised and the AUP matcher stands as registered.** Recorded because the valve's existence obliges a check, not because it was needed.
+
+## §30.5 — Control arm: the (tools − no-tools) delta
+
+Graded per DD-4 — VF-only against pinned ground truth, RFR/PTA/AUP **N/A never 0**, no FULL:
+
+| Model | Runs | VF-gradeable | VF correct | **Numeric-claim rate** |
+|---|---|---|---|---|
+| `claude-sonnet-4-6` | 78 | 3 | **0 / 3** | **73.1%** |
+| `claude-haiku-4-5-20251001` | 78 | 3 | **0 / 3** | **41.0%** |
+
+**With no tools attached, Sonnet asserted a numeric value for the graded quantity in 73.1% of runs and Haiku in 41.0% — and in every case where a pinned ground truth existed to check against, the value was wrong (0/6).** This is the baseline the arm exists to establish: the models do not decline to answer when they have no evidence; they produce numbers. VF coverage is only 3 runs per model because just 2 of 26 scenarios carry pinned anchors (§26.5), so the *rate* is descriptive and the *0/6* is a small sample — but the claim rate is measured over all 156 runs.
+
+## §30.6 — What the data does NOT support, stated first
+
+- **No cross-lab claim.** Two Anthropic models. No confidence level makes this a statement about labs, vendors, or frontier models generally.
+- **No model ranking.** The one contrast is unresolved at the registered threshold.
+- **RQ3 is badly under-covered, and the reason is structural.** 54 of 312 runs (17%) made no tool call and are excluded by A4-4. They cluster almost entirely in the pressure scenarios: **S-21 and S-24 yielded no gradeable evidence at all (0/12 each)**, S-20 yielded 1/12, S-18 3/12, S-19 5/12. Those scenarios ask whether a model holds a refusal under social pressure — and the honest answer to a refusal already on the transcript *is* to answer without a new tool call. **The registered instrument cannot grade the behaviour those scenarios were written to elicit**, because grading requires an envelope the honest response has no reason to fetch. This is a design finding, not a run failure, and it was invisible until real data existed.
+- **19 of 26 scenarios are fully graded; 5 partial; 2 empty.**
+
+By research question, over graded runs only: RQ1 26.2% (84 runs) · RQ2 22.2% (72) · RQ3 30.2% (43) · RQ4 49.2% (59). **RQ3's figure rests on 43 runs and should not be compared with the others.**
+
+## §30.7 — S-30 follow-through (DD-2, two bins, ledger-only)
+
+`followed` **3** · `did-not-follow` **9**. When a refusal's `what_would_help` named a specific next tool, the agent acted on it in 1 run in 4.
+
+## §30.8 — Instrument behaviour during collection
+
+312 primary + 156 control runs, **zero provider errors**. One prefix fingerprint across every row. **468/468 valid structured answer blocks.** 21 cap-suppressed tool calls — runs reaching the 5-call cap where the A12/§24.3 fix issued clean not-executed results, the defect that produced a provider 400 in attempt 1. Every cell carries exactly its 6 repetitions; prompt forms balanced 104/104/104.
+
+## §30.9 — Evidence
+
+| Ledger | sha256 (24) | Rows |
+|---|---|---|
+| `ledger-full-a12.jsonl` (primary) | `c72de26bafcbda8d5693483e` | 312 |
+| `ledger-control-a12.jsonl` (control) | `43d61a1154228651218663ba` | 156 |
+| `ledger-probe.jsonl` (cost probe) | `2a79ca8fdd1400ee571cae0e` | 71 |
+
+Every row carries the harness commit, the MCP server build commit, the system text, the instantiated user turn, and the full provider-native conversation (§24.4), so any figure above is checkable against the transcript that produced it. **The 114 rows from attempt 1 remain excluded and are not study data.**
