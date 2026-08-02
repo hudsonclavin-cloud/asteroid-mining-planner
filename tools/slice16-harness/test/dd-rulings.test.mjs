@@ -582,7 +582,7 @@ test('DD-5: single-refusal runs are unchanged', () => {
 // ---------------------------------------------------------------------------
 
 test('PROBE: --probe parses as its own mode and is not a fallback', () => {
-  assert.deepEqual(parseCliMode(['--probe']), { mode: 'probe', fixture: null });
+  assert.deepEqual(parseCliMode(['--probe']), { mode: 'probe', fixture: null, tag: null });
   assert.throws(() => parseCliMode(['--probe', '--full']), UsageError);
   assert.throws(() => parseCliMode(['--prob']), UsageError);
 });

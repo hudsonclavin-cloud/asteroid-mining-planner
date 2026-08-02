@@ -250,10 +250,38 @@ export const EVALUABLE_CONTRASTS = CONTRASTS.filter(
 // ---------------------------------------------------------------------------
 
 export const BUDGET = Object.freeze({
-  ceilingUsd: 200,
+  // S16-FINISH-2026-08-01-A: LOWERED 200 -> 19. This is no longer a design
+  // aspiration, it is the ACTUAL REMAINING CREDIT. Hudson: "$15 added to
+  // Anthropic. Total available ~= $19. This is the final budget — do not
+  // exceed it... no further top-ups will happen."
+  //
+  // The registered $200 ceiling (DEC-16-7) is unchanged as a DESIGN commitment
+  // and is recorded below; this is the operational ceiling the runtime guard
+  // enforces, and it is deliberately the smaller of the two. A guard set above
+  // the money that actually exists is decoration.
+  ceilingUsd: 19,
+  registeredCeilingUsd: 200,
   expectedUsdLow: 30,
   expectedUsdHigh: 150
 });
+
+/**
+ * Ledgers that count toward the CURRENT session's spend meter.
+ *
+ * WHY AN EXPLICIT LIST: the guard's per-ledger meter is not enough for a hard
+ * global budget spread across probe + primary + control arms — three separate
+ * ledgers, one wallet. And the historical ledgers must NOT count: their ~$13.82
+ * is already spent and is not part of the $19 still available, so charging the
+ * meter for it would halt the run before it started.
+ *
+ * Declared by name rather than inferred, so a reader can audit exactly what the
+ * ceiling is being measured against.
+ */
+export const SESSION_LEDGERS = Object.freeze([
+  'ledger-probe.jsonl',
+  'ledger-full-a12.jsonl',
+  'ledger-control-a12.jsonl'
+]);
 
 // ---------------------------------------------------------------------------
 // Runtime spend guard — L5-3 remediation (S16-REMEDIATE-2026-08-01-A)

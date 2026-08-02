@@ -28,7 +28,7 @@ import {
   REGISTERED_PRIMARY_RUN_COUNT, REGISTERED_CONTROL_RUN_COUNT, REGISTERED_TOTAL_RUN_COUNT,
   BUDGET, estimateRowCostUsd,
   CAP_NOTICE, MAX_MODEL_TURNS, TOOL_CALL_CAP,
-  MARKER, PATHS, PILOT, PROBE, REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL,
+  MARKER, PATHS, PILOT, PROBE, SESSION_LEDGERS, REGISTERED_RUNS_PER_CELL, EXECUTED_RUNS_PER_CELL,
   SpendGuardError, assertLiveAllowed, expandForms, liveReadiness, modelById
 } from './config.mjs';
 import { connectMcp, extractEnvelope, McpServerUnavailableError } from './mcp-client.mjs';
@@ -112,21 +112,31 @@ export const USAGE = `usage: node runner.mjs <MODE>
   --full                 primary matrix (needs S16_LIVE_OK=1 + keys)
   --control              control arm: no tools, ORIGINAL only, r=3
   --mock <fixture.json>  offline end-to-end, no keys, no spend
+  --tag <name>           suffix the ledger filename (ledger-<mode>-<name>.jsonl).
+                         Use a new tag when the INSTRUMENT changes, so a run can
+                         never resume over data collected under a superseded one.
   --help                 print this text and exit
 Exactly one mode per invocation. Unknown or combined flags are an error,
 never a fallback — a typo must not be able to start a paid run.`;
 
 /** Strict parse. Throws UsageError on anything unrecognized or contradictory. */
 export function parseCliMode(argv) {
-  if (argv.length === 0) return { mode: 'preflight', fixture: null };
+  if (argv.length === 0) return { mode: 'preflight', fixture: null, tag: null };
   const modes = [];
   let fixture = null;
+  let tag = null;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--help' || arg === '-h') modes.push('help');
     else if (arg === '--preflight') modes.push('preflight');
     else if (arg === '--pilot') modes.push('pilot');
     else if (arg === '--probe') modes.push('probe');
+    else if (arg === '--tag') {
+      const next = argv[i + 1];
+      if (!next || next.startsWith('-')) throw new UsageError('--tag requires a name');
+      tag = next;
+      i += 1;
+    }
     else if (arg === '--full') modes.push('full');
     else if (arg === '--control') modes.push('control');
     else if (arg === '--mock') {
@@ -142,7 +152,7 @@ export function parseCliMode(argv) {
   if (modes.length !== 1) {
     throw new UsageError(`exactly one mode required, got: ${modes.join(' + ') || 'none'}`);
   }
-  return { mode: modes[0], fixture };
+  return { mode: modes[0], fixture, tag };
 }
 
 // ---------------------------------------------------------------------------
@@ -314,6 +324,21 @@ export function priorLedgerSpendUsd(ledgerPath) {
   // not just at the done-set stage.
   const { rows } = parseLedgerFile(ledgerPath);
   return rows.reduce((usd, row) => usd + estimateRowCostUsd(row).usd, 0);
+}
+
+/**
+ * S16-FINISH: spend across EVERY ledger of the current session, not just the
+ * one being written. One wallet funds probe + primary + control, so a
+ * per-ledger meter would let three arms each spend the whole ceiling.
+ * Historical ledgers are excluded by SESSION_LEDGERS — that money is already
+ * gone and is not part of what remains.
+ */
+export function sessionSpendUsd(ledgerDir = PATHS.ledgerDir) {
+  let usd = 0;
+  for (const name of SESSION_LEDGERS) {
+    usd += priorLedgerSpendUsd(resolve(ledgerDir, name));
+  }
+  return usd;
 }
 
 /** Builds the plan without executing anything — used by --preflight and tests. */
@@ -613,7 +638,7 @@ export async function main(argv = process.argv.slice(2)) {
   const formsOverride = wantsControl
     ? Array.from({ length: CONTROL_ARM.runsPerCell }, () => CONTROL_ARM.form)
     : null;
-  const ledgerPath = resolve(PATHS.ledgerDir, `ledger-${mode}.jsonl`);
+  const ledgerPath = resolve(PATHS.ledgerDir, `ledger-${mode}${cli.tag ? `-${cli.tag}` : ''}.jsonl`);
   let alreadyDone;
   try {
     alreadyDone = loadLedger(ledgerPath);
@@ -711,8 +736,9 @@ export async function main(argv = process.argv.slice(2)) {
   let failed = 0;
   let thisRunUsd = 0;
   let unpricedRows = 0;
-  const priorUsd = priorLedgerSpendUsd(ledgerPath); // cannot throw here: loadLedger above already validated the file
-  if (priorUsd > 0) console.log(`prior spend already in this ledger: $${priorUsd.toFixed(2)} (counts toward the $${BUDGET.ceilingUsd} ceiling)`);
+  // S16-FINISH: the meter spans every session ledger, not just this one.
+  const priorUsd = sessionSpendUsd();
+  if (priorUsd > 0) console.log(`prior session spend (all arms): $${priorUsd.toFixed(2)} of the $${BUDGET.ceilingUsd} ceiling`);
   const failuresByCause = new Map();
 
   try {

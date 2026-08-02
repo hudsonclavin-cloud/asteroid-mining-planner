@@ -19,12 +19,12 @@ import { join } from 'node:path';
 import {
   main, parseCliMode, UsageError,
   errorCauseKey, sameCauseHalt, SAME_CAUSE_HALT_THRESHOLD,
-  spendHalt, priorLedgerSpendUsd,
+  spendHalt, priorLedgerSpendUsd, sessionSpendUsd,
   loadLedger, parseLedgerFile, LedgerCorruptError,
   executeRun, harnessProvenance, serverBuildProvenance
 } from '../runner.mjs';
 import { definitiveRows, gradeLedger, LedgerRefusedError } from '../grade.mjs';
-import { ACTIVE_ROSTER, BUDGET, PRICES_USD_PER_MTOK, estimateRowCostUsd } from '../config.mjs';
+import { ACTIVE_ROSTER, BUDGET, PRICES_USD_PER_MTOK, SESSION_LEDGERS, estimateRowCostUsd } from '../config.mjs';
 
 // ---------------------------------------------------------------------------
 // L5-14 — strict CLI
@@ -40,7 +40,7 @@ test('L5-14: a misspelled flag ERRORS OUT instead of falling through to full', a
 });
 
 test('L5-14: --help is safe and never selects a live mode', async () => {
-  assert.deepEqual(parseCliMode(['--help']), { mode: 'help', fixture: null });
+  assert.deepEqual(parseCliMode(['--help']), { mode: 'help', fixture: null, tag: null });
   const code = await main(['--help']);
   assert.equal(code, 0, 'help prints usage and exits cleanly');
 });
@@ -59,16 +59,16 @@ test('L5-14: unknown positional arguments are rejected', async () => {
 test('L5-14: --mock still requires its fixture argument', () => {
   assert.throws(() => parseCliMode(['--mock']), UsageError);
   assert.throws(() => parseCliMode(['--mock', '--full']), UsageError, 'a flag is not a fixture');
-  assert.deepEqual(parseCliMode(['--mock', 'mock-toolcalls.json']), { mode: 'mock', fixture: 'mock-toolcalls.json' });
+  assert.deepEqual(parseCliMode(['--mock', 'mock-toolcalls.json']), { mode: 'mock', fixture: 'mock-toolcalls.json', tag: null });
 });
 
 test('L5-14: no arguments still defaults to preflight (the safe mode)', () => {
-  assert.deepEqual(parseCliMode([]), { mode: 'preflight', fixture: null });
+  assert.deepEqual(parseCliMode([]), { mode: 'preflight', fixture: null, tag: null });
 });
 
 test('L5-14: every documented mode parses to itself and nothing else', () => {
   for (const mode of ['preflight', 'pilot', 'full', 'control']) {
-    assert.deepEqual(parseCliMode([`--${mode}`]), { mode, fixture: null });
+    assert.deepEqual(parseCliMode([`--${mode}`]), { mode, fixture: null, tag: null });
   }
 });
 
@@ -195,10 +195,35 @@ test('L5-3: priorLedgerSpendUsd prices an existing ledger file (synthetic)', () 
   }
 });
 
-test('L5-3: the configured ceiling default is the registered $200', () => {
-  assert.equal(BUDGET.ceilingUsd, 200);
-  assert.equal(spendHalt({ priorUsd: 0, thisRunUsd: 199, attempted: 10, planTotal: 10 }), null,
+test('L5-3: the operational ceiling is the money that actually exists', () => {
+  // S16-FINISH lowered this 200 -> 19: the remaining credit, not the design
+  // aspiration. The registered $200 (DEC-16-7) is preserved alongside it, and
+  // the guard must enforce the SMALLER of the two — a ceiling set above the
+  // available balance is decoration.
+  assert.equal(BUDGET.ceilingUsd, 19, 'the operational ceiling is the real budget');
+  assert.equal(BUDGET.registeredCeilingUsd, 200, 'the registered design ceiling stays in the record');
+  assert.ok(BUDGET.ceilingUsd <= BUDGET.registeredCeilingUsd, 'operational must never exceed registered');
+  assert.equal(spendHalt({ priorUsd: 0, thisRunUsd: 18, attempted: 10, planTotal: 10 }), null,
     'defaults to BUDGET.ceilingUsd when no ceiling is passed');
+  assert.equal(spendHalt({ priorUsd: 0, thisRunUsd: 19.5, attempted: 10, planTotal: 10 })?.kind, 'accrued',
+    'and halts above it');
+});
+
+test('S16-FINISH: the spend meter spans EVERY session ledger, not just one', () => {
+  // One wallet funds probe + primary + control. A per-ledger meter would let
+  // each arm spend the whole ceiling independently.
+  assert.ok(SESSION_LEDGERS.includes('ledger-probe.jsonl'));
+  assert.ok(SESSION_LEDGERS.includes('ledger-full-a12.jsonl'));
+  assert.ok(SESSION_LEDGERS.includes('ledger-control-a12.jsonl'));
+  assert.ok(!SESSION_LEDGERS.includes('ledger-full.jsonl'),
+    'the superseded attempt-1 ledger must NOT count — that money is already spent');
+  assert.equal(typeof sessionSpendUsd(), 'number');
+});
+
+test('S16-FINISH: --tag isolates a corrected-instrument run from a superseded ledger', () => {
+  assert.deepEqual(parseCliMode(['--full', '--tag', 'a12']), { mode: 'full', fixture: null, tag: 'a12' });
+  assert.throws(() => parseCliMode(['--full', '--tag']), UsageError, 'a tag name is required');
+  assert.throws(() => parseCliMode(['--full', '--tag', '--probe']), UsageError, 'a flag is not a tag');
 });
 
 // ---------------------------------------------------------------------------
