@@ -134,3 +134,7 @@ Every row carries harness commit, MCP server build commit, system text, instanti
 2. **Read §30.6 before quoting any number.** The RQ3 coverage issue is the honest caveat on the headline, and the cross-lab limitation is absolute.
 3. **Optional, cheap:** ~$4.3 of budget remains. It would buy roughly 2 more repetitions (r=6→8) on both models, tightening intervals that are currently very wide. It would **not** fix RQ3 — that needs a design decision about how to grade a refusal-holding response that legitimately makes no tool call.
 4. **For the write-up:** the instrument, the amendment chain, and the failures are all sealed at DOI `10.5281/zenodo.21752617`. The story that the study *found its own instrument defects before reporting* is stronger than the rates.
+
+---
+
+> **AMENDED — 2026-08-02 (R-CLOSE-1, `S16-CLOSE-2026-08-02-A`).** The RQ3 coverage collapse reported above was ruled a **structural instrument defect, not a run failure**: S-20, S-21 and S-24 are struck post-data as ungradeable, moving the primary set 26 → **25** for any future run. **Every result figure above stands exactly as collected** — the strike changes future scope, not this data. HUDSON'S QUEUE item 1 is stale (the local chain no longer ends at `13e9c05`). Full disposition and the carried-forward Slice 17 design input: founding **§31.6**.

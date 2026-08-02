@@ -172,3 +172,7 @@ Caching the **growing conversation** is what would attack the quadratic driver; 
 4. **`PRE_RUN_GATE.md` end to end** — three boxes still blocking.
 5. **Scenario-stratified cost probe** across the 0–5-call range, informed by the caching verdict (the guard over-estimates OpenAI ~26%; Haiku is uncached).
 6. **Scope decision: full / reduced / demonstration run** — 1,014 runs at the corrected instrument.
+
+---
+
+> **SUPERSEDED — 2026-08-02 (`S16-CLOSE-2026-08-02-A`).** The next-actions above are complete: public seal recorded (founding §27), gate passed, cost probe run (§28), scope decided at 2 models × r=6 (§29), 468 runs collected and graded (§30). The "1,014 runs at the corrected instrument" scope figure was **not** what executed — see §29 for the executed scope and why. Slice 16 close-out: founding **§31**.

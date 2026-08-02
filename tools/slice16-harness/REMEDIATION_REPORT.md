@@ -143,3 +143,7 @@ Recorded in founding **§25.3** (authoritative). Re-verified at session end — 
 2. **Review + `git hpush`** — 24 local commits (`b374243` … `73ac85f`).
 3. **Public seal BEFORE any collection** — push, then OSF/Zenodo the sealed HEAD, record URL/DOI additively in the founding doc (gate box 1; §25.2).
 4. **`PRE_RUN_GATE.md` end-to-end before any `S16_LIVE_OK=1` command** — including the scenario-stratified cost probe (box 11) and the signed ledger-recovery dispatch (box 12 / audit top-10 #1).
+
+---
+
+> **SUPERSEDED — 2026-08-02 (`S16-CLOSE-2026-08-02-A`).** The next-actions and the DESIGN DECISIONS QUEUE above are **closed**: DD-1…DD-7 were ruled and instantiated as Amendment A12 (founding §26), the chain was pushed and publicly sealed (§27, DOI `10.5281/zenodo.21752617` at commit `670b039`), the gate was walked, and 468 runs were collected and graded (§30). Read this document as the remediation record, not as an open queue. Slice 16 close-out: founding **§31**.

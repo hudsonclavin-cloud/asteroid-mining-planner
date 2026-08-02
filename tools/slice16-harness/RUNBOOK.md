@@ -408,3 +408,7 @@ Record the DOI back into `SLICE_16_FOUNDING.md` as an additive amendment, never 
 - `SLICE_16_FOUNDING.md` and `SLICE_16_APPENDIX_A_LOCKED.md` are additive-only; the pre-commit hook enforces the founding doc.
 - Deviations become additive amendments, never silent edits (DEC-16-10).
 - **Never tune a tolerance, prompt, threshold, or fixture expectation to improve a score.** That is the one change that would invalidate the study.
+
+---
+
+> **Slice 16 CLOSED — 2026-08-02 (`S16-CLOSE-2026-08-02-A`).** The registered run is complete (founding §29–§30); this runbook is now the **procedure of record**, not a pending instruction. Before reusing it: the primary scenario set is **25**, not 28 — S-20/S-21/S-24 were struck post-data (founding §31.6), and the sealed registration's counts are pinned separately in `config.mjs` as `SEALED_AT`.

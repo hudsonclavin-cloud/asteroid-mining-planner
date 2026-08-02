@@ -155,3 +155,7 @@ is an INV-S16-036 evidence artifact of a superseded instrument — a corrected-
 instrument run must NOT resume over it; archive per the signed recovery
 dispatch (audit top-10 #1) first. Checksums must match founding §25.3 before
 anything moves.
+
+---
+
+> **GATE CLOSED — 2026-08-02 (`S16-CLOSE-2026-08-02-A`).** Every box above was walked and passed before any paid collection, and the run this gate guarded is complete: 468 runs, zero errors (founding §29–§30). Retained as the record of what was checked, **not as a pending checklist**. Slice 16 close-out: founding **§31**.

@@ -156,3 +156,7 @@ Package:    https://www.npmjs.com/package/aster-mission-mcp  (v0.1.0)
 run ledgers are checksummed in founding §25.3 instead. If you want them inside
 the deposit, upload them as a Zenodo file set and record the per-file checksums
 additively — founding §25.3 already carries the dispatch for that.
+
+---
+
+> **SEALED — 2026-08-01 (`S16-FINISH-2026-08-01-A`).** The "NOT YET SEALED — this is the blocking item" status line at the top is **historical**. The deposit exists: DOI `10.5281/zenodo.21752617`, sealed commit `670b039`, published `2026-08-01T23:44:23.499178+00:00`, recorded in founding **§27**. Collection began only after it.
