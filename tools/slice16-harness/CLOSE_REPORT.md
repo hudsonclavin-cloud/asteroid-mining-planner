@@ -61,15 +61,18 @@ Two safeguards make that strike non-corrosive:
 | **Audit MEDIUM/LOW residue** (C1–C12) | Carried verbatim in `STATUS.md`'s cleanup queue. |
 | **CI gap L4-1** | CI runs neither the MCP package tests nor the Slice 16 suite; default `npm test` reaches a subset. Confirmed still true today; commands and their real coverage are tabulated in `STATUS.md`. |
 
-**CLOSED — WONTFIX — 1**
+**CLOSED — WONTFIX — 2**
 
 | Item | Reason |
 |---|---|
 | **`gpt-5.5-mini`** | Refuted by A7: the model does not exist. The `openai-frontier-vs-small` contrast died with it. Re-open only if OpenAI ships a small sibling — this is not a defect to fix. |
+| **C12** — signed recovery dispatch for the halted attempt-1 ledger | **Ruled WONTFIX by Hudson (R-ARCH-3, 2026-08-02).** Purpose moot: the study ran to completion on separately `--tag`ged ledgers, and the attempt-1 rows are permanently excluded as non-data. Its remaining archival value is now fully served — the ledger is **git-tracked** as of `c037448` and digest-pinned at full length in founding §32.2. Recorded here rather than silently dropped, because retiring a queued safety artifact should leave a trace. |
 
-**ONE ITEM I AM NOT DISPOSING OF — Hudson's call**
+*Disposition history, kept deliberately:* this report originally left C12 open under the heading "ONE ITEM I AM NOT DISPOSING OF — Hudson's call", recommending WONTFIX but declining to act, on the grounds that retiring a safety artifact was not an agent's decision. Hudson ruled on 2026-08-02 and the ruling is instantiated above. The recommendation and the ruling agreed; that they agreed is not why the decision was his to make.
 
-**C12, the signed recovery dispatch for the halted attempt-1 ledger.** Its original purpose — make the 114 successful rows resumable — is moot: the study ran to completion on separately `--tag`ged ledgers, and those rows are permanently excluded as non-data. The only remaining value is archival, which the checksum manifest already covers. **My recommendation is WONTFIX**, but retiring a queued safety artifact is your decision, not mine, so it stays open.
+**RESOLVED THIS SESSION — the ledger-evidence question (§5)**
+
+**R-ARCH-1: commit them.** All 13 files are now tracked (`c037448`), byte-identity verified at three points, with `runs/README.md` marking each file's arm, instrument version, and study-data status. **R-ARCH-2** closed both checksum gaps — the grades artifacts now carry digests in the founding doc, and §30.9's 24-character truncation is corrected additively at full 64. See founding **§32** and `ARCHIVE_REPORT.md`. This was item 2 of the queue below and is done.
 
 ---
 
@@ -158,9 +161,11 @@ git commit -m "evidence(slice16): commit all 13 run ledgers + grade artifacts pe
 
 ## HUDSON'S QUEUE
 
-1. **`git hpush`** — 5 commits from `642dfc9`. Nothing after `642dfc9` is public yet, including §31.
-2. **Decide the ledger question (§5).** Commit the 13 files, or attach them to the Zenodo deposit. Either is fine; the status quo is one disk away from an unreproducible sealed study. **This is the highest-value item in this report.**
+> **Superseded 2026-08-02 by `S16-ARCHIVE-2026-08-02-A`** — items 2 and 4 are done; the live queue is in `ARCHIVE_REPORT.md`. Kept unedited below as the record of what was open at close-out.
+
+1. **`git hpush`** — 5 commits from `642dfc9`. Nothing after `642dfc9` is public yet, including §31. *(Now 8 commits, ~25 MB — see `ARCHIVE_REPORT.md`.)*
+2. ~~**Decide the ledger question (§5).**~~ **DONE** — ruled R-ARCH-1, committed `c037448`, founding §32.
 3. **Read §31.4 before quoting any figure.** Single-lab is absolute, the contrast is unresolved, RQ3 is under-covered.
-4. **C12 needs a yes or no** — I recommend WONTFIX and did not act (§2).
+4. ~~**C12 needs a yes or no**~~ **DONE** — ruled WONTFIX (R-ARCH-3), recorded in §2.
 5. **Slice 17 opens on §31.6.** The RQ3 finding — an instrument that cannot grade what its own scenarios elicit — is the strongest thing this slice produced after the instrument itself, and it is a design input, not a bug report.
 6. **≈$4.27 remains.** It buys tighter intervals, not a new contrast, and not an RQ3 fix.
