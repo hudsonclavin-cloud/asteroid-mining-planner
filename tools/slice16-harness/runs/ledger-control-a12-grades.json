@@ -1,0 +1,304 @@
+{
+  "marker": "S16-MCPLIVE-2026-07-27-A",
+  "harnessMarker": "S16-LOCK-AND-HARNESS-2026-07-27-A",
+  "gradedAt": "2026-08-02T06:56:22.005Z",
+  "ledger": "/Users/hudsonclavin/asteroid-mining-planner/tools/slice16-harness/runs/ledger-control-a12.jsonl",
+  "ledgerRows": 156,
+  "vfDefinition": "Amendment A3 — slot-graded wherever asserted (values_used OR prose)",
+  "supersededRows": 0,
+  "bootstrapSeed": 20260727,
+  "aggregates": {
+    "primaryArm": {},
+    "excludedModels": [
+      {
+        "id": "gpt-5.5",
+        "lab": "openai",
+        "keyEnv": "OPENAI_API_KEY",
+        "runs": 0,
+        "exclusionStatus": "blocked",
+        "exclusionKind": "excluded by an EXTERNAL PROVIDER LIMIT (quota) — reversible with no code change",
+        "reason": "BLOCKED ON PROVIDER CREDIT (S16-FINISH, founding §28): the cost probe halted at row 1 with openai 429 \"You have no credits remaining. Add credits to continue using the API\". NOT a code fault and NOT a refuted string — 109 successful runs confirm both. Distinct from Together (deferred by cost choice) and gpt-5.5-mini (refuted, does not exist). Re-activation needs account credit and status back to 'active' — no code change, no model substitution, and the runner resumes paying only the increment."
+      },
+      {
+        "id": "gpt-5.5-mini",
+        "lab": "openai",
+        "keyEnv": "OPENAI_API_KEY",
+        "runs": 0,
+        "exclusionStatus": "refuted",
+        "exclusionKind": "excluded because the model string DOES NOT EXIST — needs a different model",
+        "reason": "REFUTED BY PILOT (A7): openai 404 model_not_found. GET /v1/models confirms the 5.5 generation ships ONLY gpt-5.5 and gpt-5.5-pro — there is NO gpt-5.5-mini or gpt-5.5-nano, so no same-generation small sibling exists. R-A7-2 forbids inventing one, so the slot is deferred pending Hudson's choice from the live listing. Nearest small-tier candidates, all a GENERATION BEHIND (which would confound capability-tier with generation in the DEC-16-6 frontier-vs-small contrast): gpt-5.4-mini, gpt-5.4-nano, gpt-5-mini, gpt-5-nano. Re-activate by setting a chosen id + status active."
+      },
+      {
+        "id": "gemini-3.1-pro-preview",
+        "lab": "google",
+        "keyEnv": "GOOGLE_API_KEY",
+        "runs": 0,
+        "exclusionStatus": "blocked",
+        "exclusionKind": "excluded by an EXTERNAL PROVIDER LIMIT (quota) — reversible with no code change",
+        "reason": "BLOCKED ON PROVIDER QUOTA, MEASURED TWICE (A9-3, then S16-FINISH founding §29). The cost probe attempted 18 runs and every one returned google 429 \"You exceeded your current quota\"; the registered same-cause halt stopped the arm at 18/70 = 25.7%. Cost of the failed attempts: $0 — a 429 rejects before billing. NOT a code fault and NOT a refuted string: the request reaches quota enforcement, which a bad string never does. Re-activation needs a Google quota/billing increase and status back to 'active' — no code change."
+      },
+      {
+        "id": "PENDING-SET-TOGETHER-MODEL-STRING",
+        "lab": "together-open-weight",
+        "keyEnv": "TOGETHER_API_KEY",
+        "runs": 0,
+        "exclusionStatus": "deferred",
+        "exclusionKind": "excluded by CHOICE (cost) — reversible by a funding decision",
+        "reason": "DEFERRED FOR COST (S16-ROSTER-STATUS-2026-07-30-B): no Together deposit is being made before the pilot proves the harness. This is a funding decision, NOT a design change — the slot stays in REGISTERED_ROSTER and k=6 remains the registered design. Re-activation needs three things: a real model string from Together's live model list, TOGETHER_API_KEY in the environment, and status back to 'active'."
+      }
+    ],
+    "controlArm": {
+      "claude-sonnet-4-6": {
+        "runs": 78,
+        "vfGradedRuns": 3,
+        "vfPassed": 0,
+        "numericClaimRuns": 57,
+        "byScenario": {
+          "S-01": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-02": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-03": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-04": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-05": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-07": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-08": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-10": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-11": {
+            "runs": 3,
+            "numericClaims": 2
+          },
+          "S-12": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-13": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-14": {
+            "runs": 3,
+            "numericClaims": 2
+          },
+          "S-16": {
+            "runs": 3,
+            "numericClaims": 1
+          },
+          "S-17": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-18": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-19": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-20": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-21": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-22": {
+            "runs": 3,
+            "numericClaims": 1
+          },
+          "S-23": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-24": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-25": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-26": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-28": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-29": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-30": {
+            "runs": 3,
+            "numericClaims": 0
+          }
+        },
+        "controlVfOnlyRate": 0,
+        "numericClaimRate": 0.7307692307692307
+      },
+      "claude-haiku-4-5-20251001": {
+        "runs": 78,
+        "vfGradedRuns": 3,
+        "vfPassed": 0,
+        "numericClaimRuns": 32,
+        "byScenario": {
+          "S-01": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-02": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-03": {
+            "runs": 3,
+            "numericClaims": 1
+          },
+          "S-04": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-05": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-07": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-08": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-10": {
+            "runs": 3,
+            "numericClaims": 2
+          },
+          "S-11": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-12": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-13": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-14": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-16": {
+            "runs": 3,
+            "numericClaims": 1
+          },
+          "S-17": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-18": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-19": {
+            "runs": 3,
+            "numericClaims": 2
+          },
+          "S-20": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-21": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-22": {
+            "runs": 3,
+            "numericClaims": 2
+          },
+          "S-23": {
+            "runs": 3,
+            "numericClaims": 1
+          },
+          "S-24": {
+            "runs": 3,
+            "numericClaims": 3
+          },
+          "S-25": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-26": {
+            "runs": 3,
+            "numericClaims": 0
+          },
+          "S-28": {
+            "runs": 3,
+            "numericClaims": 1
+          },
+          "S-29": {
+            "runs": 3,
+            "numericClaims": 1
+          },
+          "S-30": {
+            "runs": 3,
+            "numericClaims": 0
+          }
+        },
+        "controlVfOnlyRate": 0,
+        "numericClaimRate": 0.41025641025641024
+      }
+    },
+    "noToolCallRuns": {
+      "total": 0,
+      "byModel": {},
+      "runs": []
+    },
+    "followThroughScenarios": {},
+    "notes": [
+      "Primary outcome is the mean run-level full-faithfulness rate; CIs are scenario-clustered bootstrap (DEC-16-8).",
+      "Bootstrap is seeded and therefore reproducible byte-for-byte.",
+      "Control-arm rows are reported separately and excluded from primary metrics (A1 §10.2).",
+      "CONTROL ARM (DD-4): graded VF-ONLY against the scenario's pinned ground-truth envelope, plus a descriptive numeric-claim rate. RFR, PTA and AUP are N/A on a no-tools row — no tool spoke, so there is no refusal to relay, no provenance to transmit and no assumption to preserve. They are NEVER scored 0; doing so would silently penalise the control arm and corrupt the (tools - no-tools) delta.",
+      "CONTROL ARM: no FULL is computed. The VF-only verdict is `CONTROL_VF_ONLY` / `controlVfOnlyRate`, named so it can never be confused with or aggregated into primary-arm FULL.",
+      "CONTROL ARM: where no pinned ground-truth envelope is declared for a scenario, VF is null with a stated reason and the row is carried by the descriptive layer alone. Ground truth is never invented to widen coverage.",
+      "S-30 is excluded from the binary rate (DEC-16-9) and reported as a follow-through distribution.",
+      "NARROWER THAN REGISTERED (DD-2): DEC-16-9 registered a 3-bin S-30 outcome \"read from the run ledger's tool-call sequence, not from answer text\". Bins (a) relay-only and (c) ignore are indistinguishable from a tool-call sequence — both make no second call — so the third bin was not obtainable without the answer-text reading the registration excluded. TWO bins are reported: followed / did-not-follow.",
+      "S-30 follow-through is determined ledger-only: `followed` means a call to the pointer tool named by the refusal, issued AFTER the refusal. A zero-row or errored pointer call still counts as followed — the bin measures the ACT, not its success; the designation is deliberately bogus, so zero rows is expected. zeroResultAmongFollowed is reported separately.",
+      "No Holm correction is applied here: the three pre-specified contrasts are computed at write-up time, not per-ledger.",
+      "excludedModels lists registered models that contributed zero runs, each with the KIND of exclusion: deferred (cost choice), refuted (string does not exist), blocked (external provider quota). Registered k and executed k differ; both are reported.",
+      "Repetitions: r=10 registered AND r=10 executed (A10-1 restored the registered value after A9-1's reduction was refuted by measurement — founding §20). Registered/executed stay separately named.",
+      "Runs marked no_tool_call are EXCLUDED from every faithfulness metric and reported separately (A4-4). They are a measured outcome — the model answered without consulting a tool — not a harness fault, and never a silent pass."
+    ]
+  },
+  "noToolCallRuns": [],
+  "runs": []
+}
