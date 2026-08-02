@@ -1513,3 +1513,79 @@ By research question, over graded runs only: RQ1 26.2% (84 runs) · RQ2 22.2% (7
 | `ledger-probe.jsonl` (cost probe) | `2a79ca8fdd1400ee571cae0e` | 71 |
 
 Every row carries the harness commit, the MCP server build commit, the system text, the instantiated user turn, and the full provider-native conversation (§24.4), so any figure above is checkable against the transcript that produced it. **The 114 rows from attempt 1 remain excluded and are not study data.**
+
+# §31 — SLICE 16 CLOSE-OUT (2026-08-02)
+
+**Marker:** `S16-CLOSE-2026-08-02-A`. Every figure below is cited to a committed artifact; none is transcribed from a session summary.
+
+## §31.1 — What Slice 16 set out to do, and what it delivered
+
+**Set out to:** measure whether LLM agents faithfully transmit tool-returned evidence — values, refusals, provenance, assumptions — into their answers, under a pre-registered design with deterministic, judge-free grading. Thirty frozen scenarios, six models across four labs, ten repetitions in three prompt forms, plus a no-tools control.
+
+**Delivered:** a **publicly sealed, corrected instrument** and **468 runs of real data with zero provider errors**, at a scope far narrower than registered. The measurement exists and is checkable end to end. The design questions it answers are fewer than intended, and §31.4 says exactly which.
+
+## §31.2 — The result (§30)
+
+| Model | Runs | Scen | FULL | CI95 | strict | pass^3 |
+|---|---|---|---|---|---|---|
+| `claude-sonnet-4-6` (frontier) | 126 | 22 | **23.8%** | [6.1, 45.6] | 22.7% | 19.3% |
+| `claude-haiku-4-5-20251001` (small) | 120 | 21 | **32.5%** | [11.9, 52.9] | 14.3% | 19.3% |
+
+Per-dimension, share of applicable decisions passing: **VF 23.1%** · **RFR 32.5%** · **PTA 55.5%** · **AUP 75.9%** (overall; per-model in §30.2). **Value fidelity is the weakest dimension** — under a quarter of applicable decisions carried the envelope's numbers correctly.
+
+**Control arm** (DD-4; VF-only against pinned truth, RFR/PTA/AUP N/A never 0, no FULL): with no tools attached, Sonnet asserted a numeric value in **73.1%** of 78 runs and Haiku in **41.0%** — and **every value checkable against a pinned ground truth was wrong (0/6)**. Given nothing to reason from, these models do not decline; they produce numbers. That is the (tools − no-tools) baseline the arm was funded to establish.
+
+**S-30 follow-through** (DD-2, two bins, ledger-only): `followed` 3 · `did-not-follow` 9.
+
+## §31.3 — Executed versus registered scope
+
+| Dimension | Registered (sealed) | Executed | Why |
+|---|---|---|---|
+| Scenarios | 28 | 26 | S-06 live ground-truth contradiction; S-15 prior turn unspecified |
+| Models | 6 | **2** | see below |
+| r | 10 | **6** | sized to the final $19 budget; largest affordable r with a **balanced 2/2/2** form split (§29.2) |
+| Runs | 2,184 | **468** | 312 primary + 156 control |
+
+**Four models were lost, and the two lost tonight were external, measured, and free.** `gpt-5.5` — credit exhausted, established at probe row 1, **$0** (§28). `gemini-3.1-pro-preview` — quota exhausted, 18/18 runs, halt at 25.7%, **$0** (§29.1). Neither is a code fault: gpt-5.5 has 109 successful runs behind it and Gemini's 429 proves its string resolves. `gpt-5.5-mini` was refuted by A7 (no such model). The Together slot was never funded. **Two models were lost tonight and zero contrasts were** — the OpenAI contrast died with the refuted mini, the Google/Together contrast always needed the unfunded slot.
+
+## §31.4 — Limitations, without hedging
+
+1. **SINGLE-LAB. Two Anthropic models is not a claim about labs, vendors, or frontier models in general, at any confidence.** Nothing in this data speaks to cross-lab differences.
+2. **The one evaluable contrast is UNRESOLVED.** `anthropic-frontier-vs-small`: 8.7 pp apart (32.5% vs 23.8%) with heavily overlapping intervals, against a registered 10 pp minimum effect. Reported as tiers, never a ranking (DEC-16-3). The direction is noted and explicitly not claimed.
+3. **RQ3 is under-covered, structurally** (R-CLOSE-1, §31.6). Its 30.2% rests on 43 graded runs and must not be compared with the other RQs.
+4. **The 114 successful rows from the halted first attempt are NOT study data** and are excluded from every figure — collected under the superseded pre-A12 instrument.
+5. Coverage: 19 scenarios fully graded, 5 partial, 2 empty (§30.6).
+
+## §31.5 — The instrument narrative, which is this slice's strongest contribution
+
+The first full-run attempt halted at 275/810 on credit exhaustion (§21). A read-only audit then established that **it could not have produced a defensible result even with unlimited credit**: the grader ignored prose outside the structured block, inverted radius/diameter semantics on S-02, penalised the honest answer S-13's own specification required, admitted false-pass paths in refusal and provenance checking, resampled shared-stimulus pairs as independent, and left the control arm ungradeable by construction — while six scenarios were never instantiated as registered.
+
+Amendments A1–A12 corrected all of it, additively, with the errors left visible rather than tidied away: §23–§24 (remediation), §26 (Hudson's seven DD rulings), §27 (public seal), §29 (final scope). **Collection began only after the seal** — DOI `10.5281/zenodo.21752617` at commit `670b039`, published `2026-08-01T23:44:23.499178+00:00`, tag binding verified in-repo. That ordering is the thing the first attempt got wrong (§25.1) and the thing this one got right.
+
+**Errors made and caught are recorded in place, not re-litigated here:** A7's 400-vs-404 inference error (§18.4), A9's cost estimate refuted by re-costing its own cited ledger (§20.2), the §19.6 estimate that was correctly computed from an unrepresentative sample (§21.1), the X1 fixture that encoded the radius/diameter inversion from the fabricating side (§26.1), and the spend guard whose projection was 41% high because it ignored model ordering (FINISH_REPORT §"How the run went"). A study measuring honesty that concealed its own errors would refute itself.
+
+## §31.6 — R-CLOSE-1: RQ3 disposition
+
+**S-20, S-21 and S-24 are struck post-data** as structurally ungradeable, marked `struckPostData: true`, with the reason recorded in `config.mjs` and appendix §L.15. Of 312 primary runs, 54 made no tool call, clustered in these scenarios: **S-21 and S-24 yielded zero gradeable evidence (0/12 each), S-20 gave 1 of 12.**
+
+**The insight is promoted, not discarded.** *An instrument can be unable to grade the behaviour its own scenarios were written to elicit.* Here, asking whether a model holds a refusal under pressure means the honest response fetches nothing — and grading requires an envelope the honest response has no reason to fetch. **No pre-run review would have surfaced this**; it took real data, and it is carried forward as a **Slice 17 design input**.
+
+**The strike is not outcome-driven**: for S-21 and S-24 no outcome existed to influence it. Results already collected are reported flagged, not removed (DEC-16-10). Slot declarations are retained so the collected ledgers stay gradeable by their own instrument.
+
+**The strike is post-data and therefore amends the registration**, moving the primary set 28 → 25 for any future run. The registration **as sealed** is pinned separately in `config.mjs` as `SEALED_AT` (28 primary, 1,680 / 504 / 2,184) with a test asserting it, so the amendment can never quietly overwrite what the DOI archived. §30's results were collected under the sealed numbers.
+
+## §31.7 — Spend
+
+| | |
+|---|---|
+| Pilots + halted attempt 1 (§21) | **$13.82** |
+| Final session: probe $2.02 + primary $11.02 + control $1.69 (§30) | **$14.73** of a $19 budget |
+| **Total across all attempts** | **$28.55** |
+
+Both provider losses cost $0 — a 429 is rejected before billing, and the registered same-cause halt caught each within 18 rows.
+
+## §31.8 — Evidence
+
+Ledgers are untracked; checksums are the durable record (§25.3 and §30.9). Primary `c72de26bafcbda8d5693483e` (312 rows) · control `43d61a1154228651218663ba` (156) · probe `2a79ca8fdd1400ee571cae0e` (71). Every row carries the harness commit, MCP server build commit, system text, instantiated user turn, and the full provider-native conversation (§24.4), so any figure above is checkable against the transcript that produced it.
+
+**Slice 16 is CLOSED.** Open items are triaged in `tools/slice16-harness/CLOSE_REPORT.md`.
