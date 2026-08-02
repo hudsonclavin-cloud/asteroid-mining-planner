@@ -1589,3 +1589,60 @@ Both provider losses cost $0 — a 429 is rejected before billing, and the regis
 Ledgers are untracked; checksums are the durable record (§25.3 and §30.9). Primary `c72de26bafcbda8d5693483e` (312 rows) · control `43d61a1154228651218663ba` (156) · probe `2a79ca8fdd1400ee571cae0e` (71). Every row carries the harness commit, MCP server build commit, system text, instantiated user turn, and the full provider-native conversation (§24.4), so any figure above is checkable against the transcript that produced it.
 
 **Slice 16 is CLOSED.** Open items are triaged in `tools/slice16-harness/CLOSE_REPORT.md`.
+
+# §32 — Evidence tracked; digest manifest completed (2026-08-02)
+
+**Marker:** `S16-ARCHIVE-2026-08-02-A` · **Additive.** Instantiates Hudson's rulings R-ARCH-1 and R-ARCH-2. Changes no result, no scope, and no registration — this section concerns the durability and verifiability of evidence already collected.
+
+## §32.1 — R-ARCH-1: the run ledgers are now git-tracked (supersedes §25.3's untracked disclosure)
+
+`tools/slice16-harness/runs/` — **13 files, 25 MB** — was untracked. **It is now committed**, in `c037448`.
+
+**§25.3 stands as written and is not withdrawn.** It was correct on its own date and its disclosure was the right call: it stated plainly that the ledgers were untracked and that the checksum manifest was the durable record *until a decision was made*. This section records that decision. What §25.3 says about the *state* of the evidence is superseded here; what it says about the *reasoning* remains the record.
+
+**Why, given that no invariant was violated.** Global INV-034 binds files *claimed as committed evidence*, and no Slice 16 document ever made that claim — §25.3, §30.9 and §31.8 each say "untracked" outright, so the invariant's trigger never fired. The **purpose** was nevertheless unmet: a $28.55 dataset backing a DOI-sealed study existed on one workstation. **A checksum proves a file is unaltered; it cannot reconstruct it.** Verifiability without recoverability is half the guarantee.
+
+**Byte-identity, and how it was proven.** These are frozen evidence artifacts (INV-S16-036); git must store them unmodified. All 13 digests were verified against their recorded values **before staging**, **after staging** against the content of the staged blobs themselves (`git cat-file -p :<path>`, not merely the working file), and **after commit** against the blobs at HEAD. All three passes matched at full 64-character length. No `.gitattributes` rule, filter, or `working-tree-encoding` applies to this directory — every attribute resolves `unspecified`, and `core.autocrlf` is unset (false) — so no line-ending or content conversion was possible. The working tree was re-verified unchanged after the commit.
+
+**Attempt 1 is committed, not hidden.** `ledger-full.jsonl` (275 rows: 114 ok, 161 errored) is the incident evidence and is committed alongside the rest. It remains **NOT STUDY DATA** and excluded from every reported figure (§21, §30.9, §31.3). A study that suppressed its own failed attempt would refute the thesis it is testing. `tools/slice16-harness/runs/README.md` marks each file's arm, instrument version, and study-data status so no reader can mistake a pilot, a mock, a probe, or attempt 1 for a result.
+
+## §32.2 — R-ARCH-2: complete digest manifest, full length
+
+Closes both gaps named in `CLOSE_REPORT.md` §5. Digests are SHA-256 at **full 64 characters**; sizes in bytes; rows for JSONL.
+
+**STUDY DATA — A12 instrument, collected after the §27 seal:**
+
+| File | sha256 | Bytes | Rows |
+|---|---|---|---|
+| `ledger-full-a12.jsonl` | `c72de26bafcbda8d5693483ef36dfb09cca0113db0594c8b4fb5559d6d349493` | 11,210,666 | 312 |
+| `ledger-control-a12.jsonl` | `43d61a1154228651218663baaaaf636cfb3e96cf0ffc769c5f4ea9fb44d068ef` | 1,791,375 | 156 |
+| `ledger-full-a12-grades.json` | `8c7cc53a74a1a3a013dac924db1aa2d1ab4cc9ae71b88098e48777d01c5770d3` | 2,054,100 | — |
+| `ledger-control-a12-grades.json` | `8a5f8bba6546b39f607d1d8fea165d2bd560f7d31909c5210102728a3f3ea297` | 11,765 | — |
+
+**NOT STUDY DATA** (probe, pilots, mocks, halted attempt 1 — none may be quoted as a result):
+
+| File | sha256 | Bytes | Rows |
+|---|---|---|---|
+| `ledger-probe.jsonl` | `2a79ca8fdd1400ee571cae0e44fa1ca297296cbfece8235ff3a9c82e896411b1` | 2,013,432 | 71 |
+| `ledger-full.jsonl` (**attempt 1, halted**) | `416f189d8b1bdb7ed13f53f7098bd1b546076754cd29ad106d6a9a8dd267d5d0` | 1,447,071 | 275 |
+| `ledger-pilot.jsonl` | `ee9ada7fbe8b1e5cd491766ab6918fe1242188aa58d8f13ede38ed7820968f92` | 95,180 | 16 |
+| `ledger-pilot-2026-07-31-round2-QUARANTINED-pre-A8-sampling.jsonl` | `48cf1d51a3d5cdd399306dd3410ea5620995213d2d02fd6c3b94631fe06f8698` | 77,828 | 16 |
+| `ledger-pilot-2026-07-31-first-contact-ERRORED.jsonl` | `92e5fe7fc5bf876a1e9f92bb93b76c77a58cb2d25551c5fcde0b3ef90aa7375a` | 17,340 | 20 |
+| `ledger-mock.jsonl` | `ade105a54d978ede8a66d12a9fb0b38c957f174dfc1353e26aa70dcea48c959f` | 599,784 | 18 |
+| `ledger-mock-2026-07-31-pre-A9-r10.jsonl` | `9a87193b40c7705894c170c96e2ae1b72bb6424931c7727323a8bac3ba5055bf` | 1,999,328 | 60 |
+| `ledger-mock-grades.json` | `c879484e3c492ce134d1d93c4623256ba7ce9fead46441a918951fd644ef672c` | 1,116,927 | — |
+| `ledger-mock-grades-2026-07-31-pre-A9-r10.json` | `d880fa6066957bdc130e99b054ccb4ebf601615129c6344bab871c98f05ffc97` | 3,710,964 | — |
+
+`runs/README.md` is documentation, not evidence, and is deliberately outside this manifest.
+
+**Gap (i) closed — the grades artifacts.** `ledger-full-a12-grades.json` and `ledger-control-a12-grades.json` **back every published figure in §30** and had, until now, no checksum in any founding document; §30.9 listed only the three `.jsonl` ledgers. The derived results were the least-protected files in the set. They are now pinned above at full length.
+
+**Gap (ii) closed — §30.9's truncation.** §30.9 records those three ledger digests **abbreviated to 24 hexadecimal characters**. Those 24 characters are correct and are a prefix of the full digests above; they are simply incomplete. Twenty-four hex characters is adequate against accidental corruption and weak as a tamper record. **§30.9 is not edited** — this document is additive-only, and the truncated values are not wrong, only partial. The full-length digests above are the authoritative manifest and supersede the abbreviated forms wherever the two are used for verification. **A study whose central claim is verifiability should not publish a partial digest**, which is why this correction is recorded rather than left implicit.
+
+**To verify the evidence:**
+
+```
+cd tools/slice16-harness/runs && shasum -a 256 *.jsonl *.json
+```
+
+Every line must reproduce a row above. `runs/README.md` carries the same digests beside each file's provenance.
