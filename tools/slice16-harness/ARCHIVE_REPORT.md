@@ -1,6 +1,6 @@
 # Slice 16 — ARCHIVE REPORT
 
-**Marker:** `S16-ARCHIVE-2026-08-02-A` · **Session:** `dfe9e94` → `05c1359`, 3 commits · **NO push, NO spend, NO provider call.**
+**Marker:** `S16-ARCHIVE-2026-08-02-A` · **Session:** `dfe9e94` → `12aad14`, 4 commits · **NO push, NO spend, NO provider call.**
 
 **The study's data is now recoverable by someone other than Hudson.** All 13 ledger files are git-tracked, byte-identity proven at three separate points, with a README that makes it impossible to mistake a pilot, a mock, a probe, or the halted first attempt for a result. Slice 16 is complete.
 
@@ -13,7 +13,8 @@
 | Session start | `dfe9e94` | ahead 5 |
 | After R-ARCH-1 evidence commit | `c037448` | ahead 6 |
 | After R-ARCH-2 founding §32 | `6642183` | ahead 7 |
-| After R-ARCH-3 C12 ruling | `05c1359` | **ahead 8** |
+| After R-ARCH-3 C12 ruling | `05c1359` | ahead 8 |
+| This report | `12aad14` | **ahead 9** |
 
 `origin/main` remains `642dfc9`. Nothing pushed.
 
@@ -117,7 +118,7 @@ The triage **retains the record that C12 was left open**, under the heading it o
 | Loose object size | 15.11 MiB | 17.57 MiB | +2.46 MiB |
 | Raw content added | — | — | **25 MB** |
 
-**The push is ~2 MB, not ~25 MB.** Measured, not estimated: `git pack-objects --revs` over `origin/main..HEAD` produces **2.0 MB** (1.8 MB thin), across 64 objects. Ledger rows repeat the system text and tool schemas on every line, so JSONL of this shape deltas and compresses roughly **12:1**. The queue item below is corrected accordingly — expect an ordinary push, not a slow one.
+**The push is ~2 MB, not ~25 MB.** Measured, not estimated: `git pack-objects --revs` over `origin/main..HEAD` produces **2.0 MB** (1.8 MB thin), across 69 objects. Ledger rows repeat the system text and tool schemas on every line, so JSONL of this shape deltas and compresses roughly **12:1**. The queue item below is corrected accordingly — expect an ordinary push, not a slow one.
 
 ---
 
@@ -148,6 +149,6 @@ The triage **retains the record that C12 was left open**, under the heading it o
 
 ## HUDSON'S QUEUE
 
-1. **`git hpush`** — **8 commits** from `642dfc9`. **Measured payload ~2.0 MB, not 25 MB** (§8) — expect an ordinary push. If it does stall, the largest single object is 10.7 MB, well inside every GitHub limit.
+1. **`git hpush`** — **9 commits** from `642dfc9`. **Measured payload ~2.0 MB, not 25 MB** (§8) — expect an ordinary push. If it does stall, the largest single object is 10.7 MB, well inside every GitHub limit.
 2. **Confirm the push landed**, then verify the evidence survived the round trip: `git ls-tree -r origin/main -- tools/slice16-harness/runs/` should list 14 paths, and the digests in founding §32.2 must reproduce from a fresh clone. That last check is the whole point of R-ARCH-1 — recoverability by someone who is not you.
 3. **Slice 16 is then complete.** Slice 17 opens on the inheritance list in `CLOSE_REPORT.md` §2: RQ3 redesign (the strongest finding — an instrument that cannot grade what its own scenarios elicit), the unresolved contrast, and OQ-16-5's standing harness-distortion threat.
