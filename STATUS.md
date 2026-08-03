@@ -117,6 +117,6 @@ The single failure is the documented **Node-version false-red** in `tests/v2-gol
 
 ## Uncommitted / Local Notes
 
-Known-dirty, user-owned, **never staged**: `.dispatch-scope` (modified per active dispatch), two `.githooks` mode changes, three `docs/` CRLF files, `Untitled.canvas`, `tools/audit/`, `tools/slice16-harness/FULL_RUN_REPORT.md`, and `tools/slice16-harness/runs/` — the run ledgers, which are **evidence** (checksums pinned in founding §25.3 and §30.9).
+Known-dirty, user-owned, **never staged**: `.dispatch-scope` (modified per active dispatch), two `.githooks` mode changes, three `docs/` CRLF files, `Untitled.canvas`, `tools/slice16-harness/FULL_RUN_REPORT.md`, and `tools/slice16-harness/runs/` — the run ledgers, which are **evidence** (checksums pinned in founding §25.3 and §30.9). **P0-D6 amendment (2026-08-03):** `tools/audit/REPO_AUDIT_2026-07-31.md` was removed from this never-staged list and committed because README.md, STATUS.md, RUNBOOK.md, and the Slice 16 remediation report cite it.
 
 `_rescued-agent-defs/` is claimed by AGENTS.md but ABSENT (audit L1-1); the live `.claude/agents/` definitions are the stale-routing hazard. Local `.claude/skills/*.md` edits are not project state.
