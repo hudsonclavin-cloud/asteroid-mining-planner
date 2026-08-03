@@ -5,11 +5,24 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, 'data');
 
+const LEGACY_WINDOW = {
+  start: '2026-05-01',
+  stop: '2026-07-30',
+};
+
 const [, , argStart, argStop] = process.argv;
 const WINDOW = {
-  start: argStart ?? '2026-05-01',
-  stop: argStop ?? '2026-07-30',
+  start: argStart ?? LEGACY_WINDOW.start,
+  stop: argStop ?? LEGACY_WINDOW.stop,
 };
+
+function resolveDataDir(window) {
+  const isLegacyWindow =
+    window.start === LEGACY_WINDOW.start && window.stop === LEGACY_WINDOW.stop;
+  return isLegacyWindow ? dataDir : path.join(dataDir, `${window.start}_${window.stop}`);
+}
+
+const windowDataDir = resolveDataDir(WINDOW);
 
 const HORIZONS_BASE_URL = 'https://ssd.jpl.nasa.gov/api/horizons.api';
 const SLOW_FETCH_WARNING_MS = 5 * 60 * 1000;
@@ -114,12 +127,14 @@ function parseSamples(resultText) {
 }
 
 async function fetchDataset(body, cadence) {
-  const outputPath = path.join(dataDir, `${cadence.label}-${body.name}.json`);
+  const outputPath = path.join(windowDataDir, `${cadence.label}-${body.name}.json`);
 
   if (!refresh) {
     try {
       await fs.access(outputPath);
-      console.log(`cache hit: ${path.relative(process.cwd(), outputPath)}`);
+      console.log(
+        `cache hit: ${path.relative(process.cwd(), outputPath)} (window ${WINDOW.start}..${WINDOW.stop})`,
+      );
       return;
     } catch {}
   }
@@ -171,7 +186,7 @@ async function fetchDataset(body, cadence) {
 }
 
 async function main() {
-  await fs.mkdir(dataDir, { recursive: true });
+  await fs.mkdir(windowDataDir, { recursive: true });
 
   const bodies = ioExtensionOnly ? BODIES.filter((body) => body.name === 'io') : BODIES;
   const cadences = ioExtensionOnly ? IO_EXTENSION_CADENCES : CADENCES;
