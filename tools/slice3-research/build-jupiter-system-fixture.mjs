@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
+const dataDir = path.join(__dirname, 'data');
+const inputDir = process.argv[3] ?? dataDir;
 
 const INPUTS = [
   {
@@ -11,35 +13,35 @@ const INPUTS = [
     targetId: '599',
     center: '@sun',
     origin: 'heliocentric',
-    inputPath: path.join(__dirname, 'data', 'daily-jupiter.json'),
+    inputPath: path.join(inputDir, 'daily-jupiter.json'),
   },
   {
     key: 'io',
     targetId: '501',
     center: '500@599',
     origin: 'jupiter-centered',
-    inputPath: path.join(__dirname, 'data', '1h-io.json'),
+    inputPath: path.join(inputDir, '1h-io.json'),
   },
   {
     key: 'europa',
     targetId: '502',
     center: '500@599',
     origin: 'jupiter-centered',
-    inputPath: path.join(__dirname, 'data', '3h-europa.json'),
+    inputPath: path.join(inputDir, '3h-europa.json'),
   },
   {
     key: 'ganymede',
     targetId: '503',
     center: '500@599',
     origin: 'jupiter-centered',
-    inputPath: path.join(__dirname, 'data', '6h-ganymede.json'),
+    inputPath: path.join(inputDir, '6h-ganymede.json'),
   },
   {
     key: 'callisto',
     targetId: '504',
     center: '500@599',
     origin: 'jupiter-centered',
-    inputPath: path.join(__dirname, 'data', '12h-callisto.json'),
+    inputPath: path.join(inputDir, '12h-callisto.json'),
   },
 ];
 
@@ -48,6 +50,9 @@ const outPath =
   path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-jupiter-system-90d.json');
 
 function readJson(filePath) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Missing intermediate file: ${filePath}`);
+  }
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 

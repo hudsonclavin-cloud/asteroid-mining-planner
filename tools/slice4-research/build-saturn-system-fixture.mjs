@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
+const dataDir = path.join(__dirname, 'data');
+const inputDir = process.argv[3] ?? dataDir;
 
 const INPUTS = [
   {
@@ -11,56 +13,56 @@ const INPUTS = [
     targetId: '699',
     center: '@sun',
     origin: 'heliocentric',
-    inputPath: path.join(__dirname, 'data', 'daily-saturn.json'),
+    inputPath: path.join(inputDir, 'daily-saturn.json'),
   },
   {
     key: 'titan',
     targetId: '606',
     center: '500@699',
     origin: 'saturn-centered',
-    inputPath: path.join(__dirname, 'data', '12h-titan.json'),
+    inputPath: path.join(inputDir, '12h-titan.json'),
   },
   {
     key: 'rhea',
     targetId: '605',
     center: '500@699',
     origin: 'saturn-centered',
-    inputPath: path.join(__dirname, 'data', '3h-rhea.json'),
+    inputPath: path.join(inputDir, '3h-rhea.json'),
   },
   {
     key: 'iapetus',
     targetId: '608',
     center: '500@699',
     origin: 'saturn-centered',
-    inputPath: path.join(__dirname, 'data', 'daily-iapetus.json'),
+    inputPath: path.join(inputDir, 'daily-iapetus.json'),
   },
   {
     key: 'tethys',
     targetId: '603',
     center: '500@699',
     origin: 'saturn-centered',
-    inputPath: path.join(__dirname, 'data', '1h-tethys.json'),
+    inputPath: path.join(inputDir, '1h-tethys.json'),
   },
   {
     key: 'dione',
     targetId: '604',
     center: '500@699',
     origin: 'saturn-centered',
-    inputPath: path.join(__dirname, 'data', '3h-dione.json'),
+    inputPath: path.join(inputDir, '3h-dione.json'),
   },
   {
     key: 'mimas',
     targetId: '601',
     center: '500@699',
     origin: 'saturn-centered',
-    inputPath: path.join(__dirname, 'data', '1h-mimas.json'),
+    inputPath: path.join(inputDir, '1h-mimas.json'),
   },
   {
     key: 'enceladus',
     targetId: '602',
     center: '500@699',
     origin: 'saturn-centered',
-    inputPath: path.join(__dirname, 'data', '1h-enceladus.json'),
+    inputPath: path.join(inputDir, '1h-enceladus.json'),
   },
 ];
 
@@ -69,6 +71,9 @@ const outPath =
   path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-saturn-system-90d.json');
 
 function readJson(filePath) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Missing intermediate file: ${filePath}`);
+  }
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 

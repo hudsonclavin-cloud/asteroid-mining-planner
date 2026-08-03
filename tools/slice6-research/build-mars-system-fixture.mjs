@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
+const dataDir = path.join(__dirname, 'data');
+const inputDir = process.argv[3] ?? dataDir;
 
 const INPUTS = [
   {
@@ -11,21 +13,21 @@ const INPUTS = [
     targetId: '499',
     center: '500@10',
     origin: 'heliocentric',
-    inputPath: path.join(__dirname, 'data', 'mars-1d.json'),
+    inputPath: path.join(inputDir, 'mars-1d.json'),
   },
   {
     key: 'phobos',
     targetId: '401',
     center: '500@499',
     origin: 'mars-centered',
-    inputPath: path.join(__dirname, 'data', 'phobos-30m.json'),
+    inputPath: path.join(inputDir, 'phobos-30m.json'),
   },
   {
     key: 'deimos',
     targetId: '402',
     center: '500@499',
     origin: 'mars-centered',
-    inputPath: path.join(__dirname, 'data', 'deimos-1h.json'),
+    inputPath: path.join(inputDir, 'deimos-1h.json'),
   },
 ];
 
@@ -34,6 +36,9 @@ const outPath =
   path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-mars-system-90d.json');
 
 function readJson(filePath) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Missing intermediate file: ${filePath}`);
+  }
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
