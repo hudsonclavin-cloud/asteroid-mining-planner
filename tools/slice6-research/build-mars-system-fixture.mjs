@@ -7,45 +7,31 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 
 const INPUTS = [
   {
-    key: 'jupiter',
-    targetId: '599',
-    center: '@sun',
+    key: 'mars',
+    targetId: '499',
+    center: '500@10',
     origin: 'heliocentric',
-    inputPath: path.join(__dirname, 'data', 'daily-jupiter.json'),
+    inputPath: path.join(__dirname, 'data', 'mars-1d.json'),
   },
   {
-    key: 'io',
-    targetId: '501',
-    center: '500@599',
-    origin: 'jupiter-centered',
-    inputPath: path.join(__dirname, 'data', '1h-io.json'),
+    key: 'phobos',
+    targetId: '401',
+    center: '500@499',
+    origin: 'mars-centered',
+    inputPath: path.join(__dirname, 'data', 'phobos-30m.json'),
   },
   {
-    key: 'europa',
-    targetId: '502',
-    center: '500@599',
-    origin: 'jupiter-centered',
-    inputPath: path.join(__dirname, 'data', '3h-europa.json'),
-  },
-  {
-    key: 'ganymede',
-    targetId: '503',
-    center: '500@599',
-    origin: 'jupiter-centered',
-    inputPath: path.join(__dirname, 'data', '6h-ganymede.json'),
-  },
-  {
-    key: 'callisto',
-    targetId: '504',
-    center: '500@599',
-    origin: 'jupiter-centered',
-    inputPath: path.join(__dirname, 'data', '12h-callisto.json'),
+    key: 'deimos',
+    targetId: '402',
+    center: '500@499',
+    origin: 'mars-centered',
+    inputPath: path.join(__dirname, 'data', 'deimos-1h.json'),
   },
 ];
 
 const outPath =
   process.argv[2] ??
-  path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-jupiter-system-90d.json');
+  path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-mars-system-90d.json');
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -84,7 +70,7 @@ const fixture = {
           records: raw.samples.map(toTuple),
         },
       ];
-    })
+    }),
   ),
 };
 

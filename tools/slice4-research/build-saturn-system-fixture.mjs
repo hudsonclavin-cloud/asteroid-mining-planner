@@ -64,13 +64,9 @@ const INPUTS = [
   },
 ];
 
-const outputPath = path.join(
-  repoRoot,
-  'tests',
-  'fixtures',
-  'v2',
-  'horizons-saturn-system-90d.json',
-);
+const outPath =
+  process.argv[2] ??
+  path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-saturn-system-90d.json');
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -113,6 +109,6 @@ const fixture = {
   ),
 };
 
-fs.writeFileSync(outputPath, `${JSON.stringify(fixture, null, 2)}\n`);
+fs.writeFileSync(outPath, `${JSON.stringify(fixture, null, 2)}\n`);
 
-console.log(`Wrote ${outputPath}`);
+console.log(`Wrote ${outPath}`);

@@ -5,9 +5,10 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, 'data');
 
+const [, , argStart, argStop] = process.argv;
 const WINDOW = {
-  start: '2026-05-01',
-  stop: '2026-07-30',
+  start: argStart ?? '2026-05-01',
+  stop: argStop ?? '2026-07-30',
 };
 
 const HORIZONS_BASE_URL = 'https://ssd.jpl.nasa.gov/api/horizons.api';

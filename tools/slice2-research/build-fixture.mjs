@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..');
 const dataDir = path.join(__dirname, 'data');
-const outPath = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-inner-system-90d.json');
+const outPath =
+  process.argv[2] ??
+  path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-inner-system-90d.json');
 
 const BODY_META = {
   sun:     { targetId: '10',  center: '@ssb',    origin: 'ssb' },
