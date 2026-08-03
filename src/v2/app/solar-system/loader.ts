@@ -10,25 +10,23 @@ export { loadSlice8AsteroidCatalogFixture } from '../../boundary/slice8-asteroid
 export { loadSlice9NeaCatalogFixture } from '../../boundary/slice9-nea-catalog.js';
 import type { BodyId } from '../../core/constants/bodies.js';
 
-export const SLICE3_EPOCH_TDB = 830_865_600;
-
 const slice2FixtureUrl = new URL(
-  '../../../../tests/fixtures/v2/horizons-inner-system-90d.json',
+  '../../data/horizons-inner-system-rolling.json',
   import.meta.url,
 );
 
 const slice3FixtureUrl = new URL(
-  '../../../../tests/fixtures/v2/horizons-jupiter-system-90d.json',
+  '../../data/horizons-jupiter-system-rolling.json',
   import.meta.url,
 );
 
 const slice4FixtureUrl = new URL(
-  '../../../../tests/fixtures/v2/horizons-saturn-system-90d.json',
+  '../../data/horizons-saturn-system-rolling.json',
   import.meta.url,
 );
 
 const slice6FixtureUrl = new URL(
-  '../../../../tests/fixtures/v2/horizons-mars-system-90d.json',
+  '../../data/horizons-mars-system-rolling.json',
   import.meta.url,
 );
 

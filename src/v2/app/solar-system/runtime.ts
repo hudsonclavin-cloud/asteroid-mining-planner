@@ -20,6 +20,7 @@ import {
 } from '../../core/index.js';
 import { BODY_CONSTANTS } from '../../core/constants/bodies.js';
 import type { BodyId } from '../../core/constants/bodies.js';
+import { utcStringToTdbSeconds } from '../../core/units/utc-to-tdb.js';
 import {
   AsteroidRenderer,
   propagateAsteroidBodyState,
@@ -54,11 +55,7 @@ import {
   subscribeToFocusRequests,
   subscribeToStarfieldDisplay,
 } from '../ui-store/index.js';
-import {
-  loadSlice9NeaCatalogFixture,
-  loadSolarSystemStatesBrowser,
-  SLICE3_EPOCH_TDB,
-} from './loader.js';
+import { loadSlice9NeaCatalogFixture, loadSolarSystemStatesBrowser } from './loader.js';
 import {
   buildSlice9RuntimePropagationBodies,
   isSlice9RuntimeEllipticBody,
@@ -201,6 +198,9 @@ export interface PlanetHoverTooltipElement {
 
 const J2000_TDB_JULIAN_DAY = 2451545;
 const TDB_MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const TDB_AT_UNIX_EPOCH = utcStringToTdbSeconds('1970-01-01T00:00:00Z');
+const nowTdbSeconds = (): number =>
+  Date.now() / 1000 + TDB_AT_UNIX_EPOCH;
 const PLANET_HOVER_TOOLTIP_OFFSET_PX = 12;
 const PLANET_HOVER_TOOLTIP_THROTTLE_MS = 33;
 
@@ -600,6 +600,20 @@ export function formatTdbDateLabel(tdbSeconds: number): string {
   return `${year} ${TDB_MONTH_LABELS[monthIndex]} ${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} TDB`;
 }
 
+const tdbSecondsToUtcMs = (tdbSeconds: number): number =>
+  (tdbSeconds - TDB_AT_UNIX_EPOCH) * 1000;
+
+function formatTdbCoverageDateLabel(tdbSeconds: number): string {
+  const [year, monthLabel, day] = formatTdbDateLabel(tdbSeconds).split(' ');
+  const month = String(TDB_MONTH_LABELS.indexOf(monthLabel) + 1).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatUtcDateTimeLabel(tdbSeconds: number): string {
+  const isoString = new Date(tdbSecondsToUtcMs(tdbSeconds)).toISOString();
+  return `${isoString.slice(0, 10)} ${isoString.slice(11, 16)} UTC`;
+}
+
 export function renderDateHud(element: DateHudElement, tdbSeconds: number): void {
   element.textContent = formatTdbDateLabel(tdbSeconds);
 }
@@ -873,7 +887,45 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   dateHud.style.border = '1px solid rgba(255, 255, 255, 0.16)';
   dateHud.style.borderRadius = '8px';
   dateHud.style.pointerEvents = 'none';
+  dateHud.style.whiteSpace = 'pre-line';
   mount.appendChild(dateHud);
+
+  const timeStatusHud = document.createElement('div');
+  timeStatusHud.setAttribute('data-testid', 'time-status-hud');
+  timeStatusHud.style.position = 'absolute';
+  timeStatusHud.style.top = '82px';
+  timeStatusHud.style.right = '16px';
+  timeStatusHud.style.display = 'grid';
+  timeStatusHud.style.gap = '4px';
+  timeStatusHud.style.maxWidth = '420px';
+  timeStatusHud.style.padding = '8px 10px';
+  timeStatusHud.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
+  timeStatusHud.style.fontSize = '12px';
+  timeStatusHud.style.lineHeight = '1.3';
+  timeStatusHud.style.color = 'rgba(255, 255, 255, 0.82)';
+  timeStatusHud.style.background = 'rgba(0, 0, 0, 0.28)';
+  timeStatusHud.style.border = '1px solid rgba(255, 255, 255, 0.16)';
+  timeStatusHud.style.borderRadius = '8px';
+  timeStatusHud.style.pointerEvents = 'none';
+
+  const coverageLine = document.createElement('div');
+  coverageLine.setAttribute('data-testid', 'ephemeris-coverage-line');
+  coverageLine.textContent =
+    `Ephemeris coverage ${formatTdbCoverageDateLabel(timeMin)} – ${formatTdbCoverageDateLabel(timeMax)} TDB`;
+  timeStatusHud.appendChild(coverageLine);
+
+  const outOfCoverageWarning = document.createElement('div');
+  outOfCoverageWarning.setAttribute('data-testid', 'ephemeris-coverage-warning');
+  outOfCoverageWarning.textContent =
+    'Current time is outside ephemeris coverage — showing nearest available date.';
+  outOfCoverageWarning.style.color = '#ffd27a';
+  outOfCoverageWarning.style.display = 'none';
+  timeStatusHud.appendChild(outOfCoverageWarning);
+
+  const trackingStatus = document.createElement('div');
+  trackingStatus.setAttribute('data-testid', 'time-tracking-status');
+  timeStatusHud.appendChild(trackingStatus);
+  mount.appendChild(timeStatusHud);
 
   const planetHoverTooltip = document.createElement('div');
   planetHoverTooltip.setAttribute('data-testid', 'planet-hover-tooltip');
@@ -1072,6 +1124,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   let focusTransitionFromAnchor: Position3 | null = null;
   let orbitTween: CameraOrbitTween | null = null;
   let currentTdbSeconds = timeMin;
+  let tracking = true;
   let disposed = false;
   let pointerActive = false;
   let pointerDragged = false;
@@ -1444,9 +1497,13 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     });
     updateFocusedAsteroidHud(activeFocusBody);
     renderDateHud(dateHud, currentTdbSeconds);
+    dateHud.textContent += `\n${formatUtcDateTimeLabel(currentTdbSeconds)}`;
+    const wallClockTdbSeconds = nowTdbSeconds();
+    outOfCoverageWarning.style.display =
+      wallClockTdbSeconds < timeMin || wallClockTdbSeconds > timeMax ? 'block' : 'none';
+    trackingStatus.textContent = tracking ? 'LIVE' : 'SCRUBBED — press Shift+N for now';
 
-    const epochStep = Math.round((currentTdbSeconds - SLICE3_EPOCH_TDB) / TIME_SCRUB_STEP_SECONDS);
-    document.title = `Aster V2 — Solar System — step ${epochStep}`;
+    document.title = `Aster V2 — Solar System — ${formatTdbDateLabel(currentTdbSeconds)}`;
   }
 
   function onResize(): void {
@@ -1460,6 +1517,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   }
 
   function scrubTime(deltaSeconds: number): void {
+    tracking = false;
     currentTdbSeconds = clamp(currentTdbSeconds + deltaSeconds, timeMin, timeMax);
     updateVisibleState();
   }
@@ -1745,14 +1803,20 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
     if (event.key === 'Home') {
       cancelCameraTween();
+      tracking = false;
       currentTdbSeconds = timeMin;
       updateVisibleState();
       return;
     }
     if (event.key === 'End') {
       cancelCameraTween();
+      tracking = false;
       currentTdbSeconds = timeMax;
       updateVisibleState();
+      return;
+    }
+    if (event.key === 'N') {
+      tracking = true;
       return;
     }
 
@@ -1793,11 +1857,14 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
   }
 
-  function renderFrame(): void {
+  function renderFrame(frameTimestampMs: number): void {
     if (disposed) return;
-    updateVisibleState();
+    if (tracking) {
+      currentTdbSeconds = clamp(nowTdbSeconds(), timeMin, timeMax);
+    }
+    updateVisibleState(frameTimestampMs);
     if (!pointerActive && hasPointerSample) {
-      updatePlanetHoverTooltip(lastPointerX, lastPointerY, performance.now());
+      updatePlanetHoverTooltip(lastPointerX, lastPointerY, frameTimestampMs);
     }
     renderer.render(scene, camera);
     if (bodyLabelsVisible) {
@@ -1816,7 +1883,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   window.addEventListener('keydown', onKeyDown);
 
   updateVisibleState();
-  renderFrame();
+  animationHandle = window.requestAnimationFrame(renderFrame);
 
   return () => {
     disposed = true;
@@ -1837,6 +1904,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     window.removeEventListener('keydown', onKeyDown);
     focusedAsteroidHud.remove();
     dateHud.remove();
+    timeStatusHud.remove();
     planetHoverTooltip.remove();
     labelRenderer.domElement.remove();
     starRenderer.dispose();
