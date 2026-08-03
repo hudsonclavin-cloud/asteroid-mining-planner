@@ -291,25 +291,38 @@ export function resolveSunLightPosition(
 
 function createBodyLabelElement(text: string): HTMLDivElement {
   const element = document.createElement('div');
-  element.textContent = text;
-  element.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  element.style.fontSize = '12px';
-  element.style.lineHeight = '1';
-  element.style.color = '#ffffff';
-  element.style.background = 'rgba(0, 0, 0, 0.58)';
-  element.style.border = '1px solid rgba(255, 255, 255, 0.18)';
-  element.style.borderRadius = '999px';
-  element.style.padding = '3px 6px';
   element.style.pointerEvents = 'none';
-  element.style.userSelect = 'none';
-  element.style.whiteSpace = 'nowrap';
-  element.style.textShadow = '0 1px 2px rgba(0, 0, 0, 0.65)';
-  element.style.transform = 'translate(-50%, calc(-100% - 8px))';
+
+  const pill = document.createElement('div');
+  pill.textContent = text;
+  pill.style.position = 'absolute';
+  pill.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  pill.style.fontSize = '12px';
+  pill.style.lineHeight = '1';
+  pill.style.color = '#ffffff';
+  pill.style.background = 'rgba(0, 0, 0, 0.58)';
+  pill.style.border = '1px solid rgba(255, 255, 255, 0.18)';
+  pill.style.borderRadius = '999px';
+  pill.style.padding = '3px 6px';
+  pill.style.pointerEvents = 'none';
+  pill.style.userSelect = 'none';
+  pill.style.whiteSpace = 'nowrap';
+  pill.style.textShadow = '0 1px 2px rgba(0, 0, 0, 0.65)';
+  pill.style.transform = 'translate(12px, -12px)';
+  element.appendChild(pill);
   return element;
 }
 
 function createBodyLabelObject(text: string): CSS2DObject {
   return new CSS2DObject(createBodyLabelElement(text));
+}
+
+function setBodyLabelText(element: HTMLElement, text: string): void {
+  const pill = element.firstElementChild;
+  if (!(pill instanceof HTMLElement)) {
+    throw new Error('Body label anchor is missing its pill element');
+  }
+  pill.textContent = text;
 }
 
 function formatAsteroidLabel(asteroid: AsteroidBody): string {
@@ -1281,7 +1294,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
 
     const asteroid = getAsteroidBody(bodyId);
-    focusedAsteroidLabel.element.textContent = formatAsteroidLabel(asteroid);
+    setBodyLabelText(focusedAsteroidLabel.element, formatAsteroidLabel(asteroid));
     focusedAsteroidLabel.position.set(0, 0, 0);
     focusedAsteroidLabel.visible = true;
   }
