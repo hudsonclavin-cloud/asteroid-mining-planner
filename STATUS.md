@@ -1,7 +1,7 @@
 # STATUS.md — Aster Project Current State
 
 > Updated at the end of each session. Keep it short; agents read this before acting.
-> **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`).** If HEAD does not match the table below,
+> **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`).** If HEAD does not match the table below,
 > update this file before believing it. A stale STATUS forced a session-start stop-gate once
 > already (audit L3-1) — that is why this section exists.
 
@@ -19,10 +19,10 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `642dfc9` | last pushed |
-| Local chain | `642dfc9`..HEAD | **UNPUSHED** — marker `S16-CLOSE-2026-08-02-A` |
+| origin/main | `ae3164c` | synced with HEAD |
+| Local HEAD | `ae3164c` | synced with origin |
 
-**Push state:** everything after `642dfc9` is local until Hudson pushes. No agent pushes, ever.
+**Push state:** HEAD is synced with origin at `ae3164cfb294bffde145734b7740785d1cb034f8`. No agent pushes, ever.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -74,8 +74,8 @@ The single failure is the documented **Node-version false-red** in `tests/v2-gol
 
 ## Next Session
 
-1. **Hudson: review + `git hpush`** the local chain from `642dfc9`.
-2. **Work HUDSON'S QUEUE** in `tools/slice16-harness/CLOSE_REPORT.md` — including the ledger-evidence decision (INV-034: `tools/slice16-harness/runs/` is untracked; the checksums in founding §25.3 and §30.9 are currently the only durable record).
+1. **2026-08 corpus recovery:** 17 artifacts are tracked on origin. The only remaining gap is the seven Perplexity re-fetches (raw P1–P5, QOL UX, and explainer result chains); drop the exact files into `~/aster-intake-2026-08/` and re-run `DISPATCH_RESEARCH_INGEST_revA` to close it.
+2. **Work HUDSON'S QUEUE** in `tools/slice16-harness/CLOSE_REPORT.md`; all 14 paths under `tools/slice16-harness/runs/` are tracked evidence.
 3. **Slice 17 opens on §31.** Its first design input is R-CLOSE-1: an instrument that cannot grade the behaviour its own scenarios were written to elicit.
 4. CI hardening (L4-1/L4-3): MCP + Slice 16 suites into Actions; truthful default `npm test`.
 
@@ -117,6 +117,6 @@ The single failure is the documented **Node-version false-red** in `tests/v2-gol
 
 ## Uncommitted / Local Notes
 
-Known-dirty, user-owned, **never staged**: `.dispatch-scope` (modified per active dispatch), two `.githooks` mode changes, three `docs/` CRLF files, `Untitled.canvas`, `tools/slice16-harness/FULL_RUN_REPORT.md`, and `tools/slice16-harness/runs/` — the run ledgers, which are **evidence** (checksums pinned in founding §25.3 and §30.9). **P0-D6 amendment (2026-08-03):** `tools/audit/REPO_AUDIT_2026-07-31.md` was removed from this never-staged list and committed because README.md, STATUS.md, RUNBOOK.md, and the Slice 16 remediation report cite it.
+Known-dirty, user-owned, **never staged**: `.dispatch-scope` (modified per active dispatch), two `.githooks` mode changes, three `docs/` CRLF files, `Untitled.canvas`, and `tools/slice16-harness/FULL_RUN_REPORT.md`. **P0-D6 amendment (2026-08-03):** `tools/audit/REPO_AUDIT_2026-07-31.md` was removed from this never-staged list and committed because README.md, STATUS.md, RUNBOOK.md, and the Slice 16 remediation report cite it.
 
 `_rescued-agent-defs/` is claimed by AGENTS.md but ABSENT (audit L1-1); the live `.claude/agents/` definitions are the stale-routing hazard. Local `.claude/skills/*.md` edits are not project state.
