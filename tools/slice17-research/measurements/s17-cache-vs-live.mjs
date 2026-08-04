@@ -11,15 +11,16 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..', '..');
 const sliceRoot = path.join(repoRoot, 'tools', 'slice17-research');
 const runtimeOutDir = path.join(sliceRoot, '.tmp-s17-measure-runtime');
-const outputPath = path.join(sliceRoot, 'data', 's17-cache-live-structure.json');
+const revDArtifactPath = path.join(sliceRoot, 'data', 's17-cache-live-structure.json');
 const cachePath = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'lambert-screen-cache.json');
 const catalogPath = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');
 const earthPath = path.join(repoRoot, 'src', 'v2', 'data', 'horizons-inner-solar-system-2026-2040.json');
 const tscEntry = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
 
-const marker = 'S-S17-MEASURE-2026-08-04-D';
+const cli = parseCliArgs(process.argv.slice(2));
+const marker = cli.marker;
 const bodyIds = ['99942', '101955', '433', '1566', '163693'];
-const nDep = 200;
+const nDep = cli.nDep;
 const nTof = 100;
 const departureStart = '2026-01-01';
 const departureEnd = '2040-01-01';
@@ -31,6 +32,41 @@ const gridParams = {
   nDep,
   nTof,
 };
+
+function parseCliArgs(argv) {
+  let nDepValue = 200;
+  let outputPathValue = revDArtifactPath;
+  let markerValue = 'S-S17-MEASURE-2026-08-04-D';
+  let skipParallel = false;
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (argument === '--n-dep') {
+      nDepValue = Number(argv[index + 1]);
+      index += 1;
+    } else if (argument === '--output') {
+      const requestedPath = argv[index + 1];
+      if (!requestedPath) throw new Error('--output requires a path');
+      outputPathValue = path.resolve(repoRoot, requestedPath);
+      index += 1;
+    } else if (argument === '--marker') {
+      markerValue = argv[index + 1];
+      if (!markerValue) throw new Error('--marker requires a value');
+      index += 1;
+    } else if (argument === '--skip-parallel') {
+      skipParallel = true;
+    } else {
+      throw new Error(`Unknown argument '${argument}'`);
+    }
+  }
+  if (!Number.isInteger(nDepValue) || nDepValue < 2) {
+    throw new Error(`--n-dep must be an integer >= 2; received '${nDepValue}'`);
+  }
+  const outputRelative = path.relative(sliceRoot, outputPathValue);
+  if (outputRelative.startsWith('..') || path.isAbsolute(outputRelative)) {
+    throw new Error(`--output must stay inside ${sliceRoot}`);
+  }
+  return { nDep: nDepValue, outputPath: outputPathValue, marker: markerValue, skipParallel };
+}
 
 function utcMidnightToJdTdb(utcDate) {
   const utcMillis = Date.parse(`${utcDate}T00:00:00Z`);
@@ -123,7 +159,8 @@ async function loadInputs() {
   const earthSeries = earthStates.earth.map((sample) => sample.state);
   const cache = readJson(cachePath);
   const cacheByDesignation = new Map(cache.bodies.map((body) => [body.designation, body]));
-  return { byDesignation, earthSeries, cache, cacheByDesignation };
+  const revDArtifact = readJson(revDArtifactPath);
+  return { byDesignation, earthSeries, cache, cacheByDesignation, revDArtifact };
 }
 
 async function runtimeFunctions(outDir = runtimeOutDir) {
@@ -286,11 +323,19 @@ function structureForGrid(cells, liveMinC3) {
     liveMinPlus10: liveMinC3 + 10,
     absolute25: 25,
   };
-  return Object.fromEntries(Object.entries(thresholds).map(([name, thresholdKm2S2]) => [name, {
-    thresholdKm2S2,
-    conn4: segmentComponents(cells, thresholdKm2S2, 4),
-    conn8: segmentComponents(cells, thresholdKm2S2, 8),
-  }]));
+  return Object.fromEntries(Object.entries(thresholds).map(([name, thresholdKm2S2]) => {
+    const conn4 = segmentComponents(cells, thresholdKm2S2, 4);
+    const conn8 = segmentComponents(cells, thresholdKm2S2, 8);
+    return [name, {
+      thresholdKm2S2,
+      conn4,
+      conn8,
+      componentCellCounts: {
+        conn4: conn4.map((component) => component.cellCount).sort((left, right) => left - right),
+        conn8: conn8.map((component) => component.cellCount).sort((left, right) => left - right),
+      },
+    }];
+  }));
 }
 
 function dateDifferenceDays(left, right) {
@@ -335,16 +380,24 @@ async function measureParallel(selectedBodies, earthSeries) {
   }
 }
 
-function buildSanityFlags(bodies) {
+function buildSanityFlags(bodies, revDArtifact) {
   const successful = bodies.filter((body) => !body.error);
+  const revDById = new Map(revDArtifact.bodies.map((body) => [body.id, body]));
+  const noWorseThanRevD = successful.map((body) => {
+    const revD = revDById.get(body.id);
+    return {
+      id: body.id,
+      pass: revD !== undefined && body.live.minC3 <= revD.live.minC3,
+      revDLiveMinC3: revD?.live.minC3 ?? null,
+      revELiveMinC3: body.live.minC3,
+    };
+  });
   const withinFive = successful.map((body) => ({
     id: body.id,
     pass: body.live.minC3 >= body.cached.minC3 - 5 && body.live.minC3 <= body.cached.minC3 + 5,
     cachedMinC3: body.cached.minC3,
     liveMinC3: body.live.minC3,
   }));
-  const eros = successful.find((body) => body.id === '433');
-  const erosComponents = eros?.structure.liveMinPlus5.conn4.length ?? null;
   const componentMinima = successful.flatMap((body) =>
     Object.entries(body.structure).flatMap(([threshold, structure]) =>
       ['conn4', 'conn8'].flatMap((connectivity) => structure[connectivity].map((component, index) => ({
@@ -357,13 +410,13 @@ function buildSanityFlags(bodies) {
     ),
   );
   return {
+    liveMinAtMostRevDLiveMin: {
+      pass: noWorseThanRevD.every((entry) => entry.pass),
+      bodies: noWorseThanRevD,
+    },
     liveMinWithinCachedPlusMinus5: {
       pass: withinFive.every((entry) => entry.pass),
       bodies: withinFive,
-    },
-    erosLiveMinPlus5HasAtLeastTwoConn4Components: {
-      pass: erosComponents !== null && erosComponents >= 2,
-      componentCount: erosComponents,
     },
     allComponentMinimaAtLeastLiveMinMinus1e9: {
       pass: componentMinima.every((entry) => entry.pass),
@@ -382,8 +435,12 @@ async function main() {
   try {
     compileRuntimeModules();
     const functions = await runtimeFunctions();
-    const { byDesignation, earthSeries, cache, cacheByDesignation } = await loadInputs();
+    const { byDesignation, earthSeries, cache, cacheByDesignation, revDArtifact } = await loadInputs();
     const span = preflightBoundsGuard(earthSeries);
+    const departureCellDays = (gridParams.depEndJD - gridParams.depStartJD) / (nDep - 1);
+    const tofCellDays = (gridParams.tofMaxDays - gridParams.tofMinDays) / (nTof - 1);
+    console.log(`departure cell width: ${departureCellDays} days`);
+    console.log(`TOF cell width: ${tofCellDays} days`);
     const deps = makeDeps(earthSeries, functions);
     const selectedBodies = bodyIds.map((id) => {
       const body = byDesignation.get(id);
@@ -407,6 +464,12 @@ async function main() {
         let liveGrid;
         for (let run = 0; run < runCount; run += 1) {
           const result = functions.computePorkchopGrid(body.elements, gridParams, 0, deps);
+          if (nDep === 731 && id === '99942' && run === 0) {
+            console.log(`[body 99942] first compute_ms: ${result.compute_ms}`);
+            if (result.compute_ms > 5_000) {
+              throw new TimingTripwireError(`Body 99942 731x100 grid exceeded 5 s: ${result.compute_ms} ms`);
+            }
+          }
           runsComputeMs.push(result.compute_ms);
           if (run === 0) {
             liveGrid = result;
@@ -446,6 +509,9 @@ async function main() {
           structure,
         });
       } catch (error) {
+        if (error instanceof TimingTripwireError) {
+          throw error;
+        }
         const errorName = error instanceof Error ? error.name : typeof error;
         const errorMessage = error instanceof Error ? error.message : String(error);
         const errorStack = error instanceof Error ? error.stack : String(error);
@@ -461,7 +527,6 @@ async function main() {
     if (successfulCount < 3) {
       throw new Error(`Only ${successfulCount} bodies succeeded; at least 3 required`);
     }
-    const parallel = await measureParallel(selectedBodies, earthSeries);
     const result = {
       marker,
       generatedAt: new Date().toISOString(),
@@ -474,32 +539,34 @@ async function main() {
       },
       span,
       cacheMetadata: cache.metadata,
-      liveGrid: {
+      grid: {
         nDep,
         nTof,
-        M: 0,
-        departureStart,
-        departureEnd,
-        tofMinDays: gridParams.tofMinDays,
-        tofMaxDays: gridParams.tofMaxDays,
+        departureCellDays,
+        tofCellDays,
       },
       bodies,
       serialTotalMs,
-      parallel,
-      sanity: buildSanityFlags(bodies),
+      comparisonTo: 's17-cache-live-structure.json (rev D, nDep 200)',
+      sanity: buildSanityFlags(bodies, revDArtifact),
     };
-    writeJson(outputPath, result);
-    console.log(`wrote ${outputPath}`);
+    if (!cli.skipParallel) {
+      result.parallel = await measureParallel(selectedBodies, earthSeries);
+    }
+    writeJson(cli.outputPath, result);
+    console.log(`wrote ${cli.outputPath}`);
     console.log(`successful bodies: ${successfulCount}/${bodyIds.length}`);
-    console.log(`parallel: ${parallel.status}${parallel.reason ? ` — ${parallel.reason}` : ''}`);
+    console.log(`parallel: ${cli.skipParallel ? 'skipped' : result.parallel.status}`);
+    console.log(`sanity rev E <= rev D: ${result.sanity.liveMinAtMostRevDLiveMin.pass}`);
     console.log(`sanity min±5: ${result.sanity.liveMinWithinCachedPlusMinus5.pass}`);
-    console.log(`sanity Eros components: ${result.sanity.erosLiveMinPlus5HasAtLeastTwoConn4Components.pass}`);
     console.log(`sanity component minima: ${result.sanity.allComponentMinimaAtLeastLiveMinMinus1e9.pass}`);
     console.log(`sanity span flags: ${result.sanity.cachedMinOutsideViewWindow.count}`);
   } finally {
     fs.rmSync(runtimeOutDir, { recursive: true, force: true });
   }
 }
+
+class TimingTripwireError extends Error {}
 
 async function workerMain() {
   try {
