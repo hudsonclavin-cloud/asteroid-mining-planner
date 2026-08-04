@@ -1,0 +1,5789 @@
+{
+  "marker": "S-S17-MEASURE-2026-08-04-D",
+  "generatedAt": "2026-08-04T18:50:43.414Z",
+  "head": "fa24bc6b209aa82575d1950e39022a3f2248742c",
+  "machine": {
+    "platform": "darwin",
+    "cpuModel": "Apple M1",
+    "coreCount": 8,
+    "nodeVersion": "v20.19.6"
+  },
+  "span": {
+    "requested": {
+      "start": {
+        "jdTdb": 2461041.500800741,
+        "isoUtc": "2026-01-01T00:00:00.000Z"
+      },
+      "end": {
+        "jdTdb": 2466154.500800741,
+        "isoUtc": "2040-01-01T00:00:00.000Z"
+      }
+    },
+    "fixtureBounds": {
+      "first": {
+        "jdTdb": 2461041.5,
+        "isoUtc": "2025-12-31T23:58:50.816Z"
+      },
+      "last": {
+        "jdTdb": 2466519.5,
+        "isoUtc": "2040-12-30T23:58:50.816Z"
+      }
+    }
+  },
+  "cacheMetadata": {
+    "schemaVersion": 1,
+    "generatedAt": "2026-05-30T04:43:31.918Z",
+    "catalogSize": 41906,
+    "screeningWindow": {
+      "startUtc": "2026-01-01",
+      "endUtc": "2040-12-31"
+    },
+    "departureGridSpacingDays": 7,
+    "tofGridSpacingDays": 30,
+    "tofMinDays": 182,
+    "tofMaxDays": 1826,
+    "feasibleC3MaxKm2S2": 25,
+    "coorbitalCriteria": {
+      "eMax": 0.1,
+      "iMaxRad": 0.08726646259971647,
+      "aDeltaKm": 7479893.535
+    },
+    "totalSolves": 1804638825,
+    "wallTimeSeconds": 3137.744173,
+    "provenance": {
+      "solverCommit": "8471659bb1c66c7adc6998730e28da31e60b367d",
+      "catalogFixtureSha256": "f88028d2839842299b7aae20644d15fef265b19e3bbca576c5dd0faf7d231418",
+      "horizonsFixtureSha256": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+      "precomputeScriptSha256": "44d9443500cb280a625fc99cfd12756c2928430390cda8c46d7b55763f6db4f7"
+    }
+  },
+  "liveGrid": {
+    "nDep": 200,
+    "nTof": 100,
+    "M": 0,
+    "departureStart": "2026-01-01",
+    "departureEnd": "2040-01-01",
+    "tofMinDays": 182.5,
+    "tofMaxDays": 1826.25
+  },
+  "bodies": [
+    {
+      "id": "99942",
+      "spkId": 20099942,
+      "orbitClass": "ATE",
+      "cached": {
+        "minC3": 0.00020641346871491306,
+        "minC3Date": "2028-09-14",
+        "minC3TofDays": 212,
+        "bestWindows": [
+          {
+            "launchDate": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.00020641346871491306,
+            "vInfDep": 0.01436709673924809,
+            "vInfArr": 5.844705709723842
+          },
+          {
+            "launchDate": "2028-06-15",
+            "tofDays": 302,
+            "c3": 0.014387916224504756,
+            "vInfDep": 0.11994964036838442,
+            "vInfArr": 5.7314643716484515
+          },
+          {
+            "launchDate": "2028-08-17",
+            "tofDays": 242,
+            "c3": 0.020633386144412746,
+            "vInfDep": 0.14364326000342914,
+            "vInfArr": 5.910635249161565
+          },
+          {
+            "launchDate": "2028-05-18",
+            "tofDays": 332,
+            "c3": 0.023806960681531396,
+            "vInfDep": 0.15429504425460785,
+            "vInfArr": 6.032340787500215
+          },
+          {
+            "launchDate": "2028-07-13",
+            "tofDays": 272,
+            "c3": 0.06600030152639218,
+            "vInfDep": 0.2569052384175772,
+            "vInfArr": 5.643434924362281
+          }
+        ]
+      },
+      "live": {
+        "minC3": 0.0011748949214500095,
+        "minC3Date": "2028-08-08",
+        "minC3TofDays": 248.9141414141414,
+        "computeMs": 81.42529100000002
+      },
+      "diff": {
+        "deltaMinC3": 0.0009684814527350965,
+        "absoluteDateDays": 37,
+        "absoluteTofDays": 36.9141414141414
+      },
+      "spanFlag": {
+        "cachedMinOutsideViewWindow": false
+      },
+      "timing": {
+        "singleRunComputeMs": 81.42529100000002,
+        "runsComputeMs": [
+          81.42529100000002,
+          67.99508300000025,
+          62.93837499999972
+        ],
+        "medianComputeMs": 67.99508300000025
+      },
+      "structure": {
+        "liveMinPlus2": {
+          "thresholdKm2S2": 2.00117489492145,
+          "conn4": [
+            {
+              "minC3": 0.0011748949214500095,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.2070707070707
+            },
+            {
+              "minC3": 0.012975212624176105,
+              "argmin": {
+                "date": "2028-06-18",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 0.05179304780764519,
+              "argmin": {
+                "date": "2028-09-29",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 0.20423152353607793,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707073
+            },
+            {
+              "minC3": 0.25145826516111425,
+              "argmin": {
+                "date": "2036-06-25",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 0.2891786730450508,
+              "argmin": {
+                "date": "2036-09-10",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 0.48126580710687294,
+              "argmin": {
+                "date": "2036-05-04",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 0.7687395287572533,
+              "argmin": {
+                "date": "2028-04-27",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 0.8030207452107674,
+              "argmin": {
+                "date": "2035-06-05",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 0.8685106110980008,
+              "argmin": {
+                "date": "2036-05-30",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 0.8734726247345301,
+              "argmin": {
+                "date": "2035-07-01",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 5,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 0.8920982758464496,
+              "argmin": {
+                "date": "2035-05-11",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.2252501856793032,
+              "argmin": {
+                "date": "2036-10-06",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 1.25468913590389,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.3261290698382346,
+              "argmin": {
+                "date": "2027-06-24",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707073
+            },
+            {
+              "minC3": 1.3605474295482938,
+              "argmin": {
+                "date": "2028-05-23",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535392
+            },
+            {
+              "minC3": 1.6198761641792887,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.7486186913768649,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 0.0011748949214500095,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 12,
+              "tofSpanDays": 149.43181818181816
+            },
+            {
+              "minC3": 0.20423152353607793,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 11,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 0.8030207452107674,
+              "argmin": {
+                "date": "2035-06-05",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 8,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 1.25468913590389,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 1.6198761641792887,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.7486186913768649,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus5": {
+          "thresholdKm2S2": 5.00117489492145,
+          "conn4": [
+            {
+              "minC3": 0.0011748949214500095,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 17,
+              "tofSpanDays": 132.82828282828282
+            },
+            {
+              "minC3": 0.20423152353607793,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 128.46733668306842,
+              "cellCount": 15,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 0.48126580710687294,
+              "argmin": {
+                "date": "2036-05-04",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 0.7687395287572533,
+              "argmin": {
+                "date": "2028-04-27",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 0.8030207452107674,
+              "argmin": {
+                "date": "2035-06-05",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 28,
+              "tofSpanDays": 116.22474747474752
+            },
+            {
+              "minC3": 1.25468913590389,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 23,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 1.6198761641792887,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.7486186913768649,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.217158112727045,
+              "argmin": {
+                "date": "2029-07-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.303897509608227,
+              "argmin": {
+                "date": "2029-08-03",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.342396130063121,
+              "argmin": {
+                "date": "2028-03-07",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 8,
+              "tofSpanDays": 83.01767676767676
+            },
+            {
+              "minC3": 2.484065930828199,
+              "argmin": {
+                "date": "2036-03-14",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 3,
+              "tofSpanDays": 33.2070707070707
+            },
+            {
+              "minC3": 2.6219608160002035,
+              "argmin": {
+                "date": "2037-04-29",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.7793662571737237,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 10,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 2.7939002841513405,
+              "argmin": {
+                "date": "2029-06-12",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.823921292724464,
+              "argmin": {
+                "date": "2034-04-20",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.9072274427812905,
+              "argmin": {
+                "date": "2029-08-29",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.082919704704863,
+              "argmin": {
+                "date": "2036-02-17",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535392
+            },
+            {
+              "minC3": 3.624155419081326,
+              "argmin": {
+                "date": "2037-05-25",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.7085995134470093,
+              "argmin": {
+                "date": "2026-05-09",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.811133585869469,
+              "argmin": {
+                "date": "2036-04-09",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.9286139473931465,
+              "argmin": {
+                "date": "2026-06-04",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707073
+            },
+            {
+              "minC3": 4.205883598279413,
+              "argmin": {
+                "date": "2029-09-23",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.502802028521228,
+              "argmin": {
+                "date": "2029-05-18",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.56606143503696,
+              "argmin": {
+                "date": "2037-06-20",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.77263720932722,
+              "argmin": {
+                "date": "2027-02-16",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.7958805451445015,
+              "argmin": {
+                "date": "2037-07-15",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 0.0011748949214500095,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 18,
+              "tofSpanDays": 149.43181818181816
+            },
+            {
+              "minC3": 0.20423152353607793,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 16,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 0.8030207452107674,
+              "argmin": {
+                "date": "2035-06-05",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 28,
+              "tofSpanDays": 116.22474747474752
+            },
+            {
+              "minC3": 1.25468913590389,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 25,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 1.6198761641792887,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 2.217158112727045,
+              "argmin": {
+                "date": "2029-07-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 5,
+              "tofSpanDays": 66.41414141414143
+            },
+            {
+              "minC3": 2.342396130063121,
+              "argmin": {
+                "date": "2028-03-07",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 8,
+              "tofSpanDays": 83.01767676767676
+            },
+            {
+              "minC3": 2.484065930828199,
+              "argmin": {
+                "date": "2036-03-14",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 6,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 2.6219608160002035,
+              "argmin": {
+                "date": "2037-04-29",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 2.7793662571737237,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 10,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 2.823921292724464,
+              "argmin": {
+                "date": "2034-04-20",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.7085995134470093,
+              "argmin": {
+                "date": "2026-05-09",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.9286139473931465,
+              "argmin": {
+                "date": "2026-06-04",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707073
+            },
+            {
+              "minC3": 4.7958805451445015,
+              "argmin": {
+                "date": "2037-07-15",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus10": {
+          "thresholdKm2S2": 10.00117489492145,
+          "conn4": [
+            {
+              "minC3": 0.0011748949214500095,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 28,
+              "tofSpanDays": 149.43181818181816
+            },
+            {
+              "minC3": 0.20423152353607793,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 179.85427135648206,
+              "cellCount": 24,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 0.8030207452107674,
+              "argmin": {
+                "date": "2035-06-05",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 231.2412060298957,
+              "cellCount": 50,
+              "tofSpanDays": 132.82828282828285
+            },
+            {
+              "minC3": 1.25468913590389,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 205.54773869365454,
+              "cellCount": 43,
+              "tofSpanDays": 132.82828282828285
+            },
+            {
+              "minC3": 1.6198761641792887,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.217158112727045,
+              "argmin": {
+                "date": "2029-07-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 17,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.342396130063121,
+              "argmin": {
+                "date": "2028-03-07",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 19,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.484065930828199,
+              "argmin": {
+                "date": "2036-03-14",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 15,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.6219608160002035,
+              "argmin": {
+                "date": "2037-04-29",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.7793662571737237,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 29,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 2.823921292724464,
+              "argmin": {
+                "date": "2034-04-20",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.624155419081326,
+              "argmin": {
+                "date": "2037-05-25",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 13,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 3.7085995134470093,
+              "argmin": {
+                "date": "2026-05-09",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 24,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 5.170017309515777,
+              "argmin": {
+                "date": "2029-02-04",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 7,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 6.042268815007537,
+              "argmin": {
+                "date": "2033-05-21",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 14,
+              "tofSpanDays": 66.41414141414134
+            },
+            {
+              "minC3": 6.238677308814659,
+              "argmin": {
+                "date": "2033-04-26",
+                "tofDays": 464.760101010101
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 6.986848975266681,
+              "argmin": {
+                "date": "2037-02-11",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 7,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 9.01584060065186,
+              "argmin": {
+                "date": "2027-01-21",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.351457480388916,
+              "argmin": {
+                "date": "2032-05-01",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 0.0011748949214500095,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 28,
+              "tofSpanDays": 149.43181818181816
+            },
+            {
+              "minC3": 0.20423152353607793,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 179.85427135648206,
+              "cellCount": 24,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 0.8030207452107674,
+              "argmin": {
+                "date": "2035-06-05",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 231.2412060298957,
+              "cellCount": 50,
+              "tofSpanDays": 132.82828282828285
+            },
+            {
+              "minC3": 1.25468913590389,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 231.24120603036135,
+              "cellCount": 44,
+              "tofSpanDays": 132.82828282828285
+            },
+            {
+              "minC3": 1.6198761641792887,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 179.85427135648206,
+              "cellCount": 18,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 2.342396130063121,
+              "argmin": {
+                "date": "2028-03-07",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 19,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.484065930828199,
+              "argmin": {
+                "date": "2036-03-14",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 15,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.6219608160002035,
+              "argmin": {
+                "date": "2037-04-29",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 14,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.7793662571737237,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 29,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 2.823921292724464,
+              "argmin": {
+                "date": "2034-04-20",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.7085995134470093,
+              "argmin": {
+                "date": "2026-05-09",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 24,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 5.170017309515777,
+              "argmin": {
+                "date": "2029-02-04",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 7,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 6.042268815007537,
+              "argmin": {
+                "date": "2033-05-21",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 14,
+              "tofSpanDays": 66.41414141414134
+            },
+            {
+              "minC3": 6.238677308814659,
+              "argmin": {
+                "date": "2033-04-26",
+                "tofDays": 464.760101010101
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 6.986848975266681,
+              "argmin": {
+                "date": "2037-02-11",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 7,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 9.351457480388916,
+              "argmin": {
+                "date": "2032-05-01",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "absolute25": {
+          "thresholdKm2S2": 25,
+          "conn4": [
+            {
+              "minC3": 0.0011748949214500095,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 436.78894472355023,
+              "cellCount": 102,
+              "tofSpanDays": 166.03535353535352
+            },
+            {
+              "minC3": 0.20423152353607793,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 411.0954773868434,
+              "cellCount": 94,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 0.8030207452107674,
+              "argmin": {
+                "date": "2035-06-05",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 308.32160804001614,
+              "cellCount": 78,
+              "tofSpanDays": 199.24242424242425
+            },
+            {
+              "minC3": 1.25468913590389,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 256.93467336706817,
+              "cellCount": 67,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 1.6198761641792887,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 282.6281407033093,
+              "cellCount": 36,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 2.6219608160002035,
+              "argmin": {
+                "date": "2037-04-29",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 256.9346733666025,
+              "cellCount": 27,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.7793662571737237,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 231.24120603036135,
+              "cellCount": 60,
+              "tofSpanDays": 166.03535353535347
+            },
+            {
+              "minC3": 3.7085995134470093,
+              "argmin": {
+                "date": "2026-05-09",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 205.54773869365454,
+              "cellCount": 54,
+              "tofSpanDays": 149.43181818181813
+            },
+            {
+              "minC3": 6.042268815007537,
+              "argmin": {
+                "date": "2033-05-21",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 39,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 9.351457480388916,
+              "argmin": {
+                "date": "2032-05-01",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 28,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 12.237348544742696,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 128.46733668306842,
+              "cellCount": 26,
+              "tofSpanDays": 99.62121212121218
+            },
+            {
+              "minC3": 12.314132777853379,
+              "argmin": {
+                "date": "2030-06-07",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 11,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 12.748249786554123,
+              "argmin": {
+                "date": "2031-05-07",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 19,
+              "tofSpanDays": 83.01767676767685
+            },
+            {
+              "minC3": 13.080453361546455,
+              "argmin": {
+                "date": "2038-07-10",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 7,
+              "tofSpanDays": 49.810606060606034
+            },
+            {
+              "minC3": 16.268645576464653,
+              "argmin": {
+                "date": "2038-04-24",
+                "tofDays": 580.9848484848485
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 17,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 16.776241649477523,
+              "argmin": {
+                "date": "2030-05-12",
+                "tofDays": 564.3813131313132
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 14,
+              "tofSpanDays": 66.41414141414145
+            },
+            {
+              "minC3": 17.53872533816671,
+              "argmin": {
+                "date": "2038-08-30",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 18.2061927269695,
+              "argmin": {
+                "date": "2038-04-24",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 18.546901892182028,
+              "argmin": {
+                "date": "2027-10-05",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 3,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 19.071779113218632,
+              "argmin": {
+                "date": "2037-04-29",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 11,
+              "tofSpanDays": 66.41414141414134
+            },
+            {
+              "minC3": 21.044500344235527,
+              "argmin": {
+                "date": "2033-01-13",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 21.19572994382237,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 580.9848484848485
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 10,
+              "tofSpanDays": 66.41414141414134
+            },
+            {
+              "minC3": 22.304578256975525,
+              "argmin": {
+                "date": "2036-05-04",
+                "tofDays": 647.3989898989898
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 23.586955987621934,
+              "argmin": {
+                "date": "2028-04-27",
+                "tofDays": 664.0025252525252
+              },
+              "breadthDays": 0,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 24.316674922009266,
+              "argmin": {
+                "date": "2030-01-30",
+                "tofDays": 547.7777777777778
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 0.0011748949214500095,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 436.78894472355023,
+              "cellCount": 102,
+              "tofSpanDays": 166.03535353535352
+            },
+            {
+              "minC3": 0.20423152353607793,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 411.0954773868434,
+              "cellCount": 94,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 0.8030207452107674,
+              "argmin": {
+                "date": "2035-06-05",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 308.32160804001614,
+              "cellCount": 78,
+              "tofSpanDays": 199.24242424242425
+            },
+            {
+              "minC3": 1.25468913590389,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 256.93467336706817,
+              "cellCount": 67,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 1.6198761641792887,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 282.6281407033093,
+              "cellCount": 36,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 2.6219608160002035,
+              "argmin": {
+                "date": "2037-04-29",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 256.9346733666025,
+              "cellCount": 27,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.7793662571737237,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 231.24120603036135,
+              "cellCount": 60,
+              "tofSpanDays": 166.03535353535347
+            },
+            {
+              "minC3": 3.7085995134470093,
+              "argmin": {
+                "date": "2026-05-09",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 205.54773869365454,
+              "cellCount": 54,
+              "tofSpanDays": 149.43181818181813
+            },
+            {
+              "minC3": 6.042268815007537,
+              "argmin": {
+                "date": "2033-05-21",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 40,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 9.351457480388916,
+              "argmin": {
+                "date": "2032-05-01",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 28,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 12.237348544742696,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 128.46733668306842,
+              "cellCount": 26,
+              "tofSpanDays": 99.62121212121218
+            },
+            {
+              "minC3": 12.314132777853379,
+              "argmin": {
+                "date": "2030-06-07",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 11,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 12.748249786554123,
+              "argmin": {
+                "date": "2031-05-07",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 19,
+              "tofSpanDays": 83.01767676767685
+            },
+            {
+              "minC3": 13.080453361546455,
+              "argmin": {
+                "date": "2038-07-10",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 9,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 16.268645576464653,
+              "argmin": {
+                "date": "2038-04-24",
+                "tofDays": 580.9848484848485
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 17,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 16.776241649477523,
+              "argmin": {
+                "date": "2030-05-12",
+                "tofDays": 564.3813131313132
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 15,
+              "tofSpanDays": 66.41414141414145
+            },
+            {
+              "minC3": 18.546901892182028,
+              "argmin": {
+                "date": "2027-10-05",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 3,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 19.071779113218632,
+              "argmin": {
+                "date": "2037-04-29",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 11,
+              "tofSpanDays": 66.41414141414134
+            },
+            {
+              "minC3": 21.19572994382237,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 580.9848484848485
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 10,
+              "tofSpanDays": 66.41414141414134
+            },
+            {
+              "minC3": 22.304578256975525,
+              "argmin": {
+                "date": "2036-05-04",
+                "tofDays": 647.3989898989898
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 23.586955987621934,
+              "argmin": {
+                "date": "2028-04-27",
+                "tofDays": 664.0025252525252
+              },
+              "breadthDays": 0,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707067
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "101955",
+      "spkId": 20101955,
+      "orbitClass": "APO",
+      "cached": {
+        "minC3": 0.5104500008818239,
+        "minC3Date": "2035-11-15",
+        "minC3TofDays": 332,
+        "bestWindows": [
+          {
+            "launchDate": "2035-11-15",
+            "tofDays": 332,
+            "c3": 0.5104500008818239,
+            "vInfDep": 0.7144578370217685,
+            "vInfArr": 5.215317070416417
+          },
+          {
+            "launchDate": "2035-10-18",
+            "tofDays": 362,
+            "c3": 0.5802317972815427,
+            "vInfDep": 0.7617294777554185,
+            "vInfArr": 5.2368732926414125
+          },
+          {
+            "launchDate": "2035-12-13",
+            "tofDays": 302,
+            "c3": 0.7375159899702233,
+            "vInfDep": 0.8587875115360163,
+            "vInfArr": 5.180119605097047
+          },
+          {
+            "launchDate": "2029-10-25",
+            "tofDays": 362,
+            "c3": 0.9456276657161821,
+            "vInfDep": 0.9724338875811466,
+            "vInfArr": 4.94255826272631
+          },
+          {
+            "launchDate": "2035-12-06",
+            "tofDays": 302,
+            "c3": 0.9821192248806558,
+            "vInfDep": 0.9910192858267975,
+            "vInfArr": 5.116307049144134
+          }
+        ]
+      },
+      "live": {
+        "minC3": 0.6361929269107475,
+        "minC3Date": "2035-12-02",
+        "minC3TofDays": 315.3282828282828,
+        "computeMs": 61.937041000000136
+      },
+      "diff": {
+        "deltaMinC3": 0.12574292602892356,
+        "absoluteDateDays": 17,
+        "absoluteTofDays": 16.671717171717205
+      },
+      "spanFlag": {
+        "cachedMinOutsideViewWindow": false
+      },
+      "timing": {
+        "singleRunComputeMs": 61.937041000000136,
+        "runsComputeMs": [
+          61.937041000000136
+        ],
+        "medianComputeMs": 61.937041000000136
+      },
+      "structure": {
+        "liveMinPlus2": {
+          "thresholdKm2S2": 2.6361929269107476,
+          "conn4": [
+            {
+              "minC3": 0.6361929269107475,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 1.3881316479929597,
+              "argmin": {
+                "date": "2029-12-09",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 1.402018223547667,
+              "argmin": {
+                "date": "2035-11-07",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 1.4426293868117115,
+              "argmin": {
+                "date": "2028-10-24",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.5436383588630833,
+              "argmin": {
+                "date": "2029-11-14",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 1.6666515493311889,
+              "argmin": {
+                "date": "2035-10-12",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.682445560423329,
+              "argmin": {
+                "date": "2029-10-19",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.7929498060825209,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.019147360107961,
+              "argmin": {
+                "date": "2036-01-23",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.328771210384205,
+              "argmin": {
+                "date": "2030-01-04",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 0.6361929269107475,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 8,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 1.3881316479929597,
+              "argmin": {
+                "date": "2029-12-09",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 6,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 1.4426293868117115,
+              "argmin": {
+                "date": "2028-10-24",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.7929498060825209,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus5": {
+          "thresholdKm2S2": 5.636192926910748,
+          "conn4": [
+            {
+              "minC3": 0.6361929269107475,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 13,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 1.3881316479929597,
+              "argmin": {
+                "date": "2029-12-09",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 11,
+              "tofSpanDays": 83.01767676767673
+            },
+            {
+              "minC3": 1.4426293868117115,
+              "argmin": {
+                "date": "2028-10-24",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6666515493311889,
+              "argmin": {
+                "date": "2035-10-12",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.682445560423329,
+              "argmin": {
+                "date": "2029-10-19",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.7929498060825209,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.668003350123456,
+              "argmin": {
+                "date": "2028-11-19",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 6,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 3.3865258399515206,
+              "argmin": {
+                "date": "2030-08-23",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 10,
+              "tofSpanDays": 83.01767676767676
+            },
+            {
+              "minC3": 3.776363664304164,
+              "argmin": {
+                "date": "2037-06-20",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.7907423325997347,
+              "argmin": {
+                "date": "2034-12-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.96125457544319,
+              "argmin": {
+                "date": "2037-07-15",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.1128940773086375,
+              "argmin": {
+                "date": "2034-10-17",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.156170352817321,
+              "argmin": {
+                "date": "2036-05-30",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.332949863907313,
+              "argmin": {
+                "date": "2036-06-25",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.480215501025502,
+              "argmin": {
+                "date": "2034-11-12",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.629033950135089,
+              "argmin": {
+                "date": "2031-06-02",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.651560722721769,
+              "argmin": {
+                "date": "2037-05-25",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.663579822970699,
+              "argmin": {
+                "date": "2035-01-02",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.733375414619781,
+              "argmin": {
+                "date": "2031-06-28",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.78569779378454,
+              "argmin": {
+                "date": "2036-05-04",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.8550356903011815,
+              "argmin": {
+                "date": "2036-07-21",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.9537986411627415,
+              "argmin": {
+                "date": "2036-10-31",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.340761041906514,
+              "argmin": {
+                "date": "2029-02-04",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.353894682954366,
+              "argmin": {
+                "date": "2036-08-15",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.374155740514499,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.404156465726482,
+              "argmin": {
+                "date": "2036-09-10",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 0.6361929269107475,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 14,
+              "tofSpanDays": 132.82828282828285
+            },
+            {
+              "minC3": 1.3881316479929597,
+              "argmin": {
+                "date": "2029-12-09",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 12,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 1.4426293868117115,
+              "argmin": {
+                "date": "2028-10-24",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 8,
+              "tofSpanDays": 83.01767676767676
+            },
+            {
+              "minC3": 1.7929498060825209,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.3865258399515206,
+              "argmin": {
+                "date": "2030-08-23",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 10,
+              "tofSpanDays": 83.01767676767676
+            },
+            {
+              "minC3": 3.776363664304164,
+              "argmin": {
+                "date": "2037-06-20",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707073
+            },
+            {
+              "minC3": 3.7907423325997347,
+              "argmin": {
+                "date": "2034-12-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707073
+            },
+            {
+              "minC3": 4.1128940773086375,
+              "argmin": {
+                "date": "2034-10-17",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.156170352817321,
+              "argmin": {
+                "date": "2036-05-30",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 128.46733668306842,
+              "cellCount": 6,
+              "tofSpanDays": 83.01767676767676
+            },
+            {
+              "minC3": 4.629033950135089,
+              "argmin": {
+                "date": "2031-06-02",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 16.603535353535392
+            },
+            {
+              "minC3": 4.9537986411627415,
+              "argmin": {
+                "date": "2036-10-31",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.374155740514499,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus10": {
+          "thresholdKm2S2": 10.636192926910747,
+          "conn4": [
+            {
+              "minC3": 0.6361929269107475,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 21,
+              "tofSpanDays": 132.82828282828285
+            },
+            {
+              "minC3": 1.3881316479929597,
+              "argmin": {
+                "date": "2029-12-09",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 18,
+              "tofSpanDays": 116.22474747474752
+            },
+            {
+              "minC3": 1.4426293868117115,
+              "argmin": {
+                "date": "2028-10-24",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 15,
+              "tofSpanDays": 99.6212121212121
+            },
+            {
+              "minC3": 1.7929498060825209,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.3865258399515206,
+              "argmin": {
+                "date": "2030-08-23",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 19,
+              "tofSpanDays": 99.6212121212121
+            },
+            {
+              "minC3": 3.776363664304164,
+              "argmin": {
+                "date": "2037-06-20",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 15,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 3.7907423325997347,
+              "argmin": {
+                "date": "2034-12-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 10,
+              "tofSpanDays": 83.01767676767676
+            },
+            {
+              "minC3": 4.156170352817321,
+              "argmin": {
+                "date": "2036-05-30",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 18,
+              "tofSpanDays": 116.22474747474743
+            },
+            {
+              "minC3": 4.629033950135089,
+              "argmin": {
+                "date": "2031-06-02",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 14,
+              "tofSpanDays": 66.41414141414145
+            },
+            {
+              "minC3": 4.9537986411627415,
+              "argmin": {
+                "date": "2036-10-31",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 7,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 5.374155740514499,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535392
+            },
+            {
+              "minC3": 5.748452869922105,
+              "argmin": {
+                "date": "2036-10-06",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 6.105508466037403,
+              "argmin": {
+                "date": "2036-10-06",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 6.155750264634481,
+              "argmin": {
+                "date": "2036-03-14",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 6.33724994399239,
+              "argmin": {
+                "date": "2030-11-08",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 25.693467336241156,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 8.618437996393988,
+              "argmin": {
+                "date": "2031-04-12",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.135883505597167,
+              "argmin": {
+                "date": "2038-06-14",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.832962704685517,
+              "argmin": {
+                "date": "2038-05-20",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.885058616147624,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.896066685775219,
+              "argmin": {
+                "date": "2036-04-09",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 10.340340760805393,
+              "argmin": {
+                "date": "2030-03-22",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 0.6361929269107475,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 22,
+              "tofSpanDays": 149.43181818181822
+            },
+            {
+              "minC3": 1.3881316479929597,
+              "argmin": {
+                "date": "2029-12-09",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 18,
+              "tofSpanDays": 116.22474747474752
+            },
+            {
+              "minC3": 1.4426293868117115,
+              "argmin": {
+                "date": "2028-10-24",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 15,
+              "tofSpanDays": 99.6212121212121
+            },
+            {
+              "minC3": 1.7929498060825209,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.3865258399515206,
+              "argmin": {
+                "date": "2030-08-23",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 20,
+              "tofSpanDays": 116.22474747474749
+            },
+            {
+              "minC3": 3.776363664304164,
+              "argmin": {
+                "date": "2037-06-20",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 15,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 3.7907423325997347,
+              "argmin": {
+                "date": "2034-12-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 10,
+              "tofSpanDays": 83.01767676767676
+            },
+            {
+              "minC3": 4.156170352817321,
+              "argmin": {
+                "date": "2036-05-30",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 179.85427135648206,
+              "cellCount": 19,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 4.629033950135089,
+              "argmin": {
+                "date": "2031-06-02",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 15,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 4.9537986411627415,
+              "argmin": {
+                "date": "2036-10-31",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 7,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 5.374155740514499,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 51.38693467294797,
+              "cellCount": 6,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 5.748452869922105,
+              "argmin": {
+                "date": "2036-10-06",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.135883505597167,
+              "argmin": {
+                "date": "2038-06-14",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535392
+            },
+            {
+              "minC3": 9.885058616147624,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.896066685775219,
+              "argmin": {
+                "date": "2036-04-09",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "absolute25": {
+          "thresholdKm2S2": 25,
+          "conn4": [
+            {
+              "minC3": 0.6361929269107475,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 334.01507537672296,
+              "cellCount": 78,
+              "tofSpanDays": 166.03535353535355
+            },
+            {
+              "minC3": 1.3881316479929597,
+              "argmin": {
+                "date": "2029-12-09",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 436.78894472355023,
+              "cellCount": 117,
+              "tofSpanDays": 265.65656565656565
+            },
+            {
+              "minC3": 1.4426293868117115,
+              "argmin": {
+                "date": "2028-10-24",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 38,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 1.7929498060825209,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 182.5
+              },
+              "breadthDays": 51.38693467294797,
+              "cellCount": 3,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.776363664304164,
+              "argmin": {
+                "date": "2037-06-20",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 256.93467336706817,
+              "cellCount": 61,
+              "tofSpanDays": 232.44949494949492
+            },
+            {
+              "minC3": 3.7907423325997347,
+              "argmin": {
+                "date": "2034-12-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 179.85427135648206,
+              "cellCount": 30,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 4.629033950135089,
+              "argmin": {
+                "date": "2031-06-02",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 256.93467336706817,
+              "cellCount": 59,
+              "tofSpanDays": 215.84595959595958
+            },
+            {
+              "minC3": 4.9537986411627415,
+              "argmin": {
+                "date": "2036-10-31",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 34,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 6.105508466037403,
+              "argmin": {
+                "date": "2036-10-06",
+                "tofDays": 182.5
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.135883505597167,
+              "argmin": {
+                "date": "2038-06-14",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 25,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 9.885058616147624,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 22,
+              "tofSpanDays": 66.41414141414145
+            },
+            {
+              "minC3": 9.896066685775219,
+              "argmin": {
+                "date": "2036-04-09",
+                "tofDays": 182.5
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 4,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 11.069502290054382,
+              "argmin": {
+                "date": "2028-09-29",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.40076733458574,
+              "argmin": {
+                "date": "2026-05-09",
+                "tofDays": 464.760101010101
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 21,
+              "tofSpanDays": 66.41414141414145
+            },
+            {
+              "minC3": 15.184795809069545,
+              "argmin": {
+                "date": "2039-06-09",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 10,
+              "tofSpanDays": 33.207070707070784
+            },
+            {
+              "minC3": 15.759703241367536,
+              "argmin": {
+                "date": "2033-05-21",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 12,
+              "tofSpanDays": 49.81060606060612
+            },
+            {
+              "minC3": 16.982807520121128,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 11,
+              "tofSpanDays": 49.81060606060612
+            },
+            {
+              "minC3": 17.06046991876105,
+              "argmin": {
+                "date": "2038-10-21",
+                "tofDays": 564.3813131313132
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 6,
+              "tofSpanDays": 66.41414141414145
+            },
+            {
+              "minC3": 18.151372562990847,
+              "argmin": {
+                "date": "2026-10-10",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 7,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 18.82622049997227,
+              "argmin": {
+                "date": "2032-10-02",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 19.16733795530064,
+              "argmin": {
+                "date": "2032-10-28",
+                "tofDays": 564.3813131313132
+              },
+              "breadthDays": 0,
+              "cellCount": 4,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 21.378430731169964,
+              "argmin": {
+                "date": "2027-11-25",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 21.908884425761883,
+              "argmin": {
+                "date": "2034-06-11",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 5,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 22.085073108789256,
+              "argmin": {
+                "date": "2028-05-23",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 3,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 22.27227547202374,
+              "argmin": {
+                "date": "2027-10-31",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.506874937747337,
+              "argmin": {
+                "date": "2039-10-15",
+                "tofDays": 647.3989898989898
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 23.819048331864064,
+              "argmin": {
+                "date": "2026-03-19",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 23.918593545588283,
+              "argmin": {
+                "date": "2027-10-05",
+                "tofDays": 680.6060606060605
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.693696378217226,
+              "argmin": {
+                "date": "2033-10-22",
+                "tofDays": 647.3989898989898
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.949674198642754,
+              "argmin": {
+                "date": "2039-03-24",
+                "tofDays": 547.7777777777778
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 0.6361929269107475,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 411.0954773868434,
+              "cellCount": 85,
+              "tofSpanDays": 182.6388888888889
+            },
+            {
+              "minC3": 1.3881316479929597,
+              "argmin": {
+                "date": "2029-12-09",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 436.78894472355023,
+              "cellCount": 117,
+              "tofSpanDays": 265.65656565656565
+            },
+            {
+              "minC3": 1.4426293868117115,
+              "argmin": {
+                "date": "2028-10-24",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 205.54773869365454,
+              "cellCount": 39,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 1.7929498060825209,
+              "argmin": {
+                "date": "2030-10-14",
+                "tofDays": 182.5
+              },
+              "breadthDays": 51.38693467294797,
+              "cellCount": 3,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.776363664304164,
+              "argmin": {
+                "date": "2037-06-20",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 256.93467336706817,
+              "cellCount": 61,
+              "tofSpanDays": 232.44949494949492
+            },
+            {
+              "minC3": 3.7907423325997347,
+              "argmin": {
+                "date": "2034-12-08",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 179.85427135648206,
+              "cellCount": 30,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 4.629033950135089,
+              "argmin": {
+                "date": "2031-06-02",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 256.93467336706817,
+              "cellCount": 59,
+              "tofSpanDays": 215.84595959595958
+            },
+            {
+              "minC3": 4.9537986411627415,
+              "argmin": {
+                "date": "2036-10-31",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 34,
+              "tofSpanDays": 149.4318181818182
+            },
+            {
+              "minC3": 9.135883505597167,
+              "argmin": {
+                "date": "2038-06-14",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 179.85427135694772,
+              "cellCount": 25,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 9.885058616147624,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 22,
+              "tofSpanDays": 66.41414141414145
+            },
+            {
+              "minC3": 11.40076733458574,
+              "argmin": {
+                "date": "2026-05-09",
+                "tofDays": 464.760101010101
+              },
+              "breadthDays": 179.85427135648206,
+              "cellCount": 22,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 15.184795809069545,
+              "argmin": {
+                "date": "2039-06-09",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 128.46733668306842,
+              "cellCount": 11,
+              "tofSpanDays": 49.81060606060612
+            },
+            {
+              "minC3": 15.759703241367536,
+              "argmin": {
+                "date": "2033-05-21",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 128.46733668353409,
+              "cellCount": 12,
+              "tofSpanDays": 49.81060606060612
+            },
+            {
+              "minC3": 16.982807520121128,
+              "argmin": {
+                "date": "2027-05-29",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 11,
+              "tofSpanDays": 49.81060606060612
+            },
+            {
+              "minC3": 17.06046991876105,
+              "argmin": {
+                "date": "2038-10-21",
+                "tofDays": 564.3813131313132
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 6,
+              "tofSpanDays": 66.41414141414145
+            },
+            {
+              "minC3": 18.151372562990847,
+              "argmin": {
+                "date": "2026-10-10",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 7,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 18.82622049997227,
+              "argmin": {
+                "date": "2032-10-02",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 5,
+              "tofSpanDays": 66.41414141414134
+            },
+            {
+              "minC3": 21.378430731169964,
+              "argmin": {
+                "date": "2027-11-25",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 21.908884425761883,
+              "argmin": {
+                "date": "2034-06-11",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 5,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 22.085073108789256,
+              "argmin": {
+                "date": "2028-05-23",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 3,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 22.506874937747337,
+              "argmin": {
+                "date": "2039-10-15",
+                "tofDays": 647.3989898989898
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 23.918593545588283,
+              "argmin": {
+                "date": "2027-10-05",
+                "tofDays": 680.6060606060605
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.693696378217226,
+              "argmin": {
+                "date": "2033-10-22",
+                "tofDays": 647.3989898989898
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "433",
+      "spkId": 20000433,
+      "orbitClass": "AMO",
+      "cached": {
+        "minC3": 1.6244339770173506,
+        "minC3Date": "2032-06-10",
+        "minC3TofDays": 272,
+        "bestWindows": [
+          {
+            "launchDate": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.6244339770173506,
+            "vInfDep": 1.2745328465823667,
+            "vInfArr": 6.655866629635761
+          },
+          {
+            "launchDate": "2032-06-03",
+            "tofDays": 272,
+            "c3": 1.7830634280039466,
+            "vInfDep": 1.335313981056121,
+            "vInfArr": 6.945884033383261
+          },
+          {
+            "launchDate": "2039-05-26",
+            "tofDays": 302,
+            "c3": 2.2732085739858943,
+            "vInfDep": 1.5077163440070198,
+            "vInfArr": 6.946930634205088
+          },
+          {
+            "launchDate": "2039-05-19",
+            "tofDays": 302,
+            "c3": 2.5788595573379225,
+            "vInfDep": 1.6058827968870961,
+            "vInfArr": 6.980198959749864
+          },
+          {
+            "launchDate": "2032-07-08",
+            "tofDays": 242,
+            "c3": 2.809434454987797,
+            "vInfDep": 1.6761367650009342,
+            "vInfArr": 6.697097190474086
+          }
+        ]
+      },
+      "live": {
+        "minC3": 1.752189846705813,
+        "minC3Date": "2032-05-27",
+        "minC3TofDays": 282.1212121212121,
+        "computeMs": 88.11908300000005
+      },
+      "diff": {
+        "deltaMinC3": 0.12775586968846242,
+        "absoluteDateDays": 14,
+        "absoluteTofDays": 10.121212121212125
+      },
+      "spanFlag": {
+        "cachedMinOutsideViewWindow": false
+      },
+      "timing": {
+        "singleRunComputeMs": 88.11908300000005,
+        "runsComputeMs": [
+          88.11908300000005
+        ],
+        "medianComputeMs": 88.11908300000005
+      },
+      "structure": {
+        "liveMinPlus2": {
+          "thresholdKm2S2": 3.752189846705813,
+          "conn4": [
+            {
+              "minC3": 1.752189846705813,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.4963007567254683,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.864360797207245,
+              "argmin": {
+                "date": "2032-06-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.6612308177720214,
+              "argmin": {
+                "date": "2039-06-09",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 1.752189846705813,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 2.4963007567254683,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.6612308177720214,
+              "argmin": {
+                "date": "2039-06-09",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus5": {
+          "thresholdKm2S2": 6.752189846705813,
+          "conn4": [
+            {
+              "minC3": 1.752189846705813,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 2.4963007567254683,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 2.864360797207245,
+              "argmin": {
+                "date": "2032-06-21",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535392
+            },
+            {
+              "minC3": 3.986326052845977,
+              "argmin": {
+                "date": "2032-07-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 4.204259272593046,
+              "argmin": {
+                "date": "2039-04-19",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 1.752189846705813,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 7,
+              "tofSpanDays": 83.01767676767673
+            },
+            {
+              "minC3": 2.4963007567254683,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 51.38693467294797,
+              "cellCount": 5,
+              "tofSpanDays": 49.81060606060606
+            }
+          ]
+        },
+        "liveMinPlus10": {
+          "thresholdKm2S2": 11.752189846705813,
+          "conn4": [
+            {
+              "minC3": 1.752189846705813,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 77.08040200965479,
+              "cellCount": 11,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 2.4963007567254683,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 77.08040200965479,
+              "cellCount": 10,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 3.986326052845977,
+              "argmin": {
+                "date": "2032-07-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 6.932228565159782,
+              "argmin": {
+                "date": "2039-07-05",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 7.202956762925084,
+              "argmin": {
+                "date": "2030-04-17",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 6,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 8.723794414246386,
+              "argmin": {
+                "date": "2037-04-03",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707073
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 1.752189846705813,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 12,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 2.4963007567254683,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 11,
+              "tofSpanDays": 83.01767676767673
+            },
+            {
+              "minC3": 7.202956762925084,
+              "argmin": {
+                "date": "2030-04-17",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 6,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 8.723794414246386,
+              "argmin": {
+                "date": "2037-04-03",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707073
+            }
+          ]
+        },
+        "absolute25": {
+          "thresholdKm2S2": 25,
+          "conn4": [
+            {
+              "minC3": 1.752189846705813,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 128.46733668306842,
+              "cellCount": 21,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.4963007567254683,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 23,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 7.202956762925084,
+              "argmin": {
+                "date": "2030-04-17",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 15,
+              "tofSpanDays": 83.01767676767673
+            },
+            {
+              "minC3": 8.723794414246386,
+              "argmin": {
+                "date": "2037-04-03",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 15,
+              "tofSpanDays": 83.01767676767673
+            },
+            {
+              "minC3": 13.422756286162867,
+              "argmin": {
+                "date": "2032-08-12",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 13.889827484521023,
+              "argmin": {
+                "date": "2028-04-02",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 8,
+              "tofSpanDays": 49.81060606060612
+            },
+            {
+              "minC3": 16.38933659695773,
+              "argmin": {
+                "date": "2035-03-20",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 6,
+              "tofSpanDays": 33.207070707070784
+            },
+            {
+              "minC3": 16.401626595565215,
+              "argmin": {
+                "date": "2026-01-01",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 4,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 17.654047123043735,
+              "argmin": {
+                "date": "2028-02-10",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 6,
+              "tofSpanDays": 49.810606060606034
+            },
+            {
+              "minC3": 18.150869334109423,
+              "argmin": {
+                "date": "2035-02-23",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 25.693467336241156,
+              "cellCount": 5,
+              "tofSpanDays": 49.81060606060609
+            },
+            {
+              "minC3": 18.289554887778717,
+              "argmin": {
+                "date": "2032-12-18",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 5,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 18.7241061614237,
+              "argmin": {
+                "date": "2040-01-01",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 6,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 19.60278403999138,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.070920178938547,
+              "argmin": {
+                "date": "2026-03-19",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 3,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 22.358635983537976,
+              "argmin": {
+                "date": "2030-12-04",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 0,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 22.973757380902892,
+              "argmin": {
+                "date": "2033-03-31",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 23.36346619135454,
+              "argmin": {
+                "date": "2039-07-30",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.423966491347073,
+              "argmin": {
+                "date": "2037-12-16",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 1.752189846705813,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 128.46733668306842,
+              "cellCount": 21,
+              "tofSpanDays": 116.22474747474746
+            },
+            {
+              "minC3": 2.4963007567254683,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 23,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 7.202956762925084,
+              "argmin": {
+                "date": "2030-04-17",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 15,
+              "tofSpanDays": 83.01767676767673
+            },
+            {
+              "minC3": 8.723794414246386,
+              "argmin": {
+                "date": "2037-04-03",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 15,
+              "tofSpanDays": 83.01767676767673
+            },
+            {
+              "minC3": 13.422756286162867,
+              "argmin": {
+                "date": "2032-08-12",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 13.889827484521023,
+              "argmin": {
+                "date": "2028-04-02",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 8,
+              "tofSpanDays": 49.81060606060612
+            },
+            {
+              "minC3": 16.38933659695773,
+              "argmin": {
+                "date": "2035-03-20",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 6,
+              "tofSpanDays": 33.207070707070784
+            },
+            {
+              "minC3": 16.401626595565215,
+              "argmin": {
+                "date": "2026-01-01",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 4,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 17.654047123043735,
+              "argmin": {
+                "date": "2028-02-10",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 6,
+              "tofSpanDays": 49.810606060606034
+            },
+            {
+              "minC3": 18.150869334109423,
+              "argmin": {
+                "date": "2035-02-23",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 25.693467336241156,
+              "cellCount": 5,
+              "tofSpanDays": 49.81060606060609
+            },
+            {
+              "minC3": 18.289554887778717,
+              "argmin": {
+                "date": "2032-12-18",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 5,
+              "tofSpanDays": 49.810606060606005
+            },
+            {
+              "minC3": 18.7241061614237,
+              "argmin": {
+                "date": "2040-01-01",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 6,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 22.070920178938547,
+              "argmin": {
+                "date": "2026-03-19",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 3,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 22.358635983537976,
+              "argmin": {
+                "date": "2030-12-04",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 0,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 22.973757380902892,
+              "argmin": {
+                "date": "2033-03-31",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 23.36346619135454,
+              "argmin": {
+                "date": "2039-07-30",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.423966491347073,
+              "argmin": {
+                "date": "2037-12-16",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "1566",
+      "spkId": 20001566,
+      "orbitClass": "APO",
+      "cached": {
+        "minC3": 0.8177753036670058,
+        "minC3Date": "2033-11-03",
+        "minC3TofDays": 242,
+        "bestWindows": [
+          {
+            "launchDate": "2033-11-03",
+            "tofDays": 242,
+            "c3": 0.8177753036670058,
+            "vInfDep": 0.9043092964616729,
+            "vInfArr": 28.101215210833974
+          },
+          {
+            "launchDate": "2033-09-01",
+            "tofDays": 302,
+            "c3": 0.923903213806504,
+            "vInfDep": 0.9611988419710585,
+            "vInfArr": 29.14678307611609
+          },
+          {
+            "launchDate": "2033-12-08",
+            "tofDays": 212,
+            "c3": 1.0662708533135983,
+            "vInfDep": 1.032603918893202,
+            "vInfArr": 25.97466912314241
+          },
+          {
+            "launchDate": "2034-01-05",
+            "tofDays": 182,
+            "c3": 1.429728089969335,
+            "vInfDep": 1.1957123776098226,
+            "vInfArr": 26.59007105540475
+          },
+          {
+            "launchDate": "2033-09-29",
+            "tofDays": 272,
+            "c3": 1.4891546503017055,
+            "vInfDep": 1.220309243717225,
+            "vInfArr": 29.81869250674205
+          }
+        ]
+      },
+      "live": {
+        "minC3": 1.4003456891259647,
+        "minC3Date": "2034-01-08",
+        "minC3TofDays": 182.5,
+        "computeMs": 74.02987499999972
+      },
+      "diff": {
+        "deltaMinC3": 0.5825703854589589,
+        "absoluteDateDays": 66,
+        "absoluteTofDays": 59.5
+      },
+      "spanFlag": {
+        "cachedMinOutsideViewWindow": false
+      },
+      "timing": {
+        "singleRunComputeMs": 74.02987499999972,
+        "runsComputeMs": [
+          74.02987499999972
+        ],
+        "medianComputeMs": 74.02987499999972
+      },
+      "structure": {
+        "liveMinPlus2": {
+          "thresholdKm2S2": 3.400345689125965,
+          "conn4": [
+            {
+              "minC3": 1.4003456891259647,
+              "argmin": {
+                "date": "2034-01-08",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6124577794948918,
+              "argmin": {
+                "date": "2033-11-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6740492579630535,
+              "argmin": {
+                "date": "2033-10-22",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.694808236659572,
+              "argmin": {
+                "date": "2033-09-01",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.504419934342659,
+              "argmin": {
+                "date": "2034-09-21",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.1436476325157763,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 1.4003456891259647,
+              "argmin": {
+                "date": "2034-01-08",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6124577794948918,
+              "argmin": {
+                "date": "2033-11-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 1.694808236659572,
+              "argmin": {
+                "date": "2033-09-01",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.504419934342659,
+              "argmin": {
+                "date": "2034-09-21",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.1436476325157763,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus5": {
+          "thresholdKm2S2": 6.400345689125965,
+          "conn4": [
+            {
+              "minC3": 1.4003456891259647,
+              "argmin": {
+                "date": "2034-01-08",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6124577794948918,
+              "argmin": {
+                "date": "2033-11-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6740492579630535,
+              "argmin": {
+                "date": "2033-10-22",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.694808236659572,
+              "argmin": {
+                "date": "2033-09-01",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.504419934342659,
+              "argmin": {
+                "date": "2034-09-21",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.1436476325157763,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.5097276571649267,
+              "argmin": {
+                "date": "2033-09-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.069920376054668,
+              "argmin": {
+                "date": "2034-10-17",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.16965832820085,
+              "argmin": {
+                "date": "2034-11-12",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.183042726124987,
+              "argmin": {
+                "date": "2034-08-27",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.269958005843232,
+              "argmin": {
+                "date": "2035-09-16",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 1.4003456891259647,
+              "argmin": {
+                "date": "2034-01-08",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6124577794948918,
+              "argmin": {
+                "date": "2033-11-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 1.694808236659572,
+              "argmin": {
+                "date": "2033-09-01",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 25.693467336241156,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 2.504419934342659,
+              "argmin": {
+                "date": "2034-09-21",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707073
+            },
+            {
+              "minC3": 3.1436476325157763,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.16965832820085,
+              "argmin": {
+                "date": "2034-11-12",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.269958005843232,
+              "argmin": {
+                "date": "2035-09-16",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus10": {
+          "thresholdKm2S2": 11.400345689125965,
+          "conn4": [
+            {
+              "minC3": 1.4003456891259647,
+              "argmin": {
+                "date": "2034-01-08",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6124577794948918,
+              "argmin": {
+                "date": "2033-11-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6740492579630535,
+              "argmin": {
+                "date": "2033-10-22",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535392
+            },
+            {
+              "minC3": 1.694808236659572,
+              "argmin": {
+                "date": "2033-09-01",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 2.504419934342659,
+              "argmin": {
+                "date": "2034-09-21",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.1436476325157763,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 3.5097276571649267,
+              "argmin": {
+                "date": "2033-09-27",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.069920376054668,
+              "argmin": {
+                "date": "2034-10-17",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 4,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 5.183042726124987,
+              "argmin": {
+                "date": "2034-08-27",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.269958005843232,
+              "argmin": {
+                "date": "2035-09-16",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 6.778971555662139,
+              "argmin": {
+                "date": "2035-10-12",
+                "tofDays": 365.1388888888889
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 7.052330467992214,
+              "argmin": {
+                "date": "2032-10-02",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 7.184261161231612,
+              "argmin": {
+                "date": "2026-09-14",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 7.887866419981312,
+              "argmin": {
+                "date": "2026-10-10",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 8.691504139749533,
+              "argmin": {
+                "date": "2032-07-17",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 8.823941382138498,
+              "argmin": {
+                "date": "2036-09-10",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 9.317676774566038,
+              "argmin": {
+                "date": "2035-08-22",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 10.178593564395543,
+              "argmin": {
+                "date": "2032-10-28",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 10.430162327202606,
+              "argmin": {
+                "date": "2036-10-06",
+                "tofDays": 414.9494949494949
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 10.69639954366364,
+              "argmin": {
+                "date": "2033-08-06",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 10.81120255758066,
+              "argmin": {
+                "date": "2035-11-07",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.101234437906953,
+              "argmin": {
+                "date": "2033-07-12",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.114791232992234,
+              "argmin": {
+                "date": "2031-07-23",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.118026651380015,
+              "argmin": {
+                "date": "2027-09-09",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 1.4003456891259647,
+              "argmin": {
+                "date": "2034-01-08",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6124577794948918,
+              "argmin": {
+                "date": "2033-11-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 77.08040200965479,
+              "cellCount": 5,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 2.504419934342659,
+              "argmin": {
+                "date": "2034-09-21",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 6,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 3.1436476325157763,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.269958005843232,
+              "argmin": {
+                "date": "2035-09-16",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 4,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 7.052330467992214,
+              "argmin": {
+                "date": "2032-10-02",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 7.184261161231612,
+              "argmin": {
+                "date": "2026-09-14",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 8.691504139749533,
+              "argmin": {
+                "date": "2032-07-17",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 8.823941382138498,
+              "argmin": {
+                "date": "2036-09-10",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 10.69639954366364,
+              "argmin": {
+                "date": "2033-08-06",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 11.114791232992234,
+              "argmin": {
+                "date": "2031-07-23",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.118026651380015,
+              "argmin": {
+                "date": "2027-09-09",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "absolute25": {
+          "thresholdKm2S2": 25,
+          "conn4": [
+            {
+              "minC3": 1.4003456891259647,
+              "argmin": {
+                "date": "2034-01-08",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6124577794948918,
+              "argmin": {
+                "date": "2033-11-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 6,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 1.694808236659572,
+              "argmin": {
+                "date": "2033-09-01",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 2.504419934342659,
+              "argmin": {
+                "date": "2034-09-21",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 9,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 3.1436476325157763,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 5.269958005843232,
+              "argmin": {
+                "date": "2035-09-16",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 9,
+              "tofSpanDays": 66.4141414141414
+            },
+            {
+              "minC3": 7.052330467992214,
+              "argmin": {
+                "date": "2032-10-02",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 7.184261161231612,
+              "argmin": {
+                "date": "2026-09-14",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 77.08040200965479,
+              "cellCount": 9,
+              "tofSpanDays": 83.01767676767673
+            },
+            {
+              "minC3": 8.691504139749533,
+              "argmin": {
+                "date": "2032-07-17",
+                "tofDays": 298.72474747474746
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 8.823941382138498,
+              "argmin": {
+                "date": "2036-09-10",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 5,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 10.178593564395543,
+              "argmin": {
+                "date": "2032-10-28",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 10.69639954366364,
+              "argmin": {
+                "date": "2033-08-06",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.101234437906953,
+              "argmin": {
+                "date": "2033-07-12",
+                "tofDays": 348.5353535353535
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.114791232992234,
+              "argmin": {
+                "date": "2031-07-23",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.118026651380015,
+              "argmin": {
+                "date": "2027-09-09",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 7,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 12.312140955921235,
+              "argmin": {
+                "date": "2037-09-05",
+                "tofDays": 481.3636363636364
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 12.817654851837029,
+              "argmin": {
+                "date": "2036-08-15",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 13.385939875160279,
+              "argmin": {
+                "date": "2034-08-01",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 14.203402262313446,
+              "argmin": {
+                "date": "2037-09-30",
+                "tofDays": 464.760101010101
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 3,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 14.564771370286486,
+              "argmin": {
+                "date": "2028-09-03",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 5,
+              "tofSpanDays": 33.20707070707073
+            },
+            {
+              "minC3": 14.607992068357996,
+              "argmin": {
+                "date": "2034-12-08",
+                "tofDays": 265.5176767676768
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 14.75030967965089,
+              "argmin": {
+                "date": "2032-08-12",
+                "tofDays": 282.1212121212121
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 15.42724947809981,
+              "argmin": {
+                "date": "2034-07-06",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 15.576232504767258,
+              "argmin": {
+                "date": "2037-08-10",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 15.786886637698421,
+              "argmin": {
+                "date": "2038-08-30",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 16.00564614935455,
+              "argmin": {
+                "date": "2026-07-25",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 16.994540572679185,
+              "argmin": {
+                "date": "2031-08-18",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.60060060564152,
+              "argmin": {
+                "date": "2029-08-29",
+                "tofDays": 547.7777777777778
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.68862621326955,
+              "argmin": {
+                "date": "2038-09-25",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.92995450997362,
+              "argmin": {
+                "date": "2038-08-05",
+                "tofDays": 547.7777777777778
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 19.54516350012044,
+              "argmin": {
+                "date": "2029-09-23",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 19.674726518974808,
+              "argmin": {
+                "date": "2039-08-25",
+                "tofDays": 580.9848484848485
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 20.40134935419952,
+              "argmin": {
+                "date": "2039-07-30",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 20.682086001405633,
+              "argmin": {
+                "date": "2030-08-23",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 21.06754066028131,
+              "argmin": {
+                "date": "2039-09-20",
+                "tofDays": 564.3813131313132
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 21.293849106647258,
+              "argmin": {
+                "date": "2035-07-27",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 21.410990734837604,
+              "argmin": {
+                "date": "2028-08-08",
+                "tofDays": 514.570707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.33227490392099,
+              "argmin": {
+                "date": "2035-07-01",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.472113255280895,
+              "argmin": {
+                "date": "2033-12-13",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.510292469590933,
+              "argmin": {
+                "date": "2035-01-02",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.5183624361603,
+              "argmin": {
+                "date": "2030-09-18",
+                "tofDays": 580.9848484848485
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.81301933271024,
+              "argmin": {
+                "date": "2031-09-13",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.909688963691085,
+              "argmin": {
+                "date": "2029-08-03",
+                "tofDays": 564.3813131313132
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 23.606614570765746,
+              "argmin": {
+                "date": "2038-10-21",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.120411921772785,
+              "argmin": {
+                "date": "2030-07-29",
+                "tofDays": 614.1919191919192
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.42996673779272,
+              "argmin": {
+                "date": "2035-12-02",
+                "tofDays": 315.3282828282828
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.55735618232062,
+              "argmin": {
+                "date": "2031-08-18",
+                "tofDays": 647.3989898989898
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 1.4003456891259647,
+              "argmin": {
+                "date": "2034-01-08",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 1.6124577794948918,
+              "argmin": {
+                "date": "2033-11-17",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 154.16080401977524,
+              "cellCount": 11,
+              "tofSpanDays": 132.82828282828282
+            },
+            {
+              "minC3": 2.504419934342659,
+              "argmin": {
+                "date": "2034-09-21",
+                "tofDays": 331.9318181818182
+              },
+              "breadthDays": 154.1608040202409,
+              "cellCount": 12,
+              "tofSpanDays": 132.8282828282828
+            },
+            {
+              "minC3": 3.1436476325157763,
+              "argmin": {
+                "date": "2032-09-06",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 7,
+              "tofSpanDays": 99.6212121212121
+            },
+            {
+              "minC3": 5.269958005843232,
+              "argmin": {
+                "date": "2035-09-16",
+                "tofDays": 381.74242424242425
+              },
+              "breadthDays": 102.77386934682727,
+              "cellCount": 10,
+              "tofSpanDays": 83.01767676767679
+            },
+            {
+              "minC3": 7.184261161231612,
+              "argmin": {
+                "date": "2026-09-14",
+                "tofDays": 398.3459595959596
+              },
+              "breadthDays": 102.77386934636161,
+              "cellCount": 10,
+              "tofSpanDays": 99.62121212121212
+            },
+            {
+              "minC3": 8.823941382138498,
+              "argmin": {
+                "date": "2036-09-10",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 6,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 11.114791232992234,
+              "argmin": {
+                "date": "2031-07-23",
+                "tofDays": 248.9141414141414
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 11.118026651380015,
+              "argmin": {
+                "date": "2027-09-09",
+                "tofDays": 448.15656565656565
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 7,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 12.312140955921235,
+              "argmin": {
+                "date": "2037-09-05",
+                "tofDays": 481.3636363636364
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 5,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 14.564771370286486,
+              "argmin": {
+                "date": "2028-09-03",
+                "tofDays": 497.9671717171717
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 6,
+              "tofSpanDays": 49.81060606060606
+            },
+            {
+              "minC3": 15.786886637698421,
+              "argmin": {
+                "date": "2038-08-30",
+                "tofDays": 531.1742424242425
+              },
+              "breadthDays": 77.08040201012045,
+              "cellCount": 4,
+              "tofSpanDays": 49.81060606060612
+            },
+            {
+              "minC3": 16.994540572679185,
+              "argmin": {
+                "date": "2031-08-18",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 17.60060060564152,
+              "argmin": {
+                "date": "2029-08-29",
+                "tofDays": 547.7777777777778
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 19.674726518974808,
+              "argmin": {
+                "date": "2039-08-25",
+                "tofDays": 580.9848484848485
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 20.682086001405633,
+              "argmin": {
+                "date": "2030-08-23",
+                "tofDays": 597.5883838383838
+              },
+              "breadthDays": 51.386934673413634,
+              "cellCount": 3,
+              "tofSpanDays": 33.20707070707067
+            },
+            {
+              "minC3": 21.293849106647258,
+              "argmin": {
+                "date": "2035-07-27",
+                "tofDays": 431.55303030303025
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535392
+            },
+            {
+              "minC3": 22.510292469590933,
+              "argmin": {
+                "date": "2035-01-02",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.55735618232062,
+              "argmin": {
+                "date": "2031-08-18",
+                "tofDays": 647.3989898989898
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "163693",
+      "spkId": 20163693,
+      "orbitClass": "IEO",
+      "cached": {
+        "minC3": 7.191393068210365,
+        "minC3Date": "2027-05-13",
+        "minC3TofDays": 182,
+        "bestWindows": [
+          {
+            "launchDate": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.191393068210365,
+            "vInfDep": 2.681677286365823,
+            "vInfArr": 17.622136758505214
+          },
+          {
+            "launchDate": "2034-05-18",
+            "tofDays": 182,
+            "c3": 7.36930726781736,
+            "vInfDep": 2.714646803511897,
+            "vInfArr": 18.31897249744589
+          },
+          {
+            "launchDate": "2036-04-17",
+            "tofDays": 182,
+            "c3": 11.160561417551186,
+            "vInfDep": 3.3407426446152937,
+            "vInfArr": 16.064736835687516
+          },
+          {
+            "launchDate": "2034-05-25",
+            "tofDays": 182,
+            "c3": 11.464701784772702,
+            "vInfDep": 3.3859565538814436,
+            "vInfArr": 15.095727730586937
+          },
+          {
+            "launchDate": "2027-05-20",
+            "tofDays": 182,
+            "c3": 12.157963467706182,
+            "vInfDep": 3.4868271347610826,
+            "vInfArr": 14.799190347870464
+          }
+        ]
+      },
+      "live": {
+        "minC3": 8.447568896891584,
+        "minC3Date": "2034-05-16",
+        "minC3TofDays": 182.5,
+        "computeMs": 81.40383299999985
+      },
+      "diff": {
+        "deltaMinC3": 1.2561758286812186,
+        "absoluteDateDays": 2560,
+        "absoluteTofDays": 0.5
+      },
+      "spanFlag": {
+        "cachedMinOutsideViewWindow": false
+      },
+      "timing": {
+        "singleRunComputeMs": 81.40383299999985,
+        "runsComputeMs": [
+          81.40383299999985
+        ],
+        "medianComputeMs": 81.40383299999985
+      },
+      "structure": {
+        "liveMinPlus2": {
+          "thresholdKm2S2": 10.447568896891584,
+          "conn4": [
+            {
+              "minC3": 8.447568896891584,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 8.447568896891584,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus5": {
+          "thresholdKm2S2": 13.447568896891584,
+          "conn4": [
+            {
+              "minC3": 8.447568896891584,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 12.62464408539716,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 8.447568896891584,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 12.62464408539716,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "liveMinPlus10": {
+          "thresholdKm2S2": 18.447568896891582,
+          "conn4": [
+            {
+              "minC3": 8.447568896891584,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 12.62464408539716,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 13.628264842450871,
+              "argmin": {
+                "date": "2034-04-20",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.369589534021326,
+              "argmin": {
+                "date": "2029-03-27",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.862635091220962,
+              "argmin": {
+                "date": "2039-06-09",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 18.443955613381117,
+              "argmin": {
+                "date": "2036-04-09",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 8.447568896891584,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 12.62464408539716,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 13.628264842450871,
+              "argmin": {
+                "date": "2034-04-20",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.369589534021326,
+              "argmin": {
+                "date": "2029-03-27",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.862635091220962,
+              "argmin": {
+                "date": "2039-06-09",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 18.443955613381117,
+              "argmin": {
+                "date": "2036-04-09",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        },
+        "absolute25": {
+          "thresholdKm2S2": 25,
+          "conn4": [
+            {
+              "minC3": 8.447568896891584,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 12.62464408539716,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 13.628264842450871,
+              "argmin": {
+                "date": "2034-04-20",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.369589534021326,
+              "argmin": {
+                "date": "2029-03-27",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 17.862635091220962,
+              "argmin": {
+                "date": "2039-06-09",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 18.443955613381117,
+              "argmin": {
+                "date": "2036-04-09",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 19.198548984076528,
+              "argmin": {
+                "date": "2027-04-08",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 21.86817477974139,
+              "argmin": {
+                "date": "2032-05-01",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.313701512766293,
+              "argmin": {
+                "date": "2032-06-21",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.57276480488088,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.572932565540412,
+              "argmin": {
+                "date": "2032-05-27",
+                "tofDays": 215.7070707070707
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 24.932164481576745,
+              "argmin": {
+                "date": "2029-04-22",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ],
+          "conn8": [
+            {
+              "minC3": 8.447568896891584,
+              "argmin": {
+                "date": "2034-05-16",
+                "tofDays": 182.5
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 3,
+              "tofSpanDays": 33.2070707070707
+            },
+            {
+              "minC3": 12.62464408539716,
+              "argmin": {
+                "date": "2027-05-04",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535335
+            },
+            {
+              "minC3": 17.369589534021326,
+              "argmin": {
+                "date": "2029-03-27",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 17.862635091220962,
+              "argmin": {
+                "date": "2039-06-09",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 18.443955613381117,
+              "argmin": {
+                "date": "2036-04-09",
+                "tofDays": 199.10353535353536
+              },
+              "breadthDays": 0,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 21.86817477974139,
+              "argmin": {
+                "date": "2032-05-01",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 25.693467336706817,
+              "cellCount": 2,
+              "tofSpanDays": 16.603535353535364
+            },
+            {
+              "minC3": 22.313701512766293,
+              "argmin": {
+                "date": "2032-06-21",
+                "tofDays": 182.5
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            },
+            {
+              "minC3": 22.57276480488088,
+              "argmin": {
+                "date": "2039-05-14",
+                "tofDays": 232.31060606060606
+              },
+              "breadthDays": 0,
+              "cellCount": 1,
+              "tofSpanDays": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "serialTotalMs": 386.91512299999977,
+  "parallel": {
+    "status": "measured",
+    "wallMs": 423.7615420000002,
+    "bodies": [
+      {
+        "id": "99942",
+        "computeMs": 262.9922499999998
+      },
+      {
+        "id": "101955",
+        "computeMs": 281.0963749999996
+      },
+      {
+        "id": "433",
+        "computeMs": 273.6632910000003
+      },
+      {
+        "id": "1566",
+        "computeMs": 276.34799999999996
+      },
+      {
+        "id": "163693",
+        "computeMs": 281.1070420000001
+      }
+    ]
+  },
+  "sanity": {
+    "liveMinWithinCachedPlusMinus5": {
+      "pass": true,
+      "bodies": [
+        {
+          "id": "99942",
+          "pass": true,
+          "cachedMinC3": 0.00020641346871491306,
+          "liveMinC3": 0.0011748949214500095
+        },
+        {
+          "id": "101955",
+          "pass": true,
+          "cachedMinC3": 0.5104500008818239,
+          "liveMinC3": 0.6361929269107475
+        },
+        {
+          "id": "433",
+          "pass": true,
+          "cachedMinC3": 1.6244339770173506,
+          "liveMinC3": 1.752189846705813
+        },
+        {
+          "id": "1566",
+          "pass": true,
+          "cachedMinC3": 0.8177753036670058,
+          "liveMinC3": 1.4003456891259647
+        },
+        {
+          "id": "163693",
+          "pass": true,
+          "cachedMinC3": 7.191393068210365,
+          "liveMinC3": 8.447568896891584
+        }
+      ]
+    },
+    "erosLiveMinPlus5HasAtLeastTwoConn4Components": {
+      "pass": true,
+      "componentCount": 5
+    },
+    "allComponentMinimaAtLeastLiveMinMinus1e9": {
+      "pass": true,
+      "failures": []
+    },
+    "cachedMinOutsideViewWindow": {
+      "count": 0,
+      "bodyIds": []
+    }
+  }
+}
