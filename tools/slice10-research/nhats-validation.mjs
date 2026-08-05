@@ -67,7 +67,7 @@ const MU_SUN = 1.32712440018e11; // km^3/s^2
 
 const NHATS_FIXTURE_DIR = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nhats-validation-targets');
 const HORIZONS_FIXTURE = path.join(
-    repoRoot, 'tests', 'fixtures', 'v2', 'horizons-inner-solar-system-2026-2040.json'
+    repoRoot, 'src', 'v2', 'data', 'horizons-inner-solar-system-2026-2040.json'
 );
 const NEA_FIXTURE = path.join(
     repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json'

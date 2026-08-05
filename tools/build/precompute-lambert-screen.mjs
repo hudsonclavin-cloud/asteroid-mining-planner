@@ -157,9 +157,9 @@ console.log(`Grid per body:  ${departureTdbs.length * tofSecondsList.length}`);
 
 const HORIZONS_FIXTURE = path.join(
   repoRoot,
-  'tests',
-  'fixtures',
+  'src',
   'v2',
+  'data',
   'horizons-inner-solar-system-2026-2040.json',
 );
 const NEA_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');

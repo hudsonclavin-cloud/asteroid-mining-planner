@@ -14,9 +14,9 @@ const DATA_PATH = path.join(repoRoot, 'tools', 'slice11-research', 'data', 'mult
 const NEA_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');
 const HORIZONS_FIXTURE = path.join(
     repoRoot,
-    'tests',
-    'fixtures',
+    'src',
     'v2',
+    'data',
     'horizons-inner-solar-system-2026-2040.json'
 );
 const POLIASTRO_SCRIPT = path.join(repoRoot, 'tools', 'slice11-research', 'measurements', 'poliastro-grid.py');

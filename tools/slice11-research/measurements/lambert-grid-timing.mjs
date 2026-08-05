@@ -15,9 +15,9 @@ const NEA_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-
 const SCREEN_CACHE_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'lambert-screen-cache.json');
 const HORIZONS_FIXTURE = path.join(
   repoRoot,
-  'tests',
-  'fixtures',
+  'src',
   'v2',
+  'data',
   'horizons-inner-solar-system-2026-2040.json',
 );
 

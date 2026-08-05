@@ -12,7 +12,7 @@ const TEMP_OUT_DIR = path.join(repoRoot, '.tmp-tests', 'slice11-multi-rev-dual-o
 const DATA_PATH = path.join(repoRoot, 'tools', 'slice11-research', 'data', 'multi-rev-poliastro-validation.json');
 const BOUNDARY_PATH = path.join(repoRoot, 'tools', 'slice11-research', 'data', 'multi-rev-boundary-analysis.json');
 const NEA_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');
-const HORIZONS_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'horizons-inner-solar-system-2026-2040.json');
+const HORIZONS_FIXTURE = path.join(repoRoot, 'src', 'v2', 'data', 'horizons-inner-solar-system-2026-2040.json');
 const PYTHON = path.join(os.homedir(), '.aster-slice11-venv', 'bin', 'python');
 const PY_HELPER = path.join(repoRoot, 'tools', 'slice11-research', 'measurements', 'multi-rev-dual-oracle.py');
 
