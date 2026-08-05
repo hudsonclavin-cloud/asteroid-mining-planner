@@ -927,7 +927,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   const coverageLine = document.createElement('div');
   coverageLine.setAttribute('data-testid', 'ephemeris-coverage-line');
   coverageLine.textContent =
-    `Ephemeris coverage ${formatTdbCoverageDateLabel(timeMin)} – ${formatTdbCoverageDateLabel(timeMax)} TDB`;
+    `View ephemeris coverage ${formatTdbCoverageDateLabel(timeMin)} – ${formatTdbCoverageDateLabel(timeMax)} TDB`;
   timeStatusHud.appendChild(coverageLine);
 
   const outOfCoverageWarning = document.createElement('div');
