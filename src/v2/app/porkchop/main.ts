@@ -24,6 +24,7 @@ import {
   type SpacecraftDvBudget,
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
+import { formatC3 } from '../../porkchop/format-c3.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
 import {
   buildDeltaVStack,
@@ -769,7 +770,7 @@ function PorkchopDedicatedPage() {
                   key: 'card-stack',
                   style: `display:grid;grid-template-columns:max-content 1fr;gap:7px 14px;font-size:12px;line-height:1.6;color:#d8e1f1;${costCardState.band === 'RED' ? 'opacity:0.55;' : ''}`,
                 },
-                h('span', null, `Payload at C3 = ${costCardState.c3.toFixed(1)}`),
+                h('span', null, `Payload at C3 = ${formatC3(costCardState.c3)}`),
                 h(
                   'span',
                   null,
@@ -811,7 +812,7 @@ function PorkchopDedicatedPage() {
               h(
                 'div',
                 { key: 'card-injection-split', style: 'font-size:10px;color:#93a4bf;font-style:italic;margin-top:8px;line-height:1.4;' },
-                `Launch vehicle provides injection to C3 = ${costCardState.c3.toFixed(1)} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
+                `Launch vehicle provides injection to C3 = ${formatC3(costCardState.c3)} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
               ),
               h(
                 'details',

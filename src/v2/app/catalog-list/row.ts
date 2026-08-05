@@ -1,4 +1,5 @@
 import { h, type VNode } from 'preact';
+import { formatC3 } from '../../porkchop/format-c3.js';
 import { requestFocus, selectBody, selectedBodySignal } from '../ui-store/index.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
@@ -35,19 +36,6 @@ function statusBadgeColor(status: string): string {
     default:
       return '#555';
   }
-}
-
-function formatC3(c3: number | null): string {
-  if (c3 === null) {
-    return '—';
-  }
-  if (c3 < 0.01) {
-    return c3.toExponential(2);
-  }
-  if (c3 < 10) {
-    return c3.toFixed(3);
-  }
-  return c3.toFixed(1);
 }
 
 export function renderRow(
