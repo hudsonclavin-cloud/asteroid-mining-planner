@@ -14,6 +14,12 @@ export type SortKey =
 
 const DEFAULT_SORT_KEY: SortKey = 'designation-asc';
 export const DEFAULT_STARFIELD_BRIGHTNESS = 1;
+/**
+ * DEC-17-6 compare multi-select cap. Mirrored (necessarily — the pure codec
+ * cannot import app code) as COMPARE_BODIES_CAP in
+ * src/v2/porkchop/compare-url.ts; keep the two in step.
+ */
+export const SELECTED_BODY_SET_CAP = 5;
 export const DEFAULT_BODY_LABELS_VISIBLE = true;
 const STORAGE_KEY_LAYOUT_MODE = 'aster-v2-layout-mode';
 
@@ -32,6 +38,9 @@ const mutableFilterClass = signal<OrbitClass | null>(null);
 const mutableSearchQuery = signal('');
 const mutableSortKey = signal<SortKey>(DEFAULT_SORT_KEY);
 const mutableSelectedBody = signal<string | null>(null);
+// DEC-17-6: additive multi-select set BESIDE the scalar — single-select
+// consumers are untouched (Slice 17 A3 prep).
+const mutableSelectedBodySet = signal<ReadonlyArray<string>>([]);
 const mutableFocusRequestId = signal(0);
 const mutableStarfieldVisible = signal(true);
 const mutableStarfieldBrightness = signal(DEFAULT_STARFIELD_BRIGHTNESS);
@@ -43,6 +52,7 @@ export const filterClassSignal = computed(() => mutableFilterClass.value);
 export const searchQuerySignal = computed(() => mutableSearchQuery.value);
 export const sortKeySignal = computed(() => mutableSortKey.value);
 export const selectedBodySignal = computed(() => mutableSelectedBody.value);
+export const selectedBodySetSignal = computed(() => mutableSelectedBodySet.value);
 export const focusRequestIdSignal = computed(() => mutableFocusRequestId.value);
 export const starfieldVisibleSignal = computed(() => mutableStarfieldVisible.value);
 export const starfieldBrightnessSignal = computed(() => mutableStarfieldBrightness.value);
@@ -54,6 +64,7 @@ export interface UiStoreSignals {
   readonly searchQuery: ReadonlySignal<string>;
   readonly sortKey: ReadonlySignal<SortKey>;
   readonly selectedBody: ReadonlySignal<string | null>;
+  readonly selectedBodySet: ReadonlySignal<ReadonlyArray<string>>;
   readonly focusRequestId: ReadonlySignal<number>;
   readonly starfieldVisible: ReadonlySignal<boolean>;
   readonly starfieldBrightness: ReadonlySignal<number>;
@@ -66,6 +77,7 @@ export const uiStoreSignals: UiStoreSignals = {
   searchQuery: searchQuerySignal,
   sortKey: sortKeySignal,
   selectedBody: selectedBodySignal,
+  selectedBodySet: selectedBodySetSignal,
   focusRequestId: focusRequestIdSignal,
   starfieldVisible: starfieldVisibleSignal,
   starfieldBrightness: starfieldBrightnessSignal,
@@ -130,6 +142,25 @@ export function setSort(sortKey: SortKey): void {
 
 export function selectBody(bodyId: string | null): void {
   mutableSelectedBody.value = bodyId;
+}
+
+/** Replaces the compare set: dedupes (first occurrence wins) and caps at
+ * SELECTED_BODY_SET_CAP (DEC-17-6). */
+export function setSelectedBodySet(bodyIds: readonly string[]): void {
+  const deduped: string[] = [];
+  for (const bodyId of bodyIds) {
+    if (!deduped.includes(bodyId)) {
+      deduped.push(bodyId);
+      if (deduped.length === SELECTED_BODY_SET_CAP) {
+        break;
+      }
+    }
+  }
+  mutableSelectedBodySet.value = deduped;
+}
+
+export function readSelectedBodySet(): ReadonlyArray<string> {
+  return mutableSelectedBodySet.value;
 }
 
 export function requestFocus(): number {
