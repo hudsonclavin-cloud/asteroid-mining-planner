@@ -417,6 +417,23 @@ OQ-17-9  What albedo does the existing catalog's H-derived
   Open at lock, by design: OQ-17-3 (dominance metric set, locks at A3),
   OQ-17-4..9 (§7), and the two V6/V7 spot checks named in §9.
 
+2026-08-04 · AMENDMENT A1 — evidence-header provenance correction
+  (additive; the header lines stand as written, this entry is the
+  correction of record). Source: S-REPO-SWEEP-2026-08-04-A findings
+  R-01/R-02, an independent read-only sweep.
+  The rev B evidence-base header associates S17_PRERESEARCH_TRIAGE.md and
+  "recon/S17_RECON_REPORT.md" with "HEAD c6c0c52". That SHA records the
+  HEAD the recon was EXECUTED AGAINST (S-S17-RECON-2026-08-03-A), NOT the
+  commit that introduced either artifact; neither file is in c6c0c52's
+  tree. Verified containment:
+    tools/slice17-research/S17_PRERESEARCH_TRIAGE.md      added 56149d8
+    tools/slice17-research/recon/S17_RECON_REPORT.md      added c64ce1d
+  Additionally, the header's "recon/S17_RECON_REPORT.md" is a fragment
+  relative to tools/slice17-research/, not a repo-root path. The
+  repo-root path is tools/slice17-research/recon/S17_RECON_REPORT.md.
+  Lesson recorded: an evidence header must distinguish "executed against
+  SHA X" from "introduced by SHA X". Future founding docs state which.
+
 (Subsequent amendments, cut-rule invocations, audit outcomes, and the close
 entry append below. Additive only; prove with git diff | grep '^-'.)
 
