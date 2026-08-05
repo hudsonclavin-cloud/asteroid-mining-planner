@@ -117,10 +117,11 @@ function compileRuntimeModules() {
     fs.rmSync(TEMP_OUT_DIR, { recursive: true, force: true });
     fs.mkdirSync(TEMP_OUT_DIR, { recursive: true });
 
-    const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
+    const tscBin = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
     const tscResult = spawnSync(
-        tscBin,
+        process.execPath,
         [
+            tscBin,
             '--pretty', 'false',
             '--outDir', TEMP_OUT_DIR,
             '--rootDir', path.join(repoRoot, 'src', 'v2'),

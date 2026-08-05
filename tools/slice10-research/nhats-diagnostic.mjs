@@ -27,10 +27,11 @@ const tempOutDir = path.join(repoRoot, '.tmp-tests', 'oq4-diag');
 fs.rmSync(tempOutDir, { recursive: true, force: true });
 fs.mkdirSync(tempOutDir, { recursive: true });
 
-const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
+const tscBin = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
 const tscResult = spawnSync(
-  tscBin,
+  process.execPath,
   [
+    tscBin,
     '--pretty', 'false',
     '--outDir', tempOutDir,
     '--rootDir', path.join(repoRoot, 'src', 'v2'),
