@@ -247,7 +247,25 @@ function renderFooter(): VNode {
       'span',
       null,
       h('span', { style: { fontWeight: 500, color: '#aaa' } }, footerText(screeningWindowSignal.value)),
-      h('span', { style: { marginLeft: '8px', color: '#666', fontSize: '10px' } }, `· ${FOOTER_CLICK_HINT}`),
+      // L1 measurements (tools/overnight-2026-08-05/L1_FOOTER_LAYOUT.md): the
+      // loaded label fits a 400px sidebar with 1.25px slack, and a RENDERED
+      // leading space (+2.94px) wraps it. inline-block collapses the
+      // text-level space at line start (textContent stays correct, width
+      // unchanged); nowrap makes any wrap move the whole hint to its own row,
+      // never splitting mid-text. No px value added or changed.
+      h(
+        'span',
+        {
+          style: {
+            marginLeft: '8px',
+            color: '#666',
+            fontSize: '10px',
+            display: 'inline-block',
+            whiteSpace: 'nowrap',
+          },
+        },
+        ` · ${FOOTER_CLICK_HINT}`,
+      ),
     ),
     h(
       'a',
