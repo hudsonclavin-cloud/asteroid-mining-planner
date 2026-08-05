@@ -224,12 +224,39 @@ function noteById(doc: ProvenanceDoc | null, id: string): string {
   return doc?.rows.find((row) => row.id === id)?.note ?? '';
 }
 
+const SUPERSCRIPT_DIGITS: Record<string, string> = {
+  '0': '⁰',
+  '1': '¹',
+  '2': '²',
+  '3': '³',
+  '4': '⁴',
+  '5': '⁵',
+  '6': '⁶',
+  '7': '⁷',
+  '8': '⁸',
+  '9': '⁹',
+};
+
+/**
+ * Compact plain scientific notation ("3.60e-12") into "3.6×10⁻¹²".
+ * Trailing zeros in a fractional mantissa are trimmed; the exponent renders
+ * from its own captured digits, negative or positive (positive exponents
+ * render unsigned). Anything that is not plain scientific notation passes
+ * through unchanged — this function claims no handling beyond that form.
+ */
 function compactScientific(value: string): string {
-  const match = value.match(/^(\d+)\.(\d+)0e-(\d+)$/);
-  if (match) {
-    return `${match[1]}.${match[2]}×10⁻¹²`;
+  const match = value.match(/^(\d+(?:\.\d+)?)e([+-]?)(\d+)$/i);
+  if (!match) {
+    return value;
   }
-  return value;
+  const mantissa = match[1].includes('.')
+    ? match[1].replace(/0+$/, '').replace(/\.$/, '')
+    : match[1];
+  const sign = match[2] === '-' ? '⁻' : '';
+  const exponent = [...match[3]]
+    .map((digit) => SUPERSCRIPT_DIGITS[digit] ?? digit)
+    .join('');
+  return `${mantissa}×10${sign}${exponent}`;
 }
 
 function firstPercent(value: string): string {
