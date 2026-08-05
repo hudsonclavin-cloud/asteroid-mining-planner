@@ -141,13 +141,15 @@ const LABELED_BODY_IDS: ReadonlyArray<{ bodyId: BodyId; label: string }> = [
  * 1 Sun, 2 Mercury, 3 Venus, 4 Earth, 5 Moon, 6 Mars (legacy), M Mars,
  * P Phobos, X Deimos,
  * 7 Jupiter, 8 Io, 9 Europa, 0 Ganymede, - Callisto,
- * S Saturn, R Rhea, I Iapetus, Y Tethys, D Dione,
+ * S Saturn, K Titan, R Rhea, I Iapetus, Y Tethys, D Dione,
  * N Mimas, E Enceladus, = outer-system overview.
  *
  * Mars claims 'm' so the default Slice 6 manual verification path can press
  * 'm' from overview without remembering the older numeric alias. Mimas moves to
  * 'n'; Saturn focus itself remains on 's' for the Slice 4-5 regression path.
- * Slice 8.5 repurposes 't' for the top-down preset.
+ * Slice 8.5 repurposes 't' for the top-down preset. Slice 17 B0a adds 'k' for
+ * Titan — previously the only rendered body without a focus key; 't' stays
+ * with the top-down preset.
  */
 const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
   '1': 'sun',
@@ -165,6 +167,7 @@ const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
   '0': 'ganymede',
   '-': 'callisto',
   s: 'saturn',
+  k: 'titan',
   r: 'rhea',
   i: 'iapetus',
   y: 'tethys',

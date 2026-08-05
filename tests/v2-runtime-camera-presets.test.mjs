@@ -97,7 +97,7 @@ test('camera tween locks controls during animation and releases them on completi
   assert.ok(dot >= Math.cos(maxAngleErrorRad), `final camera direction misaligned by more than 2 deg (dot=${dot})`);
 });
 
-test('existing regression shortcuts remain intact while t is no longer mapped to Titan focus', async () => {
+test('existing regression shortcuts remain intact; Titan focus is on k, and t stays with the top-down preset', async () => {
   const { runtime } = await loadModules();
 
   assert.equal(runtime.getCameraPresetForKey('='), null);
@@ -111,5 +111,6 @@ test('existing regression shortcuts remain intact while t is no longer mapped to
   assert.ok(source.includes("s: 'saturn'"));
   assert.ok(source.includes("'7': 'jupiter'"));
   assert.ok(source.includes("'4': 'earth'"));
+  assert.ok(source.includes("k: 'titan'"));
   assert.ok(!source.includes("t: 'titan'"));
 });
