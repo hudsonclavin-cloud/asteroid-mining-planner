@@ -524,6 +524,9 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
         ),
         h('input', {
           type: 'text',
+          id: 'catalog-search',
+          name: 'catalog-search',
+          'aria-label': 'Search catalog by designation or name',
           placeholder: 'Search designation or name…',
           value: searchQuery,
           onInput: (event: Event) => setSearch((event.target as HTMLInputElement).value),
