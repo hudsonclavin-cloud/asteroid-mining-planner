@@ -26,10 +26,11 @@ import {
 } from '../../boundary/lambert-screen-cache.js';
 import { renderEmpty, type EmptyReason } from './empty.js';
 import {
-  DISCLOSURE_INTRO,
-  DISCLOSURE_SECTIONS,
+  disclosureIntro,
+  disclosureSections,
   FOOTER_CLICK_HINT,
-  FOOTER_TEXT,
+  footerText,
+  type ScreeningWindow,
 } from './honesty-disclosure.js';
 import { renderRow } from './row.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
@@ -52,11 +53,13 @@ const scrollTopSignal = signal(0);
 const viewportHeightSignal = signal(600);
 const popoverOpenSignal = signal(false);
 const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> | null>(null);
+const screeningWindowSignal = signal<ScreeningWindow | null>(null);
 const ABOUT_ROUTE = '../about/';
 
 loadLambertScreenCacheAsync()
   .then((cache) => {
     screeningIndexSignal.value = createLambertScreenIndex(cache);
+    screeningWindowSignal.value = cache.metadata.screeningWindow;
   })
   .catch((error) => {
     console.error('Failed to load Lambert screen cache:', error);
@@ -206,6 +209,7 @@ export function disposePanel(): void {
 
 export function trackPanelSignals(): void {
   filteredRowsSignal.value;
+  screeningWindowSignal.value;
   layoutModeSignal.value;
   selectedBodySignal.value;
   bodyLabelsVisibleSignal.value;
@@ -242,7 +246,7 @@ function renderFooter(): VNode {
     h(
       'span',
       null,
-      h('span', { style: { fontWeight: 500, color: '#aaa' } }, FOOTER_TEXT),
+      h('span', { style: { fontWeight: 500, color: '#aaa' } }, footerText(screeningWindowSignal.value)),
       h('span', { style: { marginLeft: '8px', color: '#666', fontSize: '10px' } }, `· ${FOOTER_CLICK_HINT}`),
     ),
     h(
@@ -264,7 +268,7 @@ function renderFooter(): VNode {
 }
 
 function renderPopover(): VNode {
-  const sections = DISCLOSURE_SECTIONS.map((section) =>
+  const sections = disclosureSections(screeningWindowSignal.value).map((section) =>
     h(
       'div',
       { key: section.title, style: { marginBottom: '16px' } },
@@ -369,7 +373,7 @@ function renderPopover(): VNode {
             marginBottom: '20px',
           },
         },
-        DISCLOSURE_INTRO,
+        disclosureIntro(screeningWindowSignal.value),
       ),
       ...sections,
     ),
