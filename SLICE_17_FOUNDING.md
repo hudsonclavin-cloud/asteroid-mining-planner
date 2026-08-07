@@ -434,6 +434,60 @@ OQ-17-9  What albedo does the existing catalog's H-derived
   Lesson recorded: an evidence header must distinguish "executed against
   SHA X" from "introduced by SHA X". Future founding docs state which.
 
+2026-08-06 · AMENDMENT A2 — breadth day-value convention (additive; the
+  DEC-17-8 lines stand as written, this entry is the correction of record).
+  Source: pre-commit sanity review of the A1 segmentWindows module
+  (S-OVERNIGHT-BUILD-2026-08-05-A), which surfaced the conflict and
+  correctly declined to self-resolve it.
+
+  DEC-17-8's RANKING qualifier states "B_min = 2 DEPARTURE CELLS =
+  14.008219178082192 days at the locked resolution". That day value applies
+  an N x cell conversion. Every other part of the system applies
+  (N - 1) x cell:
+    DEC-17-1                              departure-date SPAN
+    measurement artifact 806745c          breadth as span between endpoints
+    the locked grid geometry              5113 days / 730 intervals /
+                                          731 samples => 7.004109589041096 d
+    src/v2/porkchop/segment-windows.ts    breadthDays =
+                                          (breadthCells - 1) * depCellDays
+  The (N - 1) convention is CORRECT and stands. A departure cell is a
+  SAMPLED epoch at which a Lambert solution was actually computed, not an
+  integrated bin of departure dates. N contiguous cells therefore span
+  (N - 1) x cell days between the first and last VERIFIED departure;
+  N x cell would assert feasibility for half a cell beyond the last epoch
+  ever evaluated, which is extrapolation presented as measurement. The
+  corrected value for B_min = 2 is 7.004109589041096 days.
+
+  No ranking or classification result changes: the practical filter
+  operates on breadthCells, not on days. The exposure was UI copy.
+
+  Stronger statement of the underlying truth, which DEC-17-8's own
+  rationale already implies: NEITHER 7.004 nor 14.008 days is a verified
+  CONTINUOUS window. A two-cell component means two verified departure
+  epochs 7.004109589041096 days apart; the dates between them were not
+  solved either. The verified quantity is a COUNT OF EPOCHS at a stated
+  sampling interval. This is precisely why DEC-17-8 makes cells the primary
+  unit -- "day-precision copy would overclaim resolution the grid does not
+  carry" -- and the 17-significant-figure day value in the same sentence
+  was doing the exact thing that sentence forbids.
+
+  Binding copy rule, effective immediately and applying to A3 and every
+  later surface: a breadth day-span is NEVER displayed alone. Every display
+  of breadthDays carries, adjacent and in the same visual unit, the cell
+  count and the sampling interval. Day values display at 3 significant
+  figures (7.00 d); full precision lives in the data layer and in this
+  document, never in user-facing copy. Compliant pattern:
+    "7.00 d window - 2 verified departures, 7.00 d sampling"
+  Non-compliant, and never to ship: any bare day count, any phrasing that
+  implies continuous feasibility across the span, and specifically the
+  words "two-week window" for a two-cell component.
+
+  Lesson recorded, alongside A1's: a founding doc that states a quantity in
+  a primary unit must not also state a derived convenience value in a unit
+  it has just argued is less truthful. If a derived value is stated, its
+  conversion rule is stated with it. Future DECs quoting a span state the
+  conversion.
+
 (Subsequent amendments, cut-rule invocations, audit outcomes, and the close
 entry append below. Additive only; prove with git diff | grep '^-'.)
 
