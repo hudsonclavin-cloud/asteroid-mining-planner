@@ -56,6 +56,13 @@ const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> 
 const screeningWindowSignal = signal<ScreeningWindow | null>(null);
 const ABOUT_ROUTE = '../about/';
 
+// Module-scope fetch, deliberate: b6b7f92 moved the screening cache out
+// of the bundle graph to fix a vite build OOM. Consequence — importing
+// this module outside a browser fires a fetch against the root-relative
+// '/lambert-screen-cache.json' and fails with ERR_INVALID_URL. That is
+// expected in Node test harnesses and is not a defect; the failure is
+// logged and swallowed. Do not convert this to a lazy or guarded load
+// without re-checking the build memory footprint that b6b7f92 fixed.
 loadLambertScreenCacheAsync()
   .then((cache) => {
     screeningIndexSignal.value = createLambertScreenIndex(cache);
