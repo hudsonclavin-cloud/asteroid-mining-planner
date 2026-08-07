@@ -1,3 +1,12 @@
+<!-- SUPERSEDED DRAFT — NOT THE LOCKED SLICE 17 DOCUMENT.
+     This 2026-07-07 draft proposes a Remote MCP Transport slice. It was
+     not adopted. The locked Slice 17 is target-compare + viewer QOL and
+     lives at the repository root as SLICE_17_FOUNDING.md.
+     Renamed 2026-08-06 [S-S17-POSTMERGE-2026-08-06-A] because the two
+     files shared a filename and collide on DEC-17-* and OQ-17-*
+     identifiers, making grep results ambiguous. The DEC and OQ numbers
+     below refer ONLY to this unadopted draft and have no authority.
+     Content below is unmodified from the 2026-07-07 draft. -->
 <!-- DRAFT — NOT LOCKED. Authored 2026-07-07 (Fable session,
 pre-Slice-15-publish). Ingested 2026-07-18 per S16-PRE-INGEST
 dispatch; body text byte-preserved from the authored draft.
