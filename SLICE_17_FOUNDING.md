@@ -488,6 +488,48 @@ OQ-17-9  What albedo does the existing catalog's H-derived
   conversion rule is stated with it. Future DECs quoting a span state the
   conversion.
 
+2026-08-08 · GATE CLOSURES G-A1 + G-A2 (condensed pass, additive
+  record; source: S-S17-GA12-AUDIT-2026-08-07-A, Hudson PASS of record).
+  G-A1 CLOSED. Green-tests clause: Hudson's own run of 2026-08-06
+  (node --test over v2-segment-windows / v2-compare-url /
+  v2-runtime-camera-presets; 32/32 pass, his box, post-merge audit).
+  Fixture-expectation clause: the audit's adversarial lens read every
+  asserted constant directly from the committed
+  tools/slice17-research/data/s17-structure-7day.json and tabled it
+  against the test file; all rows MATCH; Hudson verified by reading the
+  table and issuing PASS. The gate's verification is thereby his, on
+  independently re-derived evidence, per INV-033 separation.
+  G-A2 CLOSED at ZERO open HIGH findings. Lenses: mathematician,
+  adversarial, architect, reconciliation — each a fresh session
+  distinct from the module's author; the overnight self-review carried
+  no gate weight. Findings: 0 HIGH / 11 MED / 9 LOW — HIGH
+  count zero; MED/LOW items queued with dispositions in the audit
+  record (tools/s17-ga12-audit-2026-08-07/RECONCILIATION.md, committed
+  separately if Hudson elects).
+  The gate certifies fixture honesty (G-A1: 160 field-level
+  comparisons, zero mismatches; 5 rows n/a in 3 categories — nDep,
+  nTof, span-end unasserted, TOF_MIN_DAYS inferred, breadthCells
+  synthetic) and the correctness of the module's exported
+  classification logic (resolveThreshold, classifyComponents) against
+  DEC-17-3 and DEC-17-8. DEC-17-1's membership and conn8 clauses are
+  verified by lens reading, not by the fixture tests, though the
+  conn4/conn8 divergence check confirms the fixtures derive from the
+  conn8 array. It does NOT certify the segmentation core, flood-fill,
+  breadth measurement, or date conversion, which the artifact-fixture
+  tests do not invoke. Three findings convert to HIGH at the A3 commit
+  and are binding A3 entry conditions: D-01 (index-transpose adapter +
+  asymmetric-fixture test), D-03 (inject absoluteKm2S2 from the
+  DEC-17-5a runtime read), D-04 (echo liveMin/Δ/grid-geometry on the
+  result). D-02 (TDB-as-UTC date convention) is a binding
+  §8-amendment-plus-fix condition carrying the anchor tripwire: A3 must
+  read the epoch from span.requested.start, never
+  span.fixtureBounds.first.
+  Consequence: the UNAUDITED quarantine on
+  src/v2/porkchop/segment-windows.ts is LIFTED. A3 and later phases
+  may import the module. The in-file quarantine header is retired by
+  the first A3 commit that touches the module's consumers (comment
+  edit, cited to this entry), not by this record.
+
 (Subsequent amendments, cut-rule invocations, audit outcomes, and the close
 entry append below. Additive only; prove with git diff | grep '^-'.)
 
