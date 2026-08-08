@@ -288,3 +288,30 @@ per-dispatch scope, not standing domain specialists.
 The orchestrator.md dispatch-round structure (Round 1: define contracts, Round 2: parallel
 independent work, Round 3: integration) remains valid for multi-domain Codex dispatches and
 should be used when a dispatch touches more than two files owned by different architectural layers.
+
+## §9. Deploy surface (added 2026-08-07, S-HYGIENE-2026-08-07-A)
+
+docs/ is a COMMITTED BUILD-ARTIFACT TREE (vite outDir). GitHub Pages
+serves whatever docs/ last contained. Consequences, learned 2026-08-06
+when twelve src/v2 commits sat undeployed behind green CI:
+
+1. A green Actions run and a green pages-build-deployment run are NOT
+   deploy confirmation. They publish the last-built artifacts; they say
+   nothing about whether current source is in them.
+2. A src/v2 change is live ONLY after all four: (a) `npm run build`,
+   run by Hudson unless a dispatch carries an explicit §3 waiver;
+   (b) an artifacts-only commit of docs/; (c) Hudson's manual push;
+   (d) CONTENT verification in the browser with cache disabled — a
+   string or bundle hash the change introduced, read from the live
+   page. The string on the page is the proof; the green check is not.
+3. docs/ is a generated tree: deletions inside it are expected and
+   correct on rebuild. The founding-doc additive proof does NOT apply
+   to docs/. `git add docs/` (path-scoped) is the one sanctioned
+   directory staging, used only for deploy-rebuild commits.
+4. .dispatch-scope uses shell case-glob semantics: `docs/*` matches
+   files under docs/; a bare `docs/` matches nothing. Dispatches use
+   the trailing-asterisk form.
+5. Build reproducibility as verified 2026-08-06: emptyOutDir wipes and
+   regenerates all tracked docs/ files; unchanged sources reproduce
+   byte-identical artifacts (.gitattributes normalizes docs/** to LF).
+   Wide churn on rebuild is a tripwire, not an expectation.
