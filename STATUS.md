@@ -1,7 +1,7 @@
 # STATUS.md — Aster Project Current State
 
 > Updated at the end of each session. Keep it short; agents read this before acting.
-> **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`); truth-refreshed 2026-08-04 (`S-TRUTH-REFRESH-2026-08-04-A`).** If HEAD does not match the table below,
+> **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`); truth-refreshed 2026-08-07 (`S-HYGIENE-2026-08-07-A`).** If HEAD does not match the table below,
 > update this file before believing it. A stale STATUS forced a session-start stop-gate once
 > already (audit L3-1) — that is why this section exists.
 
@@ -19,11 +19,12 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `237c42e` | local tracking ref, not re-fetched this session |
-| Local HEAD | `1a1b987` | 1 ahead of origin/main (unpushed: S17 §8 amendment A1) |
+| origin/main | `1a1df13` | local tracking ref; deploy-rebuild boundary, not re-fetched this session |
+| Local HEAD | `aaf74a4` | 2 ahead of origin/main (unpushed: hygiene audit directory + AGENTS.md §9) |
 
-**Structural one-commit lag (expected, not rot):** a SHA-pinning file cannot name its own commit. This table names the state it describes; the commit that lands this STATUS refresh itself sits one ahead of `1a1b987`. A next session should read exactly one commit of drift here as normal; more than one means this file is stale.
-**Push state:** HEAD `1a1b987` is ahead of origin/main `237c42e` by the two `S-TRUTH-REFRESH-2026-08-04-A` doc commits once this refresh lands, pending Hudson's push. No agent pushes, ever.
+**Structural one-commit lag (expected, not rot):** State recorded through `aaf74a4`; this file's own commit follows it — structural one-commit lag, accepted (a STATUS file cannot pin its own commit).
+**Push state:** HEAD `aaf74a4` is ahead of origin/main `1a1df13` by the first two `S-HYGIENE-2026-08-07-A` commits; this STATUS refresh follows, pending Hudson's push. No agent pushes, ever.
+**Deploy boundary:** `docs/` was rebuilt at `1a1df13` on 2026-08-06, closing the 12-commit `src/v2/` gap since `729ffb8`; Hudson completed live-page content verification on 2026-08-06.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -39,7 +40,7 @@
 | Packaging / demo | 14 (About, validation card, FK3 tour, CI) | CLOSED + DEPLOYED |
 | MCP / agent surface | 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`) |
 | Agent-honesty study | **16** | **CLOSED 2026-08-02 — HAS A RESULT** |
-| Mission planning | **17** (Target Compare + viewer QOL) | **FOUNDING LOCKED rev B 2026-08-04** (`SLICE_17_FOUNDING.md`, repo root; §8 amendment A1) — Front A at A1; Front B not started |
+| Mission planning | **17** (Target Compare + viewer QOL) | **FOUNDING LOCKED rev B 2026-08-04** (`SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, with A2 the DEC-17-8 breadth erratum at `d204cea`) — Front A: A1 `segmentWindows` landed at `e8182e4`, quarantined UNAUDITED; A3 preparation landed at `51516bd` + `52ee0c8`; next gate is condensed G-A1+G-A2 audit `S-S17-GA12-AUDIT-2026-08-07-A` (dispatched). Front B: B0 partially landed in seven commits (`fbdd8da`, `c0b578f`, `1b42e78`, `63ca402`, `4d483e5`, `a3a1981`, `8d6bdf8`). |
 
 ## Slice 16 — closed, with data
 
@@ -69,6 +70,8 @@
 | Root recursive | `node tools/run-tests.mjs` | 71 files, **70 pass / 1 fail** |
 | Default | `npm test` (`tests/*.test.mjs` only) | 173 pass / 1 skip — reaches a subset |
 
+**Test-file inventory (audited 2026-08-07):** 70 files under `tests/`, 3 colocated under `src/v2/`, and 3 MCP tests. This is an inventory, not a test result.
+
 The single failure is the documented **Node-version false-red** in `tests/v2-golden/launch-vehicles.golden.test.mjs` (needs Node ≥22.18; CI pins Node 24). Not a math regression (audit L4-2).
 **CI gap, still open (L4-1):** CI runs neither the MCP package tests nor the Slice 16 suite, and the default `npm test` is not truthful about coverage.
 
@@ -78,7 +81,7 @@ The single failure is the documented **Node-version false-red** in `tests/v2-gol
 
 1. **2026-08 corpus recovery: CLOSED (verified 2026-08-04).** All seven Perplexity re-fetches are tracked: `tools/slice21-research/literature/{P1_EPHEMERIS,P2_EARTH_ORIENTATION,P3_PROPAGATION,P4_SATELLITES,P5_CATALOG_FRESHNESS,QOL_UX}_RESULT.md` + `strategy/research/EXPLAINER_RESULT.md`. The four V6/V7 verification artifacts also landed: prompts at `aebca4a`, results at `efd6409`. The previously-cited `DISPATCH_RESEARCH_INGEST_revA` exists nowhere in the repo (it lives only in the local intake dir `~/aster-intake-2026-08/`); the re-run instruction is removed because the recovery it drove is complete.
 2. **Work HUDSON'S QUEUE** in `tools/slice16-harness/CLOSE_REPORT.md`; all 14 paths under `tools/slice16-harness/runs/` are tracked evidence.
-3. **Slice 17 is OPEN — founding doc LOCKED rev B** (was "opens on §31"; superseded 2026-08-04). See the Slice Status row above. Next execution step: Front A phase A1. Its first design input was R-CLOSE-1: an instrument that cannot grade the behaviour its own scenarios were written to elicit.
+3. **Slice 17 is OPEN — founding doc LOCKED rev B** (was "opens on §31"; superseded 2026-08-04). A1 `segmentWindows` is committed but quarantined UNAUDITED; the next gate is the condensed G-A1+G-A2 audit (`S-S17-GA12-AUDIT-2026-08-07-A`, dispatched). A3 preparation and part of Front B's B0 are already landed; see the Slice Status row above.
 4. CI hardening (L4-1/L4-3): MCP + Slice 16 suites into Actions; truthful default `npm test`.
 
 **2026-08-04 · sweep record:** `S-REPO-SWEEP-2026-08-04-A` (independent read-only multi-lens sweep, 9 HIGH findings) ran. This refresh addresses only the STATUS falsehoods and the S17 evidence-header provenance (R-01/R-02). Remaining findings OPEN and deliberately not addressed here: UI copy R-04/R-13 · build reproducibility R-03/R-05/R-16 · label drift R-17.
@@ -116,6 +119,7 @@ The single failure is the documented **Node-version false-red** in `tests/v2-gol
 | V6 | Same-row refocus zoom behavior. |
 | V7 | Point pop at LOD transition. |
 | V8 | Picking near/far desync from render camera. |
+| V9 | Focused-asteroid drift/flicker under live time. Static-time discriminator run 2026-08-07: flicker stops at static time. Fix pending; epoch mismatch remains the hypothesis. |
 
 ---
 
