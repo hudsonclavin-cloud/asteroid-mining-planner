@@ -18,6 +18,7 @@ export default defineConfig({
         aboutV2: resolve(__dirname, 'v2/about/index.html'),
         porkchopV2: resolve(__dirname, 'v2/porkchop/index.html'),
         solarSystemV2: resolve(__dirname, 'v2/solar-system/index.html'),
+        compareV2: resolve(__dirname, 'v2/compare/index.html'),
       },
     },
   },
