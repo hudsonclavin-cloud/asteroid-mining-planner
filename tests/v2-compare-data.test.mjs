@@ -388,7 +388,17 @@ test('D-04 echo carries liveMin, delta, absolute, and grid geometry from the com
   );
 
   assert.equal(result.ok, true);
-  assert.equal(result.echo.liveMin, 3.25, 'liveMin is MEASURED, not back-derived from the threshold');
+  // The fixture realizes c3 through sqrt, so the grid's true min is one ulp
+  // below the requested 3.25; asserting 3.25 inverted the test and passed only
+  // under back-derivation.
+  const realizedMin = Math.sqrt(3.25) ** 2; // what the stub actually builds
+  assert.equal(
+    result.echo.liveMin,
+    realizedMin,
+    'liveMin is MEASURED (equals the realized grid min, sqrt(3.25)^2 = ' +
+      '3.2499999999999996); back-derivation (threshold − Δ) yields exactly ' +
+      '3.25 and must FAIL here',
+  );
   assert.equal(result.echo.deltaKm2S2, 5);
   assert.equal(result.echo.absoluteKm2S2, 25);
   assert.equal(result.echo.nDep, 5);
@@ -508,13 +518,16 @@ test('serial orchestration preserves input order and is deterministic', async ()
 
 test('deliveredMass is null on NO-PRACTICAL-WINDOW rather than a fabricated number', async () => {
   const { compareData } = await loadModules();
-  // Every in-window cell isolated => all singletons => none practical at B_min 2.
+  const params = baseParams({ bMinCells: 2, thresholdMode: 'absolute', absoluteKm2S2: 50 });
+  // Three singleton WINDOWS on departure-column semantics, none meeting
+  // breadth 2 — mirrors 163693's breadth-binding state.
   const [result] = compareData.computeCompareData(
     [BODY],
-    baseParams({ bMinCells: 2, thresholdMode: 'absolute', absoluteKm2S2: 50 }),
-    makeDeps((i) => (i % 2 === 0 ? 1 : 99)),
+    params,
+    makeDeps((i) => (Math.floor(i / params.nTof) % 2 === 0 ? 1 : 99)),
   );
   assert.equal(result.ok, true);
+  assert.equal(result.segmentation.components.length, 3);
   assert.equal(result.segmentation.bestPractical, null);
   assert.equal(result.deliveredMass, null);
 });
