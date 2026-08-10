@@ -145,9 +145,14 @@ function formatBreadth(component: WindowComponent, samplingDays: number): string
   const departures = component.breadthCells === 1 ? 'departure' : 'departures';
   return (
     `${formatDays(component.breadthDays)} d window — ` +
-    `${component.breadthCells} verified ${departures}, ` +
+    `${component.breadthCells} ${departures} in this window, ` +
     `${formatDays(samplingDays)} d sampling`
   );
+}
+
+function formatComputeTime(totalComputeMs: number): string {
+  const roundedMs = Math.round(totalComputeMs);
+  return roundedMs < 1 ? '< 1 ms (cached grids)' : `${roundedMs} ms`;
 }
 
 function formatMassKg(massKg: number): string {
@@ -463,7 +468,7 @@ function MethodBadge(props: {
   lines.push(
     `Delivered mass — interpolated from the published performance curve for ${props.vehicleName}, against a fixed reference rendezvous budget of ${REFERENCE_RENDEZVOUS_MPS} m/s plus ${SPACECRAFT_STATIONKEEPING_MPS} m/s stationkeeping. Rendezvous ΔV varies by target; a single reference budget is used here so the mass column is comparable across bodies, which means it is not a per-target mission estimate.`,
     'Launch-vehicle performance figures are the operator-published curves and carry their contract context; quoted interior points on those curves are interpolations between published anchors, not independently verified performance.',
-    `Computed live in this browser — ${Math.round(props.totalComputeMs)} ms of solver time for this comparison.`,
+    `Computed live in this browser — ${formatComputeTime(props.totalComputeMs)} of solver time for this comparison.`,
   );
 
   return h(
@@ -628,7 +633,7 @@ function ComparePage() {
   const headers = [
     'Target',
     'Best practical window',
-    'Distinct opportunities',
+    'Distinct windows',
     'Widest window',
     `Delivered mass — ${data.vehicleName}`,
     'Threshold',
