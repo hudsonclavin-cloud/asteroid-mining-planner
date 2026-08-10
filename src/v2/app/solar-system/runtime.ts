@@ -1094,6 +1094,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   let asteroidPropagationRevision = 0;
   let asteroidCanonicalPositionsM = buildAsteroidCanonicalPositions(asteroidBodies, timeMin);
   let asteroidPositionsEpochTdbSeconds = timeMin;
+  // S-S17-FLICKER-2026-08-09-A: bodyId -> slot in asteroidCanonicalPositionsM.
+  // Built once; both the array and this map are ordered by asteroidBodies, the
+  // same array AsteroidRenderer iterates, so the indices agree by construction.
+  const asteroidCanonicalIndexByBodyId = new Map<AsteroidBodyId, number>(
+    asteroidBodies.map((asteroid, index) => [asteroid.bodyId, index] as const),
+  );
   asteroidWorker.onmessage = (event) => {
     const message = event.data;
     if (!message || typeof message !== 'object') {
@@ -1223,18 +1229,6 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     return asteroid;
   }
 
-  function getAsteroidHeliocentricState(bodyId: AsteroidBodyId, tdbSeconds: number): CanonicalState {
-    if (tdbSeconds === asteroidPositionsEpochTdbSeconds) {
-      const cached = asteroidRenderer.getAsteroidCanonicalPosition(bodyId);
-      return {
-        ...getAsteroidBody(bodyId).anchorState,
-        tdbSeconds,
-        positionM: cached,
-      };
-    }
-    return propagateAsteroidBodyState(getAsteroidBody(bodyId), tdbSeconds);
-  }
-
   function requestAsteroidPropagation(targetTdbSeconds: number): void {
     if (!asteroidWorkerReady) {
       asteroidCanonicalPositionsM = buildAsteroidCanonicalPositions(asteroidBodies, targetTdbSeconds);
@@ -1323,10 +1317,31 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       return getOuterSystemOverviewAnchor(tdbSeconds);
     }
     if (isAsteroidFocusTarget(bodyId)) {
-      if (tdbSeconds === asteroidPositionsEpochTdbSeconds) {
-        return asteroidRenderer.getAsteroidCanonicalPosition(bodyId);
+      // S-S17-FLICKER-2026-08-09-A: the anchor reads the focused body's slot
+      // from asteroidCanonicalPositionsM — the SAME array object that this
+      // frame's AsteroidRenderer.update rebases every asteroid against — so
+      // canonical[idx] - anchor is IDENTICALLY zero every frame, and the
+      // focused mesh pins to centre.
+      //
+      // Two earlier shapes were both wrong. The original epoch-conditional
+      // re-propagated to the current frame epoch while the array stayed at the
+      // last worker-accepted epoch; (stale - fresh) was the drift that read as
+      // swim under live time. Reading the renderer's cached map instead fixed
+      // the steady state but left a one-frame pop per worker result, because
+      // that map is written during the PREVIOUS update() call and so lags the
+      // array on exactly the frame a result lands.
+      //
+      // The returned object is a COPY, not the live Vector3:
+      // focusTransitionFromAnchor holds an anchor across the 650 ms focus
+      // transition, and the worker handler mutates these vectors in place.
+      const canonicalIndex = asteroidCanonicalIndexByBodyId.get(bodyId);
+      if (canonicalIndex !== undefined) {
+        const slot = asteroidCanonicalPositionsM[canonicalIndex];
+        if (slot) {
+          return { x: slot.x, y: slot.y, z: slot.z };
+        }
       }
-      return getAsteroidHeliocentricState(bodyId, tdbSeconds).positionM;
+      return asteroidRenderer.getAsteroidCanonicalPosition(bodyId);
     }
     return getHeliocentricState(bodyId, tdbSeconds).positionM;
   }
