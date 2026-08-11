@@ -13,7 +13,20 @@ export type SortKey =
   | 'absolute-magnitude-desc';
 
 const DEFAULT_SORT_KEY: SortKey = 'designation-asc';
-export const DEFAULT_STARFIELD_BRIGHTNESS = 1;
+/**
+ * S-S17-FRONTB-BATCH-2026-08-11-A: default lowered 1 -> 0.65.
+ *
+ * The decorative layer must not out-compete the data layer at default
+ * composition. Toggling the starfield off revealed a correct, distinct NEA
+ * cloud — the points were never too dim in isolation; the starfield at 100%
+ * was simply louder than them. Two prior retunes amplified the data to beat
+ * the decoration, which was the wrong lever: it chased a symptom and would
+ * have ended in a bloom-like haze.
+ *
+ * DEFAULT only — the slider keeps its full 0..1 range (step 0.05, so 0.65 is
+ * an exact stop), and any user can restore 100%.
+ */
+export const DEFAULT_STARFIELD_BRIGHTNESS = 0.65;
 /**
  * DEC-17-6 compare multi-select cap. Mirrored (necessarily — the pure codec
  * cannot import app code) as COMPARE_BODIES_CAP in
