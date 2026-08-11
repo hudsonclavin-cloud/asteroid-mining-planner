@@ -55,6 +55,7 @@ import {
   LAUNCH_VEHICLES,
   SPACECRAFT_STATIONKEEPING_MPS,
   type DeliveredMassResult,
+  type LaunchVehicle,
 } from '../../porkchop/launch-vehicles.js';
 import type { WindowComponent } from '../../porkchop/segment-windows.js';
 import { setSelectedBodySet } from '../ui-store/store.js';
@@ -558,6 +559,7 @@ function MethodBadge(props: {
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly vehicleName: string;
   readonly totalComputeMs: number;
+  readonly thresholdMode: 'relative' | 'absolute';
 }) {
   const { echo } = props;
   const lines: string[] = [
@@ -576,6 +578,13 @@ function MethodBadge(props: {
   if (echo) {
     lines.push(
       `Feasibility boundary — ${formatC3WithUnits(echo.absoluteKm2S2)}, read from the screening cache rather than assumed.`,
+      // S-S17-FRONTB-BATCH-2026-08-11-A (D2): the badge states the active
+      // mode, so it also discloses that switching recomputes.
+      `Segmentation mode — ${
+        props.thresholdMode === 'relative'
+          ? `relative: each body's window threshold is its own energy floor plus ${echo.deltaKm2S2} km²/s²`
+          : `absolute: one shared boundary at ${formatC3WithUnits(echo.absoluteKm2S2)} for every body`
+      }. Switching modes recomputes every grid live in this browser.`,
     );
   }
   lines.push(
@@ -600,13 +609,33 @@ function MethodBadge(props: {
 // Page
 // ---------------------------------------------------------------------------
 
+/** Everything loaded once per selection, independent of threshold mode —
+ * S-S17-FRONTB-BATCH-2026-08-11-A (D2): the mode toggle recomputes from these
+ * without refetching fixtures. */
+interface LoadedSources {
+  readonly earthStateSeries: readonly CanonicalState[];
+  readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
+  readonly bodies: readonly CompareBodyInput[];
+  readonly labels: ReadonlyMap<string, string>;
+  readonly vehicle: LaunchVehicle;
+  /** DEC-17-5(a) runtime read of metadata.feasibleC3MaxKm2S2 — never a literal. */
+  readonly absoluteKm2S2: number;
+}
+
 function ComparePage() {
+  const [sources, setSources] = useState<LoadedSources | null>(null);
   const [data, setData] = useState<PageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  // DEC-17-8 UI clause: "mode toggle (relative Δ=5 | absolute 25), both
+  // labeled with values". Session state only — the DEC does not require URL
+  // persistence.
+  const [thresholdMode, setThresholdMode] = useState<'relative' | 'absolute'>('relative');
+  const [busy, setBusy] = useState(false);
 
   const requestedBodyIds = useMemo(() => parseCompareBodies(window.location.search), []);
 
+  // Load fixtures + catalog + screen cache once per selection.
   useEffect(() => {
     let cancelled = false;
     if (requestedBodyIds.length === 0) {
@@ -651,47 +680,13 @@ function ComparePage() {
           );
         }
 
-        const vehicle = LAUNCH_VEHICLES[0];
-        const results = computeCompareData(
-          bodies,
-          {
-            depStartJdTdb: utcMidnightToJdTdb(DEPARTURE_WINDOW_START_UTC),
-            depEndJdTdb: utcMidnightToJdTdb(DEPARTURE_WINDOW_END_UTC),
-            nDep: N_DEP,
-            nTof: N_TOF,
-            tofMinDays: TOF_MIN_DAYS,
-            tofMaxDays: TOF_MAX_DAYS,
-            M: 0,
-            thresholdMode: 'relative',
-            deltaKm2S2: DELTA_KM2S2,
-            absoluteKm2S2: screenCache.metadata.feasibleC3MaxKm2S2,
-            bMinCells: B_MIN_CELLS,
-            earthSpanJdTdb: { firstSample: firstJd, lastSample: lastJd },
-            vehicle,
-            dvBudget: {
-              rendezvousMps: REFERENCE_RENDEZVOUS_MPS,
-              stationkeepingMps: SPACECRAFT_STATIONKEEPING_MPS,
-              marginMps: deterministicMarginMps(REFERENCE_RENDEZVOUS_MPS),
-            },
-          },
-          {
-            getEarthStateAtTdbSeconds: (tdbSeconds) =>
-              interpolateBodyStateSeries('earth', earthStateSeries, tdbSeconds),
-            propagateTargetStateAtTdbSeconds: (bodyElements, tdbSeconds) =>
-              propagateKeplerianStateVectors(bodyElements, tdbSeconds),
-          },
-        );
-
-        const totalComputeMs = results.reduce(
-          (sum, result) => sum + (result.ok ? result.grid.computeMs : 0),
-          0,
-        );
-        setData({
-          results,
-          labels,
-          vehicleName: `${vehicle.name} — ${vehicle.config}`,
+        setSources({
+          earthStateSeries,
           ephemerisSpan: { firstJd, lastJd },
-          totalComputeMs,
+          bodies,
+          labels,
+          vehicle: LAUNCH_VEHICLES[0],
+          absoluteKm2S2: screenCache.metadata.feasibleC3MaxKm2S2,
         });
       })
       .catch((nextError: Error) => {
@@ -702,6 +697,80 @@ function ComparePage() {
 
     return () => { cancelled = true; };
   }, [requestedBodyIds]);
+
+  // Compute (and on toggle, recompute) from the loaded sources. The
+  // setTimeout(0) lets the busy state paint before computeCompareData's
+  // synchronous N-grid pass (~1.4 s at N=5) blocks the main thread.
+  useEffect(() => {
+    if (sources === null) {
+      return undefined;
+    }
+    let cancelled = false;
+    setBusy(true);
+    const timer = window.setTimeout(() => {
+      try {
+        const results = computeCompareData(
+          sources.bodies,
+          {
+            depStartJdTdb: utcMidnightToJdTdb(DEPARTURE_WINDOW_START_UTC),
+            depEndJdTdb: utcMidnightToJdTdb(DEPARTURE_WINDOW_END_UTC),
+            nDep: N_DEP,
+            nTof: N_TOF,
+            tofMinDays: TOF_MIN_DAYS,
+            tofMaxDays: TOF_MAX_DAYS,
+            M: 0,
+            thresholdMode,
+            deltaKm2S2: DELTA_KM2S2,
+            absoluteKm2S2: sources.absoluteKm2S2,
+            bMinCells: B_MIN_CELLS,
+            earthSpanJdTdb: {
+              firstSample: sources.ephemerisSpan.firstJd,
+              lastSample: sources.ephemerisSpan.lastJd,
+            },
+            vehicle: sources.vehicle,
+            dvBudget: {
+              rendezvousMps: REFERENCE_RENDEZVOUS_MPS,
+              stationkeepingMps: SPACECRAFT_STATIONKEEPING_MPS,
+              marginMps: deterministicMarginMps(REFERENCE_RENDEZVOUS_MPS),
+            },
+          },
+          {
+            getEarthStateAtTdbSeconds: (tdbSeconds) =>
+              interpolateBodyStateSeries('earth', sources.earthStateSeries, tdbSeconds),
+            propagateTargetStateAtTdbSeconds: (bodyElements, tdbSeconds) =>
+              propagateKeplerianStateVectors(bodyElements, tdbSeconds),
+          },
+        );
+        if (cancelled) {
+          return;
+        }
+        const totalComputeMs = results.reduce(
+          (sum, result) => sum + (result.ok ? result.grid.computeMs : 0),
+          0,
+        );
+        setData({
+          results,
+          labels: sources.labels,
+          vehicleName: `${sources.vehicle.name} — ${sources.vehicle.config}`,
+          ephemerisSpan: sources.ephemerisSpan,
+          totalComputeMs,
+        });
+      } catch (computeError) {
+        if (!cancelled) {
+          setError((computeError as Error).message);
+        }
+      } finally {
+        if (!cancelled) {
+          setBusy(false);
+        }
+      }
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [sources, thresholdMode]);
 
   const pageStyle = 'max-width:1200px;margin:0 auto;padding:32px 24px 64px;color:#eef2ff;font-family:system-ui,-apple-system,sans-serif;';
 
@@ -757,12 +826,54 @@ function ComparePage() {
     'Threshold',
   ];
 
+  // S-S17-FRONTB-BATCH-2026-08-11-A (D2): DEC-17-8 mode toggle, both options
+  // labeled with their values. Δ is the injected segmentation parameter; the
+  // absolute value is the DEC-17-5(a) runtime metadata read — never a literal.
+  const modeButton = (
+    mode: 'relative' | 'absolute',
+    labelText: string,
+  ) =>
+    h(
+      'button',
+      {
+        onClick: () => {
+          if (!busy && thresholdMode !== mode) {
+            setThresholdMode(mode);
+          }
+        },
+        disabled: busy,
+        style:
+          'font-size:12px;padding:6px 12px;border-radius:6px;cursor:' +
+          (busy ? 'wait' : 'pointer') +
+          ';border:1px solid ' +
+          (thresholdMode === mode ? 'rgba(125,211,252,0.7)' : 'rgba(255,255,255,0.2)') +
+          ';background:' +
+          (thresholdMode === mode ? 'rgba(125,211,252,0.12)' : 'transparent') +
+          ';color:' +
+          (thresholdMode === mode ? '#7dd3fc' : '#cbd5e1') +
+          ';',
+      },
+      labelText,
+    );
+
   return h('div', { style: pageStyle }, [
     h('h1', { style: 'font-size:22px;margin:0 0 6px;' }, 'Compare departure targets'),
     h('p', { style: 'color:#94a3b8;font-size:13px;line-height:1.7;margin:0 0 18px;max-width:70ch;' },
       'Every figure below is computed from the grids shown — nothing is quoted from a stored table. A target with no practical window is a real answer, not a missing one.'),
 
-    h('table', { style: 'width:100%;border-collapse:collapse;' }, [
+    h('div', { style: 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;' }, [
+      h('span', { style: 'font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#94a3b8;font-weight:600;' }, 'Window threshold'),
+      modeButton('relative', `Relative — Δ = ${DELTA_KM2S2} km²/s² above each body's own floor`),
+      modeButton(
+        'absolute',
+        `Absolute — ${sources ? formatC3WithUnits(sources.absoluteKm2S2) : ''} shared screening boundary`,
+      ),
+      busy
+        ? h('span', { style: 'font-size:12px;color:#94a3b8;' }, 'Recomputing every grid…')
+        : null,
+    ]),
+
+    h('table', { style: 'width:100%;border-collapse:collapse;' + (busy ? 'opacity:0.45;pointer-events:none;' : '') }, [
       h('thead', null, h('tr', null, headers.map((header) =>
         h('th', {
           style: 'text-align:left;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.2);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#94a3b8;font-weight:600;',
@@ -801,6 +912,7 @@ function ComparePage() {
       ephemerisSpan: data.ephemerisSpan,
       vehicleName: data.vehicleName,
       totalComputeMs: data.totalComputeMs,
+      thresholdMode,
     }),
   ]);
 }
