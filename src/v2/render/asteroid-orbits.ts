@@ -5,8 +5,11 @@ import {
   type OrbitSamplePoint,
 } from '../core/propagators/keplerian.js';
 
-export const ASTEROID_ORBIT_BASE_COLOR_HEX = 0x8ea0b8;
-export const ASTEROID_ORBIT_BASE_OPACITY = 0.12;
+// S-S17-FRONTB-BATCH-2026-08-11-A (B0 orbit-contrast toning): base color
+// 0x8ea0b8 -> 0xaebbd0, base opacity 0.12 -> 0.18 so unfocused orbit lines
+// read at default zoom without going neon. Focused opacity unchanged.
+export const ASTEROID_ORBIT_BASE_COLOR_HEX = 0xaebbd0;
+export const ASTEROID_ORBIT_BASE_OPACITY = 0.18;
 export const ASTEROID_ORBIT_FOCUSED_OPACITY = 0.6;
 export const ASTEROID_ORBIT_MAIN_BELT_SEGMENTS = 64;
 export const ASTEROID_ORBIT_HIGH_DETAIL_SEGMENTS = 128;

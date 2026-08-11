@@ -8,8 +8,11 @@ import { getScreeningColor } from './asteroid-screening-color.js';
 // directly. At outer-system overview, a main-belt body sits around 1.37e12 m
 // from the camera; this scale targets a 4-8 px point sprite for large
 // main-belt asteroids so the soft-glow fragment shader can actually register.
-export const ASTEROID_POINTS_DEFAULT_OPACITY = 0.4;
-export const ASTEROID_POINTS_DEFAULT_SCALE = 1.5e12;
+// S-S17-FRONTB-BATCH-2026-08-11-A (B0 NEA point-haze toning): opacity
+// 0.4 -> 0.3 and scale 1.5e12 -> 1.25e12 so the NEA cloud reads as a data
+// plot instead of haze bleeding onto planets and labels.
+export const ASTEROID_POINTS_DEFAULT_OPACITY = 0.3;
+export const ASTEROID_POINTS_DEFAULT_SCALE = 1.25e12;
 export const ASTEROID_POINTS_FALLBACK_MAX_SIZE_PX = 64;
 export const ASTEROID_MAIN_BELT_COLOR_HEX = 0x86a7d7;
 export const ASTEROID_CURATED_NEA_COLOR_HEX = 0xffb173;
@@ -47,7 +50,9 @@ void main() {
 
   float core = 1.0 - smoothstep(0.0, 0.22, radius);
   float halo = 1.0 - smoothstep(0.08, 0.5, radius);
-  float alpha = (0.7 * core + 0.3 * halo) * uOpacity;
+  // S-S17-FRONTB-BATCH-2026-08-11-A (B0): core 0.7 -> 0.8, halo 0.3 -> 0.2 —
+  // tighter core, weaker glow skirt, same discard radius.
+  float alpha = (0.8 * core + 0.2 * halo) * uOpacity;
   gl_FragColor = vec4(vColor, alpha);
 }
 `;
