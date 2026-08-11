@@ -341,12 +341,123 @@ function isRefusal(result: CompareBodyResult): result is CompareBodyRefusal {
   return result.ok === false;
 }
 
-function renderRefusalRow(result: CompareBodyRefusal, label: string) {
+// ---------------------------------------------------------------------------
+// Dominance badge (DEC-17-3) — S-S17-FRONTB-BATCH-2026-08-11-A
+// ---------------------------------------------------------------------------
+
+type DominanceVerdict = 'dominated' | 'nondominated' | 'insufficient-data';
+
+interface DominanceMetrics {
+  readonly bodyId: string;
+  readonly practicalC3: number;
+  readonly maxBreadthCells: number;
+  readonly deliveredMassKg: number;
+}
+
+/**
+ * DEC-17-3 per-row dominance badge: dominated / nondominated /
+ * insufficient-data, at N<=5, over the DEC's three metrics — best practical
+ * window C3 (lower better), max window breadth cells (higher better),
+ * delivered mass at the selected vehicle (higher better). NO composite score:
+ * this is a Pareto comparison, and a tie on all three dominates in neither
+ * direction. The DEC's own terms are used as the badge labels; the badge
+ * legend in the method block translates them.
+ *
+ * A row that cannot supply all three metrics — a refusal, a
+ * no-practical-window body, or a sentinel (non-numeric) delivered mass —
+ * takes the DEC's third state, insufficient-data, which is an honest
+ * "not compared", never a losing badge. Note: OQ-17-3 (metric-set
+ * finalization) is OPEN at this HEAD; the set implemented is DEC-17-3's own
+ * currently-named three.
+ */
+function computeDominance(
+  results: readonly CompareBodyResult[],
+): ReadonlyMap<string, DominanceVerdict> {
+  const participants: DominanceMetrics[] = [];
+  const verdicts = new Map<string, DominanceVerdict>();
+  for (const result of results) {
+    if (
+      !isRefusal(result) &&
+      result.segmentation.bestPractical !== null &&
+      typeof result.deliveredMass === 'number'
+    ) {
+      participants.push({
+        bodyId: result.bodyId,
+        practicalC3: result.segmentation.bestPractical.c3,
+        maxBreadthCells: result.segmentation.components.reduce(
+          (widest, component) => Math.max(widest, component.breadthCells),
+          0,
+        ),
+        deliveredMassKg: result.deliveredMass,
+      });
+    } else {
+      verdicts.set(result.bodyId, 'insufficient-data');
+    }
+  }
+  for (const row of participants) {
+    const dominated = participants.some(
+      (other) =>
+        other !== row &&
+        other.practicalC3 <= row.practicalC3 &&
+        other.maxBreadthCells >= row.maxBreadthCells &&
+        other.deliveredMassKg >= row.deliveredMassKg &&
+        (other.practicalC3 < row.practicalC3 ||
+          other.maxBreadthCells > row.maxBreadthCells ||
+          other.deliveredMassKg > row.deliveredMassKg),
+    );
+    verdicts.set(row.bodyId, dominated ? 'dominated' : 'nondominated');
+  }
+  return verdicts;
+}
+
+const DOMINANCE_TITLE =
+  'Compared on three measurements: best practical window energy (lower is better), ' +
+  'widest window in departure columns (higher is better), delivered mass (higher is better). ' +
+  'A row is dominated when another selected body is at least as good on all three and ' +
+  'strictly better on at least one.';
+
+function renderDominanceChip(verdict: DominanceVerdict | undefined) {
+  if (verdict === undefined) {
+    return null;
+  }
+  const base =
+    'display:inline-block;width:fit-content;margin-top:6px;padding:2px 8px;border-radius:999px;font-size:10px;letter-spacing:0.04em;';
+  if (verdict === 'nondominated') {
+    return h(
+      'span',
+      { style: base + 'border:1px solid rgba(125,211,252,0.5);color:#7dd3fc;', title: DOMINANCE_TITLE },
+      'nondominated',
+    );
+  }
+  if (verdict === 'dominated') {
+    return h(
+      'span',
+      { style: base + 'border:1px solid rgba(148,163,184,0.4);color:#94a3b8;', title: DOMINANCE_TITLE },
+      'dominated',
+    );
+  }
+  return h(
+    'span',
+    {
+      style: base + 'border:1px solid rgba(148,163,184,0.25);color:#64748b;font-style:italic;',
+      title:
+        'This row does not carry all three ranked measurements (no practical window, no delivered mass, or no computed grid), so it is not compared. Not a losing badge.',
+    },
+    'insufficient data',
+  );
+}
+
+function renderRefusalRow(
+  result: CompareBodyRefusal,
+  label: string,
+  dominance: DominanceVerdict | undefined,
+) {
   const copy = refusalCopy(result.reason, result.detail);
   return h('tr', { key: result.bodyId, style: 'background:rgba(148,163,184,0.05);' }, [
     h('td', { style: CELL_STYLE }, [
       h('strong', null, label),
       h('span', { style: NOTE_STYLE }, result.bodyId),
+      renderDominanceChip(dominance),
     ]),
     h('td', { style: CELL_STYLE, colSpan: 5 }, [
       h('span', { style: 'color:#cbd5e1;' }, copy.title),
@@ -361,6 +472,7 @@ function renderOkRow(
   vehicleName: string,
   expanded: boolean,
   onToggle: () => void,
+  dominance: DominanceVerdict | undefined,
 ) {
   const { segmentation, echo } = result;
   const best = segmentation.bestPractical;
@@ -383,11 +495,12 @@ function renderOkRow(
     h('td', { style: CELL_STYLE }, [
       h('strong', null, label),
       h('span', { style: NOTE_STYLE }, result.bodyId),
+      renderDominanceChip(dominance),
       h(
         'button',
         {
           onClick: onToggle,
-          style: 'margin-top:8px;font-size:11px;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:#cbd5e1;cursor:pointer;',
+          style: 'display:block;margin-top:8px;font-size:11px;padding:4px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:#cbd5e1;cursor:pointer;',
         },
         expanded ? 'hide porkchop' : 'show porkchop',
       ),
@@ -468,6 +581,9 @@ function MethodBadge(props: {
   lines.push(
     `Delivered mass — interpolated from the published performance curve for ${props.vehicleName}, against a fixed reference rendezvous budget of ${REFERENCE_RENDEZVOUS_MPS} m/s plus ${SPACECRAFT_STATIONKEEPING_MPS} m/s stationkeeping. Rendezvous ΔV varies by target; a single reference budget is used here so the mass column is comparable across bodies, which means it is not a per-target mission estimate.`,
     'Launch-vehicle performance figures are the operator-published curves and carry their contract context; quoted interior points on those curves are interpolations between published anchors, not independently verified performance.',
+    // S-S17-FRONTB-BATCH-2026-08-11-A (D1): plain-English legend for the
+    // DEC-17-3 badge — three named measurements, no composite score.
+    'Dominance badge — each compared body is checked on three measurements: best practical window energy (lower is better), widest window in departure columns (higher), and delivered mass (higher). A body is "dominated" when another selected body is at least as good on all three and better on at least one; "nondominated" otherwise. There is no combined score. Rows missing any of the three measurements read "insufficient data" and are not compared.',
     `Computed live in this browser — ${formatComputeTime(props.totalComputeMs)} of solver time for this comparison.`,
   );
 
@@ -629,6 +745,8 @@ function ComparePage() {
 
   const firstOk = data.results.find((result) => result.ok);
   const echo = firstOk && firstOk.ok ? firstOk.echo : null;
+  // DEC-17-3 dominance verdicts, N<=5 — cheap enough to recompute per render.
+  const dominance = computeDominance(data.results);
 
   const headers = [
     'Target',
@@ -663,8 +781,8 @@ function ComparePage() {
         };
         const rows = [
           isRefusal(result)
-            ? renderRefusalRow(result, label)
-            : renderOkRow(result, label, data.vehicleName, isExpanded, onToggle),
+            ? renderRefusalRow(result, label, dominance.get(result.bodyId))
+            : renderOkRow(result, label, data.vehicleName, isExpanded, onToggle, dominance.get(result.bodyId)),
         ];
         if (isExpanded && result.ok) {
           rows.push(h('tr', { key: `${result.bodyId}-grid` },
