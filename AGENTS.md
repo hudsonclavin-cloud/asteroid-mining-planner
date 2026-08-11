@@ -315,3 +315,7 @@ when twelve src/v2 commits sat undeployed behind green CI:
    regenerates all tracked docs/ files; unchanged sources reproduce
    byte-identical artifacts (.gitattributes normalizes docs/** to LF).
    Wide churn on rebuild is a tripwire, not an expectation.
+### §9.1 Test, CI, and artifact-order gates
+1. A test run is green at N/N or it is not green. Any nonzero failure count blocks the commit — no exceptions for "the important assertions passed" — unless the failure is a pre-recorded environmental exception named in STATUS.md (currently: tests/v2-golden/launch-vehicles.golden.test.mjs fails to load on local Node 20 with ERR_UNKNOWN_FILE_EXTENSION; it passes in CI on Node 24, and the exception retires once the Node-version unify lands).
+2. Red CI on `main` blocks the next push until investigated. Green Pages does not excuse red CI.
+3. Artifact builds run only from a tree where `git status --porcelain -- src/ tests/` is empty. Source commits precede builds, always; the `0516848` order inversion must not recur.
