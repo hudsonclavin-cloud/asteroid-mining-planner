@@ -189,6 +189,17 @@ function closePorkchopModal(): void {
   porkchopModalBodyIdSignal.value = null;
 }
 
+/**
+ * S-S17-FRONTB-BATCH-2026-08-11-A (B0 hotkey gating): read-only view of
+ * whether the porkchop modal is open, so the scene's keydown handler can
+ * yield time/focus/preset hotkeys to the modal without reaching into this
+ * module's private signal. Accessor only — no setter is exported; open/close
+ * stay owned by this module (Escape included, via the modal's own listener).
+ */
+export function isPorkchopModalOpen(): boolean {
+  return porkchopModalBodyIdSignal.value !== null;
+}
+
 function openPorkchopModal(bodyId: string): void {
   if (porkchopClientSignal.value === null || porkchopComputeBusySignal.value || porkchopModalBodyIdSignal.value !== null) {
     return;

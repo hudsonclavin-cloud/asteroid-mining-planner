@@ -1,4 +1,5 @@
 export {
+  isPorkchopModalOpen,
   mountPhaseCOverlay,
   PHASE_C_OVERLAY_FOCUS_REQUEST_TEST_ID,
   PHASE_C_OVERLAY_HOST_TEST_ID,

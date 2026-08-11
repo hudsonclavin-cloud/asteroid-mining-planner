@@ -770,7 +770,9 @@ function PorkchopDedicatedPage() {
                   key: 'card-stack',
                   style: `display:grid;grid-template-columns:max-content 1fr;gap:7px 14px;font-size:12px;line-height:1.6;color:#d8e1f1;${costCardState.band === 'RED' ? 'opacity:0.55;' : ''}`,
                 },
-                h('span', null, `Payload at C3 = ${formatC3(costCardState.c3)}`),
+                // S-S17-FRONTB-BATCH-2026-08-11-A (B0): cost-card C3 carries
+                // its units; hover/pin 6-decimal readouts stay untouched.
+                h('span', null, `Payload at C3 = ${formatC3(costCardState.c3)} km²/s²`),
                 h(
                   'span',
                   null,
@@ -812,7 +814,7 @@ function PorkchopDedicatedPage() {
               h(
                 'div',
                 { key: 'card-injection-split', style: 'font-size:10px;color:#93a4bf;font-style:italic;margin-top:8px;line-height:1.4;' },
-                `Launch vehicle provides injection to C3 = ${formatC3(costCardState.c3)} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
+                `Launch vehicle provides injection to C3 = ${formatC3(costCardState.c3)} km²/s² — embodied in payload-at-C3, not a spacecraft ΔV line.`,
               ),
               h(
                 'details',

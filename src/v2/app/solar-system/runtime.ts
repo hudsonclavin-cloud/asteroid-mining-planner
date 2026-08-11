@@ -47,7 +47,7 @@ import {
   createAtmosphereMesh,
 } from '../../render/atmosphere.js';
 import { buildEarthMaterial, updateSunDirection } from '../../render/earth-shader.js';
-import { mountPhaseCOverlay } from '../ui-overlay/index.js';
+import { isPorkchopModalOpen, mountPhaseCOverlay } from '../ui-overlay/index.js';
 import {
   readSelectedBody,
   selectBody,
@@ -1814,6 +1814,13 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   function onKeyDown(event: KeyboardEvent): void {
     if (isEditableKeyboardTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+    // S-S17-FRONTB-BATCH-2026-08-11-A (B0 hotkey gating): with the porkchop
+    // modal open, every scene hotkey (time scrub, focus keys, camera presets)
+    // yields — the modal owns the keyboard. Escape is unaffected: the modal
+    // closes itself via its own listener, which this early return never sees.
+    if (isPorkchopModalOpen()) {
       return;
     }
 
