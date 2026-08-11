@@ -235,6 +235,13 @@ function renderFooter(): VNode {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        // S-S17-FRONTB-BATCH-2026-08-11-A (B0 narrow-viewport): allow the
+        // footer row to wrap. WRAP chosen over ellipsis: the "Loaded ..."
+        // numbers are the footer's payload, and the hint span is already
+        // built (inline-block + nowrap, see below) to move to its own row
+        // whole — so wrapping keeps every glyph legible at the 320px clamp
+        // floor, where ellipsis would eat the data.
+        flexWrap: 'wrap',
         gap: '12px',
         padding: '10px 16px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
@@ -252,7 +259,10 @@ function renderFooter(): VNode {
     },
     h(
       'span',
-      null,
+      // minWidth: 0 lets this flex child actually shrink below its content
+      // width, so the inner hint span's designed whole-row wrap can engage
+      // instead of the label overflowing the panel (same B0 marker as above).
+      { style: { minWidth: 0 } },
       h('span', { style: { fontWeight: 500, color: '#aaa' } }, footerText(screeningWindowSignal.value)),
       // L1 measurements (tools/overnight-2026-08-05/L1_FOOTER_LAYOUT.md): the
       // loaded label fits a 400px sidebar with 1.25px slack, and a RENDERED
@@ -436,7 +446,9 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
           position: 'absolute',
           top: '16px',
           left: '16px',
-          width: '380px',
+          // S-S17-FRONTB-BATCH-2026-08-11-A (B0 narrow-viewport): 380px ->
+          // clamp so the overlay stops overlapping the scene below ~950px.
+          width: 'clamp(300px, 40vw, 380px)',
           height: 'calc(100vh - 32px)',
           background: 'rgba(20, 22, 28, 0.92)',
           backdropFilter: 'blur(8px)',
@@ -451,7 +463,9 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
           position: 'absolute',
           top: '0',
           left: '0',
-          width: '400px',
+          // S-S17-FRONTB-BATCH-2026-08-11-A (B0 narrow-viewport): 400px ->
+          // clamp so the sidebar yields at narrow widths instead of clipping.
+          width: 'clamp(320px, 42vw, 400px)',
           height: '100vh',
           background: 'rgba(15, 17, 22, 0.98)',
           borderRight: '1px solid rgba(255,255,255,0.1)',
