@@ -184,6 +184,21 @@ const FOCUS_KEY_TO_BODY: Record<string, BodyId> = {
   e: 'enceladus',
 };
 
+// B1 T1-4 (S-S17-BATCH2-2026-08-12-A): bodyId -> its focus key(s), DERIVED
+// from the live key map above — a tooltip badge or overlay row built from
+// this can never advertise a key the handler does not actually bind.
+export const FOCUS_BODY_TO_KEYS: ReadonlyMap<BodyId, string> = (() => {
+  const keysByBody = new Map<BodyId, string[]>();
+  for (const [key, bodyId] of Object.entries(FOCUS_KEY_TO_BODY)) {
+    const keys = keysByBody.get(bodyId) ?? [];
+    keys.push(key);
+    keysByBody.set(bodyId, keys);
+  }
+  return new Map(
+    [...keysByBody.entries()].map(([bodyId, keys]) => [bodyId, keys.join(' / ')]),
+  );
+})();
+
 type FocusTarget = BodyId | AsteroidBodyId | typeof OUTER_SYSTEM_OVERVIEW;
 type Position3 = CanonicalState['positionM'];
 
@@ -1010,22 +1025,31 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   // "Reset view", NOT "Home": the keyboard Home key is already bound to
   // jump-to-coverage-start (a TIME action), and a Home-labeled view button
   // would collide with that meaning.
+  const navButtonRow = document.createElement('div');
+  navButtonRow.setAttribute('data-testid', 'nav-button-row');
+  navButtonRow.style.position = 'absolute';
+  navButtonRow.style.right = `${AXIS_TRIAD_SIZE_PX + AXIS_TRIAD_MARGIN_PX * 2}px`;
+  navButtonRow.style.bottom = '16px';
+  navButtonRow.style.display = 'flex';
+  navButtonRow.style.gap = '8px';
+
+  const styleNavButton = (button: HTMLButtonElement): void => {
+    button.type = 'button';
+    button.style.padding = '6px 12px';
+    button.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
+    button.style.fontSize = '12px';
+    button.style.color = 'rgba(255, 255, 255, 0.85)';
+    button.style.background = 'rgba(0, 0, 0, 0.4)';
+    button.style.border = '1px solid rgba(255, 255, 255, 0.25)';
+    button.style.borderRadius = '8px';
+    button.style.cursor = 'pointer';
+  };
+
   const resetViewButton = document.createElement('button');
   resetViewButton.setAttribute('data-testid', 'reset-view-button');
-  resetViewButton.type = 'button';
   resetViewButton.textContent = '⌂ Reset view';
   resetViewButton.title = "Return to the top-down overview (same as the 't' key); clears pan";
-  resetViewButton.style.position = 'absolute';
-  resetViewButton.style.right = `${AXIS_TRIAD_SIZE_PX + AXIS_TRIAD_MARGIN_PX * 2}px`;
-  resetViewButton.style.bottom = '16px';
-  resetViewButton.style.padding = '6px 12px';
-  resetViewButton.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
-  resetViewButton.style.fontSize = '12px';
-  resetViewButton.style.color = 'rgba(255, 255, 255, 0.85)';
-  resetViewButton.style.background = 'rgba(0, 0, 0, 0.4)';
-  resetViewButton.style.border = '1px solid rgba(255, 255, 255, 0.25)';
-  resetViewButton.style.borderRadius = '8px';
-  resetViewButton.style.cursor = 'pointer';
+  styleNavButton(resetViewButton);
   const onResetViewClick = (): void => {
     const preset = getCameraPresetForKey(TOP_DOWN_PRESET_KEY);
     if (preset) {
@@ -1033,7 +1057,129 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     }
   };
   resetViewButton.addEventListener('click', onResetViewClick);
-  mount.appendChild(resetViewButton);
+  navButtonRow.appendChild(resetViewButton);
+
+  // B1 T1-3: '?' affordance — the overlay itself is built below.
+  const helpButton = document.createElement('button');
+  helpButton.setAttribute('data-testid', 'shortcut-help-button');
+  helpButton.textContent = '?';
+  helpButton.title = 'Keyboard and mouse controls (?)';
+  styleNavButton(helpButton);
+  const onHelpClick = (): void => {
+    setShortcutOverlayOpen(!shortcutOverlayOpen);
+  };
+  helpButton.addEventListener('click', onHelpClick);
+  navButtonRow.appendChild(helpButton);
+  mount.appendChild(navButtonRow);
+
+  // B1 T1-3 (S-S17-BATCH2-2026-08-12-A): shortcut overlay, grouped BY TASK.
+  // The Focus rows are GENERATED from the live FOCUS_KEY_TO_BODY map (via
+  // FOCUS_BODY_TO_KEYS) and the scrub step is derived from
+  // TIME_SCRUB_STEP_SECONDS — the overlay cannot list a dead key or a stale
+  // number without the binding changing beside it. Every hand-written row
+  // below names a handler verified live in this file (onPointerMove pan/orbit,
+  // onWheel zoom, onKeyDown Home/End/Shift+N/t/=; B1-1 recon, no dead keys).
+  let shortcutOverlayOpen = false;
+  const shortcutOverlay = document.createElement('div');
+  shortcutOverlay.setAttribute('data-testid', 'shortcut-overlay');
+  shortcutOverlay.style.position = 'absolute';
+  shortcutOverlay.style.inset = '0';
+  shortcutOverlay.style.display = 'none';
+  shortcutOverlay.style.alignItems = 'center';
+  shortcutOverlay.style.justifyContent = 'center';
+  shortcutOverlay.style.background = 'rgba(0, 0, 0, 0.55)';
+  shortcutOverlay.style.zIndex = '60';
+
+  const shortcutCard = document.createElement('div');
+  shortcutCard.style.maxWidth = '640px';
+  shortcutCard.style.maxHeight = '80vh';
+  shortcutCard.style.overflow = 'auto';
+  shortcutCard.style.padding = '20px 24px';
+  shortcutCard.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
+  shortcutCard.style.fontSize = '12px';
+  shortcutCard.style.lineHeight = '1.6';
+  shortcutCard.style.color = 'rgba(255, 255, 255, 0.9)';
+  shortcutCard.style.background = 'rgba(10, 12, 18, 0.96)';
+  shortcutCard.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+  shortcutCard.style.borderRadius = '10px';
+
+  const focusRows: Array<readonly [string, string]> = [
+    ...[...FOCUS_BODY_TO_KEYS.entries()].map(
+      ([bodyId, keys]) => [keys, getBodyLabel(bodyId)] as const,
+    ),
+    ['click', 'focus an asteroid under the cursor'] as const,
+  ];
+  const shortcutGroups: ReadonlyArray<{ title: string; rows: ReadonlyArray<readonly [string, string]> }> = [
+    {
+      title: 'Navigate',
+      rows: [
+        ['drag', 'orbit the camera'],
+        ['right-drag / Shift+drag', 'pan the view'],
+        ['scroll', 'zoom in / out'],
+        ['⌂ Reset view (button)', 'top-down overview; clears pan'],
+      ],
+    },
+    { title: 'Focus', rows: focusRows },
+    {
+      title: 'Time',
+      rows: [
+        ['← / →', `scrub time ±${TIME_SCRUB_STEP_SECONDS / 60} min`],
+        ['Home / End', 'jump to coverage start / end'],
+        ['Shift+N', 'resume live time'],
+      ],
+    },
+    {
+      title: 'Display',
+      rows: [
+        ['t', 'top-down view'],
+        ['=', 'outer-system overview'],
+      ],
+    },
+    {
+      title: 'Recover',
+      rows: [
+        ['Esc', 'close this panel'],
+        ['? ', 'toggle this panel'],
+      ],
+    },
+  ];
+  for (const group of shortcutGroups) {
+    const title = document.createElement('div');
+    title.textContent = group.title;
+    title.style.textTransform = 'uppercase';
+    title.style.letterSpacing = '0.08em';
+    title.style.fontSize = '11px';
+    title.style.color = 'rgba(255, 255, 255, 0.55)';
+    title.style.margin = '12px 0 4px';
+    shortcutCard.appendChild(title);
+    for (const [keys, action] of group.rows) {
+      const row = document.createElement('div');
+      row.style.display = 'grid';
+      row.style.gridTemplateColumns = '180px 1fr';
+      row.style.gap = '12px';
+      const keyCell = document.createElement('span');
+      keyCell.textContent = keys;
+      keyCell.style.color = '#7dd3fc';
+      const actionCell = document.createElement('span');
+      actionCell.textContent = action;
+      row.appendChild(keyCell);
+      row.appendChild(actionCell);
+      shortcutCard.appendChild(row);
+    }
+  }
+  shortcutOverlay.appendChild(shortcutCard);
+  const onShortcutBackdropClick = (event: MouseEvent): void => {
+    if (event.target === shortcutOverlay) {
+      setShortcutOverlayOpen(false);
+    }
+  };
+  shortcutOverlay.addEventListener('click', onShortcutBackdropClick);
+  mount.appendChild(shortcutOverlay);
+
+  function setShortcutOverlayOpen(open: boolean): void {
+    shortcutOverlayOpen = open;
+    shortcutOverlay.style.display = open ? 'flex' : 'none';
+  }
 
   const planetHoverTooltip = document.createElement('div');
   planetHoverTooltip.setAttribute('data-testid', 'planet-hover-tooltip');
@@ -1832,7 +1978,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     const worldPosition = hovered.object.getWorldPosition(new THREE.Vector3());
     const viewport = getViewportSizeForMount(mount);
     const screenPosition = projectWorldPositionToViewport(worldPosition, camera, viewport);
-    renderPlanetHoverTooltip(planetHoverTooltip, getBodyLabel(bodyId), screenPosition);
+    // B1 T1-4: shortcut badge, from the derived key map — never a dead key.
+    const focusKeys = FOCUS_BODY_TO_KEYS.get(bodyId);
+    const tooltipLabel = focusKeys
+      ? `${getBodyLabel(bodyId)} · key ${focusKeys}`
+      : getBodyLabel(bodyId);
+    renderPlanetHoverTooltip(planetHoverTooltip, tooltipLabel, screenPosition);
   }
 
   function updatePointerCursor(clientX: number, clientY: number): void {
@@ -2020,6 +2171,18 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     if (isPorkchopModalOpen()) {
       return;
     }
+    // B1 T1-3: '?' toggles the shortcut overlay; while open, Esc closes it
+    // and every other scene hotkey yields (same ownership rule as the modal).
+    if (event.key === '?') {
+      setShortcutOverlayOpen(!shortcutOverlayOpen);
+      return;
+    }
+    if (shortcutOverlayOpen) {
+      if (event.key === 'Escape') {
+        setShortcutOverlayOpen(false);
+      }
+      return;
+    }
 
     const nowMs = performance.now();
     const cancelCameraTween = () => {
@@ -2150,7 +2313,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     window.cancelAnimationFrame(animationHandle);
     renderer.domElement.removeEventListener('contextmenu', onContextMenu);
     resetViewButton.removeEventListener('click', onResetViewClick);
-    resetViewButton.remove();
+    helpButton.removeEventListener('click', onHelpClick);
+    shortcutOverlay.removeEventListener('click', onShortcutBackdropClick);
+    shortcutOverlay.remove();
+    navButtonRow.remove();
     renderer.domElement.removeEventListener('pointerdown', onPointerDown);
     renderer.domElement.removeEventListener('pointermove', onPointerMove);
     renderer.domElement.removeEventListener('pointerup', onPointerUp);
