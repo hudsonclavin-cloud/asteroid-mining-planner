@@ -99,7 +99,13 @@ test('asteroid points shader material constructs with additive soft-glow setting
   assert.equal(material.depthWrite, false);
   assert.equal(material.uniforms.uOpacity.value, shader.ASTEROID_POINTS_DEFAULT_OPACITY);
   assert.equal(material.uniforms.uScale.value, shader.ASTEROID_POINTS_DEFAULT_SCALE);
-  assert.equal(material.uniforms.uMaxPointSize.value, shader.ASTEROID_POINTS_FALLBACK_MAX_SIZE_PX);
+  // S-S17-FRONTB-BATCH-2026-08-11-A: the material default is now the DESIGN
+  // ceiling, not the aliased-range FALLBACK. The two were conflated, which is
+  // how sub-pixel bodies ended up drawn as 255 px haloes: FALLBACK describes
+  // what to report when GL cannot state its own limit, and is unrelated to how
+  // large a point should ever be drawn.
+  assert.equal(material.uniforms.uMaxPointSize.value, shader.ASTEROID_POINTS_MAX_SIZE_PX);
+  assert.equal(material.uniforms.uMinPointSize.value, shader.ASTEROID_POINTS_MIN_SIZE_PX);
   assert.ok(typeof material.vertexShader === 'string' && material.vertexShader.includes('gl_PointSize'));
   assert.ok(typeof material.fragmentShader === 'string' && material.fragmentShader.includes('gl_PointCoord'));
 });

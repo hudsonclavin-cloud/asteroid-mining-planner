@@ -22,12 +22,14 @@ import { BODY_CONSTANTS } from '../../core/constants/bodies.js';
 import type { BodyId } from '../../core/constants/bodies.js';
 import { utcStringToTdbSeconds } from '../../core/units/utc-to-tdb.js';
 import {
+  ASTEROID_POINTS_MAX_SIZE_PX,
   AsteroidRenderer,
   propagateAsteroidBodyState,
   resolveAliasedPointSizeRange,
   StarRenderer,
   sampleCameraOrbitTween,
   setAsteroidPointsMaxSize,
+  setAsteroidPointsPixelRatio,
   type CameraOrbitState,
   type CameraOrbitTween,
 } from '../../render/index.js';
@@ -1072,8 +1074,17 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   // the shared heliocentric scene graph.
   scene.add(asteroidRenderer.root);
   if (asteroidRenderer.pointsMaterial instanceof THREE.ShaderMaterial) {
-    const [, maxPointSize] = resolveAliasedPointSizeRange(renderer.getContext());
-    setAsteroidPointsMaxSize(asteroidRenderer.pointsMaterial, maxPointSize);
+    // S-S17-FRONTB-BATCH-2026-08-11-A: the driver's ALIASED_POINT_SIZE_RANGE
+    // max is a HARDWARE limit (commonly 255+), not a design choice. Passing it
+    // straight through made it the operative ceiling and let sub-pixel bodies
+    // bloom into haze halos at deep zoom. Take the smaller of the two: never
+    // exceed what the driver allows, never exceed what the design wants.
+    const [, driverMaxPointSize] = resolveAliasedPointSizeRange(renderer.getContext());
+    setAsteroidPointsMaxSize(
+      asteroidRenderer.pointsMaterial,
+      Math.min(driverMaxPointSize, ASTEROID_POINTS_MAX_SIZE_PX),
+    );
+    setAsteroidPointsPixelRatio(asteroidRenderer.pointsMaterial, renderer.getPixelRatio());
   }
   loadLambertScreenCacheAsync()
     .then((cache) => {
@@ -1545,6 +1556,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     renderer.setSize(viewport.width, viewport.height);
     labelRenderer.setSize(viewport.width, viewport.height);
     starRenderer.setPixelRatio(renderer.getPixelRatio());
+    if (asteroidRenderer.pointsMaterial instanceof THREE.ShaderMaterial) {
+      setAsteroidPointsPixelRatio(asteroidRenderer.pointsMaterial, renderer.getPixelRatio());
+    }
   }
 
   function scrubTime(deltaSeconds: number): void {

@@ -65,10 +65,13 @@ export {
   ASTEROID_POINTS_DEFAULT_OPACITY,
   ASTEROID_POINTS_DEFAULT_SCALE,
   ASTEROID_POINTS_FALLBACK_MAX_SIZE_PX,
+  ASTEROID_POINTS_MAX_SIZE_PX,
+  ASTEROID_POINTS_MIN_SIZE_PX,
   createAsteroidPointsShaderMaterial,
   getAsteroidPointColor,
   resolveAliasedPointSizeRange,
   setAsteroidPointsMaxSize,
+  setAsteroidPointsPixelRatio,
 } from './asteroid-points-shader.js';
 
 export type {
