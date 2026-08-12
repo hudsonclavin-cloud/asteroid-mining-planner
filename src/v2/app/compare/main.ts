@@ -32,6 +32,10 @@ import { h, render } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizons.js';
 import { loadLambertScreenCacheAsync } from '../../boundary/lambert-screen-cache.js';
+import {
+  ASTEROID_DEFAULT_ALBEDO,
+  deriveAsteroidDiameterKmFromAbsoluteMagnitude,
+} from '../../core/constants/asteroids.js';
 import { interpolateBodyStateSeries } from '../../core/interpolators/hermite.js';
 import { propagateKeplerianStateVectors } from '../../core/propagators/keplerian.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
@@ -110,6 +114,8 @@ const REFERENCE_RENDEZVOUS_MPS = 1000;
 interface PageData {
   readonly results: readonly CompareBodyResult[];
   readonly labels: ReadonlyMap<string, string>;
+  /** A4c catalog facts (H, conditionCode) per bodyId. */
+  readonly facts: ReadonlyMap<string, BodyFacts>;
   readonly vehicleName: string;
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly totalComputeMs: number;
@@ -163,6 +169,134 @@ function formatMassKg(massKg: number): string {
     return '< 1 kg';
   }
   return `${Math.round(massKg).toLocaleString('en-US')} kg`;
+}
+
+// ---------------------------------------------------------------------------
+// A4c — DEC-17-4 context/quality columns (S-S17-BATCH2-2026-08-12-A)
+//
+// Every constant below is sourced, not remembered:
+//  - Diameter relation D(km) = (1329/sqrt(pV)) * 10^(-H/5): computed by
+//    deriveAsteroidDiameterKmFromAbsoluteMagnitude — the SAME core function
+//    that generated the catalog's estimatedRadiusM at build time
+//    (tools/slice9-ingestion/derived-fields.mjs), so the display derivation
+//    cannot drift from the data. Relation + K = 1329 km verified with primary
+//    citations in tools/slice17-research/literature/V6_H_TO_DIAMETER_VERIFIED.md
+//    (Fowler & Chillemi 1992; Pravec & Harris 2007 give K = 1329 ± 10 km).
+//  - Albedo medians: C-complex 0.053, S-complex 0.166 (Mainzer et al. 2011,
+//    ApJ 741, 90 — which explicitly endorses this use); NEA default
+//    0.14 ± 0.02 (Stuart & Binzel 2004) = ASTEROID_DEFAULT_ALBEDO, the value
+//    the catalog radii were built with (verified in A4c-1 recon).
+//  - DEC-17-4 (:171-180): size ships AS A RANGE — a single diameter without
+//    the albedo uncertainty factor (≈1.77 C-vs-S, ≈2.93 across X) is an
+//    overclaim.
+//  - U bands and warning: tools/slice17-research/literature/
+//    V7_CONDITION_CODE_VERIFIED.md (MPC UValue page; JPL SBMD API v1.2).
+// ---------------------------------------------------------------------------
+
+/** Mainzer et al. 2011 taxonomy-median albedos bounding the displayed range
+ * (V6 items 3/3b). Higher albedo -> smaller diameter for the same H. */
+const ALBEDO_C_COMPLEX = 0.053;
+const ALBEDO_S_COMPLEX = 0.166;
+/** V6 item 5b: diameter factor across the unconstrained X-complex span. */
+const X_COMPLEX_WIDENING_FACTOR = '≈2.9';
+
+function formatDiameterKm(diameterKm: number): string {
+  if (diameterKm < 1) {
+    return `${Number((diameterKm * 1000).toPrecision(3))} m`;
+  }
+  return `${Number(diameterKm.toPrecision(3))} km`;
+}
+
+interface SizeCell {
+  readonly headline: string;
+  readonly notes: readonly string[];
+  readonly known: boolean;
+}
+
+/** DEC-17-4 SIZE RANGE. The range spans the C-to-S albedo medians; the NEA
+ * default 0.14 — the assumption already baked into the 3D view's marker
+ * radii — is disclosed as a point within it, per the OQ-17-9 disposition. */
+function describeSize(H: number | null): SizeCell {
+  if (H === null) {
+    return {
+      headline: 'no H on file',
+      notes: ['size cannot be estimated without an absolute magnitude'],
+      known: false,
+    };
+  }
+  // Brighter (higher) albedo reflects more light per unit area, so the same H
+  // implies a SMALLER body: S-complex bounds the small end, C-complex the large.
+  const smallKm = deriveAsteroidDiameterKmFromAbsoluteMagnitude(H, ALBEDO_S_COMPLEX);
+  const largeKm = deriveAsteroidDiameterKmFromAbsoluteMagnitude(H, ALBEDO_C_COMPLEX);
+  const defaultKm = deriveAsteroidDiameterKmFromAbsoluteMagnitude(H, ASTEROID_DEFAULT_ALBEDO);
+  return {
+    headline: `${formatDiameterKm(smallKm)} – ${formatDiameterKm(largeKm)}`,
+    notes: [
+      `estimated from brightness (H ${H}) across dark-to-bright surface reflectivities (0.053–0.166) — an assumption, not a measurement`,
+      `at the survey-average reflectivity 0.14 assumed elsewhere in this tool: ≈ ${formatDiameterKm(defaultKm)}; a metallic-bright surface could shrink this ${X_COMPLEX_WIDENING_FACTOR}×`,
+    ],
+    known: true,
+  };
+}
+
+/** V7 band table, verbatim values: in-orbit longitude runoff, arcsec/decade,
+ * indexed by U. MPC "Uncertainty Parameter U" page. */
+const U_RUNOFF_BANDS: readonly string[] = [
+  '< 1.0', '< 4.4', '< 19.6', '< 86.5', '< 382',
+  '< 1692', '< 7488', '< 33121', '< 146502', '> 146502',
+];
+
+interface QualityCell {
+  readonly headline: string;
+  readonly label: string;
+  readonly notes: readonly string[];
+  readonly tone: 'good' | 'mid' | 'poor' | 'unknown';
+}
+
+/** DEC-17-4 quality column: raw U + qualitative label + the MPC caveat.
+ * The >=7 tier anchors on JPL's PUBLISHED threshold; the lower boundaries are
+ * ours and say so on the surface (DEC-17-4:190-192). Null renders "unknown". */
+function describeOrbitQuality(conditionCode: number | null): QualityCell {
+  const mpcCaveat =
+    'MPC: "The U value should not be used as a predictor for the uncertainty in the future motion of NEAs."';
+  if (conditionCode === null || !Number.isInteger(conditionCode) || conditionCode < 0 || conditionCode > 9) {
+    return {
+      headline: 'unknown',
+      label: 'no orbit-quality code on file',
+      notes: [mpcCaveat],
+      tone: 'unknown',
+    };
+  }
+  const band = `${U_RUNOFF_BANDS[conditionCode]} arcsec of in-orbit drift per decade (MPC uncertainty scale 0–9)`;
+  if (conditionCode >= 7) {
+    return {
+      headline: `U = ${conditionCode}`,
+      label: 'orbit solution is highly uncertain — JPL’s published threshold (code ≥ 7)',
+      notes: [band, mpcCaveat],
+      tone: 'poor',
+    };
+  }
+  if (conditionCode <= 2) {
+    return {
+      headline: `U = ${conditionCode}`,
+      label: 'tightly determined orbit — our banding, not an official tier',
+      notes: [band, mpcCaveat],
+      tone: 'good',
+    };
+  }
+  return {
+    headline: `U = ${conditionCode}`,
+    label: 'moderately determined orbit — our banding, not an official tier',
+    notes: [band, mpcCaveat],
+    tone: 'mid',
+  };
+}
+
+/** Catalog facts the two A4c columns render; carried per body alongside the
+ * compute results (INV-026: read from the loaded catalog, never re-typed). */
+interface BodyFacts {
+  readonly H: number | null;
+  readonly conditionCode: number | null;
 }
 
 interface MassCell {
@@ -452,6 +586,7 @@ function renderRefusalRow(
   result: CompareBodyRefusal,
   label: string,
   dominance: DominanceVerdict | undefined,
+  facts: BodyFacts | undefined,
 ) {
   const copy = refusalCopy(result.reason, result.detail);
   return h('tr', { key: result.bodyId, style: 'background:rgba(148,163,184,0.05);' }, [
@@ -460,11 +595,38 @@ function renderRefusalRow(
       h('span', { style: NOTE_STYLE }, result.bodyId),
       renderDominanceChip(dominance),
     ]),
+    // The refusal message spans the five COMPUTE columns; the two A4c fact
+    // columns still render — size and orbit quality are catalog facts, valid
+    // for a body whose grid was refused.
     h('td', { style: CELL_STYLE, colSpan: 5 }, [
       h('span', { style: 'color:#cbd5e1;' }, copy.title),
       h('span', { style: NOTE_STYLE }, copy.body),
     ]),
+    ...renderFactCells(facts),
   ]);
+}
+
+/** A4c size + orbit-quality cells, shared by ok and refusal rows — they are
+ * catalog facts, not compute outputs, so a refused body still shows them. */
+function renderFactCells(facts: BodyFacts | undefined) {
+  const size = describeSize(facts?.H ?? null);
+  const quality = describeOrbitQuality(facts?.conditionCode ?? null);
+  const qualityColor =
+    quality.tone === 'poor' ? '#fca5a5'
+    : quality.tone === 'good' ? '#a7f3d0'
+    : quality.tone === 'mid' ? '#eef2ff'
+    : '#94a3b8';
+  return [
+    h('td', { style: CELL_STYLE }, [
+      h('span', { style: size.known ? undefined : 'color:#94a3b8;' }, size.headline),
+      ...size.notes.map((note) => h('span', { style: NOTE_STYLE }, note)),
+    ]),
+    h('td', { style: CELL_STYLE }, [
+      h('span', { style: `color:${qualityColor};` }, quality.headline),
+      h('span', { style: NOTE_STYLE }, quality.label),
+      ...quality.notes.map((note) => h('span', { style: NOTE_STYLE }, note)),
+    ]),
+  ];
 }
 
 function renderOkRow(
@@ -474,6 +636,7 @@ function renderOkRow(
   expanded: boolean,
   onToggle: () => void,
   dominance: DominanceVerdict | undefined,
+  facts: BodyFacts | undefined,
 ) {
   const { segmentation, echo } = result;
   const best = segmentation.bestPractical;
@@ -547,6 +710,9 @@ function renderOkRow(
         ? `${echo.deltaKm2S2} ${C3_UNITS} above this body's own floor of ${formatC3WithUnits(echo.liveMin ?? Number.NaN)}`
         : `disclosed screening boundary, ${formatC3WithUnits(echo.absoluteKm2S2)}`),
     ]),
+
+    // A4c — size + orbit quality (catalog facts).
+    ...renderFactCells(facts),
   ]);
 }
 
@@ -590,6 +756,9 @@ function MethodBadge(props: {
   lines.push(
     `Delivered mass — interpolated from the published performance curve for ${props.vehicleName}, against a fixed reference rendezvous budget of ${REFERENCE_RENDEZVOUS_MPS} m/s plus ${SPACECRAFT_STATIONKEEPING_MPS} m/s stationkeeping. Rendezvous ΔV varies by target; a single reference budget is used here so the mass column is comparable across bodies, which means it is not a per-target mission estimate.`,
     'Launch-vehicle performance figures are the operator-published curves and carry their contract context; quoted interior points on those curves are interpolations between published anchors, not independently verified performance.',
+    // A4c (S-S17-BATCH2-2026-08-12-A): size-column provenance — the formula
+    // and reflectivity values, cited, so the per-row range is traceable.
+    'Size column — diameters are estimated from brightness (absolute magnitude H) via D = (1329/√reflectivity) × 10^(−H/5); the range spans the dark-to-bright taxonomy median reflectivities 0.053–0.166 (Mainzer et al. 2011), and the survey-average 0.14 (Stuart & Binzel 2004) quoted beneath it is the same assumption behind this tool\'s 3D marker sizes. These are estimates, not measurements.',
     // S-S17-FRONTB-BATCH-2026-08-11-A (D1): plain-English legend for the
     // DEC-17-3 badge — three named measurements, no composite score.
     'Dominance badge — each compared body is checked on three measurements: best practical window energy (lower is better), widest window in departure columns (higher), and delivered mass (higher). A body is "dominated" when another selected body is at least as good on all three and better on at least one; "nondominated" otherwise. There is no combined score. Rows missing any of the three measurements read "insufficient data" and are not compared.',
@@ -617,6 +786,8 @@ interface LoadedSources {
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly bodies: readonly CompareBodyInput[];
   readonly labels: ReadonlyMap<string, string>;
+  /** A4c catalog facts (H, conditionCode) per bodyId. */
+  readonly facts: ReadonlyMap<string, BodyFacts>;
   readonly vehicle: LaunchVehicle;
   /** DEC-17-5(a) runtime read of metadata.feasibleC3MaxKm2S2 — never a literal. */
   readonly absoluteKm2S2: number;
@@ -663,6 +834,7 @@ function ComparePage() {
         const lastJd = tdbSecondsToJd(earthSamples[earthSamples.length - 1].state.tdbSeconds);
 
         const labels = new Map<string, string>();
+        const facts = new Map<string, BodyFacts>();
         const bodies: CompareBodyInput[] = [];
         const missing: string[] = [];
         for (const bodyId of requestedBodyIds) {
@@ -672,6 +844,7 @@ function ComparePage() {
             continue;
           }
           labels.set(body.bodyId, body.name || body.designation || body.bodyId);
+          facts.set(body.bodyId, { H: body.H, conditionCode: body.conditionCode });
           bodies.push({ bodyId: body.bodyId, bodyElements: body.elements });
         }
         if (bodies.length === 0) {
@@ -685,6 +858,7 @@ function ComparePage() {
           ephemerisSpan: { firstJd, lastJd },
           bodies,
           labels,
+          facts,
           vehicle: LAUNCH_VEHICLES[0],
           absoluteKm2S2: screenCache.metadata.feasibleC3MaxKm2S2,
         });
@@ -751,6 +925,7 @@ function ComparePage() {
         setData({
           results,
           labels: sources.labels,
+          facts: sources.facts,
           vehicleName: `${sources.vehicle.name} — ${sources.vehicle.config}`,
           ephemerisSpan: sources.ephemerisSpan,
           totalComputeMs,
@@ -824,6 +999,9 @@ function ComparePage() {
     'Widest window',
     `Delivered mass — ${data.vehicleName}`,
     'Threshold',
+    // A4c (DEC-17-4 context/quality): estimated size + orbit quality.
+    'Size (from brightness)',
+    'Orbit quality',
   ];
 
   // S-S17-FRONTB-BATCH-2026-08-11-A (D2): DEC-17-8 mode toggle, both options
@@ -892,12 +1070,12 @@ function ComparePage() {
         };
         const rows = [
           isRefusal(result)
-            ? renderRefusalRow(result, label, dominance.get(result.bodyId))
-            : renderOkRow(result, label, data.vehicleName, isExpanded, onToggle, dominance.get(result.bodyId)),
+            ? renderRefusalRow(result, label, dominance.get(result.bodyId), data.facts.get(result.bodyId))
+            : renderOkRow(result, label, data.vehicleName, isExpanded, onToggle, dominance.get(result.bodyId), data.facts.get(result.bodyId)),
         ];
         if (isExpanded && result.ok) {
           rows.push(h('tr', { key: `${result.bodyId}-grid` },
-            h('td', { colSpan: 6, style: 'padding:4px 12px 18px;border-bottom:1px solid rgba(255,255,255,0.08);' }, [
+            h('td', { colSpan: 8, style: 'padding:4px 12px 18px;border-bottom:1px solid rgba(255,255,255,0.08);' }, [
               h(PorkchopThumbnail, { cells: result.grid.cells }),
               h('span', { style: NOTE_STYLE },
                 `Departure date left to right, transfer time bottom to top. Colour is departure energy on one scale shared by every target on this page, so panels are directly comparable.`),
