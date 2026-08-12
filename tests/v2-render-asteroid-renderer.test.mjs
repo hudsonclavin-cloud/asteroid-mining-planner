@@ -39,8 +39,15 @@ async function loadModules() {
     modulePromise = Promise.all([
       import(pathToFileURL(path.join(tempOutDir, 'render', 'asteroid-renderer.js')).href),
       import(pathToFileURL(path.join(tempOutDir, 'core', 'index.js')).href),
+      // S-S17-FRONTB-BATCH-2026-08-11-A: orbit constants are asserted against
+      // their source of truth rather than copied as literals — a copied value
+      // silently goes stale the moment the constant is tuned, which is exactly
+      // how this suite broke when the base opacity moved 0.12 -> 0.18.
+      // asteroid-renderer.ts imports asteroid-orbits.ts, so tsc already emits
+      // it into tempOutDir; this adds no compile work.
+      import(pathToFileURL(path.join(tempOutDir, 'render', 'asteroid-orbits.js')).href),
       import('three'),
-    ]).then(([renderer, core, THREE]) => ({ renderer, core, THREE }));
+    ]).then(([renderer, core, orbits, THREE]) => ({ renderer, core, orbits, THREE }));
   }
 
   return modulePromise;
@@ -178,6 +185,7 @@ test('Points, InstancedMesh, and focused Mesh agree on world position', async ()
 });
 
 test('focused asteroid gets a highlighted orbit while the main orbit batch stays visible in browse-scale focus', async () => {
+  const { orbits } = await loadModules();
   const { asteroidRenderer, asteroid } = await buildRendererWithCamera(2.5, {
     designation: '404',
     focused: true,
@@ -186,7 +194,11 @@ test('focused asteroid gets a highlighted orbit while the main orbit batch stays
   assert.equal(asteroidRenderer.getAsteroidRenderMode(asteroid.bodyId), 'instanced');
   assert.equal(asteroidRenderer.getFocusedOrbitBodyId(), asteroid.bodyId);
   assert.equal(asteroidRenderer.orbitBatch.lineSegments.visible, true);
-  assert.equal(asteroidRenderer.getMainOrbitOpacity(), 0.12);
+  // Un-faded, so the batch sits at exactly the source constant. Asserting the
+  // constant (not a copy of its value) is the point: this pins the BEHAVIOUR
+  // "browse-scale focus leaves the main batch un-faded" and stays true through
+  // any future retuning of the constant itself.
+  assert.equal(asteroidRenderer.getMainOrbitOpacity(), orbits.ASTEROID_ORBIT_BASE_OPACITY);
   assert.equal(asteroidRenderer.orbitBatch.rangesByBodyId.size, 1);
 });
 
@@ -198,6 +210,8 @@ test('main orbit batch fades out when the focused asteroid reaches close-inspect
 
   assert.equal(asteroidRenderer.getAsteroidRenderMode(asteroid.bodyId), 'mesh');
   assert.equal(asteroidRenderer.getFocusedOrbitBodyId(), asteroid.bodyId);
+  // 0 stays a literal deliberately: fully faded is a SEMANTIC endpoint, not a
+  // tunable value, so it must not track the base constant.
   assert.equal(asteroidRenderer.getMainOrbitOpacity(), 0);
   assert.equal(asteroidRenderer.orbitBatch.lineSegments.visible, false);
 });
