@@ -1004,6 +1004,37 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   }
   mount.appendChild(honestyChips);
 
+  // B1 T1-2 (S-S17-BATCH2-2026-08-12-A): persistent Reset-view button —
+  // exposure of the existing top-down preset, one shared code path with the
+  // 't' key (applyCameraPreset), which also clears any pan offset. Labeled
+  // "Reset view", NOT "Home": the keyboard Home key is already bound to
+  // jump-to-coverage-start (a TIME action), and a Home-labeled view button
+  // would collide with that meaning.
+  const resetViewButton = document.createElement('button');
+  resetViewButton.setAttribute('data-testid', 'reset-view-button');
+  resetViewButton.type = 'button';
+  resetViewButton.textContent = '⌂ Reset view';
+  resetViewButton.title = "Return to the top-down overview (same as the 't' key); clears pan";
+  resetViewButton.style.position = 'absolute';
+  resetViewButton.style.right = `${AXIS_TRIAD_SIZE_PX + AXIS_TRIAD_MARGIN_PX * 2}px`;
+  resetViewButton.style.bottom = '16px';
+  resetViewButton.style.padding = '6px 12px';
+  resetViewButton.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
+  resetViewButton.style.fontSize = '12px';
+  resetViewButton.style.color = 'rgba(255, 255, 255, 0.85)';
+  resetViewButton.style.background = 'rgba(0, 0, 0, 0.4)';
+  resetViewButton.style.border = '1px solid rgba(255, 255, 255, 0.25)';
+  resetViewButton.style.borderRadius = '8px';
+  resetViewButton.style.cursor = 'pointer';
+  const onResetViewClick = (): void => {
+    const preset = getCameraPresetForKey(TOP_DOWN_PRESET_KEY);
+    if (preset) {
+      applyCameraPreset(preset, performance.now());
+    }
+  };
+  resetViewButton.addEventListener('click', onResetViewClick);
+  mount.appendChild(resetViewButton);
+
   const planetHoverTooltip = document.createElement('div');
   planetHoverTooltip.setAttribute('data-testid', 'planet-hover-tooltip');
   planetHoverTooltip.className = 'planet-hover-tooltip';
@@ -1212,6 +1243,20 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   let orbitRadius = TOP_DOWN_ORBIT_STATE.radiusM;
   let orbitAzimuth = TOP_DOWN_ORBIT_STATE.azimuthRad;
   let orbitPolar = TOP_DOWN_ORBIT_STATE.polarRad;
+  // B1 T1-1 pan (S-S17-BATCH2-2026-08-12-A): view-space target offset in
+  // scene meters. Pan is a PURE TRANSLATION of the camera rig — position
+  // becomes camLocal + panOffsetM and lookAt becomes panOffsetM, so the view
+  // direction (-camLocal) and camera orientation are bit-identical to the
+  // unpanned rig. It lives strictly on the camera side of the lookAt line:
+  // the focus-anchor path (getAnchorPosition / getCurrentOrbitCenter, the
+  // dcdb494 same-frame canonical-array read) never sees it, and the focus
+  // body stays pinned at scene origin exactly as the flicker fix left it.
+  // Cleared in startFocusTransition, which every focus change and both
+  // camera presets route through.
+  const panOffsetM = new THREE.Vector3();
+  const panBasisRight = new THREE.Vector3();
+  const panBasisUp = new THREE.Vector3();
+  let panDragActive = false;
   let currentFocusBody: FocusTarget = 'sun';
   let targetFocusBody: FocusTarget = 'sun';
   let focusTransitionStartMs = 0;
@@ -1458,6 +1503,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   function startFocusTransition(nextFocusBody: FocusTarget, nextOrbitRadius: number): void {
     const nowMs = performance.now();
+    // B1: every focus change and both camera presets route through here, so
+    // clearing the pan offset here gives "focus/preset resets pan" for free.
+    panOffsetM.set(0, 0, 0);
     const fromAnchor = getCurrentOrbitCenter(nowMs);
     const activeFocusBody = getActiveFocusBody(nowMs);
     const nextAsteroid = isAsteroidFocusTarget(nextFocusBody)
@@ -1512,10 +1560,24 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     const camLocal = sphericalToCartesian(orbitRadius, orbitPolar, orbitAzimuth);
     const viewport = getViewportSizeForMount(mount);
 
+    // B1: bound the pan so the target cannot leave the neighbourhood the rig
+    // is dimensioned for, and widen far by the offset so panned geometry
+    // never clips (near only gets safer under pan — camera-to-anchor distance
+    // grows).
+    if (panOffsetM.lengthSq() > 0) {
+      const maxPanM = 2 * orbitRadius;
+      if (panOffsetM.length() > maxPanM) {
+        panOffsetM.setLength(maxPanM);
+      }
+    }
     camera.near = Math.max(1, orbitRadius * 1e-4);
-    camera.far = Math.max(orbitRadius * 10, 5e8);
+    camera.far = Math.max((orbitRadius + panOffsetM.length()) * 10, 5e8);
     camera.updateProjectionMatrix();
-    camera.position.set(camLocal.x, camLocal.y, camLocal.z);
+    camera.position.set(
+      camLocal.x + panOffsetM.x,
+      camLocal.y + panOffsetM.y,
+      camLocal.z + panOffsetM.z,
+    );
 
     const haloUpdates: Array<{
       bodyId: BodyId;
@@ -1550,10 +1612,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
         helio.positionM.y - anchorPosM.y,
         helio.positionM.z - anchorPosM.z,
       );
+      // B1: distance measured from the ACTUAL camera position (camLocal +
+      // pan) — halo sizing would drift under pan against camLocal alone.
       const distanceToCameraM = Math.hypot(
-        positionRelScene.x - camLocal.x,
-        positionRelScene.y - camLocal.y,
-        positionRelScene.z - camLocal.z,
+        positionRelScene.x - (camLocal.x + panOffsetM.x),
+        positionRelScene.y - (camLocal.y + panOffsetM.y),
+        positionRelScene.z - (camLocal.z + panOffsetM.z),
       );
       haloUpdates.push({
         bodyId,
@@ -1577,7 +1641,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     sunMesh.position.set(sunRelX, sunRelY, sunRelZ);
     updateSunDirection(sunMesh.position, renderRoots.get('earth')!.position, earthSunDirection);
 
-    camera.lookAt(0, 0, 0);
+    // B1: the camera looks at the panned target; with position offset by the
+    // same vector this is a pure translation of the unpanned rig.
+    camera.lookAt(panOffsetM.x, panOffsetM.y, panOffsetM.z);
     camera.updateMatrixWorld();
 
     haloSystem.update(
@@ -1679,8 +1745,13 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     pointerNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
     pointerNdc.y = -(((clientY - rect.top) / rect.height) * 2 - 1);
     raycaster.setFromCamera(pointerNdc, camera);
+    // B1: orbitRadius is the distance proxy for the points threshold; under
+    // pan the true camera-to-cloud distance can exceed it, so widen the
+    // proxy by the pan magnitude (threshold only grows — picking stays
+    // possible, never silently harder).
     const worldUnitsPerPixel =
-      (2 * orbitRadius * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(rect.height, 1);
+      (2 * (orbitRadius + panOffsetM.length()) * Math.tan((camera.fov * Math.PI) / 360)) /
+      Math.max(rect.height, 1);
     raycaster.params.Points.threshold = Math.max(
       1_000,
       worldUnitsPerPixel * ASTEROID_POINT_RAYCAST_PIXEL_THRESHOLD,
@@ -1778,6 +1849,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       return;
     }
     pointerActive = true;
+    // B1 T1-1: right- or middle-drag pans, Shift+left-drag pans (trackpads
+    // without a right button); plain left-drag keeps its existing orbit
+    // behaviour. Touch pan (two-finger) is NOT implemented — the pointer
+    // path is single-pointer today, and multi-pointer tracking is a
+    // prerequisite recorded in the batch run report, not smuggled in here.
+    panDragActive = event.button === 2 || event.button === 1 || (event.button === 0 && event.shiftKey);
     pointerDragged = false;
     pointerDownX = event.clientX;
     pointerDownY = event.clientY;
@@ -1817,12 +1894,28 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       return;
     }
 
-    orbitAzimuth -= dx * ORBIT_SENSITIVITY;
-    orbitPolar = clamp(
-      orbitPolar + dy * ORBIT_SENSITIVITY,
-      INTERACTIVE_MIN_ORBIT_POLAR_RAD,
-      INTERACTIVE_MAX_ORBIT_POLAR_RAD,
-    );
+    if (panDragActive) {
+      // B1 T1-1: convert the pixel drag to scene meters at the target plane
+      // (2 * r * tan(fov/2) / viewportHeight), then move the pan target
+      // against the drag so the scene follows the cursor. The camera basis
+      // comes from matrixWorld — exact, not stale: pan is a pure translation,
+      // so orientation does not change while panning.
+      const viewportHeightPx = getViewportSizeForMount(mount).height;
+      const metersPerPixel =
+        (2 * orbitRadius * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)) /
+        Math.max(1, viewportHeightPx);
+      panBasisRight.setFromMatrixColumn(camera.matrixWorld, 0);
+      panBasisUp.setFromMatrixColumn(camera.matrixWorld, 1);
+      panOffsetM.addScaledVector(panBasisRight, -dx * metersPerPixel);
+      panOffsetM.addScaledVector(panBasisUp, dy * metersPerPixel);
+    } else {
+      orbitAzimuth -= dx * ORBIT_SENSITIVITY;
+      orbitPolar = clamp(
+        orbitPolar + dy * ORBIT_SENSITIVITY,
+        INTERACTIVE_MIN_ORBIT_POLAR_RAD,
+        INTERACTIVE_MAX_ORBIT_POLAR_RAD,
+      );
+    }
     updateVisibleState();
     setCursor('grabbing');
     hidePlanetHoverTooltip();
@@ -1831,6 +1924,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   function resetPointerInteraction(pointerId?: number): void {
     pointerActive = false;
     pointerDragged = false;
+    panDragActive = false;
     if (typeof pointerId === 'number' && renderer.domElement.hasPointerCapture(pointerId)) {
       renderer.domElement.releasePointerCapture(pointerId);
     }
@@ -1903,7 +1997,14 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       minOrbitRadius,
       orbitPolar,
       orbitAzimuth,
-      sunScenePosForClamp,
+      // B1: the clamp's derivation assumes the camera ray emanates from the
+      // orbit center; under pan that center is panOffsetM, so the Sun is
+      // expressed relative to it. The clamp function itself is unchanged.
+      {
+        x: sunScenePosForClamp.x - panOffsetM.x,
+        y: sunScenePosForClamp.y - panOffsetM.y,
+        z: sunScenePosForClamp.z - panOffsetM.z,
+      },
     );
     updateVisibleState();
   }
@@ -1969,19 +2070,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
     const preset = getCameraPresetForKey(event.key);
     if (preset) {
-      const previousOrbitState = {
-        radiusM: orbitRadius,
-        polarRad: orbitPolar,
-        azimuthRad: orbitAzimuth,
-      };
-      startFocusTransition(preset.focusBody, preset.orbitState.radiusM);
-      orbitTween = {
-        from: previousOrbitState,
-        to: preset.orbitState,
-        startMs: nowMs,
-        durationMs: preset.durationMs,
-      };
-      updateVisibleState(nowMs);
+      applyCameraPreset(preset, nowMs);
       return;
     }
 
@@ -1989,6 +2078,28 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       cancelCameraTween();
       startFocusTransition(OUTER_SYSTEM_OVERVIEW, OVERVIEW_ORBIT_RADIUS_M);
     }
+  }
+
+  /** Shared by the preset keys and the B1 Reset-view button — one code path,
+   * so the button is exposure of existing behaviour, not new behaviour.
+   * (startFocusTransition inside also clears the pan offset.) */
+  function applyCameraPreset(
+    preset: NonNullable<ReturnType<typeof getCameraPresetForKey>>,
+    nowMs: number,
+  ): void {
+    const previousOrbitState = {
+      radiusM: orbitRadius,
+      polarRad: orbitPolar,
+      azimuthRad: orbitAzimuth,
+    };
+    startFocusTransition(preset.focusBody, preset.orbitState.radiusM);
+    orbitTween = {
+      from: previousOrbitState,
+      to: preset.orbitState,
+      startMs: nowMs,
+      durationMs: preset.durationMs,
+    };
+    updateVisibleState(nowMs);
   }
 
   function renderFrame(frameTimestampMs: number): void {
@@ -2010,6 +2121,12 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     animationHandle = window.requestAnimationFrame(renderFrame);
   }
 
+  // B1: right-drag pans; without this the browser context menu interrupts
+  // the gesture on mouse-up.
+  const onContextMenu = (event: Event): void => {
+    event.preventDefault();
+  };
+  renderer.domElement.addEventListener('contextmenu', onContextMenu);
   renderer.domElement.addEventListener('pointerdown', onPointerDown);
   renderer.domElement.addEventListener('pointermove', onPointerMove);
   renderer.domElement.addEventListener('pointerup', onPointerUp);
@@ -2031,6 +2148,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     resetFrameTransformHooks();
     asteroidWorker.terminate();
     window.cancelAnimationFrame(animationHandle);
+    renderer.domElement.removeEventListener('contextmenu', onContextMenu);
+    resetViewButton.removeEventListener('click', onResetViewClick);
+    resetViewButton.remove();
     renderer.domElement.removeEventListener('pointerdown', onPointerDown);
     renderer.domElement.removeEventListener('pointermove', onPointerMove);
     renderer.domElement.removeEventListener('pointerup', onPointerUp);
