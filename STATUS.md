@@ -84,7 +84,7 @@
 
 | Suite | Command | Result |
 |---|---|---|
-| CI | GitHub Actions | **green** at `90790aa` — run number NOT SUPPLIED in the 2026-08-12 refresh input; pin it on the next edit rather than trusting a guess |
+| CI | GitHub Actions run #76 | **green** at `90790aa` |
 | Root recursive | `node tools/run-tests.mjs` | 74 files discovered; **73 pass / 1 environmental load failure**; 246 tests pass / 1 fail (re-measured 2026-08-12 on the Front B branch) |
 | Focused compare data | `node --test tests/v2-compare-data.test.mjs` | **17 / 17 pass** after fixture repair at `88b9133` |
 | Slice 16 harness | `node --test tools/slice16-harness/test/*.test.mjs` | **191 / 191 pass** when last measured |
