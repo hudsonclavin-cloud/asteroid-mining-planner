@@ -23,6 +23,7 @@ import type { BodyId } from '../../core/constants/bodies.js';
 import { utcStringToTdbSeconds } from '../../core/units/utc-to-tdb.js';
 import {
   ASTEROID_POINTS_MAX_SIZE_PX,
+  ASTEROID_POINTS_MIN_SIZE_PX,
   AsteroidRenderer,
   propagateAsteroidBodyState,
   resolveAliasedPointSizeRange,
@@ -42,7 +43,12 @@ import { createJupiterOblateMesh } from '../../render/jupiter-oblate.js';
 import { createMarsOblateMesh } from '../../render/mars-oblate.js';
 import { createSaturnOblateMesh } from '../../render/saturn-oblate.js';
 import { createSaturnRingsGroup } from '../../render/saturn-rings.js';
-import { HaloSystem } from '../../render/halos.js';
+import {
+  DEFAULT_MIN_HALO_DIAMETER_PX,
+  HALO_INVISIBLE_MIN_DIAMETER_PX,
+  HaloSystem,
+} from '../../render/halos.js';
+import { AxisTriad, AXIS_TRIAD_MARGIN_PX, AXIS_TRIAD_SIZE_PX } from '../../render/axis-triad.js';
 import {
   ATMOSPHERE_BODY_IDS,
   ATMOSPHERE_PARAMS,
@@ -943,7 +949,60 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   const trackingStatus = document.createElement('div');
   trackingStatus.setAttribute('data-testid', 'time-tracking-status');
   timeStatusHud.appendChild(trackingStatus);
+
+  // B2 T2-3 (S-S17-BATCH2-2026-08-12-A): HUD readout — target · distance ·
+  // frame. Sim time already lives in dateHud directly above; these join the
+  // existing status grid so the whole readout is one surface.
+  const focusReadoutLine = document.createElement('div');
+  focusReadoutLine.setAttribute('data-testid', 'focus-readout-line');
+  timeStatusHud.appendChild(focusReadoutLine);
+
+  const frameReadoutLine = document.createElement('div');
+  frameReadoutLine.setAttribute('data-testid', 'frame-readout-line');
+  // Short form of the C2-verified frame label (tools/frontb-2026-08-11/
+  // C2_FRAME_VERDICT.md, verdict (i)); the full label + caveat is on the
+  // scale/frame chips below.
+  frameReadoutLine.textContent = 'Frame heliocentric J2000 equatorial (ICRF)';
+  timeStatusHud.appendChild(frameReadoutLine);
   mount.appendChild(timeStatusHud);
+
+  // B2 T2-1 (S-S17-BATCH2-2026-08-12-A): scale/frame honesty chips. Every
+  // number here is the live repo constant (INV-026), not a copy: the halo
+  // floor and threshold import from render/halos.ts, the asteroid point floor
+  // from the points shader. Claims verified by the B2-1 recon at 0feffb4:
+  // distances are anchor-subtracted meters with no scale factor
+  // (updateVisibleState body loop); planet/moon/Sun geometry is built at
+  // pck radii with no exaggeration; asteroid meshes are scaled by the
+  // H-derived estimatedRadiusM — "estimated", and the chip says so. The frame
+  // line is the C2 verdict label with its ecliptic-vs-equatorial caveat.
+  const honestyChips = document.createElement('div');
+  honestyChips.setAttribute('data-testid', 'scale-frame-chips');
+  honestyChips.style.position = 'absolute';
+  honestyChips.style.right = '16px';
+  honestyChips.style.bottom = `${AXIS_TRIAD_MARGIN_PX + AXIS_TRIAD_SIZE_PX + 12}px`;
+  honestyChips.style.display = 'grid';
+  honestyChips.style.gap = '4px';
+  honestyChips.style.maxWidth = '440px';
+  honestyChips.style.padding = '8px 10px';
+  honestyChips.style.fontFamily = '"SF Mono", "Roboto Mono", monospace';
+  honestyChips.style.fontSize = '11px';
+  honestyChips.style.lineHeight = '1.4';
+  honestyChips.style.color = 'rgba(255, 255, 255, 0.72)';
+  honestyChips.style.background = 'rgba(0, 0, 0, 0.28)';
+  honestyChips.style.border = '1px solid rgba(255, 255, 255, 0.16)';
+  honestyChips.style.borderRadius = '8px';
+  honestyChips.style.pointerEvents = 'none';
+  const chipLines = [
+    'Scale — distances true scale (1 unit = 1 m); planet, moon and Sun radii true scale; asteroid radii estimated from brightness',
+    `Markers — bodies smaller than ${HALO_INVISIBLE_MIN_DIAMETER_PX} px on screen get a marker floored at ${DEFAULT_MIN_HALO_DIAMETER_PX} px (Saturn moons use a scaled floor); far-field asteroid points floor at ${ASTEROID_POINTS_MIN_SIZE_PX} px — markers are visibility aids, not sizes`,
+    'Frame — heliocentric J2000 equatorial (ICRF); +Z is celestial north. The top-down view looks down the ecliptic pole; the axes stay equatorial',
+  ];
+  for (const lineText of chipLines) {
+    const line = document.createElement('div');
+    line.textContent = lineText;
+    honestyChips.appendChild(line);
+  }
+  mount.appendChild(honestyChips);
 
   const planetHoverTooltip = document.createElement('div');
   planetHoverTooltip.setAttribute('data-testid', 'planet-hover-tooltip');
@@ -1058,6 +1117,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   sunLight.target = sunLightTarget;
 
   const haloSystem = new HaloSystem(scene);
+  // B2 T2-2: corner axis triad, counter-rotated per frame in renderFrame.
+  const axisTriad = new AxisTriad();
   const asteroidRenderer = new AsteroidRenderer(asteroidBodies, {
     cellRenderer: {
       partitionStrategy: 'slice9-hybrid',
@@ -1544,8 +1605,29 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     outOfCoverageWarning.style.display =
       wallClockTdbSeconds < timeMin || wallClockTdbSeconds > timeMax ? 'block' : 'none';
     trackingStatus.textContent = tracking ? 'LIVE' : 'SCRUBBED — press Shift+N for now';
+    // B2 T2-3: target + camera distance. orbitRadius is the camera's distance
+    // to the focus anchor in meters (scene units are meters — B2-1 recon).
+    focusReadoutLine.textContent =
+      `Focus ${describeFocusTarget(activeFocusBody)} · camera ${formatCameraDistance(orbitRadius)}`;
 
     document.title = `Aster V2 — Solar System — ${formatTdbDateLabel(currentTdbSeconds)}`;
+  }
+
+  function describeFocusTarget(target: FocusTarget): string {
+    if (target === OUTER_SYSTEM_OVERVIEW) {
+      return 'outer-system overview';
+    }
+    if (isAsteroidFocusTarget(target)) {
+      return formatAsteroidLabel(getAsteroidBody(target));
+    }
+    return target;
+  }
+
+  function formatCameraDistance(distanceM: number): string {
+    if (distanceM >= 0.1 * AU_M) {
+      return `${(distanceM / AU_M).toFixed(2)} AU`;
+    }
+    return `${Math.round(distanceM / 1000).toLocaleString('en-US')} km`;
   }
 
   function onResize(): void {
@@ -1919,6 +2001,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       updatePlanetHoverTooltip(lastPointerX, lastPointerY, frameTimestampMs);
     }
     renderer.render(scene, camera);
+    // B2 T2-2: axis triad draws after the main pass into its own scissored
+    // corner viewport and restores the full-canvas viewport before returning.
+    axisTriad.render(renderer, camera.quaternion);
     if (bodyLabelsVisible) {
       labelRenderer.render(scene, camera);
     }
@@ -1957,6 +2042,8 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     focusedAsteroidHud.remove();
     dateHud.remove();
     timeStatusHud.remove();
+    honestyChips.remove();
+    axisTriad.dispose();
     planetHoverTooltip.remove();
     labelRenderer.domElement.remove();
     starRenderer.dispose();
