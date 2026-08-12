@@ -1,7 +1,7 @@
 # STATUS.md — Aster Project Current State
 
 > Updated at the end of each session. Keep it short; agents read this before acting.
-> **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`); truth-refreshed 2026-08-07 (`S-HYGIENE-2026-08-07-A`); truth-refreshed 2026-08-10 after Front A close.** If HEAD does not match the table below,
+> **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`); truth-refreshed 2026-08-07 (`S-HYGIENE-2026-08-07-A`); truth-refreshed 2026-08-10 after Front A close; truth-refreshed 2026-08-12 after the Front B batch run (`S-S17-FRONTB-BATCH-2026-08-11-A`).** If HEAD does not match the table below,
 > update this file before believing it. A stale STATUS forced a session-start stop-gate once
 > already (audit L3-1) — that is why this section exists.
 
@@ -19,12 +19,12 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `ed80996` | current main, per 2026-08-10 truth refresh |
-| Local HEAD | `ed80996` | Front A closed; deploy rebuild and AGENTS.md §9.1 hygiene rule landed |
+| origin/main | `90790aa` | current main, per 2026-08-12 truth refresh |
+| Local HEAD | `90790aa` | Front B batch merged (B0 closed, A4b closed, NEA legibility fixed); deploy surface rebuilt |
 
-**Structural one-commit lag (expected, not rot):** This file is edited after `ed80996`; any later STATUS commit will necessarily pin the previous commit, accepted (a STATUS file cannot pin its own commit).
-**Push state:** Main is recorded at `ed80996`. No agent pushes, ever.
-**Deploy boundary:** `docs/` was rebuilt at `5222810` on 2026-08-10, carrying A4 copy fixes (`77cbc10`) and the test-fixture repair (`88b9133`). Live bundles: `compareV2-C-fL9GZc.js`, `solarSystemV2-DnPXdNDE.js`.
+**Structural one-commit lag (expected, not rot):** This file is edited after `90790aa`; any later STATUS commit will necessarily pin the previous commit, accepted (a STATUS file cannot pin its own commit).
+**Push state:** Main is recorded at `90790aa`. No agent pushes, ever.
+**Deploy boundary:** `docs/` was rebuilt at `90790aa` on 2026-08-12, carrying the Front B batch (B0 toning/layout/input, A4b dominance badge + threshold toggle, NEA point legibility fix). Live bundles: `solarSystemV2-WleVJavp.js`, `compareV2-BPmHOZkI.js`, `porkchopV2-CZyNtmDi.js`, `store-DFRfRc0V.js`.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -40,7 +40,7 @@
 | Packaging / demo | 14 (About, validation card, FK3 tour, CI) | CLOSED + DEPLOYED |
 | MCP / agent surface | 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`) |
 | Agent-honesty study | **16** | **CLOSED 2026-08-02 — HAS A RESULT** |
-| Mission planning | **17** (Target Compare + viewer QOL) | **FOUNDING LOCKED rev B 2026-08-04** (`SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, with A2 the DEC-17-8 breadth erratum at `d204cea`) — Front A: **CLOSED** (shipped, source-reconciled, test-true, CI-green). Front B: QOL backlog remains open in `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`; B0 partially landed in seven commits (`fbdd8da`, `c0b578f`, `1b42e78`, `63ca402`, `4d483e5`, `a3a1981`, `8d6bdf8`). |
+| Mission planning | **17** (Target Compare + viewer QOL) | **FOUNDING LOCKED rev B 2026-08-04** (`SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, with A2 the DEC-17-8 breadth erratum at `d204cea`) — Front A: **CLOSED**, A4b residuals now also closed. Front B: **B0 CLOSED**; B1/B2/B3-B5 open (B3-B5 cuttable per §5). Backlog: `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`. See the Slice 17 section below. |
 
 ## Slice 16 — closed, with data
 
@@ -62,12 +62,30 @@
 
 ---
 
-## Test State (measured 2026-08-10)
+## Slice 17 — Front A closed, Front B B0 closed
+
+**Front A residuals CLOSED (A4b).** DEC-17-3 dominance badge at `525cd48` — three-state Pareto (dominated / nondominated / insufficient-data) over the DEC's three metrics, **no composite score**; rows lacking any metric take insufficient-data, never a losing badge. DEC-17-8 threshold toggle at `82996ee` — relative Δ=5 | absolute 25, **both labeled with their values**, the absolute read from `metadata.feasibleC3MaxKm2S2` at runtime rather than a literal.
+
+**Front B B0 CLOSED.** Orbit contrast, responsive panel widths + footer wrap, porkchop-modal hotkey gating, cost-card C3 units (`7593616`, `7a3622d`, `4daa199`).
+
+**NEA point legibility — FIXED STRUCTURALLY (`358d379`).** Root cause was never brightness: the point shader was missing the pixel-ratio term the starfield shader has, a **2× linear / 4× area** disadvantage on a DPR-2 display. Minimum point size raised; maximum capped — the driver's `ALIASED_POINT_SIZE_RANGE` had been overriding the 64 px constant and permitting ~255 px halos. Screening colors resaturated so green separates from white/grey by hue. **All brightness/opacity values reverted to their originals** — two earlier retunes moved the wrong variable. Verified by the cold-reader gate: legibility survives the 100 %-starfield stress test, so the 65 % starfield default (`dc19cbd`) is **optional, not load-bearing**.
+
+**C2 frame verdict LANDED** (`tools/frontb-2026-08-11/`, `c90b4f6`): *"Heliocentric J2000 equatorial (ICRF) axes; scene +Z = ICRF/celestial north."* **B2 entry gate SATISFIED.** Chip caveat, binding on copy: the top-down preset views down the **ecliptic** pole while scene axes remain **equatorial** — copy must not conflate the two.
+
+**OQ-17-8 ANSWERED — CANNOT-REACH.** Source is JPL SBDB, not MPCORB, so no E/D/F letters are possible; the committed catalog carries 41,906 values, all numerals 0-9 plus 10 nulls.
+
+**OPEN DEBT — A4c.** DEC-17-4's context/quality columns are **mandated and unshipped**: H-derived size **as a range**, and condition code raw + qualitative label + the verbatim MPC warning. OQ-17-9's albedo-0.14 disclosure belongs on the size column.
+
+**NEW FINDING (B1/B2 discoverability):** the orbit-class tabs (ATE / APO / AMO / IEO) do **not** filter the 3D point cloud — a screening class cannot be isolated visually.
+
+---
+
+## Test State (measured 2026-08-12)
 
 | Suite | Command | Result |
 |---|---|---|
-| CI | GitHub Actions run #73 | **green** at `5222810` |
-| Root recursive | `node tools/run-tests.mjs` | 74 files discovered; **73 pass / 1 environmental load failure**; 246 tests pass / 1 fail |
+| CI | GitHub Actions | **green** at `90790aa` — run number NOT SUPPLIED in the 2026-08-12 refresh input; pin it on the next edit rather than trusting a guess |
+| Root recursive | `node tools/run-tests.mjs` | 74 files discovered; **73 pass / 1 environmental load failure**; 246 tests pass / 1 fail (re-measured 2026-08-12 on the Front B branch) |
 | Focused compare data | `node --test tests/v2-compare-data.test.mjs` | **17 / 17 pass** after fixture repair at `88b9133` |
 | Slice 16 harness | `node --test tools/slice16-harness/test/*.test.mjs` | **191 / 191 pass** when last measured |
 
@@ -90,16 +108,35 @@
 | `88b9133` | test-fixture repair, fabrication diagnosis retracted |
 | `5222810` | deploy rebuild carrying `77cbc10` + `88b9133` |
 | `ed80996` | AGENTS.md §9.1 — N/N-or-not-green, red-CI-blocks-push, build-only-from-clean-tree |
+| `525cd48` | A4b dominance badge (DEC-17-3, three-state Pareto, no composite) |
+| `82996ee` | A4b threshold mode toggle (DEC-17-8, both modes labeled with values) |
+
+**Front B commit ledger (Slice 17, batch `S-S17-FRONTB-BATCH-2026-08-11-A`):**
+
+| Commit | Change |
+|---|---|
+| `7593616` | B0 orbit contrast + first NEA point toning |
+| `7a3622d` | B0 responsive panel widths + footer wrap |
+| `4daa199` | B0 porkchop-modal hotkey gating + cost-card C3 units |
+| `c90b4f6` | batch run report + C2 frame verdict (`tools/frontb-2026-08-11/`) |
+| `13580b1` | NEA point retune (superseded — brightness was the wrong axis) |
+| `dc19cbd` | starfield default 100 % → 65 %; focused-orbit opacity 0.6 → 0.75 |
+| `358d379` | NEA legibility structural fix — pixel-ratio parity, size floor/cap, hue resaturation |
+| `b9d25cf` | orbit-opacity assertions derived from source constants, not literals |
+| `90790aa` | deploy rebuild carrying the batch |
 
 ---
 
 ## Next Session
 
 1. **2026-08 corpus recovery: CLOSED (verified 2026-08-04).** All seven Perplexity re-fetches are tracked: `tools/slice21-research/literature/{P1_EPHEMERIS,P2_EARTH_ORIENTATION,P3_PROPAGATION,P4_SATELLITES,P5_CATALOG_FRESHNESS,QOL_UX}_RESULT.md` + `strategy/research/EXPLAINER_RESULT.md`. The four V6/V7 verification artifacts also landed: prompts at `aebca4a`, results at `efd6409`. The previously-cited `DISPATCH_RESEARCH_INGEST_revA` exists nowhere in the repo (it lives only in the local intake dir `~/aster-intake-2026-08/`); the re-run instruction is removed because the recovery it drove is complete.
-2. **Open next:** Front B QOL backlog in `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`.
-3. **Node local-version unify:** align local Node 20 -> 24 to retire the `tests/v2-golden/launch-vehicles.golden.test.mjs` environmental exception.
-4. **Work HUDSON'S QUEUE** in `tools/slice16-harness/CLOSE_REPORT.md`; all 14 paths under `tools/slice16-harness/runs/` are tracked evidence.
-5. CI hardening (L4-1/L4-3): MCP + Slice 16 suites into Actions; truthful default `npm test`.
+2. **Remaining Slice 17:** **B1**, **B2** (entry gate satisfied by the C2 verdict), **B3-B5** (cuttable per founding §5), **A4c** (the mandated-and-unshipped DEC-17-4 context/quality columns), and **close-out**: D-07 erratum, OQ-17-9 disposition, OQ-17-4 roadmap ruling, §8 ritual. Backlog: `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`.
+3. **Orbit-class tabs do not filter the 3D point cloud** (ATE/APO/AMO/IEO) — a screening class cannot be isolated visually. Route into B1/B2 discoverability.
+4. **Node local-version unify:** align local Node 20 -> 24 to retire the `tests/v2-golden/launch-vehicles.golden.test.mjs` environmental exception.
+5. **Work HUDSON'S QUEUE** in `tools/slice16-harness/CLOSE_REPORT.md`; all 14 paths under `tools/slice16-harness/runs/` are tracked evidence.
+6. CI hardening (L4-1/L4-3): MCP + Slice 16 suites into Actions; truthful default `npm test`.
+
+**Hardware constraint (recorded 2026-08-12):** desktop available **2 more days**; laptop-only thereafter. Sequence anything that wants the desktop — visual gates, full-suite runs, deploy verification — inside that window.
 
 **2026-08-04 · sweep record:** `S-REPO-SWEEP-2026-08-04-A` (independent read-only multi-lens sweep, 9 HIGH findings) ran. This refresh addresses only the STATUS falsehoods and the S17 evidence-header provenance (R-01/R-02). Remaining findings OPEN and deliberately not addressed here: UI copy R-04/R-13 · build reproducibility R-03/R-05/R-16 · label drift R-17.
 
@@ -130,7 +167,7 @@
 |---|---|
 | V1 | Straight green line artifact on Bennu / asteroid 100926. |
 | V2 | NEA cloud vanishes at high zoom-in. |
-| V3 | Starfield density / brightness tuning. |
+| V3 | Starfield density / brightness tuning. Default lowered 100 % → 65 % at `dc19cbd`; the cold-reader gate then showed NEA legibility survives 100 %, so this default is a preference, not a fix. Density untouched. |
 | V4 | Focus-transition `camera.far` clipping during tween. |
 | V5 | Wheel-during-tween `preventDefault` leak. |
 | V6 | Same-row refocus zoom behavior. |
