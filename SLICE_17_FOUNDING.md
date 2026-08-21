@@ -533,6 +533,56 @@ OQ-17-9  What albedo does the existing catalog's H-derived
 (Subsequent amendments, cut-rule invocations, audit outcomes, and the close
 entry append below. Additive only; prove with git diff | grep '^-'.)
 
+2026-08-13 · CUT — Front B tiers B3-B5 descoped; tiers B0-B2 shipped
+  [S-S17-CLOSE-2026-08-13-A] · Hudson ruled 2026-08-13. Additive §8 record of
+  the cut, per the §5 CUT RULE requirement that a cut be a history entry, not a
+  silent omission.
+
+  SHIPPED (Front B tiers 0-2 — the protected scope):
+  - B0 small-fix sweep: 7593616 (orbit contrast + NEA point toning), 7a3622d
+    (responsive panel widths + footer wrap), 4daa199 (porkchop-modal hotkey
+    gating + cost-card C3 units).
+  - NEA point legibility structural fix: 358d379 (pixel-ratio parity, size
+    floor/cap, hue resaturation) — the load-bearing legibility fix, verified by
+    the cold-reader 100%-starfield stress test.
+  - B1 Tier 1 (hidden→visible): 1e99aca (pan as camera-target offset,
+    "⌂ Reset view"), 3a7c686 (discoverability: "?" overlay + tooltip badges).
+  - B2 Tier 2 (honesty surface): 325c115 (scale/frame chips + axis triad + HUD),
+    on the C2 frame verdict landed at c90b4f6 — B2 entry gate satisfied.
+
+  CUT (from the bottom, B5 → B4 → B3, per the §5 CUT RULE):
+  - B3 Tier 3 — selection/label correctness: click-priority model (T3-1:
+    semantic rank within hit aperture — label owner > major body > orbit curve >
+    minor-body point; kills the "clicked Earth, got 2019 UJ15" class) · label
+    collision suppression + priority tiers (T3-2).
+  - B4 Tier 4: ecliptic/heliocentric reference grid toggle (T4-1) · Frame
+    Selected / Frame All as distinct commands (T4-2).
+  - B5 deferred tail: disambiguation picker (T3-3, only after T3-1 is measured
+    in use) · layered novice/pro IA (T4-3 — the backlog's own caveat, "probably
+    not worth it; audience uniformly technical").
+
+  AUTHORITY — the §5 CUT RULE, quoted verbatim (§5, lines 345-347):
+    "CUT RULE: cut from the bottom, B5 → B4 → B3. B0–B2 protected (the
+    first-sixty-seconds fix and the honesty surface). Front A is never cut in
+    favor of Front B. Any cut is a §8 history entry, not a silent omission."
+  and DEC-17-9 ("Phasing + cut rule §5"). This cut removes B5 → B4 → B3 in the
+  mandated bottom-up order, leaves the protected B0-B2 shipped, and does not
+  touch Front A (CLOSED). (Dispatch note: the S-S17-CLOSE dispatch cited this
+  authority as "AGENTS.md §5/§8"; that was a document-name error — AGENTS.md §5
+  is the Nova role and §8 is prior-art notes. The rule lives here, at this
+  document's §5/§8, and Hudson confirmed the substitution 2026-08-13.)
+
+  REASON (Hudson, plainly): the slice's protected scope — the first-sixty-
+  seconds legibility fix and the honesty surface — shipped. B3-B5 are
+  enhancements, not commitments. The work moved to a laptop-only environment
+  (desktop retired 2026-08-13); the cut closes Slice 17 at a verified, shipped
+  state rather than leaving it open indefinitely.
+
+  WHERE THE CUT WORK GOES: strategy/SLICE21_QOL_BACKLOG_TRIAGED.md already
+  carries these as Tier 3 (T3-1/T3-2/T3-3) and Tier 4 (T4-1/T4-2/T4-3); its
+  Tier 4 is annotated "larger scene work (natural Slice 21 core)", aligning with
+  OQ-17-4's Slice 21 rescope. B3-B5 carry forward there.
+
 ═══════════════════════════════════════════════════════════════════════════
 §9. VERIFICATION BINDINGS
 ═══════════════════════════════════════════════════════════════════════════
