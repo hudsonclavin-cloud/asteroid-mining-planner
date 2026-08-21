@@ -583,6 +583,50 @@ entry append below. Additive only; prove with git diff | grep '^-'.)
   Tier 4 is annotated "larger scene work (natural Slice 21 core)", aligning with
   OQ-17-4's Slice 21 rescope. B3-B5 carry forward there.
 
+2026-08-13 · OQ DISPOSITIONS — OQ-17-3, OQ-17-4, OQ-17-5, OQ-17-9
+  [S-S17-CLOSE-2026-08-13-A] · Hudson ruled 2026-08-13. Additive; each OQ line
+  in §7 stands as written, this entry is the disposition of record.
+
+  OQ-17-3 (final dominance metric set) — CLOSED. The A4b dominance badge shipped
+  at 525cd48 ("dominance badge per DEC-17-3 — three-metric, no composite"):
+  three-state Pareto (dominated / nondominated / insufficient-data) over exactly
+  the three metrics OQ-17-3 named — best practical window C3, max window breadth
+  cells, delivered mass @ selected vehicle — with no composite score; rows
+  lacking any metric take insufficient-data, never a losing badge. Shipping the
+  badge over that set IS the finalization DEC-17-3 delegated to this OQ
+  ("Metric-set finalization = OQ-17-3"); the question is fully answered.
+  PHASE-LABEL CORRECTION (not a residual): OQ-17-3 anticipated "lock at A3"; the
+  set in fact locked one phase later, at A4b (525cd48). The lock is complete —
+  only the phase label differs.
+
+  OQ-17-5 (marker rim-decay shortfall) — RULED (b). Accept the measured
+  ~7-7.5 CSS px effective rim decay (vs the 8 px floor) as a logged rendering
+  property. The B2 chip (325c115) states the code-enforced 8 px floor
+  (DEFAULT_MIN_HALO_DIAMETER_PX, halos.ts:9), which is true as stated per
+  DEC-17-9 C1. Evidence: tools/batch2-2026-08-12/OQ_17_5_EVIDENCE.md — the cause
+  is a texture property (halos.ts:146-149: the radial-gradient alpha decays to 0
+  at the rim), not a sizing bug; the geometry honors the floor, the perceived
+  edge does not. Option (a), the one-file halo-texture fix (move the last
+  gradient stop inward), remains available as a visually-gated one-file change if
+  the sub-perceptual shortfall later matters.
+
+  OQ-17-9 (albedo disclosure) — DISPOSED. The catalog's H-derived size assumes
+  albedo p_V = 0.14 ± 0.02, disclosed on the compare page's size column (shipped
+  60a6fb6; the 0.14 is generator-verified and the display shares the catalog
+  core function, so it cannot drift). Attribution VERIFIED against
+  tools/slice17-research/literature/V6_H_TO_DIAMETER_VERIFIED.md:33 — "p_V =
+  0.14 ± 0.02 — the bias-corrected mean albedo of the NEO population — Stuart,
+  J.S. & Binzel, R.P. (2004), 'Bias-corrected population, size distribution, and
+  impact hazard for the near-Earth objects,' Icarus 170, 295–311" — matching
+  DEC-17-4's citation. Taxonomy-driven per-body albedo is a future-slice ingest,
+  not a Slice 17 commitment.
+
+  OQ-17-4 (Slice 21 rescope) — RULED: rescoped to Slice 21. Front B has absorbed
+  the QOL backlog (Tiers 1-2 shipped; Tiers 3-4 cut and carried forward), so
+  Slice 21 reduces to its Living Sky core — the ephemeris/live-sky work (P1-P5
+  research). Carried by strategy/SLICE21_QOL_BACKLOG_TRIAGED.md, whose Tier 4 is
+  the annotated "natural Slice 21 core".
+
 ═══════════════════════════════════════════════════════════════════════════
 §9. VERIFICATION BINDINGS
 ═══════════════════════════════════════════════════════════════════════════
