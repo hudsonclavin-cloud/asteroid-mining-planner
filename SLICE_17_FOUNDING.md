@@ -627,6 +627,34 @@ entry append below. Additive only; prove with git diff | grep '^-'.)
   research). Carried by strategy/SLICE21_QOL_BACKLOG_TRIAGED.md, whose Tier 4 is
   the annotated "natural Slice 21 core".
 
+2026-08-13 · ERRATUM D-07 — DEC-17-8 Δ=2 component count (additive; the
+  DEC-17-8 line stands as written, this entry is the correction of record).
+  [S-S17-CLOSE-2026-08-13-A] · Hudson ruled 2026-08-13. Distinct from AMENDMENT
+  A2 above (the DEC-17-8 breadth day-value erratum); this corrects a component
+  COUNT, not the breadth convention.
+
+  DEC-17-8's segmentation rationale states, verbatim: "Δ=2 is too tight (163693
+  → 1 component; structure disappears)". The committed measurement artifact
+  records TWO components, not one.
+    Artifact: tools/slice17-research/data/s17-structure-7day.json — introduced
+      and held at 806745c, the exact commit DEC-17-8 cites.
+    Location: bodies[163693].structure.liveMinPlus2 (Δ=2; thresholdKm2S2 =
+      8.756119518901183 = live.minC3 6.7561195189011825 + 2).
+    Value: componentCellCounts.conn8 = [1, 1] — two components, each cellCount 1
+      (single-cell, breadthDays 0). conn4 is likewise [1, 1].
+  CORRECT VALUE: 2 components at Δ=2 (both single-cell), not 1.
+
+  No decision or classification result changes. Both components are single-cell,
+  so zero satisfy B_min ≥ 2 (DEC-17-8); 163693 still has NO practical window at
+  Δ=2, and the conclusion — "structure disappears", and §1's "zero components
+  wider than a single departure cell at Δ=2" — stands unaltered. The Δ=5 lock is
+  untouched. The error is confined to the parenthetical count "1 component",
+  which should read "2 single-cell components".
+
+  Lesson, alongside A1/A2: a component COUNT cited from an artifact is read from
+  that artifact's component array (componentCellCounts.conn8), not recalled — the
+  record holds two single-cell components where the rationale recalled one.
+
 ═══════════════════════════════════════════════════════════════════════════
 §9. VERIFICATION BINDINGS
 ═══════════════════════════════════════════════════════════════════════════
