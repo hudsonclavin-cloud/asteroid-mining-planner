@@ -19,11 +19,11 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `5a00907` | current main, per 2026-08-13 truth refresh |
-| Local HEAD | `5a00907` | Batch 2 shipped; deploy surface rebuilt |
+| origin/main | `5a00907` | last pushed; the Slice 17 CLOSE commits are local-only, unpushed |
+| Local HEAD | `2ef0133` | Slice 17 CLOSE ritual (`S-S17-CLOSE-2026-08-13-A`); STATUS lags HEAD by this 2-5 commit — see the lag note |
 
-**Structural one-commit lag (expected, not rot):** This file is edited after `5a00907`; any later STATUS commit will necessarily pin the previous commit, accepted (a STATUS file cannot pin its own commit).
-**Push state:** Main is recorded at `5a00907`. No agent pushes, ever.
+**Structural one-commit lag (expected, not rot):** This file is edited after `2ef0133` (the `S-S17-CLOSE-2026-08-13-A` 2-4 hand-commit); this 2-5 STATUS commit pins that previous commit and therefore lags HEAD by exactly one, accepted (a STATUS file cannot pin its own commit).
+**Push state:** origin/main is recorded at `5a00907`; the S-S17-CLOSE commits `af527e7` / `c3f4817` / `14f1ee9` / `2ef0133` and this STATUS commit are local-only and unpushed. No agent pushes, ever.
 **Deploy boundary:** `docs/` was rebuilt at `5a00907` on 2026-08-13, carrying Batch 2 (A4c size-range + orbit-quality columns, B2 scale/frame chips + axis triad + HUD, B1 pan/reset/discoverability). Live bundles: `solarSystemV2-C60RP1nx.js`, `compareV2-BPtoAvbN.js`, `porkchopV2-C8hMf2EQ.js`, `store-BAStm0cU.js`.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
@@ -40,7 +40,7 @@
 | Packaging / demo | 14 (About, validation card, FK3 tour, CI) | CLOSED + DEPLOYED |
 | MCP / agent surface | 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`) |
 | Agent-honesty study | **16** | **CLOSED 2026-08-02 — HAS A RESULT** |
-| Mission planning | **17** (Target Compare + viewer QOL) | **FOUNDING LOCKED rev B 2026-08-04** (`SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, with A2 the DEC-17-8 breadth erratum at `d204cea`) — Front A: **CLOSED**, A4b residuals closed. Front B: **Batch 2 SHIPPED** (B0 closed, B1/B2 shipped, A4c partial shipped); B3-B5 remain cuttable per §5. Remaining close-out is docs-layer/laptop-compatible. Backlog: `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`. See the Slice 17 section below. |
+| Mission planning | **17** (Target Compare + viewer QOL) | **CLOSED 2026-08-13** (`S-S17-CLOSE-2026-08-13-A`; founding `SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, plus this dispatch's cut entry + OQ dispositions + D-07 erratum). Front A **CLOSED** (A4b residuals closed). Front B tiers **B0-B2 shipped**, **B3-B5 CUT** per the §5 CUT RULE → carried by `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`. OQ-17-3/-4/-5/-8/-9 disposed; residual non-blocking items in the Slice 17 section below. |
 
 ## Slice 16 — closed, with data
 
@@ -62,7 +62,7 @@
 
 ---
 
-## Slice 17 — Front A closed, Front B Batch 2 shipped
+## Slice 17 — CLOSED 2026-08-13 (Front A closed; Front B B0-B2 shipped, B3-B5 cut)
 
 **Front A residuals CLOSED (A4b).** DEC-17-3 dominance badge at `525cd48` — three-state Pareto (dominated / nondominated / insufficient-data) over the DEC's three metrics, **no composite score**; rows lacking any metric take insufficient-data, never a losing badge. DEC-17-8 threshold toggle at `82996ee` — relative Δ=5 | absolute 25, **both labeled with their values**, the absolute read from `metadata.feasibleC3MaxKm2S2` at runtime rather than a literal.
 
@@ -76,7 +76,9 @@
 
 **OQ-17-8 ANSWERED — CANNOT-REACH.** Source is JPL SBDB, not MPCORB, so no E/D/F letters are possible; the committed catalog carries 41,906 values, all numerals 0-9 plus 10 nulls.
 
-**OPEN ITEMS from Batch 2.** OQ-17-5 ruling is pending; agent recommendation is (b) accept the shortfall, with the chip stating the code-enforced floor. A4c still has residual DEC-17-4 columns unbuilt: orbit class, a/e/i, `dataArcDays`, `nObsUsed`, and sigmas — fields are loaded, rendering is not. Touch pan still needs per-`pointerId` tracking before touch support is honest. `MAX_CAMERA_DISTANCE_M` has a one-line headroom lever, not pre-approved.
+**CLOSE-OUT (`S-S17-CLOSE-2026-08-13-A`, 2026-08-13).** Slice 17 is CLOSED. §8 close entries: the B3-B5 cut (authority = §5 CUT RULE, quoted verbatim); OQ dispositions — OQ-17-3 CLOSED by the A4b badge `525cd48` (three metrics, no composite; locked at A4b not A3, a phase-label note); OQ-17-5 RULED (b), accept the ~7-7.5 CSS px rim shortfall with the chip stating the 8 px code floor; OQ-17-9 DISPOSED, albedo `0.14` (Stuart & Binzel 2004, V6-verified); OQ-17-4 rescoped to Slice 21; and the D-07 erratum (DEC-17-8 Δ=2 count 1→2, both single-cell). B3-B5 carry forward in `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`.
+
+**Carried forward, OPEN and non-blocking:** A4c residual DEC-17-4 columns unbuilt — orbit class, a/e/i, `dataArcDays`, `nObsUsed`, sigmas (fields loaded, rendering not built). Touch pan needs per-`pointerId` tracking before touch support is honest. `MAX_CAMERA_DISTANCE_M` has a one-line zoom-out headroom lever, not pre-approved. Orbit-class tabs (ATE/APO/AMO/IEO) do not filter the 3D point cloud (detail below). **Live gate letter (f) — pan + a 10 s no-flicker watch on the deployed site — NOT YET CONFIRMED.** Environment: laptop-only, Windows, Node v24.18.0.
 
 **NEW FINDING (B1/B2 discoverability):** the orbit-class tabs (ATE / APO / AMO / IEO) do **not** filter the 3D point cloud — a screening class cannot be isolated visually.
 
