@@ -87,7 +87,7 @@
 | Suite | Command | Result |
 |---|---|---|
 | CI | GitHub Actions run #78 | **green** at `5a00907` |
-| Root recursive | `node tools/run-tests.mjs` | 74 files discovered; **73 pass / 1 environmental load failure**; 246 tests pass / 1 fail (re-measured 2026-08-12 on the Front B branch) |
+| Root recursive | `node tools/run-tests.mjs` | **74/74 files pass; 256 tests pass / 0 fail** (Hudson, 2026-08-13, Windows / Node v24.18.0 — the golden-numbers loader test now loads under Node 24; the 246→256 delta is that test. Prior Node-20 record: 73/74 files, 246 pass / 1 load failure, 2026-08-12) |
 | Focused compare data | `node --test tests/v2-compare-data.test.mjs` | **17 / 17 pass** after fixture repair at `88b9133` |
 | Slice 16 harness | `node --test tools/slice16-harness/test/*.test.mjs` | **191 / 191 pass** when last measured |
 
@@ -95,7 +95,7 @@
 
 **CI history:** Runs #70-72 were red, root-caused to two **false test-fixture premises** in `tests/v2-compare-data.test.mjs`, not source defects. The earlier diagnosis (fabricated delivered-mass, back-derived `liveMin`) was **retracted** after adjudication against `compare-data.ts:303-308` and `compare-data.ts:330-335`, which were already correct. Fixtures repaired at `88b9133`.
 
-**Known environmental exception (AGENTS.md §9.1 rule 1):** `tests/v2-golden/launch-vehicles.golden.test.mjs` fails to load on local Node 20 with `ERR_UNKNOWN_FILE_EXTENSION` on a `.ts` import; it passes in CI on Node 24. Retire this exception when the Node-version unify (Node 20 -> 24 locally) lands.
+**Environmental exception registry: EMPTY (retired 2026-08-13).** The former AGENTS.md §9.1 rule 1 exception — `tests/v2-golden/launch-vehicles.golden.test.mjs` failing to load on local Node 20 with `ERR_UNKNOWN_FILE_EXTENSION` on a `.ts` import — is RETIRED: the laptop runs Node v24.18.0, the file loads and passes, and the full suite is **74/74 · 256 · 0** (Hudson, 2026-08-13). The last Node-20 machine (the iMac) is retired; the Node-version unify is effectively complete for the local environment.
 **CI gap, still open (L4-1):** CI runs neither the MCP package tests nor the Slice 16 suite, and the default `npm test` is not truthful about coverage.
 
 **Front A commit ledger (Slice 17):**

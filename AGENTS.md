@@ -317,5 +317,14 @@ when twelve src/v2 commits sat undeployed behind green CI:
    Wide churn on rebuild is a tripwire, not an expectation.
 ### §9.1 Test, CI, and artifact-order gates
 1. A test run is green at N/N or it is not green. Any nonzero failure count blocks the commit — no exceptions for "the important assertions passed" — unless the failure is a pre-recorded environmental exception named in STATUS.md (currently: tests/v2-golden/launch-vehicles.golden.test.mjs fails to load on local Node 20 with ERR_UNKNOWN_FILE_EXTENSION; it passes in CI on Node 24, and the exception retires once the Node-version unify lands).
+   _[RETIRED 2026-08-13 · S-S17-CLOSE-2026-08-13-A]_ — The Node-20 environmental
+   exception in rule 1 above is retired. The last Node-20 machine (the iMac) is
+   retired; the laptop runs Node v24.18.0, where `tests/v2-golden/launch-vehicles.golden.test.mjs`
+   loads and passes and the full suite is green at N/N — **74/74 files, 256 tests,
+   0 failures** (measured by Hudson 2026-08-13, Windows / Node v24.18.0). The
+   246→256 test-count delta versus the prior STATUS record is exactly that golden
+   loader test now loading under Node 24, where it errored `ERR_UNKNOWN_FILE_EXTENSION`
+   under Node 20. CI was already unified to Node 24. Rule 1 now stands plainly as
+   green-at-N/N with NO standing environmental exceptions.
 2. Red CI on `main` blocks the next push until investigated. Green Pages does not excuse red CI.
 3. Artifact builds run only from a tree where `git status --porcelain -- src/ tests/` is empty. Source commits precede builds, always; the `0516848` order inversion must not recur.
