@@ -19,11 +19,11 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `10f0f72` | everything through the cold-load Content-Encoding measurement was pushed 2026-08-24; verified via `git fetch` |
-| Local HEAD | `10f0f72` | pinned as the previous commit; STATUS lags HEAD by this 2026-08-24 catalog-payload findings commit — see the lag note |
+| origin/main | `46ff00f` | everything through the catalog-payload findings refresh was pushed 2026-08-24; verified via `git fetch` |
+| Local HEAD | `46ff00f` | pinned as the previous commit; STATUS lags HEAD by this 2026-08-24 Slice-18-seating commit — see the lag note |
 
-**Structural one-commit lag (expected, not rot):** This file is edited after `10f0f72` (the cold-load Content-Encoding measurement); this 2026-08-24 catalog-payload findings STATUS commit pins that previous commit and therefore lags HEAD by exactly one, accepted (a STATUS file cannot pin its own commit).
-**Push state:** origin/main is at `10f0f72` — everything through `10f0f72` was pushed 2026-08-24. This catalog-payload findings STATUS commit is the only local-only, unpushed change. No agent pushes, ever.
+**Structural one-commit lag (expected, not rot):** This file is edited after `46ff00f` (the catalog-payload findings refresh); this 2026-08-24 Slice-18-seating STATUS commit pins that previous commit and therefore lags HEAD by exactly one, accepted (a STATUS file cannot pin its own commit).
+**Push state:** origin/main is at `46ff00f` — everything through `46ff00f` was pushed 2026-08-24. This Slice-18-seating STATUS commit is the only local-only, unpushed change. No agent pushes, ever.
 **Deploy boundary:** `docs/` was rebuilt at `5a00907` on 2026-08-13, carrying Batch 2 (A4c size-range + orbit-quality columns, B2 scale/frame chips + axis triad + HUD, B1 pan/reset/discoverability). Live bundles: `solarSystemV2-C60RP1nx.js`, `compareV2-BPtoAvbN.js`, `porkchopV2-C8hMf2EQ.js`, `store-BAStm0cU.js`.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
@@ -41,6 +41,7 @@
 | MCP / agent surface | 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`) |
 | Agent-honesty study | **16** | **CLOSED 2026-08-02 — HAS A RESULT** |
 | Mission planning | **17** (Target Compare + viewer QOL) | **CLOSED 2026-08-13** (`S-S17-CLOSE-2026-08-13-A`; founding `SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, plus this dispatch's cut entry + OQ dispositions + D-07 erratum). Front A **CLOSED** (A4b residuals closed). Front B tiers **B0-B2 shipped**, **B3-B5 CUT** per the §5 CUT RULE → carried by `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`. OQ-17-3/-4/-5/-8/-9 disposed; residual non-blocking items in the Slice 17 section below. |
+| Mission planning | **18** (Screening Fidelity) | **SEATED 2026-08-24** — DEC-18-1..4 locked. Front A (solver/revolution consistency) has a finding: the dedicated porkchop ships a fixed `M: 1` against DEC-5 / INV-016b. Front B (NEA drift measurement) open; Front C (per-object fidelity surface) gated on B. Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
 
 ## Slice 16 — closed, with data
 
@@ -107,6 +108,91 @@ All four are observations from a SINGLE record. No remedy chosen.
 **False precision in generated catalog data, observed 2026-08-24 (honesty layer; separate from payload size).** `estimatedRadiusM: 14839.899761463936` — approximately 16 significant figures — is derived from `H: 10.39` (4 significant figures) and an assumed geometric albedo of `0.14` (Stuart & Binzel 2004, disclosed per OQ-17-9 / A4c). The emitted value states a precision the inputs cannot support. Related: `positionKm` values such as `-184294550.5137226` carry sub-millimetre precision on a heliocentric position in a record tagged `inv014Tier: "visualization-tier"`. The in-app disclosure box already states that asteroid radii are estimated from brightness, so the UI's claim is honest; the finding is that the generated data file itself asserts more precision than its inputs justify. Scope of the finding: the generated asset. Whether any consumer (screening, Lambert, display) depends on digits beyond a defensible cutoff is NOT verified. No remedy chosen; not scheduled.
 
 **Blank-page incident 2026-08-23 — rAF-gated-boot hypothesis REJECTED (first recorded here, not a restoration).** A blank page with an empty `#app` and no console error was observed on 2026-08-23 and self-resolved. The rAF-gated-boot hypothesis — that the mount awaited an animation frame, which browsers pause in hidden tabs — was TESTED and REJECTED: a background-born tab (opened via Alt+Enter, unfocused 20 s) rendered normally on focus. The permanent black screen Clome reported across three runs was an artifact of its own harness (its automation tab runs `document.hidden = true`; a 3.4 s `requestAnimationFrame` probe fired zero frames), not site behavior. [Likely] the incident was the cold-load catalog fetch recorded above, which explains every symptom including the self-resolution. The recurrence trigger changes accordingly: an init-race recon on `runtime.ts` is no longer the indicated first move; a recurrence should first be checked against the cold-load path.
+
+---
+
+## Slice 18 — SEATED 2026-08-24 (Screening Fidelity)
+
+**Seated as Screening Fidelity (2026-08-24).** Mission View (animated transfer arc + uncertainty envelope) was evaluated and **DEFERRED, not cancelled** — see DEC-18-4. Three fronts: **Front A** — solver/revolution consistency on the shipped screening surfaces; **Front B** — closing the NEA propagation-drift measurement gap; **Front C** — a per-object fidelity surface built from Front B's results. **Front C is gated on Front B.**
+
+All measurements below were produced by read-only local runs with **no network**, using only committed fixtures and the repo's own math. Artifacts are named per measurement and are **NOT in version control**; they live in `C:\Users\hudso\Documents\aster-slice18\`.
+
+### DECs locked for Slice 18
+
+**DEC-18-1 — Endpoint states are recomputed, never retained.** The screening layer's endpoint states (r1, v1, r2, v2) are discarded: the live worker strips v1/v2 and `lambert-screen-cache.json` holds only derived scalars. They are deterministically recomputable from stored inputs, and this was demonstrated: the cached Eros cell (minC3 `1.6244339770173506`, 2032-06-10, TOF 272 d) was recomputed from stored inputs to **4.101e-16 relative on C3, 1.742e-16 on vInfDep, exact on vInfArr** — machine epsilon. Five bodies' full-grid argmins matched their cached minC3 below 1e-9 relative. Retention would duplicate a derivable number and invite drift; recomputation makes drift structurally impossible. Measured 2026-08-24, local, no network.
+
+**DEC-18-2 — No quantitative uncertainty geometry ships in Slice 18.** An uncertainty envelope derived from the catalog's element sigmas is **REJECTED as indefensible**. Evidence: the along-track phase sensitivity from `sigmaA` for 433 Eros at a 10-year horizon is **~1.3 km** (derived, not measured in this arc: `sigmaA` 1.5722e-10 AU from the committed catalog, a = 218,150,587.7 km, n = 1.1306e-7 rad/s, via the standard along-track relation 1.5·n·δa·t; independently re-derived at 1.259 km during this commit's verification), while the repo's own two-body propagator drifts from JPL-integrated truth by **~10⁵ km** over the screening window for well-behaved planets — five orders of magnitude. A ribbon drawn from `sigmaA` would depict an error bar far narrower than the model error containing it. Condition code renders as its raw MPC category and is **NEVER** converted to kilometres; it is an ordinal longitude-runoff band, not a Cartesian uncertainty. Superseded only by a real state covariance plus perturbed propagation.
+
+**DEC-18-3 — Disclosure is per-object and measured, or qualitative.** Two-body drift depends strongly on the **anchor epoch**, not on elapsed time alone: up to ~12× difference for the same elapsed time depending on which epoch anchored the elements, and forward propagation differs from backward. Aster's asteroids each carry one fixed SBDB element epoch, so every body has its own error curve. **No global "± X km at N years" claim is defensible.** Each object gets a measured number or an honest refusal.
+
+**DEC-18-4 — Mission View is DEFERRED, not cancelled.** Its stated rationale was that the uncertainty envelope IS the honesty. DEC-18-2 removes the envelope. What remains is an animated arc labeled screening-grade — a legitimate feature, but no longer a distinctive contribution to the honesty thesis. It re-enters as a later slice once Front B establishes what an arc would be drawn on top of. Recorded so the deferral is legible rather than looking like drift.
+
+### Measurement: two-body drift vs Horizons (2026-08-24)
+
+Local, no network, using only committed fixtures (`horizons-inner-solar-system-2026-2040.json`: 6 targets, 5,479 daily records, ICRF/J2000, TDB, km) and the repo's own propagator plus `cartesianToElements`. **Sanity check passed before any drift numbers:** drift at the anchor epoch was sub-metre for every body. Position drift, two-body propagation from a single-epoch anchor vs JPL-integrated truth, **kilometres**:
+
+| body | +1 y | +5 y | +10 y | final (~15 y) | max |
+|---|---|---|---|---|---|
+| mercury | 1,563 | 18,974 | 45,346 | 42,020 | 71,364 |
+| venus | 3,715 | 47,680 | 115,561 | 173,336 | 173,767 |
+| earth (geocenter 399) | 1,154,008 | 5,737,233 | 11,486,568 | 17,210,425 | 17,215,899 |
+| mars | 31,823 | 107,640 | 74,500 | 89,425 | 120,455 |
+
+**LIMITATION, prominent: these are PLANETS.** Near-Earth asteroids are worse behaved — higher eccentricity, planetary close approaches. This is a **FLOOR** on the error the screening layer incurs for asteroids, **not an estimate of it**.
+
+**Earth note:** the fixture's `earth` is targetId 399, the **geocenter**, not the Earth-Moon barycenter. Deriving elements from the wobbling geocenter's instantaneous state yields a = 0.998198 AU, a period error of −0.432 d, which accounts for the nearly linear ~1.15M km/yr growth. The screening layer **interpolates** Earth rather than propagating it, so this row is anchor-sensitivity evidence, **not a screening-path error**.
+
+**Anchor dependence:** up to ~12× drift difference for identical elapsed time (venus at 5 y: 47,680 first-forward vs 16,745 mid-forward vs 4,057 mid-backward km); forward ≠ backward (mars at 5 y: 120,399 vs 44,971 km).
+
+Artifacts (not in version control): `measure-two-body-drift.mjs`, `TWO_BODY_DRIFT_MEASUREMENT.md`, `two-body-drift-results.json`.
+
+### Measurement: C3 robustness under drift-scale perturbation (2026-08-24)
+
+Reproduction gate passed at machine epsilon before any sensitivity numbers. At the 10⁵ km planet-floor drift scale, perturbing the arrival state along-track, radially, and cross-track: worst-direction ΔC3 ranged **1.4e-3 to 5.2e-2 km²/s²** — at most **1.11%** of nominal for every body except near-zero-C3 Apophis, whose 657% is a near-zero-denominator artifact (absolute Δ 1.4e-3 km²/s²). An along-track 10⁵ km displacement equals **0.7–3.7 hours** of phase against a **168-hour** departure cell. |ΔC3| at 10⁵ km is **10×–250× smaller than one grid-cell step** (smallest adjacent step per body) and 450×–10,000× smaller than the mean step. The optimal cell **did not move in any of 15 cases at 10⁵ km**; at 10⁶ km, **3 of 15 moved**. Zero solver failures across ~2.7M solves.
+
+**Conclusion recorded:** at the drift scale the repo can currently establish, the published screening quantities are **robust**, and no screening-honesty correction is required on that basis.
+
+**[Speculative]** real NEA drift is not bounded by the planet floor; the argmin begins moving at 10⁶ km, and where real NEAs sit between those regimes is exactly what the repo cannot presently answer — **this is Front B**.
+
+Artifacts (not in version control): `c3-drift-sensitivity.mjs`, `C3_DRIFT_SENSITIVITY.md`, `c3-drift-sensitivity-results.json`.
+
+### FRONT A FINDING — the shipped porkchop diverges from DEC-5
+
+**The two Lambert solvers are BIT-IDENTICAL where their domains overlap.** On the Eros cell at M=0, izzo `lambert` and `lambertMultiRev` returned identical C3 (`1.62443397701735`), identical vInfDep, identical vInfArr, identical root x; ΔC3 exactly 0, Δv1 and Δv2 exactly [0,0,0]. **Every divergence below is STRUCTURAL — disjoint revolution families — not numerical.**
+
+| surface | solver | revolutions |
+|---|---|---|
+| catalog badge / minC3 (cache) | izzo `lambert` | M=0 only |
+| `/v2/compare/` | `lambertMultiRev` | M=0 only |
+| `/v2/porkchop/` (dedicated view) | `lambertMultiRev` | **M=1 only, fixed** |
+
+The dedicated view passes `M: 1` as a fixed literal (`app/porkchop/main.ts:916`), forwarded unchanged (`porkchop/porkchop-view.ts:583`). **M is never iterated.** At M=1, `lambertMultiRev` skips the M=0 early-return path entirely and returns null for TOF below T_min, which `grid-compute` converts to `no_solution` — even where a valid M=0 transfer exists.
+
+**THIS DIVERGES FROM A LOCKED DEC.** `SLICE_11_FOUNDING.md:103-106`, DEC-5, verbatim: *"Dedicated view: M=0/M=1 toggle is prominent. Selecting M=1 replaces the heatmap with the M=1 grid; selecting "both" overlays them (semi-transparent layers). Default state is "both" so the 28% gap is visible immediately."* And INV-016b, `SLICE_11_FOUNDING.md:27`, verbatim: *"Porkchop views must visually distinguish M=0 and M=1 solution branches. Users must be able to identify which solution branch each visible window belongs to. The dedicated view exposes an explicit M=0/M=1 toggle; the overlay shows both with distinct visual encoding."* AMD-1 (`:198`) specifies the mechanism: *"'Both' display mode (DEC-5) issues two messages (M=0 and M=1); the renderer composites."*
+
+No toggle and no second `computeGrid` message exist in the shipped code. The introducing commit is `e871297` (2026-06-25, *"feat(slice11): Phase D1 dedicated porkchop route"*), which cites no DEC or OQ; no later commit has modified the value. **No test binds the page's M — no test imports `app/porkchop` at all** — so nothing would fail if it changed. DEC-5's first two bullets were never amended; AMD-2 (`:213-215`) amends only its third bullet (branch selection).
+
+**Measured user-visible consequences**, 13-body sample, on the porkchop's own grid parameters (20,000 cells, dep step 25.693 d, TOF step 16.604 d):
+- **5 of 13 bodies render an ENTIRELY EMPTY porkchop grid** (no M=1 solution in any of the 20,000 cells) while the catalog badges a finite C3 for the same body. All five are high-eccentricity (0.88–0.996), large-a (8.6–353 AU).
+- `asteroid-2021 CG6`: cached badge **HIGH C3 (37.737)**; the M=1 grid the porkchop actually renders finds **21.199 km²/s²**, **below the 25 km²/s² feasibility threshold**. The two surfaces disagree on feasibility for the same body.
+- `asteroid-1979 XB`: M=1 minC3 `0.7098626241284557` vs M=0 `3.151477050001412` km²/s² — **4.44× better, and a different mission**: departure 2028-04-02 vs 2029-03-02, TOF 580.985 d vs 248.914 d.
+- Blank-cell fraction on bodies where M=1 solves at all: **7.2%–60.5%**.
+- **0** cells were solvable under M=1 but not M=0 in this sample; **0** solver stalls.
+
+**SAMPLE CAVEAT, mandatory: 13 of 41,906 bodies is 0.031%, and the bodies were DELIBERATELY SELECTED** to span eccentricity, condition code, and C3. **The percentages above are NOT catalog rates and must never be quoted as such.**
+
+**Independent corroboration already in the repo:** `SLICE_11_FOUNDING.md:53-55`, OQ-2 CLOSED (2026-06-30), 500-body measurement, meaningfulWinFraction = **0.242 (121/500)**, orbit-class dependent — AMO 41.6%, IEO 26.3%, APO 23.6%, ATE 7.2%.
+
+Artifacts (not in version control): `multirev-consistency.mjs`, `MULTIREV_CACHE_CONSISTENCY.md`, `multirev-consistency-results.json`.
+
+### Two documentation defects (separate from the Front A finding)
+
+- **INV-016b is unregistered.** It is declared "(new)" at `SLICE_11_FOUNDING.md:27` but does **not** appear in `INVARIANTS.md`, which carries INV-016 (`:183`), INV-016c (`:184`), INV-016d (`:185`), INV-016e (`:186`). The gap in the sequence is itself evidence registration was intended. Whether an unregistered invariant is in force is not addressed by any text found. **UNRESOLVED — requires Hudson's ruling.**
+- **DEC-5's rationale figure is stale.** DEC-5 cites *"the 28% gap"*; OQ-2 subsequently closed at meaningfulWinFraction = 0.242 (24.2%). **The ruling stands**; the number in its justification predates the measurement that followed. Recorded for additive annotation on the founding doc, not a rewrite.
+
+### Scope note
+
+The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`), and DEC-5 rules it separately (M=0 default with a small M=1 toggle adding a contour layer). Recorded as a known second surface with the same class of divergence. **Front A scope is the dedicated view; the overlay is not in Front A scope.**
 
 ---
 
