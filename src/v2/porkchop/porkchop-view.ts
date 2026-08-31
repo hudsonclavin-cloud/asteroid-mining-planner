@@ -12,6 +12,20 @@ import type { PorkchopGridParams } from './grid-compute.js';
 import type { PorkchopClient } from './porkchop-client.js';
 import type { PorkchopWorkerCell } from './porkchop.worker.js';
 import { C3_COLOR_MAX, C3_COLOR_MIN, colorForPorkchopCell } from './colormap.js';
+import { computeDualFamilyGrids, type DualFamilyGrids } from './dual-m-compute.js';
+import { compositeGrids } from './composite-grid.js';
+
+/**
+ * DEC-5 (`src/v2/SLICE_11_FOUNDING.md:105`) display families for the dedicated view.
+ * Default is "both" so the M=0/M=1 gap is visible immediately, as DEC-5 states.
+ */
+export type PorkchopFamilyMode = 'both' | 'm0' | 'm1';
+
+const FAMILY_MODE_OPTIONS: readonly (readonly [PorkchopFamilyMode, string])[] = [
+  ['both', 'Both (M=0 + M=1)'],
+  ['m0', 'M=0 only'],
+  ['m1', 'M=1 only'],
+];
 
 const HEATMAP_PIXEL_WIDTH = 200;
 const HEATMAP_PIXEL_HEIGHT = 100;
@@ -121,7 +135,18 @@ export interface PorkchopViewProps {
   readonly bodyLabel: string;
   readonly bodyElements: AsteroidOrbitalElements;
   readonly gridParams: PorkchopGridParams;
+  /**
+   * Revolution family used when `showFamilyToggle` is not set. Retained unchanged for
+   * the surfaces that ship a single family (the Phase C overlay, the smoke harness).
+   */
   readonly M: number;
+  /**
+   * Opt in to DEC-5's dedicated-view behavior: compute BOTH families (AMD-1: two
+   * messages), expose the prominent M=0/M=1/both control, and default to "both".
+   * Omitted/false keeps the historical single-family path byte-for-byte, so the
+   * overlay and the smoke harness are unaffected.
+   */
+  readonly showFamilyToggle?: boolean | undefined;
   readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellRectChange?: ((rect: PorkchopViewportRect | null) => void) | undefined;
@@ -558,7 +583,15 @@ export function PorkchopView(props: PorkchopViewProps) {
   const [hoverCell, setHoverCell] = useState<PorkchopWorkerCell | null>(null);
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<HoverTooltipPosition | null>(null);
   const [showContours, setShowContours] = useState(false);
+  // DEC-5: "Default state is "both" so the 28% gap is visible immediately."
+  const [familyMode, setFamilyMode] = useState<PorkchopFamilyMode>('both');
+  const [familyGrids, setFamilyGrids] = useState<DualFamilyGrids | null>(null);
+  const familyToggleEnabled = props.showFamilyToggle === true;
   const launchSite = props.launchSite ?? CAPE_CANAVERAL;
+  const familyComposite = useMemo(
+    () => (familyGrids === null ? null : compositeGrids(familyGrids.m0.cells, familyGrids.m1.cells)),
+    [familyGrids],
+  );
   const contourSegments = useMemo(
     () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, C3_CONTOUR_LEVELS, getSelectedBranchC3)),
     [cells, props.gridParams],
@@ -576,12 +609,25 @@ export function PorkchopView(props: PorkchopViewProps) {
     setPinnedCell(null);
     setHoverCell(null);
     setHoverTooltipPosition(null);
-    void props.client.computeGrid({
+    setFamilyGrids(null);
+    const request = {
       bodyId: props.bodyId,
       bodyElements: props.bodyElements,
       gridParams: props.gridParams,
-      M: props.M,
-    }).then((result) => {
+    };
+    // DEC-5 "both" needs both families; AMD-1 rules two messages, one M each, and
+    // computeDualFamilyGrids awaits them sequentially behind the client's
+    // single-in-flight guard. Without the toggle this is the historical single call.
+    const pending = familyToggleEnabled
+      ? computeDualFamilyGrids(props.client, request).then((grids) => {
+          if (!cancelled) {
+            setFamilyGrids(grids);
+          }
+          return { cells: grids.m0.cells, compute_ms: grids.m0.compute_ms + grids.m1.compute_ms };
+        })
+      : props.client.computeGrid({ ...request, M: props.M });
+
+    void pending.then((result) => {
       if (cancelled) {
         return;
       }
@@ -599,7 +645,25 @@ export function PorkchopView(props: PorkchopViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [props.client, props.bodyId, props.bodyElements, props.gridParams, props.M]);
+  }, [props.client, props.bodyId, props.bodyElements, props.gridParams, props.M, familyToggleEnabled]);
+
+  // DEC-5 family selection. "Selecting M=1 replaces the heatmap with the M=1 grid";
+  // "both" renders the composite, whose per-cell provenance is carried by cell.M.
+  // The pin/hover are cleared on a mode change because the cell objects differ
+  // between families — a stale pin would name the wrong family.
+  useEffect(() => {
+    if (!familyToggleEnabled || familyGrids === null || familyComposite === null) {
+      return;
+    }
+    const next =
+      familyMode === 'm0' ? familyGrids.m0.cells
+        : familyMode === 'm1' ? familyGrids.m1.cells
+          : familyComposite.cells;
+    setCells(next);
+    setPinnedCell(null);
+    setHoverCell(null);
+    setHoverTooltipPosition(null);
+  }, [familyToggleEnabled, familyGrids, familyComposite, familyMode]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -642,6 +706,46 @@ export function PorkchopView(props: PorkchopViewProps) {
     context.clearRect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
     context.imageSmoothingEnabled = false;
     context.drawImage(offscreen, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
+    // INV-016b provenance layer: in "both", mark the cells whose window came from the
+    // M=1 family with a stipple drawn semi-transparently OVER the composite heatmap.
+    // Deliberately NOT colour — colour is reserved for C3, so the family must be
+    // carried by a separate channel (dispatch 4.3: "Do NOT rely on colour alone").
+    if (familyToggleEnabled && familyMode === 'both') {
+      const cellWidthPx = DISPLAY_WIDTH / props.gridParams.nDep;
+      const cellHeightPx = DISPLAY_HEIGHT / props.gridParams.nTof;
+      const dotSize = Math.max(1, Math.min(2, Math.min(cellWidthPx, cellHeightPx) / 3));
+      // Same cell the rest of the view calls the global minimum (drives the readout and
+      // the tour anchor) — reused by identity so the surface cannot hold two different
+      // notions of "the minimum".
+      const minimumCell = findGlobalMinimumCell(cells);
+      context.save();
+      context.fillStyle = 'rgba(255,255,255,0.62)';
+      for (let depIndex = 0; depIndex < props.gridParams.nDep; depIndex += 1) {
+        for (let tofIndex = 0; tofIndex < props.gridParams.nTof; tofIndex += 1) {
+          const cell = cells[depIndex * props.gridParams.nTof + tofIndex];
+          if (cell.status !== 'ok' || cell.M !== 1) {
+            continue;
+          }
+          const rowFromTop = props.gridParams.nTof - 1 - tofIndex;
+          // Checkerboard the stipple so a solid M=1 region reads as texture, not a wash —
+          // EXCEPT the minimum cell, which is always marked: it is the window a user acts
+          // on, and INV-016b bites hardest there, so its family must never fall in a
+          // parity gap. The M=1 test above still applies — an M=0 minimum stays
+          // un-stippled, because the stipple asserts "this came from M=1".
+          if (cell !== minimumCell && (depIndex + rowFromTop) % 2 !== 0) {
+            continue;
+          }
+          context.fillRect(
+            depIndex * cellWidthPx + (cellWidthPx - dotSize) / 2,
+            rowFromTop * cellHeightPx + (cellHeightPx - dotSize) / 2,
+            dotSize,
+            dotSize,
+          );
+        }
+      }
+      context.restore();
+    }
 
     if (showContours) {
       context.save();
@@ -695,7 +799,7 @@ export function PorkchopView(props: PorkchopViewProps) {
 
     drawCellMarker(pinnedCell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.22)', 8);
     drawCellMarker(hoverCell, 'rgba(167,243,208,0.95)', 'rgba(167,243,208,0.16)', 6);
-  }, [cells, contourSegments, dlaContourSegments, hoverCell, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, showContours]);
+  }, [cells, contourSegments, dlaContourSegments, familyMode, familyToggleEnabled, hoverCell, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, showContours]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -781,6 +885,10 @@ export function PorkchopView(props: PorkchopViewProps) {
   const tofMinLabel = `${formatNumber(props.gridParams.tofMinDays, 1)} d`;
   const tofMaxLabel = `${formatNumber(props.gridParams.tofMaxDays, 1)} d`;
   const hasValidatedTarget = props.validatedTarget !== undefined;
+  // The title must name what is actually on screen, not a hardcoded family.
+  const familyLabel = familyToggleEnabled
+    ? (familyMode === 'both' ? 'M=0 + M=1' : familyMode === 'm0' ? 'M=0' : 'M=1')
+    : `M=${props.M}`;
   const legendGradient = useMemo(() => buildLegendGradient(), []);
 
   useEffect(() => {
@@ -843,8 +951,8 @@ export function PorkchopView(props: PorkchopViewProps) {
         'div',
         { style: 'font-size:20px;font-weight:600;margin-bottom:8px;' },
         hasValidatedTarget
-          ? `${props.bodyLabel} — M=${props.M}`
-          : `${props.bodyLabel} — Earth-Departure Porkchop (M=${props.M})`,
+          ? `${props.bodyLabel} — ${familyLabel}`
+          : `${props.bodyLabel} — Earth-Departure Porkchop (${familyLabel})`,
       ),
       hasValidatedTarget
         ? h(
@@ -858,6 +966,36 @@ export function PorkchopView(props: PorkchopViewProps) {
             { style: 'font-size:13px;opacity:0.85;line-height:1.5;' },
             'Departure date runs left to right; time of flight increases upward. Color shows departure C3 energy (km²/s²) on a logarithmic scale — darker regions are lower-energy, more accessible transfer windows.',
           ),
+      familyToggleEnabled
+        ? h(
+            'div',
+            {
+              style: 'display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin-top:14px;padding:10px 12px;border:1px solid rgba(255,255,255,0.16);border-radius:10px;background:rgba(255,255,255,0.04);font-size:13px;',
+            },
+            h('span', { style: 'font-weight:700;' }, 'Transfer family'),
+            ...FAMILY_MODE_OPTIONS.map(([value, label]) =>
+              h(
+                'label',
+                { style: 'display:flex;align-items:center;gap:8px;cursor:pointer;opacity:0.95;' },
+                h('input', {
+                  type: 'radio',
+                  name: 'porkchop-family-mode',
+                  value,
+                  checked: familyMode === value,
+                  onInput: () => setFamilyMode(value),
+                }),
+                label,
+              ),
+            ),
+          )
+        : null,
+      familyToggleEnabled && familyMode === 'both'
+        ? h(
+            'div',
+            { style: 'font-size:12px;opacity:0.85;line-height:1.5;margin-top:8px;' },
+            'Both families are searched and each cell shows whichever gives the lower departure C3. Stippled cells came from M=1 (one revolution); un-stippled cells from M=0 (direct). Colour encodes C3 only — the stipple, not the colour, identifies the family, and the pinned readout names it.',
+          )
+        : null,
       h(
         'label',
         {
@@ -928,6 +1066,9 @@ export function PorkchopView(props: PorkchopViewProps) {
                       },
                       h('div', { style: 'font-weight:600;margin-bottom:6px;' }, 'Hover cell'),
                       h('div', null, `Status: ${hoverReadout.status}`),
+                      familyToggleEnabled
+                        ? h('div', null, `Family: M=${hoverReadout.M}`)
+                        : null,
                       h('div', null, `Departure: ${formatJdTdb(hoverReadout.depJD)}`),
                       h('div', null, `TOF: ${formatNumber(hoverReadout.tofDays, 3)} d`),
                       h(

@@ -591,7 +591,7 @@ function PorkchopDedicatedPage() {
       h(
         'div',
         { style: 'font-size:13px;line-height:1.6;color:#cbd5e1;margin-bottom:20px;' },
-        `M=1 transfer search from Earth departure to ${pageState.bodyLabel}. Grid spans 2026–2040 departures and 182.5–1826.25 day flight times. Click a cell to inspect its branch and ΔV stack.`,
+        `Transfer search from Earth departure to ${pageState.bodyLabel}, over both revolution families — M=0 (direct) and M=1 (one revolution). Grid spans 2026–2040 departures and 182.5–1826.25 day flight times. Use the transfer-family control to switch; click a cell to inspect its family, branch and ΔV stack.`,
       ),
       h(
         'section',
@@ -914,6 +914,10 @@ function PorkchopDedicatedPage() {
         bodyElements: pageState.bodyElements,
         gridParams: GRID_PARAMS,
         M: 1,
+        // DEC-5 dedicated-view behavior: compute both families, expose the prominent
+        // toggle, default to "both". props.M stays the single-family fallback for the
+        // surfaces that do not opt in (overlay, smoke harness).
+        showFamilyToggle: true,
         onPinnedCellChange: setPinnedReadout,
         onGlobalMinimumCellChange: setGlobalMinimumReadout,
         onGlobalMinimumCellRectChange: handleGlobalMinimumCellRectChange,
