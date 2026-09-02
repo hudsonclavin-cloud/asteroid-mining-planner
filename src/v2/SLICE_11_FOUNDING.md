@@ -290,6 +290,24 @@ VERIFICATION OBLIGATION (for the implementation dispatch):
 
 ---
 
+**AMD-9 — "Both" renders a composite, not blended layers (annotates DEC-5's dedicated-view bullet). Recorded 2026-08-31, after this section's 2026-06-20 heading date; filed here because §5a is this document's mechanism for recording deltas from locked DEC text.**
+
+DEC-5's dedicated-view bullet states, verbatim: "Dedicated view: M=0/M=1 toggle is prominent. Selecting M=1 replaces the heatmap with the M=1 grid; selecting "both" overlays them (semi-transparent layers). Default state is "both" so the 28% gap is visible immediately."
+
+IMPLEMENTED AS WRITTEN: the prominent toggle, M=1 replacing the heatmap, and the "both" default.
+
+NOT IMPLEMENTED AS WRITTEN: "overlays them (semi-transparent layers)". "Both" renders a single composite heatmap — colour = the winning family's actual C3 — with the M=1 layer expressed as a semi-transparent stipple over it.
+
+Reason: blending two log-scale C3 colour fields produces a colour that READS AS A C3 VALUE AND IS NOT ONE. On a surface whose thesis is that it never claims more than its data supports, that is a false reading. Colour stays reserved for C3; family moves to a non-colour channel, which is also what INV-016b's "distinct visual encoding" requires. DEC-5's stated purpose — "so the gap is visible immediately" — is served by the composite, since blending would obscure the very difference the DEC exists to show.
+
+Provenance of the choice: the composite was specified by the Slice 18 Front A dispatch, Phase 3.1, before implementation — not invented at the UI layer — and was verified at the Phase 3 gate before any UI existed. Hudson upheld it explicitly at the Phase 4 gate (2026-08-31).
+
+Encoding detail: the stipple marks M=1 cells on a checkerboard subset (every other cell) so the texture does not wash out the colour field; the composite's minimum cell is ALWAYS stippled regardless of parity, because it is the window a user acts on and INV-016b's requirement bites hardest there. Un-stippled therefore does not universally mean M=0 — only at the minimum is absence unambiguous. Family is stated in text in the hover tooltip, the pinned panel's M row, and (since `67c4c18`) the grid-extremes readout.
+
+Rationale-figure note: DEC-5 cites "the 28% gap". OQ-2 subsequently closed (2026-06-30, §4) at meaningfulWinFraction = 0.242. The ruling stands; the number in its justification predates the measurement that followed.
+
+---
+
 ## §6. Phase breakdown
 
 **Phase A: lambertMultiRev() implementation + audit (~3-5 dispatches).**
@@ -451,3 +469,24 @@ Lesson recorded: the four-pass diagnosis prevented "fixing" a non-bug — each w
 Carried to Phase F: the dedicated route header still shows leftover smoke copy ("Standalone Phase B smoke mount / worker compute Xms") — clean up before deploy. Plus visual verification + production deploy (math audit discharged per AMD-4).
 
 Remaining per §6: Phase E (M=1 sampling to 500 bodies), Phase F (visual verification + deploy).
+
+**2026-08-31: DEC-5 implemented on the dedicated view (Slice 18 Front A). The ruling had not shipped.**
+
+DEC-5's dedicated-view ruling and INV-016b were NOT implemented when the dedicated porkchop route shipped. The route was introduced by `e871297` (2026-06-25, "feat(slice11): Phase D1 dedicated porkchop route"), which cites no DEC or OQ and carries no explanatory comment. It passed `M: 1` as a fixed literal at `app/porkchop/main.ts`, forwarded unchanged, never iterated. No toggle and no second `computeGrid` message existed. No later commit modified the value. No test bound it — no test imports `app/porkchop` at all.
+
+Consequence, measured 2026-08-24 on a 13-body sample using the dedicated view's own grid parameters (20,000 cells): five of thirteen bodies rendered an ENTIRELY EMPTY grid, because at M=1 `lambertMultiRev` returns null for TOF below T_min and `grid-compute` maps that to `no_solution` — even where a valid M=0 transfer exists. All five were high-eccentricity (0.88-0.996), large-a (8.6-353 AU). The catalog list, which screens M=0 via the cache, badged those same bodies with a finite C3. One body (`asteroid-2021 CG6`) disagreed on FEASIBILITY between the two surfaces: cached badge HIGH C3 (37.737), while the M=1 grid the porkchop rendered found 21.199 km²/s², below the 25 km²/s² threshold. One body (`asteroid-1979 XB`) had an M=1 minimum 4.44× better than its M=0 minimum and a materially different mission (departure 2028-04-02 vs 2029-03-02; TOF 580.985 d vs 248.914 d). Blank-cell fraction on bodies where M=1 solved at all: 7.2%-60.5%.
+
+SAMPLE CAVEAT: 13 of 41,906 bodies is 0.031%, deliberately selected to span eccentricity, condition code, and C3. These percentages are NOT catalog rates and must not be quoted as such. Independent corroboration already in this document: OQ-2 CLOSED (2026-06-30, §4), 500-body measurement, meaningfulWinFraction = 0.242.
+
+The two Lambert solvers were verified BIT-IDENTICAL where their domains overlap: on the Eros cell at M=0, izzo `lambert` and `lambertMultiRev` returned identical C3 (1.62443397701735), identical vInfDep, identical vInfArr, identical root x; ΔC3 exactly 0, Δv1 and Δv2 exactly [0,0,0]. The divergence was entirely structural — disjoint revolution families — not numerical.
+
+DEC-5 was implemented 2026-08-31 by three commits:
+- `765f8fd` dual-M compute path — AMD-1's two messages, awaited sequentially behind the client's single-in-flight guard. AMD-1's own budget sentence ("The ~200 ms budget in DEC-8 already covers the two computes (~98 ms each)") is sequential arithmetic and settled the concurrency question.
+- `bda0ee2` composite selection — per-cell winner by strictly lower selected-branch C3, exact ties to M=0, `stall` preserved per §5a AMD-1's status semantics ("never collapse silently into `no_solution`"), provenance via `cell.M`. AMD-2 honored by construction: comparison uses the worker's own `selectedBranch` C3; the module never re-selects a branch.
+- `a7670c4` the three-state toggle (Both / M=0 only / M=1 only, default Both), non-colour family encoding, mode-aware copy. See AMD-9 (§5a) for the deliberate deviation from DEC-5's "semi-transparent layers" wording.
+
+Verified: the M=0-only view reproduces cached minC3 within 7.631e-11 km²/s² worst-case ABSOLUTE (gate: 1e-9 absolute). Relative tolerance was ruled inappropriate near zero C3 — Apophis's 1.208e-9 relative is 2.493e-13 absolute. Exact float64 ties across 200,000 cells: 0. All five previously-empty grids became fully populated. Suite 74/256/0 → 76/270/0, all additive. Browser gate closed 2026-09-02: foreground load under 2 s; family texture legible; family encoding confirmed by pixel-level cross-check at grid cell (39,31) plus magnified confirmation on 1979 XB's minimum; the Transfer family control reads as prominent per DEC-5; switching instant with no recompute.
+
+Prior-art correction: this document's Phase D history describes the dedicated route shipping without noting the toggle was not built, and the Phase D colormap investigation reasoned over "the Apophis M=1 200×100 grid" — the M=1-only surface was treated as THE surface throughout. That is the point at which the divergence became invisible.
+
+Still open: `app/ui-overlay/overlay.ts` also passes `M: 1` fixed. DEC-5 rules the overlay separately (M=0 default with a small M=1 toggle adding a contour layer). It was explicitly out of Front A scope and its divergence remains OPEN.
