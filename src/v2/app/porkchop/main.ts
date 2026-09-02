@@ -918,6 +918,7 @@ function PorkchopDedicatedPage() {
         // toggle, default to "both". props.M stays the single-family fallback for the
         // surfaces that do not opt in (overlay, smoke harness).
         showFamilyToggle: true,
+        showGridExtremes: true,
         onPinnedCellChange: setPinnedReadout,
         onGlobalMinimumCellChange: setGlobalMinimumReadout,
         onGlobalMinimumCellRectChange: handleGlobalMinimumCellRectChange,

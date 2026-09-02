@@ -13,7 +13,7 @@ import type { PorkchopClient } from './porkchop-client.js';
 import type { PorkchopWorkerCell } from './porkchop.worker.js';
 import { C3_COLOR_MAX, C3_COLOR_MIN, colorForPorkchopCell } from './colormap.js';
 import { computeDualFamilyGrids, type DualFamilyGrids } from './dual-m-compute.js';
-import { compositeGrids } from './composite-grid.js';
+import { compositeGrids, gridExtremes } from './composite-grid.js';
 
 /**
  * DEC-5 (`src/v2/SLICE_11_FOUNDING.md:105`) display families for the dedicated view.
@@ -147,6 +147,12 @@ export interface PorkchopViewProps {
    * overlay and the smoke harness are unaffected.
    */
   readonly showFamilyToggle?: boolean | undefined;
+  /**
+   * Opt in to the grid-extremes readout and its plot markers. Separate from
+   * showFamilyToggle on purpose: they are independent capabilities, and folding them
+   * behind one flag is how a surface inherits a feature nobody decided to give it.
+   */
+  readonly showGridExtremes?: boolean | undefined;
   readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellRectChange?: ((rect: PorkchopViewportRect | null) => void) | undefined;
@@ -458,6 +464,40 @@ function drawMarker(
   context.restore();
 }
 
+/**
+ * Square sibling of drawMarker, same idiom (fill + 2px stroke + crosshair ticks) so the
+ * extreme markers read as the same visual language as the pin and hover markers.
+ *
+ * Shape is the ONLY channel separating minimum (circle) from maximum (square): colour is
+ * reserved for C3 and the plot already carries stipple, DLA dashes and C3 contours, so a
+ * fifth signal (text) is not added here — the readout panel names which is which.
+ */
+function drawSquareMarker(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  strokeStyle: string,
+  fillStyle: string,
+  radius: number,
+) {
+  context.save();
+  context.beginPath();
+  context.rect(x - radius, y - radius, radius * 2, radius * 2);
+  context.fillStyle = fillStyle;
+  context.strokeStyle = strokeStyle;
+  context.lineWidth = 2;
+  context.fill();
+  context.stroke();
+
+  context.beginPath();
+  context.moveTo(x - radius - 4, y);
+  context.lineTo(x + radius + 4, y);
+  context.moveTo(x, y - radius - 4);
+  context.lineTo(x, y + radius + 4);
+  context.stroke();
+  context.restore();
+}
+
 function getSelectedBranchC3(cell: PorkchopWorkerCell): number | null {
   if (cell.status !== 'ok' || cell.selectedBranch === null) {
     return null;
@@ -592,6 +632,10 @@ export function PorkchopView(props: PorkchopViewProps) {
     () => (familyGrids === null ? null : compositeGrids(familyGrids.m0.cells, familyGrids.m1.cells)),
     [familyGrids],
   );
+  // Facts about the CURRENTLY DISPLAYED grid. Derived from `cells`, which is replaced on
+  // every family switch, so an extreme can never be carried across a switch and name a
+  // cell that is not in the current grid.
+  const extremes = useMemo(() => (cells === null ? null : gridExtremes(cells)), [cells]);
   const contourSegments = useMemo(
     () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, C3_CONTOUR_LEVELS, getSelectedBranchC3)),
     [cells, props.gridParams],
@@ -781,6 +825,7 @@ export function PorkchopView(props: PorkchopViewProps) {
       strokeStyle: string,
       fillStyle: string,
       radius: number,
+      draw: typeof drawMarker = drawMarker,
     ) => {
       if (cell === null) {
         return;
@@ -794,12 +839,19 @@ export function PorkchopView(props: PorkchopViewProps) {
         indices.tofIndex,
         props.gridParams,
       );
-      drawMarker(context, x, y, strokeStyle, fillStyle, radius);
+      draw(context, x, y, strokeStyle, fillStyle, radius);
     };
+
+    // Extremes first, so a user's pin and the hover marker draw ON TOP of them — the
+    // cell you are acting on must never be obscured by a fact-about-the-grid marker.
+    if (props.showGridExtremes === true && extremes !== null && extremes.kind === 'extremes') {
+      drawCellMarker(extremes.minimum.cell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.10)', 11);
+      drawCellMarker(extremes.maximum.cell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.10)', 11, drawSquareMarker);
+    }
 
     drawCellMarker(pinnedCell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.22)', 8);
     drawCellMarker(hoverCell, 'rgba(167,243,208,0.95)', 'rgba(167,243,208,0.16)', 6);
-  }, [cells, contourSegments, dlaContourSegments, familyMode, familyToggleEnabled, hoverCell, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, showContours]);
+  }, [cells, contourSegments, dlaContourSegments, extremes, familyMode, familyToggleEnabled, hoverCell, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, props.showGridExtremes, showContours]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1128,6 +1180,45 @@ export function PorkchopView(props: PorkchopViewProps) {
               ),
             ),
     ),
+    props.showGridExtremes === true
+      ? h(
+          'div',
+          { style: PANEL_STYLE },
+          h('div', { style: 'font-size:15px;font-weight:600;margin-bottom:6px;' }, 'Grid extremes'),
+          h(
+            'div',
+            { style: 'font-size:12px;opacity:0.8;line-height:1.5;margin-bottom:10px;' },
+            'Facts about the displayed grid. Lowest departure C3 is not the best mission — a higher-C3 cell with shorter TOF or lower arrival v∞ may suit a given objective better.',
+          ),
+          extremes === null
+            ? h('div', { style: 'font-size:13px;opacity:0.75;' }, 'Computing…')
+            : extremes.kind === 'no-solvable-cells'
+              ? h('div', { style: 'font-size:13px;opacity:0.75;' }, 'No solvable cells in this grid.')
+              : h(
+                  'div',
+                  { style: 'display:flex;flex-direction:column;gap:8px;' },
+                  ...([
+                    ['Lowest departure C3 in this grid', extremes.minimum],
+                    ['Highest departure C3 in this grid', extremes.maximum],
+                  ] as const).map(([label, entry]) =>
+                    h(
+                      'button',
+                      {
+                        type: 'button',
+                        style: 'display:block;width:100%;text-align:left;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:#111827;color:#eef2ff;font:inherit;font-size:13px;line-height:1.5;cursor:pointer;',
+                        onClick: () => setPinnedCell(entry.cell),
+                      },
+                      h('div', { style: 'font-weight:600;margin-bottom:2px;' }, label),
+                      h(
+                        'div',
+                        { style: 'opacity:0.92;' },
+                        `${formatNumber(entry.c3, 6)} km²/s² · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}`,
+                      ),
+                    ),
+                  ),
+                ),
+        )
+      : null,
     h(
       'div',
       { style: PANEL_STYLE },
