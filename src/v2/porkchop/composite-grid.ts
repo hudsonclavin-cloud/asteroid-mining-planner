@@ -196,3 +196,66 @@ export function minSelectedC3<C extends CompositableCell>(
   }
   return best;
 }
+
+/** One extreme of a grid: the cell, its selected-branch C3, and the array index that broke ties. */
+export interface GridExtremeEntry<C extends CompositableCell> {
+  readonly c3: number;
+  readonly cell: C;
+  readonly index: number;
+}
+
+/**
+ * Facts about a displayed grid. The empty case is its own variant rather than null
+ * fields, so a consumer cannot render a blank or a fabricated value by forgetting a
+ * check: in the `extremes` variant both entries are always present.
+ */
+export type GridExtremes<C extends CompositableCell> =
+  | { readonly kind: 'no-solvable-cells'; readonly okCount: 0 }
+  | {
+      readonly kind: 'extremes';
+      readonly okCount: number;
+      readonly minimum: GridExtremeEntry<C>;
+      readonly maximum: GridExtremeEntry<C>;
+    };
+
+/**
+ * Lowest and highest selected-branch C3 over a grid.
+ *
+ * Only `ok` cells participate — `no_solution` and `stall` are excluded, via the same
+ * `selectedC3` filter used everywhere else in this module.
+ *
+ * Ties: strict `<` / `>` means the LOWEST ARRAY INDEX wins. Index is
+ * `depIdx * nTof + tofIdx`, so an exact C3 tie resolves to the earliest departure and
+ * then the shortest TOF.
+ *
+ * NOTE — a second minimum implementation exists: `findGlobalMinimumCell` in
+ * `porkchop-view.ts:468`, which feeds the tour anchor and the `onGlobalMinimumCellChange`
+ * contract. It is deliberately NOT refactored away (tour-critical path, zero functional
+ * gain). Both are ok-only and both use strict `<`, so both pick the same cell; this
+ * comment exists so the duplication is recorded rather than silently grown to a third.
+ */
+export function gridExtremes<C extends CompositableCell>(cells: readonly C[]): GridExtremes<C> {
+  let minimum: GridExtremeEntry<C> | null = null;
+  let maximum: GridExtremeEntry<C> | null = null;
+  let okCount = 0;
+
+  for (let index = 0; index < cells.length; index += 1) {
+    const cell = cells[index];
+    const c3 = selectedC3(cell);
+    if (c3 === null) {
+      continue;
+    }
+    okCount += 1;
+    if (minimum === null || c3 < minimum.c3) {
+      minimum = { c3, cell, index };
+    }
+    if (maximum === null || c3 > maximum.c3) {
+      maximum = { c3, cell, index };
+    }
+  }
+
+  if (minimum === null || maximum === null) {
+    return { kind: 'no-solvable-cells', okCount: 0 };
+  }
+  return { kind: 'extremes', okCount, minimum, maximum };
+}
