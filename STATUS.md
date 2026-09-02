@@ -19,11 +19,11 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `46ff00f` | everything through the catalog-payload findings refresh was pushed 2026-08-24; verified via `git fetch` |
-| Local HEAD | `46ff00f` | pinned as the previous commit; STATUS lags HEAD by this 2026-08-24 Slice-18-seating commit — see the lag note |
+| origin/main | `67c4c18` | Slice 18 Front A implementation was pushed 2026-09-02 (`22774cc..67c4c18`); verified via `git fetch` |
+| Local HEAD | `a3a900e` | pinned as the previous commit — the Slice 11 founding-doc annotations; STATUS lags HEAD by this 2026-09-02 Front-A-close-out commit — see the lag note |
 
-**Structural one-commit lag (expected, not rot):** This file is edited after `46ff00f` (the catalog-payload findings refresh); this 2026-08-24 Slice-18-seating STATUS commit pins that previous commit and therefore lags HEAD by exactly one, accepted (a STATUS file cannot pin its own commit).
-**Push state:** origin/main is at `46ff00f` — everything through `46ff00f` was pushed 2026-08-24. This Slice-18-seating STATUS commit is the only local-only, unpushed change. No agent pushes, ever.
+**Structural one-commit lag (expected, not rot):** This file is edited after `a3a900e` (the DEC-5 founding-doc annotations); this 2026-09-02 Front-A-close-out STATUS commit pins that previous commit and therefore lags HEAD by exactly one, accepted (a STATUS file cannot pin its own commit).
+**Push state:** origin/main is at `67c4c18` — everything through the grid-extremes readout was pushed 2026-09-02. Local-only and unpushed: `a3a900e` (founding-doc annotations) and this STATUS commit. No agent pushes, ever.
 **Deploy boundary:** `docs/` was rebuilt at `5a00907` on 2026-08-13, carrying Batch 2 (A4c size-range + orbit-quality columns, B2 scale/frame chips + axis triad + HUD, B1 pan/reset/discoverability). Live bundles: `solarSystemV2-C60RP1nx.js`, `compareV2-BPtoAvbN.js`, `porkchopV2-C8hMf2EQ.js`, `store-BAStm0cU.js`.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
@@ -41,7 +41,7 @@
 | MCP / agent surface | 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`) |
 | Agent-honesty study | **16** | **CLOSED 2026-08-02 — HAS A RESULT** |
 | Mission planning | **17** (Target Compare + viewer QOL) | **CLOSED 2026-08-13** (`S-S17-CLOSE-2026-08-13-A`; founding `SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, plus this dispatch's cut entry + OQ dispositions + D-07 erratum). Front A **CLOSED** (A4b residuals closed). Front B tiers **B0-B2 shipped**, **B3-B5 CUT** per the §5 CUT RULE → carried by `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`. OQ-17-3/-4/-5/-8/-9 disposed; residual non-blocking items in the Slice 17 section below. |
-| Mission planning | **18** (Screening Fidelity) | **SEATED 2026-08-24** — DEC-18-1..4 locked. Front A (solver/revolution consistency) has a finding: the dedicated porkchop ships a fixed `M: 1` against DEC-5 / INV-016b. Front B (NEA drift measurement) open; Front C (per-object fidelity surface) gated on B. Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
+| Mission planning | **18** (Screening Fidelity) | **SEATED 2026-08-24** — DEC-18-1..4 locked. **Front A CLOSED 2026-09-02**: DEC-5 implemented on the dedicated view (`765f8fd`, `bda0ee2`, `a7670c4`) and the grid-extremes readout shipped (`c0a8b9b`, `67c4c18`); annotated on the founding doc at `a3a900e`. Front B (NEA drift measurement) OPEN and gates Front C (per-object fidelity surface). Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
 
 ## Slice 16 — closed, with data
 
@@ -193,6 +193,27 @@ Artifacts (not in version control): `multirev-consistency.mjs`, `MULTIREV_CACHE_
 ### Scope note
 
 The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`), and DEC-5 rules it separately (M=0 default with a small M=1 toggle adding a contour layer). Recorded as a known second surface with the same class of divergence. **Front A scope is the dedicated view; the overlay is not in Front A scope.**
+
+### FRONT A CLOSED — 2026-09-02
+
+**DEC-5 implemented on the dedicated view.** The ruling had been locked in Slice 11 and never shipped: the route passed a fixed `M: 1` from `e871297` (2026-06-25) onward, with no toggle and no second `computeGrid` message. Implemented by `765f8fd` (dual-M compute path, AMD-1's two messages awaited sequentially), `bda0ee2` (composite selection — per-cell winner, exact ties to M=0, `stall` preserved, provenance via `cell.M`), `a7670c4` (three-state toggle Both / M=0 only / M=1 only, default Both; non-colour family encoding; mode-aware copy). Annotated on the founding doc at `a3a900e` — §8 records the divergence and its measured consequence, AMD-9 (§5a) records the deliberate deviation from DEC-5's "semi-transparent layers" wording. Both are additive; the additive-only grep proof returned only the file header.
+
+**Grid extremes readout shipped** (`c0a8b9b` computation, `67c4c18` UI). Names the lowest and highest departure C3 in the displayed grid, per-extreme family, click-to-pin through the existing pin path, circle/square colour-free markers. Framed as facts about the grid, never a recommendation — the rendered qualifier reads: *"Facts about the displayed grid. Lowest departure C3 is not the best mission — a higher-C3 cell with shorter TOF or lower arrival v∞ may suit a given objective better."* Verified against the independent record via a different code path than produced it: `asteroid-433` composite min **1.752189846705813**; `asteroid-2021 CG6` composite min **21.19856534539755**.
+
+**Browser gate closed**; `22774cc..67c4c18` pushed. **`docs/` was NOT rebuilt, so the live site is unaffected by these commits.** Two checks remain **unverified** and are recorded as such rather than assumed: click-to-pin row/panel agreement, and the "No solvable cells in this grid." empty-state string on `asteroid-2017 UR52` in M=1 only.
+
+**JD epoch quantization (finding).** Departure epochs on the JD-based grid differ from the cache generator's seconds-based construction by up to **1.431e-5 s**, below the **4.721e-5 s** float64 ULP of a JD at 2.46e6. Inherent to AMD-1/AMD-7's "departure as JD" message contract, which is ruled and stands. Moves screening C3 by ~1e-11 relative — immaterial at screening fidelity. Consequence recorded: **relative tolerance is the wrong instrument near zero C3** (Apophis's 1.208e-9 relative is 2.493e-13 absolute), so the reproduction gate was ruled as an absolute 1e-9 km²/s² bound.
+
+**False-invariant correction (test scope).** A proposed test asserting *"composite max ≤ M=0 max, always"* was **not** implemented as stated: it holds only when `onlyM1 === 0`, which is an empirical property of the measured grids (M=1 needs longer TOF), not something `compositeGrids` enforces. The true structural property is per-cell — composite ≤ M=0 wherever M=0 solves. Both were tested, plus a boundary counterexample pinning the claim so it is not later strengthened into a false invariant.
+
+**Known duplicate, recorded not fixed.** `findGlobalMinimumCell` (`porkchop-view.ts:468`, tour-critical) and `minSelectedC3`/`gridExtremes` (`composite-grid.ts`) both compute the minimum; both are ok-only with strict `<`, so both select the same cell. Deliberately not unified — refactoring a tour-critical path for zero functional gain is the wrong trade; documented in a source comment so it is not silently grown to a third.
+
+**Open, carried forward from Front A:**
+- The ui-overlay porkchop still passes a fixed `M: 1` (`app/ui-overlay/overlay.ts:339`) and diverges from DEC-5's separate overlay ruling. Out of Front A scope by decision; **still OPEN**.
+- The r=11 minimum marker's crosshair occludes that cell's stipple dot (both are centred on the same point; the crosshair is 2 px through the centre, the dot 1.667 px). Family is still stated in three text places. Fixing it would edit the shared `drawMarker` used by the pin and hover markers — wider blast radius, deliberately not done.
+- The DLA feasibility overlay is on by default and visually dominates the plot; independently noted by two readers. Turning off a Slice 12 default to suit a Slice 18 marker would need its own decision and was not taken.
+
+**Front B remains OPEN and gates Front C.** The repo cannot measure real NEA propagation drift — there is no asteroid truth series beyond 90 days. The planet floor is ~10⁵ km; the argmin begins moving at 10⁶ km, and where real NEAs sit between those regimes is what the repo cannot presently answer.
 
 ---
 
