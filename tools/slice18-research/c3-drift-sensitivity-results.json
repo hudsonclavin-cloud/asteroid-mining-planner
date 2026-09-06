@@ -1,0 +1,1754 @@
+{
+  "gate": {
+    "recomputed": {
+      "c3": 1.62443397701735,
+      "vInfDep": 1.2745328465823664,
+      "vInfArr": 6.655866629635761
+    },
+    "cached": {
+      "bodyId": "asteroid-433",
+      "minC3": 1.6244339770173506,
+      "minC3Date": "2032-06-10",
+      "minC3TofDays": 272,
+      "vInfDep": 1.2745328465823667,
+      "vInfArr": 6.655866629635761
+    },
+    "relativeDiffs": {
+      "c3_rel": 4.100713382012564e-16,
+      "vInfDep_rel": 1.742164633264959e-16,
+      "vInfArr_rel": 0
+    }
+  },
+  "bodies": {
+    "asteroid-433": {
+      "selection": {
+        "bodyId": "asteroid-433",
+        "designation": "433",
+        "minC3": 1.6244339770173506,
+        "e": 0.22288929294611265,
+        "conditionCode": 0,
+        "name": "433 Eros (A898 PA)",
+        "why": "reproduction-gate body (e=0.223, U=0, mid minC3)"
+      },
+      "cachedMinC3": 1.6244339770173506,
+      "baselineArgminRelDiffVsCache": 4.100713382012564e-16,
+      "bestCell": {
+        "date": "2032-06-10",
+        "tofDays": 272,
+        "c3": 1.62443397701735,
+        "vInfDep": 1.2745328465823664,
+        "vInfArr": 6.655866629635761,
+        "arrSpeedKmps": 30.931980427412856
+      },
+      "perturbations": [
+        {
+          "dir": "along",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 1.6244497694692723,
+          "vInfDep": 1.2745390419556681,
+          "vInfArr": 6.655893075725797,
+          "dC3": 0.00001579245192240286,
+          "dC3_pct": 0.0009721818273833229,
+          "dVInfDep": 0.000006195373301709495,
+          "dVInfDep_pct": 0.0004860897322750262,
+          "dVInfArr": 0.000026446090036102987,
+          "dVInfArr_pct": 0.00039733503550611613,
+          "alongTrack_timeShift_hours": 0.008980277820543385
+        },
+        {
+          "dir": "along",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 1.6245921635768088,
+          "vInfDep": 1.2745949017538116,
+          "vInfArr": 6.6561312709071006,
+          "dC3": 0.00015818655945887272,
+          "dC3_pct": 0.009737949445586067,
+          "dVInfDep": 0.00006205517144519668,
+          "dVInfDep_pct": 0.004868856193984827,
+          "dVInfArr": 0.00026464127133962734,
+          "dVInfArr_pct": 0.0039760603098819855,
+          "alongTrack_timeShift_hours": 0.08980277820543385
+        },
+        {
+          "dir": "along",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 1.6260420458471478,
+          "vInfDep": 1.2751635369030703,
+          "vInfArr": 6.658531068820303,
+          "dC3": 0.001608068829797915,
+          "dC3_pct": 0.09899256310499716,
+          "dVInfDep": 0.0006306903207038417,
+          "dVInfDep_pct": 0.049484038202312695,
+          "dVInfArr": 0.002664439184542289,
+          "dVInfArr_pct": 0.040031438921547306,
+          "alongTrack_timeShift_hours": 0.8980277820543385
+        },
+        {
+          "dir": "along",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 1.6431344265169805,
+          "vInfDep": 1.281848051259189,
+          "vInfArr": 6.684302793568583,
+          "dC3": 0.018700449499630567,
+          "dC3_pct": 1.1511978796433926,
+          "dVInfDep": 0.007315204676822562,
+          "dVInfDep_pct": 0.5739518362699033,
+          "dVInfArr": 0.02843616393282211,
+          "dVInfArr_pct": 0.4272345813873117,
+          "alongTrack_timeShift_hours": 8.980277820543385
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 1.6244868128195744,
+          "vInfDep": 1.2745535739307212,
+          "vInfArr": 6.655917043338379,
+          "dC3": 0.000052835802224482364,
+          "dC3_pct": 0.003252566923125743,
+          "dVInfDep": 0.000020727348354787622,
+          "dVInfDep_pct": 0.0016262702377869333,
+          "dVInfArr": 0.000050413702617824185,
+          "dVInfArr_pct": 0.000757432584261128,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 1.6249635863599252,
+          "vInfDep": 1.2747405957134672,
+          "vInfArr": 6.656370865394,
+          "dC3": 0.0005296093425752879,
+          "dC3_pct": 0.032602700390920926,
+          "dVInfDep": 0.0002077491311007762,
+          "dVInfDep_pct": 0.01630002174191518,
+          "dVInfArr": 0.0005042357582389911,
+          "dVInfArr_pct": 0.0075758092266128415,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 1.6298551535302457,
+          "vInfDep": 1.2766578059645606,
+          "vInfArr": 6.660918843578453,
+          "dC3": 0.005421176512895753,
+          "dC3_pct": 0.33372710677042505,
+          "dVInfDep": 0.002124959382194147,
+          "dVInfDep_pct": 0.16672456797737162,
+          "dVInfArr": 0.005052213942692063,
+          "dVInfArr_pct": 0.07590617756967499,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 1.691105324044242,
+          "vInfDep": 1.3004250551432182,
+          "vInfArr": 6.70735767978958,
+          "dC3": 0.06667134702689204,
+          "dC3_pct": 4.104281735679304,
+          "dVInfDep": 0.025892208560851726,
+          "dVInfDep_pct": 2.0315057889862276,
+          "dVInfArr": 0.05149105015381927,
+          "dVInfArr_pct": 0.7736190194159148,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 1.6242798590157288,
+          "vInfDep": 1.2744723845637962,
+          "vInfArr": 6.655989809925292,
+          "dC3": -0.00015411800162112854,
+          "dC3_pct": -0.009487489414873429,
+          "dVInfDep": -0.000060462018570239806,
+          "dVInfDep_pct": -0.004743857228345858,
+          "dVInfArr": 0.00012318028953117732,
+          "dVInfArr_pct": 0.0018507024912835176,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 1.6228978334336304,
+          "vInfDep": 1.2739300739968542,
+          "vInfArr": 6.6570984887351266,
+          "dC3": -0.0015361435837195625,
+          "dC3_pct": -0.09456485184704774,
+          "dVInfDep": -0.0006027725855122235,
+          "dVInfDep_pct": -0.04729360935095127,
+          "dVInfArr": 0.0012318590993656287,
+          "dVInfArr_pct": 0.01850786934162233,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 1.6095760938630443,
+          "vInfDep": 1.2686907006292134,
+          "vInfArr": 6.66819082101819,
+          "dC3": -0.014857883154305584,
+          "dC3_pct": -0.9146498635534815,
+          "dVInfDep": -0.005842145953153022,
+          "dVInfDep_pct": -0.4583754721440578,
+          "dVInfArr": 0.012324191382429461,
+          "dVInfArr_pct": 0.18516283555855892,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 1.526117954497006,
+          "vInfDep": 1.235361467141098,
+          "vInfArr": 6.779648832319186,
+          "dC3": -0.09831602252034388,
+          "dC3_pct": -6.05232492741032,
+          "dVInfDep": -0.03917137944126847,
+          "dVInfDep_pct": -3.073391128859936,
+          "dVInfArr": 0.12378220268342499,
+          "dVInfArr_pct": 1.8597458388405073,
+          "alongTrack_timeShift_hours": null
+        }
+      ],
+      "neighbors": {
+        "dep-7d": {
+          "c3": 1.7830634280039466,
+          "dC3_from_best": 0.15862945098659664
+        },
+        "dep+7d": {
+          "c3": 2.9764972231786087,
+          "dC3_from_best": 1.3520632461612587
+        },
+        "tof-30d": {
+          "c3": 42.78545220096388,
+          "dC3_from_best": 41.161018223946535
+        },
+        "tof+30d": {
+          "c3": 11.572356870803985,
+          "dC3_from_best": 9.947922893786634
+        }
+      },
+      "meanNeighborDelta": 13.154908453720255,
+      "minNeighborDelta": 0.15862945098659664,
+      "gridRelative": {
+        "along@1e+5km": {
+          "absDC3": 0.001608068829797915,
+          "ratio_vs_meanNeighbor": 0.0001222409745727381,
+          "ratio_vs_minNeighbor": 0.010137265304749675
+        },
+        "along@1e+6km": {
+          "absDC3": 0.018700449499630567,
+          "ratio_vs_meanNeighbor": 0.001421556794972755,
+          "ratio_vs_minNeighbor": 0.11788762668800169
+        },
+        "radial@1e+5km": {
+          "absDC3": 0.005421176512895753,
+          "ratio_vs_meanNeighbor": 0.00041210294484129425,
+          "ratio_vs_minNeighbor": 0.03417509472029765
+        },
+        "radial@1e+6km": {
+          "absDC3": 0.06667134702689204,
+          "ratio_vs_meanNeighbor": 0.005068172633921838,
+          "ratio_vs_minNeighbor": 0.42029614685185673
+        },
+        "cross@1e+5km": {
+          "absDC3": 0.014857883154305584,
+          "ratio_vs_meanNeighbor": 0.0011294554581338589,
+          "ratio_vs_minNeighbor": 0.09366408987673416
+        },
+        "cross@1e+6km": {
+          "absDC3": 0.09831602252034388,
+          "ratio_vs_meanNeighbor": 0.007473713927103747,
+          "ratio_vs_minNeighbor": 0.6197841693888928
+        }
+      },
+      "argminStability": {
+        "along@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.62443397701735
+          },
+          "perturbed": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.6260420458471478
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "along@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.62443397701735
+          },
+          "perturbed": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.6431344265169805
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.62443397701735
+          },
+          "perturbed": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.6298551535302457
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.62443397701735
+          },
+          "perturbed": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.691105324044242
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.62443397701735
+          },
+          "perturbed": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.6095760938630443
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.62443397701735
+          },
+          "perturbed": {
+            "date": "2032-06-10",
+            "tofDays": 272,
+            "c3": 1.526117954497006
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        }
+      }
+    },
+    "asteroid-163693": {
+      "selection": {
+        "bodyId": "asteroid-163693",
+        "designation": "163693",
+        "minC3": 7.191393068210365,
+        "e": 0.32216557986238864,
+        "conditionCode": 0,
+        "name": "163693 Atira (2003 CP20)",
+        "why": "S17 continuity body (IEO Atira; no practical window at tight thresholds)"
+      },
+      "cachedMinC3": 7.191393068210365,
+      "baselineArgminRelDiffVsCache": 0,
+      "bestCell": {
+        "date": "2027-05-13",
+        "tofDays": 182,
+        "c3": 7.191393068210365,
+        "vInfDep": 2.681677286365823,
+        "vInfArr": 17.62213675850521,
+        "arrSpeedKmps": 34.928136924718515
+      },
+      "perturbations": [
+        {
+          "dir": "along",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 7.191267483997913,
+          "vInfDep": 2.681653871027712,
+          "vInfArr": 17.622104262041834,
+          "dC3": -0.0001255842124523454,
+          "dC3_pct": -0.0017463127277452244,
+          "dVInfDep": -0.000023415338111121287,
+          "dVInfDep_pct": -0.000873160175915629,
+          "dVInfArr": -0.000032496463376219253,
+          "dVInfArr_pct": -0.0001844070547264085,
+          "alongTrack_timeShift_hours": 0.00795283694565442
+        },
+        {
+          "dir": "along",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 7.190139098498286,
+          "vInfDep": 2.6814434729261563,
+          "vInfArr": 17.621812031732503,
+          "dC3": -0.0012539697120788063,
+          "dC3_pct": -0.017437090424412948,
+          "dVInfDep": -0.00023381343966688561,
+          "dVInfDep_pct": -0.008718925310500236,
+          "dVInfArr": -0.00032472677270689587,
+          "dVInfArr_pct": -0.0018427207617156224,
+          "alongTrack_timeShift_hours": 0.0795283694565442
+        },
+        {
+          "dir": "along",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 7.179040418470696,
+          "vInfDep": 2.6793731390888236,
+          "vInfArr": 17.618913255118983,
+          "dC3": -0.012352649739669097,
+          "dC3_pct": -0.17176991470921157,
+          "dVInfDep": -0.0023041472769995686,
+          "dVInfDep_pct": -0.08592187019349078,
+          "dVInfArr": -0.0032235033862271223,
+          "dVInfArr_pct": -0.018292352569964702,
+          "alongTrack_timeShift_hours": 0.7952836945654421
+        },
+        {
+          "dir": "along",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 7.086380984431414,
+          "vInfDep": 2.66202572948336,
+          "vInfArr": 17.592256335620505,
+          "dC3": -0.10501208377895122,
+          "dC3_pct": -1.460246753068725,
+          "dVInfDep": -0.01965155688246334,
+          "dVInfDep_pct": -0.7328084174175519,
+          "dVInfArr": -0.029880422884705382,
+          "dVInfArr_pct": -0.16956186014323033,
+          "alongTrack_timeShift_hours": 7.95283694565442
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 7.190871434776184,
+          "vInfDep": 2.681580025801241,
+          "vInfArr": 17.622023295932884,
+          "dC3": -0.0005216334341806572,
+          "dC3_pct": -0.00725357978952011,
+          "dVInfDep": -0.00009726056458214671,
+          "dVInfDep_pct": -0.0036268556651704005,
+          "dVInfArr": -0.00011346257232602852,
+          "dVInfArr_pct": -0.0006438638734957414,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 7.186179774696124,
+          "vInfDep": 2.6807050890943085,
+          "vInfArr": 17.621002314037717,
+          "dC3": -0.005213293514240824,
+          "dC3_pct": -0.0724935136320979,
+          "dVInfDep": -0.0009721972715146521,
+          "dVInfDep_pct": -0.03625332833512425,
+          "dVInfArr": -0.001134444467492557,
+          "dVInfArr_pct": -0.0064376101663439,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 7.139564066094462,
+          "vInfDep": 2.671996269850402,
+          "vInfArr": 17.610810426434266,
+          "dC3": -0.05182900211590269,
+          "dC3_pct": -0.7207087920838785,
+          "dVInfDep": -0.009681016515421081,
+          "dVInfDep_pct": -0.3610060227843701,
+          "dVInfArr": -0.011326332070943579,
+          "dVInfArr_pct": -0.064273318418534,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 6.7033474147345204,
+          "vInfDep": 2.5890823499329874,
+          "vInfArr": 17.510671813722986,
+          "dC3": -0.4880456534758446,
+          "dC3_pct": -6.786524514050775,
+          "dVInfDep": -0.09259493643283578,
+          "dVInfDep_pct": -3.4528739495839686,
+          "dVInfArr": -0.1114649447822238,
+          "dVInfArr_pct": -0.6325279749541495,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 7.191399681179219,
+          "vInfDep": 2.6816785193567143,
+          "vInfArr": 17.621869521423033,
+          "dC3": 0.000006612968854291523,
+          "dC3_pct": 0.00009195671536192657,
+          "dVInfDep": 0.000001232990891164576,
+          "dVInfDep_pct": 0.00004597834711258305,
+          "dVInfArr": -0.0002672370821770187,
+          "dVInfArr_pct": -0.0015164851223166138,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 7.191466709148146,
+          "vInfDep": 2.6816910167183963,
+          "vInfArr": 17.619464284914507,
+          "dC3": 0.00007364093778061687,
+          "dC3_pct": 0.0010240149173064601,
+          "dVInfDep": 0.000013730352573126936,
+          "dVInfDep_pct": 0.0005120061479035811,
+          "dVInfArr": -0.002672473590703106,
+          "dVInfArr_pct": -0.015165434404050087,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 7.1928810691940335,
+          "vInfDep": 2.6819547105038954,
+          "vInfArr": 17.595401765893428,
+          "dC3": 0.0014880009836684138,
+          "dC3_pct": 0.020691414995046495,
+          "dVInfDep": 0.00027742413807230193,
+          "dVInfDep_pct": 0.01034517238456622,
+          "dVInfArr": -0.02673499261178236,
+          "dVInfArr_pct": -0.15171254756537336,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 7.281896079075365,
+          "vInfDep": 2.6984988566007146,
+          "vInfArr": 17.353781664622282,
+          "dC3": 0.09050301086499957,
+          "dC3_pct": 1.2584906708141035,
+          "dVInfDep": 0.016821570234891503,
+          "dVInfDep_pct": 0.6272779472912602,
+          "dVInfArr": -0.2683550938829278,
+          "dVInfArr_pct": -1.522829481807352,
+          "alongTrack_timeShift_hours": null
+        }
+      ],
+      "neighbors": {
+        "dep-7d": {
+          "c3": 21.878807639231727,
+          "dC3_from_best": 14.687414571021362
+        },
+        "dep+7d": {
+          "c3": 12.157963467706171,
+          "dC3_from_best": 4.966570399495806
+        },
+        "tof-30d": "off-grid",
+        "tof+30d": {
+          "c3": 59.48912436773663,
+          "dC3_from_best": 52.29773129952626
+        }
+      },
+      "meanNeighborDelta": 23.98390542334781,
+      "minNeighborDelta": 4.966570399495806,
+      "gridRelative": {
+        "along@1e+5km": {
+          "absDC3": 0.012352649739669097,
+          "ratio_vs_meanNeighbor": 0.0005150391281831883,
+          "ratio_vs_minNeighbor": 0.002487158893574348
+        },
+        "along@1e+6km": {
+          "absDC3": 0.10501208377895122,
+          "ratio_vs_meanNeighbor": 0.004378439704683134,
+          "ratio_vs_minNeighbor": 0.021143782395516186
+        },
+        "radial@1e+5km": {
+          "absDC3": 0.05182900211590269,
+          "ratio_vs_meanNeighbor": 0.0021609909312537683,
+          "ratio_vs_minNeighbor": 0.010435571822592958
+        },
+        "radial@1e+6km": {
+          "absDC3": 0.4880456534758446,
+          "ratio_vs_meanNeighbor": 0.02034888167132042,
+          "ratio_vs_minNeighbor": 0.09826613019023948
+        },
+        "cross@1e+5km": {
+          "absDC3": 0.0014880009836684138,
+          "ratio_vs_meanNeighbor": 0.00006204164657103247,
+          "ratio_vs_minNeighbor": 0.00029960332059714124
+        },
+        "cross@1e+6km": {
+          "absDC3": 0.09050301086499957,
+          "ratio_vs_meanNeighbor": 0.0037734893157515895,
+          "ratio_vs_minNeighbor": 0.018222435923627944
+        }
+      },
+      "argminStability": {
+        "along@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.191393068210365
+          },
+          "perturbed": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.179040418470696
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "along@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.191393068210365
+          },
+          "perturbed": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.086380984431414
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.191393068210365
+          },
+          "perturbed": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.139564066094462
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.191393068210365
+          },
+          "perturbed": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 6.7033474147345204
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.191393068210365
+          },
+          "perturbed": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.1928810691940335
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.191393068210365
+          },
+          "perturbed": {
+            "date": "2027-05-13",
+            "tofDays": 182,
+            "c3": 7.281896079075365
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        }
+      }
+    },
+    "asteroid-2017 UR52": {
+      "selection": {
+        "bodyId": "asteroid-2017 UR52",
+        "designation": "2017 UR52",
+        "minC3": 1462.9506048730348,
+        "e": 0.9964262210658009,
+        "conditionCode": 6,
+        "name": "(2017 UR52)",
+        "why": "max eccentricity in pool"
+      },
+      "cachedMinC3": 1462.9506048730348,
+      "baselineArgminRelDiffVsCache": 0,
+      "bestCell": {
+        "date": "2026-02-12",
+        "tofDays": 1802,
+        "c3": 1462.9506048730348,
+        "vInfDep": 38.2485372906342,
+        "vInfArr": 19.45295221046588,
+        "arrSpeedKmps": 7.518530643659308
+      },
+      "perturbations": [
+        {
+          "dir": "along",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 1462.9507096235889,
+          "vInfDep": 38.24853865997483,
+          "vInfArr": 19.452958935590008,
+          "dC3": 0.00010475055410097411,
+          "dC3_pct": 0.000007160224942117243,
+          "dVInfDep": 0.0000013693406302195399,
+          "dVInfDep_pct": 0.0000035801124100890682,
+          "dVInfArr": 0.000006725124126916171,
+          "dVInfArr_pct": 0.00003457122628049221,
+          "alongTrack_timeShift_hours": 0.036945753225337906
+        },
+        {
+          "dir": "along",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 1462.9516523828474,
+          "vInfDep": 38.24855098409412,
+          "vInfArr": 19.453019461705544,
+          "dC3": 0.0010475098126789817,
+          "dC3_pct": 0.00007160254141115667,
+          "dVInfDep": 0.000013693459926855667,
+          "dVInfDep_pct": 0.0000358012643014423,
+          "dVInfArr": 0.00006725123966333513,
+          "dVInfArr_pct": 0.00034571225454999726,
+          "alongTrack_timeShift_hours": 0.3694575322533791
+        },
+        {
+          "dir": "along",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 1462.9610804016081,
+          "vInfDep": 38.248674230639786,
+          "vInfArr": 19.453624722697597,
+          "dC3": 0.010475528573351767,
+          "dC3_pct": 0.0007160548372896642,
+          "dVInfDep": 0.0001369400055892811,
+          "dVInfDep_pct": 0.00035802677772677383,
+          "dVInfArr": 0.0006725122317163823,
+          "dVInfArr_pct": 0.0034571216977264977,
+          "alongTrack_timeShift_hours": 3.6945753225337907
+        },
+        {
+          "dir": "along",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 1463.0554031956315,
+          "vInfDep": 38.24990723120295,
+          "vInfArr": 19.459677316270824,
+          "dC3": 0.1047983225967073,
+          "dC3_pct": 0.007163490158015447,
+          "dVInfDep": 0.001369940568750394,
+          "dVInfDep_pct": 0.0035816809368180657,
+          "dVInfArr": 0.006725105804942899,
+          "dVInfArr_pct": 0.03457113209441149,
+          "alongTrack_timeShift_hours": 36.9457532253379
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 1462.9508006721546,
+          "vInfDep": 38.24853985019761,
+          "vInfArr": 19.452959213452175,
+          "dC3": 0.00019579911986511433,
+          "dC3_pct": 0.0000133838503646613,
+          "dVInfDep": 0.0000025595634127739686,
+          "dVInfDep_pct": 0.000006691924957351824,
+          "dVInfArr": 0.000007002986293969116,
+          "dVInfArr_pct": 0.000035999606734249,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 1462.952562867598,
+          "vInfDep": 38.248562886304605,
+          "vInfArr": 19.45302224031914,
+          "dC3": 0.0019579945633267926,
+          "dC3_pct": 0.0001338387336390432,
+          "dVInfDep": 0.000025595670408051774,
+          "dVInfDep_pct": 0.00006691934442763465,
+          "dVInfArr": 0.00007002985325854638,
+          "dVInfArr_pct": 0.00035999601757552064,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 1462.970185156316,
+          "vInfDep": 38.24879325098134,
+          "vInfArr": 19.453652508026504,
+          "dC3": 0.019580283281129596,
+          "dC3_pct": 0.0013384104163126486,
+          "dVInfDep": 0.0002559603471468108,
+          "dVInfDep_pct": 0.0006692029689969009,
+          "dVInfArr": 0.0007002975606233974,
+          "dVInfArr_pct": 0.00359995517927932,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 1463.1464414731317,
+          "vInfDep": 38.25109725842034,
+          "vInfArr": 19.45995508888752,
+          "dC3": 0.19583660009698178,
+          "dC3_pct": 0.013386412326202763,
+          "dVInfDep": 0.00255996778614076,
+          "dVInfDep_pct": 0.006692982183053602,
+          "dVInfArr": 0.007002878421637604,
+          "dVInfArr_pct": 0.035999052204888395,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 1462.9508562829394,
+          "vInfDep": 38.248540577163716,
+          "vInfArr": 19.452951931852958,
+          "dC3": 0.00025140990464933566,
+          "dC3_pct": 0.000017185125992080557,
+          "dVInfDep": 0.00000328652951964159,
+          "dVInfDep_pct": 0.000008592562624470223,
+          "dVInfArr": -2.786129229548351e-7,
+          "dVInfArr_pct": -0.0000014322397954842996,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 1462.953118975412,
+          "vInfDep": 38.24857015596024,
+          "vInfArr": 19.452949424429292,
+          "dC3": 0.002514102377290328,
+          "dC3_pct": 0.00017185148759745855,
+          "dVInfDep": 0.00003286532604107606,
+          "dVInfDep_pct": 0.00008592570688742048,
+          "dVInfArr": -0.0000027860365889864624,
+          "dVInfArr_pct": -0.000014321921726037796,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 1462.975746232986,
+          "vInfDep": 38.24886594701843,
+          "vInfArr": 19.452924359348053,
+          "dC3": 0.025141359951248887,
+          "dC3_pct": 0.0017185378554480197,
+          "dVInfDep": 0.00032865638423373866,
+          "dVInfDep_pct": 0.0008592652360439827,
+          "dVInfArr": -0.000027851117827992766,
+          "dVInfArr_pct": -0.00014317167660037015,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 1463.2020520822437,
+          "vInfDep": 38.25182416672757,
+          "vInfArr": 19.45267462410118,
+          "dC3": 0.25144720920889085,
+          "dC3_pct": 0.01718767594553975,
+          "dVInfDep": 0.003286876093376634,
+          "dVInfDep_pct": 0.008593468734244856,
+          "dVInfArr": -0.0002775863646995447,
+          "dVInfArr_pct": -0.0014269626619973933,
+          "alongTrack_timeShift_hours": null
+        }
+      ],
+      "neighbors": {
+        "dep-7d": {
+          "c3": 1467.4482559605976,
+          "dC3_from_best": 4.497651087562872
+        },
+        "dep+7d": {
+          "c3": 1482.7096267818542,
+          "dC3_from_best": 19.759021908819477
+        },
+        "tof-30d": {
+          "c3": 1474.4012916512493,
+          "dC3_from_best": 11.450686778214504
+        },
+        "tof+30d": "off-grid"
+      },
+      "meanNeighborDelta": 11.902453258198952,
+      "minNeighborDelta": 4.497651087562872,
+      "gridRelative": {
+        "along@1e+5km": {
+          "absDC3": 0.010475528573351767,
+          "ratio_vs_meanNeighbor": 0.0008801150776320626,
+          "ratio_vs_minNeighbor": 0.0023291109891381344
+        },
+        "along@1e+6km": {
+          "absDC3": 0.1047983225967073,
+          "ratio_vs_meanNeighbor": 0.008804766574026866,
+          "ratio_vs_minNeighbor": 0.023300678633453985
+        },
+        "radial@1e+5km": {
+          "absDC3": 0.019580283281129596,
+          "ratio_vs_meanNeighbor": 0.0016450628165787424,
+          "ratio_vs_minNeighbor": 0.004353446476822973
+        },
+        "radial@1e+6km": {
+          "absDC3": 0.19583660009698178,
+          "ratio_vs_meanNeighbor": 0.016453465167954397,
+          "ratio_vs_minNeighbor": 0.04354197252839796
+        },
+        "cross@1e+5km": {
+          "absDC3": 0.025141359951248887,
+          "ratio_vs_meanNeighbor": 0.002112283863322914,
+          "ratio_vs_minNeighbor": 0.00558988669013722
+        },
+        "cross@1e+6km": {
+          "absDC3": 0.25144720920889085,
+          "ratio_vs_meanNeighbor": 0.021125662395328676,
+          "ratio_vs_minNeighbor": 0.05590633962341035
+        }
+      },
+      "argminStability": {
+        "along@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.9506048730348
+          },
+          "perturbed": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.9610804016081
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "along@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.9506048730348
+          },
+          "perturbed": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1463.0554031956315
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.9506048730348
+          },
+          "perturbed": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.970185156316
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.9506048730348
+          },
+          "perturbed": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1463.1464414731317
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.9506048730348
+          },
+          "perturbed": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.975746232986
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1462.9506048730348
+          },
+          "perturbed": {
+            "date": "2026-02-12",
+            "tofDays": 1802,
+            "c3": 1463.2020520822437
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        }
+      }
+    },
+    "asteroid-1979 XB": {
+      "selection": {
+        "bodyId": "asteroid-1979 XB",
+        "designation": "1979 XB",
+        "minC3": 2.4062596694509333,
+        "e": 0.7109170248822084,
+        "conditionCode": 9,
+        "name": "(1979 XB)",
+        "why": "max condition code in pool (U=9)"
+      },
+      "cachedMinC3": 2.4062596694509333,
+      "baselineArgminRelDiffVsCache": 1.8455581311030993e-16,
+      "bestCell": {
+        "date": "2029-03-08",
+        "tofDays": 242,
+        "c3": 2.4062596694509337,
+        "vInfDep": 1.5512123224919707,
+        "vInfArr": 26.13249723858159,
+        "arrSpeedKmps": 39.09892115606137
+      },
+      "perturbations": [
+        {
+          "dir": "along",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 2.4063712582459984,
+          "vInfDep": 1.5512482903281468,
+          "vInfArr": 26.132400577386612,
+          "dC3": 0.00011158879506467656,
+          "dC3_pct": 0.004637437782853218,
+          "dVInfDep": 0.000035967836176098444,
+          "dVInfDep_pct": 0.002318692009764164,
+          "dVInfArr": -0.00009666119497708792,
+          "dVInfArr_pct": -0.00036988885560611067,
+          "alongTrack_timeShift_hours": 0.007104487018172235
+        },
+        {
+          "dir": "along",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 2.4073769392540667,
+          "vInfDep": 1.551572408640366,
+          "vInfArr": 26.13153063212545,
+          "dC3": 0.0011172698031329809,
+          "dC3_pct": 0.04643180523355246,
+          "dVInfDep": 0.00036008614839522224,
+          "dVInfDep_pct": 0.02321320835156569,
+          "dVInfArr": -0.0009666064561386634,
+          "dVInfArr_pct": -0.0036988675338366877,
+          "alongTrack_timeShift_hours": 0.07104487018172236
+        },
+        {
+          "dir": "along",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 2.417570587260341,
+          "vInfDep": 1.55485387971357,
+          "vInfArr": 26.122831725607828,
+          "dC3": 0.011310917809407073,
+          "dC3_pct": 0.4700622278221546,
+          "dVInfDep": 0.003641557221599312,
+          "dVInfDep_pct": 0.2347555630391894,
+          "dVInfArr": -0.009665512973761281,
+          "dVInfArr_pct": -0.03698656460390351,
+          "alongTrack_timeShift_hours": 0.7104487018172235
+        },
+        {
+          "dir": "along",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 2.533225355777813,
+          "vInfDep": 1.5916109310311402,
+          "vInfArr": 26.035899511633712,
+          "dC3": 0.1269656863268791,
+          "dC3_pct": 5.276474851770692,
+          "dVInfDep": 0.040398608539169434,
+          "dVInfDep_pct": 2.6043248853432535,
+          "dVInfArr": -0.09659772694787705,
+          "dVInfArr_pct": -0.3696459854791901,
+          "alongTrack_timeShift_hours": 7.104487018172235
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 2.4063180642279165,
+          "vInfDep": 1.5512311446808682,
+          "vInfArr": 26.132432332438473,
+          "dC3": 0.00005839477698277307,
+          "dC3_pct": 0.0024267861745818037,
+          "dVInfDep": 0.00001882218889748266,
+          "dVInfDep_pct": 0.001213385725768697,
+          "dVInfArr": -0.00006490614311616127,
+          "dVInfArr_pct": -0.00024837328986812216,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 2.40684694927779,
+          "vInfDep": 1.5514016079912352,
+          "vInfArr": 26.131848344770958,
+          "dC3": 0.0005872798268562462,
+          "dC3_pct": 0.024406336286650777,
+          "dVInfDep": 0.0001892854992644466,
+          "dVInfDep_pct": 0.01220242364761297,
+          "dVInfArr": -0.000648893810630824,
+          "dVInfArr_pct": -0.0024830914730675177,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 2.412465502018934,
+          "vInfDep": 1.5532113513681691,
+          "vInfArr": 26.126025052020402,
+          "dC3": 0.006205832568000336,
+          "dC3_pct": 0.2579036937196557,
+          "dVInfDep": 0.0019990288761984054,
+          "dVInfDep_pct": 0.12886881100757583,
+          "dVInfArr": -0.006472186561186533,
+          "dVInfArr_pct": -0.02476681237961102,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 2.501450480446496,
+          "vInfDep": 1.5815974457637747,
+          "vInfArr": 26.069440035024247,
+          "dC3": 0.09519081099556237,
+          "dC3_pct": 3.9559658587172866,
+          "dVInfDep": 0.030385123271803982,
+          "dVInfDep_pct": 1.9587984720873863,
+          "dVInfArr": -0.06305720355734223,
+          "dVInfArr_pct": -0.24129803968464836,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 2.406521853614667,
+          "vInfDep": 1.5512968296282523,
+          "vInfArr": 26.132578014999048,
+          "dC3": 0.00026218416373335884,
+          "dC3_pct": 0.010895921461094207,
+          "dVInfDep": 0.00008450713628160855,
+          "dVInfDep_pct": 0.005447812337246694,
+          "dVInfArr": 0.00008077641745884989,
+          "dVInfArr_pct": 0.00030910332342671377,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 2.408884987193676,
+          "vInfDep": 1.552058306634669,
+          "vInfArr": 26.133304967562648,
+          "dC3": 0.002625317742742439,
+          "dC3_pct": 0.10910367555391437,
+          "dVInfDep": 0.0008459841426982084,
+          "dVInfDep_pct": 0.05453696637344675,
+          "dVInfArr": 0.0008077289810586308,
+          "dVInfArr_pct": 0.0030908985608390804,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 2.4328604207793103,
+          "vInfDep": 1.5597629373655826,
+          "vInfArr": 26.140571006122986,
+          "dC3": 0.026600751328376582,
+          "dC3_pct": 1.1054813271439823,
+          "dVInfDep": 0.008550614873611861,
+          "dVInfDep_pct": 0.5512214382023207,
+          "dVInfArr": 0.008073767541397103,
+          "dVInfArr_pct": 0.030895507106290347,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 2.7069873152068293,
+          "vInfDep": 1.6452924710235652,
+          "vInfArr": 26.212879814491778,
+          "dC3": 0.3007276457558956,
+          "dC3_pct": 12.497722069393964,
+          "dVInfDep": 0.09408014853159452,
+          "dVInfDep_pct": 6.064943345760554,
+          "dVInfArr": 0.08038257591018905,
+          "dVInfArr_pct": 0.30759622846726464,
+          "alongTrack_timeShift_hours": null
+        }
+      ],
+      "neighbors": {
+        "dep-7d": {
+          "c3": 8.358235320471577,
+          "dC3_from_best": 5.951975651020643
+        },
+        "dep+7d": {
+          "c3": 13.836078809888948,
+          "dC3_from_best": 11.429819140438013
+        },
+        "tof-30d": {
+          "c3": 114.59525284638111,
+          "dC3_from_best": 112.18899317693018
+        },
+        "tof+30d": {
+          "c3": 560.4471258412999,
+          "dC3_from_best": 558.040866171849
+        }
+      },
+      "meanNeighborDelta": 171.90291353505944,
+      "minNeighborDelta": 5.951975651020643,
+      "gridRelative": {
+        "along@1e+5km": {
+          "absDC3": 0.011310917809407073,
+          "ratio_vs_meanNeighbor": 0.0000657982903070472,
+          "ratio_vs_minNeighbor": 0.001900363588931598
+        },
+        "along@1e+6km": {
+          "absDC3": 0.1269656863268791,
+          "ratio_vs_meanNeighbor": 0.0007385894963379115,
+          "ratio_vs_minNeighbor": 0.021331687790945023
+        },
+        "radial@1e+5km": {
+          "absDC3": 0.006205832568000336,
+          "ratio_vs_meanNeighbor": 0.000036100799226620794,
+          "ratio_vs_minNeighbor": 0.001042650866176874
+        },
+        "radial@1e+6km": {
+          "absDC3": 0.09519081099556237,
+          "ratio_vs_meanNeighbor": 0.0005537475138613535,
+          "ratio_vs_minNeighbor": 0.01599314523056543
+        },
+        "cross@1e+5km": {
+          "absDC3": 0.026600751328376582,
+          "ratio_vs_meanNeighbor": 0.00015474287655369717,
+          "ratio_vs_minNeighbor": 0.004469230535883509
+        },
+        "cross@1e+6km": {
+          "absDC3": 0.3007276457558956,
+          "ratio_vs_meanNeighbor": 0.0017494040070156372,
+          "ratio_vs_minNeighbor": 0.05052568481262636
+        }
+      },
+      "argminStability": {
+        "along@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.4062596694509337
+          },
+          "perturbed": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.417570587260341
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "along@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.4062596694509337
+          },
+          "perturbed": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.533225355777813
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.4062596694509337
+          },
+          "perturbed": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.412465502018934
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.4062596694509337
+          },
+          "perturbed": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.501450480446496
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.4062596694509337
+          },
+          "perturbed": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.4328604207793103
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+6km": {
+          "moved": true,
+          "baseline": {
+            "date": "2029-03-08",
+            "tofDays": 242,
+            "c3": 2.4062596694509337
+          },
+          "perturbed": {
+            "date": "2029-02-01",
+            "tofDays": 272,
+            "c3": 2.6281166215917913
+          },
+          "dep_shift_days": -35,
+          "tof_shift_days": 30
+        }
+      }
+    },
+    "asteroid-99942": {
+      "selection": {
+        "bodyId": "asteroid-99942",
+        "designation": "99942",
+        "minC3": 0.00020641346871491306,
+        "e": 0.19114292963930402,
+        "conditionCode": 0,
+        "name": "99942 Apophis (2004 MN4)",
+        "why": "lowest minC3 in pool (most accessible)"
+      },
+      "cachedMinC3": 0.00020641346871491306,
+      "baselineArgminRelDiffVsCache": 0,
+      "bestCell": {
+        "date": "2028-09-14",
+        "tofDays": 212,
+        "c3": 0.00020641346871491306,
+        "vInfDep": 0.01436709673924809,
+        "vInfArr": 5.844705709723842,
+        "arrSpeedKmps": 28.405814731861984
+      },
+      "perturbations": [
+        {
+          "dir": "along",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 0.00020688087238730644,
+          "vInfDep": 0.014383354003406384,
+          "vInfArr": 5.8445510958349525,
+          "dC3": 4.6740367239337115e-7,
+          "dC3_pct": 0.2264404911672326,
+          "dVInfDep": 0.00001625726415829462,
+          "dVInfDep_pct": 0.11315622392854756,
+          "dVInfArr": -0.00015461388888926564,
+          "dVInfArr_pct": -0.002645366534572209,
+          "alongTrack_timeShift_hours": 0.009778905495226035
+        },
+        {
+          "dir": "along",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 0.0002111540360030061,
+          "vInfDep": 0.014531140216893033,
+          "vInfArr": 5.843159590591291,
+          "dC3": 0.000004740567288093032,
+          "dC3_pct": 2.2966366088447665,
+          "dVInfDep": 0.00016404347764494356,
+          "dVInfDep_pct": 1.1417997708389405,
+          "dVInfArr": -0.0015461191325503165,
+          "dVInfArr_pct": -0.026453327324556936,
+          "alongTrack_timeShift_hours": 0.09778905495226034
+        },
+        {
+          "dir": "along",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 0.0002604703810005578,
+          "vInfDep": 0.016139094801151575,
+          "vInfArr": 5.829246501041456,
+          "dC3": 0.00005405691228564476,
+          "dC3_pct": 26.188655528242293,
+          "dVInfDep": 0.0017719980619034861,
+          "dVInfDep_pct": 12.333724022771666,
+          "dVInfArr": -0.015459208682385928,
+          "dVInfArr_pct": -0.26449935121055673,
+          "alongTrack_timeShift_hours": 0.9778905495226033
+        },
+        {
+          "dir": "along",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 0.0014105068159174484,
+          "vInfDep": 0.037556714658199916,
+          "vInfArr": 5.690319050299733,
+          "dC3": 0.0012040933472025352,
+          "dC3_pct": 583.3404935729086,
+          "dVInfDep": 0.023189617918951827,
+          "dVInfDep_pct": 161.40782191298499,
+          "dVInfArr": -0.15438665942410879,
+          "dVInfArr_pct": -2.641478751740324,
+          "alongTrack_timeShift_hours": 9.778905495226033
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 0.00020948913680287468,
+          "vInfDep": 0.014473739558347548,
+          "vInfArr": 5.844720951352474,
+          "dC3": 0.0000030756680879616145,
+          "dC3_pct": 1.4900520334792484,
+          "dVInfDep": 0.00010664281909945894,
+          "dVInfDep_pct": 0.742271184185262,
+          "dVInfArr": 0.000015241628632089999,
+          "dVInfArr_pct": 0.00026077666505488014,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 0.00023875040318804852,
+          "vInfDep": 0.015451550187215796,
+          "vInfArr": 5.844858398519131,
+          "dC3": 0.00003233693447313545,
+          "dC3_pct": 15.666097117818145,
+          "dVInfDep": 0.0010844534479677072,
+          "dVInfDep_pct": 7.5481739118884965,
+          "dVInfArr": 0.00015268879528917978,
+          "dVInfArr_pct": 0.0026124291430987072,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 0.0006877477236516923,
+          "vInfDep": 0.026224944683482028,
+          "vInfArr": 5.846259819753302,
+          "dC3": 0.0004813342549367793,
+          "dC3_pct": 233.18936401459914,
+          "dVInfDep": 0.011857847944233939,
+          "dVInfDep_pct": 82.53475395513016,
+          "dVInfArr": 0.001554110029459821,
+          "dVInfArr_pct": 0.026590047585702166,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "radial",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 0.020756063350936684,
+          "vInfDep": 0.1440696475699746,
+          "vInfArr": 5.862939743265108,
+          "dC3": 0.02054964988222177,
+          "dC3_pct": 9955.576063015451,
+          "dVInfDep": 0.12970255083072652,
+          "dVInfDep_pct": 902.7749529687832,
+          "dVInfArr": 0.018234033541266292,
+          "dVInfArr_pct": 0.3119752207699751,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000,
+          "ok": true,
+          "c3": 0.0002067454100076474,
+          "vInfDep": 0.014378644233989775,
+          "vInfArr": 5.844627395374107,
+          "dC3": 3.319412927343306e-7,
+          "dC3_pct": 0.16081377576808695,
+          "dVInfDep": 0.00001154749474168576,
+          "dVInfDep_pct": 0.08037458751245316,
+          "dVInfArr": -0.00007831434973493145,
+          "dVInfArr_pct": -0.0013399194694206724,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 10000,
+          "ok": true,
+          "c3": 0.00022176069827816927,
+          "vInfDep": 0.014891631820528241,
+          "vInfArr": 5.843923068747907,
+          "dC3": 0.00001534722956325621,
+          "dC3_pct": 7.4351880518286135,
+          "dVInfDep": 0.0005245350812801523,
+          "dVInfDep_pct": 3.650946957482547,
+          "dVInfArr": -0.000782640975934612,
+          "dVInfArr_pct": -0.013390596803403319,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 100000,
+          "ok": true,
+          "c3": 0.0015628097277326722,
+          "vInfDep": 0.0395323883383318,
+          "vInfArr": 5.836929634091001,
+          "dC3": 0.001356396259017759,
+          "dC3_pct": 657.1258491330035,
+          "dVInfDep": 0.025165291599083713,
+          "dVInfDep_pct": 175.15919921619985,
+          "dVInfArr": -0.007776075632841106,
+          "dVInfArr_pct": -0.13304477623063282,
+          "alongTrack_timeShift_hours": null
+        },
+        {
+          "dir": "cross",
+          "magKm": 1000000,
+          "ok": true,
+          "c3": 0.13419225019535508,
+          "vInfDep": 0.36632260399183,
+          "vInfArr": 5.772058185505749,
+          "dC3": 0.13398583672664016,
+          "dC3_pct": 64911.38275075161,
+          "dVInfDep": 0.3519555072525819,
+          "dVInfDep_pct": 2449.732981132566,
+          "dVInfArr": -0.07264752421809284,
+          "dVInfArr_pct": -1.2429629108139542,
+          "alongTrack_timeShift_hours": null
+        }
+      ],
+      "neighbors": {
+        "dep-7d": {
+          "c3": 0.33904781238699827,
+          "dC3_from_best": 0.33884139891828335
+        },
+        "dep+7d": {
+          "c3": 0.3594920122849816,
+          "dC3_from_best": 0.3592855988162667
+        },
+        "tof-30d": {
+          "c3": 42.944044461908156,
+          "dC3_from_best": 42.94383804843944
+        },
+        "tof+30d": {
+          "c3": 5.77788958751546,
+          "dC3_from_best": 5.777683174046746
+        }
+      },
+      "meanNeighborDelta": 12.354912055055182,
+      "minNeighborDelta": 0.33884139891828335,
+      "gridRelative": {
+        "along@1e+5km": {
+          "absDC3": 0.00005405691228564476,
+          "ratio_vs_meanNeighbor": 0.000004375337683081817,
+          "ratio_vs_minNeighbor": 0.00015953455645684365
+        },
+        "along@1e+6km": {
+          "absDC3": 0.0012040933472025352,
+          "ratio_vs_meanNeighbor": 0.0000974586740752933,
+          "ratio_vs_minNeighbor": 0.003553560311834624
+        },
+        "radial@1e+5km": {
+          "absDC3": 0.0004813342549367793,
+          "ratio_vs_meanNeighbor": 0.00003895893817713051,
+          "ratio_vs_minNeighbor": 0.001420529653322734
+        },
+        "radial@1e+6km": {
+          "absDC3": 0.02054964988222177,
+          "ratio_vs_meanNeighbor": 0.0016632777142119436,
+          "ratio_vs_minNeighbor": 0.06064680982850512
+        },
+        "cross@1e+5km": {
+          "absDC3": 0.001356396259017759,
+          "ratio_vs_meanNeighbor": 0.00010978599062247236,
+          "ratio_vs_minNeighbor": 0.004003041727923199
+        },
+        "cross@1e+6km": {
+          "absDC3": 0.13398583672664016,
+          "ratio_vs_meanNeighbor": 0.010844742247421988,
+          "ratio_vs_minNeighbor": 0.39542345520463645
+        }
+      },
+      "argminStability": {
+        "along@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.00020641346871491306
+          },
+          "perturbed": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.0002604703810005578
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "along@1e+6km": {
+          "moved": false,
+          "baseline": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.00020641346871491306
+          },
+          "perturbed": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.0014105068159174484
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.00020641346871491306
+          },
+          "perturbed": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.0006877477236516923
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "radial@1e+6km": {
+          "moved": true,
+          "baseline": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.00020641346871491306
+          },
+          "perturbed": {
+            "date": "2028-08-17",
+            "tofDays": 242,
+            "c3": 0.004307482097751484
+          },
+          "dep_shift_days": -28,
+          "tof_shift_days": 30
+        },
+        "cross@1e+5km": {
+          "moved": false,
+          "baseline": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.00020641346871491306
+          },
+          "perturbed": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.0015628097277326722
+          },
+          "dep_shift_days": 0,
+          "tof_shift_days": 0
+        },
+        "cross@1e+6km": {
+          "moved": true,
+          "baseline": {
+            "date": "2028-09-14",
+            "tofDays": 212,
+            "c3": 0.00020641346871491306
+          },
+          "perturbed": {
+            "date": "2028-06-15",
+            "tofDays": 302,
+            "c3": 0.049481628762952964
+          },
+          "dep_shift_days": -91,
+          "tof_shift_days": 90
+        }
+      }
+    }
+  },
+  "convergenceFailures": []
+}

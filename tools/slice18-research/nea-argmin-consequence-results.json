@@ -1,0 +1,497 @@
+{
+ "generatedAtUtc": "2026-09-06T15:34:26.865Z",
+ "grid": {
+  "depStartJD": 2461041.500800741,
+  "depEndJD": 2466154.500800741,
+  "tofMinDays": 182.5,
+  "tofMaxDays": 1826.25,
+  "nDep": 200,
+  "nTof": 100
+ },
+ "bodies": {
+  "433": {
+   "shippedMin": {
+    "c3": 1.752189846705813,
+    "dep": "2032-05-27",
+    "tofDays": 282.12,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 1.7467155509757852,
+    "dep": "2032-05-27",
+    "tofDays": 282.12,
+    "M": 0
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": -0.005474295730027778,
+   "dC3AtShippedArgmin": -0.005474295730027778,
+   "maxAbsDc3": 1365.1278725453187,
+   "maxAbsDc3At": {
+    "dep": "2030-04-17",
+    "tofDays": 1577.2
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 2
+  },
+  "99942": {
+   "shippedMin": {
+    "c3": 0.0011748949214500095,
+    "dep": "2028-08-08",
+    "tofDays": 248.91,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 0.0015553536725282713,
+    "dep": "2028-08-08",
+    "tofDays": 248.91,
+    "M": 0
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": 0.00038045875107826184,
+   "dC3AtShippedArgmin": 0.00038045875107826184,
+   "maxAbsDc3": 2647.4564429181437,
+   "maxAbsDc3At": {
+    "dep": "2037-09-30",
+    "tofDays": 1743.23
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 3352
+  },
+  "105140": {
+   "shippedMin": {
+    "c3": 73.84192355956755,
+    "dep": "2027-04-08",
+    "tofDays": 331.93,
+    "M": 1
+   },
+   "truthMin": {
+    "c3": 73.85467031242244,
+    "dep": "2027-04-08",
+    "tofDays": 331.93,
+    "M": 1
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": 0.012746752854894794,
+   "dC3AtShippedArgmin": 0.012746752854894794,
+   "maxAbsDc3": 468.2974713233415,
+   "maxAbsDc3At": {
+    "dep": "2039-05-14",
+    "tofDays": 630.8
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 0
+  },
+  "163693": {
+   "shippedMin": {
+    "c3": 8.447568896891584,
+    "dep": "2034-05-16",
+    "tofDays": 182.5,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 7.987937863832605,
+    "dep": "2037-05-25",
+    "tofDays": 481.36,
+    "M": 1
+   },
+   "argminMoved": true,
+   "argminShiftDays": 1104.8,
+   "minC3Delta": -0.45963103305897857,
+   "dC3AtShippedArgmin": 0.48425932304085606,
+   "maxAbsDc3": 1352.304336209268,
+   "maxAbsDc3At": {
+    "dep": "2027-10-05",
+    "tofDays": 1278.33
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 3
+  },
+  "1979 XB": {
+   "shippedMin": {
+    "c3": 0.7098626241284557,
+    "dep": "2028-04-02",
+    "tofDays": 580.98,
+    "M": 1
+   },
+   "truthMin": {
+    "c3": 0.5330904220431888,
+    "dep": "2028-02-10",
+    "tofDays": 630.8,
+    "M": 1
+   },
+   "argminMoved": true,
+   "argminShiftDays": -51.4,
+   "minC3Delta": -0.1767722020852669,
+   "dC3AtShippedArgmin": -0.1126379009156081,
+   "maxAbsDc3": 1781.5130218667327,
+   "maxAbsDc3At": {
+    "dep": "2039-03-24",
+    "tofDays": 996.07
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 32
+  },
+  "2017 UR52": {
+   "shippedMin": {
+    "c3": 1486.3394327615742,
+    "dep": "2026-02-21",
+    "tofDays": 1826.25,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 1486.1814839333979,
+    "dep": "2026-02-21",
+    "tofDays": 1826.25,
+    "M": 0
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": -0.1579488281763588,
+   "dC3AtShippedArgmin": -0.1579488281763588,
+   "maxAbsDc3": 134.91717959594098,
+   "maxAbsDc3At": {
+    "dep": "2039-10-15",
+    "tofDays": 182.5
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 0
+  },
+  "2025 VP": {
+   "shippedMin": {
+    "c3": 205.95431750393655,
+    "dep": "2039-09-20",
+    "tofDays": 1793.04,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 203.68773332470022,
+    "dep": "2039-09-20",
+    "tofDays": 1776.44,
+    "M": 0
+   },
+   "argminMoved": true,
+   "argminShiftDays": 0,
+   "minC3Delta": -2.2665841792363324,
+   "dC3AtShippedArgmin": -2.1745948773676673,
+   "maxAbsDc3": 1605.2809688820407,
+   "maxAbsDc3At": {
+    "dep": "2031-08-18",
+    "tofDays": 431.55
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 0
+  },
+  "2022 BG4": {
+   "shippedMin": {
+    "c3": 187.9003602512254,
+    "dep": "2037-11-21",
+    "tofDays": 1826.25,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 186.7796821077488,
+    "dep": "2037-11-21",
+    "tofDays": 1826.25,
+    "M": 0
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": -1.1206781434765958,
+   "dC3AtShippedArgmin": -1.1206781434765958,
+   "maxAbsDc3": 277.2536913474687,
+   "maxAbsDc3At": {
+    "dep": "2039-09-20",
+    "tofDays": 182.5
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 0
+  },
+  "2014 PP69": {
+   "shippedMin": {
+    "c3": 1979.3474569167072,
+    "dep": "2026-12-01",
+    "tofDays": 1826.25,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 1980.1170433821617,
+    "dep": "2026-12-01",
+    "tofDays": 1826.25,
+    "M": 0
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": 0.7695864654544948,
+   "dC3AtShippedArgmin": 0.7695864654544948,
+   "maxAbsDc3": 5009.832509300373,
+   "maxAbsDc3At": {
+    "dep": "2039-10-15",
+    "tofDays": 315.33
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 0
+  },
+  "2021 CG6": {
+   "shippedMin": {
+    "c3": 21.19856534539755,
+    "dep": "2038-11-15",
+    "tofDays": 414.95,
+    "M": 1
+   },
+   "truthMin": {
+    "c3": 20.782935609400187,
+    "dep": "2038-11-15",
+    "tofDays": 414.95,
+    "M": 1
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": -0.4156297359973635,
+   "dC3AtShippedArgmin": -0.4156297359973635,
+   "maxAbsDc3": 1456.976040343463,
+   "maxAbsDc3At": {
+    "dep": "2032-03-11",
+    "tofDays": 1793.04
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 0
+  },
+  "2010 KD": {
+   "shippedMin": {
+    "c3": 3.876773591380563,
+    "dep": "2031-12-24",
+    "tofDays": 199.1,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 4.106274469836494,
+    "dep": "2031-12-24",
+    "tofDays": 199.1,
+    "M": 0
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": 0.22950087845593092,
+   "dC3AtShippedArgmin": 0.22950087845593092,
+   "maxAbsDc3": 1101.9615250683023,
+   "maxAbsDc3At": {
+    "dep": "2035-11-07",
+    "tofDays": 1610.4
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 3
+  },
+  "2019 SE9": {
+   "shippedMin": {
+    "c3": 0.38508330777946664,
+    "dep": "2026-01-26",
+    "tofDays": 282.12,
+    "M": 0
+   },
+   "truthMin": {
+    "c3": 0.3847070807029494,
+    "dep": "2026-01-26",
+    "tofDays": 282.12,
+    "M": 0
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": -0.00037622707651724374,
+   "dC3AtShippedArgmin": -0.00037622707651724374,
+   "maxAbsDc3": 1943.2113714959796,
+   "maxAbsDc3At": {
+    "dep": "2034-03-26",
+    "tofDays": 381.74
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 40
+  },
+  "2024 BB8": {
+   "shippedMin": {
+    "c3": 2.0425843654847617,
+    "dep": "2035-04-15",
+    "tofDays": 730.42,
+    "M": 1
+   },
+   "truthMin": {
+    "c3": 1.9993756375585465,
+    "dep": "2035-04-15",
+    "tofDays": 730.42,
+    "M": 1
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": -0.04320872792621522,
+   "dC3AtShippedArgmin": -0.04320872792621522,
+   "maxAbsDc3": 1570.2764533639352,
+   "maxAbsDc3At": {
+    "dep": "2039-09-20",
+    "tofDays": 1693.42
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 8
+  },
+  "2025 KP4": {
+   "shippedMin": {
+    "c3": 2.9617888400699752,
+    "dep": "2031-08-18",
+    "tofDays": 614.19,
+    "M": 1
+   },
+   "truthMin": {
+    "c3": 2.9323281778791292,
+    "dep": "2031-08-18",
+    "tofDays": 614.19,
+    "M": 1
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": -0.029460662190845976,
+   "dC3AtShippedArgmin": -0.029460662190845976,
+   "maxAbsDc3": 1052.281204720995,
+   "maxAbsDc3At": {
+    "dep": "2035-03-20",
+    "tofDays": 1593.8
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 29
+  },
+  "2012 UE34": {
+   "shippedMin": {
+    "c3": 0.018211518118272544,
+    "dep": "2039-06-09",
+    "tofDays": 664,
+    "M": 1
+   },
+   "truthMin": {
+    "c3": 0.027128528061037237,
+    "dep": "2040-01-01",
+    "tofDays": 464.76,
+    "M": 1
+   },
+   "argminMoved": true,
+   "argminShiftDays": 205.5,
+   "minC3Delta": 0.008917009942764693,
+   "dC3AtShippedArgmin": 0.21244862018999935,
+   "maxAbsDc3": 2378.2459766367124,
+   "maxAbsDc3At": {
+    "dep": "2039-11-10",
+    "tofDays": 1809.65
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 115
+  },
+  "2025 HH": {
+   "shippedMin": {
+    "c3": 0.05226310945522356,
+    "dep": "2030-06-07",
+    "tofDays": 664,
+    "M": 1
+   },
+   "truthMin": {
+    "c3": 0.051794005595479545,
+    "dep": "2030-06-07",
+    "tofDays": 664,
+    "M": 1
+   },
+   "argminMoved": false,
+   "argminShiftDays": 0,
+   "minC3Delta": -0.0004691038597440175,
+   "dC3AtShippedArgmin": -0.0004691038597440175,
+   "maxAbsDc3": 1908.6862067720126,
+   "maxAbsDc3At": {
+    "dep": "2039-03-24",
+    "tofDays": 497.97
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 29
+  },
+  "2026 BX8": {
+   "shippedMin": {
+    "c3": 2.0826043273415915,
+    "dep": "2038-05-20",
+    "tofDays": 713.81,
+    "M": 1
+   },
+   "truthMin": {
+    "c3": 1.1202428315250088,
+    "dep": "2038-06-14",
+    "tofDays": 630.8,
+    "M": 1
+   },
+   "argminMoved": true,
+   "argminShiftDays": 25.7,
+   "minC3Delta": -0.9623614958165827,
+   "dC3AtShippedArgmin": 75.27977604998442,
+   "maxAbsDc3": 2772.2752527717544,
+   "maxAbsDc3At": {
+    "dep": "2037-09-05",
+    "tofDays": 1045.88
+   },
+   "bothOk": 20000,
+   "statusChanges": 0,
+   "feasibilityCrossings25": 192
+  }
+ },
+ "crossCheck": {
+  "433": {
+   "m0_now": 1.752189846705813,
+   "m0_prior": 1.752189846705813,
+   "m1_now": 2.2086275443559535,
+   "m1_prior": 2.2086275443559535,
+   "m0_match": true,
+   "m1_match": true
+  },
+  "99942": {
+   "m0_now": 0.0011748949214500095,
+   "m0_prior": 0.0011748949214500095,
+   "m1_now": 0.0027783280538082066,
+   "m1_prior": 0.0027783280538082066,
+   "m0_match": true,
+   "m1_match": true
+  },
+  "163693": {
+   "m0_now": 8.447568896891584,
+   "m0_prior": 8.447568896891584,
+   "m1_now": 8.50891347875945,
+   "m1_prior": 8.50891347875945,
+   "m0_match": true,
+   "m1_match": true
+  },
+  "1979 XB": {
+   "m0_now": 3.151477050001412,
+   "m0_prior": 3.151477050001412,
+   "m1_now": 0.7098626241284557,
+   "m1_prior": 0.7098626241284557,
+   "m0_match": true,
+   "m1_match": true
+  },
+  "2021 CG6": {
+   "m0_now": 39.54485149124556,
+   "m0_prior": 39.54485149124556,
+   "m1_now": 21.19856534539755,
+   "m1_prior": 21.19856534539755,
+   "m0_match": true,
+   "m1_match": true
+  }
+ }
+}

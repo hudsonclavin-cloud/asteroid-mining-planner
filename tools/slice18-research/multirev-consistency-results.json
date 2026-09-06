@@ -1,0 +1,833 @@
+{
+  "gateA": {
+    "cached": {
+      "bodyId": "asteroid-433",
+      "minC3": 1.6244339770173506,
+      "minC3Date": "2032-06-10",
+      "minC3TofDays": 272,
+      "vInfDep": 1.2745328465823667,
+      "vInfArr": 6.655866629635761
+    },
+    "recomputed": {
+      "c3": 1.62443397701735,
+      "vInfDep": 1.2745328465823664,
+      "vInfArr": 6.655866629635761
+    },
+    "relDiffs": {
+      "c3_rel": 4.100713382012564e-16,
+      "vInfDep_rel": 1.742164633264959e-16,
+      "vInfArr_rel": 0
+    }
+  },
+  "step12": {
+    "izzo": {
+      "c3": 1.62443397701735,
+      "vInfDep": 1.2745328465823664,
+      "vInfArr": 6.655866629635761,
+      "x": -0.23940178501453757,
+      "iterations": 3
+    },
+    "multiRevM0": {
+      "c3": 1.62443397701735,
+      "vInfDep": 1.2745328465823664,
+      "vInfArr": 6.655866629635761,
+      "x": -0.23940178501453757,
+      "branch": "single",
+      "converged": true,
+      "branchCount": 1
+    },
+    "absDiff": {
+      "c3": 0,
+      "vInfDep": 0,
+      "vInfArr": 0,
+      "v1": [
+        0,
+        0,
+        0
+      ],
+      "v2": [
+        0,
+        0,
+        0
+      ]
+    },
+    "relDiff": {
+      "c3": 0,
+      "vInfDep": 0,
+      "vInfArr": 0
+    }
+  },
+  "gridParams": {
+    "depStartJD": 2461041.500800741,
+    "depEndJD": 2466154.500800741,
+    "tofMinDays": 182.5,
+    "tofMaxDays": 1826.25,
+    "nDep": 200,
+    "nTof": 100,
+    "depStartDate": "2026-01-01",
+    "depEndDate": "2040-01-01",
+    "depStepDays": 25.693467336683415,
+    "tofStepDays": 16.603535353535353
+  },
+  "feasibleC3Max": 25,
+  "bodies": {
+    "asteroid-433": {
+      "selection": {
+        "why": "prior-measurement continuity",
+        "e": 0.22288929294611265,
+        "aAU": 1.458246609185368,
+        "conditionCode": 0,
+        "cachedMinC3": 1.6244339770173506,
+        "cachedStatus": "low_departure_c3",
+        "cachedDate": "2032-06-10",
+        "cachedTofDays": 272
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 1.752189846705813,
+        "at": {
+          "depJD": 2463379.606328379,
+          "date": "2032-05-27",
+          "tofDays": 282.1212121212121,
+          "vInfDep": 1.3237030810215005,
+          "vInfArr": 6.803248513581318,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": 2.2086275443559535,
+        "at": {
+          "depJD": 2465692.0183886806,
+          "date": "2038-09-25",
+          "tofDays": 547.7777777777778,
+          "vInfDep": 1.4861451962563932,
+          "vInfArr": 6.877764023504247,
+          "branch": "right"
+        },
+        "okCells": 15219,
+        "noSolution": 4781,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 4781,
+        "m1NoSolution_but_m0Ok_frac": 0.23905,
+        "m1NotOk_but_m0Ok": 4781,
+        "m1NotOk_but_m0Ok_frac": 0.23905,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": true,
+        "deltaC3_m1_minus_m0": 0.45643769765014053,
+        "ratio_m1_over_m0": 1.2604955727304674
+      },
+      "feasibility": {
+        "cachedBadge": "low_departure_c3",
+        "m0GridImplies": "low_departure_c3",
+        "m1GridImplies": "low_departure_c3",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": false,
+        "m0VsM1Differ": false
+      }
+    },
+    "asteroid-163693": {
+      "selection": {
+        "why": "prior-measurement continuity",
+        "e": 0.32216557986238864,
+        "aAU": 0.7409595494769653,
+        "conditionCode": 0,
+        "cachedMinC3": 7.191393068210365,
+        "cachedStatus": "low_departure_c3",
+        "cachedDate": "2027-05-13",
+        "cachedTofDays": 182
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 8.447568896891584,
+        "at": {
+          "depJD": 2464099.023413806,
+          "date": "2034-05-16",
+          "tofDays": 182.5,
+          "vInfDep": 2.9064701782216145,
+          "vInfArr": 18.800626982050506,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": 8.50891347875945,
+        "at": {
+          "depJD": 2465203.8425092837,
+          "date": "2037-05-25",
+          "tofDays": 481.3636363636364,
+          "vInfDep": 2.917004195876216,
+          "vInfArr": 16.046148939206077,
+          "branch": "left"
+        },
+        "okCells": 17965,
+        "noSolution": 2035,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 2035,
+        "m1NoSolution_but_m0Ok_frac": 0.10175,
+        "m1NotOk_but_m0Ok": 2035,
+        "m1NotOk_but_m0Ok_frac": 0.10175,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": true,
+        "deltaC3_m1_minus_m0": 0.061344581867865955,
+        "ratio_m1_over_m0": 1.0072618030840137
+      },
+      "feasibility": {
+        "cachedBadge": "low_departure_c3",
+        "m0GridImplies": "low_departure_c3",
+        "m1GridImplies": "low_departure_c3",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": false,
+        "m0VsM1Differ": false
+      }
+    },
+    "asteroid-2017 UR52": {
+      "selection": {
+        "why": "prior-measurement continuity",
+        "e": 0.9964262210658009,
+        "aAU": 353.30418705257205,
+        "conditionCode": 6,
+        "cachedMinC3": 1462.9506048730348,
+        "cachedStatus": "high_departure_c3",
+        "cachedDate": "2026-02-12",
+        "cachedTofDays": 1802
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 1486.3394327615742,
+        "at": {
+          "depJD": 2461092.8877354143,
+          "date": "2026-02-21",
+          "tofDays": 1826.25,
+          "vInfDep": 38.55307293539095,
+          "vInfArr": 19.147200602295836,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": null,
+        "at": null,
+        "okCells": 0,
+        "noSolution": 20000,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 20000,
+        "m1NoSolution_but_m0Ok_frac": 1,
+        "m1NotOk_but_m0Ok": 20000,
+        "m1NotOk_but_m0Ok_frac": 1,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": true,
+        "deltaC3_m1_minus_m0": null,
+        "ratio_m1_over_m0": null
+      },
+      "feasibility": {
+        "cachedBadge": "high_departure_c3",
+        "m0GridImplies": "high_departure_c3",
+        "m1GridImplies": "no-solution",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": true,
+        "m0VsM1Differ": true
+      }
+    },
+    "asteroid-1979 XB": {
+      "selection": {
+        "why": "prior-measurement continuity",
+        "e": 0.7109170248822084,
+        "aAU": 2.2245588401033847,
+        "conditionCode": 9,
+        "cachedMinC3": 2.4062596694509333,
+        "cachedStatus": "low_departure_c3",
+        "cachedDate": "2029-03-08",
+        "cachedTofDays": 242
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 3.151477050001412,
+        "at": {
+          "depJD": 2462197.706830892,
+          "date": "2029-03-02",
+          "tofDays": 248.9141414141414,
+          "vInfDep": 1.775239997859842,
+          "vInfArr": 26.39196811750089,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": 0.7098626241284557,
+        "at": {
+          "depJD": 2461863.6917555146,
+          "date": "2028-04-02",
+          "tofDays": 580.9848484848485,
+          "vInfDep": 0.8425334557917897,
+          "vInfArr": 24.863714606185546,
+          "branch": "left"
+        },
+        "okCells": 7910,
+        "noSolution": 12090,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 12090,
+        "m1NoSolution_but_m0Ok_frac": 0.6045,
+        "m1NotOk_but_m0Ok": 12090,
+        "m1NotOk_but_m0Ok_frac": 0.6045,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": false,
+        "deltaC3_m1_minus_m0": -2.4416144258729564,
+        "ratio_m1_over_m0": 0.22524759433933927
+      },
+      "feasibility": {
+        "cachedBadge": "low_departure_c3",
+        "m0GridImplies": "low_departure_c3",
+        "m1GridImplies": "low_departure_c3",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": false,
+        "m0VsM1Differ": false
+      }
+    },
+    "asteroid-99942": {
+      "selection": {
+        "why": "prior-measurement continuity",
+        "e": 0.19114292963930402,
+        "aAU": 0.9223649765138211,
+        "conditionCode": 0,
+        "cachedMinC3": 0.00020641346871491306,
+        "cachedStatus": "low_departure_c3",
+        "cachedDate": "2028-09-14",
+        "cachedTofDays": 212
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 0.0011748949214500095,
+        "at": {
+          "depJD": 2461992.159092198,
+          "date": "2028-08-08",
+          "tofDays": 248.9141414141414,
+          "vInfDep": 0.034276740239556173,
+          "vInfArr": 5.865760091757039,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": 0.0027783280538082066,
+        "at": {
+          "depJD": 2461709.530951495,
+          "date": "2027-10-31",
+          "tofDays": 531.1742424242425,
+          "vInfDep": 0.05270984778775411,
+          "vInfArr": 5.821463794995901,
+          "branch": "left"
+        },
+        "okCells": 17477,
+        "noSolution": 2523,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 2523,
+        "m1NoSolution_but_m0Ok_frac": 0.12615,
+        "m1NotOk_but_m0Ok": 2523,
+        "m1NotOk_but_m0Ok_frac": 0.12615,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": true,
+        "deltaC3_m1_minus_m0": 0.0016034331323581971,
+        "ratio_m1_over_m0": 2.364745989691829
+      },
+      "feasibility": {
+        "cachedBadge": "low_departure_c3",
+        "m0GridImplies": "low_departure_c3",
+        "m1GridImplies": "low_departure_c3",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": false,
+        "m0VsM1Differ": false
+      }
+    },
+    "asteroid-12P": {
+      "selection": {
+        "why": "cached TOF near upper end (1802 d)",
+        "e": 0.9545612442767357,
+        "aAU": 17.18491452314557,
+        "conditionCode": 0,
+        "cachedMinC3": 164.25020522136842,
+        "cachedStatus": "high_departure_c3",
+        "cachedDate": "2026-01-08",
+        "cachedTofDays": 1802
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 172.26123377298643,
+        "at": {
+          "depJD": 2461041.500800741,
+          "date": "2026-01-01",
+          "tofDays": 1826.25,
+          "vInfDep": 13.124832714095309,
+          "vInfArr": 5.715250907644226,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": null,
+        "at": null,
+        "okCells": 0,
+        "noSolution": 20000,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 20000,
+        "m1NoSolution_but_m0Ok_frac": 1,
+        "m1NotOk_but_m0Ok": 20000,
+        "m1NotOk_but_m0Ok_frac": 1,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": true,
+        "deltaC3_m1_minus_m0": null,
+        "ratio_m1_over_m0": null
+      },
+      "feasibility": {
+        "cachedBadge": "high_departure_c3",
+        "m0GridImplies": "high_departure_c3",
+        "m1GridImplies": "no-solution",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": true,
+        "m0VsM1Differ": true
+      }
+    },
+    "asteroid-2025 VP": {
+      "selection": {
+        "why": "cached TOF near upper end (1802 d)",
+        "e": 0.8827371072393936,
+        "aAU": 8.606677159764923,
+        "conditionCode": 5,
+        "cachedMinC3": 168.2131346514458,
+        "cachedStatus": "high_departure_c3",
+        "cachedDate": "2040-09-06",
+        "cachedTofDays": 1802
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 205.95431750393655,
+        "at": {
+          "depJD": 2466051.726931394,
+          "date": "2039-09-20",
+          "tofDays": 1793.0429292929293,
+          "vInfDep": 14.35110858100992,
+          "vInfArr": 13.479370333584482,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": null,
+        "at": null,
+        "okCells": 0,
+        "noSolution": 20000,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 20000,
+        "m1NoSolution_but_m0Ok_frac": 1,
+        "m1NotOk_but_m0Ok": 20000,
+        "m1NotOk_but_m0Ok_frac": 1,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": true,
+        "deltaC3_m1_minus_m0": null,
+        "ratio_m1_over_m0": null
+      },
+      "feasibility": {
+        "cachedBadge": "high_departure_c3",
+        "m0GridImplies": "high_departure_c3",
+        "m1GridImplies": "no-solution",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": true,
+        "m0VsM1Differ": true
+      }
+    },
+    "asteroid-2022 BG4": {
+      "selection": {
+        "why": "cached TOF near upper end (1802 d)",
+        "e": 0.8877472789176587,
+        "aAU": 9.987988008953083,
+        "conditionCode": 7,
+        "cachedMinC3": 169.80843789371522,
+        "cachedStatus": "high_departure_c3",
+        "cachedDate": "2040-11-22",
+        "cachedTofDays": 1802
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 187.9003602512254,
+        "at": {
+          "depJD": 2465383.6967806406,
+          "date": "2037-11-21",
+          "tofDays": 1826.25,
+          "vInfDep": 13.707675231461584,
+          "vInfArr": 15.3128272846409,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": null,
+        "at": null,
+        "okCells": 0,
+        "noSolution": 20000,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 20000,
+        "m1NoSolution_but_m0Ok_frac": 1,
+        "m1NotOk_but_m0Ok": 20000,
+        "m1NotOk_but_m0Ok_frac": 1,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": true,
+        "deltaC3_m1_minus_m0": null,
+        "ratio_m1_over_m0": null
+      },
+      "feasibility": {
+        "cachedBadge": "high_departure_c3",
+        "m0GridImplies": "high_departure_c3",
+        "m1GridImplies": "no-solution",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": true,
+        "m0VsM1Differ": true
+      }
+    },
+    "asteroid-2018 AB13": {
+      "selection": {
+        "why": "HIGH C3 badge — lowest above threshold",
+        "e": 0.48373920485490934,
+        "aAU": 2.5166292223030626,
+        "conditionCode": 0,
+        "cachedMinC3": 25.04375797373423,
+        "cachedStatus": "high_departure_c3",
+        "cachedDate": "2032-04-08",
+        "cachedTofDays": 632
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 24.966161151730244,
+        "at": {
+          "depJD": 2463328.219393706,
+          "date": "2032-04-05",
+          "tofDays": 630.7954545454545,
+          "vInfDep": 4.996614969329761,
+          "vInfArr": 10.526033514231093,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": 11.538900645588411,
+        "at": {
+          "depJD": 2461529.676680138,
+          "date": "2027-05-04",
+          "tofDays": 979.469696969697,
+          "vInfDep": 3.3968957366378514,
+          "vInfArr": 9.742180573516773,
+          "branch": "left"
+        },
+        "okCells": 7990,
+        "noSolution": 12010,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 12010,
+        "m1NoSolution_but_m0Ok_frac": 0.6005,
+        "m1NotOk_but_m0Ok": 12010,
+        "m1NotOk_but_m0Ok_frac": 0.6005,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": false,
+        "deltaC3_m1_minus_m0": -13.427260506141833,
+        "ratio_m1_over_m0": 0.46218161356331405
+      },
+      "feasibility": {
+        "cachedBadge": "high_departure_c3",
+        "m0GridImplies": "low_departure_c3",
+        "m1GridImplies": "low_departure_c3",
+        "m0DiffersFromCached": true,
+        "m1DiffersFromCached": true,
+        "m0VsM1Differ": false
+      }
+    },
+    "asteroid-2021 CG6": {
+      "selection": {
+        "why": "HIGH C3 badge — median",
+        "e": 0.7155636868139589,
+        "aAU": 2.1185342361806185,
+        "conditionCode": 1,
+        "cachedMinC3": 37.73683879332649,
+        "cachedStatus": "high_departure_c3",
+        "cachedDate": "2038-08-26",
+        "cachedTofDays": 302
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 39.54485149124556,
+        "at": {
+          "depJD": 2465666.324921344,
+          "date": "2038-08-30",
+          "tofDays": 298.72474747474746,
+          "vInfDep": 6.288469725715912,
+          "vInfArr": 20.40351387329903,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": 21.19856534539755,
+        "at": {
+          "depJD": 2465743.405323354,
+          "date": "2038-11-15",
+          "tofDays": 414.9494949494949,
+          "vInfDep": 4.604189977118402,
+          "vInfArr": 32.204594760212245,
+          "branch": "left"
+        },
+        "okCells": 8431,
+        "noSolution": 11569,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 11569,
+        "m1NoSolution_but_m0Ok_frac": 0.57845,
+        "m1NotOk_but_m0Ok": 11569,
+        "m1NotOk_but_m0Ok_frac": 0.57845,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": false,
+        "deltaC3_m1_minus_m0": -18.34628614584801,
+        "ratio_m1_over_m0": 0.5360638501851623
+      },
+      "feasibility": {
+        "cachedBadge": "high_departure_c3",
+        "m0GridImplies": "high_departure_c3",
+        "m1GridImplies": "low_departure_c3",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": true,
+        "m0VsM1Differ": true
+      }
+    },
+    "asteroid-2014 PP69": {
+      "selection": {
+        "why": "HIGH C3 badge — highest",
+        "e": 0.9408601390577376,
+        "aAU": 21.428515736571068,
+        "conditionCode": 5,
+        "cachedMinC3": 1993.329542849536,
+        "cachedStatus": "high_departure_c3",
+        "cachedDate": "2026-11-26",
+        "cachedTofDays": 1802
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 1979.3474569167072,
+        "at": {
+          "depJD": 2461375.5158761176,
+          "date": "2026-12-01",
+          "tofDays": 1826.25,
+          "vInfDep": 44.48985791072733,
+          "vInfArr": 21.379234978383888,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": null,
+        "at": null,
+        "okCells": 0,
+        "noSolution": 20000,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 20000,
+        "m1NoSolution_but_m0Ok_frac": 1,
+        "m1NotOk_but_m0Ok": 20000,
+        "m1NotOk_but_m0Ok_frac": 1,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": true,
+        "deltaC3_m1_minus_m0": null,
+        "ratio_m1_over_m0": null
+      },
+      "feasibility": {
+        "cachedBadge": "high_departure_c3",
+        "m0GridImplies": "high_departure_c3",
+        "m1GridImplies": "no-solution",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": true,
+        "m0VsM1Differ": true
+      }
+    },
+    "asteroid-2021 PH27": {
+      "selection": {
+        "why": "semi-major axis: minimum in pool",
+        "e": 0.711542187281037,
+        "aAU": 0.46176518990269133,
+        "conditionCode": 2,
+        "cachedMinC3": 6.127121071100553,
+        "cachedStatus": "low_departure_c3",
+        "cachedDate": "2037-09-17",
+        "cachedTofDays": 182
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 7.253535538986368,
+        "at": {
+          "depJD": 2463482.3801977257,
+          "date": "2032-09-06",
+          "tofDays": 182.5,
+          "vInfDep": 2.69323885665315,
+          "vInfArr": 23.034441262305698,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": 5.6762388714372465,
+        "at": {
+          "depJD": 2466051.726931394,
+          "date": "2039-09-20",
+          "tofDays": 481.3636363636364,
+          "vInfDep": 2.382485859651059,
+          "vInfArr": 22.623673307215252,
+          "branch": "left"
+        },
+        "okCells": 18553,
+        "noSolution": 1447,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 1447,
+        "m1NoSolution_but_m0Ok_frac": 0.07235,
+        "m1NotOk_but_m0Ok": 1447,
+        "m1NotOk_but_m0Ok_frac": 0.07235,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": false,
+        "deltaC3_m1_minus_m0": -1.5772966675491213,
+        "ratio_m1_over_m0": 0.7825478817782786
+      },
+      "feasibility": {
+        "cachedBadge": "low_departure_c3",
+        "m0GridImplies": "low_departure_c3",
+        "m1GridImplies": "low_departure_c3",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": false,
+        "m0VsM1Differ": false
+      }
+    },
+    "asteroid-2024 UQ6": {
+      "selection": {
+        "why": "semi-major axis: median in pool",
+        "e": 0.3719592621820005,
+        "aAU": 1.6826406140469086,
+        "conditionCode": 8,
+        "cachedMinC3": 0.9162682135732872,
+        "cachedStatus": "low_departure_c3",
+        "cachedDate": "2037-02-05",
+        "cachedTofDays": 302
+      },
+      "totalCells": 20000,
+      "M0": {
+        "minC3": 0.8730198586758668,
+        "at": {
+          "depJD": 2465101.068639937,
+          "date": "2037-02-11",
+          "tofDays": 298.72474747474746,
+          "vInfDep": 0.9343553171443222,
+          "vInfArr": 7.7312043774965264,
+          "branch": "single"
+        },
+        "okCells": 20000,
+        "noSolution": 0,
+        "stall": 0
+      },
+      "M1": {
+        "minC3": 0.5343221444598077,
+        "at": {
+          "depJD": 2464869.827433907,
+          "date": "2036-06-25",
+          "tofDays": 531.1742424242425,
+          "vInfDep": 0.730973422539977,
+          "vInfArr": 6.283834010319182,
+          "branch": "right"
+        },
+        "okCells": 13674,
+        "noSolution": 6326,
+        "stall": 0
+      },
+      "cellCoverage": {
+        "m1NoSolution_but_m0Ok": 6326,
+        "m1NoSolution_but_m0Ok_frac": 0.3163,
+        "m1NotOk_but_m0Ok": 6326,
+        "m1NotOk_but_m0Ok_frac": 0.3163,
+        "m0NotOk_but_m1Ok": 0
+      },
+      "comparison": {
+        "m0BeatsM1": false,
+        "deltaC3_m1_minus_m0": -0.3386977142160591,
+        "ratio_m1_over_m0": 0.6120389349106317
+      },
+      "feasibility": {
+        "cachedBadge": "low_departure_c3",
+        "m0GridImplies": "low_departure_c3",
+        "m1GridImplies": "low_departure_c3",
+        "m0DiffersFromCached": false,
+        "m1DiffersFromCached": false,
+        "m0VsM1Differ": false
+      }
+    }
+  }
+}
