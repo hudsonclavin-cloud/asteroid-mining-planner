@@ -20,10 +20,10 @@
 | Item | Commit | State |
 |---|---|---|
 | origin/main | `67c4c18` | Slice 18 Front A implementation was pushed 2026-09-02 (`22774cc..67c4c18`); verified via `git fetch` |
-| Local HEAD | `a3a900e` | pinned as the previous commit — the Slice 11 founding-doc annotations; STATUS lags HEAD by this 2026-09-02 Front-A-close-out commit — see the lag note |
+| Local HEAD | `d663e9c` | pinned as the previous commit — Front B measurement artifacts landed in tools/slice18-research/; STATUS lags HEAD by this 2026-09-02 Front-B-complete commit — see the lag note |
 
-**Structural one-commit lag (expected, not rot):** This file is edited after `a3a900e` (the DEC-5 founding-doc annotations); this 2026-09-02 Front-A-close-out STATUS commit pins that previous commit and therefore lags HEAD by exactly one, accepted (a STATUS file cannot pin its own commit).
-**Push state:** origin/main is at `67c4c18` — everything through the grid-extremes readout was pushed 2026-09-02. Local-only and unpushed: `a3a900e` (founding-doc annotations) and this STATUS commit. No agent pushes, ever.
+**Structural one-commit lag (expected, not rot):** This file is edited after `d663e9c` (the Front B artifact landing); this 2026-09-02 Front-B-complete STATUS commit pins that previous commit and therefore lags HEAD by exactly one, accepted (a STATUS file cannot pin its own commit).
+**Push state:** origin/main is at `67c4c18`. Local-only and unpushed: `a3a900e` (founding-doc annotations), `01494ee` (Front A close STATUS), `0d927e4` (NEA truth fixture), `d663e9c` (Front B artifacts), and this STATUS commit. No agent pushes, ever.
 **Deploy boundary:** `docs/` was rebuilt at `5a00907` on 2026-08-13, carrying Batch 2 (A4c size-range + orbit-quality columns, B2 scale/frame chips + axis triad + HUD, B1 pan/reset/discoverability). Live bundles: `solarSystemV2-C60RP1nx.js`, `compareV2-BPtoAvbN.js`, `porkchopV2-C8hMf2EQ.js`, `store-BAStm0cU.js`.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
@@ -41,7 +41,7 @@
 | MCP / agent surface | 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`) |
 | Agent-honesty study | **16** | **CLOSED 2026-08-02 — HAS A RESULT** |
 | Mission planning | **17** (Target Compare + viewer QOL) | **CLOSED 2026-08-13** (`S-S17-CLOSE-2026-08-13-A`; founding `SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, plus this dispatch's cut entry + OQ dispositions + D-07 erratum). Front A **CLOSED** (A4b residuals closed). Front B tiers **B0-B2 shipped**, **B3-B5 CUT** per the §5 CUT RULE → carried by `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`. OQ-17-3/-4/-5/-8/-9 disposed; residual non-blocking items in the Slice 17 section below. |
-| Mission planning | **18** (Screening Fidelity) | **SEATED 2026-08-24** — DEC-18-1..4 locked. **Front A CLOSED 2026-09-02**: DEC-5 implemented on the dedicated view (`765f8fd`, `bda0ee2`, `a7670c4`) and the grid-extremes readout shipped (`c0a8b9b`, `67c4c18`); annotated on the founding doc at `a3a900e`. Front B (NEA drift measurement) OPEN and gates Front C (per-object fidelity surface). Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
+| Mission planning | **18** (Screening Fidelity) | **SEATED 2026-08-24** — DEC-18-1..4 locked. **Front A CLOSED 2026-09-02**: DEC-5 implemented on the dedicated view (`765f8fd`, `bda0ee2`, `a7670c4`) and the grid-extremes readout shipped (`c0a8b9b`, `67c4c18`); annotated on the founding doc at `a3a900e`. **Front B measurement COMPLETE 2026-09-02** (`0d927e4` fixture, `d663e9c` artifacts): drift measured on 20 bodies, condition code ruled out as a drift proxy, close approaches identified as the mechanism — see below. Front C gated ordering set (catalog integrity first); disclosure design NOT decided. Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
 
 ## Slice 16 — closed, with data
 
@@ -213,7 +213,29 @@ The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`)
 - The r=11 minimum marker's crosshair occludes that cell's stipple dot (both are centred on the same point; the crosshair is 2 px through the centre, the dot 1.667 px). Family is still stated in three text places. Fixing it would edit the shared `drawMarker` used by the pin and hover markers — wider blast radius, deliberately not done.
 - The DLA feasibility overlay is on by default and visually dominates the plot; independently noted by two readers. Turning off a Slice 12 default to suit a Slice 18 marker would need its own decision and was not taken.
 
-**Front B remains OPEN and gates Front C.** The repo cannot measure real NEA propagation drift — there is no asteroid truth series beyond 90 days. The planet floor is ~10⁵ km; the argmin begins moving at 10⁶ km, and where real NEAs sit between those regimes is what the repo cannot presently answer.
+**Front B, as carried forward at Front A close, is now COMPLETE — see the next section.** (At Front A close this line read "Front B remains OPEN"; the truth fixture landed at `0d927e4` and the measurement followed.)
+### FRONT B MEASUREMENT COMPLETE — 2026-09-02
+
+**Sanity gate passed** before any drift number: worst anchor-epoch drift 8.9e-5 km (9 cm), all 20 bodies sub-metre. Truth: `tests/fixtures/v2/nea-drift-truth-2026-2046.json` (`0d927e4`), 20 bodies, 7-day cadence, frame/center/units/time-scale verified per body from the response headers.
+
+**Band counts, NEA band (17 bodies), max drift over the consumed window 2026–2046.** **0 stay below 10⁵ km** — the planet floor. 2 in 10⁵–10⁶ (433, 2010 KD). **15 reach ≥10⁶ km**, the regime where the C3-sensitivity measurement found 3 of 15 argmins moved. 3 exceed 10⁸ km: 99942 (325.8M), 2012 UE34 (164.4M), 2026 BX8 (269.4M). Comet band (3), never averaged with NEAs: all ≥10⁶, 323P at 396.5M. **The planet floor was low by 1–3 orders of magnitude.** Backward propagation, measured on asteroids for the first time, is benign: 1.3k–36k km to the window start.
+
+**Q ANSWERED — condition code does NOT predict propagation error.** Matched triple holding e (0.193–0.218) and a (1.26–1.41 AU) and varying only U: 5-year drift U=0 204k km, U=5 912k km, U=9 231k km — non-monotonic. Across all 17 NEA-band bodies, Spearman ρ(U, 5-year drift) = 0.03; ρ(U, max drift) = 0.33. Drift is driven by encounters and orbit shape, not orbit-determination quality. STRUCTURAL CAVEAT, recorded verbatim: this measurement cannot test U's actual claim (solution-versus-reality error), because JPL's solution IS the truth source here and re-anchoring erased solution differences. The honest statement is narrow — U does not predict two-body model error — NOT that U is uninformative.
+
+**Close approaches are the mechanism.** 99942 across its 2029 encounter (38,011 km, 2029-04-13): drift growth rate ~44k km/yr before, ~226M km/yr after — **~5,200×**. 2012 UE34 across its 2041 encounter: 15×. Distant passes at ≥5M km produce no measurable change (0.95–1.06×). The cliff sits between ~0.4M and ~5M km in this sample. Method note: an initial before/after-week ratio was self-caught as physically wrong for bodies with large pre-encounter drift — an encounter kicks velocity, not position — and replaced with a growth-rate metric; both were disclosed.
+
+**Product consequence, measured.** Applying each body's MEASURED drift as a perturbation: **5 of 17 argmins moved.** 163693 — optimum moves +3.0 years AND flips revolution family (8.448 → 7.988). 2026 BX8 — minC3 halves (2.083 → 1.120). 1979 XB −51 d; 2012 UE34 +206 d; 2025 VP TOF shift. The other 12 held, with minC3 value shifts ≤1.1 km²/s² everywhere. But feasibility flips concentrate exactly where drift does: 99942 **3,352 cells (16.8% of its grid)**, 2026 BX8 192, 2012 UE34 115. Baseline grids reproduced the multirev artifact bit-exactly across 5 bodies and both families — the independent cross-check. 99942's headline minC3 survived (Δ 3.8e-4) only because its best window happens to arrive BEFORE the 2029 encounter. That is luck, not robustness.
+
+**DEC-18-3 annotation — the disclosure unit is a DATE, not a distance.** DEC-18-3 ruled that disclosure is per-object and measured, or qualitative. The measurement establishes the unit: screening is honest for arrivals before a body's first significant close approach and degrades sharply after it. This refines DEC-18-3's unit; it does not reverse the ruling.
+
+**Finding S extended — a tenth non-existent object.** 3D/Biela is 253M km wrong on the window's FIRST DAY when propagated from its 1832 elements, and the comet disintegrated in the 1840s–50s. Recorded as historical context, not measurement. With the nine impacted bodies already recorded under S, the catalog screens transfer windows to ten objects that do not exist.
+
+**Unresolved at fine scale (interpolation floor):** step-10 detail for 105140 and 2025 KP4 sits below the truth fixture's near-perihelion interpolation noise floor and is reported but not certain; the five argmin movers are all far above their floors.
+
+**Front C ordering (Nova, 2026-09-02):** catalog integrity first — the non-existent objects, whose flag (anchorSource `stale-unanchored` on an NEA-class body) is already in the data — then the temporal validity surface built from close-approach dates. Front C's disclosure design is NOT decided; only the ordering and the unit are.
+
+**Artifacts:** `tools/slice18-research/` (`d663e9c`) — Front B findings, results, and scripts, plus the three earlier measurement sets (two-body drift, C3 sensitivity, multirev consistency) and the DEC-5 Phase-3.4 verification harness, all landed byte-identical (sha256-verified both sides) so the record cites version control rather than a local directory.
+
 
 ---
 
