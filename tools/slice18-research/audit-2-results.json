@@ -1,0 +1,155 @@
+{
+ "checks": {
+  "crossSolverAndBvp": {
+   "method": "izzo vs lambertMultiRev M=0 + BVP chain (Lambert->elements->propagate->r2) over 1,296 geometries",
+   "cases": 1296,
+   "solvedBoth": 1296,
+   "izzoOnly": 0,
+   "mrOnly": 0,
+   "neither": 0,
+   "worstXDiff": 0,
+   "worstV1V2DiffKmS": 0,
+   "bvp": {
+    "count": 1022,
+    "meanResidualKm": 0.000009338099872365467,
+    "worst": {
+     "residual": 0.0018218826123982776,
+     "at": {
+      "th": 1,
+      "r2AU": 0.7,
+      "z": 0,
+      "days": 1800
+     }
+    },
+    "nonEllipticSkips": 274
+   },
+   "energyEndpointMismatchRelMax": 2.3363773910384483e-14,
+   "angMomEndpointMismatchRelMax": 6.296864318107273e-14,
+   "iterations": {
+    "worst": 4,
+    "capBindingCount": 0
+   },
+   "wouldCatch": "solver divergence between implementations, wrong velocity algebra (BVP misses r2), non-conic solutions, silent cap-bound partial convergence"
+  },
+  "householderResidual": {
+   "method": "|T(x_solved) - T*|/T* directly evaluated after convergence, 360 (lambda, T) pairs",
+   "solved": 360,
+   "worstRelResidual": 1.2490009027033011e-15,
+   "worstAt": {
+    "lam": 0.99,
+    "T": 0.2,
+    "x": 0.04899932178526266,
+    "iters": 3
+   },
+   "wouldCatch": "tolerance-on-step masking a poorly converged root (step small but residual large)"
+  },
+  "multiRevBranches": {
+   "method": "TMin boundary probe (0.999x and 1.02x) + BVP residual per returned branch, M=1 and M=2",
+   "rows": [
+    {
+     "M": 1,
+     "TMinNormalized": 4.5538497125693125,
+     "belowTMin": "null (correct)",
+     "justAbove": "2 branches",
+     "branchChecks": [
+      {
+       "branch": "left",
+       "converged": true,
+       "x": 0.030595,
+       "bvpResidualKm": 4.547296321292856e-7
+      },
+      {
+       "branch": "right",
+       "converged": true,
+       "x": 0.256916,
+       "bvpResidualKm": 4.238326148190466e-7
+      }
+     ]
+    },
+    {
+     "M": 2,
+     "TMinNormalized": 7.7553969473766,
+     "belowTMin": "null (correct)",
+     "justAbove": "2 branches",
+     "branchChecks": [
+      {
+       "branch": "left",
+       "converged": true,
+       "x": -0.029504,
+       "bvpResidualKm": 0.0000011423528443227237
+      },
+      {
+       "branch": "right",
+       "converged": true,
+       "x": 0.198522,
+       "bvpResidualKm": 0.0000011698360617215557
+      }
+     ]
+    }
+   ],
+   "wouldCatch": "TMin guard off by a factor, non-converged branch marked converged, branch velocities not solving the BVP"
+  },
+  "adversarial": [
+   {
+    "label": "exact 180 deg transfer (izzo)",
+    "outcome": "ok:false reason=invalid_geometry"
+   },
+   {
+    "label": "exact 180 deg transfer (multiRev)",
+    "outcome": "null"
+   },
+   {
+    "label": "theta -> 0 (r2 = 1.000001*r1, izzo) — sigma NaN probe",
+    "outcome": "ok:false reason=invalid_geometry"
+   },
+   {
+    "label": "theta -> 0 (multiRev)",
+    "outcome": "null"
+   },
+   {
+    "label": "identical positions (izzo)",
+    "outcome": "ok:false reason=invalid_geometry"
+   },
+   {
+    "label": "zero tof (izzo)",
+    "outcome": "ok:false reason=no_convergence"
+   },
+   {
+    "label": "zero tof (multiRev)",
+    "outcome": "null (correct)"
+   },
+   {
+    "label": "negative tof (izzo)",
+    "outcome": "ok:true finite v"
+   },
+   {
+    "label": "NaN position (izzo)",
+    "outcome": "ok:false reason=no_convergence"
+   },
+   {
+    "label": "NaN position (multiRev)",
+    "outcome": "null (correct)"
+   },
+   {
+    "label": "Infinity tof (izzo)",
+    "outcome": "ok:false reason=no_convergence"
+   },
+   {
+    "label": "mu=0 (multiRev)",
+    "outcome": "null (correct)"
+   },
+   {
+    "label": "M=3 (multiRev)",
+    "outcome": "threw RangeError: lambertMultiRev expects integer M in {0, 1, 2}"
+   },
+   {
+    "label": "M=1 via izzo (documented rejection)",
+    "outcome": "ok:false reason=multi_rev_not_supported"
+   },
+   {
+    "label": "retrograde (izzo prograde=false) + BVP",
+    "outcome": "ok:true, BVP residual 1.07e-7 km"
+   }
+  ]
+ }
+}

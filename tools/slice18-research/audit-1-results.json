@@ -1,0 +1,162 @@
+{
+ "checks": {
+  "circular": {
+   "method": "closed-form: e=0 orbit, 400 samples over one period",
+   "radiusRelVariation": 6.119922292115884e-16,
+   "speedRelVariation": 4.885702800148072e-16,
+   "periodClosureRelPos": 0,
+   "wouldCatch": "wrong mean motion, wrong GM, non-uniform circular motion, period error"
+  },
+  "equatorialPole": {
+   "method": "closed-form: i=0 orbit pole vs independently computed rotated ecliptic pole",
+   "poleDotExpected": 1,
+   "poleError": 1.2485037833112645e-16,
+   "wouldCatch": "wrong obliquity rotation direction or double/missing rotation"
+  },
+  "eBoundary": {
+   "method": "boundary probe",
+   "e=0.999999999": "accepted",
+   "e=1": "rejected: RangeError",
+   "e=1.0000001": "rejected: RangeError",
+   "e=-1e-16": "rejected: RangeError",
+   "wouldCatch": "rejection not exactly at the claimed e>=1 boundary"
+  },
+  "conservation": {
+   "method": "specific energy + |h| at 501 epochs across 2026-2046, catalog elements",
+   "rows": {
+    "433": {
+     "energyMaxRelDrift": 1.3716802734564291e-15,
+     "angMomMaxRelDrift": 5.719423117174618e-16
+    },
+    "99942": {
+     "energyMaxRelDrift": 1.7352206893426524e-15,
+     "angMomMaxRelDrift": 5.951853762843894e-16
+    },
+    "105140": {
+     "energyMaxRelDrift": 1.1794505181477324e-14,
+     "angMomMaxRelDrift": 8.140239237693137e-16
+    },
+    "2017 UR52": {
+     "energyMaxRelDrift": 7.121376073796637e-14,
+     "angMomMaxRelDrift": 3.675275993600777e-15
+    },
+    "2021 CG6": {
+     "energyMaxRelDrift": 6.6900170823064884e-15,
+     "angMomMaxRelDrift": 6.621998002613676e-16
+    }
+   },
+   "wouldCatch": "algebra errors in the E->state mapping, velocity formula errors, GM inconsistency between position and velocity"
+  },
+  "keplerSweep": {
+   "method": "residual |E - e sinE - M| after solve, 12 eccentricities x 1440 mean anomalies (17,280 solves)",
+   "worstResidualRad": 6.283185307179586,
+   "worstAt": {
+    "e": 0,
+    "M": -3.141592653589793
+   },
+   "throwCount": 0,
+   "wouldCatch": "silent partial convergence (tolerance on step, not residual), divergence at high e near M=0"
+  },
+  "roundTrip": {
+   "method": "elements -> state (propagator) -> cartesianToElements -> state again; position residual, 245-case grid",
+   "worst": {
+    "posErrM": 7174.165358397608,
+    "at": {
+     "e": 0.999,
+     "iDeg": 0.000001,
+     "maDeg": 179.5
+    }
+   },
+   "byRegime": {
+    "e=~0,i=~0": {
+     "posErrM": 3611.2976298924073,
+     "at": {
+      "e": 1e-8,
+      "iDeg": 0.000001,
+      "maDeg": 179.5
+     }
+    },
+    "e=~0,i=mid": {
+     "posErrM": 0.0003777898682598861,
+     "at": {
+      "e": 1e-8,
+      "iDeg": 150,
+      "maDeg": 270
+     }
+    },
+    "e=~0,i=~180": {
+     "posErrM": 0.0009544979353658089,
+     "at": {
+      "e": 0,
+      "iDeg": 179.9,
+      "maDeg": 179.5
+     }
+    },
+    "e=mid,i=~0": {
+     "posErrM": 6823.606180283839,
+     "at": {
+      "e": 0.9,
+      "iDeg": 0.000001,
+      "maDeg": 179.5
+     }
+    },
+    "e=mid,i=mid": {
+     "posErrM": 0.0009261469058528758,
+     "at": {
+      "e": 0.9,
+      "iDeg": 150,
+      "maDeg": 179.5
+     }
+    },
+    "e=mid,i=~180": {
+     "posErrM": 0.02343368996010482,
+     "at": {
+      "e": 0.9,
+      "iDeg": 179.9,
+      "maDeg": 179.5
+     }
+    },
+    "e=high,i=~0": {
+     "posErrM": 7174.165358397608,
+     "at": {
+      "e": 0.999,
+      "iDeg": 0.000001,
+      "maDeg": 179.5
+     }
+    },
+    "e=high,i=mid": {
+     "posErrM": 0.02610375235493383,
+     "at": {
+      "e": 0.999,
+      "iDeg": 30,
+      "maDeg": 90
+     }
+    },
+    "e=high,i=~180": {
+     "posErrM": 0.024657863199138257,
+     "at": {
+      "e": 0.999,
+      "iDeg": 179.9,
+      "maDeg": 179.5
+     }
+    }
+   },
+   "wouldCatch": "inverse-rotation mismatch, anomaly-conversion errors (incl. tan(nu/2) near apoapsis), singular-regime blowups"
+  },
+  "adversarialPropagator": [
+   "aM=-1: threw RangeError",
+   "aM=0: threw RangeError",
+   "e=NaN: threw RangeError",
+   "ma=Infinity: threw RangeError",
+   "t=NaN: threw RangeError",
+   "t=1e30 (huge): returned finite state",
+   "gm=-1: threw RangeError"
+  ],
+  "adversarialC2E": [
+   "zero position: threw Error",
+   "zero velocity: threw Error",
+   "hyperbolic state: returned a=-7.250e+7 e=3.0689 (caller must validate)",
+   "NaN position: returned a=NaN e=NaN <- SILENT NaN?"
+  ]
+ }
+}

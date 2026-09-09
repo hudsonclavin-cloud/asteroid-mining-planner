@@ -1,0 +1,89 @@
+{
+ "generatedAtUtc": "2026-09-09T17:37:28.635Z",
+ "entryPoints": [
+  "src/v2/core/lambert/izzo.ts",
+  "src/v2/core/lambert/lambert-multi-rev.ts"
+ ],
+ "oracleFixture": {
+  "path": "tools/slice11-research/data/multi-rev-poliastro-validation.json",
+  "solverCommit": "6d68b3bc3013a0faa738f134ccaedfa582a05436",
+  "validationLandedCommit": "3560ff8",
+  "generated": "2026-06-20T15:33:53.180Z",
+  "overallMaxRelError": 3.5979389805439233e-12,
+  "overallPassesAuditTarget": true,
+  "toleranceTarget": 0.000001,
+  "auditTargetScope": "M=0 is externally validated vs poliastro at machine precision. M=1/M=2 are now externally validated with a dual oracle: poliastro 0.17 for bulk CLASS_BOTH cells and an independent float64 T(x) boundary scan for CLASS_SOLVER_ONLY cells where the post-F2 solver is more correct than poliastro near true T_min."
+ },
+ "closureSize": 7,
+ "closureFiles": [
+  "src/v2/core/lambert/householder.ts",
+  "src/v2/core/lambert/hyp2f1b.ts",
+  "src/v2/core/lambert/initial-guess.ts",
+  "src/v2/core/lambert/izzo.ts",
+  "src/v2/core/lambert/lambert-multi-rev.ts",
+  "src/v2/core/lambert/tof.ts",
+  "src/v2/core/lambert/vec3.ts"
+ ],
+ "externalSpecifiers": [],
+ "missingFiles": [],
+ "priorHandListed": [
+  "src/v2/core/lambert/izzo.ts",
+  "src/v2/core/lambert/householder.ts",
+  "src/v2/core/lambert/initial-guess.ts",
+  "src/v2/core/lambert/tof.ts",
+  "src/v2/core/lambert/lambert-multi-rev.ts",
+  "src/v2/core/lambert/hyp2f1b.ts",
+  "src/v2/core/lambert/stumpff.ts",
+  "src/v2/core/lambert/vec3.ts"
+ ],
+ "perFile": [
+  {
+   "file": "src/v2/core/lambert/householder.ts",
+   "sinceSolverCommit": "code-identical (comments differ)",
+   "sinceValidationLanded": "code-identical (comments differ)",
+   "lastTouchedBy": "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)"
+  },
+  {
+   "file": "src/v2/core/lambert/hyp2f1b.ts",
+   "sinceSolverCommit": "code-identical (comments differ)",
+   "sinceValidationLanded": "code-identical (comments differ)",
+   "lastTouchedBy": "f455697 2026-05-30 docs(v2): Slice 10 narrow hyp2f1b documented domain to [0, 0.5] (audit Finding 8)"
+  },
+  {
+   "file": "src/v2/core/lambert/initial-guess.ts",
+   "sinceSolverCommit": "code-identical (comments differ)",
+   "sinceValidationLanded": "code-identical (comments differ)",
+   "lastTouchedBy": "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)"
+  },
+  {
+   "file": "src/v2/core/lambert/izzo.ts",
+   "sinceSolverCommit": "code-identical (comments differ)",
+   "sinceValidationLanded": "code-identical (comments differ)",
+   "lastTouchedBy": "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)"
+  },
+  {
+   "file": "src/v2/core/lambert/lambert-multi-rev.ts",
+   "sinceSolverCommit": "code-identical (comments differ)",
+   "sinceValidationLanded": "code-identical (comments differ)",
+   "lastTouchedBy": "dcdeb1c 2026-06-19 fix(slice11-phase-a): recompute T(x) per Halley iterate in tMinForM(); corrected T_min (F2)"
+  },
+  {
+   "file": "src/v2/core/lambert/tof.ts",
+   "sinceSolverCommit": "code-identical (comments differ)",
+   "sinceValidationLanded": "code-identical (comments differ)",
+   "lastTouchedBy": "864993b 2026-05-26 feat(v2): Slice 10 Lambert T-equation helpers (compute_y, tof, derivatives) with scipy-verified tests"
+  },
+  {
+   "file": "src/v2/core/lambert/vec3.ts",
+   "sinceSolverCommit": "code-identical (comments differ)",
+   "sinceValidationLanded": "code-identical (comments differ)",
+   "lastTouchedBy": "70a97fa 2026-05-26 feat(v2): Slice 10 Lambert leaf helpers (Vec3, Stumpff, hyp2f1b) with scipy-verified unit tests"
+  }
+ ],
+ "anyCodeChangeInClosure": false,
+ "anyRawChangeInClosure": true,
+ "filesInClosureNotHandListed": [],
+ "handListedNotInClosure": [
+  "src/v2/core/lambert/stumpff.ts"
+ ]
+}

@@ -1,0 +1,440 @@
+{
+ "generatedAtUtc": "2026-09-09T17:42:35.043Z",
+ "rowsBeforeEpochSkipped": 1906,
+ "validationAgainstMeasured": {
+  "n": 17,
+  "agree": 7,
+  "underPredicts": 10,
+  "overPredicts": 0,
+  "interpretation": "Under-prediction is EXPECTED and is the point: dv captures encounter-driven drift only. Bodies that drift past 1e6 km with no post-epoch encounter do so by secular/shape-driven accumulation, which this criterion does not model. The scope number is therefore a LOWER BOUND on how many catalog bodies reach the argmin-moving regime.",
+  "rows": [
+   {
+    "des": "99942",
+    "measuredMaxKm": 325803827.14090174,
+    "predictedAddedKm": 1463409167.3661084,
+    "predictedFrom": "Earth 2029-Apr-13 21:46",
+    "measuredGe1e6": true,
+    "predictedGe1e6": true
+   },
+   {
+    "des": "2026 BX8",
+    "measuredMaxKm": 269360919.3302774,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "2012 UE34",
+    "measuredMaxKm": 164389405.8316913,
+    "predictedAddedKm": 176260453.40643224,
+    "predictedFrom": "Earth 2041-Apr-08 02:55",
+    "measuredGe1e6": true,
+    "predictedGe1e6": true
+   },
+   {
+    "des": "2025 VP",
+    "measuredMaxKm": 41976388.10622321,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "2022 BG4",
+    "measuredMaxKm": 28080356.797566522,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "1979 XB",
+    "measuredMaxKm": 26780080.542822044,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "2025 HH",
+    "measuredMaxKm": 18362976.344194386,
+    "predictedAddedKm": 17259990.553440344,
+    "predictedFrom": "Earth 2045-Apr-18 00:24",
+    "measuredGe1e6": true,
+    "predictedGe1e6": true
+   },
+   {
+    "des": "2025 KP4",
+    "measuredMaxKm": 10548864.43163341,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "2014 PP69",
+    "measuredMaxKm": 8681501.775130646,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "2017 UR52",
+    "measuredMaxKm": 8037966.697957755,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "2019 SE9",
+    "measuredMaxKm": 6683446.457082612,
+    "predictedAddedKm": 2824882.4502698737,
+    "predictedFrom": "Earth 2043-Oct-01 07:26",
+    "measuredGe1e6": true,
+    "predictedGe1e6": true
+   },
+   {
+    "des": "2024 BB8",
+    "measuredMaxKm": 5705940.334037784,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "2021 CG6",
+    "measuredMaxKm": 5498035.810165917,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "163693",
+    "measuredMaxKm": 2833006.1007251786,
+    "predictedAddedKm": 1000340.282134086,
+    "predictedFrom": "Venus 2036-Feb-29 19:03",
+    "measuredGe1e6": true,
+    "predictedGe1e6": true
+   },
+   {
+    "des": "105140",
+    "measuredMaxKm": 1051281.0055119486,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": true,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "433",
+    "measuredMaxKm": 620080.5592872206,
+    "predictedAddedKm": 0,
+    "predictedFrom": "no post-epoch encounter in CAD",
+    "measuredGe1e6": false,
+    "predictedGe1e6": false
+   },
+   {
+    "des": "2010 KD",
+    "measuredMaxKm": 462290.39244682423,
+    "predictedAddedKm": 843969.033274782,
+    "predictedFrom": "Earth 2031-Dec-25 07:08",
+    "measuredGe1e6": false,
+    "predictedGe1e6": false
+   }
+  ]
+ },
+ "source": "ssd-api.jpl.nasa.gov/cad.api, date-min 2026-01-01, date-max 2046-01-01, dist-max 0.3, body=ALL",
+ "criterion": "addedDrift = dv * timeRemainingToWindowEnd; dv = 2 v sin(atan(mu/(d v^2)))",
+ "windowEndJd": 2468342.5,
+ "perturberGM": {
+  "Mercury": 22031.868551,
+  "Venus": 324858.592,
+  "Earth": 398600.435507,
+  "Moon": 4902.800118,
+  "Mars": 42828.375816,
+  "Jupiter": 126712764.1,
+  "Saturn": 37940584.8
+ },
+ "capByBody": {
+  "Venus": 0.149990174621409,
+  "Earth": 0.299982651554776,
+  "Moon": 0.00998055714358425,
+  "Mars": 0.251346774828008,
+  "Mercury": 0.0999845454195656,
+  "Jupiter": 0.283265795530111
+ },
+ "rowsTotal": 49629,
+ "rowsInCatalog": 48471,
+ "scope": {
+  "catalogTotal": 41906,
+  "bodiesWithAnyCadRow": 16046,
+  "byPredictedAddedDrift": {
+   "ge_1e8_km": 55,
+   "ge_1e7_km": 1088,
+   "ge_1e6_km_argminMovingRegime": 10173,
+   "ge_1e5_km_planetFloor": 15459,
+   "lt_1e5_km": 587
+  },
+  "asPercentOfCatalog": {
+   "anyCadRow": 38.29,
+   "ge_1e6": 24.28,
+   "ge_1e5": 36.89
+  }
+ },
+ "distanceComparison": {
+  "within_5M_km_any": 2645,
+  "within_0p4M_km_any": 122,
+  "note": "Prior probe (0.1 AU dataset) reported 2,644 and 122. Recomputed here on the 0.3 AU dataset."
+ },
+ "blindSpotFromDataCap": {
+  "Venus": {
+   "maxDistReturnedAu": 0.15,
+   "dvAtCapKmS": 0.002896,
+   "addedDriftOver19yKm": 1736000,
+   "exceeds1e6": true
+  },
+  "Mars": {
+   "maxDistReturnedAu": 0.2513,
+   "dvAtCapKmS": 0.0002848,
+   "addedDriftOver19yKm": 170700,
+   "exceeds1e6": false
+  },
+  "Mercury": {
+   "maxDistReturnedAu": 0.1,
+   "dvAtCapKmS": 0.0001964,
+   "addedDriftOver19yKm": 117800,
+   "exceeds1e6": false
+  },
+  "Jupiter": {
+   "maxDistReturnedAu": 0.2833,
+   "dvAtCapKmS": 0.5978,
+   "addedDriftOver19yKm": 358400000,
+   "exceeds1e6": true
+  }
+ },
+ "top20": [
+  {
+   "des": "2021 Q5",
+   "body": "Jupiter",
+   "cd": "2030-Sep-04 12:37",
+   "distKm": 1627944.9082205237,
+   "vrel": 13.4729019425799,
+   "dvKmS": 10.619328258906807,
+   "tRemainYears": 15.314097179238884,
+   "addedKm": 5132068109.9330635,
+   "largeDeflection": true
+  },
+  {
+   "des": "2026 JM2",
+   "body": "Earth",
+   "cd": "2026-May-07 13:06",
+   "distKm": 43996.76387623095,
+   "vrel": 5.82890597117675,
+   "dvKmS": 3.003616155186443,
+   "tRemainYears": 19.64258580812311,
+   "addedKm": 1861860154.1742313,
+   "largeDeflection": true
+  },
+  {
+   "des": "99942",
+   "body": "Earth",
+   "cd": "2029-Apr-13 21:46",
+   "distKm": 38011.45916295157,
+   "vrel": 7.42253895678452,
+   "dvKmS": 2.775704395041767,
+   "tRemainYears": 16.70661987140545,
+   "addedKm": 1463409167.3661084,
+   "largeDeflection": true
+  },
+  {
+   "des": "2026 HZ4",
+   "body": "Earth",
+   "cd": "2026-Apr-24 12:13",
+   "distKm": 29708.547992881086,
+   "vrel": 13.2661785245408,
+   "dvKmS": 2.016889401800801,
+   "tRemainYears": 19.67827758753467,
+   "addedKm": 1252486730.8156674,
+   "largeDeflection": true
+  },
+  {
+   "des": "2026 JV3",
+   "body": "Earth",
+   "cd": "2026-May-14 22:59",
+   "distKm": 50129.94126067938,
+   "vrel": 12.6898619540927,
+   "dvKmS": 1.2516557139530753,
+   "tRemainYears": 19.622292342880698,
+   "addedKm": 775065837.8619785,
+   "largeDeflection": true
+  },
+  {
+   "des": "2026 JX3",
+   "body": "Earth",
+   "cd": "2026-May-13 05:02",
+   "distKm": 109644.51163200867,
+   "vrel": 6.39818787322291,
+   "dvKmS": 1.1319261827535898,
+   "tRemainYears": 19.627077536419044,
+   "addedKm": 701096357.8740114,
+   "largeDeflection": true
+  },
+  {
+   "des": "45P",
+   "body": "Jupiter",
+   "cd": "2030-Aug-01 09:42",
+   "distKm": 25134232.574986223,
+   "vrel": 7.87443120377817,
+   "dvKmS": 1.276247237438872,
+   "tRemainYears": 15.407517016503876,
+   "addedKm": 620542367.3245416,
+   "largeDeflection": true
+  },
+  {
+   "des": "2026 JH2",
+   "body": "Earth",
+   "cd": "2026-May-18 22:00",
+   "distKm": 91571.50834436771,
+   "vrel": 9.14452949497881,
+   "dvKmS": 0.9507327176415274,
+   "tRemainYears": 19.611454215230935,
+   "addedKm": 588399378.099876,
+   "largeDeflection": false
+  },
+  {
+   "des": "18D",
+   "body": "Jupiter",
+   "cd": "2030-Sep-07 12:17",
+   "distKm": 40628254.3321826,
+   "vrel": 7.74244780836599,
+   "dvKmS": 0.8045571726645011,
+   "tRemainYears": 15.305922381930477,
+   "addedKm": 388615738.15686095,
+   "largeDeflection": false
+  },
+  {
+   "des": "2026 JQ1",
+   "body": "Earth",
+   "cd": "2026-May-03 13:18",
+   "distKm": 510247.95333407517,
+   "vrel": 2.50914794070525,
+   "dvKmS": 0.6179345818508207,
+   "tRemainYears": 19.653514032654368,
+   "addedKm": 383253986.38572514,
+   "largeDeflection": false
+  },
+  {
+   "des": "2008 DB",
+   "body": "Earth",
+   "cd": "2032-Aug-14 14:51",
+   "distKm": 127435.26718464072,
+   "vrel": 7.39467602697345,
+   "dvKmS": 0.844597171770784,
+   "tRemainYears": 13.369969724284193,
+   "addedKm": 356355949.3416999,
+   "largeDeflection": false
+  },
+  {
+   "des": "2001 AV43",
+   "body": "Earth",
+   "cd": "2029-Nov-11 15:24",
+   "distKm": 313057.43369005807,
+   "vrel": 3.99790510260908,
+   "dvKmS": 0.6349471938003733,
+   "tRemainYears": 16.12692140225604,
+   "addedKm": 323141729.12851864,
+   "largeDeflection": false
+  },
+  {
+   "des": "2026 JO1",
+   "body": "Earth",
+   "cd": "2026-May-07 00:18",
+   "distKm": 131053.29685684292,
+   "vrel": 11.7639148484517,
+   "dvKmS": 0.5169673063443222,
+   "tRemainYears": 19.64404456335401,
+   "addedKm": 320477804.25327474,
+   "largeDeflection": false
+  },
+  {
+   "des": "323P",
+   "body": "Jupiter",
+   "cd": "2026-Dec-08 19:59",
+   "distKm": 42375959.85344618,
+   "vrel": 11.5014283166799,
+   "dvKmS": 0.5198381012255581,
+   "tRemainYears": 19.053162607895356,
+   "addedKm": 312564138.6302009,
+   "largeDeflection": false
+  },
+  {
+   "des": "2021 PE20",
+   "body": "Jupiter",
+   "cd": "2037-Sep-04 16:48",
+   "distKm": 23778991.37011646,
+   "vrel": 8.92763245567492,
+   "dvKmS": 1.1911107409821304,
+   "tRemainYears": 8.312935899814347,
+   "addedKm": 312471591.76897925,
+   "largeDeflection": true
+  },
+  {
+   "des": "2019 NC",
+   "body": "Jupiter",
+   "cd": "2037-Sep-16 04:43",
+   "distKm": 39754164.014880374,
+   "vrel": 5.58566736174593,
+   "dvKmS": 1.1353716565717455,
+   "tRemainYears": 8.28146125827288,
+   "addedKm": 296721482.3065885,
+   "largeDeflection": true
+  },
+  {
+   "des": "2026 JO",
+   "body": "Earth",
+   "cd": "2026-May-09 05:04",
+   "distKm": 133578.1525609196,
+   "vrel": 13.6583426817011,
+   "dvKmS": 0.4368967092363091,
+   "tRemainYears": 19.638024903578884,
+   "addedKm": 270757532.18772185,
+   "largeDeflection": false
+  },
+  {
+   "des": "2017 FU102",
+   "body": "Earth",
+   "cd": "2036-Apr-02 23:31",
+   "distKm": 129060.50291452468,
+   "vrel": 7.65307218146634,
+   "dvKmS": 0.8060010924179023,
+   "tRemainYears": 9.735852735576046,
+   "addedKm": 247635893.5429371,
+   "largeDeflection": false
+  },
+  {
+   "des": "2019 BX1",
+   "body": "Earth",
+   "cd": "2029-Jan-08 14:59",
+   "distKm": 445275.75484435394,
+   "vrel": 4.09682943409263,
+   "dvKmS": 0.43638921226178934,
+   "tRemainYears": 16.967490201272852,
+   "addedKm": 233666030.16402268,
+   "largeDeflection": false
+  },
+  {
+   "des": "2026 KB",
+   "body": "Earth",
+   "cd": "2026-May-18 15:15",
+   "distKm": 231710.90548778072,
+   "vrel": 9.60668508845637,
+   "dvKmS": 0.3580735991718862,
+   "tRemainYears": 19.612222769577503,
+   "addedKm": 221617007.50382233,
+   "largeDeflection": false
+  }
+ ]
+}
