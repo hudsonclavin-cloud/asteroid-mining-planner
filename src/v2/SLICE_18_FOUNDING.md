@@ -194,3 +194,44 @@ All committed under `tools/slice18-research/`. The measurement artifacts landed 
 Corrections applied to the draft during verification, each with its source: the L2 sub-population count 690 → 689 (hyperbolic body double-counted; `tier-sizing-results.json`); the INV-033/034 characterisation (verbatim text from `INVARIANTS.md`); DEC-18-5's cross-reference OQ-18-5 → OQ-18-1; the measured drift floor 10⁶ → 4.6e5 km and the resulting "six to eight" → "five to eight" orders of magnitude (`nea-drift-results.json`). Two claims marked `[UNVERIFIED-IN-REPO]`: the derived ~1.3 km σ_a sensitivity, and 3D/Biela's disintegration. One inconsistency recorded rather than silently resolved: DEC-18-5's ten and L0's ten are different sets (OQ-18-6).
 
 Everything else in the draft verified clean against committed evidence: all eight SHAs, the Eros reproduction tolerances, the band counts, the Apophis growth rates, the argmin movers, the 2010 KD / 2024 BB8 counterexample, the scope percentages, the Q distribution, the tier arithmetic, the audit figures, the CAD caps, and the 500-body scoping.
+
+---
+
+## §9. POST-LOCK CORRECTIONS — 2026-09-10 (ADDITIVE)
+
+This section corrects §4 and §5 without altering their locked text. Nothing above this line is modified: per line 2 and `.githooks/pre-commit`, a DEC is never reworded, only annotated. Where a correction below and the original text disagree, **this section governs**.
+
+### C-1 — DEC-18-10 population table and title. CORRECTED.
+
+The population table and the heading contained an error, found during Front C implementation. OQ-18-6's ruling — 3D/Biela moves from L2's comet population into L0, the same tier as the nine impactors, under a different provenance label — was not propagated into DEC-18-10's tier populations when it was recorded.
+
+Corrected populations:
+
+- **L0 = 11** — 9 impactors + 3D/Biela + 2015 D1 (the hyperbolic body), each carrying its own sub-reason.
+- **L1 = 10,152** — unchanged.
+- **L2 = 31,743** — 206 comets + 482 Jupiter-crossing + 31,055 unmeasured.
+- **Total = 41,906**, verified.
+
+The comet count moves 207 → 206 because 3D/Biela leaves that population for L0. L2 therefore moves 31,744 → 31,743, and the structurally-blind sub-population recorded in DEC-18-9 moves 689 → 688 (206 comets + 482 Jupiter-crossing); 688 + 31,055 = 31,743 exactly.
+
+**Title corrected:** DEC-18-10's heading reads "Two fidelity tiers ship; no bounded tier without measurement." It should read **"Three fidelity tiers ship; no bounded tier without measurement."** The body of the DEC always described three tiers (L0, L1, L2); the heading was wrong. The original heading is left in place as the additive-only rule requires — this correction is the authority on its wording.
+
+What is unchanged by this correction: there is still no "bounded / trustworthy throughout" tier, and the reasoning for its absence stands unaltered.
+
+### C-2 — OQ-18-6. RESOLVED 2026-09-09 by Hudson.
+
+OQ-18-6 recorded that DEC-18-5's "ten" (nine impactors + 3D/Biela) and L0's "ten" (nine impactors + the hyperbolic body) were different sets with coincidentally matching counts.
+
+**RULING, carried here verbatim from STATUS.md so it lives in the permanent record and not only in the living file:** 3D/Biela is flagged alongside the nine impactors, in the same tier, with a **DIFFERENT PROVENANCE LABEL**. The user-facing fact is identical — this object does not exist — and orbit class has no bearing on it; tiering by orbit class was a classification accident. The evidence differs and the labels say so: **"verified destroyed — ephemeris terminates"** for the nine; **"historically destroyed — documented disintegration, not ephemeris-verified"** for 3D/Biela.
+
+This preserves the `[UNVERIFIED-IN-REPO]` marker on 3D/Biela's disintegration recorded in DEC-18-5: the ruling changes its tier, not the strength of the evidence behind it. L0 now holds three provenance classes — ephemeris-terminated (9), historically destroyed (1), and mathematically unpropagatable (1).
+
+### C-3 — Heading dates on DEC-18-5 through DEC-18-10. CORRECTED.
+
+Those six headings read `LOCKED 2026-09-02`, the date of Nova's draft prose. **The correct date is 2026-09-09**, the git author and commit date of `2eaf936`, the commit that locked them. Per the standing rule that git dates are authority over prose dates, read all six as **LOCKED 2026-09-09**.
+
+The original headings are left in place, as above. DEC-18-1 through DEC-18-4 are unaffected: they were seated 2026-08-24 and recorded in STATUS before this document existed.
+
+### Verification of this section
+
+Tier arithmetic recomputed from `tools/slice18-research/tier-sizing-results.json`: 9 + 1 + 1 = 11; 207 − 1 = 206; 206 + 482 + 31,055 = 31,743; 11 + 10,152 + 31,743 = 41,906. The git date of `2eaf936` was read from `git log`, not from prose. OQ-18-6's ruling text was copied from STATUS.md, where it is recorded under "OQ-18-6 RULED — 2026-09-09, Hudson", and confirmed to exist before being cited, per INV-033.
