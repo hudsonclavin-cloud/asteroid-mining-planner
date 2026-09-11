@@ -19,11 +19,11 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `6e89131` | everything through the Front B STATUS entry was pushed 2026-09-09; verified via `git fetch` |
-| Local HEAD | `6e89131` | this 2026-09-09 math-audit STATUS commit is the FIRST local-only change since the push, so there is no lag this time — see the lag note |
+| origin/main | `2eaf936` | everything through the Slice 18 founding document and math-layer audit evidence was pushed; verified via `git fetch` |
+| Local HEAD | `2eaf936` | this reconciliation commit intentionally pins its immediate predecessor; see the measured lag note |
 
-**Structural one-commit lag (expected, not rot):** normally this file is edited after the commit it pins and lags HEAD by exactly one. This time HEAD and origin/main were equal at `6e89131` when the edit began (the audit run committed nothing), so this STATUS commit pins the commit it directly follows. The lag rule is unchanged; it simply has nothing to lag behind here.
-**Push state:** origin/main is at `6e89131`. This math-audit STATUS commit is the only local-only, unpushed change. No agent pushes, ever.
+**Measured pin lag (2026-09-09 reconciliation):** before this edit, `git rev-list --count 6e89131..HEAD` measured a two-commit lag (`eacb1b3`, then `2eaf936`). This edit pins `2eaf936`; after this STATUS commit lands, `git rev-list --count 2eaf936..HEAD` measures the intentional one-commit structural lag. STATUS commits LAST in any sequence. When a later non-STATUS commit lands, the lag exceeds one and must be stated as measured rather than asserted as a timeless property.
+**Push state:** origin/main is at `2eaf936`. This reconciliation STATUS commit will be the only local-only, unpushed change. No agent pushes, ever.
 **Deploy boundary:** `docs/` was rebuilt at `5a00907` on 2026-08-13, carrying Batch 2 (A4c size-range + orbit-quality columns, B2 scale/frame chips + axis triad + HUD, B1 pan/reset/discoverability). Live bundles: `solarSystemV2-C60RP1nx.js`, `compareV2-BPtoAvbN.js`, `porkchopV2-C8hMf2EQ.js`, `store-BAStm0cU.js`.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
@@ -114,6 +114,37 @@ All four are observations from a SINGLE record. No remedy chosen.
 ## Slice 18 — SEATED 2026-08-24 (Screening Fidelity)
 
 **Seated as Screening Fidelity (2026-08-24).** Mission View (animated transfer arc + uncertainty envelope) was evaluated and **DEFERRED, not cancelled** — see DEC-18-4. Three fronts: **Front A** — solver/revolution consistency on the shipped screening surfaces; **Front B** — closing the NEA propagation-drift measurement gap; **Front C** — a per-object fidelity surface built from Front B's results. **Front C is gated on Front B.**
+
+### Slice 18 founding document landed — 2026-09-09
+
+`src/v2/SLICE_18_FOUNDING.md` landed at `2eaf936` and is **ADDITIVE-ONLY** from that commit forward. It carries DEC-18-1 through DEC-18-10, OQ-18-1 through OQ-18-6, the invariants relied on, the evidence index, and front status.
+
+**Date correction.** Nova-supplied prose dates were found incorrect; git's own dates govern from here. `src/v2/SLICE_18_FOUNDING.md` still carries `2026-09-02` in additive-only text and needs a separate additive date-correction annotation; it was not edited here.
+
+**Process finding.** Slice 18 ran dispatch-first, with DEC-18-1 through DEC-18-4 held only in STATUS — the living file, which is rewritten each session. Locked decisions do not belong there. The founding document was created retroactively to correct that. Future slices seat the founding document before dispatches, per the standing lifecycle.
+
+Landing it found four errors inherited from prior prose rather than present in the underlying data, all corrected before commit:
+
+- L2's structurally-blind sub-population is **689, not 690**. The hyperbolic body (2015 D1) was counted both in L0 (cannot propagate) and in L2 (structurally blind). A sum check inside a tier cannot detect a misplacement across tiers; only the cross-tier arithmetic caught it: 689 + 31,055 = 31,744 exactly.
+- INV-033/034 were mischaracterised as "provenance verified by a different check than produced it." That is the discipline this slice practised, not the invariants' text. It is recorded as practice.
+- A cross-reference pointed at OQ-18-5 (GM_SUN) instead of OQ-18-1.
+- Drift was stated as 10⁶–10⁸ km / "six to eight orders"; measured is 4.6e5–3.3e8 km / five to eight orders.
+
+**INV-034 violation found and fixed before landing.** The founding document claimed the math-layer audit as evidence while those 15 artifacts lived outside version control. They were landed in the same commit, hash-verified byte-identical, and `git check-ignore` clean.
+
+Two claims in the founding document remain **[UNVERIFIED-IN-REPO]**: the ~1.3 km sigma_a sensitivity is derived and no committed artifact produces it; 3D/Biela's disintegration is historical knowledge and no repo artifact holds it. By contrast, the nine impactors' non-existence is established by ephemeris termination. The 253.34M km error figure for 3D/Biela **is verified**.
+
+### OQ-18-6 RULED — 2026-09-09, Hudson
+
+OQ-18-6 recorded that DEC-18-5's "ten" (nine impactors + 3D/Biela) and L0's "ten" (nine impactors + the hyperbolic body) were different sets with coincidentally matching counts.
+
+**RULING:** 3D/Biela is flagged alongside the nine impactors, in the same tier, with a **DIFFERENT PROVENANCE LABEL**. The user-facing fact is identical — this object does not exist — and orbit class has no bearing on it; tiering by orbit class was a classification accident. The evidence differs and the labels say so: **"verified destroyed — ephemeris terminates"** for the nine; **"historically destroyed — documented disintegration, not ephemeris-verified"** for 3D/Biela.
+
+**Consequence:** DEC-18-5's ten and L0's ten are now the same set of ten. The hyperbolic body moves to its own L0 sub-reason — **cannot propagate**, which is a different failure from **does not exist**.
+
+This ruling is recorded in STATUS here and requires a separate additive annotation on `src/v2/SLICE_18_FOUNDING.md`; that annotation is not part of this dispatch.
+
+**Front C L0:** designed and dispatched; blocked at Phase 0 on the STATUS staleness resolved by this reconciliation. Resumes after this lands.
 
 All measurements below were produced by read-only local runs with **no network**, using only committed fixtures and the repo's own math. Artifacts are named per measurement and are **NOT in version control**; they live in `C:\Users\hudso\Documents\aster-slice18\`.
 
