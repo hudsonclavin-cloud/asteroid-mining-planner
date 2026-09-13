@@ -1,0 +1,7 @@
+{
+  "fetchedAtUtc": "2026-09-11T04:27:49.000Z",
+  "source": "https://ssd-api.jpl.nasa.gov/cad.api?date-min=2026-01-01&date-max=2046-01-01&dist-max=0.3&body=ALL",
+  "rows": 49652,
+  "file": "cad-all-0.3.json",
+  "sha256": "3273B604666760DEBACCF86605CFF017B5EDD152D91699AC4887F885BBF90517"
+}

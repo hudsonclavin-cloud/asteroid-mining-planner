@@ -235,3 +235,32 @@ The original headings are left in place, as above. DEC-18-1 through DEC-18-4 are
 ### Verification of this section
 
 Tier arithmetic recomputed from `tools/slice18-research/tier-sizing-results.json`: 9 + 1 + 1 = 11; 207 − 1 = 206; 206 + 482 + 31,055 = 31,743; 11 + 10,152 + 31,743 = 41,906. The git date of `2eaf936` was read from `git log`, not from prose. OQ-18-6's ruling text was copied from STATUS.md, where it is recorded under "OQ-18-6 RULED — 2026-09-09, Hudson", and confirmed to exist before being cited, per INV-033.
+
+### C-4 — Tier populations are snapshot-dependent. CORRECTED 2026-09-13.
+
+DEC-18-10's populations, and C-1's correction of them, were derived from a CAD query that was never committed. Regenerating from the committed snapshot `tools/slice18-research/cad-wide/cad-all-0.3.json` — fetched **2026-09-11T04:27:49Z**, 49,652 rows, sha256 `3273b604…f90517`, provenance in `cad-all-0.3.metadata.json` — yields:
+
+- **L0 = 11** — unchanged.
+- **L1 = 10,150** — was 10,152.
+- **L2 = 31,745** — was 31,743.
+- **Structurally blind = 688** — unchanged (206 comets + 482 Jupiter-crossing).
+- **Total = 41,906**, verified.
+
+Four bodies account for the entire difference. Three lost Earth encounters upstream and fell below the 10⁶ km materiality threshold; one gained two and crossed above it:
+
+| body | change in the upstream data | max added drift |
+|---|---|---|
+| 2023 RZ12 | both Earth rows removed (2026-Aug-12 @ 0.2099 AU; 2029-Aug-05 @ 0.2959 AU) | 5.02M → none |
+| 2025 OM3 | Earth row removed (2042-Jul-03 @ 0.1287 AU) | 1.46M → none |
+| 444584 | two Earth rows removed (2027-Mar-27; 2028-Nov-02); its three Venus rows also revised below the sixth decimal | 1.24M → 0.68M |
+| 2015 RT82 | two Earth rows **added** (2026-Sep-04 @ 0.0176 AU; 2044-Aug-25 @ 0.0263 AU) | none → 32.45M |
+
+Confirmed by direct CAD-row comparison between the two snapshots with the identical criterion code applied to both: these are **JPL orbit-solution revisions, not a computation change**. The rows themselves appear, disappear, and change upstream. Note that the newer snapshot has *more* rows overall (49,652 vs 49,629, +23) yet yields *fewer* material bodies — the revision is not accumulation.
+
+**General finding, and the reason this correction matters more than its two-body magnitude suggests.** Any tier population derived from live upstream close-approach data is **a function of the query date**, not a fixed property of the catalog. The catalog is committed and stable; the encounter data is not. A population figure without a named snapshot is unreproducible, and two honest computations run a week apart will disagree.
+
+Therefore: **every population figure cited anywhere — this document, STATUS, a UI surface, a future slice — must name the snapshot it came from.** The committed snapshot is the authority, not because it is more correct than a fresher one, but because it is the only one that can be reproduced. A fresher query is a different measurement, not a better one.
+
+This applies retroactively to the figures in DEC-18-6, DEC-18-9, DEC-18-10 and C-1: read them as "as of the snapshot then in use", and read the numbers in this C-4 as "as of the 2026-09-11 snapshot". The L0 population and the structurally-blind count are the exception — they derive from the committed catalog's own `anchorSource`, `orbitClass`, `a` and `e`, need no external data, and are therefore snapshot-independent.
+
+*Verification of this section: populations recomputed from the committed snapshot by two independent implementations written separately — one by the author of this section, one by an agent given the criterion but not the expected answers — agreeing exactly on all six figures for both the old and the new snapshot, and identifying the same four bodies. The snapshot's sha256 and row count were checked against its metadata artifact before it was cited, per INV-033. The fetch timestamp is read from `cad-all-0.3.metadata.json`, not from any literal in a script.*
