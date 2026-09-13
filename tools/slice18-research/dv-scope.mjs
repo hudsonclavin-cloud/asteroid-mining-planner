@@ -21,6 +21,9 @@ import { pathToFileURL } from 'node:url';
 const REPO = 'C:/Users/hudso/asteroid-mining-planner';
 const HERE = 'C:/Users/hudso/Documents/aster-slice18/audit';
 const OUT = path.join(HERE, 'dv-scope-results.json');
+const RESEARCH_DIR = path.join(REPO, 'tools/slice18-research');
+const PER_BODY_OUT = path.join(RESEARCH_DIR, 'dv-scope-per-body.json');
+const CAD_PATH = path.join(RESEARCH_DIR, 'cad-wide/cad-all-0.3.json');
 
 const { ingestSlice9Fixture } = await import(pathToFileURL('C:/Users/hudso/Documents/aster-slice18/build-v2x/boundary/slice9-nea-catalog.js').href);
 
@@ -33,7 +36,7 @@ const catalog = ingestSlice9Fixture(JSON.parse(fs.readFileSync(path.join(REPO, '
 const catDes = new Set(Object.values(catalog.asteroids).map((b) => b.designation));
 const TOTAL = catDes.size;
 
-const cad = JSON.parse(fs.readFileSync(path.join(HERE, 'cad-wide/cad-all-0.3.json'), 'utf8'));
+const cad = JSON.parse(fs.readFileSync(CAD_PATH, 'utf8'));
 const F = cad.fields;
 const ix = { des: F.indexOf('des'), jd: F.indexOf('jd'), dist: F.indexOf('dist'), vrel: F.indexOf('v_rel'), body: F.indexOf('body'), cd: F.indexOf('cd') };
 
@@ -158,8 +161,12 @@ const validationSummary = {
   rows: validation.sort((a, b) => b.measuredMaxKm - a.measuredMaxKm),
 };
 
-const results = { generatedAtUtc: new Date().toISOString(), rowsBeforeEpochSkipped, validationAgainstMeasured: validationSummary, source: 'ssd-api.jpl.nasa.gov/cad.api, date-min 2026-01-01, date-max 2046-01-01, dist-max 0.3, body=ALL', criterion: 'addedDrift = dv * timeRemainingToWindowEnd; dv = 2 v sin(atan(mu/(d v^2)))', windowEndJd: END_JD, perturberGM: GM, capByBody, rowsTotal: cad.data.length, rowsInCatalog, scope, distanceComparison, blindSpotFromDataCap: blind, top20: [...best.values()].sort((a, b) => b.addedKm - a.addedKm).slice(0, 20) };
+const generatedAtUtc = new Date().toISOString();
+const source = 'ssd-api.jpl.nasa.gov/cad.api, date-min 2026-01-01, date-max 2046-01-01, dist-max 0.3, body=ALL';
+const results = { generatedAtUtc, rowsBeforeEpochSkipped, validationAgainstMeasured: validationSummary, source, criterion: 'addedDrift = dv * timeRemainingToWindowEnd; dv = 2 v sin(atan(mu/(d v^2)))', windowEndJd: END_JD, perturberGM: GM, capByBody, rowsTotal: cad.data.length, rowsInCatalog, scope, distanceComparison, blindSpotFromDataCap: blind, top20: [...best.values()].sort((a, b) => b.addedKm - a.addedKm).slice(0, 20) };
 fs.writeFileSync(OUT, JSON.stringify(results, null, 1));
+const perBody = Object.fromEntries([...catDes].sort((a, b) => a.localeCompare(b)).map((des) => [des, best.get(des) ?? null]));
+fs.writeFileSync(PER_BODY_OUT, JSON.stringify({ generatedAtUtc, cadFetchedAtUtc: '2026-09-11T04:27:49.000Z', source, criterion: results.criterion, windowEndJd: END_JD, perturberGM: GM, catalogTotal: TOTAL, records: perBody }, null, 1));
 
 console.log('CAD rows: ' + cad.data.length + ' total, ' + rowsInCatalog + ' belong to catalog bodies');
 console.log('per-body max distance actually stored (measured): ' + JSON.stringify(capByBody));

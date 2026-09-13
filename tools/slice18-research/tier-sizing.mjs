@@ -20,6 +20,9 @@ import { pathToFileURL } from 'node:url';
 const REPO = 'C:/Users/hudso/asteroid-mining-planner';
 const HERE = 'C:/Users/hudso/Documents/aster-slice18/audit';
 const OUT = path.join(HERE, 'tier-sizing-results.json');
+const RESEARCH_DIR = path.join(REPO, 'tools/slice18-research');
+const PER_BODY_OUT = path.join(RESEARCH_DIR, 'tier-sizing-per-body.json');
+const CAD_PATH = path.join(RESEARCH_DIR, 'cad-wide/cad-all-0.3.json');
 const AU_KM = 149597870.7;
 const JUPITER_PERIHELION_AU = 4.95;
 
@@ -31,7 +34,7 @@ const scope = JSON.parse(fs.readFileSync(path.join(HERE, 'dv-scope-results.json'
 // rebuild the material set from the per-body top records we kept, plus recompute from source
 const materialSet = new Set();
 {
-  const cad = JSON.parse(fs.readFileSync(path.join(HERE, 'cad-wide/cad-all-0.3.json'), 'utf8'));
+  const cad = JSON.parse(fs.readFileSync(CAD_PATH, 'utf8'));
   const F = cad.fields;
   const ix = { des: F.indexOf('des'), jd: F.indexOf('jd'), dist: F.indexOf('dist'), vrel: F.indexOf('v_rel'), body: F.indexOf('body') };
   const GM = scope.perturberGM;
@@ -70,7 +73,8 @@ for (const b of bodies) {
   const aAU = b.elements.aKm / AU_KM;
   const Q = aAU * (1 + e);
   const isComet = ['JFC', 'HTC', 'ETC', 'CTc', 'COM', 'PAR', 'HYP'].includes(b.orbitClass) || !NEA_CLASSES.includes(b.orbitClass);
-  const nonExistent = b.anchorSource === 'stale-unanchored' && NEA_CLASSES.includes(b.orbitClass);
+  const historicallyDestroyed = des === '3D' && b.name === '3D/Biela';
+  const nonExistent = (b.anchorSource === 'stale-unanchored' && NEA_CLASSES.includes(b.orbitClass)) || historicallyDestroyed;
   const hyperbolic = !(e < 1) || !(aAU > 0);
 
   if (Number.isFinite(Q)) {
@@ -84,16 +88,40 @@ for (const b of bodies) {
   } else qMissing += 1;
 
   // precedence: does not exist > cannot propagate > comet > Jupiter-crossing > material > quiet
-  let tier;
-  if (nonExistent) tier = 'nonExistent';
-  else if (hyperbolic) tier = 'hyperbolic';
-  else if (isComet) tier = 'comet';
-  else if (Q >= JUPITER_PERIHELION_AU) tier = 'jupiterCrossing';
-  else if (materialSet.has(des)) tier = 'material';
-  else tier = 'quiet';
-  counts[tier] = (counts[tier] || 0) + 1;
-  assign.push({ des, tier, Q: +Q.toFixed(3), e: +e.toFixed(4), aAU: +aAU.toFixed(3), orbitClass: b.orbitClass, material: materialSet.has(des) });
+  let classification;
+  let fidelityTier;
+  let subReason;
+  if (nonExistent) {
+    classification = 'nonExistent';
+    fidelityTier = 'L0';
+    subReason = historicallyDestroyed ? 'historically-destroyed-disintegration' : 'verified-destroyed-ephemeris-termination';
+  } else if (hyperbolic) {
+    classification = 'hyperbolic';
+    fidelityTier = 'L0';
+    subReason = 'cannot-propagate-hyperbolic-orbit';
+  } else if (isComet) {
+    classification = 'comet';
+    fidelityTier = 'L2';
+    subReason = 'structurally-blind-comet';
+  } else if (Q >= JUPITER_PERIHELION_AU) {
+    classification = 'jupiterCrossing';
+    fidelityTier = 'L2';
+    subReason = 'structurally-blind-jupiter-crossing';
+  } else if (materialSet.has(des)) {
+    classification = 'material';
+    fidelityTier = 'L1';
+    subReason = 'materially-degraded-delta-v';
+  } else {
+    classification = 'quiet';
+    fidelityTier = 'L2';
+    subReason = 'unmeasured';
+  }
+  counts[classification] = (counts[classification] || 0) + 1;
+  assign.push({ des, tier: fidelityTier, subReason, classification, Q: +Q.toFixed(3), e: +e.toFixed(4), aAU: +aAU.toFixed(3), orbitClass: b.orbitClass, material: materialSet.has(des) });
 }
+const fidelityCounts = Object.fromEntries(['L0', 'L1', 'L2'].map((tier) => [tier, assign.filter((row) => row.tier === tier).length]));
+const structurallyBlindCount = assign.filter((row) => row.tier === 'L2' && row.subReason.startsWith('structurally-blind-')).length;
+if (fidelityCounts.L0 !== 11 || fidelityCounts.L1 !== 10150 || fidelityCounts.L2 !== 31745 || TOTAL !== 41906 || structurallyBlindCount !== 688) throw new Error(`Front C population mismatch: ${JSON.stringify({ total: TOTAL, fidelityCounts, structurallyBlindCount })}`);
 
 // overlaps that matter for the design
 const jupCrossingAlsoMaterial = assign.filter((r) => r.tier === 'jupiterCrossing' && r.material).length;
@@ -115,6 +143,7 @@ const results = {
   note: 'Precedence: nonExistent > hyperbolic > comet > jupiterCrossing > material > quiet. A body is counted once, in its strongest tier.',
 };
 fs.writeFileSync(OUT, JSON.stringify(results, null, 1));
+fs.writeFileSync(PER_BODY_OUT, JSON.stringify({ generatedAtUtc: results.generatedAtUtc, cadFetchedAtUtc: '2026-09-11T04:27:49.000Z', source: 'tier-sizing.mjs over nea-catalog-slice9.json + dv-scope-results.json + cad-all-0.3.json', catalogTotal: TOTAL, populations: { L0: fidelityCounts.L0, L1: fidelityCounts.L1, L2: fidelityCounts.L2, total: TOTAL, structurallyBlindL2: structurallyBlindCount }, records: Object.fromEntries(assign.sort((a, b) => a.des.localeCompare(b.des)).map((row) => [row.des, row])) }, null, 1));
 
 const pct = (n) => (100 * n / TOTAL).toFixed(2) + '%';
 console.log('catalog total: ' + TOTAL);
