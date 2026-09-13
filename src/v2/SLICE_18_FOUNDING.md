@@ -264,3 +264,23 @@ Therefore: **every population figure cited anywhere — this document, STATUS, a
 This applies retroactively to the figures in DEC-18-6, DEC-18-9, DEC-18-10 and C-1: read them as "as of the snapshot then in use", and read the numbers in this C-4 as "as of the 2026-09-11 snapshot". The L0 population and the structurally-blind count are the exception — they derive from the committed catalog's own `anchorSource`, `orbitClass`, `a` and `e`, need no external data, and are therefore snapshot-independent.
 
 *Verification of this section: populations recomputed from the committed snapshot by two independent implementations written separately — one by the author of this section, one by an agent given the criterion but not the expected answers — agreeing exactly on all six figures for both the old and the new snapshot, and identifying the same four bodies. The snapshot's sha256 and row count were checked against its metadata artifact before it was cited, per INV-033. The fetch timestamp is read from `cad-all-0.3.metadata.json`, not from any literal in a script.*
+
+### C-5 — L1 is threshold-fragile as well as snapshot-dependent. RECORDED 2026-09-13.
+
+C-4 established that L1 moves with the CAD snapshot. It also moves with the threshold, and more steeply. Measured from the committed per-body artifact `tools/slice18-research/dv-scope-per-body.json` against the 2026-09-11 snapshot, with tier precedence applied so these are true L1 counts and not raw material-set counts:
+
+| threshold | L1 |
+|---|---|
+| 0.5 × 10⁶ km | 13,172 |
+| **1 × 10⁶ km (DEC-18-6)** | **10,150** |
+| 2 × 10⁶ km | 6,469 |
+
+A 4× sweep of the threshold moves L1 by slightly more than 2×. The region around the cutoff is dense: **118 L1-eligible bodies sit within ±1% of 10⁶ km, and 1,063 within ±10%**. L1 is a point on a continuum, not a natural boundary in the data.
+
+**DEC-18-6's threshold choice is unaffected by this.** It was chosen because the C3-sensitivity measurement found argmins actually move at 10⁶ km (3 of 15) and do not at 10⁵ (0 of 15) — it is grounded in measured product-visible behaviour, not in where the population happens to be sparse. A threshold is not better for landing in a gap, and this one does not land in a gap. Nothing here reopens DEC-18-6.
+
+**What it does constrain is citation.** L1's count must never be quoted as a stable fact. It is a function of **two** parameters — the snapshot date (C-4) and the threshold value (here) — and a figure given without both is not reproducible. The full statement is "L1 = 10,150 at 10⁶ km against the 2026-09-11 snapshot". L0 and the structurally-blind count remain exempt, for the reason given in C-4: they derive from the committed catalog alone and are independent of both parameters.
+
+**Artifact status, verified 2026-09-13.** `tools/slice18-research/tier-sizing-results.json` **still carries the stale values** — `cannotBoundTotal: 690` and the pre-OQ-18-6 tiers `nonExistent: 9`, `comet: 207`, `material: 10,152`, generated 2026-09-09. It has not been regenerated. It is **superseded** by `tools/slice18-research/tier-sizing-per-body.json` (landed `355fa5f`), whose `populations` field reads `{L0: 11, L1: 10150, L2: 31745, total: 41906, structurallyBlindL2: 688}` — matching C-4 exactly, and naming the field `structurallyBlindL2` so the definitional ambiguity that produced the 690 / 689 / 688 confusion cannot recur. Where the two artifacts disagree, the per-body artifact governs; the older file should be regenerated or removed rather than left to be cited. Its `jupiterCrossingAlsoHasMaterialCadEncounter: 0` is independently wrong: 9 Jupiter-crossing bodies do carry a material CAD encounter, and 21 material bodies in total are absorbed by higher tiers (12 comet, 9 Jupiter-crossing).
+
+*Verification of this section: the sweep and density figures were computed from the committed per-body artifacts joined by designation, with L0/comet/Jupiter-crossing bodies excluded before counting, and independently reproduced by a separate agent given the criterion but not the expected answers — 13,172 / 10,150 / 6,469 and 118 / 1,063, agreeing exactly. The `populations` field was read from the committed artifact, not recomputed into it. The staleness of `tier-sizing-results.json` was checked directly rather than assumed corrected.*
