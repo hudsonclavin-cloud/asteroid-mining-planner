@@ -1,10 +1,4 @@
-# S18 — founding doc §9 C-4: snapshot-dependent tier populations (additive)
+# S18 — founding doc §9 C-5: L1 threshold fragility (additive)
 src/v2/SLICE_18_FOUNDING.md
-tools/slice18-research/cad-wide/cad-all-0.3.json
-tools/slice18-research/cad-wide/cad-all-0.3.metadata.json
-tools/slice18-research/dv-scope.mjs
 tools/slice18-research/tier-sizing.mjs
-tools/slice18-research/dv-scope-per-body.json
-tools/slice18-research/tier-sizing-per-body.json
-tools/slice18-research/cad-wide/cad-all-0.3.json
-tools/slice18-research/cad-wide/cad-all-0.3.metadata.json
+tools/slice18-research/tier-sizing-results.json

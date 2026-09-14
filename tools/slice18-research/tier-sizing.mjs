@@ -19,7 +19,6 @@ import { pathToFileURL } from 'node:url';
 
 const REPO = 'C:/Users/hudso/asteroid-mining-planner';
 const HERE = 'C:/Users/hudso/Documents/aster-slice18/audit';
-const OUT = path.join(HERE, 'tier-sizing-results.json');
 const RESEARCH_DIR = path.join(REPO, 'tools/slice18-research');
 const PER_BODY_OUT = path.join(RESEARCH_DIR, 'tier-sizing-per-body.json');
 const CAD_PATH = path.join(RESEARCH_DIR, 'cad-wide/cad-all-0.3.json');
@@ -142,7 +141,6 @@ const results = {
   materialSetSize: materialSet.size,
   note: 'Precedence: nonExistent > hyperbolic > comet > jupiterCrossing > material > quiet. A body is counted once, in its strongest tier.',
 };
-fs.writeFileSync(OUT, JSON.stringify(results, null, 1));
 fs.writeFileSync(PER_BODY_OUT, JSON.stringify({ generatedAtUtc: results.generatedAtUtc, cadFetchedAtUtc: '2026-09-11T04:27:49.000Z', source: 'tier-sizing.mjs over nea-catalog-slice9.json + dv-scope-results.json + cad-all-0.3.json', catalogTotal: TOTAL, populations: { L0: fidelityCounts.L0, L1: fidelityCounts.L1, L2: fidelityCounts.L2, total: TOTAL, structurallyBlindL2: structurallyBlindCount }, records: Object.fromEntries(assign.sort((a, b) => a.des.localeCompare(b.des)).map((row) => [row.des, row])) }, null, 1));
 
 const pct = (n) => (100 * n / TOTAL).toFixed(2) + '%';
