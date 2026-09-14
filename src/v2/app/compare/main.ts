@@ -64,6 +64,7 @@ import {
 import type { WindowComponent } from '../../porkchop/segment-windows.js';
 import { setSelectedBodySet } from '../ui-store/store.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
+import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 
 const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',
@@ -116,6 +117,7 @@ interface PageData {
   readonly labels: ReadonlyMap<string, string>;
   /** A4c catalog facts (H, conditionCode) per bodyId. */
   readonly facts: ReadonlyMap<string, BodyFacts>;
+  readonly tiers: ReadonlyMap<string, TierAssignment>;
   readonly vehicleName: string;
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly totalComputeMs: number;
@@ -587,6 +589,7 @@ function renderRefusalRow(
   label: string,
   dominance: DominanceVerdict | undefined,
   facts: BodyFacts | undefined,
+  tier: TierAssignment | undefined,
 ) {
   const copy = refusalCopy(result.reason, result.detail);
   return h('tr', { key: result.bodyId, style: 'background:rgba(148,163,184,0.05);' }, [
@@ -595,6 +598,7 @@ function renderRefusalRow(
       h('span', { style: NOTE_STYLE }, result.bodyId),
       renderDominanceChip(dominance),
     ]),
+    renderTierCell(tier),
     // The refusal message spans the five COMPUTE columns; the two A4c fact
     // columns still render — size and orbit quality are catalog facts, valid
     // for a body whose grid was refused.
@@ -629,6 +633,15 @@ function renderFactCells(facts: BodyFacts | undefined) {
   ];
 }
 
+function renderTierCell(tier: TierAssignment | undefined) {
+  const value = tier?.tier ?? '—';
+  const color = tier?.tier === 'L0' ? '#fca5a5' : tier?.tier === 'L1' ? '#fcd34d' : '#93c5fd';
+  return h('td', { style: CELL_STYLE }, [
+    h('span', { style: `color:${color};font-weight:600;` }, value),
+    tier ? h('span', { style: NOTE_STYLE }, tier.subReason) : null,
+  ]);
+}
+
 function renderOkRow(
   result: CompareBodyOk,
   label: string,
@@ -637,6 +650,7 @@ function renderOkRow(
   onToggle: () => void,
   dominance: DominanceVerdict | undefined,
   facts: BodyFacts | undefined,
+  tier: TierAssignment | undefined,
 ) {
   const { segmentation, echo } = result;
   const best = segmentation.bestPractical;
@@ -669,6 +683,7 @@ function renderOkRow(
         expanded ? 'hide porkchop' : 'show porkchop',
       ),
     ]),
+    renderTierCell(tier),
 
     // Best practical window — or the honest negative, which names its own
     // binding constraint (see describeNoPracticalWindow).
@@ -788,6 +803,7 @@ interface LoadedSources {
   readonly labels: ReadonlyMap<string, string>;
   /** A4c catalog facts (H, conditionCode) per bodyId. */
   readonly facts: ReadonlyMap<string, BodyFacts>;
+  readonly tiers: ReadonlyMap<string, TierAssignment>;
   readonly vehicle: LaunchVehicle;
   /** DEC-17-5(a) runtime read of metadata.feasibleC3MaxKm2S2 — never a literal. */
   readonly absoluteKm2S2: number;
@@ -823,8 +839,9 @@ function ComparePage() {
       }),
       loadSlice9NeaCatalogFixture(),
       loadLambertScreenCacheAsync(),
+      loadTierAssignments(),
     ])
-      .then(([horizonsStates, catalog, screenCache]) => {
+      .then(([horizonsStates, catalog, screenCache, tierAssignments]) => {
         if (cancelled) {
           return;
         }
@@ -835,6 +852,7 @@ function ComparePage() {
 
         const labels = new Map<string, string>();
         const facts = new Map<string, BodyFacts>();
+        const tiers = new Map<string, TierAssignment>();
         const bodies: CompareBodyInput[] = [];
         const missing: string[] = [];
         for (const bodyId of requestedBodyIds) {
@@ -845,6 +863,11 @@ function ComparePage() {
           }
           labels.set(body.bodyId, body.name || body.designation || body.bodyId);
           facts.set(body.bodyId, { H: body.H, conditionCode: body.conditionCode });
+          const tier = tierAssignments.get(body.designation);
+          if (!tier) {
+            throw new Error(`No fidelity tier assignment for ${body.designation}`);
+          }
+          tiers.set(body.bodyId, tier);
           bodies.push({ bodyId: body.bodyId, bodyElements: body.elements });
         }
         if (bodies.length === 0) {
@@ -859,6 +882,7 @@ function ComparePage() {
           bodies,
           labels,
           facts,
+          tiers,
           vehicle: LAUNCH_VEHICLES[0],
           absoluteKm2S2: screenCache.metadata.feasibleC3MaxKm2S2,
         });
@@ -926,6 +950,7 @@ function ComparePage() {
           results,
           labels: sources.labels,
           facts: sources.facts,
+          tiers: sources.tiers,
           vehicleName: `${sources.vehicle.name} — ${sources.vehicle.config}`,
           ephemerisSpan: sources.ephemerisSpan,
           totalComputeMs,
@@ -994,6 +1019,7 @@ function ComparePage() {
 
   const headers = [
     'Target',
+    'Fidelity tier',
     'Best practical window',
     'Distinct windows',
     'Widest window',
@@ -1070,12 +1096,12 @@ function ComparePage() {
         };
         const rows = [
           isRefusal(result)
-            ? renderRefusalRow(result, label, dominance.get(result.bodyId), data.facts.get(result.bodyId))
-            : renderOkRow(result, label, data.vehicleName, isExpanded, onToggle, dominance.get(result.bodyId), data.facts.get(result.bodyId)),
+            ? renderRefusalRow(result, label, dominance.get(result.bodyId), data.facts.get(result.bodyId), data.tiers.get(result.bodyId))
+            : renderOkRow(result, label, data.vehicleName, isExpanded, onToggle, dominance.get(result.bodyId), data.facts.get(result.bodyId), data.tiers.get(result.bodyId)),
         ];
         if (isExpanded && result.ok) {
           rows.push(h('tr', { key: `${result.bodyId}-grid` },
-            h('td', { colSpan: 8, style: 'padding:4px 12px 18px;border-bottom:1px solid rgba(255,255,255,0.08);' }, [
+            h('td', { colSpan: 9, style: 'padding:4px 12px 18px;border-bottom:1px solid rgba(255,255,255,0.08);' }, [
               h(PorkchopThumbnail, { cells: result.grid.cells }),
               h('span', { style: NOTE_STYLE },
                 `Departure date left to right, transfer time bottom to top. Colour is departure energy on one scale shared by every target on this page, so panels are directly comparable.`),
