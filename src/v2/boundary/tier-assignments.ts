@@ -12,10 +12,16 @@ interface TierArtifact {
   readonly records: Record<string, TierAssignment>;
 }
 
-export const TIER_ASSIGNMENTS_URL = '/tier-sizing-per-body.json';
+const TIER_FILENAME = 'tier-sizing-per-body.json';
+
+function resolveTierAssignmentsUrl(): string {
+  const base = (typeof import.meta !== 'undefined' && (import.meta as any).env?.BASE_URL) || '/';
+  return base.endsWith('/') ? `${base}${TIER_FILENAME}` : `${base}/${TIER_FILENAME}`;
+}
 
 export async function loadTierAssignments(): Promise<ReadonlyMap<string, TierAssignment>> {
-  const response = await fetch(TIER_ASSIGNMENTS_URL);
+  const url = resolveTierAssignmentsUrl();
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to load fidelity tier assignments: ${response.status} ${response.statusText}`);
   }
