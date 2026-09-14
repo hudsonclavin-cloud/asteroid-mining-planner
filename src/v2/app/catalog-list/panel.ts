@@ -33,6 +33,7 @@ import {
   type ScreeningWindow,
 } from './honesty-disclosure.js';
 import { renderRow } from './row.js';
+import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
 export interface RenderPanelOptions {
@@ -54,6 +55,7 @@ const viewportHeightSignal = signal(600);
 const popoverOpenSignal = signal(false);
 const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> | null>(null);
 const screeningWindowSignal = signal<ScreeningWindow | null>(null);
+const tierAssignmentsSignal = signal<ReadonlyMap<string, TierAssignment> | null>(null);
 const ABOUT_ROUTE = '../about/';
 
 // Module-scope fetch, deliberate: b6b7f92 moved the screening cache out
@@ -72,20 +74,26 @@ loadLambertScreenCacheAsync()
     console.error('Failed to load Lambert screen cache:', error);
   });
 
+loadTierAssignments().then((tiers) => { tierAssignmentsSignal.value = tiers; }).catch((error) => {
+  console.error('Failed to load fidelity tier assignments:', error);
+});
+
 let scrollContainerEl: HTMLDivElement | null = null;
 let resizeListenerInstalled = false;
 
 function buildRowData(): CatalogListRowData[] {
   const catalog = catalogSignal.value;
   const screeningIndex = screeningIndexSignal.value;
-  if (!catalog || !screeningIndex) {
+  const tierAssignments = tierAssignmentsSignal.value;
+  if (!catalog || !screeningIndex || !tierAssignments) {
     return [];
   }
 
   const rows: CatalogListRowData[] = [];
   for (const body of Object.values(catalog.asteroids)) {
     const screen = screeningIndex.byBodyId.get(body.bodyId);
-    if (!screen) {
+    const tier = tierAssignments.get(body.designation);
+    if (!screen || !tier) {
       continue;
     }
     rows.push({
@@ -96,6 +104,7 @@ function buildRowData(): CatalogListRowData[] {
       orbitClass: body.orbitClass,
       H: typeof body.H === 'number' ? body.H : null,
       screen,
+      tier,
     });
   }
   return rows;
@@ -217,6 +226,7 @@ export function disposePanel(): void {
 export function trackPanelSignals(): void {
   filteredRowsSignal.value;
   screeningWindowSignal.value;
+  tierAssignmentsSignal.value;
   layoutModeSignal.value;
   selectedBodySignal.value;
   bodyLabelsVisibleSignal.value;

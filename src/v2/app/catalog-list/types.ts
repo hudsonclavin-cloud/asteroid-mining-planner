@@ -1,4 +1,5 @@
 import type { LambertScreenResult } from '../../boundary/lambert-screen-cache.js';
+import type { TierAssignment } from '../../boundary/tier-assignments.js';
 
 /**
  * Row data combining the Slice 9 catalog identity with its screening result.
@@ -12,6 +13,7 @@ export interface CatalogListRowData {
   orbitClass: string;
   H: number | null;
   screen: LambertScreenResult;
+  tier: TierAssignment;
 }
 
 export const CATALOG_LIST_ROW_HEIGHT_PX = 56;

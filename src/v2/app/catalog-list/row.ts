@@ -38,6 +38,10 @@ function statusBadgeColor(status: string): string {
   }
 }
 
+function tierBadgeColor(tier: string): string {
+  return tier === 'L0' ? '#9a4a4a' : tier === 'L1' ? '#9a7a3a' : '#4f6680';
+}
+
 export function renderRow(
   data: CatalogListRowData,
   topPx: number,
@@ -129,6 +133,14 @@ export function renderRow(
           },
           statusBadgeText(data.screen.status),
         ),
+        h('span', {
+          style: {
+            fontSize: '10px', padding: '2px 6px', borderRadius: '3px',
+            background: tierBadgeColor(data.tier.tier), color: '#fff',
+            letterSpacing: '0.5px', flexShrink: 0,
+          },
+          title: data.tier.subReason,
+        }, data.tier.tier),
       ),
       h(
         'div',
