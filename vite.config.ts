@@ -66,6 +66,24 @@ export default defineConfig({
       },
     },
     {
+      name: 'copy-fidelity-tier-assignments',
+      writeBundle() {
+        mkdirSync(resolve(__dirname, 'docs'), { recursive: true });
+        copyFileSync(
+          resolve(__dirname, 'tools/slice18-research/tier-sizing-per-body.json'),
+          resolve(__dirname, 'docs/tier-sizing-per-body.json'),
+        );
+      },
+      configureServer(server) {
+        server.middlewares.use('/asteroid-mining-planner/tier-sizing-per-body.json', (_req, res) => {
+          createReadStream(resolve(__dirname, 'tools/slice18-research/tier-sizing-per-body.json'))
+            .on('error', () => { res.statusCode = 404; res.end('tier artifact not found'); })
+            .on('open', () => { res.setHeader('Content-Type', 'application/json'); })
+            .pipe(res);
+        });
+      },
+    },
+    {
       name: 'copy-nojekyll',
       writeBundle() {
         mkdirSync(resolve(__dirname, 'docs'), { recursive: true });
