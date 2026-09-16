@@ -856,7 +856,9 @@ function ComparePage() {
         const bodies: CompareBodyInput[] = [];
         const missing: string[] = [];
         for (const bodyId of requestedBodyIds) {
-          const body = catalog.asteroids[bodyId];
+          const body = catalog.asteroids[bodyId] ?? Object.values(catalog.asteroids).find(
+            (candidate) => candidate.designation === bodyId,
+          );
           if (!body) {
             missing.push(bodyId);
             continue;

@@ -90,6 +90,9 @@ export function renderRow(
         },
         onClick: () => {
           selectBody(data.bodyId);
+          if (data.tier.subReason === 'cannot-propagate-hyperbolic-orbit') {
+            return;
+          }
           requestFocus();
         },
       },
