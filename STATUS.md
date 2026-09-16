@@ -19,11 +19,11 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `2eaf936` | everything through the Slice 18 founding document and math-layer audit evidence was pushed; verified via `git fetch` |
-| Local HEAD | `2eaf936` | this reconciliation commit intentionally pins its immediate predecessor; see the measured lag note |
+| origin/main | `22d4fa7` | Front C W1-W3 is merged and pushed to main; verified via `git fetch` |
+| Local HEAD | `22d4fa7` | current merged tip before this STATUS closeout commit |
 
-**Measured pin lag (2026-09-09 reconciliation):** before this edit, `git rev-list --count 6e89131..HEAD` measured a two-commit lag (`eacb1b3`, then `2eaf936`). This edit pins `2eaf936`; after this STATUS commit lands, `git rev-list --count 2eaf936..HEAD` measures the intentional one-commit structural lag. STATUS commits LAST in any sequence. When a later non-STATUS commit lands, the lag exceeds one and must be stated as measured rather than asserted as a timeless property.
-**Push state:** origin/main is at `2eaf936`. This reconciliation STATUS commit will be the only local-only, unpushed change. No agent pushes, ever.
+**Measured pin lag (2026-09-16):** before this edit, `git rev-list --count 22d4fa7..HEAD` measured 0 commits. After this STATUS commit lands, the measured local lag will be 1 commit until it is pushed; STATUS commits LAST in any sequence.
+**Push state:** origin/main is at `22d4fa7`. This STATUS closeout commit is the only local-only, unpushed change. No agent pushes, ever.
 **Deploy boundary:** `docs/` was rebuilt at `5a00907` on 2026-08-13, carrying Batch 2 (A4c size-range + orbit-quality columns, B2 scale/frame chips + axis triad + HUD, B1 pan/reset/discoverability). Live bundles: `solarSystemV2-C60RP1nx.js`, `compareV2-BPtoAvbN.js`, `porkchopV2-C8hMf2EQ.js`, `store-BAStm0cU.js`.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
@@ -144,7 +144,19 @@ OQ-18-6 recorded that DEC-18-5's "ten" (nine impactors + 3D/Biela) and L0's "ten
 
 This ruling is recorded in STATUS here and requires a separate additive annotation on `src/v2/SLICE_18_FOUNDING.md`; that annotation is not part of this dispatch.
 
-**Front C L0:** designed and dispatched; blocked at Phase 0 on the STATUS staleness resolved by this reconciliation. Resumes after this lands.
+**Front C W1-W3 CLOSED (2026-09-16, git date).** Tier data layer, catalog-list badges, and compare-page fidelity column shipped on `codex/s18-front-c-fidelity-surface` and merged to `main`.
+
+Commits: `fcfc40c` (tier artifact loader plus Vite static/dev serving); `64acff0` (Vite `BASE_URL` correction required by `fcfc40c`, one revert unit with it); `20213b0` (catalog-list tier badge); `b41c47e` (compare-table fidelity-tier column); `22d4fa7` (browser-gate fixes).
+
+Revert map: revert `fcfc40c` and `64acff0` together; revert `20213b0` for the catalog-list badge; revert `b41c47e` for the compare column; revert `22d4fa7` for the browser-gate fixes. The `64acff0` base-path correction is required for the new tier-artifact loading under the deployed base path.
+
+Populations: **L0 = 11**, **L1 = 10,150**, **L2 = 31,745**, **structurallyBlindL2 = 688**, **total = 41,906**. All W1-W3 gates are green: **219 passed, 0 failed, 1 skipped (220 total)**; TypeScript is clean.
+
+Gate findings closed: the pre-existing compare designation-to-key mismatch was fixed in `22d4fa7` and verified for `2015 D1`, `2021 CG6`, and `2018 LA16`. The L0 `cannot-propagate-hyperbolic-orbit` click path was gated before `requestFocus`, preventing the RangeError/render-loop failure.
+
+Open gaps: the long-form disclosure strings are not wired into the UI (only short L0/L1/L2 badges and native title tooltips with sub-reasons render; no cold-reader legend). W4/W5 remain blocked pending a committed per-body join from dv-scope encounter data to porkchop per-cell arrival boundary (`depJD + tofDays`). `jupiterCrossingAlsoHasMaterialCadEncounter` remains 0 in the artifact although C-5 rules it should be 9; this latent discrepancy is not surfaced. `2018 LA` shows green LOW C3 and numeric C3 alongside a red L0 verified-destroyed flag; suppression remains undecided. The ui-overlay remains fixed M:1, open since Front A and out of scope.
+
+**Date correction finding:** Nova-supplied prose dates were found incorrect; git's own dates govern from here. The founding document's additive-only text still carries `2026-09-02` and needs a separate additive date-correction annotation; it was not edited here.
 
 All measurements below were produced by read-only local runs with **no network**, using only committed fixtures and the repo's own math. Artifacts are named per measurement and are **NOT in version control**; they live in `C:\Users\hudso\Documents\aster-slice18\`.
 
