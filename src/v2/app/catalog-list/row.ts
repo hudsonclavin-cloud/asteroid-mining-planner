@@ -1,5 +1,6 @@
 import { h, type VNode } from 'preact';
 import { formatC3 } from '../../porkchop/format-c3.js';
+import { fullTierDisclosure, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { requestFocus, selectBody, selectedBodySignal } from '../ui-store/index.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
@@ -23,7 +24,7 @@ function statusBadgeText(status: string): string {
   }
 }
 
-function statusBadgeColor(status: string): string {
+export function statusBadgeColor(status: string): string {
   switch (status) {
     case 'low_departure_c3':
       return '#3a8d4a';
@@ -38,7 +39,7 @@ function statusBadgeColor(status: string): string {
   }
 }
 
-function tierBadgeColor(tier: string): string {
+export function tierBadgeColor(tier: string): string {
   return tier === 'L0' ? '#9a4a4a' : tier === 'L1' ? '#9a7a3a' : '#4f6680';
 }
 
@@ -165,7 +166,9 @@ export function renderRow(
             background: tierBadgeColor(data.tier.tier), color: '#fff',
             letterSpacing: '0.5px', flexShrink: 0,
           },
-          title: data.tier.subReason,
+          // S18 Item 5: the FULL disclosure sentence (values from the committed
+          // artifact), never the slug; the legend line if a value is missing.
+          title: fullTierDisclosure(data.tier) ?? legendLineFor(data.tier.tier),
         }, data.tier.tier),
       ),
       deEmphasizeC3

@@ -42,6 +42,8 @@ import {
 } from '../../porkchop/porkchop-view.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js';
+import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
+import { fullTierDisclosure, L1_CRITERION, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import {
   FK3_TOUR_STORAGE_KEY,
   Fk3GuidedTour,
@@ -103,6 +105,8 @@ interface PageState {
   readonly bodyLabel: string;
   readonly bodyElements: AsteroidOrbitalElements;
   readonly client: PorkchopClient;
+  /** S18 Item 5: the body's fidelity tier from the committed artifact; null if absent. */
+  readonly tier: TierAssignment | null;
 }
 
 interface StackState {
@@ -187,6 +191,38 @@ const GRID_PARAMS = {
   nDep: 200,
   nTof: 100,
 } as const;
+
+/**
+ * S18 Item 5 (DEC-18-8): the body's full fidelity-tier disclosure, visible on
+ * the page near the title — not hover-only. L1 also states the criterion, and
+ * because that names 10^6 km it carries the threshold provenance with it.
+ */
+function renderTierDisclosure(tier: TierAssignment | null) {
+  if (tier === null) {
+    return h(
+      'div',
+      { style: 'font-size:12px;color:#fca5a5;margin-bottom:12px;' },
+      'Fidelity tier: this body is not in the committed tier artifact.',
+    );
+  }
+  const color = tier.tier === 'L0' ? '#fca5a5' : tier.tier === 'L1' ? '#fcd34d' : '#93c5fd';
+  const sentence = fullTierDisclosure(tier) ?? legendLineFor(tier.tier);
+  return h(
+    'section',
+    {
+      style: `border:1px solid ${color}55;border-left:3px solid ${color};border-radius:8px;padding:10px 12px;margin-bottom:14px;background:rgba(255,255,255,0.03);`,
+    },
+    h(
+      'div',
+      { style: `font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:${color};margin-bottom:4px;` },
+      `Fidelity tier ${tier.tier}`,
+    ),
+    h('div', { style: 'font-size:12px;line-height:1.6;color:#e2e8f0;' }, sentence),
+    tier.tier === 'L1'
+      ? h('div', { style: 'font-size:11px;line-height:1.6;color:#94a3b8;margin-top:6px;' }, L1_CRITERION)
+      : null,
+  );
+}
 
 function resolveRequestedBodyId(): string {
   const params = new URLSearchParams(location.search);
@@ -302,7 +338,8 @@ function PorkchopDedicatedPage() {
     void Promise.all([
       loadLongWindowEarthSeries(),
       loadSlice9NeaCatalogFixture(),
-    ]).then(async ([earthStateSeries, catalog]) => {
+      loadTierAssignments(),
+    ]).then(async ([earthStateSeries, catalog, tierAssignments]) => {
       // S18 Item 2: accept the same forms the compare page does (canonical
       // bodyId or bare designation) through the same shared resolver.
       const body = resolveSlice9CatalogBody(catalog, requestedBodyId);
@@ -322,6 +359,7 @@ function PorkchopDedicatedPage() {
         bodyLabel: body.name || body.designation,
         bodyElements: body.elements,
         client,
+        tier: tierAssignments.get(body.designation) ?? null,
       });
       setLoading(false);
     }).catch((nextError: Error) => {
@@ -565,6 +603,7 @@ function PorkchopDedicatedPage() {
       h('div', { style: 'font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8da2c0;margin-bottom:10px;' }, 'Porkchop Analysis'),
       h('div', { style: 'font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;' }, pageState.bodyLabel),
       h('div', { style: 'font-size:13px;color:#93a4bf;margin-bottom:6px;' }, pageState.bodyId),
+      renderTierDisclosure(pageState.tier),
       h(
         'a',
         {

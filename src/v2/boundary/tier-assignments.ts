@@ -1,11 +1,33 @@
 /** Front C fidelity-tier assignments, loaded from the committed per-body artifact. */
 export type FidelityTier = 'L0' | 'L1' | 'L2';
 
+/** S18 Item 5/6: the CAD close approach that makes an L1 body's tier material. */
+export interface TierEncounter {
+  /** Close-approach epoch, Julian date (TDB), as CAD reports it. */
+  readonly jd: number;
+  /** CAD calendar date string, e.g. '2029-Apr-13 21:46'. */
+  readonly cd: string;
+  /** Perturbing body, e.g. 'Earth'. */
+  readonly body: string;
+  /** Estimated deflection δv = 2·v·sin(θ/2), km/s. */
+  readonly dvKmS: number;
+}
+
 export interface TierAssignment {
   readonly des: string;
   readonly tier: FidelityTier;
   readonly subReason: string;
   readonly classification: string;
+  /** Aphelion, AU (3 dp), as the artifact records it. */
+  readonly Q?: number;
+  /** Eccentricity (4 dp), as the artifact records it. */
+  readonly e?: number;
+  /** L0 impactors only: the Horizons termination epoch, verbatim TDB string. */
+  readonly terminationTdb?: string;
+  /** L0 3D/Biela only: two-body drift on the screening window's first day, km. */
+  readonly firstDayDriftKm?: number;
+  /** L1 only: the encounter behind the tier. */
+  readonly encounter?: TierEncounter;
 }
 
 interface TierArtifact {

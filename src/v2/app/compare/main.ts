@@ -66,6 +66,7 @@ import { setSelectedBodySet } from '../ui-store/store.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js';
+import { fullTierDisclosure, legendLineFor, shortTierLabel } from '../../porkchop/tier-disclosure.js';
 
 const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',
@@ -642,9 +643,12 @@ function renderFactCells(facts: BodyFacts | undefined) {
 function renderTierCell(tier: TierAssignment | undefined) {
   const value = tier?.tier ?? '—';
   const color = tier?.tier === 'L0' ? '#fca5a5' : tier?.tier === 'L1' ? '#fcd34d' : '#93c5fd';
-  return h('td', { style: CELL_STYLE }, [
+  // S18 Item 5: short label visible, the full disclosure sentence on hover —
+  // never the slug (INV-025). Legend line if a value is missing from the artifact.
+  const full = tier === undefined ? undefined : fullTierDisclosure(tier) ?? legendLineFor(tier.tier);
+  return h('td', { style: CELL_STYLE, title: full }, [
     h('span', { style: `color:${color};font-weight:600;` }, value),
-    tier ? h('span', { style: NOTE_STYLE }, tier.subReason) : null,
+    tier ? h('span', { style: NOTE_STYLE }, shortTierLabel(tier)) : null,
   ]);
 }
 

@@ -34,6 +34,8 @@ import {
 } from './honesty-disclosure.js';
 import { renderRow } from './row.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
+import { TIER_LEGEND } from '../../porkchop/tier-disclosure.js';
+import { statusBadgeColor, tierBadgeColor } from './row.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
 export interface RenderPanelOptions {
@@ -235,6 +237,54 @@ export function trackPanelSignals(): void {
   scrollTopSignal.value;
   viewportHeightSignal.value;
   popoverOpenSignal.value;
+}
+
+/**
+ * S18 Item 5 (DEC-18-8): a cold reader found no on-screen legend for the tier
+ * badges. One line per key, always visible above the footer; the long form is
+ * on hover. Chips reuse the row badge colours so the legend reads as a key.
+ */
+function renderTierLegend(): VNode {
+  return h(
+    'div',
+    {
+      style: {
+        padding: '8px 16px',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontSize: '10px',
+        color: '#9aa3b2',
+        lineHeight: 1.6,
+        flexShrink: 0,
+      },
+    },
+    ...TIER_LEGEND.map((entry) =>
+      h(
+        'div',
+        {
+          key: entry.key,
+          title: entry.title,
+          style: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
+        },
+        h(
+          'span',
+          {
+            style: {
+              fontSize: '9px',
+              padding: '1px 5px',
+              borderRadius: '3px',
+              background: entry.key === 'PROP FAIL' ? statusBadgeColor('propagator_failed') : tierBadgeColor(entry.key),
+              color: '#fff',
+              letterSpacing: '0.5px',
+              flexShrink: 0,
+            },
+          },
+          entry.key,
+        ),
+        h('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, entry.line),
+      ),
+    ),
+  );
 }
 
 function renderFooter(): VNode {
@@ -770,6 +820,7 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
         },
         listContent,
       ),
+      renderTierLegend(),
       renderFooter(),
     ),
     popover,

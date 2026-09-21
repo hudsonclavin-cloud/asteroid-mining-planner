@@ -78,8 +78,9 @@ function committedRow(modules, designation, orbitClass) {
   const tierRecord = modules.tiers[designation];
   assert.ok(screen, `${bodyId} must be in the screen cache`);
   assert.ok(tierRecord, `${designation} must be in the tier artifact`);
-  const tier = { des: tierRecord.des, tier: tierRecord.tier, subReason: tierRecord.subReason, classification: tierRecord.classification };
-  return { bodyId, spkId: screen.spkId, designation, name: '', orbitClass, H: null, screen, tier };
+  // The whole committed record, exactly as loadTierAssignments hands it to the
+  // panel — including the S18 Item 5 disclosure fields the tooltip reads.
+  return { bodyId, spkId: screen.spkId, designation, name: '', orbitClass, H: null, screen, tier: tierRecord };
 }
 
 function collectTexts(node, out = []) {
@@ -154,6 +155,22 @@ test('non-L0 rows are untouched: 433 (L2) and 99942 (L1) keep their badge and pl
     assert.ok(texts.includes(BADGE_TEXT[data.screen.status]), `${designation} keeps its '${BADGE_TEXT[data.screen.status]}' badge`);
     assert.ok(texts.includes(`C3 ${modules.formatC3(data.screen.minC3)} km²/s²`), `${designation} plain C3 line`);
     assert.ok(!texts.some((text) => text.includes(CONTEXT)), `${designation} carries no L0 context`);
+  }
+});
+
+test('S18 Item 5: the tier badge tooltip is the full disclosure sentence, never the slug', async () => {
+  const modules = await loadModules();
+  const cases = [
+    ['2018 LA', 'APO', 'This object no longer exists. Its JPL ephemeris terminates 2018-06-02 at a verified Earth impact.'],
+    ['2015 D1', 'JFC', 'Aster cannot propagate this object. Its eccentricity is 1.0035, which is not an elliptical orbit.'],
+    ['99942', 'ATE', 'Screening for this object is supported through 2029-04-13. A close approach to Earth on that date'],
+    ['433', 'AMO', 'Aster has not measured the screening error for this object.'],
+  ];
+  for (const [designation, orbitClass, opening] of cases) {
+    const data = committedRow(modules, designation, orbitClass);
+    const titles = collectTitles(modules.renderRow(data, 0));
+    assert.ok(titles.some((title) => title.startsWith(opening)), `${designation}: tooltip opens with the verbatim sentence\n${JSON.stringify(titles)}`);
+    assert.ok(!titles.includes(data.tier.subReason), `${designation}: the slug '${data.tier.subReason}' must not be a tooltip`);
   }
 });
 

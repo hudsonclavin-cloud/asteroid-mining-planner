@@ -39,12 +39,21 @@ const TOTAL = bodies.length;
 // windowEndJd — were verified identical between them before the switch).
 const scope = JSON.parse(fs.readFileSync(path.join(RESEARCH_DIR, 'dv-scope-results.json'), 'utf8'));
 const cadMetadata = JSON.parse(fs.readFileSync(CAD_METADATA_PATH, 'utf8'));
+// S18 close-out Item 5: per-body disclosure values, from COMMITTED data only.
+//  - impactors: the Horizons termination sentence date (Front B truth fixture, 0d927e4)
+//  - 3D/Biela: two-body drift on the window's first day (nea-drift-results.json)
+//  - L1 bodies: the CAD encounter that makes the tier material (kept from the loop below)
+const truth = JSON.parse(fs.readFileSync(path.join(REPO, 'tests/fixtures/v2/nea-drift-truth-2026-2046.json'), 'utf8'));
+const terminationByDes = new Map(truth.findings.S_nonExistentCatalogBodies.bodies.map((b) => [b.designation, b.terminatesAfterTdb]));
+const neaDrift = JSON.parse(fs.readFileSync(path.join(RESEARCH_DIR, 'nea-drift-results.json'), 'utf8'));
+const bielaFirstDayDriftKm = neaDrift.bodies['3D'].B_catalogElements.at_first_record_km;
+const encounterByDes = new Map();
 // rebuild the material set from the per-body top records we kept, plus recompute from source
 const materialSet = new Set();
 {
   const cad = JSON.parse(fs.readFileSync(CAD_PATH, 'utf8'));
   const F = cad.fields;
-  const ix = { des: F.indexOf('des'), jd: F.indexOf('jd'), dist: F.indexOf('dist'), vrel: F.indexOf('v_rel'), body: F.indexOf('body') };
+  const ix = { des: F.indexOf('des'), jd: F.indexOf('jd'), cd: F.indexOf('cd'), dist: F.indexOf('dist'), vrel: F.indexOf('v_rel'), body: F.indexOf('body') };
   const GM = scope.perturberGM;
   const END_JD = scope.windowEndJd;
   const SPD = 86400, J2000 = 2451545.0;
@@ -62,7 +71,13 @@ const materialSet = new Set();
     const d = +r[ix.dist] * AU_KM, v = +r[ix.vrel];
     const dv = 2 * v * Math.sin(Math.atan(mu / (d * v * v)));
     const added = dv * Math.max(0, (END_JD - jd) * SPD);
-    if (!acc.has(des) || added > acc.get(des)) acc.set(des, added);
+    if (!acc.has(des) || added > acc.get(des)) {
+      acc.set(des, added);
+      // Same strict-> rule as dv-scope.mjs, so the kept encounter is the one
+      // dv-scope-per-body.json records (the cross-check in the test suite
+      // compares them body by body).
+      encounterByDes.set(des, { jd, cd: r[ix.cd], body: r[ix.body], dvKmS: dv });
+    }
   }
   for (const [des, added] of acc) if (added >= 1e6) materialSet.add(des);
 }
@@ -125,7 +140,21 @@ for (const b of bodies) {
     subReason = 'unmeasured';
   }
   counts[classification] = (counts[classification] || 0) + 1;
-  assign.push({ des, tier: fidelityTier, subReason, classification, Q: +Q.toFixed(3), e: +e.toFixed(4), aAU: +aAU.toFixed(3), orbitClass: b.orbitClass, material: materialSet.has(des) });
+  const record = { des, tier: fidelityTier, subReason, classification, Q: +Q.toFixed(3), e: +e.toFixed(4), aAU: +aAU.toFixed(3), orbitClass: b.orbitClass, material: materialSet.has(des) };
+  // S18 Item 5: disclosure values, only where committed data has them (never invented).
+  if (classification === 'nonExistent' && terminationByDes.has(des)) record.terminationTdb = terminationByDes.get(des);
+  if (historicallyDestroyed) record.firstDayDriftKm = bielaFirstDayDriftKm;
+  if (classification === 'material') record.encounter = encounterByDes.get(des);
+  assign.push(record);
+}
+{
+  const withTermination = assign.filter((r) => r.terminationTdb !== undefined).length;
+  const withFirstDayDrift = assign.filter((r) => r.firstDayDriftKm !== undefined).length;
+  const withEncounter = assign.filter((r) => r.encounter !== undefined).length;
+  const materialRecords = assign.filter((r) => r.classification === 'material').length;
+  if (withTermination !== 9 || withFirstDayDrift !== 1 || withEncounter !== materialRecords) {
+    throw new Error(`Front C disclosure coverage mismatch: ${JSON.stringify({ withTermination, withFirstDayDrift, withEncounter, materialRecords })}`);
+  }
 }
 const fidelityCounts = Object.fromEntries(['L0', 'L1', 'L2'].map((tier) => [tier, assign.filter((row) => row.tier === tier).length]));
 const structurallyBlindCount = assign.filter((row) => row.tier === 'L2' && row.subReason.startsWith('structurally-blind-')).length;
