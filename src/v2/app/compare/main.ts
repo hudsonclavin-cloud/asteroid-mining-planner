@@ -65,6 +65,7 @@ import type { WindowComponent } from '../../porkchop/segment-windows.js';
 import { setSelectedBodySet } from '../ui-store/store.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
+import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js';
 
 const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',
@@ -861,9 +862,9 @@ function ComparePage() {
         const bodies: CompareBodyInput[] = [];
         const missing: string[] = [];
         for (const bodyId of requestedBodyIds) {
-          const body = catalog.asteroids[bodyId] ?? Object.values(catalog.asteroids).find(
-            (candidate) => candidate.designation === bodyId,
-          );
+          // S18 Item 2: the 22d4fa7 rule (bodyId, then designation), shared with
+          // the porkchop page so the two entries accept the same forms.
+          const body = resolveSlice9CatalogBody(catalog, bodyId);
           if (!body) {
             missing.push(bodyId);
             continue;

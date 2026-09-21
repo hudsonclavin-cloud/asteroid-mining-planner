@@ -41,6 +41,7 @@ import {
   type PorkchopViewportRect,
 } from '../../porkchop/porkchop-view.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
+import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js';
 import {
   FK3_TOUR_STORAGE_KEY,
   Fk3GuidedTour,
@@ -302,7 +303,9 @@ function PorkchopDedicatedPage() {
       loadLongWindowEarthSeries(),
       loadSlice9NeaCatalogFixture(),
     ]).then(async ([earthStateSeries, catalog]) => {
-      const body = catalog.asteroids[requestedBodyId];
+      // S18 Item 2: accept the same forms the compare page does (canonical
+      // bodyId or bare designation) through the same shared resolver.
+      const body = resolveSlice9CatalogBody(catalog, requestedBodyId);
       if (!body) {
         throw new Error(`Body not found for ?body=${requestedBodyId}`);
       }
