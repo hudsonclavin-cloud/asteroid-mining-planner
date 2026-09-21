@@ -89,7 +89,11 @@ test('99942: the boundary comes from the committed artifact, and the partition m
   const b = boundary.supportBoundaryFor(apophis);
   assert.ok(b, 'an L1 body with an encounter yields a boundary');
   assert.equal(b.encounterJd, apophis.encounter.jd);
-  assert.equal(b.encounterDateLabel, '2029-04-13');
+  // The EARLIEST material encounter (DEC-18-6 criterion), not the 2029-04-13 flyby —
+  // which is the largest-drift row, still carried as maxDriftEncounterCd.
+  assert.equal(b.encounterDateLabel, '2028-09-12');
+  assert.equal(apophis.maxDriftEncounterCd, '2029-Apr-13 21:46');
+  assert.ok(b.encounterJd < 2462240.407091969, 'boundary precedes the 2029 flyby JD');
   assert.equal(b.encounterBody, 'Earth');
   // The encounter lies inside the departure window, so the grid must split both ways.
   assert.ok(b.encounterJd > GRID.depStartJD && b.encounterJd < GRID.depEndJD);

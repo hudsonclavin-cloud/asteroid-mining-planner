@@ -26,8 +26,16 @@ export interface TierAssignment {
   readonly terminationTdb?: string;
   /** L0 3D/Biela only: two-body drift on the screening window's first day, km. */
   readonly firstDayDriftKm?: number;
-  /** L1 only: the encounter behind the tier. */
+  /**
+   * L1 only: the EARLIEST close approach whose own added drift reaches 10^6 km —
+   * the support boundary (first moment the orbit is materially invalidated).
+   * Not necessarily the largest-drift encounter: for 2,352 of the 10,150 L1
+   * bodies an earlier material encounter exists.
+   */
   readonly encounter?: TierEncounter;
+  /** L1 only: CAD `cd` of the LARGEST-drift encounter — the row dv-scope-per-body.json
+   * records — kept so the artifact stays traceable to it. */
+  readonly maxDriftEncounterCd?: string;
 }
 
 interface TierArtifact {

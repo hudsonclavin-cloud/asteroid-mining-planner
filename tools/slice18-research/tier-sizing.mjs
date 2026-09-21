@@ -47,7 +47,16 @@ const truth = JSON.parse(fs.readFileSync(path.join(REPO, 'tests/fixtures/v2/nea-
 const terminationByDes = new Map(truth.findings.S_nonExistentCatalogBodies.bodies.map((b) => [b.designation, b.terminatesAfterTdb]));
 const neaDrift = JSON.parse(fs.readFileSync(path.join(RESEARCH_DIR, 'nea-drift-results.json'), 'utf8'));
 const bielaFirstDayDriftKm = neaDrift.bodies['3D'].B_catalogElements.at_first_record_km;
-const encounterByDes = new Map();
+// Two encounters per material body, for two different jobs:
+//  - maxDriftByDes: the row with the LARGEST added drift — this is what makes the
+//    body material, and it is the row dv-scope-per-body.json records (cross-check).
+//  - earliestMaterialByDes: the EARLIEST row whose own added drift is >= 1e6 km —
+//    this is the support boundary (the first moment the orbit is materially
+//    invalidated). For 2,352 of the 10,150 L1 bodies it precedes the max-drift row;
+//    shipping the max-drift date would over-claim support for them (S18 close-out
+//    self-caught correction, 2026-09-21).
+const maxDriftByDes = new Map();
+const earliestMaterialByDes = new Map();
 // rebuild the material set from the per-body top records we kept, plus recompute from source
 const materialSet = new Set();
 {
@@ -73,10 +82,15 @@ const materialSet = new Set();
     const added = dv * Math.max(0, (END_JD - jd) * SPD);
     if (!acc.has(des) || added > acc.get(des)) {
       acc.set(des, added);
-      // Same strict-> rule as dv-scope.mjs, so the kept encounter is the one
-      // dv-scope-per-body.json records (the cross-check in the test suite
-      // compares them body by body).
-      encounterByDes.set(des, { jd, cd: r[ix.cd], body: r[ix.body], dvKmS: dv });
+      // Same strict-> rule as dv-scope.mjs, so this is the row
+      // dv-scope-per-body.json records (the test suite compares them body by body).
+      maxDriftByDes.set(des, { jd, cd: r[ix.cd], body: r[ix.body], dvKmS: dv });
+    }
+    if (added >= 1e6) {
+      const prev = earliestMaterialByDes.get(des);
+      if (prev === undefined || jd < prev.jd) {
+        earliestMaterialByDes.set(des, { jd, cd: r[ix.cd], body: r[ix.body], dvKmS: dv });
+      }
     }
   }
   for (const [des, added] of acc) if (added >= 1e6) materialSet.add(des);
@@ -144,7 +158,12 @@ for (const b of bodies) {
   // S18 Item 5: disclosure values, only where committed data has them (never invented).
   if (classification === 'nonExistent' && terminationByDes.has(des)) record.terminationTdb = terminationByDes.get(des);
   if (historicallyDestroyed) record.firstDayDriftKm = bielaFirstDayDriftKm;
-  if (classification === 'material') record.encounter = encounterByDes.get(des);
+  if (classification === 'material') {
+    // The boundary (earliest material) is the disclosure; the max-drift date is
+    // carried only so the artifact stays traceable to dv-scope-per-body.json.
+    record.encounter = earliestMaterialByDes.get(des);
+    record.maxDriftEncounterCd = maxDriftByDes.get(des).cd;
+  }
   assign.push(record);
 }
 {
@@ -152,9 +171,11 @@ for (const b of bodies) {
   const withFirstDayDrift = assign.filter((r) => r.firstDayDriftKm !== undefined).length;
   const withEncounter = assign.filter((r) => r.encounter !== undefined).length;
   const materialRecords = assign.filter((r) => r.classification === 'material').length;
-  if (withTermination !== 9 || withFirstDayDrift !== 1 || withEncounter !== materialRecords) {
-    throw new Error(`Front C disclosure coverage mismatch: ${JSON.stringify({ withTermination, withFirstDayDrift, withEncounter, materialRecords })}`);
+  const boundaryAfterMaxDrift = assign.filter((r) => r.encounter !== undefined && r.encounter.jd > maxDriftByDes.get(r.des).jd).length;
+  if (withTermination !== 9 || withFirstDayDrift !== 1 || withEncounter !== materialRecords || boundaryAfterMaxDrift !== 0) {
+    throw new Error(`Front C disclosure coverage mismatch: ${JSON.stringify({ withTermination, withFirstDayDrift, withEncounter, materialRecords, boundaryAfterMaxDrift })}`);
   }
+  console.log('L1 bodies whose earliest material encounter precedes the max-drift row: ' + assign.filter((r) => r.encounter !== undefined && r.encounter.cd !== r.maxDriftEncounterCd).length);
 }
 const fidelityCounts = Object.fromEntries(['L0', 'L1', 'L2'].map((tier) => [tier, assign.filter((row) => row.tier === tier).length]));
 const structurallyBlindCount = assign.filter((row) => row.tier === 'L2' && row.subReason.startsWith('structurally-blind-')).length;

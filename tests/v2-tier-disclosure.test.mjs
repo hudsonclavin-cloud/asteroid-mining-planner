@@ -26,6 +26,9 @@ const tierArtifactPath = path.join(repoRoot, 'tools', 'slice18-research', 'tier-
 const dvScopePath = path.join(repoRoot, 'tools', 'slice18-research', 'dv-scope-per-body.json');
 const truthPath = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-drift-truth-2026-2046.json');
 const neaDriftPath = path.join(repoRoot, 'tools', 'slice18-research', 'nea-drift-results.json');
+const cadPath = path.join(repoRoot, 'tools', 'slice18-research', 'cad-wide', 'cad-all-0.3.json');
+const dvScopeResultsPath = path.join(repoRoot, 'tools', 'slice18-research', 'dv-scope-results.json');
+const catalogPath = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');
 
 const VERBATIM = {
   '2018 LA':
@@ -38,9 +41,12 @@ const VERBATIM = {
   '2015 D1':
     'Aster cannot propagate this object. Its eccentricity is 1.0035, which is not an elliptical orbit. ' +
     'No transfer windows are computed.',
+  // Apophis: the EARLIEST material encounter is the 2028-Sep-12 Earth pass (δv 2.6 m/s,
+  // ≥ 1e6 km by the window's end under DEC-18-6) — not the famous 2029-Apr-13 flyby
+  // (2,776 m/s), which is the LARGEST-drift row and is kept as maxDriftEncounterCd.
   '99942':
-    'Screening for this object is supported through 2029-04-13. A close approach to Earth on that date changes ' +
-    'its orbit by an estimated 2,776 m/s. Arrivals after it are computed from an orbit the encounter invalidates.',
+    'Screening for this object is supported through 2028-09-12. A close approach to Earth on that date changes ' +
+    'its orbit by an estimated 2.6 m/s. Arrivals after it are computed from an orbit the encounter invalidates.',
   '3552':
     'Aster cannot bound the screening error for this object. Its orbit reaches 7.29 AU, and the close-approach ' +
     'data Aster uses does not cover encounters beyond 0.28 AU from Jupiter.',
@@ -109,27 +115,61 @@ test('every one of the 41,906 bodies has a full sentence — no value is missing
   assert.deepEqual(populations, { L0: 11, L1: 10150, L2: 31745, total: 41906, structurallyBlindL2: 688 });
 });
 
-test('L1 encounter values trace to dv-scope-per-body.json (a different script) for all 10,150 bodies', async () => {
+test('L1: the max-drift date traces to dv-scope-per-body.json, and the boundary is the EARLIEST material encounter, recomputed from the CAD snapshot', async () => {
   const { records } = await loadModules();
   const dvScope = JSON.parse(fs.readFileSync(dvScopePath, 'utf8')).records;
   const l1 = Object.values(records).filter((record) => record.tier === 'L1');
   assert.equal(l1.length, 10_150);
-  const mismatches = [];
+
+  // (a) The materiality row is the one a DIFFERENT script recorded — exact string equality.
+  const traceMismatches = l1.filter((record) => dvScope[record.des]?.cd !== record.maxDriftEncounterCd).map((r) => r.des);
+  assert.deepEqual(traceMismatches, []);
+
+  // (b) The boundary is recomputed here, independently of tier-sizing.mjs, from the
+  // committed CAD snapshot with the DEC-18-6 criterion: the earliest row after the
+  // body's element epoch whose own added drift (dv × time remaining) reaches 1e6 km.
+  const cad = JSON.parse(fs.readFileSync(cadPath, 'utf8'));
+  const scope = JSON.parse(fs.readFileSync(dvScopeResultsPath, 'utf8'));
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8')).asteroids;
+  const epochByDes = new Map(Object.values(catalog).map((body) => [body.designation, body.elements.epochTdbJd]));
+  const col = Object.fromEntries(['des', 'jd', 'cd', 'dist', 'v_rel', 'body'].map((name) => [name, cad.fields.indexOf(name)]));
+  const AU_KM = 149_597_870.7;
+  const l1Set = new Set(l1.map((record) => record.des));
+  const earliest = new Map();
+  for (const row of cad.data) {
+    const des = row[col.des];
+    if (!l1Set.has(des)) continue;
+    const jd = Number(row[col.jd]);
+    if (jd <= epochByDes.get(des)) continue;
+    const mu = scope.perturberGM[row[col.body]];
+    if (!mu) continue;
+    const d = Number(row[col.dist]) * AU_KM;
+    const v = Number(row[col.v_rel]);
+    const dv = 2 * v * Math.sin(Math.atan(mu / (d * v * v)));
+    const added = dv * Math.max(0, (scope.windowEndJd - jd) * 86_400);
+    if (added < 1e6) continue;
+    const prev = earliest.get(des);
+    if (prev === undefined || jd < prev.jd) earliest.set(des, { jd, cd: row[col.cd], body: row[col.body], dvKmS: dv });
+  }
+  const boundaryMismatches = [];
+  let precedesMaxDrift = 0;
   for (const record of l1) {
-    const independent = dvScope[record.des];
+    const expected = earliest.get(record.des);
     const carried = record.encounter;
-    if (!independent || !carried) {
-      mismatches.push(`${record.des}: missing`);
+    if (!expected || !carried) {
+      boundaryMismatches.push(`${record.des}: missing`);
       continue;
     }
-    if (carried.cd !== independent.cd || carried.body !== independent.body || carried.dvKmS !== independent.dvKmS) {
-      mismatches.push(`${record.des}: ${JSON.stringify(carried)} vs ${JSON.stringify(independent)}`);
+    if (carried.jd !== expected.jd || carried.cd !== expected.cd || carried.body !== expected.body || Math.abs(carried.dvKmS - expected.dvKmS) > 1e-12 * expected.dvKmS) {
+      boundaryMismatches.push(`${record.des}: ${JSON.stringify(carried)} vs ${JSON.stringify(expected)}`);
     }
-    if (!Number.isFinite(carried.jd)) {
-      mismatches.push(`${record.des}: jd ${carried.jd}`);
-    }
+    if (carried.cd !== record.maxDriftEncounterCd) precedesMaxDrift += 1;
   }
-  assert.deepEqual(mismatches, []);
+  assert.deepEqual(boundaryMismatches, []);
+  // The correction this test exists for: the earliest material encounter precedes the
+  // max-drift row for a large minority of L1 bodies. Shipping the max-drift date would
+  // over-claim support for them.
+  assert.equal(precedesMaxDrift, 2_352);
   // Bodies that are not L1 carry no encounter — the field is a tier claim, not a CAD dump.
   assert.equal(Object.values(records).filter((record) => record.tier !== 'L1' && record.encounter !== undefined).length, 0);
 });
@@ -198,5 +238,6 @@ test('short labels never expose a slug', async () => {
     // letter-hyphen-letter is slug style; digit-hyphen-digit is a date and allowed.
     assert.ok(!/[a-z]-[a-z]/i.test(label), `${record.des}: '${label}' looks like an identifier`);
   }
-  assert.equal(disclosure.shortTierLabel(records['99942']), 'supported through 2029-04-13');
+  assert.equal(disclosure.shortTierLabel(records['99942']), 'supported through 2028-09-12');
+  assert.equal(records['99942'].maxDriftEncounterCd, '2029-Apr-13 21:46', 'the 2029 flyby is still traceable in the record');
 });

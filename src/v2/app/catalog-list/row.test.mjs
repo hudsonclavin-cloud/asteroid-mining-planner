@@ -163,7 +163,7 @@ test('S18 Item 5: the tier badge tooltip is the full disclosure sentence, never 
   const cases = [
     ['2018 LA', 'APO', 'This object no longer exists. Its JPL ephemeris terminates 2018-06-02 at a verified Earth impact.'],
     ['2015 D1', 'JFC', 'Aster cannot propagate this object. Its eccentricity is 1.0035, which is not an elliptical orbit.'],
-    ['99942', 'ATE', 'Screening for this object is supported through 2029-04-13. A close approach to Earth on that date'],
+    ['99942', 'ATE', 'Screening for this object is supported through 2028-09-12. A close approach to Earth on that date'],
     ['433', 'AMO', 'Aster has not measured the screening error for this object.'],
   ];
   for (const [designation, orbitClass, opening] of cases) {
