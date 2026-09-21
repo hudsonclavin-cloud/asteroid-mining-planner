@@ -12,10 +12,13 @@
  * Jupiter cap means those encounters are invisible to the instrument.
  *
  * Reads ONLY committed inputs (the Slice 9 catalog fixture, dv-scope-results.json,
- * cad-wide/cad-all-0.3.json + its metadata) and writes two committed artifacts next
- * to itself: tier-sizing-per-body.json (the client-served tier map) and
- * tier-sizing-results.json (the catalog-wide summary). Regenerating must leave every
- * per-body record byte-identical; only generatedAtUtc moves.
+ * cad-wide/cad-all-0.3.json + its metadata) and writes ONE committed artifact next
+ * to itself: tier-sizing-per-body.json — the single source of tier populations
+ * (its `populations` field) and of every per-body tier record. The catalog-wide
+ * summary is printed to stdout only; the former tier-sizing-results.json aggregate
+ * was removed at 1cd5124 so there is one source, and a close-out re-add was
+ * reversed (2026-09-21). Regenerating must leave every per-body record
+ * byte-identical; only generatedAtUtc moves.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,7 +27,6 @@ import { pathToFileURL } from 'node:url';
 const REPO = 'C:/Users/hudso/asteroid-mining-planner';
 const RESEARCH_DIR = path.join(REPO, 'tools/slice18-research');
 const PER_BODY_OUT = path.join(RESEARCH_DIR, 'tier-sizing-per-body.json');
-const RESULTS_OUT = path.join(RESEARCH_DIR, 'tier-sizing-results.json');
 const CAD_PATH = path.join(RESEARCH_DIR, 'cad-wide/cad-all-0.3.json');
 const CAD_METADATA_PATH = path.join(RESEARCH_DIR, 'cad-wide/cad-all-0.3.metadata.json');
 const AU_KM = 149597870.7;
@@ -203,7 +205,6 @@ const results = {
   materialSetSize: materialSet.size,
   note: 'Precedence: nonExistent > hyperbolic > comet > jupiterCrossing > material > quiet. A body is counted once, in its strongest tier.',
 };
-fs.writeFileSync(RESULTS_OUT, JSON.stringify(results, null, 2) + '\n');
 fs.writeFileSync(PER_BODY_OUT, JSON.stringify({ generatedAtUtc: results.generatedAtUtc, cadFetchedAtUtc: cadMetadata.fetchedAtUtc, source: 'tier-sizing.mjs over nea-catalog-slice9.json + dv-scope-results.json + cad-all-0.3.json', catalogTotal: TOTAL, populations: { L0: fidelityCounts.L0, L1: fidelityCounts.L1, L2: fidelityCounts.L2, total: TOTAL, structurallyBlindL2: structurallyBlindCount }, records: Object.fromEntries(assign.sort((a, b) => a.des.localeCompare(b.des)).map((row) => [row.des, row])) }, null, 1));
 
 const pct = (n) => (100 * n / TOTAL).toFixed(2) + '%';
