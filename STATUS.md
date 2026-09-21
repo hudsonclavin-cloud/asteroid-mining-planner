@@ -19,12 +19,13 @@
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `22d4fa7` | Front C W1-W3 is merged and pushed to main; verified via `git fetch` |
-| Local HEAD | `22d4fa7` | current merged tip before this STATUS closeout commit |
+| origin/main | `81252f2` | Slice 18 Front C W1-W3 plus the 2026-09-20 docs rebuild; read via `git rev-parse origin/main` at the start of the close-out run — nothing has been pushed since |
+| Local HEAD (branch `claude/s18-close-out`) | `4d3267c` | Slice 18 close-out run: eight code commits `d8c4681` … `4d3bae2` plus the founding-doc close record `4d3267c`; this STATUS commit lands on top of it |
 
-**Measured pin lag (2026-09-16):** before this edit, `git rev-list --count 22d4fa7..HEAD` measured 0 commits. After this STATUS commit lands, the measured local lag will be 1 commit until it is pushed; STATUS commits LAST in any sequence.
-**Push state:** origin/main is at `22d4fa7`. This STATUS closeout commit is the only local-only, unpushed change. No agent pushes, ever.
-**Deploy boundary:** `docs/` was rebuilt at `5a00907` on 2026-08-13, carrying Batch 2 (A4c size-range + orbit-quality columns, B2 scale/frame chips + axis triad + HUD, B1 pan/reset/discoverability). Live bundles: `solarSystemV2-C60RP1nx.js`, `compareV2-BPtoAvbN.js`, `porkchopV2-C8hMf2EQ.js`, `store-BAStm0cU.js`.
+**Measured pin lag (2026-09-21):** before this edit, `git rev-list --count 4d3267c..HEAD` measured 0 commits and `git rev-list --count 81252f2..HEAD` measured 9. After this STATUS commit lands, those measure 1 and 10. STATUS commits LAST in any sequence.
+**Push state:** origin/main is at `81252f2`. Branch `claude/s18-close-out` holds the close-out run's ten local-only commits and is NOT merged. No agent pushes, ever. The merge is Hudson's: `git checkout main; git merge claude/s18-close-out --ff-only; git hpush`.
+**Rollback for the close-out run:** tag `pre-s18-close-run` and branch `backup/pre-s18-close-run`, both at `81252f2`, created by Hudson before the run and untouched by it. If the merge is ever to be undone: `git checkout main && git reset --hard pre-s18-close-run`.
+**Deploy boundary:** live `docs/` is `81252f2` (rebuilt 2026-09-20; live bundles `porkchopV2-Ci6r-fmN.js`, `solarSystemV2-DFJ0f0Yh.js`, `compareV2-CEg78aFw.js`). The close-out rebuild is `4d3bae2` on the branch — live only once merged and pushed — with entry bundles `porkchopV2-DPwWKoPv.js`, `solarSystemV2-BM6ai_je.js`, `compareV2-Br2FOkFz.js`, shared chunks `porkchop-view-CwA2OpZb.js`, `tier-assignments-Dlnkrv_W.js`, `resolve-catalog-body-pmopDgKo.js`, `store-CkJiJhKO.js`, and the Item 5 tier artifact `docs/tier-sizing-per-body.json` (10.53 MB). The `5a00907` boundary previously recorded here was stale: `81252f2` had already rebuilt `docs/` on 2026-09-20.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -41,7 +42,7 @@
 | MCP / agent surface | 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`) |
 | Agent-honesty study | **16** | **CLOSED 2026-08-02 — HAS A RESULT** |
 | Mission planning | **17** (Target Compare + viewer QOL) | **CLOSED 2026-08-13** (`S-S17-CLOSE-2026-08-13-A`; founding `SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, plus this dispatch's cut entry + OQ dispositions + D-07 erratum). Front A **CLOSED** (A4b residuals closed). Front B tiers **B0-B2 shipped**, **B3-B5 CUT** per the §5 CUT RULE → carried by `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`. OQ-17-3/-4/-5/-8/-9 disposed; residual non-blocking items in the Slice 17 section below. |
-| Mission planning | **18** (Screening Fidelity) | **SEATED 2026-08-24** — DEC-18-1..4 locked. **Front A CLOSED 2026-09-02**: DEC-5 implemented on the dedicated view (`765f8fd`, `bda0ee2`, `a7670c4`) and the grid-extremes readout shipped (`c0a8b9b`, `67c4c18`); annotated on the founding doc at `a3a900e`. **Front B measurement COMPLETE 2026-09-02** (`0d927e4` fixture, `d663e9c` artifacts): drift measured on 20 bodies, condition code ruled out as a drift proxy, close approaches identified as the mechanism — see below. **Math-layer audit CLEAN 2026-09-09** (two LOW defects, both unreachable from shipped paths; oracle validation proven to bind HEAD). Front C ordering set and its instrument chosen (δv, not distance) — scope is 24.3% of the catalog, a lower bound; disclosure design NOT decided. Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
+| Mission planning | **18** (Screening Fidelity) | **CLOSED 2026-09-21** (git date; founding `src/v2/SLICE_18_FOUNDING.md` §8 close record at `4d3267c`). Front A CLOSED 2026-09-02 (`765f8fd`, `bda0ee2`, `a7670c4`, `c0a8b9b`, `67c4c18`); Front B COMPLETE 2026-09-02 (`0d927e4`, `d663e9c`); math-layer audit CLEAN 2026-09-09; Front C CLOSED 2026-09-21 — W1-W3 at `22d4fa7`, disclosure strings `5926b16`, W4/W5 `cecbc5b`. Close-out run (branch `claude/s18-close-out`, NOT yet merged): hyperbolic guard `d8c4681`, id consistency `a9ed4f0`, L0 badge `c4da66f`, tier-sizing fix `cba6e6a`, overlay M=0 + M=1 contour layer `34b707c`, docs rebuild `4d3bae2`. Nothing cut. OQ-18-1..5 deferred with destinations, OQ-18-6 resolved. Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
 
 ## Slice 16 — closed, with data
 
@@ -111,7 +112,7 @@ All four are observations from a SINGLE record. No remedy chosen.
 
 ---
 
-## Slice 18 — SEATED 2026-08-24 (Screening Fidelity)
+## Slice 18 — CLOSED 2026-09-21 (Screening Fidelity; seated 2026-08-24)
 
 **Seated as Screening Fidelity (2026-08-24).** Mission View (animated transfer arc + uncertainty envelope) was evaluated and **DEFERRED, not cancelled** — see DEC-18-4. Three fronts: **Front A** — solver/revolution consistency on the shipped screening surfaces; **Front B** — closing the NEA propagation-drift measurement gap; **Front C** — a per-object fidelity surface built from Front B's results. **Front C is gated on Front B.**
 
@@ -154,7 +155,7 @@ Populations: **L0 = 11**, **L1 = 10,150**, **L2 = 31,745**, **structurallyBlindL
 
 Gate findings closed: the pre-existing compare designation-to-key mismatch was fixed in `22d4fa7` and verified for `2015 D1`, `2021 CG6`, and `2018 LA16`. The L0 `cannot-propagate-hyperbolic-orbit` click path was gated before `requestFocus`, preventing the RangeError/render-loop failure.
 
-Open gaps: the long-form disclosure strings are not wired into the UI (only short L0/L1/L2 badges and native title tooltips with sub-reasons render; no cold-reader legend). W4/W5 remain blocked pending a committed per-body join from dv-scope encounter data to porkchop per-cell arrival boundary (`depJD + tofDays`). `jupiterCrossingAlsoHasMaterialCadEncounter` remains 0 in the artifact although C-5 rules it should be 9; this latent discrepancy is not surfaced. `2018 LA` shows green LOW C3 and numeric C3 alongside a red L0 verified-destroyed flag; suppression remains undecided. The ui-overlay remains fixed M:1, open since Front A and out of scope.
+Open gaps at W1-W3 (as recorded 2026-09-16) — all closed by the 2026-09-21 close-out run; see "SLICE 18 CLOSED" below. The long-form disclosure strings are wired (`5926b16`); W4/W5 shipped with no new artifact (`cecbc5b`); `jupiterCrossingAlsoHasMaterialCadEncounter` is 9 in the committed results (`cba6e6a`); `2018 LA`'s quality badge is suppressed with the C3 kept as context (`c4da66f`); the ui-overlay is M=0 with an M=1 contour layer (`34b707c`).
 
 **Date correction finding:** Nova-supplied prose dates were found incorrect; git's own dates govern from here. The founding document's additive-only text still carries `2026-09-02` and needs a separate additive date-correction annotation; it was not edited here.
 
@@ -302,18 +303,41 @@ The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`)
 **Self-caught during this run, disclosed:** the closure script's comment-stripper used `/\/\/.*$/` on CRLF files, where JS regex `.` does not match `\r`, so `//` comments survived and two files falsely read as CODE CHANGED; and the first δv scope pass counted encounters occurring BEFORE a body's element epoch, which are already baked into the re-anchored elements — 1,906 such rows, worth 753 bodies at the ≥10⁶ threshold. Both corrected before the numbers above.
 
 
+### SLICE 18 CLOSED — 2026-09-21 (close-out run, branch `claude/s18-close-out`)
+
+**Run shape.** Autonomous, gated by hard stops rather than by a second agent; `AGENTS.md §3` overridden by Hudson's dispatch **for this run only** (Claude Code, Fable 5.1, wrote TypeScript and ran build/test). Safety net: tag `pre-s18-close-run` + branch `backup/pre-s18-close-run` at `81252f2`, untouched. Nothing pushed; `main` untouched. Full record with per-item verification: `src/v2/SLICE_18_FOUNDING.md` §8, 2026-09-21 entry (`4d3267c`).
+
+**Commits (all on the branch, in order):** `d8c4681` hyperbolic propagation guard — 2015 D1 no longer throws on the PC modal, the detailed route, or compare; 433 / 2018 LA byte-identical by sha256 probe · `a9ed4f0` `/v2/porkchop/?body=433` resolves like compare (shared `src/v2/boundary/resolve-catalog-body.ts`) · `c4da66f` L0 rows drop the LOW/HIGH C3 quality badge, keep C3 de-emphasised with "computed from the last known orbit" · `cba6e6a` `tier-sizing.mjs` field fix (9, not 0) and `tier-sizing-results.json` committed for the first time; populations recounted unchanged · `5926b16` full disclosure strings on the catalog tooltip, compare cell and porkchop page, plus the L0 / L1 / L2 / PROP FAIL legend; the artifact now carries the values (impactor termination dates, 3D first-day drift, L1 encounters) · `cecbc5b` per-cell L1 support boundary on the dedicated page (wash, dashed curve, readouts, extremes) · `34b707c` overlay modal M=0 default with an M=1 contour-layer toggle · `4d3bae2` docs rebuild · `4d3267c` founding-doc close record.
+
+**Revert map (each independent unless stated):** `d8c4681` guard; `a9ed4f0` resolver; `c4da66f` badge; `cba6e6a` generator + artifacts; `5926b16` disclosure strings + artifact fields — `cecbc5b` depends on it (it reads `encounter.jd`), so revert `cecbc5b` first or together; `34b707c` overlay; `4d3bae2` docs (rebuild after any other revert); `4d3267c` founding-doc entry (additive — reverting it is a deletion and needs `ASTER_PROTECTED_OK`).
+
+**Verified:** `npx tsc --noEmit` clean and `node tools/run-tests.mjs` green after every commit — baseline **76 files / 278 tests / 0 failures** at `81252f2`, final **81 / 303 / 0** at `4d3bae2` (Node v24.18.0, Windows). Populations recounted from the regenerated artifact at each regeneration: **L0 = 11, L1 = 10,150, L2 = 31,745, structurallyBlindL2 = 688, total = 41,906**; all 41,906 base records byte-identical. Guard ⇔ propagator agreement checked over all 41,906 bodies by propagating them. All 10,150 L1 encounters equal `dv-scope-per-body.json` (a different script). Every asset reference in `docs/` (45) resolves; `docs/_staging_v1/` byte-identical by blob id.
+
+**Cut: nothing.** Items 6 and 7 ("attempt") both shipped. The Slice 17 §8 CUT-RULE form was the precedent and was not needed.
+
+**Open items carried forward:**
+- Eager ~10.5 MB tier-artifact fetch on the solar-system page (module load in `src/v2/app/catalog-list/panel.ts`) and now on the dedicated porkchop page. A lazy load was not natural in Item 5 — every catalog row's badge needs it. Open.
+- OQ-18-1 (ranking eligibility of flagged non-existent objects) — needs Hudson's ruling; destination Slice 21 QOL backlog (`strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`, not edited in this run).
+- OQ-18-2, OQ-18-3 — deferred; no destination slice exists; Hudson to assign.
+- OQ-18-4, OQ-18-5 — protected-path (`src/v2/core/`) items; Cleanup Queue C13 / C14.
+- 26 of the 206 structurally-blind comets have Q < 4.95 AU; their verbatim DEC-18-9 sentence names an aphelion inside Jupiter's orbit (true, but weaker). Wording ruling pending.
+- Deploy premise correction: `docs/_staging_v1/` has a producer (`textures/_staging_v1/`, git-tracked, copied by Vite's `publicDir` on every build); the restore step in deploy dispatches is a no-op safety net.
+- Browser checklist not run in this environment (no browser): 2015 D1 on the PC modal, the detailed route and compare; 2018 LA's badge; 99942's L1 boundary; the overlay modal's M=1 contour toggle; the catalog legend and tooltips. Listed in the close-out report, ordered by severity.
+
+**Disclosed harness errors (self-caught, fixed before commit, all test-only):** a colocated test imported `tests/helpers/run-tsc.mjs` and tripped the src/v2 import wall — rewritten to spawn tsc directly; a row-test helper hand-stripped the tier record and so dropped the new disclosure fields — now passes the whole committed record as the app does; a "no slug" assertion rejected the hyphens in a date.
+
 ---
 
-## Test State (measured 2026-08-13)
+## Test State (measured 2026-09-21)
 
 | Suite | Command | Result |
 |---|---|---|
-| CI | GitHub Actions run #78 | **green** at `5a00907` |
-| Root recursive | `node tools/run-tests.mjs` | **74/74 files pass; 256 tests pass / 0 fail** (Hudson, 2026-08-13, Windows / Node v24.18.0 — the golden-numbers loader test now loads under Node 24; the 246→256 delta is that test. Prior Node-20 record: 73/74 files, 246 pass / 1 load failure, 2026-08-12) |
+| CI | GitHub Actions run #78 | **green** at `5a00907` (last recorded 2026-08-13; not re-checked in the 2026-09-21 close-out run, which had no network) |
+| Root recursive | `node tools/run-tests.mjs` | **81/81 files pass; 303 tests pass / 0 fail** (Claude Code, 2026-09-21, Windows / Node v24.18.0, at `4d3bae2` on `claude/s18-close-out`; the 76→81 files and 278→303 tests are the five Slice 18 close-out test files. Prior record: 74/74 · 256 · 0, Hudson, 2026-08-13) |
 | Focused compare data | `node --test tests/v2-compare-data.test.mjs` | **17 / 17 pass** after fixture repair at `88b9133` |
 | Slice 16 harness | `node --test tools/slice16-harness/test/*.test.mjs` | **191 / 191 pass** when last measured |
 
-**Test-file inventory (audited 2026-08-07):** 70 files under `tests/`, 3 colocated under `src/v2/`, and 3 MCP tests. This is an inventory, not a test result.
+**Test-file inventory (counted 2026-09-21 via `git ls-files`):** 73 files under `tests/` and 8 colocated under `src/v2/` — the 81 the runner discovers; the MCP package tests are outside the runner and were not re-audited. This is an inventory, not a test result.
 
 **CI history:** Runs #70-72 were red, root-caused to two **false test-fixture premises** in `tests/v2-compare-data.test.mjs`, not source defects. The earlier diagnosis (fabricated delivered-mass, back-derived `liveMin`) was **retracted** after adjudication against `compare-data.ts:303-308` and `compare-data.ts:330-335`, which were already correct. Fixtures repaired at `88b9133`.
 
@@ -372,6 +396,8 @@ The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`)
 6. **Work HUDSON'S QUEUE** in `tools/slice16-harness/CLOSE_REPORT.md`; all 14 paths under `tools/slice16-harness/runs/` are tracked evidence.
 7. CI hardening (L4-1/L4-3): MCP + Slice 16 suites into Actions; truthful default `npm test`.
 
+8. **Slice 18 carried items (2026-09-21):** merge `claude/s18-close-out` (ff-only) and push, then run the browser checklist from the close-out report (2015 D1 on the PC modal, detailed route and compare; 2018 LA's badge; 99942's L1 boundary; the overlay modal's M=1 contour toggle; the catalog legend and tooltips); rule OQ-18-1; assign OQ-18-2 / OQ-18-3; decide the lazy tier-artifact fetch; wording ruling for the 26 low-Q structurally-blind comets.
+
 **Hardware constraint (recorded 2026-08-13):** desktop retired today; laptop-only from here.
 
 **2026-08-04 · sweep record:** `S-REPO-SWEEP-2026-08-04-A` (independent read-only multi-lens sweep, 9 HIGH findings) ran. This refresh addresses only the STATUS falsehoods and the S17 evidence-header provenance (R-01/R-02). Remaining findings OPEN and deliberately not addressed here: UI copy R-04/R-13 · build reproducibility R-03/R-05/R-16 · label drift R-17.
@@ -394,6 +420,8 @@ The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`)
 | C10 | Propagate baked `dirty` into MCP SourceRefs — protected-path dispatch, next package release (= DD-7, founding §26.7). |
 | C11 | `.claude/agents` legacy routing (audit L1-1) — see remediation report Phase 6 disposition. |
 | C12 | Signed recovery dispatch for the halted attempt-1 ledger: checksum-pinned retry manifest; originals immutable. |
+| C13 | OQ-18-4: izzo `lambert()` negative/invalid-TOF hardening (F1/F2, LOW, unreachable on every shipped path) — bundle with the next math-layer change; protected path. |
+| C14 | OQ-18-5: the `GM_SUN` comment says "IAU 2015 nominal" on a DE430 value — one-line docs fix under `src/v2/core/`, needs `ASTER_PROTECTED_OK` + a Hudson dispatch. |
 
 ---
 
