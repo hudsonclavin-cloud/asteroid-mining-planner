@@ -283,11 +283,11 @@ function renderPorkchopModal(): ReturnType<typeof h> | null {
         h(
           'div',
           { style: PORKCHOP_MODAL_TITLE_STYLE },
-          h('div', { style: 'font-size:18px;font-weight:700;color:#fff;' }, `${bodyLabel} — M=1 porkchop`),
+          h('div', { style: 'font-size:18px;font-weight:700;color:#fff;' }, `${bodyLabel} — M=0 porkchop`),
           h(
             'div',
             { style: 'font-size:12px;color:#94a3b8;' },
-            'Earth-departure C3 heatmap with hover, pin, and iso-C3 contours.',
+            'Earth-departure C3 heatmap (M=0, direct) with hover, pin, iso-C3 contours, and an optional M=1 contour layer.',
           ),
         ),
         h(
@@ -336,7 +336,10 @@ function renderPorkchopModal(): ReturnType<typeof h> | null {
               bodyLabel,
               bodyElements: body.elements,
               gridParams: PHASE_C_PORKCHOP_GRID_PARAMS,
-              M: 1,
+              // S18 Item 7 — DEC-5 overlay ruling: M=0 heatmap by default, with a
+              // small toggle that adds the M=1 family as a contour layer.
+              M: 0,
+              m1ContourLayer: true,
             }),
       ),
     ),

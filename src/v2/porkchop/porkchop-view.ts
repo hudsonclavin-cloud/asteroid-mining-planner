@@ -167,6 +167,14 @@ export interface PorkchopViewProps {
    * boundary is drawn. Undefined (every other surface) changes nothing.
    */
   readonly supportBoundary?: SupportBoundary | undefined;
+  /**
+   * S18 Item 7 — DEC-5's OVERLAY ruling: M=0 heatmap by default with a small
+   * toggle that adds the M=1 family as a contour layer (not a second heatmap).
+   * Reuses computeDualFamilyGrids; the heatmap, readouts and extremes stay
+   * M=0 (props.M). Ignored when showFamilyToggle is set; undefined elsewhere
+   * keeps the single-family path byte-for-byte.
+   */
+  readonly m1ContourLayer?: boolean | undefined;
   readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellRectChange?: ((rect: PorkchopViewportRect | null) => void) | undefined;
@@ -637,6 +645,10 @@ export function PorkchopView(props: PorkchopViewProps) {
   const [hoverCell, setHoverCell] = useState<PorkchopWorkerCell | null>(null);
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<HoverTooltipPosition | null>(null);
   const [showContours, setShowContours] = useState(false);
+  // S18 Item 7 (DEC-5 overlay ruling): the M=1 family kept as contour input only.
+  const [showM1Contours, setShowM1Contours] = useState(false);
+  const [m1Cells, setM1Cells] = useState<readonly PorkchopWorkerCell[] | null>(null);
+  const m1ContourLayerEnabled = props.m1ContourLayer === true && props.showFamilyToggle !== true;
   // DEC-5: "Default state is "both" so the 28% gap is visible immediately."
   const [familyMode, setFamilyMode] = useState<PorkchopFamilyMode>('both');
   const [familyGrids, setFamilyGrids] = useState<DualFamilyGrids | null>(null);
@@ -671,6 +683,10 @@ export function PorkchopView(props: PorkchopViewProps) {
     () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, dlaContourLevels, getSelectedBranchDla)),
     [cells, dlaContourLevels, props.gridParams],
   );
+  const m1ContourSegments = useMemo(
+    () => (m1Cells === null ? [] : buildContourSegments(m1Cells, props.gridParams, C3_CONTOUR_LEVELS, getSelectedBranchC3)),
+    [m1Cells, props.gridParams],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -680,6 +696,7 @@ export function PorkchopView(props: PorkchopViewProps) {
     setHoverCell(null);
     setHoverTooltipPosition(null);
     setFamilyGrids(null);
+    setM1Cells(null);
     if (propagation.propagatable === false) {
       // S18 Item 1: never hand a non-elliptical orbit to the worker — the
       // propagator throws RangeError on it (keplerian.ts validateKeplerianElements)
@@ -706,7 +723,16 @@ export function PorkchopView(props: PorkchopViewProps) {
           }
           return { cells: grids.m0.cells, compute_ms: grids.m0.compute_ms + grids.m1.compute_ms };
         })
-      : props.client.computeGrid({ ...request, M: props.M });
+      : m1ContourLayerEnabled
+        // S18 Item 7 (DEC-5 overlay ruling): same two-message path as the dedicated
+        // view, but only the M=0 grid becomes the heatmap; M=1 feeds the contour layer.
+        ? computeDualFamilyGrids(props.client, request).then((grids) => {
+            if (!cancelled) {
+              setM1Cells(grids.m1.cells);
+            }
+            return { cells: grids.m0.cells, compute_ms: grids.m0.compute_ms + grids.m1.compute_ms };
+          })
+        : props.client.computeGrid({ ...request, M: props.M });
 
     void pending.then((result) => {
       if (cancelled) {
@@ -726,7 +752,7 @@ export function PorkchopView(props: PorkchopViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [props.client, props.bodyId, props.bodyElements, props.gridParams, props.M, familyToggleEnabled, propagation]);
+  }, [props.client, props.bodyId, props.bodyElements, props.gridParams, props.M, familyToggleEnabled, m1ContourLayerEnabled, propagation]);
 
   // DEC-5 family selection. "Selecting M=1 replaces the heatmap with the M=1 grid";
   // "both" renders the composite, whose per-cell provenance is carried by cell.M.
@@ -893,6 +919,24 @@ export function PorkchopView(props: PorkchopViewProps) {
       context.restore();
     }
 
+    // S18 Item 7 (DEC-5 overlay ruling): the M=1 family as a contour LAYER over
+    // the M=0 heatmap. Dashed so it never reads as the M=0 iso-C3 lines; the
+    // heatmap colour underneath is still M=0's C3.
+    if (m1ContourLayerEnabled && showM1Contours) {
+      context.save();
+      context.lineWidth = 1.2;
+      context.lineCap = 'round';
+      context.setLineDash([3, 3]);
+      context.strokeStyle = 'rgba(253,224,71,0.9)';
+      for (const segment of m1ContourSegments) {
+        context.beginPath();
+        context.moveTo(segment.x1, segment.y1);
+        context.lineTo(segment.x2, segment.y2);
+        context.stroke();
+      }
+      context.restore();
+    }
+
     if (props.showDlaOverlayControl === true && props.showDlaContours === true) {
       context.save();
       context.lineWidth = 2;
@@ -939,7 +983,7 @@ export function PorkchopView(props: PorkchopViewProps) {
 
     drawCellMarker(pinnedCell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.22)', 8);
     drawCellMarker(hoverCell, 'rgba(167,243,208,0.95)', 'rgba(167,243,208,0.16)', 6);
-  }, [cells, contourSegments, dlaContourSegments, extremes, familyMode, familyToggleEnabled, hoverCell, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, props.showGridExtremes, props.supportBoundary, showContours]);
+  }, [cells, contourSegments, dlaContourSegments, extremes, familyMode, familyToggleEnabled, hoverCell, m1ContourLayerEnabled, m1ContourSegments, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, props.showGridExtremes, props.supportBoundary, showContours, showM1Contours]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1148,6 +1192,22 @@ export function PorkchopView(props: PorkchopViewProps) {
         }),
         `Show contours (${C3_CONTOUR_LEVELS.map((level) => level.value).join(', ')} km²/s²)`,
       ),
+      m1ContourLayerEnabled
+        ? h(
+            'label',
+            {
+              style: 'display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;opacity:0.9;cursor:pointer;',
+              title: 'Draws the one-revolution (M=1) family as dashed iso-C3 contours over the M=0 heatmap. The heatmap, readouts and extremes stay M=0.',
+            },
+            h('input', {
+              type: 'checkbox',
+              checked: showM1Contours,
+              disabled: m1Cells === null,
+              onInput: () => setShowM1Contours((current) => !current),
+            }),
+            `M=1 contour layer (dashed; ${C3_CONTOUR_LEVELS.map((level) => level.value).join(', ')} km²/s²)`,
+          )
+        : null,
       hasValidatedTarget
         ? h(
             'button',
