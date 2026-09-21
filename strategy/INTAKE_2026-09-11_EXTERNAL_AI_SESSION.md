@@ -248,3 +248,50 @@ that these artifacts load eagerly "over a recorded cold-load problem" — no suc
 repo does record is the build-OOM constraint at `panel.ts:63-69` and a measured loader/heap cost for the long
 fixture at `src/v2/SLICE_11_FOUNDING.md:169` (4.7 ms → 224 ms, ~0.23 MB → ~15.3 MB retained), neither of which is a
 cold-load finding.*
+### §9.2 Correction to §9.1 — payload figures were worktree bytes, not served bytes (appended 2026-09-21)
+
+§9.1's payload numbers were labelled "deployed bytes". They were **working-tree** bytes. `.gitattributes:9` declares
+`docs/** linguist-generated text eol=lf` (with `-text` exemptions for .jpg/.png/.tif/.bin at :10-13), so the blobs
+GitHub Pages serves are **LF**, while the working-tree copies under `docs/` carry CRLF — the Vite build copies them
+from CRLF sources, and git normalises on commit, which is why `git status -- docs` is clean while the two sizes
+differ. Found by an adversarial re-check of §9.1 and re-verified independently with
+`git cat-file -s $(git rev-parse HEAD:<path>)`.
+
+| artifact | §9.1 said (worktree) | served blob (LF) | delta |
+|---|---|---|---|
+| Slice 9 NEA catalog | 54,897,563 | **52,969,826** | −1,927,737 |
+| Lambert screening cache | 34,541,386 | **34,499,477** | −41,909 |
+| fidelity-tier artifact | 10,880,093 | **10,880,093** | 0 (already LF) |
+| long-span Earth fixture | 7,510,022 | **7,214,102** | −295,920 |
+| four rolling fixtures | 4,393,858 | **4,223,359** | −170,499 |
+| star catalog (`.bin`) | 1,120,016 | **1,120,016** | 0 (`-text`) |
+
+Corrected eager first-paint totals: **solar-system 110,906,873 B (110.9 MB)** · **`/v2/compare/` 105,563,498 B
+(105.6 MB)** · **`/v2/porkchop/` 71,064,021 B (71.1 MB)**. §9.1's 113.3 / 107.8 / 73.3 MB are each ~2.2–2.4 MB high.
+**The conclusion is unchanged:** the 2060 Earth fixture grows 7,214,102 → ~16.8 MB, i.e. **+9.6 MB, 8.7% of the
+solar-system total and 13.5% of the porkchop total** — still "H0 is not the payload problem."
+
+Two figures §9.1 should have carried, both measured 2026-09-21:
+
+**Wire vs decoded.** Gzipping the served blobs (python `gzip`, level 6) gives **22,448,447 B ≈ 22.4 MB** for the
+solar-system eager set against 110.9 MB decoded — ratios 6.3× (NEA catalog), 4.0× (screening cache), 8.8× (tier
+artifact), 3.4× (Earth fixture), 1.6× (star catalog `.bin`). *INFERRED:* if the host applies its usual gzip, the
+network cost is ~22 MB and the ~111 MB is the decode-and-parse cost. Both matter, for different reasons — the wire
+figure is the user's wait on a cold connection, the decoded figure is main-thread parse time and retained heap. A
+payload slice should say which one it is optimising.
+
+**A 2060 cache regeneration cannot run against committed data at all.** `tools/build/precompute-lambert-screen.mjs`
+interpolates an Earth state at every departure epoch (fixture path built at :159-165; per-epoch interpolation at
+:190 via `interpolateBodyStateSeries`) from the same 5,479-record fixture that ends 2040-12-31. A 2026→2060
+departure grid needs ~12,785 daily records — **~7,306 are missing** — and the TOF axis reaches a further 1,826 days
+beyond the last departure. So the Horizons pull is a *prerequisite* to the cache run, not a parallel task, and it
+invalidates `metadata.provenance.horizonsFixtureSha256`. Separately, the generator guards its own runtime:
+`MAX_RUNTIME_SECONDS = 75 * 60` (:96), checked every 250 bodies (:97, :330-334). The recorded full run was
+3,137.7 s; a 2060 run at the same rate is ~7,321 s, so **the generator would abort itself partway through** and the
+guard needs raising deliberately, with a reason, rather than discovered.
+
+*Verification of this section: every served size was read with `git cat-file -s` on the HEAD blob, not from `stat`;
+the CR counts were obtained by byte scan (`bytes.count(b'\r')`), never by a shell `grep -c` on `$'\r'`, which is
+how §9.1's author first mis-measured this class of thing; the gzip figures were computed over the raw blob bytes;
+the missing-record count is (2026-01-01…2060-12-31 daily) − 5,479 read from the fixture itself. The error corrected
+here was found by a check run against §9.1 rather than by its author.*
