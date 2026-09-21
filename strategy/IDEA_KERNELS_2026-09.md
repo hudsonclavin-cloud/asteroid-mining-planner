@@ -101,3 +101,43 @@ telling those cases apart honestly.
 ## §6. Appended amendments
 
 (Append below. Never edit above.)
+### §6.1 State change — H0 gate (appended 2026-09-21)
+
+§2's gate for H0 is "Front B NEA drift result + `RECON-HORIZON-2060`". The **Front B half is SATISFIED**, and was
+already satisfied when this triage was written: it landed 2026-09-05/06 (`0d927e4`, `d663e9c`, `6e89131`) — see
+`strategy/INTAKE_2026-09-11_EXTERNAL_AI_SESSION.md` §9.1. The **recon half was performed 2026-09-21**, read-only,
+reported to Hudson and not committed. §3's shortlist item 1 — "Run the recon now and decide after Front B lands" —
+is superseded.
+
+**H0's new gate is not payload, either.** Extending the horizon to 2060 adds ~10 MB (the long-span Earth fixture,
+7.5 → ~17.5 MB) to an eager first-paint payload that is already 113.3 MB on the solar-system page, 107.8 MB on
+compare and 73.3 MB on porkchop. The screening cache does not grow at all — `bestWindows` is capped at 5 per body
+and its record count is the catalog's — so the horizon buys ~2.33× the **compute** (1.80e9 → ~4.21e9 solves; ~52 min
+of recorded wall clock → ~2.0 h), not bytes. What actually binds H0 is (a) the honesty boundary — no drift is
+measured past the truth fixture's `2046-01-01` stop — and (b) an already-shipping payload that H0 worsens by 9–14%
+and did not cause. Both are Slice 19 seat decisions, not decided here.
+
+**Correction to this amendment's own draft.** C0 (Chebyshev) is **not** "ungated by H0": §2 states its gate as "Only
+if H0's recon shows fixture size or accuracy actually binds". The recon measured the size half — it does not bind
+(+10 MB against 73–113 MB). C0 therefore stays CONCEPT on the size argument; only an accuracy argument could revive
+it, and that would be the measurement §3.4 of the intake already calls for.
+
+**K1 (return-leg porkchop) is better positioned than §3 assumed.** `vInfArr` is computed per branch
+(`src/v2/porkchop/grid-compute.ts:36`) and is **not** among the fields the worker strips
+(`src/v2/porkchop/porkchop.worker.ts:40` strips `v1`, `v2`, `dlaDeg`); it is also already persisted per body in the
+committed screening cache's `bestWindows` entries. The arrival quantity K1 needs therefore exists end to end today.
+The remaining work is the Earth-as-departure assumptions, not the arrival quantity.
+
+**K3 (spin-barrier structure hint) loses its data assumption.** §1 marked its rotation-period coverage
+"[Speculative: a small fraction of 41,906; the recon or pre-research measures it]". Measured 2026-09-21: the
+committed catalog carries **no rotation-period field at all**. The 41,906 records in
+`tests/fixtures/v2/nea-catalog-slice9.json` expose G, H, anchor, anchorSource, class, conditionCode, dataArcDays,
+designation, eccentricityBand, elements, elementsFrame, estimatedRadiusM, inv014Tier, isCuratedNea, nObsUsed, name,
+neo, orbitClass, pha, qualityRank, reanchorEpochTdbJd, sigmaA, sigmaE and spkId — nothing matching rot/period/spin,
+and nothing in `src/v2/boundary/slice9-nea-catalog.ts` either. Coverage is **zero without a new SBDB pull**. K3's
+state is unchanged (CONCEPT), but its cost now provably includes a data acquisition, not just a UI surface.
+
+K4 and K5 unchanged.
+
+*Verification of this section: every count and field list was read from the committed artifacts on 2026-09-21, not
+recalled; the gate wording was quoted from §2 and §3 above; each cited SHA was confirmed with `git cat-file -e`.*

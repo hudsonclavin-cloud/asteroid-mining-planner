@@ -167,3 +167,84 @@ is the easy part.
 ## §9. Appended findings
 
 (Append below. Never edit above.)
+### §9.1 Correction — Front B had already landed (appended 2026-09-21)
+
+This intake was written without repository access, and its sequencing was stale on the day it was written. Front B's
+NEA drift measurement had already completed and been recorded five to six days earlier: the JPL-integrated truth
+fixture `tests/fixtures/v2/nea-drift-truth-2026-2046.json` landed at `0d927e4` (2026-09-05); the drift artifacts
+under `tools/slice18-research/` (`nea-drift-results.json`, `NEA_DRIFT_MEASUREMENT.md`) landed at `d663e9c`
+(2026-09-06); STATUS recorded completion at `6e89131` (2026-09-06, "Front B complete — NEA drift measured, condition
+code ruled out, close approaches identified as the mechanism"). All dates are git author dates, not prose dates.
+
+**Citation correction to this amendment's own draft.** The stale sequencing lives in §4 ("Front B's drift-vs-time
+result decides how far the horizon can honestly extend") and in §7's next-action row ("Its result, together with
+Front B, feeds the Slice 19 seat decision"). The phrase "decide after Front B lands" is from the companion
+document's §3, not from this one. §1 point 2 is not a sequencing claim — it states that NEA drift past the truth
+fixture's end is unmeasured — and it stands unchanged.
+
+What Front B measured, within the truth fixture's span (its `window` key: start `2026-01-01`, stop `2046-01-01`,
+step `7d`):
+
+- Of **17 NEA-band bodies, 15 reached at least 10⁶ km** of two-body drift against JPL-integrated truth. The two
+  below the line are `2010 KD` (4.65e5 km) and `433` (6.26e5 km); the maximum is `99942` at 3.258e8 km. Counted
+  from the per-body `max_km` fields in `tools/slice18-research/nea-drift-results.json`.
+- **Drift is dominated by close approaches, not elapsed time.** `99942`'s drift is 33,477 km immediately before its
+  2029-04-13 Earth approach and 1,201,378 km immediately after — a 35.9× step across one encounter
+  (`bodies["99942"].closeApproaches[0].drift_before_km` / `.drift_after_km`) — while its first full year of drift
+  from the 2026-05-01 anchor is 47,885 km (`A_primaryAnchor.yearly_km`).
+- **No drift is measured past the truth fixture's stop date.** This intake's §4 point 4 stands.
+
+**What changed the shape of H0.** Slice 18 Front C shipped per-object fidelity tiers (L0/L1/L2) with disclosure,
+including a per-cell boundary on the porkchop for L1 bodies. `src/v2/SLICE_18_FOUNDING.md` §8 records it: "Front C
+is CLOSED 2026-09-21 — W1–W3 at `22d4fa7` (per STATUS), disclosure strings at `5926b16`, W4/W5 at `cecbc5b`".
+DEC-18-7 governs the boundary (de-emphasize with a visible marker, never suppress); DEC-18-8 governs the blunt
+unbounded-error form. The code is `src/v2/porkchop/support-boundary.ts` and `src/v2/porkchop/tier-disclosure.ts`,
+wired at `src/v2/app/porkchop/main.ts:973`. Extending past 2040 is therefore no longer honesty-BLOCKED; it is
+disclosure-ENABLED but UNVALIDATED beyond the truth fixture's end. Any extension must not claim measured support
+past that date.
+
+**The existing generator's parameters — confirmed from repo evidence, not from this intake's inference.**
+`tools/slice10-research/extend-horizons-fixture.mjs` produced the long-span fixture over the window `2026-01-01` →
+`2040-12-31` (:15-18). Its request block (:32-45) states: **CENTER** per body — `@sun` for mercury/venus/earth/mars
+(:24-27), `@ssb` for the Sun (:23), `500@399` for the Moon (:26); **EPHEM_TYPE** `VECTORS`; **REF_SYSTEM** `ICRF`;
+**REF_PLANE** `FRAME`; **TIME_TYPE** `TDB`; **OUT_UNITS** `KM-S`; **VEC_TABLE** `2`; **STEP_SIZE** `1d`. The repo's
+own parameters refute the session's code on exactly the three points §3.3 flagged: REF_PLANE is stated (`FRAME`,
+equatorial) rather than left to default to ECLIPTIC, VEC_TABLE is `2` (full state, not position-only), and CENTER is
+heliocentric rather than `500@0` (SSB). §3.3's rule stands: extend this generator with identical parameters.
+**One trap for whoever extends it:** the generator writes to
+`tests/fixtures/v2/horizons-inner-solar-system-2026-2040.json.new` (:7-13), but the fixture the app actually reads
+is `src/v2/data/horizons-inner-solar-system-2026-2040.json` — the path correction is already recorded at
+`src/v2/SLICE_15_FOUNDING.md:149`. The output must be moved, not written in place.
+
+**New constraint not visible on 2026-09-11: payload — and the horizon is not its cause.** Measured 2026-09-21 from
+the deployed build (`docs/`) and the fetch sites in `src/v2`. Eager first-paint payload, per page: **solar-system
+113.3 MB**, **`/v2/compare/` 107.8 MB**, **`/v2/porkchop/` 73.3 MB**. Components, deployed bytes: Slice 9 NEA
+catalog 54,897,563; Lambert screening cache 34,541,386; fidelity-tier artifact 10,880,093; long-span Earth fixture
+7,510,022; the four rolling solar-system fixtures 4,393,858; star catalog 1,120,016. Nothing waits for a user
+action: the screening cache and the tier artifact are fetched at **module scope**
+(`src/v2/app/catalog-list/panel.ts:70` and `:79`), and the Earth fixture is fetched when the overlay mounts
+(`src/v2/app/ui-overlay/overlay.ts:414-421`, reached from `src/v2/app/solar-system/runtime.ts:896`). The
+module-scope placement is deliberate and constrained: the comment at `panel.ts:63-69` records that `b6b7f92` moved
+the screening cache out of the bundle graph to fix a vite build OOM, and warns against converting it to a lazy load
+without re-checking that footprint.
+
+Extending the horizon to 2060 grows **only the Earth fixture**, 7.5 MB → ~17.5 MB (linear in daily samples,
+5,479 → 12,785): **+10 MB on a 73–113 MB eager load, i.e. 9–14%.** The screening cache does **not** grow: its
+`bestWindows` list is capped at 5 per body (41,905 records carry exactly 5; the single `propagator_failed` record —
+the catalog's one hyperbolic body — carries none) and its record count is fixed at the catalog's 41,906. The horizon
+multiplies that cache's **compute**, not its bytes: 783 departures × 55 TOFs × 41,905 bodies = 1,804,638,825, which
+is exactly the `totalSolves` in its metadata, and at 2060 becomes 1,827 × 55 × 41,905 ≈ 4.21e9 solves — about 2.0 h
+against the recorded `wallTimeSeconds` of 3,137.7 (linear estimate, not measured). The tier artifact does not scale
+with the horizon either: one record per catalog body, 10,150 of which carry an encounter today. **H0 is therefore
+not the payload problem; the payload problem is already shipping.** See the Slice 19 seat decision.
+
+*Verification of this section: Front B's dates were read with `git log --date=iso-strict` on each artifact path, not
+from prose. The drift counts, the truth-fixture window and the close-approach figures were recounted from the
+committed artifacts. The generator parameters were read from the source lines cited. Every deployed byte size was
+read from `docs/` after the build, every fetch site was read at the cited line, and the 1,804,638,825 identity was
+derived independently from the cache's own grid and checked against its metadata. Every SHA cited here was confirmed
+to exist with `git cat-file -e` before it was written (INV-033). One draft claim was DROPPED rather than published:
+that these artifacts load eagerly "over a recorded cold-load problem" — no such cold-load record was found; what the
+repo does record is the build-OOM constraint at `panel.ts:63-69` and a measured loader/heap cost for the long
+fixture at `src/v2/SLICE_11_FOUNDING.md:169` (4.7 ms → 224 ms, ~0.23 MB → ~15.3 MB retained), neither of which is a
+cold-load finding.*
