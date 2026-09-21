@@ -53,6 +53,12 @@ const VERBATIM = {
   '3552':
     'Aster cannot bound the screening error for this object. Its orbit reaches 7.29 AU, and the close-approach ' +
     'data Aster uses does not cover encounters beyond 0.28 AU from Jupiter.',
+  // 162P/Siding Spring: a JFC comet with Q = 4.893 AU — one of the 26 comets inside
+  // Jupiter's orbit that the aphelion sentence fitted badly. Ruled 2026-09-21: comets
+  // get their own sentence, by cause (not-kepler-safe), not by aphelion.
+  '162P':
+    'Aster cannot bound the screening error for this object. It is a comet, which Aster\'s catalog classifies ' +
+    'as not safe for two-body Keplerian propagation.',
   '433':
     'Aster has not measured the screening error for this object. Two-body propagation over the screening window ' +
     'drifted 0.46 to 330 million km across the 17 asteroids that were measured. This object was not among them.',
@@ -88,7 +94,7 @@ async function loadModules() {
   return modulesPromise;
 }
 
-test('the six representative bodies render their sentences verbatim from the committed artifact', async () => {
+test('the seven representative bodies render their sentences verbatim from the committed artifact', async () => {
   const { disclosure, records } = await loadModules();
   for (const [designation, expected] of Object.entries(VERBATIM)) {
     const record = records[designation];
@@ -101,7 +107,31 @@ test('the six representative bodies render their sentences verbatim from the com
   assert.equal(records['2015 D1'].subReason, 'cannot-propagate-hyperbolic-orbit');
   assert.equal(records['99942'].subReason, 'materially-degraded-delta-v');
   assert.equal(records['3552'].subReason, 'structurally-blind-jupiter-crossing');
+  assert.equal(records['162P'].subReason, 'structurally-blind-comet');
   assert.equal(records['433'].subReason, 'unmeasured');
+});
+
+test('structurally blind splits by cause: 206 comets + 482 Jupiter-crossing = 688, each with its own sentence', async () => {
+  const { disclosure, records, populations } = await loadModules();
+  const comets = Object.values(records).filter((record) => record.subReason === 'structurally-blind-comet');
+  const crossers = Object.values(records).filter((record) => record.subReason === 'structurally-blind-jupiter-crossing');
+  assert.equal(comets.length, 206);
+  assert.equal(crossers.length, 482);
+  assert.equal(comets.length + crossers.length, 688);
+  assert.equal(populations.structurallyBlindL2, 688);
+  // The comet sentence's claim is checked against the catalog, not asserted from prose:
+  // every one of the 206 is a comet class and INV-014 not-kepler-safe.
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8')).asteroids;
+  const byDes = new Map(Object.values(catalog).map((body) => [body.designation, body]));
+  const notComet = comets.filter((record) => !['JFC', 'HTC', 'ETC'].includes(byDes.get(record.des).orbitClass)).map((r) => r.des);
+  const keplerSafe = comets.filter((record) => byDes.get(record.des).inv014Tier !== 'not-kepler-safe').map((r) => r.des);
+  assert.deepEqual(notComet, []);
+  assert.deepEqual(keplerSafe, []);
+  const cometSentence = "Aster cannot bound the screening error for this object. It is a comet, which Aster's catalog classifies as not safe for two-body Keplerian propagation.";
+  assert.ok(comets.every((record) => disclosure.fullTierDisclosure(record) === cometSentence));
+  assert.ok(crossers.every((record) => /^Aster cannot bound the screening error for this object\. Its orbit reaches \d+\.\d\d AU, and the close-approach data Aster uses does not cover encounters beyond 0\.28 AU from Jupiter\.$/.test(disclosure.fullTierDisclosure(record))));
+  // No Jupiter-crosser sits inside Jupiter's orbit — the aphelion sentence fits all 482.
+  assert.ok(crossers.every((record) => record.Q >= 4.95));
 });
 
 test('every one of the 41,906 bodies has a full sentence — no value is missing from committed data', async () => {

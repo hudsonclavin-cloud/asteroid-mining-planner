@@ -123,6 +123,13 @@ export function fullTierDisclosure(tier: TierAssignment): string | null {
             `${largestDate}, changing its orbit by an estimated ${largestDv} m/s.`;
     }
     case 'structurally-blind-comet':
+      // Ruled 2026-09-21: comets get their own sentence — the cause is the orbit
+      // class (INV-014 not-kepler-safe: all 206 are JFC/HTC/ETC), not aphelion.
+      // Verbatim.
+      return (
+        'Aster cannot bound the screening error for this object. It is a comet, which Aster\'s catalog ' +
+        'classifies as not safe for two-body Keplerian propagation.'
+      );
     case 'structurally-blind-jupiter-crossing': {
       const reach = tier.Q === undefined ? null : formatAu(tier.Q);
       return reach === null
