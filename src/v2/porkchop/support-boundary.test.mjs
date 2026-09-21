@@ -92,7 +92,7 @@ test('99942: the boundary comes from the committed artifact, and the partition m
   // The EARLIEST material encounter (DEC-18-6 criterion), not the 2029-04-13 flyby —
   // which is the largest-drift row, still carried as maxDriftEncounterCd.
   assert.equal(b.encounterDateLabel, '2028-09-12');
-  assert.equal(apophis.maxDriftEncounterCd, '2029-Apr-13 21:46');
+  assert.equal(apophis.maxDriftEncounter.cd, '2029-Apr-13 21:46');
   assert.ok(b.encounterJd < 2462240.407091969, 'boundary precedes the 2029 flyby JD');
   assert.equal(b.encounterBody, 'Earth');
   // The encounter lies inside the departure window, so the grid must split both ways.

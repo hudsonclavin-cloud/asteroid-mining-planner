@@ -43,10 +43,13 @@ const VERBATIM = {
     'No transfer windows are computed.',
   // Apophis: the EARLIEST material encounter is the 2028-Sep-12 Earth pass (δv 2.6 m/s,
   // ≥ 1e6 km by the window's end under DEC-18-6) — not the famous 2029-Apr-13 flyby
-  // (2,776 m/s), which is the LARGEST-drift row and is kept as maxDriftEncounterCd.
+  // (2,776 m/s), which is the LARGEST-drift row, carried as maxDriftEncounter and named
+  // by the appended sentence (ratified 2026-09-21).
   '99942':
     'Screening for this object is supported through 2028-09-12. A close approach to Earth on that date changes ' +
-    'its orbit by an estimated 2.6 m/s. Arrivals after it are computed from an orbit the encounter invalidates.',
+    'its orbit by an estimated 2.6 m/s. Arrivals after it are computed from an orbit the encounter invalidates. ' +
+    'The largest perturbation in the window is a close approach to Earth on 2029-04-13, changing its orbit by an ' +
+    'estimated 2,776 m/s.',
   '3552':
     'Aster cannot bound the screening error for this object. Its orbit reaches 7.29 AU, and the close-approach ' +
     'data Aster uses does not cover encounters beyond 0.28 AU from Jupiter.',
@@ -121,8 +124,14 @@ test('L1: the max-drift date traces to dv-scope-per-body.json, and the boundary 
   const l1 = Object.values(records).filter((record) => record.tier === 'L1');
   assert.equal(l1.length, 10_150);
 
-  // (a) The materiality row is the one a DIFFERENT script recorded — exact string equality.
-  const traceMismatches = l1.filter((record) => dvScope[record.des]?.cd !== record.maxDriftEncounterCd).map((r) => r.des);
+  // (a) The materiality row — maxDriftEncounter when it differs from the boundary,
+  // otherwise the boundary itself — is the one a DIFFERENT script recorded: exact
+  // equality on date, body and δv for all 10,150.
+  const traceMismatches = l1.filter((record) => {
+    const independent = dvScope[record.des];
+    const largest = record.maxDriftEncounter ?? record.encounter;
+    return !independent || !largest || largest.cd !== independent.cd || largest.body !== independent.body || largest.dvKmS !== independent.dvKmS;
+  }).map((r) => r.des);
   assert.deepEqual(traceMismatches, []);
 
   // (b) The boundary is recomputed here, independently of tier-sizing.mjs, from the
@@ -163,13 +172,22 @@ test('L1: the max-drift date traces to dv-scope-per-body.json, and the boundary 
     if (carried.jd !== expected.jd || carried.cd !== expected.cd || carried.body !== expected.body || Math.abs(carried.dvKmS - expected.dvKmS) > 1e-12 * expected.dvKmS) {
       boundaryMismatches.push(`${record.des}: ${JSON.stringify(carried)} vs ${JSON.stringify(expected)}`);
     }
-    if (carried.cd !== record.maxDriftEncounterCd) precedesMaxDrift += 1;
+    if (record.maxDriftEncounter !== undefined) {
+      precedesMaxDrift += 1;
+      // A carried largest-drift row is a genuinely different, later-or-equal encounter.
+      assert.ok(record.maxDriftEncounter.jd >= carried.jd, `${record.des}: largest-drift row must not precede the boundary`);
+      assert.notEqual(record.maxDriftEncounter.cd, carried.cd, `${record.des}: maxDriftEncounter is only carried when it differs`);
+    }
   }
   assert.deepEqual(boundaryMismatches, []);
   // The correction this test exists for: the earliest material encounter precedes the
   // max-drift row for a large minority of L1 bodies. Shipping the max-drift date would
   // over-claim support for them.
   assert.equal(precedesMaxDrift, 2_352);
+  // And exactly those bodies get the appended "largest perturbation" sentence.
+  const { disclosure } = await loadModules();
+  const withAppended = l1.filter((record) => disclosure.fullTierDisclosure(record).includes('The largest perturbation in the window is a close approach to')).length;
+  assert.equal(withAppended, 2_352);
   // Bodies that are not L1 carry no encounter — the field is a tier claim, not a CAD dump.
   assert.equal(Object.values(records).filter((record) => record.tier !== 'L1' && record.encounter !== undefined).length, 0);
 });
@@ -239,5 +257,5 @@ test('short labels never expose a slug', async () => {
     assert.ok(!/[a-z]-[a-z]/i.test(label), `${record.des}: '${label}' looks like an identifier`);
   }
   assert.equal(disclosure.shortTierLabel(records['99942']), 'supported through 2028-09-12');
-  assert.equal(records['99942'].maxDriftEncounterCd, '2029-Apr-13 21:46', 'the 2029 flyby is still traceable in the record');
+  assert.equal(records['99942'].maxDriftEncounter.cd, '2029-Apr-13 21:46', 'the 2029 flyby is still traceable in the record');
 });

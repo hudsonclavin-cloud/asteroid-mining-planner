@@ -101,11 +101,26 @@ export function fullTierDisclosure(tier: TierAssignment): string | null {
       }
       const date = formatDisclosureDate(encounter.cd);
       const dv = formatMetersPerSecond(encounter.dvKmS);
-      return date === null || dv === null
-        ? null
-        : `Screening for this object is supported through ${date}. A close approach to ${encounter.body} on that ` +
-            `date changes its orbit by an estimated ${dv} m/s. Arrivals after it are computed from an orbit the ` +
-            'encounter invalidates.';
+      if (date === null || dv === null) {
+        return null;
+      }
+      const boundarySentence =
+        `Screening for this object is supported through ${date}. A close approach to ${encounter.body} on that ` +
+        `date changes its orbit by an estimated ${dv} m/s. Arrivals after it are computed from an orbit the ` +
+        'encounter invalidates.';
+      // Ratified 2026-09-21: the boundary is the EARLIEST material encounter. When the
+      // largest perturbation in the window is a different close approach, name it
+      // too (verbatim), filled from the artifact's maxDriftEncounter row.
+      const largest = tier.maxDriftEncounter;
+      if (largest === undefined) {
+        return boundarySentence;
+      }
+      const largestDate = formatDisclosureDate(largest.cd);
+      const largestDv = formatMetersPerSecond(largest.dvKmS);
+      return largestDate === null || largestDv === null
+        ? boundarySentence
+        : `${boundarySentence} The largest perturbation in the window is a close approach to ${largest.body} on ` +
+            `${largestDate}, changing its orbit by an estimated ${largestDv} m/s.`;
     }
     case 'structurally-blind-comet':
     case 'structurally-blind-jupiter-crossing': {

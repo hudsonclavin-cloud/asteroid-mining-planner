@@ -33,9 +33,13 @@ export interface TierAssignment {
    * bodies an earlier material encounter exists.
    */
   readonly encounter?: TierEncounter;
-  /** L1 only: CAD `cd` of the LARGEST-drift encounter — the row dv-scope-per-body.json
-   * records — kept so the artifact stays traceable to it. */
-  readonly maxDriftEncounterCd?: string;
+  /**
+   * L1 only, and only when it is a DIFFERENT row from `encounter`: the LARGEST-drift
+   * close approach — the row dv-scope-per-body.json records and the one the
+   * disclosure names as "the largest perturbation in the window". Absent means the
+   * boundary encounter is also the largest perturbation.
+   */
+  readonly maxDriftEncounter?: TierEncounter;
 }
 
 interface TierArtifact {

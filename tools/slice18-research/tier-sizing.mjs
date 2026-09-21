@@ -52,11 +52,15 @@ const bielaFirstDayDriftKm = neaDrift.bodies['3D'].B_catalogElements.at_first_re
 // Two encounters per material body, for two different jobs:
 //  - maxDriftByDes: the row with the LARGEST added drift — this is what makes the
 //    body material, and it is the row dv-scope-per-body.json records (cross-check).
+//    Carried in the record as `maxDriftEncounter` ONLY when it is a different row
+//    from the boundary, so the disclosure can name the largest perturbation too
+//    (ratified 2026-09-21).
 //  - earliestMaterialByDes: the EARLIEST row whose own added drift is >= 1e6 km —
 //    this is the support boundary (the first moment the orbit is materially
-//    invalidated). For 2,352 of the 10,150 L1 bodies it precedes the max-drift row;
-//    shipping the max-drift date would over-claim support for them (S18 close-out
-//    self-caught correction, 2026-09-21).
+//    invalidated; DEC-18-3's "first materially perturbing encounter"). For 2,352 of
+//    the 10,150 L1 bodies it precedes the max-drift row; shipping the max-drift date
+//    would over-claim support for them (S18 close-out self-caught correction,
+//    2026-09-21, ratified as earliest-material).
 const maxDriftByDes = new Map();
 const earliestMaterialByDes = new Map();
 // rebuild the material set from the per-body top records we kept, plus recompute from source
@@ -161,10 +165,15 @@ for (const b of bodies) {
   if (classification === 'nonExistent' && terminationByDes.has(des)) record.terminationTdb = terminationByDes.get(des);
   if (historicallyDestroyed) record.firstDayDriftKm = bielaFirstDayDriftKm;
   if (classification === 'material') {
-    // The boundary (earliest material) is the disclosure; the max-drift date is
-    // carried only so the artifact stays traceable to dv-scope-per-body.json.
+    // The boundary (earliest material) is the disclosure's date; the largest-drift
+    // row is carried only when it is a different row — then the disclosure also
+    // names it, and the artifact stays traceable to dv-scope-per-body.json
+    // (maxDriftEncounter ?? encounter is always dv-scope's row).
     record.encounter = earliestMaterialByDes.get(des);
-    record.maxDriftEncounterCd = maxDriftByDes.get(des).cd;
+    const maxDrift = maxDriftByDes.get(des);
+    if (maxDrift.cd !== record.encounter.cd || maxDrift.body !== record.encounter.body) {
+      record.maxDriftEncounter = maxDrift;
+    }
   }
   assign.push(record);
 }
@@ -177,7 +186,7 @@ for (const b of bodies) {
   if (withTermination !== 9 || withFirstDayDrift !== 1 || withEncounter !== materialRecords || boundaryAfterMaxDrift !== 0) {
     throw new Error(`Front C disclosure coverage mismatch: ${JSON.stringify({ withTermination, withFirstDayDrift, withEncounter, materialRecords, boundaryAfterMaxDrift })}`);
   }
-  console.log('L1 bodies whose earliest material encounter precedes the max-drift row: ' + assign.filter((r) => r.encounter !== undefined && r.encounter.cd !== r.maxDriftEncounterCd).length);
+  console.log('L1 bodies whose earliest material encounter precedes the max-drift row: ' + assign.filter((r) => r.maxDriftEncounter !== undefined).length);
 }
 const fidelityCounts = Object.fromEntries(['L0', 'L1', 'L2'].map((tier) => [tier, assign.filter((row) => row.tier === tier).length]));
 const structurallyBlindCount = assign.filter((row) => row.tier === 'L2' && row.subReason.startsWith('structurally-blind-')).length;
