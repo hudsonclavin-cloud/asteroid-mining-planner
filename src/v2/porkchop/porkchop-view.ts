@@ -14,6 +14,7 @@ import type { PorkchopWorkerCell } from './porkchop.worker.js';
 import { C3_COLOR_MAX, C3_COLOR_MIN, colorForPorkchopCell } from './colormap.js';
 import { computeDualFamilyGrids, type DualFamilyGrids } from './dual-m-compute.js';
 import { compositeGrids, gridExtremes } from './composite-grid.js';
+import { assessPropagation } from './propagation-guard.js';
 
 /**
  * DEC-5 (`src/v2/SLICE_11_FOUNDING.md:105`) display families for the dedicated view.
@@ -635,7 +636,19 @@ export function PorkchopView(props: PorkchopViewProps) {
   // Facts about the CURRENTLY DISPLAYED grid. Derived from `cells`, which is replaced on
   // every family switch, so an extreme can never be carried across a switch and name a
   // cell that is not in the current grid.
-  const extremes = useMemo(() => (cells === null ? null : gridExtremes(cells)), [cells]);
+  // S18 Item 1: a body the propagator refuses never gets a grid, so `cells` stays null
+  // for good. The readout must still reach a terminal state — reuse the existing
+  // "no solvable cells" variant rather than sitting on "Computing…" forever.
+  const propagation = useMemo(() => assessPropagation(props.bodyElements), [props.bodyElements]);
+  const extremes = useMemo(
+    () =>
+      cells !== null
+        ? gridExtremes(cells)
+        : propagation.propagatable
+          ? null
+          : { kind: 'no-solvable-cells' as const, okCount: 0 as const },
+    [cells, propagation],
+  );
   const contourSegments = useMemo(
     () => (cells === null ? [] : buildContourSegments(cells, props.gridParams, C3_CONTOUR_LEVELS, getSelectedBranchC3)),
     [cells, props.gridParams],
@@ -654,6 +667,17 @@ export function PorkchopView(props: PorkchopViewProps) {
     setHoverCell(null);
     setHoverTooltipPosition(null);
     setFamilyGrids(null);
+    if (propagation.propagatable === false) {
+      // S18 Item 1: never hand a non-elliptical orbit to the worker — the
+      // propagator throws RangeError on it (keplerian.ts validateKeplerianElements)
+      // and this surface would show a raw error, or nothing. Refuse before compute.
+      setCells(null);
+      setComputeMs(null);
+      setLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
     const request = {
       bodyId: props.bodyId,
       bodyElements: props.bodyElements,
@@ -689,7 +713,7 @@ export function PorkchopView(props: PorkchopViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [props.client, props.bodyId, props.bodyElements, props.gridParams, props.M, familyToggleEnabled]);
+  }, [props.client, props.bodyId, props.bodyElements, props.gridParams, props.M, familyToggleEnabled, propagation]);
 
   // DEC-5 family selection. "Selecting M=1 replaces the heatmap with the M=1 grid";
   // "both" renders the composite, whose per-cell provenance is carried by cell.M.
@@ -1088,7 +1112,12 @@ export function PorkchopView(props: PorkchopViewProps) {
     h(
       'div',
       { style: PANEL_STYLE },
-      loading
+      // S18 Item 1: the refusal sentence takes the grid's place. Checked before
+      // `loading` so the first paint never flashes "Loading…" for a body that
+      // will never load.
+      propagation.propagatable === false
+        ? h('div', { style: 'font-size:15px;color:#ff8ba7;padding:18px 0;line-height:1.5;' }, propagation.message)
+        : loading
         ? h('div', { style: 'font-size:15px;padding:18px 0;' }, 'Loading screening data…')
         : error !== null
           ? h('div', { style: 'font-size:15px;color:#ff8ba7;padding:18px 0;' }, error)

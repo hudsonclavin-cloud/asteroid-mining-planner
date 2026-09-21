@@ -26,6 +26,7 @@ import type {
   PorkchopCell,
   PorkchopEphemerisDependencies,
 } from './grid-compute.js';
+import { assessPropagation } from './propagation-guard.js';
 import { liveGridMin, segmentWindows } from './segment-windows.js';
 import type {
   SegmentGrid,
@@ -134,7 +135,11 @@ export interface CompareBodyOk {
 export type CompareRefusalReason =
   | 'out-of-bounds'
   | 'no-convergence'
-  | 'cap-exceeded';
+  | 'cap-exceeded'
+  /** S18 Item 1: the propagator's precondition rejects these elements
+   * (hyperbolic / invalid orbit). `detail` carries the verbatim user-facing
+   * sentence from propagation-guard.ts. */
+  | 'not-propagatable';
 
 export interface CompareBodyRefusal {
   readonly ok: false;
@@ -273,6 +278,21 @@ export function computeCompareData(
           `requested departure window JD TDB ${params.depStartJdTdb}–${params.depEndJdTdb} ` +
           `falls outside the Earth ephemeris span ` +
           `${params.earthSpanJdTdb.firstSample}–${params.earthSpanJdTdb.lastSample}`,
+      });
+      continue;
+    }
+
+    // S18 Item 1: the propagator THROWS RangeError on a non-elliptical orbit
+    // (keplerian.ts validateKeplerianElements), and that throw used to take
+    // the whole compare down with it. Refuse this body as a value instead;
+    // the row is never omitted.
+    const propagation = assessPropagation(body.bodyElements);
+    if (propagation.propagatable === false) {
+      results.push({
+        ok: false,
+        bodyId: body.bodyId,
+        reason: 'not-propagatable',
+        detail: propagation.message,
       });
       continue;
     }

@@ -416,6 +416,11 @@ function refusalCopy(reason: string, detail: string): { title: string; body: str
       body: `No departure in the window produced a converged transfer, so there is no departure-energy floor to report. ${detail}`,
     };
   }
+  if (reason === 'not-propagatable') {
+    // S18 Item 1: `detail` IS the user-facing sentence (verbatim from
+    // propagation-guard.ts, eccentricity included). Nothing here paraphrases it.
+    return { title: 'cannot propagate', body: detail };
+  }
   return {
     title: 'not compared',
     body: `This body was not included in the comparison. ${detail}`,

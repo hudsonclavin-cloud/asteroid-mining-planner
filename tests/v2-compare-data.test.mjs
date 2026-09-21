@@ -74,14 +74,20 @@ const ZERO_STATE = {
   velocityMps: { x: 0, y: 0, z: 0 },
 };
 
+// AsteroidOrbitalElements shape (aM in metres, angles in radians, epoch in TDB
+// seconds past J2000) — the same 1.1 AU / e 0.1 / 2°,10°,20°,30° orbit the
+// fixture always described, now in the units the type declares. Nothing below
+// reads these values through the (stubbed) propagator; since S18 Item 1 the
+// propagation guard in computeCompareData DOES read them, and it must see a
+// valid elliptical orbit or every orchestration test would refuse at the gate.
 const ELEMENTS = {
-  aAu: 1.1,
+  aM: 1.1 * 149_597_870_700,
   e: 0.1,
-  iDeg: 2,
-  omDeg: 10,
-  wDeg: 20,
-  maDeg: 30,
-  epochJdTdb: REQUESTED_START_JD,
+  iRad: (2 * Math.PI) / 180,
+  omRad: (10 * Math.PI) / 180,
+  wRad: (20 * Math.PI) / 180,
+  maRad: (30 * Math.PI) / 180,
+  epochTdbSeconds: (REQUESTED_START_JD - 2_451_545) * 86_400,
 };
 
 /** Stub solver whose C3 is a pure function of the call index. grid-compute
