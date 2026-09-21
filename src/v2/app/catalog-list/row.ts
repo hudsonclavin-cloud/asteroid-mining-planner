@@ -42,6 +42,24 @@ function tierBadgeColor(tier: string): string {
   return tier === 'L0' ? '#9a4a4a' : tier === 'L1' ? '#9a7a3a' : '#4f6680';
 }
 
+/**
+ * S18 Item 3: an L0 body does not exist (verified impact / disintegration) or
+ * cannot be propagated, so a LOW C3 / HIGH C3 badge would grade a transfer
+ * that cannot happen. Only the two QUALITY statuses are suppressed; 'prop
+ * fail' and 'unconv.' are not quality claims and stay. Non-L0 rows untouched.
+ */
+function isSuppressedQualityBadge(data: CatalogListRowData): boolean {
+  return (
+    data.tier.tier === 'L0' &&
+    (data.screen.status === 'low_departure_c3' || data.screen.status === 'high_departure_c3')
+  );
+}
+
+/** Visible context for an L0 row's numeric C3 (S18 Item 3). */
+export const L0_C3_CONTEXT = 'computed from the last known orbit';
+const L0_C3_TITLE =
+  'Computed from the last known orbit. This object is tier L0, so the value is not a screening-quality signal.';
+
 export function renderRow(
   data: CatalogListRowData,
   topPx: number,
@@ -50,6 +68,9 @@ export function renderRow(
   const isSelected = selectedBodySignal.value === data.bodyId;
   const showPorkchopAffordance = typeof options.onOpenPorkchop === 'function';
   const affordanceDisabled = options.porkchopDisabled === true;
+  // S18 Item 3: keep the number (a real two-body result) but read it as context,
+  // not as a grade. A null C3 already renders '—' and needs no context.
+  const deEmphasizeC3 = data.tier.tier === 'L0' && data.screen.minC3 !== null;
 
   return h(
     'div',
@@ -120,7 +141,9 @@ export function renderRow(
           },
           data.name || data.designation,
         ),
-        h(
+        isSuppressedQualityBadge(data)
+          ? null
+          : h(
           'span',
           {
             style: {
@@ -145,20 +168,53 @@ export function renderRow(
           title: data.tier.subReason,
         }, data.tier.tier),
       ),
-      h(
-        'div',
-        {
-          style: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: '4px',
-            color: '#aaa',
-            fontSize: '11px',
-          },
-        },
-        h('span', null, `${data.orbitClass}${data.screen.isCoOrbital ? ' · co-orbital' : ''}`),
-        h('span', null, `C3 ${formatC3(data.screen.minC3)} km²/s²`),
-      ),
+      deEmphasizeC3
+        ? h(
+            'div',
+            {
+              style: {
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: '8px',
+                marginTop: '4px',
+                color: '#aaa',
+                fontSize: '11px',
+              },
+            },
+            h('span', { style: { flexShrink: 0 } }, `${data.orbitClass}${data.screen.isCoOrbital ? ' · co-orbital' : ''}`),
+            // Ellipsis-protected so a narrow sidebar never wraps the fixed-height
+            // row; the tooltip carries the full sentence.
+            h(
+              'span',
+              {
+                style: {
+                  opacity: 0.55,
+                  fontStyle: 'italic',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  textAlign: 'right',
+                },
+                title: L0_C3_TITLE,
+              },
+              `C3 ${formatC3(data.screen.minC3)} km²/s² · ${L0_C3_CONTEXT}`,
+            ),
+          )
+        : h(
+            'div',
+            {
+              style: {
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: '4px',
+                color: '#aaa',
+                fontSize: '11px',
+              },
+            },
+            h('span', null, `${data.orbitClass}${data.screen.isCoOrbital ? ' · co-orbital' : ''}`),
+            h('span', null, `C3 ${formatC3(data.screen.minC3)} km²/s²`),
+          ),
     ),
     showPorkchopAffordance
       ? h(
