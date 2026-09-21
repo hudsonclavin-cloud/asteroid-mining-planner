@@ -44,6 +44,7 @@ import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { fullTierDisclosure, L1_CRITERION, legendLineFor } from '../../porkchop/tier-disclosure.js';
+import { supportBoundaryFor } from '../../porkchop/support-boundary.js';
 import {
   FK3_TOUR_STORAGE_KEY,
   Fk3GuidedTour,
@@ -968,6 +969,8 @@ function PorkchopDedicatedPage() {
         showDlaOverlayControl: true,
         showDlaContours,
         launchSite: selectedLaunchSite,
+        // S18 Item 6: L1 bodies get the encounter boundary; every other tier passes undefined.
+        supportBoundary: supportBoundaryFor(pageState.tier),
       }),
     ),
     tourStep === null

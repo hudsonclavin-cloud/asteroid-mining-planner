@@ -15,6 +15,12 @@ import { C3_COLOR_MAX, C3_COLOR_MIN, colorForPorkchopCell } from './colormap.js'
 import { computeDualFamilyGrids, type DualFamilyGrids } from './dual-m-compute.js';
 import { compositeGrids, gridExtremes } from './composite-grid.js';
 import { assessPropagation } from './propagation-guard.js';
+import {
+  boundaryTofDaysAtDeparture,
+  isArrivalAfterEncounter,
+  unsupportedCellMessage,
+  type SupportBoundary,
+} from './support-boundary.js';
 
 /**
  * DEC-5 (`src/v2/SLICE_11_FOUNDING.md:105`) display families for the dedicated view.
@@ -154,6 +160,13 @@ export interface PorkchopViewProps {
    * behind one flag is how a surface inherits a feature nobody decided to give it.
    */
   readonly showGridExtremes?: boolean | undefined;
+  /**
+   * S18 Item 6 (W4/W5, DEC-18-7): for an L1 body, the encounter that bounds
+   * supported screening. Cells whose arrival (depJD + tofDays) is at or after it
+   * are de-emphasised — opacity only, never hue, never suppressed — and the
+   * boundary is drawn. Undefined (every other surface) changes nothing.
+   */
+  readonly supportBoundary?: SupportBoundary | undefined;
   readonly onPinnedCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellChange?: ((readout: PorkchopPinnedReadout | null) => void) | undefined;
   readonly onGlobalMinimumCellRectChange?: ((rect: PorkchopViewportRect | null) => void) | undefined;
@@ -775,6 +788,57 @@ export function PorkchopView(props: PorkchopViewProps) {
     context.imageSmoothingEnabled = false;
     context.drawImage(offscreen, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
+    // S18 Item 6 (DEC-18-7): de-emphasise — never suppress — the cells whose
+    // arrival falls at or after the L1 encounter, then draw the boundary
+    // (arrival == encounter) as a dashed curve. Opacity only: colour stays C3.
+    if (props.supportBoundary !== undefined) {
+      const boundary = props.supportBoundary;
+      const cellWidthPx = DISPLAY_WIDTH / props.gridParams.nDep;
+      const cellHeightPx = DISPLAY_HEIGHT / props.gridParams.nTof;
+      context.save();
+      context.fillStyle = 'rgba(5,7,13,0.55)';
+      for (let depIndex = 0; depIndex < props.gridParams.nDep; depIndex += 1) {
+        for (let tofIndex = 0; tofIndex < props.gridParams.nTof; tofIndex += 1) {
+          const cell = cells[depIndex * props.gridParams.nTof + tofIndex];
+          if (!isArrivalAfterEncounter(cell, boundary)) {
+            continue;
+          }
+          const rowFromTop = props.gridParams.nTof - 1 - tofIndex;
+          context.fillRect(depIndex * cellWidthPx, rowFromTop * cellHeightPx, cellWidthPx, cellHeightPx);
+        }
+      }
+      context.restore();
+
+      const tofCellDays =
+        props.gridParams.nTof > 1
+          ? (props.gridParams.tofMaxDays - props.gridParams.tofMinDays) / (props.gridParams.nTof - 1)
+          : 1;
+      context.save();
+      context.lineWidth = 1.5;
+      context.lineCap = 'round';
+      context.setLineDash([5, 4]);
+      context.strokeStyle = 'rgba(255,255,255,0.95)';
+      context.beginPath();
+      let started = false;
+      for (let depIndex = 0; depIndex < props.gridParams.nDep; depIndex += 1) {
+        const column = cells[depIndex * props.gridParams.nTof];
+        const tofIndex = (boundaryTofDaysAtDeparture(column.depJD, boundary) - props.gridParams.tofMinDays) / tofCellDays;
+        if (tofIndex < 0 || tofIndex > props.gridParams.nTof - 1) {
+          started = false;
+          continue;
+        }
+        const { x, y } = getDisplayCoordinatesForGridPoint(depIndex, tofIndex, props.gridParams);
+        if (started) {
+          context.lineTo(x, y);
+        } else {
+          context.moveTo(x, y);
+          started = true;
+        }
+      }
+      context.stroke();
+      context.restore();
+    }
+
     // INV-016b provenance layer: in "both", mark the cells whose window came from the
     // M=1 family with a stipple drawn semi-transparently OVER the composite heatmap.
     // Deliberately NOT colour — colour is reserved for C3, so the family must be
@@ -875,7 +939,7 @@ export function PorkchopView(props: PorkchopViewProps) {
 
     drawCellMarker(pinnedCell, 'rgba(255,255,255,0.92)', 'rgba(10,13,20,0.22)', 8);
     drawCellMarker(hoverCell, 'rgba(167,243,208,0.95)', 'rgba(167,243,208,0.16)', 6);
-  }, [cells, contourSegments, dlaContourSegments, extremes, familyMode, familyToggleEnabled, hoverCell, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, props.showGridExtremes, showContours]);
+  }, [cells, contourSegments, dlaContourSegments, extremes, familyMode, familyToggleEnabled, hoverCell, pinnedCell, props.gridParams, props.showDlaContours, props.showDlaOverlayControl, props.showGridExtremes, props.supportBoundary, showContours]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1157,9 +1221,24 @@ export function PorkchopView(props: PorkchopViewProps) {
                         null,
                         `C3: ${hoverReadout.c3 === null ? 'n/a' : `${formatNumber(hoverReadout.c3, 6)} km²/s²`}`,
                       ),
+                      props.supportBoundary !== undefined && hoverCell !== null && isArrivalAfterEncounter(hoverCell, props.supportBoundary)
+                        ? h(
+                            'div',
+                            { style: 'margin-top:6px;max-width:220px;white-space:normal;color:#fbbf24;font-style:italic;' },
+                            unsupportedCellMessage(props.supportBoundary),
+                          )
+                        : null,
                     )
                   : null,
               ),
+              props.supportBoundary !== undefined
+                ? h(
+                    'div',
+                    { style: 'font-size:12px;line-height:1.5;color:#fbbf24;' },
+                    `Dashed curve: arrival on the ${props.supportBoundary.encounterDateLabel} ${props.supportBoundary.encounterBody} encounter. ` +
+                      'Darkened cells arrive after it — computed from an orbit that encounter invalidates. Colour is still C3.',
+                  )
+                : null,
               h(
                 'div',
                 { style: LABEL_ROW_STYLE },
@@ -1241,7 +1320,10 @@ export function PorkchopView(props: PorkchopViewProps) {
                       h(
                         'div',
                         { style: 'opacity:0.92;' },
-                        `${formatNumber(entry.c3, 6)} km²/s² · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}`,
+                        `${formatNumber(entry.c3, 6)} km²/s² · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}` +
+                          (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
+                            ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
+                            : ''),
                       ),
                     ),
                   ),
@@ -1293,6 +1375,16 @@ export function PorkchopView(props: PorkchopViewProps) {
               { style: 'font-size:11px;line-height:1.45;color:#93a4bf;font-style:italic;' },
               'Screening estimate. Actual launch geometry may differ (see azimuth constraints).',
             ),
+            props.supportBoundary !== undefined && pinnedCell !== null && isArrivalAfterEncounter(pinnedCell, props.supportBoundary)
+              ? [
+                  h('span', { key: 'unsupported-label' }, ''),
+                  h(
+                    'span',
+                    { key: 'unsupported-text', style: 'font-size:11px;line-height:1.45;color:#fbbf24;font-style:italic;' },
+                    unsupportedCellMessage(props.supportBoundary),
+                  ),
+                ]
+              : null,
             pinnedReadout.feasibility === 'AMBER'
               ? [
                   h('span', { key: 'amber-advisory-label' }, ''),
