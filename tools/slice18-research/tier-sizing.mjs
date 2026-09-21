@@ -11,17 +11,22 @@
  * reaches Jupiter's orbit can have Jupiter encounters, and CAD's measured 0.28 AU
  * Jupiter cap means those encounters are invisible to the instrument.
  *
- * Repo READ-ONLY.
+ * Reads ONLY committed inputs (the Slice 9 catalog fixture, dv-scope-results.json,
+ * cad-wide/cad-all-0.3.json + its metadata) and writes two committed artifacts next
+ * to itself: tier-sizing-per-body.json (the client-served tier map) and
+ * tier-sizing-results.json (the catalog-wide summary). Regenerating must leave every
+ * per-body record byte-identical; only generatedAtUtc moves.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const REPO = 'C:/Users/hudso/asteroid-mining-planner';
-const HERE = 'C:/Users/hudso/Documents/aster-slice18/audit';
 const RESEARCH_DIR = path.join(REPO, 'tools/slice18-research');
 const PER_BODY_OUT = path.join(RESEARCH_DIR, 'tier-sizing-per-body.json');
+const RESULTS_OUT = path.join(RESEARCH_DIR, 'tier-sizing-results.json');
 const CAD_PATH = path.join(RESEARCH_DIR, 'cad-wide/cad-all-0.3.json');
+const CAD_METADATA_PATH = path.join(RESEARCH_DIR, 'cad-wide/cad-all-0.3.metadata.json');
 const AU_KM = 149597870.7;
 const JUPITER_PERIHELION_AU = 4.95;
 
@@ -29,7 +34,11 @@ const raw = JSON.parse(fs.readFileSync(path.join(REPO, 'tests/fixtures/v2/nea-ca
 const bodies = Object.values(raw.asteroids);
 const TOTAL = bodies.length;
 
-const scope = JSON.parse(fs.readFileSync(path.join(HERE, 'dv-scope-results.json'), 'utf8'));
+// S18 close-out Item 4: read the COMMITTED copy (the audit-directory copy this
+// once read is not in the repo; the two fields used here — perturberGM and
+// windowEndJd — were verified identical between them before the switch).
+const scope = JSON.parse(fs.readFileSync(path.join(RESEARCH_DIR, 'dv-scope-results.json'), 'utf8'));
+const cadMetadata = JSON.parse(fs.readFileSync(CAD_METADATA_PATH, 'utf8'));
 // rebuild the material set from the per-body top records we kept, plus recompute from source
 const materialSet = new Set();
 {
@@ -123,7 +132,10 @@ const structurallyBlindCount = assign.filter((row) => row.tier === 'L2' && row.s
 if (fidelityCounts.L0 !== 11 || fidelityCounts.L1 !== 10150 || fidelityCounts.L2 !== 31745 || TOTAL !== 41906 || structurallyBlindCount !== 688) throw new Error(`Front C population mismatch: ${JSON.stringify({ total: TOTAL, fidelityCounts, structurallyBlindCount })}`);
 
 // overlaps that matter for the design
-const jupCrossingAlsoMaterial = assign.filter((r) => r.tier === 'jupiterCrossing' && r.material).length;
+// S18 close-out Item 4: this compared r.tier (an L0/L1/L2 label) against a
+// classification name, so it was always 0. The classification field is the one
+// that carries 'jupiterCrossing'; the true count is 9.
+const jupCrossingAlsoMaterial = assign.filter((r) => r.classification === 'jupiterCrossing' && r.material).length;
 const quietCount = counts.quiet || 0;
 const cannotBound = (counts.jupiterCrossing || 0) + (counts.comet || 0) + (counts.hyperbolic || 0);
 
@@ -141,7 +153,8 @@ const results = {
   materialSetSize: materialSet.size,
   note: 'Precedence: nonExistent > hyperbolic > comet > jupiterCrossing > material > quiet. A body is counted once, in its strongest tier.',
 };
-fs.writeFileSync(PER_BODY_OUT, JSON.stringify({ generatedAtUtc: results.generatedAtUtc, cadFetchedAtUtc: '2026-09-11T04:27:49.000Z', source: 'tier-sizing.mjs over nea-catalog-slice9.json + dv-scope-results.json + cad-all-0.3.json', catalogTotal: TOTAL, populations: { L0: fidelityCounts.L0, L1: fidelityCounts.L1, L2: fidelityCounts.L2, total: TOTAL, structurallyBlindL2: structurallyBlindCount }, records: Object.fromEntries(assign.sort((a, b) => a.des.localeCompare(b.des)).map((row) => [row.des, row])) }, null, 1));
+fs.writeFileSync(RESULTS_OUT, JSON.stringify(results, null, 2) + '\n');
+fs.writeFileSync(PER_BODY_OUT, JSON.stringify({ generatedAtUtc: results.generatedAtUtc, cadFetchedAtUtc: cadMetadata.fetchedAtUtc, source: 'tier-sizing.mjs over nea-catalog-slice9.json + dv-scope-results.json + cad-all-0.3.json', catalogTotal: TOTAL, populations: { L0: fidelityCounts.L0, L1: fidelityCounts.L1, L2: fidelityCounts.L2, total: TOTAL, structurallyBlindL2: structurallyBlindCount }, records: Object.fromEntries(assign.sort((a, b) => a.des.localeCompare(b.des)).map((row) => [row.des, row])) }, null, 1));
 
 const pct = (n) => (100 * n / TOTAL).toFixed(2) + '%';
 console.log('catalog total: ' + TOTAL);
