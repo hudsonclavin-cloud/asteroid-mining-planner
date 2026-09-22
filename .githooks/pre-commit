@@ -47,10 +47,24 @@ for f in $STAGED; do
     fail=1
   fi
 done
+# Additive-only guard. Deletions are COUNTED BY GIT (--numstat), never by pattern-matching
+# diff lines. The former `grep -c '^-[^-]'` could not see a deleted markdown bullet: it
+# renders in a diff as "-- item", whose second character is also "-", so the pattern
+# reported 0 for the most common deletion case in these documents. Demonstrated against
+# 2032b9e (--stat: 1 deletion; old pattern: 0). Recorded as STATUS.md Cleanup C17.
+# git reports deletions as a number, so there is no pattern left to get wrong.
+# awk skips binary diffs, where numstat emits "-" instead of a count.
+#
+# Guarded set, widened 2026-09-22: INVARIANTS.md; every SLICE_*_FOUNDING.md at the repo ROOT
+# (SLICE_17_FOUNDING.md lives there) and under src/v2/ (a `case` glob's * also crosses /, so
+# src/v2/founding-drafts/ is covered); and src/v2/*_LOCKED.md. The root-level and *_LOCKED
+# paths are additive-only by policy but were matched by NO pattern here until this change —
+# SLICE_16_APPENDIX_A_LOCKED.md was appended to on 2026-09-21 with the guard silently inert.
+# STATUS.md is deliberately absent: it is the living file and is rewritten every session.
 for doc in $STAGED; do
   case "$doc" in
-    INVARIANTS.md|src/v2/*_FOUNDING.md)
-      dels=$(git diff --cached -- "$doc" | grep -c '^-[^-]')
+    INVARIANTS.md|SLICE_*_FOUNDING.md|src/v2/*_FOUNDING.md|src/v2/*_LOCKED.md)
+      dels=$(git diff --cached --numstat -- "$doc" | awk '$2 != "-" { d += $2 } END { print d + 0 }')
       if [ "$dels" -gt 0 ]; then
         echo "BLOCKED: $dels deletion line(s) in $doc — additive/annotation only (needs ASTER_PROTECTED_OK)" >&2
         fail=1
