@@ -345,3 +345,27 @@ A 4× sweep of the threshold moves L1 by slightly more than 2×. The region arou
 **Artifact status, verified 2026-09-13.** `tools/slice18-research/tier-sizing-results.json` **still carries the stale values** — `cannotBoundTotal: 690` and the pre-OQ-18-6 tiers `nonExistent: 9`, `comet: 207`, `material: 10,152`, generated 2026-09-09. It has not been regenerated. It is **superseded** by `tools/slice18-research/tier-sizing-per-body.json` (landed `355fa5f`), whose `populations` field reads `{L0: 11, L1: 10150, L2: 31745, total: 41906, structurallyBlindL2: 688}` — matching C-4 exactly, and naming the field `structurallyBlindL2` so the definitional ambiguity that produced the 690 / 689 / 688 confusion cannot recur. Where the two artifacts disagree, the per-body artifact governs; the older file should be regenerated or removed rather than left to be cited. Its `jupiterCrossingAlsoHasMaterialCadEncounter: 0` is independently wrong: 9 Jupiter-crossing bodies do carry a material CAD encounter, and 21 material bodies in total are absorbed by higher tiers (12 comet, 9 Jupiter-crossing).
 
 *Verification of this section: the sweep and density figures were computed from the committed per-body artifacts joined by designation, with L0/comet/Jupiter-crossing bodies excluded before counting, and independently reproduced by a separate agent given the criterion but not the expected answers — 13,172 / 10,150 / 6,469 and 118 / 1,063, agreeing exactly. The `populations` field was read from the committed artifact, not recomputed into it. The staleness of `tier-sizing-results.json` was checked directly rather than assumed corrected.*
+### C-6 — Tier populations: one current authority; the heading was already corrected. RECORDED 2026-09-22.
+
+A read-only recon on 2026-09-21 re-reported two items this section had already settled. That is itself the finding: a correction nobody can find gets re-discovered as a defect, and re-discovery costs a verification cycle each time.
+
+**The heading is already ruled on.** The recon flagged DEC-18-10's heading ("Two fidelity tiers ship") as contradicting its own three-tier body, and recorded that "the document does not address this". It does — **C-1 above** rules that the heading should read "Three fidelity tiers ship; no bounded tier without measurement", leaves the original in place as the additive-only rule requires, and declares itself the authority on that wording. C-1 stands; nothing further is needed here.
+
+**Populations, independently recounted.** Three tables for the same quantity now exist in this document, each superseding the last: DEC-18-10 (L0 10 / L1 10,152 / L2 31,744), C-1 (11 / 10,152 / 31,743) and C-4 (11 / 10,150 / 31,745). Recounted 2026-09-22 by iterating all 41,906 records of `tools/slice18-research/tier-sizing-per-body.json` and tallying the `tier` field directly — deliberately **not** by reading that artifact's own `populations` summary, so the check is independent of the value it checks:
+
+- **L0 = 11**
+- **L1 = 10,150**
+- **L2 = 31,745**, of which **688** carry a `structurally-blind-*` sub-reason
+- **Total = 41,906**. Cross-tier: 11 + 10,150 + 31,745 = 41,906 exactly.
+
+The recount matches C-4 and the artifact's `populations` field exactly. **C-4 remains the authority**; this entry adds only the independent confirmation and a single place to find it. C-4's snapshot-dependence and C-5's threshold-fragility caveats apply unchanged — these figures are "as of the 2026-09-11 CAD snapshot, at the 10^6 km threshold", and must be cited with both parameters or not at all.
+
+### C-7 — `at_2046_01_01_km` holds the drift at 2045-12-28. RECORDED 2026-09-22.
+
+The Front B truth fixture's `window` reads `{ start: 2026-01-01, stop: 2046-01-01, step: 7d }`, and `tools/slice18-research/nea-drift-measure.mjs:103` defines `IDX_END = rec0.length - 1` with the in-code comment "2046-01-01, last consumed arrival". The field it emits is named `at_2046_01_01_km` (`:135` in the primary-anchor block, `:173` in the catalog-elements block — 40 instances across the 20 measured bodies in `nea-drift-results.json`).
+
+The value is not at 2046-01-01. Verified by reading `tests/fixtures/v2/nea-drift-truth-2026-2046.json`: all 20 bodies carry exactly 1,044 records, ending at JD TDB 2468342.5 = **2045-12-28**. The 7-day cadence from 2026-01-01 reaches its last step 1,043 intervals = 7,301 days later, at 2045-12-28; the next sample would be JD 2468349.5, past the requested stop. The field therefore reports the drift **four days before** the date in its own name.
+
+**Do not rename the field.** It is consumed by name, and a rename would silently break those consumers. Read it as "at the last sampled arrival", and read any statement of the form "no drift is measured past 2046-01-01" — including the ones in §8 and in `strategy/INTAKE_2026-09-11_EXTERNAL_AI_SESSION.md` §9.1 — as **past 2045-12-28**. Four days is small against a twenty-year horizon, but DEC-18-3 makes the date the disclosure unit, so the offset is recorded rather than rounded away.
+
+Independently, the same epoch bounds the other Slice 18 instrument: `tools/slice18-research/dv-scope-results.json` carries `windowEndJd: 2468342.5` — the identical Julian date. Both instruments stop at 2045-12-28, so a horizon extension must move both.
