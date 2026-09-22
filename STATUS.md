@@ -42,7 +42,7 @@
 | MCP / agent surface | 15 | PUBLISHED + VERIFIED (`aster-mission-mcp@0.1.0`) |
 | Agent-honesty study | **16** | **CLOSED 2026-08-02 — HAS A RESULT** |
 | Mission planning | **17** (Target Compare + viewer QOL) | **CLOSED 2026-08-13** (`S-S17-CLOSE-2026-08-13-A`; founding `SLICE_17_FOUNDING.md`, repo root; §8 amendments A1 + A2, plus this dispatch's cut entry + OQ dispositions + D-07 erratum). Front A **CLOSED** (A4b residuals closed). Front B tiers **B0-B2 shipped**, **B3-B5 CUT** per the §5 CUT RULE → carried by `strategy/SLICE21_QOL_BACKLOG_TRIAGED.md`. OQ-17-3/-4/-5/-8/-9 disposed; residual non-blocking items in the Slice 17 section below. |
-| Mission planning | **18** (Screening Fidelity) | **CLOSED 2026-09-21** (git date; founding `src/v2/SLICE_18_FOUNDING.md` §8 close record at `4d3267c`). Front A CLOSED 2026-09-02 (`765f8fd`, `bda0ee2`, `a7670c4`, `c0a8b9b`, `67c4c18`); Front B COMPLETE 2026-09-02 (`0d927e4`, `d663e9c`); math-layer audit CLEAN 2026-09-09; Front C CLOSED 2026-09-21 — W1-W3 at `22d4fa7`, disclosure strings `5926b16`, W4/W5 `cecbc5b`. Close-out run (branch `claude/s18-close-out`, NOT yet merged): hyperbolic guard `d8c4681`, id consistency `a9ed4f0`, L0 badge `c4da66f`, tier-sizing fix `cba6e6a`, overlay M=0 + M=1 contour layer `34b707c`, docs rebuild `4d3bae2`; self-caught correction — L1 boundary is the EARLIEST material encounter (`d496532`, docs `b6d3373`, founding addendum `4c1c58d`), **RATIFIED 2026-09-21** with the largest-perturbation sentence appended where it differs (`5ac5cb5`); pre-merge follow-ups: results-file re-add reversed (`0a8bbac`), comets' own sentence (`052d0a2`), docs `c6dc7dd`, founding entry `3d395fb`. Nothing cut. OQ-18-1..5 deferred with destinations, OQ-18-6 resolved. Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
+| Mission planning | **18** (Screening Fidelity) | **CLOSED 2026-09-21** (git date; founding `src/v2/SLICE_18_FOUNDING.md` §8 close record at `4d3267c`). Front A CLOSED 2026-09-02 (`765f8fd`, `bda0ee2`, `a7670c4`, `c0a8b9b`, `67c4c18`); Front B COMPLETE **2026-09-06** (truth fixture `0d927e4` 2026-09-05, artifacts `d663e9c` 2026-09-06, recorded at `6e89131`; the former "2026-09-02" was Front A's close date — corrected 2026-09-22); math-layer audit CLEAN 2026-09-09; Front C CLOSED 2026-09-21 — W1-W3 at `22d4fa7`, disclosure strings `5926b16`, W4/W5 `cecbc5b`. Close-out run (branch `claude/s18-close-out`, NOT yet merged): hyperbolic guard `d8c4681`, id consistency `a9ed4f0`, L0 badge `c4da66f`, tier-sizing fix `cba6e6a`, overlay M=0 + M=1 contour layer `34b707c`, docs rebuild `4d3bae2`; self-caught correction — L1 boundary is the EARLIEST material encounter (`d496532`, docs `b6d3373`, founding addendum `4c1c58d`), **RATIFIED 2026-09-21** with the largest-perturbation sentence appended where it differs (`5ac5cb5`); pre-merge follow-ups: results-file re-add reversed (`0a8bbac`), comets' own sentence (`052d0a2`), docs `c6dc7dd`, founding entry `3d395fb`. Nothing cut. OQ-18-1..5 deferred with destinations, OQ-18-6 resolved. Mission View DEFERRED per DEC-18-4. See the Slice 18 section below. |
 
 ## Slice 16 — closed, with data
 
@@ -258,7 +258,9 @@ The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`)
 - The DLA feasibility overlay is on by default and visually dominates the plot; independently noted by two readers. Turning off a Slice 12 default to suit a Slice 18 marker would need its own decision and was not taken.
 
 **Front B, as carried forward at Front A close, is now COMPLETE — see the next section.** (At Front A close this line read "Front B remains OPEN"; the truth fixture landed at `0d927e4` and the measurement followed.)
-### FRONT B MEASUREMENT COMPLETE — 2026-09-02
+### FRONT B MEASUREMENT COMPLETE — 2026-09-06 (date corrected 2026-09-22)
+
+**Date correction (2026-09-22).** This heading read "2026-09-02". Git is authority and says otherwise: the truth fixture landed at `0d927e4` on 2026-09-05T13:23:08-04:00, the drift artifacts at `d663e9c` on 2026-09-06T11:59:18-04:00, and STATUS first recorded completion at `6e89131` on 2026-09-06T12:01:17-04:00. 2026-09-02 is Front A's close date (`01494ee`), and that commit's own STATUS text still read "Front B remains OPEN and gates Front C" — so Front B cannot have been complete that day. The date was inherited from the adjacent Front A entry. Every artifact-internal `generatedAtUtc` agrees with git, not with the prose.
 
 **Sanity gate passed** before any drift number: worst anchor-epoch drift 8.9e-5 km (9 cm), all 20 bodies sub-metre. Truth: `tests/fixtures/v2/nea-drift-truth-2026-2046.json` (`0d927e4`), 20 bodies, 7-day cadence, frame/center/units/time-scale verified per body from the response headers.
 
@@ -397,11 +399,66 @@ The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`)
 6. **Work HUDSON'S QUEUE** in `tools/slice16-harness/CLOSE_REPORT.md`; all 14 paths under `tools/slice16-harness/runs/` are tracked evidence.
 7. CI hardening (L4-1/L4-3): MCP + Slice 16 suites into Actions; truthful default `npm test`.
 
-8. **Slice 18 carried items (2026-09-21):** merge `claude/s18-close-out` (ff-only) and push, then run the browser checklist from the close-out report (2015 D1 on the PC modal, detailed route and compare; 2018 LA's badge; 99942's L1 boundary at 2028-09-12 with the appended 2029-04-13 sentence; a comet such as 162P showing the comet sentence; the overlay modal's M=1 contour toggle; the catalog legend and tooltips); rule OQ-18-1; assign OQ-18-2 / OQ-18-3; decide the eager 10.9 MB tier-artifact fetch (open item above).
+8. **Slice 18 carried items (2026-09-21):** merge `claude/s18-close-out` (ff-only) and push, then run the browser checklist from the close-out report (2015 D1 on the PC modal, detailed route and compare; 2018 LA's badge; 99942's L1 boundary at 2028-09-12 with the appended 2029-04-13 sentence; a comet such as 162P showing the comet sentence; the overlay modal's M=1 contour toggle; the catalog legend and tooltips); rule OQ-18-1; assign OQ-18-2 / OQ-18-3; decide the eager tier-artifact fetch (open item above). See also **Slice 19 — carried forward from the 2026-09-21 horizon recon** below, whose item 1 is a live literal-label defect on a trust surface.
 
 **Hardware constraint (recorded 2026-08-13):** desktop retired today; laptop-only from here.
 
 **2026-08-04 · sweep record:** `S-REPO-SWEEP-2026-08-04-A` (independent read-only multi-lens sweep, 9 HIGH findings) ran. This refresh addresses only the STATUS falsehoods and the S17 evidence-header provenance (R-01/R-02). Remaining findings OPEN and deliberately not addressed here: UI copy R-04/R-13 · build reproducibility R-03/R-05/R-16 · label drift R-17.
+
+---
+
+## Slice 19 — carried forward from the 2026-09-21 horizon recon
+
+Read-only recon, reported in full to Hudson; the numbered items below are the parts that bind a future slice. Byte
+sizes are **committed-blob (served) bytes**, read with `git cat-file -s`, not `stat` — `.gitattributes:9`
+(`docs/** linguist-generated text eol=lf`) makes the on-disk copies larger than what the host serves, and that
+distinction already produced one wrong set of figures.
+
+1. **Literal window label on a trust surface — the first Slice 19 item. Product code; its own commit; NOT fixed
+   here.** `src/v2/app/porkchop/main.ts:637` renders the hardcoded string "Grid spans 2026-2040 departures and
+   182.5-1826.25 day flight times." into the dedicated porkchop page. DEC-17-5 requires a derived label, and the
+   same file derives the adjacent line correctly at `:646` (`Grid: ${GRID_PARAMS.nDep}x${GRID_PARAMS.nTof}`); the
+   grid itself is defined at `:187-194`, with `depEndJD: utcMidnightToJdTdb('2040-01-01')` at `:189`. This is an
+   **honesty defect, not a cosmetic one**: the literal's "2040" and the catalog footer's *derived* "2040" denote
+   different bounds — the porkchop grid's last departure is 2040-01-01, while the footer derives from the screening
+   cache's `metadata.screeningWindow.endUtc` of 2040-12-31 — so the sentence advertises roughly twelve months of
+   departures the grid does not have. The literal ships: `docs/assets/porkchopV2-z3nhVK2W.js` contains it.
+
+2. **~10.6 MB of deployed weight that no page fetches.** `docs/assets/asteroid-catalog-slice8-*.json` (9,727,201 B)
+   and `docs/assets/asteroid-catalog-slice7-*.json` (915,006 B) enter the build only because
+   `src/v2/app/solar-system/loader.ts:8-9` re-exports their loaders; no call site fetches either. Removing the
+   re-exports should drop both from the bundle graph — verify with a build, do not assume.
+
+3. **Wire cost and decode cost are different arguments.** The solar-system page's eager first-paint set is
+   **110,906,873 B decoded** and **22,448,447 B gzipped** (level 6, measured over the committed blobs 2026-09-22) —
+   110.9 MB against 22.4 MB. A payload slice must say which it optimises: the wire figure is the cold-connection
+   wait; the decoded figure is main-thread parse time and retained heap. Per-page eager totals, served: solar-system
+   110,906,873 B, `/v2/compare/` 105,563,498 B, `/v2/porkchop/` 71,064,021 B.
+
+4. **H0 (horizon extension past 2040) has two hard prerequisites before any 2060 cache run.**
+   (a) *There is no data to run against.* `tools/build/precompute-lambert-screen.mjs` interpolates an Earth state at
+   every departure epoch (`:190`) from `src/v2/data/horizons-inner-solar-system-2026-2040.json` (path built at
+   `:159-165`), which holds 5,479 daily records ending 2040-12-31. A 2026->2060 departure grid needs ~12,785 daily
+   records — ~7,306 are missing — and the TOF axis reaches a further 1,826 days beyond the last departure. The
+   Horizons pull is a prerequisite, not a parallel task.
+   (b) *The generator aborts itself.* `MAX_RUNTIME_SECONDS = 75 * 60` (`:96`), checked every `PROGRESS_INTERVAL = 250`
+   bodies (`:97`, `:330-334`). The recorded full run was `wallTimeSeconds` 3,137.744173; a 2060 run at the same rate
+   is ~7,321 s, so the guard trips partway through and has to be raised deliberately, with a reason.
+   Note what does **not** scale: the cache's own file size. `bestWindows` is capped at 5 per body
+   (`precompute-lambert-screen.mjs:132` and `:136-137`) and the record count is the catalog's 41,906, so the horizon
+   multiplies compute (783 x 55 x 41,905 = 1,804,638,825 = the metadata's own `totalSolves`, becoming ~4.21e9), not
+   bytes.
+
+5. **OQ-17-7 (screening-cache reproducibility) — its stated blocker is resolved; a different one replaced it.**
+   `SLICE_17_FOUNDING.md` F4 (`:727-733`) says the generator "points at
+   tests/fixtures/v2/horizons-inner-solar-system-2026-2040.json, which does not exist". That is **no longer true** —
+   `tools/build/precompute-lambert-screen.mjs:159-165` points at `src/v2/data/`, repointed at `be5ef60`
+   (2026-08-05). But F4's companion claim, "provenance is intact", now holds only on one basis: the cache's recorded
+   `provenance.horizonsFixtureSha256` is `b278dd55...`, which is the sha256 of the fixture's **committed blob (LF)**.
+   This checkout's on-disk copy is CRLF and hashes to `c91f4e50...`. The generator hashes the bytes it reads
+   (`:181`), so **re-running it today records a provenance hash that disagrees with the shipped cache for a
+   byte-identical fixture**. OQ-17-7 stays OPEN with its cause restated: the blocker is now the hashing basis, not
+   the path. Verify provenance against `git cat-file blob`, never against on-disk bytes.
 
 ---
 
@@ -424,6 +481,7 @@ The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`)
 | C13 | OQ-18-4: izzo `lambert()` negative/invalid-TOF hardening (F1/F2, LOW, unreachable on every shipped path) — bundle with the next math-layer change; protected path. |
 | C14 | OQ-18-5: the `GM_SUN` comment says "IAU 2015 nominal" on a DE430 value — one-line docs fix under `src/v2/core/`, needs `ASTER_PROTECTED_OK` + a Hudson dispatch. |
 | C15 | `tools/run-tests.mjs` `parseCounts` takes the FIRST `pass N` / `fail N` match in a child's interleaved stdout+stderr; one 2026-09-21 run's headline read 302 while the per-file `ℹ pass` summaries summed to 303 (re-run: 303). Anchor the regex to the `ℹ pass` summary line, or take the last match. Headline only — the per-file exit codes and accounting were correct. |
+| C16 | **Label collision: three different findings are named "F2".** (1) `SLICE_17_FOUNDING.md:716-719` — cache and view screen different spans, both labelled "2026-2040" (cache to 2040-12-31, view to 2040-01-01); still unfixed. (2) `STATUS.md` math-layer audit paragraph — "F2 (LOW) — izzo mislabels invalid input (NaN, zero, infinity TOF) as `no_convergence`"; carried as OQ-18-4 / C13. (3) `STATUS.md` Cleanup `C7` — the Slice 16 "F2 negative-control transcript". Cite them as **S17-F2 (span mismatch)**, **audit-F2 (izzo taxonomy)** and **S16-F2 (negative control)**; a bare "F2" is ambiguous across these three. |
 
 ---
 
