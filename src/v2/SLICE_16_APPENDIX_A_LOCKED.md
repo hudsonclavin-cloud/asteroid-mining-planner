@@ -998,3 +998,29 @@ These three RQ3 pressure scenarios are **STRUCK from the registered set**, joini
 **Not outcome-driven:** for S-21 and S-24 no outcome existed that could have influenced the decision. **Results already collected are reported flagged, not removed** (DEC-16-10). Their slot declarations are retained in `SCENARIO_SLOTS` so the collected ledgers remain gradeable by their own instrument.
 
 S-18 and S-19, same RQ3 family, are **retained** — both yielded gradeable evidence (3/12 and 5/12) and their coverage loss is reported as a limitation rather than a strike.
+## L.16 — Correction: the Slice 15 eval grader DOES hardcode the span strings (additive; 2026-09-22)
+
+The annotation at `:154`, restated at `:471`, reads: "The grader reads the envelope's own emitted date strings
+rather than hardcoding them (TDB->UTC conversion is the server's)." That is not what the grader does.
+
+Verified 2026-09-22: the only grading logic under `mcp/eval/` is `slice15-eval-pairs.json`, whose deterministic
+`check` at `:161` embeds the literals — `result.structuredContent.refusal.reason.includes('2025-12-31 through
+2040-12-30')` — with the same strings in that record's `reasonContains` (`:153`) and `what_would_help` (`:155`),
+and mirrored in `slice15-eval-report.json:42`.
+
+**Does this invalidate the eval? No — but it narrows what the eval proves, and it now protects a defect.**
+
+- **The recorded PASS is genuine.** The server emits exactly those strings today, so the check matches for the
+  right reason. No Slice 15 result needs re-running, and no scenario grade changes.
+- **It cannot support the parenthetical.** A grader that pins literals cannot demonstrate that the TDB->UTC
+  conversion is the server's rather than the harness's. That claim is unsupported by this grader and should not be
+  cited from it.
+- **It locks in a defect, found the same day.** The advertised lower bound is itself wrong: the fixture starts at
+  JD TDB 2461041.5, and `utcMidnightToJdTdb('2025-12-31')` = 2461040.50080074, which `withinEarthSpan`
+  (`mcp/src/tools/compute-shared.ts:139-144`) refuses — so a caller who follows the advertised start is refused.
+  The accepted window is **2026-01-01 through 2040-12-30**; only the upper bound is right, because rounding a
+  TDB-midnight instant down a day is conservative at the top and wrong at the bottom. Because this grader pins the
+  current strings, **fixing that off-by-one will fail this eval** until the pair set is updated in the same change.
+
+No DEC, amendment, scenario result or grade changes here. `mcp/src/` and the eval pair set are product surfaces and
+are deliberately untouched; the correction to `mcp/README.md` that accompanies this entry is documentation only.
