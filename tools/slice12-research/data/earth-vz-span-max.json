@@ -1,0 +1,58 @@
+{
+  "generatedAtUtc": "2026-09-22T17:31:12.580Z",
+  "purpose": "Span maximum of Earth |vZ| in the porkchop worker long-span fixture, to separate the four-epoch SAMPLE max recorded in SLICE_12_FOUNDING.md:45 from the SPAN max the changelog line at :164 calls it. Does not reopen DEC-12-2.",
+  "source": "tools/slice12-research/measure-earth-vz.mjs over src/v2/data/horizons-inner-solar-system-2026-2040.json",
+  "ingestedVia": "src/v2/boundary/horizons.ts ingestSlice2Fixture (production path; no rotation applied)",
+  "fixture": {
+    "path": "src/v2/data/horizons-inner-solar-system-2026-2040.json",
+    "sha256": "c91f4e50da0e6fc550bc5900a94b95aa9256b9623dfcb876d01b22501241bc49",
+    "bytes": 7510022,
+    "frameLabel": "ICRF/J2000",
+    "timeScale": "TDB",
+    "earthSampleCount": 5479,
+    "firstJdTdb": 2461041.5,
+    "lastJdTdb": 2466519.5,
+    "canonicalFrame": "FRAME_HELIO_J2000_ICRF"
+  },
+  "spanMaxAbsVz": {
+    "kmPerSec": 11.89731636992642,
+    "signedKmPerSec": -11.89731636992642,
+    "jdTdb": 2461120.5,
+    "dateTdb": "2026-03-21"
+  },
+  "spanMinAbsVz": {
+    "kmPerSec": 0.001467157129840613,
+    "jdTdb": 2464135.5,
+    "dateTdb": "2034-06-22"
+  },
+  "reconSampleReproduced": {
+    "note": "SLICE_12_FOUNDING.md:45 reports |vZ| = 11.715 km/s at 2027-10-01 from a four-epoch 2027 probe. Reproduced here to confirm the sample figure is correct as a SAMPLE.",
+    "dateTdb": "2027-10-01",
+    "kmPerSec": 11.71467991580171,
+    "calendarYear2027MaxKmPerSec": 11.88634484921835,
+    "calendarYear2027MaxDateTdb": "2027-03-21"
+  },
+  "frameDiscriminator": {
+    "maxSpeedKmPerSec": 30.29998666639607,
+    "maxAbsVzOverMaxSpeed": 0.392650878065271,
+    "sinObliquityJ2000": 0.3977771559319137,
+    "note": "An ecliptic frame would show vZ ~ 0 at every epoch. The measured peak sits at the obliquity ratio, so the fixture is equatorial by measurement — DEC-12-2 unaffected and strengthened."
+  },
+  "perCalendarYearMaxAbsVzKmPerSec": {
+    "2026": 1.8778347611002,
+    "2027": 1.833770534201894,
+    "2028": 1.98336348094064,
+    "2029": 1.928288624781386,
+    "2030": 1.882170877327186,
+    "2031": 1.821712904135764,
+    "2032": 1.978711861989177,
+    "2033": 1.928467094559937,
+    "2034": 1.868431794741497,
+    "2035": 1.819404971600941,
+    "2036": 1.975564651800336,
+    "2037": 1.915385026887027,
+    "2038": 1.870771321401233,
+    "2039": 1.81332817964337,
+    "2040": 1.96488255381893
+  }
+}
