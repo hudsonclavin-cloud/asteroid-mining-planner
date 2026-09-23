@@ -126,3 +126,11 @@ stopping point and is easy to rationalize indefinitely.
 Decision rule: if a specific reviewer, application, or deadline is
 imminent, discoverability wins. If the next milestone is months out, ship
 interpretability first and keep QOL in 21 as planned.
+
+## Added from the kernel triage (appended 2026-09-23)
+
+K4 — one-way light-time chip. PROMOTED OUT of this backlog to the Slice 19 QOL
+slot; recorded here only so the backlog does not re-raise it. Source:
+strategy/IDEA_KERNELS_2026-09.md §1 row 6 and §6.2. Derived from scene state
+(distance ÷ c); display only; no payload, no new data source, no math-layer
+code. Do not re-triage.
