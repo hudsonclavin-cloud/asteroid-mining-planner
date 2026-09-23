@@ -10,6 +10,7 @@ import {
   SITE_ID_VALUES,
   baseComputeProvenance,
   computeGridForBody,
+  earthSpanLabel,
   earthSpanHelp,
   findSiteById,
   loadComputeContext,
@@ -66,11 +67,11 @@ export async function runDlaFeasibility(args: z.output<typeof dlaFeasibilityInpu
     return refuse(
       'dla_feasibility',
       'out_of_envelope',
-      `Departure date ${args.departureDate} is outside the committed Earth ephemeris span ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`,
+      `Departure date ${args.departureDate} is outside the committed Earth ephemeris span ${earthSpanLabel(computeContext.earthSpan)}.`,
       earthSpanHelp(computeContext.earthSpan),
       {
         provenance: baseComputeProvenance(),
-        validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`
+        validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}.`
       }
     );
   }
@@ -107,7 +108,7 @@ export async function runDlaFeasibility(args: z.output<typeof dlaFeasibilityInpu
       },
       provenance: baseComputeProvenance(),
       assumptions: ['Known-negative transfer outcomes are returned as values, not refusals.'],
-      validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`
+      validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}.`
     });
   }
 
@@ -153,6 +154,6 @@ export async function runDlaFeasibility(args: z.output<typeof dlaFeasibilityInpu
       args.siteId ? `Only siteId=${args.siteId} was evaluated.` : 'All committed launch-site screening bands were evaluated.',
       'feasible:false site rows are known-negative values, not refusals.'
     ],
-    validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}; site verdicts are screening-level only, not day-specific launch geometry.`
+    validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}; site verdicts are screening-level only, not day-specific launch geometry.`
   });
 }

@@ -9,6 +9,7 @@ import { runExplainCell } from '../src/tools/explain-cell.js';
 import { runGetValidationReport } from '../src/tools/get-validation-report.js';
 import { porkchopScanInputSchema, runPorkchopScan } from '../src/tools/porkchop-scan.js';
 import { readRepoJson, readRepoText } from '../src/resources/repo.js';
+import { earthSpanLabel, loadComputeContext, utcMidnightToJdTdb, withinEarthSpan } from '../src/tools/compute-shared.js';
 
 type PinnedFixture = {
   toleranceRel: number;
@@ -152,6 +153,20 @@ test('T16 porkchop_scan grid cap is an input error and ephemeris miss is an out_
     topN: 5
   });
   assert.equal(envelope.refusal?.code, 'out_of_envelope');
+});
+
+test('derived Earth span exposes the first and last accepted UTC midnights', async () => {
+  const { earthSpan } = await loadComputeContext();
+  const shiftUtcDate = (date: string, days: number): string =>
+    new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+  const lowerJd = utcMidnightToJdTdb(earthSpan.startDate);
+  const upperJd = utcMidnightToJdTdb(earthSpan.endDate);
+
+  assert.equal(withinEarthSpan(earthSpan, lowerJd, lowerJd), true);
+  assert.equal(withinEarthSpan(earthSpan, upperJd, upperJd), true);
+  assert.equal(withinEarthSpan(earthSpan, utcMidnightToJdTdb(shiftUtcDate(earthSpan.startDate, -1)), lowerJd), false);
+  assert.equal(withinEarthSpan(earthSpan, upperJd, utcMidnightToJdTdb(shiftUtcDate(earthSpan.endDate, 1))), false);
+  assert.equal(earthSpanLabel(earthSpan), '2026-01-01 through 2040-12-30');
 });
 
 test('T17 every explain_cell quantity leaf carries confidence and resolving sourceIds', async () => {

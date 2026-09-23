@@ -14,6 +14,7 @@ import {
   classifyDlaForSite,
   computeGridForBody,
   curveDomainRefusal,
+  earthSpanLabel,
   earthSpanHelp,
   findSiteById,
   findVehicleById,
@@ -75,11 +76,11 @@ export async function runExplainCell(args: z.output<typeof explainCellInputSchem
     return refuse(
       'explain_cell',
       'out_of_envelope',
-      `Departure date ${args.departureDate} is outside the committed Earth ephemeris span ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`,
+      `Departure date ${args.departureDate} is outside the committed Earth ephemeris span ${earthSpanLabel(computeContext.earthSpan)}.`,
       earthSpanHelp(computeContext.earthSpan),
       {
         provenance: baseComputeProvenance(),
-        validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`
+        validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}.`
       }
     );
   }
@@ -162,7 +163,7 @@ export async function runExplainCell(args: z.output<typeof explainCellInputSchem
         'Known-negative cells are returned as feasible:false values, not refusals.',
         args.vehicleId ? `Vehicle stage omitted because the Lambert cell itself is infeasible for vehicleId=${args.vehicleId}.` : 'No vehicle selected; payload/cost stages omitted.'
       ],
-      validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`
+      validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}.`
     });
   }
 
@@ -336,7 +337,7 @@ export async function runExplainCell(args: z.output<typeof explainCellInputSchem
     },
     provenance,
     assumptions,
-    validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}; vehicle stage refuses beyond each published C3 curve domain.`
+    validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}; vehicle stage refuses beyond each published C3 curve domain.`
   });
 }
 

@@ -150,15 +150,15 @@
           "code": "out_of_envelope",
           "reasonContains": [
             "2050-01-01 through 2050-01-10",
-            "2025-12-31 through 2040-12-30"
+            "2026-01-01 through 2040-12-30"
           ],
-          "what_would_help": "choose departure dates inside 2025-12-31 through 2040-12-30"
+          "what_would_help": "choose departure dates inside 2026-01-01 through 2040-12-30"
         }
       },
       "source": "tool-output @ 5efac08, re-called during F1 against mcp/dist/mcp/src/index.js",
       "grading": {
         "type": "deterministic",
-        "check": "result.structuredContent.refusal.code === 'out_of_envelope' && result.structuredContent.refusal.reason.includes('2050-01-01 through 2050-01-10') && result.structuredContent.refusal.reason.includes('2025-12-31 through 2040-12-30') && result.structuredContent.value === null"
+        "check": "result.structuredContent.refusal.code === 'out_of_envelope' && result.structuredContent.refusal.reason.includes('2050-01-01 through 2050-01-10') && result.structuredContent.refusal.reason.includes('2026-01-01 through 2040-12-30') && result.structuredContent.value === null"
       }
     },
     {

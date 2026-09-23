@@ -12,6 +12,7 @@ import {
   MAX_GRID_CELLS,
   baseComputeProvenance,
   computeGridForBody,
+  earthSpanLabel,
   earthSpanHelp,
   jdTdbToUtcDateString,
   loadComputeContext,
@@ -101,11 +102,11 @@ export async function runPorkchopScan(args: z.output<typeof porkchopScanInputSch
     return refuse(
       'porkchop_scan',
       'out_of_envelope',
-      `Departure window ${args.departureStart} through ${args.departureEnd} is outside the committed Earth ephemeris span ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`,
+      `Departure window ${args.departureStart} through ${args.departureEnd} is outside the committed Earth ephemeris span ${earthSpanLabel(computeContext.earthSpan)}.`,
       earthSpanHelp(computeContext.earthSpan),
       {
         provenance: baseComputeProvenance({ includeScreenCache: true }),
-        validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`
+        validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}.`
       }
     );
   }
@@ -177,7 +178,7 @@ export async function runPorkchopScan(args: z.output<typeof porkchopScanInputSch
       `Selected Lambert branch per cell is the lowest departure C3 among converged branches for M=${args.M}.`,
       'Cells with no converged Lambert branch are counted as feasible:false outcomes in summary, never dropped silently.'
     ],
-    validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}; grid bounded to ${MAX_GRID_CELLS} cells.`,
+    validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}; grid bounded to ${MAX_GRID_CELLS} cells.`,
     coverage
   });
 }

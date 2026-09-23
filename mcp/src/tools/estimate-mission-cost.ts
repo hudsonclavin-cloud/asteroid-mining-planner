@@ -12,6 +12,7 @@ import {
   classifyDlaForSite,
   computeGridForBody,
   curveDomainRefusal,
+  earthSpanLabel,
   earthSpanHelp,
   findSiteById,
   findVehicleById,
@@ -72,11 +73,11 @@ export async function runEstimateMissionCost(args: z.output<typeof estimateMissi
     return refuse(
       'estimate_mission_cost',
       'out_of_envelope',
-      `Departure date ${args.departureDate} is outside the committed Earth ephemeris span ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`,
+      `Departure date ${args.departureDate} is outside the committed Earth ephemeris span ${earthSpanLabel(computeContext.earthSpan)}.`,
       earthSpanHelp(computeContext.earthSpan),
       {
         provenance: baseComputeProvenance({ includeVehicle: true, includeDeltaV: true }),
-        validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`
+        validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}.`
       }
     );
   }
@@ -145,7 +146,7 @@ export async function runEstimateMissionCost(args: z.output<typeof estimateMissi
         marginPolicyProvenance()
       ],
       assumptions: ['Known-negative transfer outcomes are returned as values, not refusals.'],
-      validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}.`
+      validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}.`
     });
   }
 
@@ -252,7 +253,7 @@ export async function runEstimateMissionCost(args: z.output<typeof estimateMissi
           ]
         : ['No launch site selected; site-band feasibility omitted.'])
     ],
-    validity_envelope: `Departure dates limited to ${computeContext.earthSpan.startDate} through ${computeContext.earthSpan.endDate}; vehicle stage refuses beyond each published C3 curve domain.`
+    validity_envelope: `Departure dates limited to ${earthSpanLabel(computeContext.earthSpan)}; vehicle stage refuses beyond each published C3 curve domain.`
   });
 }
 

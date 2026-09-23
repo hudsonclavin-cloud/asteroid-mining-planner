@@ -50,7 +50,7 @@ Lambert core validated against poliastro 0.17.0 as external oracle: M=0 max rela
 ## Limits
 
 - Catalog: 41,906 near-Earth asteroids; searches are paged, coverage fields say so.
-- Ephemeris span: the accepted departure window is **2026-01-01 through 2040-12-30** (UTC midnight); requests outside it refuse rather than extrapolate. The server's own refusal text currently advertises `2025-12-31 through 2040-12-30`, whose start date is one day early and is itself refused — see "Advertised span vs accepted span" below.
+- Ephemeris span: the accepted departure window is **2026-01-01 through 2040-12-30** (UTC midnight); requests outside it refuse rather than extrapolate. The server's own refusal text now advertises `2026-01-01 through 2040-12-30` — see "Advertised span vs accepted span" below.
 - Provenance hashes: live per-path git hashes in a checkout; build-baked package commit under npx (granularity loss disclosed in the envelope note).
 
 ## Advertised span vs accepted span (recorded 2026-09-22)
@@ -58,7 +58,7 @@ Lambert core validated against poliastro 0.17.0 as external oracle: M=0 max rela
 The committed Earth fixture spans JD TDB 2461041.5 - 2466519.5, i.e. TDB midnight on 2026-01-01 through
 2040-12-31. `jdTdbToUtcDateString` (`src/tools/compute-shared.ts:130-136`) renders a JD as a UTC date by
 subtracting the 69.184 s TDB-UTC offset, which moves a TDB-midnight instant back across the date line, so the span
-renders as `2025-12-31 through 2040-12-30`.
+renders as `2026-01-01 through 2040-12-30`.
 
 Rounding down that way is conservative for the upper bound and wrong for the lower:
 
@@ -70,7 +70,7 @@ Rounding down that way is conservative for the upper bound and wrong for the low
 | 2040-12-31 | 2466519.50080074 | above max 2466519.5 | refused as an end |
 
 So the accepted window is **2026-01-01 through 2040-12-30**, while `earthSpanHelp`
-(`src/tools/compute-shared.ts:146-148`) tells the caller to "choose departure dates inside 2025-12-31 through
+(`src/tools/compute-shared.ts:146-148`) tells the caller to "choose departure dates inside 2026-01-01 through
 2040-12-30". A caller who follows that advice at its lower edge gets an `out_of_envelope` refusal from
 `withinEarthSpan` (`src/tools/compute-shared.ts:139-144`).
 

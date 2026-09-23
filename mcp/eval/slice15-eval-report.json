@@ -1,7 +1,7 @@
 {
   "reportVersion": "1",
-  "generatedAt": "2026-07-10T04:03:40.164Z",
-  "origin": "5d4f8966ef504f5e1f0ccbc2fc5d4adc4097d183",
+  "generatedAt": "2026-09-23T19:12:55.611Z",
+  "origin": "f7b19e7590de8fa41610e83bdb20cbcb09d06ffe",
   "totalPairs": 10,
   "passed": 10,
   "failed": 0,
@@ -39,7 +39,7 @@
       "category": "refusal",
       "passed": true,
       "reason": "",
-      "gradingCheck": "result.structuredContent.refusal.code === 'out_of_envelope' && result.structuredContent.refusal.reason.includes('2050-01-01 through 2050-01-10') && result.structuredContent.refusal.reason.includes('2025-12-31 through 2040-12-30') && result.structuredContent.value === null"
+      "gradingCheck": "result.structuredContent.refusal.code === 'out_of_envelope' && result.structuredContent.refusal.reason.includes('2050-01-01 through 2050-01-10') && result.structuredContent.refusal.reason.includes('2026-01-01 through 2040-12-30') && result.structuredContent.value === null"
     },
     {
       "id": "P6",

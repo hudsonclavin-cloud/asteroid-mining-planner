@@ -43,9 +43,16 @@ export const DEFAULT_GRID_DEPARTURE = 80;
 export const DEFAULT_GRID_TOF = 50;
 export const DEFAULT_TOP_N = 10;
 
+export interface EarthSpan {
+  minJd: number;
+  maxJd: number;
+  startDate: string;
+  endDate: string;
+}
+
 interface ComputeContext {
   earthSeries: readonly CanonicalState[];
-  earthSpan: { minJd: number; maxJd: number; startDate: string; endDate: string };
+  earthSpan: EarthSpan;
   porkchopDeps: PorkchopEphemerisDependencies;
 }
 
@@ -66,13 +73,17 @@ export async function loadComputeContext(): Promise<ComputeContext> {
       throw new Error('Earth Horizons fixture did not produce a usable state series');
     }
 
+    const minJd = jdFromTdbSeconds(first.tdbSeconds);
+    const maxJd = jdFromTdbSeconds(last.tdbSeconds);
+    const { startDate, endDate } = acceptedUtcDateBounds(minJd, maxJd);
+
     return {
       earthSeries,
       earthSpan: {
-        minJd: jdFromTdbSeconds(first.tdbSeconds),
-        maxJd: jdFromTdbSeconds(last.tdbSeconds),
-        startDate: jdTdbToUtcDateString(jdFromTdbSeconds(first.tdbSeconds)),
-        endDate: jdTdbToUtcDateString(jdFromTdbSeconds(last.tdbSeconds))
+        minJd,
+        maxJd,
+        startDate,
+        endDate
       },
       porkchopDeps: {
         nowMs: () => performance.now(),
@@ -135,16 +146,38 @@ export function jdTdbToUtcDateString(jdTdb: number): string {
   return new Date(utcMillis).toISOString().slice(0, 10);
 }
 
+export function acceptedUtcDateBounds(minJd: number, maxJd: number): Pick<EarthSpan, 'startDate' | 'endDate'> {
+  const renderedLowerDate = jdTdbToUtcDateString(minJd);
+  const renderedUpperDate = jdTdbToUtcDateString(maxJd);
+  const startDate = utcMidnightToJdTdb(renderedLowerDate) < minJd
+    ? shiftUtcDate(renderedLowerDate, 1)
+    : renderedLowerDate;
+  const endDate = utcMidnightToJdTdb(renderedUpperDate) > maxJd
+    ? shiftUtcDate(renderedUpperDate, -1)
+    : renderedUpperDate;
+
+  return { startDate, endDate };
+}
+
+function shiftUtcDate(date: string, dayDelta: number): string {
+  const utcMillis = Date.parse(`${date}T00:00:00Z`) + dayDelta * SECONDS_PER_DAY * 1000;
+  return new Date(utcMillis).toISOString().slice(0, 10);
+}
+
 export function withinEarthSpan(
-  span: { minJd: number; maxJd: number; startDate: string; endDate: string },
+  span: EarthSpan,
   departureStartJd: number,
   departureEndJd: number
 ): boolean {
   return departureStartJd >= span.minJd && departureEndJd <= span.maxJd;
 }
 
-export function earthSpanHelp(span: { startDate: string; endDate: string }): string {
-  return `choose departure dates inside ${span.startDate} through ${span.endDate}`;
+export function earthSpanLabel(span: Pick<EarthSpan, 'startDate' | 'endDate'>): string {
+  return `${span.startDate} through ${span.endDate}`;
+}
+
+export function earthSpanHelp(span: Pick<EarthSpan, 'startDate' | 'endDate'>): string {
+  return `choose departure dates inside ${earthSpanLabel(span)}`;
 }
 
 export function makeVehicleId(vehicle: LaunchVehicle): string {

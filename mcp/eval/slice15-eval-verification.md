@@ -99,7 +99,7 @@ Source consulted: MCP server call:
 }
 ```
 
-Observed refusal: code `out_of_envelope`; reason `Departure window 2050-01-01 through 2050-01-10 is outside the committed Earth ephemeris span 2025-12-31 through 2040-12-30.`; value `null`.
+Observed refusal: code `out_of_envelope`; reason `Departure window 2050-01-01 through 2050-01-10 is outside the committed Earth ephemeris span 2026-01-01 through 2040-12-30.`; value `null`.
 
 Ground truth in eval: same refusal; deterministic check asserts code, requested window, committed span, and null value.
 
