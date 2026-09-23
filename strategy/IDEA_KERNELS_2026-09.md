@@ -141,3 +141,28 @@ K4 and K5 unchanged.
 
 *Verification of this section: every count and field list was read from the committed artifacts on 2026-09-21, not
 recalled; the gate wording was quoted from §2 and §3 above; each cited SHA was confirmed with `git cat-file -e`.*
+
+### §6.2 State change — K4 promoted to Slice 19 QOL slot (appended 2026-09-23)
+
+K4 (one-way light-time / comms-latency chip, §1 row 6) is promoted from CONCEPT
+to the Slice 19 QOL slot by Hudson's ruling. It qualifies under §3 item 4
+("tiny; it can ride the QOL slot of any UI slice") and adds no payload, no new
+data source, and no math-layer code: the quantity is heliocentric distance ÷ c,
+derived from body state already computed for the scene.
+
+Scope as promoted: display only. One chip per selected body, stating one-way
+light time. It is DERIVED, not literal (DEC-17-5), computed from the same core
+state the renderer already holds — no new constant is typed, and c is imported
+from the core if a constant exists there, else added to the core, never inlined
+at the call site (§5).
+
+Explicitly NOT in scope: round-trip light time, time dilation (killed in §1),
+any latency claim about a real comms link, or any relay/routing behaviour
+(that is K9, unchanged).
+
+Honesty requirement: if the body's state is unavailable or the scene has no
+selection, the chip must show a structured refusal or be absent — never a
+placeholder number (§5, "a kernel that cannot refuse does not ship").
+
+Unchanged by this promotion: K1, K3, K5, K13 states; H0's Slice-21 seat; C0's
+gate.
