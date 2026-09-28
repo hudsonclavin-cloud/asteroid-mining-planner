@@ -18,3 +18,11 @@ textures/** linguist-vendored
 # Cloudflare Worker proxy — vendored infrastructure
 worker/** linguist-vendored
 proxy/** linguist-vendored
+# S19-D04: normalize all tracked text to LF (ruled by Hudson)
+* text=auto eol=lf
+*.jpg -text
+*.png -text
+*.tif -text
+*.tiff -text
+*.bin -text
+*.pdf -text
