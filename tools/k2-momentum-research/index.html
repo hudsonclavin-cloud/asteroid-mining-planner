@@ -1,0 +1,526 @@
+<title>K2 Momentum Bank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: flight-dynamics console. Plot left (the physics), ledger right (the numbers), assumptions below. */
+:root {
+  --bg: #eef1f4;
+  --panel: #f8fafb;
+  --ink: #17202b;
+  --muted: #5a6573;
+  --rule: #cfd6de;
+  --orbit: #2f6f9f;
+  --tether: #b5651d;
+  --payload: #c2410c;
+  --earth: #3b5a7a;
+  --atmo: #8fb3d1;
+  --good: #2e7d4f;
+  --warn: #a15c00;
+  --bad: #b3261e;
+  --chip: #e2e8ee;
+  --plot-bg: #f3f6f9;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e141b; --panel: #141c25; --ink: #dfe6ee; --muted: #8d99a8; --rule: #263241;
+  --orbit: #6aa8d8; --tether: #e0a060; --payload: #ff8a4c; --earth: #29435e; --atmo: #3f6c94;
+  --good: #5cc28a; --warn: #e3a341; --bad: #ef6b62; --chip: #1d2733; --plot-bg: #0a1017; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e141b; --panel: #141c25; --ink: #dfe6ee; --muted: #8d99a8; --rule: #263241;
+  --orbit: #6aa8d8; --tether: #e0a060; --payload: #ff8a4c; --earth: #29435e; --atmo: #3f6c94;
+  --good: #5cc28a; --warn: #e3a341; --bad: #ef6b62; --chip: #1d2733; --plot-bg: #0a1017; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body); margin: 0; }
+.wrap { padding: 20px 16px 40px; max-width: 1360px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font: 500 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 30px/1.1 var(--f-display); margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+.lede { margin: 0; max-width: 72ch; color: var(--muted); }
+.lede b { color: var(--ink); font-weight: 500; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 920px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+section { min-width: 0; }
+.plot { background: var(--plot-bg); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; display: grid; }
+canvas#scene { width: 100%; aspect-ratio: 4 / 3; display: block; touch-action: none; cursor: grab; max-width: 100%; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--rule); background: var(--panel); }
+.bar .sp { flex: 1; }
+button, select { font: 500 12px var(--f-body); color: var(--ink); background: var(--chip); border: 1px solid var(--rule); border-radius: 4px; padding: 6px 10px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--orbit); outline-offset: 2px; }
+.clock { font: 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 8px 12px; font: 11px var(--f-mono); color: var(--muted); border-top: 1px solid var(--rule); background: var(--panel); }
+.legend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 6px; }
+
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.panel h2 { font: 600 15px/1.2 var(--f-display); margin: 0; letter-spacing: .01em; text-transform: uppercase; }
+.panel h2 small { font: 400 11px var(--f-mono); color: var(--muted); text-transform: none; letter-spacing: 0; margin-left: 6px; }
+.stack { display: grid; gap: 14px; }
+.ctl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; }
+.ctl label { font-size: 12.5px; }
+.ctl output { font: 500 12px var(--f-mono); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--tether); }
+.ctl .hint { grid-column: 1 / -1; font-size: 11px; color: var(--muted); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font: 500 10px var(--f-mono); padding: 1px 5px; border-radius: 3px; background: var(--chip); color: var(--muted); white-space: nowrap; }
+.tag.c { color: var(--good); } .tag.l { color: var(--orbit); } .tag.s { color: var(--warn); }
+
+table.led { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.led td { padding: 5px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.led td.v { text-align: right; font: 500 12.5px var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 10px; }
+table.led tr.tot td { font-weight: 600; border-bottom: 2px solid var(--ink); }
+.big { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.big div { border: 1px solid var(--rule); border-radius: 4px; padding: 8px 10px; }
+.big b { display: block; font: 600 24px/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
+.big span { font-size: 11.5px; color: var(--muted); }
+.flag { border-left: 3px solid var(--warn); padding: 6px 10px; font-size: 12.5px; background: var(--chip); border-radius: 0 4px 4px 0; }
+.flag.bad { border-color: var(--bad); }
+.flag.ok { border-color: var(--good); }
+canvas#hist { width: 100%; height: 130px; display: block; max-width: 100%; }
+.note { font-size: 11.5px; color: var(--muted); margin: 0; }
+.mono { font-family: var(--f-mono); font-size: 11.5px; overflow-wrap: anywhere; }
+.assump { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 22px; }
+.assump p { margin: 0; font-size: 12.5px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Aster · L9 Momentum · Kernel K2 · research prototype</div>
+    <h1>K2 Momentum Bank</h1>
+    <p class="lede">An asteroid payload comes home on a hyperbola. Aster's side of the interface is one number, the <b>Earth-arrival v∞</b>. Skyhook's side is the <b>Rev A tether</b>. The plot shows the payload falling in, being caught at the upper tip, and leaving at the lower tip. The ledger shows what the payload saves and what each kg it delivers puts back into the tether's momentum budget.</p>
+  </header>
+
+  <div class="grid">
+    <section class="plot" aria-label="Catch geometry plot">
+      <canvas id="scene" width="960" height="720"></canvas>
+      <div class="bar">
+        <button id="play" aria-pressed="true">Pause</button>
+        <button id="restart">Restart</button>
+        <select id="warp" aria-label="Time warp">
+          <option value="20">20× time</option>
+          <option value="60" selected>60× time</option>
+          <option value="200">200× time</option>
+          <option value="600">600× time</option>
+        </select>
+        <span class="sp"></span>
+        <div class="seg" role="group" aria-label="Camera">
+          <button data-cam="catch" aria-pressed="true">Catch</button>
+          <button data-cam="earth">Earth</button>
+          <button data-cam="approach">Approach</button>
+        </div>
+        <span class="clock" id="clock">T−00:00</span>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--orbit)"></i>tether CoM orbit, 610 km</span>
+        <span><i style="background:var(--tether)"></i>tether, 2×320 km</span>
+        <span><i style="background:var(--payload)"></i>payload path</span>
+        <span><i style="background:var(--muted)"></i>no-catch hyperbola</span>
+        <span>True scale. Camera moves; physics does not.</span>
+      </div>
+    </section>
+
+    <section class="stack">
+      <div class="panel" aria-label="Inputs">
+        <h2>Arrival <small>what Aster hands over</small></h2>
+        <div class="ctl">
+          <label for="vinf">Earth-arrival v∞ <span class="tag s">input</span></label><output id="vinfO"></output>
+          <input type="range" id="vinf" min="0" max="6" step="0.05" value="2">
+          <span class="hint">K1 (return-leg porkchop) will supply this per body. Until then it is a slider.</span>
+        </div>
+        <div class="ctl">
+          <label for="dec">Asymptote declination <span class="tag s">input</span></label><output id="decO"></output>
+          <input type="range" id="dec" min="-40" max="40" step="1" value="0">
+        </div>
+        <div class="seg" role="group" aria-label="Payload fate">
+          <button data-mode="drop" aria-pressed="true">Drop to Earth</button>
+          <button data-mode="hold">Hold in 610 km orbit</button>
+        </div>
+        <h2>Tether <small>Skyhook Rev A snapshot</small></h2>
+        <div class="ctl">
+          <label for="tip">Tip speed</label><output id="tipO"></output>
+          <select id="tip" style="grid-column:1/-1"></select>
+        </div>
+        <div class="ctl">
+          <label for="inc">Facility inclination <span class="tag s">not in Rev A</span></label><output id="incO"></output>
+          <input type="range" id="inc" min="0" max="60" step="1" value="0">
+          <span class="hint">0° matches the equatorial-prograde lower-tip note in rev_a.json.</span>
+        </div>
+        <div class="ctl">
+          <label for="tol">Catch velocity tolerance <span class="tag s">not in Rev A</span></label><output id="tolO"></output>
+          <input type="range" id="tol" min="0" max="0.5" step="0.01" value="0">
+        </div>
+        <div class="ctl">
+          <label for="isp">Payload stage Isp <span class="tag s">assumption</span></label><output id="ispO"></output>
+          <input type="range" id="isp" min="200" max="460" step="5" value="320">
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="panel" aria-label="Payload ledger">
+      <h2>Payload Δv ledger <small id="modeNote"></small></h2>
+      <div class="big">
+        <div><b id="bigTether">–</b><span>payload Δv with the tether</span></div>
+        <div><b id="bigAlt">–</b><span id="bigAltL">without the tether</span></div>
+      </div>
+      <table class="led"><tbody id="ledger"></tbody></table>
+      <div id="fateBox"></div>
+    </section>
+
+    <section class="panel" aria-label="Momentum bank">
+      <h2>Momentum bank <small>what the tether gets back</small></h2>
+      <table class="led"><tbody id="bank"></tbody></table>
+      <div class="ctl">
+        <label for="fac">Facility mass, t <span class="tag s">lower bound</span></label><output id="facO"></output>
+        <input type="range" id="fac" min="100" max="20000" step="0.1" value="609.1">
+        <span class="hint" id="facHint"></span>
+      </div>
+      <div class="ctl">
+        <label for="out">Outbound throws, t/yr <span class="tag s">assumption</span></label><output id="outO"></output>
+        <input type="range" id="out" min="0" max="1000" step="10" value="100">
+      </div>
+      <div class="ctl">
+        <label for="inb">Inbound catches, t/yr <span class="tag s">assumption</span></label><output id="inbO"></output>
+        <input type="range" id="inb" min="0" max="1000" step="10" value="50">
+      </div>
+      <div id="bankFlags" class="stack"></div>
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="panel" aria-label="Aster catalog proxy">
+      <h2>Where Aster's catalog sits <small>proxy, read the caveat</small></h2>
+      <canvas id="hist" width="640" height="130"></canvas>
+      <p class="note" id="histNote"></p>
+    </section>
+    <section class="panel" aria-label="Provenance">
+      <h2>Provenance</h2>
+      <p class="note mono" id="prov"></p>
+      <p class="note">Gate: <span class="mono">node tools/k2-momentum-research/verify.mjs --skyhook ../skyhook</span> reproduces Rev A's recorded v_upper, C3, apogee, tip g, spin period and the 2.8 and 3.5 km/s option values, then checks the snapshot hash against the live file.</p>
+    </section>
+  </div>
+
+  <section class="panel" aria-label="Assumptions">
+    <h2>Model limits and assumptions</h2>
+    <div class="assump">
+      <p><span class="tag c">[Certain]</span> Catch Δv = |√(v∞² + 2μ/r<sub>tip</sub>) − (v<sub>orb</sub> + v<sub>tip</sub>)|, vis-viva at the upper-tip radius with periapsis placed on the tip.</p>
+      <p><span class="tag c">[Certain]</span> Drop mode deposits exactly the energy one outbound throw withdraws, per kg. The catch and throw states are mirror images.</p>
+      <p><span class="tag l">[Likely]</span> Energy accounting is first-order orbital energy. Spin-energy redistribution and the CoM shift while a payload is attached are neglected.</p>
+      <p><span class="tag l">[Likely]</span> Plane penalty 2·v∞·sin(Δ/2) assumes the asymptote is rotated far from Earth when |dec| exceeds the facility inclination. Node timing and phasing waits are not modeled.</p>
+      <p><span class="tag l">[Likely]</span> Entry figures are ballistic Allen–Eggers estimates (H = 7.2 km, interface 120 km). They rank options; they do not size a heat shield.</p>
+      <p><span class="tag s">[Speculative]</span> Hold mode assumes a climber moves the payload to the CoM. That motion is drawn schematically and its timing is invented for the picture.</p>
+      <p><span class="tag s">[Speculative]</span> Facility mass defaults to Rev A fiber mass only. Station, ballast and climber mass are not in Rev A, so real perturbations are smaller.</p>
+      <p><span class="tag l">[Likely]</span> Aerocapture is the strongest competitor for both modes. It is not modeled here because its cost is aeroshell mass, not Δv.</p>
+    </div>
+  </section>
+</div>
+
+<script src="rev-a-snapshot.js"></script>
+<script src="vinf-proxy.js"></script>
+<script src="k2-model.js"></script>
+<script>
+(function () {
+  'use strict';
+  var SNAP = globalThis.REV_A_SNAPSHOT, A = SNAP.params, K = globalThis.K2Model, PROXY = globalThis.VINF_PROXY;
+  var $ = function (id) { return document.getElementById(id); };
+  var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+
+  // Tip-speed options come straight from the snapshot, with their Rev A status.
+  var kin = A.kinematics, mr = A.mass_ratio.integrated_tether_to_payload_both_arms;
+  var TIPS = [
+    { v: kin.v_tip_kms, label: kin.v_tip_kms.toFixed(2) + ' km/s · Rev A reference (GTO class)', fiberT: mr.conservative_30pct_fiber_mass_t },
+    { v: kin.cislunar_revenue_gated_option.v_tip_kms, label: kin.cislunar_revenue_gated_option.v_tip_kms.toFixed(2) + ' km/s · cislunar, revenue-gated', fiberT: kin.cislunar_revenue_gated_option.fiber_mass_t_at_5000kg_payload },
+    { v: kin.phase3_growth_option.v_tip_kms, label: kin.phase3_growth_option.v_tip_kms.toFixed(2) + ' km/s · Phase 3 growth option', fiberT: kin.phase3_growth_option.fiber_mass_t_at_5000kg_payload }
+  ];
+  TIPS.forEach(function (t, i) { var o = document.createElement('option'); o.value = i; o.textContent = t.label; $('tip').appendChild(o); });
+  var payloadT = mr.payload_mass_kg_for_tonnage / 1000;
+
+  var state = { mode: 'drop', cam: 'catch', playing: true, warp: 60, t: -1500, facTouched: false };
+  var R, scen;
+
+  function inputs() {
+    var tip = TIPS[+$('tip').value];
+    if (!state.facTouched) $('fac').value = tip.fiberT;
+    return {
+      vInf: +$('vinf').value, decDeg: +$('dec').value, incDeg: +$('inc').value, tolKms: +$('tol').value,
+      ispS: +$('isp').value, mode: state.mode, vTip: tip.v, facilityMassT: +$('fac').value, payloadT: payloadT,
+      outboundTPerYr: +$('out').value, inboundTPerYr: +$('inb').value, directGammaDeg: 6
+    };
+  }
+
+  function f(x, d) { return (x >= 0 ? '' : '−') + Math.abs(x).toFixed(d == null ? 2 : d); }
+  function row(label, val, cls) { return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + label + '</td><td class="v">' + val + '</td></tr>'; }
+
+  function recompute() {
+    var inp = inputs();
+    R = K.evaluate(A, inp);
+    var m = R.machine;
+    $('vinfO').textContent = inp.vInf.toFixed(2) + ' km/s';
+    $('decO').textContent = inp.decDeg + '°';
+    $('incO').textContent = inp.incDeg + '°';
+    $('tolO').textContent = (inp.tolKms * 1000).toFixed(0) + ' m/s';
+    $('ispO').textContent = inp.ispS + ' s';
+    $('tipO').textContent = 'v_up ' + m.vUp.toFixed(2) + ' · v_low ' + m.vLow.toFixed(2) + ' km/s ECI';
+    $('facO').textContent = (+$('fac').value).toLocaleString() + ' t';
+    $('outO').textContent = inp.outboundTPerYr + ' t/yr';
+    $('inbO').textContent = inp.inboundTPerYr + ' t/yr';
+    $('facHint').textContent = 'Default is Rev A fiber mass at 30% derate for this tip speed (' + TIPS[+$('tip').value].fiberT.toLocaleString() + ' t). Payload per event ' + payloadT + ' t (rev_a.json).';
+
+    // Payload ledger
+    var hold = inp.mode === 'hold';
+    $('bigTether').textContent = R.dvTether.toFixed(2) + ' km/s';
+    $('bigAlt').textContent = hold ? R.dvRocketOnly.toFixed(2) + ' km/s' : '0 km/s';
+    $('bigAltL').textContent = hold ? 'rocket-only capture into 610 km circular' : 'direct entry, no burn, but see entry speed below';
+    $('modeNote').textContent = hold ? 'end state: 610 km circular' : 'end state: Earth entry';
+    var L = '';
+    L += row('Payload speed at upper-tip radius (pre-burn)', R.vPeriUp.toFixed(3) + ' km/s');
+    L += row('Upper-tip speed, ECI', m.vUp.toFixed(3) + ' km/s');
+    L += row(R.dvMatchSigned >= 0 ? 'Braking burn to match the tip' : 'Speed-up burn to match the tip', R.dvMatch.toFixed(3) + ' km/s');
+    L += row('Plane alignment (|dec| − inc = ' + R.planeGapDeg.toFixed(0) + '°)', R.dvPlane.toFixed(3) + ' km/s');
+    L += row('Total with tether', R.dvTether.toFixed(3) + ' km/s', 'tot');
+    L += row('Propellant per kg delivered, Isp ' + inp.ispS + ' s', R.propFracTether.toFixed(3) + ' kg');
+    if (hold) {
+      L += row('Rocket-only, same end state', R.dvRocketOnly.toFixed(3) + ' km/s');
+      L += row('Propellant per kg, rocket-only', R.propFracRocketOnly.toFixed(3) + ' kg');
+      L += row('Δv saved by the tether', f(R.dvSaved, 3) + ' km/s', 'tot');
+    }
+    $('ledger').innerHTML = L;
+
+    var fb = '';
+    if (!hold && R.entry) {
+      if (R.entry.enters) {
+        fb += '<table class="led"><tbody>' +
+          row('Entry speed after lower-tip release', R.entry.vEI.toFixed(2) + ' km/s') +
+          row('Direct entry speed from v∞', R.direct.vEI.toFixed(2) + ' km/s') +
+          row('Entry angle after release (steep, fixed by geometry)', R.entry.gammaDeg.toFixed(1) + '°') +
+          row('Heating-rate proxy, v³ ratio (released ÷ direct)', Math.pow(R.entry.vEI / R.direct.vEI, 3).toFixed(2)) +
+          row('Ballistic peak g, released / direct at 6°', R.entry.allenEggersPeakG.toFixed(0) + ' g / ' + R.direct.allenEggersPeakG.toFixed(0) + ' g') +
+          '</tbody></table>';
+        fb += '<p class="note">The drop trades a braking burn for a much slower but steep entry. Steepness is set by the tether, not the payload, so peak deceleration is the cost to check.</p>';
+      } else {
+        fb += '<div class="flag">Released payload does not reach the entry interface (perigee ' + R.entry.perigeeAltKm.toFixed(0) + ' km).</div>';
+      }
+    }
+    if (R.dvMatchSigned < 0) fb += '<div class="flag ok">At this tip speed the tip outruns the arriving payload, so the payload must speed up to be caught. This is the escape-capable regime.</div>';
+    $('fateBox').innerHTML = fb;
+
+    // Bank
+    var B = '';
+    B += row('Energy one outbound throw withdraws', R.withdrawMJperKg.toFixed(2) + ' MJ/kg');
+    B += row('Energy one inbound catch deposits', R.depositMJperKg.toFixed(2) + ' MJ/kg');
+    B += row('Inbound kg that repays one outbound kg', (1 / R.bankRatio).toFixed(2) + ' kg', 'tot');
+    B += row('Annual debt / repaid', R.debtTJperYr.toFixed(1) + ' / ' + R.repaidTJperYr.toFixed(1) + ' TJ');
+    B += row('Share of debt repaid by inbound traffic', R.repaidFraction == null ? '–' : (R.repaidFraction * 100).toFixed(0) + '%', 'tot');
+    B += row('CoM perigee after one unbalanced ' + payloadT + ' t throw', R.afterThrow.perigeeAltKm.toFixed(0) + ' km');
+    B += row('Lower-tip altitude at that perigee', R.lowerTipAltAfterThrowKm.toFixed(0) + ' km');
+    B += row('CoM apogee after one ' + payloadT + ' t catch', R.afterCatch.apogeeAltKm.toFixed(0) + ' km');
+    $('bank').innerHTML = B;
+    var flags = '';
+    var EI = K.ASSUMPTIONS.ENTRY_INTERFACE_ALT_KM.value;
+    if (R.lowerTipAltAfterThrowKm < EI) flags += '<div class="flag bad">After one unbalanced throw the lower tip dips to ' + R.lowerTipAltAfterThrowKm.toFixed(0) + ' km, below the ' + EI + ' km entry interface. At this facility mass the tether needs a matching catch or reboost before the next perigee pass. [Likely, first-order]</div>';
+    else if (R.lowerTipAltAfterThrowKm < 200) flags += '<div class="flag">Lower tip dips to ' + R.lowerTipAltAfterThrowKm.toFixed(0) + ' km after one unbalanced throw. Drag on the tip becomes a real cost there. [Likely]</div>';
+    if (R.repaidFraction != null && R.repaidFraction >= 1) flags += '<div class="flag ok">Inbound traffic repays the full outbound debt. Reboost covers only losses. [Likely, first-order]</div>';
+    $('bankFlags').innerHTML = flags;
+
+    buildScenario();
+    drawHist();
+  }
+
+  // ---------- Scenario geometry (t = 0 at catch) ----------
+  var PHI_C = Math.PI / 2;
+  function buildScenario() {
+    var m = R.machine, mu = m.mu;
+    var rc = [m.rUp * Math.cos(PHI_C), m.rUp * Math.sin(PHI_C)];
+    var tdir = [-Math.sin(PHI_C), Math.cos(PHI_C)];
+    var dt = 5;
+    // Inbound (pre-burn) hyperbola, integrated backward 2 h from periapsis.
+    var back = K.propagate(mu, rc, [-tdir[0] * R.vPeriUp, -tdir[1] * R.vPeriUp], dt, 1440);
+    var inbound = back.map(function (p, i) { return { t: -i * dt, x: p[0], y: p[1] }; }).reverse();
+    // No-catch continuation for 40 min.
+    var cont = K.propagate(mu, rc, [tdir[0] * R.vPeriUp, tdir[1] * R.vPeriUp], dt, 480).map(function (p) { return { x: p[0], y: p[1] }; });
+    var tRel = m.catchToNadirS, release = null, out = [];
+    if (state.mode === 'drop') {
+      var phi = PHI_C + m.n * tRel, th = PHI_C + m.omega * tRel;
+      var com = [m.rCom * Math.cos(phi), m.rCom * Math.sin(phi)];
+      var vcom = [-m.vOrb * Math.sin(phi), m.vOrb * Math.cos(phi)];
+      var r0 = [com[0] + m.L * Math.cos(th), com[1] + m.L * Math.sin(th)];
+      var v0 = [vcom[0] - m.vTip * Math.sin(th), vcom[1] + m.vTip * Math.cos(th)];
+      var rEI = m.RE + K.ASSUMPTIONS.ENTRY_INTERFACE_ALT_KM.value;
+      out = K.propagate(mu, r0, v0, dt, 1200, function (s) { return Math.hypot(s[0], s[1]) < rEI; })
+        .map(function (p, i) { return { t: tRel + i * dt, x: p[0], y: p[1] }; });
+      release = { t: tRel };
+    }
+    scen = { inbound: inbound, cont: cont, out: out, tRel: tRel, tEnd: state.mode === 'drop' ? (out.length ? out[out.length - 1].t + 300 : tRel + 600) : 2 * Math.PI / (m.omega - m.n) * 3, rc: rc };
+  }
+
+  function tetherAt(t) {
+    var m = R.machine, phi = PHI_C + m.n * t, th = PHI_C + m.omega * t;
+    var com = [m.rCom * Math.cos(phi), m.rCom * Math.sin(phi)];
+    return { com: com, up: [com[0] + m.L * Math.cos(th), com[1] + m.L * Math.sin(th)], low: [com[0] - m.L * Math.cos(th), com[1] - m.L * Math.sin(th)], th: th };
+  }
+
+  function interp(arr, t) {
+    if (!arr.length) return null;
+    if (t <= arr[0].t) return arr[0];
+    for (var i = 1; i < arr.length; i++) if (arr[i].t >= t) {
+      var a = arr[i - 1], b = arr[i], u = (t - a.t) / (b.t - a.t);
+      return { x: a.x + u * (b.x - a.x), y: a.y + u * (b.y - a.y) };
+    }
+    return arr[arr.length - 1];
+  }
+
+  function payloadAt(t) {
+    if (t < 0) return interp(scen.inbound, t);
+    var T = tetherAt(t);
+    if (state.mode === 'drop') {
+      if (t < scen.tRel) return { x: T.up[0], y: T.up[1] };
+      return interp(scen.out, t);
+    }
+    // hold: ride the tip for one quarter turn, then a schematic climb to the CoM over one spin period.
+    var m = R.machine, climbStart = (Math.PI / 2) / m.omega, climbDur = 2 * Math.PI / m.omega;
+    var frac = Math.min(1, Math.max(0, (t - climbStart) / climbDur));
+    var r = m.L * (1 - frac);
+    return { x: T.com[0] + r * Math.cos(T.th), y: T.com[1] + r * Math.sin(T.th), climbing: frac > 0 && frac < 1 };
+  }
+
+  // ---------- Camera ----------
+  var cam = { cx: 0, cy: 7000, span: 3200 }, camGoal = null, drag = null;
+  function camPreset(name) {
+    state.cam = name;
+    document.querySelectorAll('[data-cam]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.cam === name); });
+    if (name === 'catch') camGoal = { cx: -900, cy: 6900, span: 4200 };
+    if (name === 'earth') camGoal = { cx: 0, cy: 0, span: 19000 };
+    if (name === 'approach') camGoal = { cx: 0, cy: 0, span: 90000 };
+  }
+
+  var cv = $('scene'), ctx = cv.getContext('2d');
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), w = cv.clientWidth, h = cv.clientHeight;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function W2S(x, y) {
+    var w = cv.clientWidth, h = cv.clientHeight, s = Math.min(w, h) / cam.span;
+    return [w / 2 + (x - cam.cx) * s, h / 2 - (y - cam.cy) * s];
+  }
+  function scale() { return Math.min(cv.clientWidth, cv.clientHeight) / cam.span; }
+
+  function path(pts, color, width, dash) {
+    if (!pts.length) return;
+    ctx.beginPath();
+    pts.forEach(function (p, i) { var s = W2S(p.x, p.y); if (i) ctx.lineTo(s[0], s[1]); else ctx.moveTo(s[0], s[1]); });
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]);
+  }
+  function circle(r, color, width, fill) {
+    var c = W2S(0, 0);
+    ctx.beginPath(); ctx.arc(c[0], c[1], r * scale(), 0, 2 * Math.PI);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (color) { ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke(); }
+  }
+  function dot(p, r, color) { var s = W2S(p[0] != null ? p[0] : p.x, p[1] != null ? p[1] : p.y); ctx.beginPath(); ctx.arc(s[0], s[1], r, 0, 2 * Math.PI); ctx.fillStyle = color; ctx.fill(); }
+
+  function draw() {
+    var m = R.machine, t = state.t, w = cv.clientWidth, h = cv.clientHeight;
+    var C = { bg: css('--plot-bg'), orbit: css('--orbit'), tether: css('--tether'), payload: css('--payload'), earth: css('--earth'), atmo: css('--atmo'), muted: css('--muted'), ink: css('--ink') };
+    ctx.fillStyle = C.bg; ctx.fillRect(0, 0, w, h);
+    circle(m.RE + K.ASSUMPTIONS.ENTRY_INTERFACE_ALT_KM.value, null, 0, C.atmo);
+    circle(m.RE, null, 0, C.earth);
+    circle(m.rCom, C.orbit, 1.2);
+    path(scen.cont, C.muted, 1, [4, 4]);
+    path(scen.inbound.filter(function (p) { return p.t <= Math.min(t, 0); }), C.payload, 1.6);
+    path(scen.inbound.filter(function (p) { return p.t > t; }), C.payload, 1, [2, 5]);
+    if (state.mode === 'drop' && scen.out.length) {
+      path(scen.out.filter(function (p) { return p.t <= t; }), C.payload, 1.8);
+      path(scen.out.filter(function (p) { return p.t > t; }), C.payload, 1, [2, 5]);
+      var last = scen.out[scen.out.length - 1];
+      if (t >= last.t) { var s = W2S(last.x, last.y); ctx.fillStyle = C.ink; ctx.font = '11px ' + css('--f-mono'); ctx.fillText('entry interface', s[0] + 8, s[1] + 4); }
+    }
+    var T = tetherAt(t), a = W2S(T.low[0], T.low[1]), b = W2S(T.up[0], T.up[1]);
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.strokeStyle = C.tether; ctx.lineWidth = 2.2; ctx.stroke();
+    dot(T.com, 3.5, C.orbit); dot(T.up, 2.5, C.tether); dot(T.low, 2.5, C.tether);
+    var P = payloadAt(t);
+    if (P) {
+      dot(P, 4.5, C.payload);
+      if (Math.abs(t) < 40 && R.dvMatch > 0) { var sp = W2S(P.x, P.y); ctx.beginPath(); ctx.arc(sp[0], sp[1], 10 + Math.abs(t) / 4, 0, 2 * Math.PI); ctx.strokeStyle = C.payload; ctx.lineWidth = 1; ctx.stroke(); }
+    }
+    // Labels
+    ctx.font = '11px ' + css('--f-mono'); ctx.fillStyle = C.muted;
+    var phase = t < 0 ? 'inbound on hyperbola, v∞ ' + (+$('vinf').value).toFixed(2) + ' km/s'
+      : state.mode === 'drop' ? (t < scen.tRel ? 'caught · riding the tip to local nadir' : 'released at lower tip · ' + m.vLow.toFixed(2) + ' km/s ECI')
+      : (P && P.climbing ? 'climber transfer to CoM (schematic timing)' : 'caught · held');
+    ctx.fillText(phase, 12, 20);
+    ctx.fillText('field ' + Math.round(cam.span).toLocaleString() + ' km', 12, h - 12);
+    var mm = Math.floor(Math.abs(t) / 60), ss = Math.floor(Math.abs(t) % 60);
+    $('clock').textContent = 'T' + (t < 0 ? '−' : '+') + String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0') + ' from catch';
+  }
+
+  var last = null;
+  function frame(ts) {
+    if (last == null) last = ts;
+    var dt = Math.min(0.1, (ts - last) / 1000); last = ts;
+    if (state.playing) { state.t += dt * state.warp; if (state.t > scen.tEnd) state.t = -1500; }
+    if (camGoal) {
+      var k = 1 - Math.pow(0.02, dt);
+      cam.cx += (camGoal.cx - cam.cx) * k; cam.cy += (camGoal.cy - cam.cy) * k;
+      cam.span *= Math.pow(camGoal.span / cam.span, k);
+      if (Math.abs(cam.span / camGoal.span - 1) < 1e-3) camGoal = null;
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Histogram ----------
+  function drawHist() {
+    var hc = $('hist'), g = hc.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = hc.clientWidth, h = hc.clientHeight; hc.width = w * dpr; hc.height = h * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var bins = PROXY.bins, max = Math.max.apply(null, bins), pad = { l: 8, r: 8, t: 8, b: 20 };
+    var bw = (w - pad.l - pad.r) / bins.length, vmax = bins.length * PROXY.binKms;
+    g.clearRect(0, 0, w, h);
+    var vi = +$('vinf').value;
+    bins.forEach(function (c, i) {
+      var bh = (h - pad.t - pad.b) * c / max;
+      g.fillStyle = (i + 1) * PROXY.binKms <= vi ? css('--payload') : css('--atmo');
+      g.fillRect(pad.l + i * bw + 1, h - pad.b - bh, bw - 2, bh);
+    });
+    g.fillStyle = css('--muted'); g.font = '10px ' + css('--f-mono');
+    for (var v = 0; v <= vmax; v += 1) g.fillText(v + (v === vmax ? ' km/s' : ''), pad.l + v / PROXY.binKms * bw - (v === vmax ? 40 : 3), h - 6);
+    var below = 0; bins.forEach(function (c, i) { if ((i + 1) * PROXY.binKms <= vi) below += c; });
+    $('histNote').innerHTML = '<b>' + (below / PROXY.counted * 100).toFixed(0) + '%</b> of ' + PROXY.counted.toLocaleString() + ' bodies have a minimum <b>outbound</b> Earth-departure v∞ at or below the slider (' + PROXY.noWindow + ' have no window under C3 ≤ ' + PROXY.provenance.feasibleC3MaxKm2S2 + '). ' + PROXY.caveat;
+  }
+
+  function prov() {
+    var p = SNAP.provenance, q = PROXY.provenance;
+    $('prov').textContent = 'Rev A: ' + p.source + ' @ ' + p.skyhookCommit.slice(0, 7) + ' · sha256 ' + p.sha256.slice(0, 16) + '… · snapshot ' + p.snapshotAtUtc.slice(0, 10) +
+      '\nProxy: ' + q.source + ' · sha256 ' + q.sha256.slice(0, 16) + '… · solver ' + q.solverCommit.slice(0, 7) + ' · window ' + q.screeningWindow.startUtc + '…' + q.screeningWindow.endUtc;
+  }
+
+  // ---------- Wiring ----------
+  ['vinf', 'dec', 'inc', 'tol', 'isp', 'out', 'inb'].forEach(function (id) { $(id).addEventListener('input', recompute); });
+  $('fac').addEventListener('input', function () { state.facTouched = true; recompute(); });
+  $('tip').addEventListener('change', function () { state.facTouched = false; recompute(); state.t = -1500; });
+  document.querySelectorAll('[data-mode]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      state.mode = b.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      recompute(); state.t = -1500;
+    });
+  });
+  document.querySelectorAll('[data-cam]').forEach(function (b) { b.addEventListener('click', function () { camPreset(b.dataset.cam); }); });
+  $('play').addEventListener('click', function () { state.playing = !state.playing; this.textContent = state.playing ? 'Pause' : 'Play'; this.setAttribute('aria-pressed', state.playing); });
+  $('restart').addEventListener('click', function () { state.t = -1500; });
+  $('warp').addEventListener('change', function () { state.warp = +this.value; });
+  cv.addEventListener('wheel', function (e) { e.preventDefault(); camGoal = null; cam.span *= Math.exp(e.deltaY * 0.0015); cam.span = Math.min(4e5, Math.max(200, cam.span)); }, { passive: false });
+  cv.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); camGoal = null; });
+  cv.addEventListener('pointermove', function (e) { if (!drag) return; var s = scale(); cam.cx -= (e.clientX - drag.x) / s; cam.cy += (e.clientY - drag.y) / s; drag = { x: e.clientX, y: e.clientY }; });
+  cv.addEventListener('pointerup', function () { drag = null; });
+  window.addEventListener('resize', function () { resize(); drawHist(); });
+
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { state.playing = false; state.t = 0; $('play').textContent = 'Play'; $('play').setAttribute('aria-pressed', 'false'); }
+  resize(); recompute(); prov(); camPreset('catch'); cam = { cx: -900, cy: 6900, span: 4200 };
+  requestAnimationFrame(frame);
+})();
+</script>
