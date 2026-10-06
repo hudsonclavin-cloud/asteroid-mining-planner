@@ -210,10 +210,11 @@ canvas#hist { width: 100%; height: 130px; display: block; max-width: 100%; }
       <p><span class="tag c">[Certain]</span> Catch Δv = |√(v∞² + 2μ/r<sub>tip</sub>) − (v<sub>orb</sub> + v<sub>tip</sub>)|, vis-viva at the upper-tip radius with periapsis placed on the tip.</p>
       <p><span class="tag c">[Certain]</span> Drop mode deposits exactly the energy one outbound throw withdraws, per kg. The catch and throw states are mirror images.</p>
       <p><span class="tag l">[Likely]</span> Energy accounting is first-order orbital energy. Spin-energy redistribution and the CoM shift while a payload is attached are neglected.</p>
-      <p><span class="tag l">[Likely]</span> Plane penalty 2·v∞·sin(Δ/2) assumes the asymptote is rotated far from Earth when |dec| exceeds the facility inclination. Node timing and phasing waits are not modeled.</p>
-      <p><span class="tag l">[Likely]</span> Entry figures are ballistic Allen–Eggers estimates (H = 7.2 km, interface 120 km). They rank options; they do not size a heat shield.</p>
-      <p><span class="tag s">[Speculative]</span> Hold mode assumes a climber moves the payload to the CoM. That motion is drawn schematically and its timing is invented for the picture.</p>
-      <p><span class="tag s">[Speculative]</span> Facility mass defaults to Rev A fiber mass only. Station, ballast and climber mass are not in Rev A, so real perturbations are smaller.</p>
+      <p><span class="tag s">[Screening only]</span> Plane penalty 2·v∞·sin(Δ/2) assumes the asymptote is rotated far from Earth when |dec| exceeds the facility inclination. Node timing and phasing waits are not modeled. A real catch needs the full v∞ vector, epoch and B-plane target, not declination alone.</p>
+      <p><span class="tag l">[Likely]</span> Entry figures are ballistic Allen–Eggers estimates (H = 7.2 km, interface 120 km). They rank options; they do not size a heat shield. The 5.4 km/s drop entry sits below the 10–16 km/s range of NASA's Earth-entry TPS correlations, so those correlations do not apply.</p>
+      <p><span class="tag s">[Speculative]</span> Hold mode assumes a climber moves the payload to the CoM. That motion is drawn schematically and its timing is invented for the picture. Its energy credit assumes the payload ends at the CoM; retained mass also changes the facility, which is not modeled.</p>
+      <p><span class="tag s">[Speculative]</span> Facility mass defaults to Rev A fiber mass only. Station, ballast and climber mass are not in Rev A. Even so, Rev A fiber alone is ~122× payload, far heavier than MXER's ~10×. The perigee drop comes from the circular orbit, not from too little mass.</p>
+      <p><span class="tag s">[Not modeled]</span> Energy only. Angular momentum and spin recovery are separate budgets and are not reported. Outputs are nominal feasibility, not robust (Monte Carlo) feasibility.</p>
       <p><span class="tag l">[Likely]</span> Aerocapture is the strongest competitor for both modes. It is not modeled here because its cost is aeroshell mass, not Δv.</p>
     </div>
   </section>
@@ -268,7 +269,7 @@ canvas#hist { width: 100%; height: 130px; display: block; max-width: 100%; }
     $('facO').textContent = (+$('fac').value).toLocaleString() + ' t';
     $('outO').textContent = inp.outboundTPerYr + ' t/yr';
     $('inbO').textContent = inp.inboundTPerYr + ' t/yr';
-    $('facHint').textContent = 'Default is Rev A fiber mass at 30% derate for this tip speed (' + TIPS[+$('tip').value].fiberT.toLocaleString() + ' t). Payload per event ' + payloadT + ' t (rev_a.json).';
+    $('facHint').textContent = 'Default is Rev A fiber mass at 30% derate for this tip speed (' + TIPS[+$('tip').value].fiberT.toLocaleString() + ' t). Payload per event ' + payloadT + ' t (rev_a.json). Published MXER point designs ran about 9–10× payload, on elliptical orbits that catch at perigee. [lead]';
 
     // Payload ledger
     var hold = inp.mode === 'hold';
@@ -288,6 +289,8 @@ canvas#hist { width: 100%; height: 130px; display: block; max-width: 100%; }
       L += row('Propellant per kg, rocket-only', R.propFracRocketOnly.toFixed(3) + ' kg');
       L += row('Δv saved by the tether', f(R.dvSaved, 3) + ' km/s', 'tot');
     }
+    var ms = R.miss;
+    L += row('If the catch misses after the burn', (ms.bound ? 'bound, ' + ms.perigeeAltKm.toFixed(0) + ' × ' + (ms.apogeeAltKm / 1000).toFixed(0) + 'k km' : 'escapes, periapsis ' + ms.perigeeAltKm.toFixed(0) + ' km') + (ms.safe ? ' · safe' : ' · IMPACTS'));
     $('ledger').innerHTML = L;
 
     var fb = '';
@@ -473,6 +476,13 @@ canvas#hist { width: 100%; height: 130px; display: block; max-width: 100%; }
     requestAnimationFrame(frame);
   }
 
+  // Published return-leg references from literature/PERPLEXITY_RESULT_2026-10-06.pdf.
+  // LEADS until the verification pass (literature/K2_LEARNINGS.md) confirms them.
+  var LIT = {
+    keck: { lo: Math.sqrt(1.6), hi: Math.sqrt(2.1), label: 'Keck 2012 return C3 1.6–2.1', src: 'KISS 2012 ESA/ESTEC slides, slide 31 (lunar-assisted capture, not LEO)' },
+    nhats: { v: 4.63, label: 'NHATS 12 km/s entry cap', src: 'NHATS entry ≤ 12 km/s at 125 km; v∞ ceiling is a two-body estimate' }
+  };
+
   // ---------- Histogram ----------
   function drawHist() {
     var hc = $('hist'), g = hc.getContext('2d'), dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -486,10 +496,17 @@ canvas#hist { width: 100%; height: 130px; display: block; max-width: 100%; }
       g.fillStyle = (i + 1) * PROXY.binKms <= vi ? css('--payload') : css('--atmo');
       g.fillRect(pad.l + i * bw + 1, h - pad.b - bh, bw - 2, bh);
     });
-    g.fillStyle = css('--muted'); g.font = '10px ' + css('--f-mono');
+    var xOf = function (v) { return pad.l + v / PROXY.binKms * bw; };
+    g.fillStyle = css('--good'); g.globalAlpha = 0.25;
+    g.fillRect(xOf(LIT.keck.lo), pad.t, xOf(LIT.keck.hi) - xOf(LIT.keck.lo), h - pad.t - pad.b);
+    g.globalAlpha = 1; g.strokeStyle = css('--bad'); g.setLineDash([3, 3]); g.beginPath();
+    g.moveTo(xOf(LIT.nhats.v), pad.t); g.lineTo(xOf(LIT.nhats.v), h - pad.b); g.stroke(); g.setLineDash([]);
+    g.font = '10px ' + css('--f-mono'); g.fillStyle = css('--good'); g.fillText('Keck', xOf(LIT.keck.hi) + 3, pad.t + 10);
+    g.fillStyle = css('--bad'); g.fillText('NHATS cap', xOf(LIT.nhats.v) + 3, pad.t + 10);
+    g.fillStyle = css('--muted');
     for (var v = 0; v <= vmax; v += 1) g.fillText(v + (v === vmax ? ' km/s' : ''), pad.l + v / PROXY.binKms * bw - (v === vmax ? 40 : 3), h - 6);
     var below = 0; bins.forEach(function (c, i) { if ((i + 1) * PROXY.binKms <= vi) below += c; });
-    $('histNote').innerHTML = '<b>' + (below / PROXY.counted * 100).toFixed(0) + '%</b> of ' + PROXY.counted.toLocaleString() + ' bodies have a minimum <b>outbound</b> Earth-departure v∞ at or below the slider (' + PROXY.noWindow + ' have no window under C3 ≤ ' + PROXY.provenance.feasibleC3MaxKm2S2 + '). ' + PROXY.caveat;
+    $('histNote').innerHTML = '<b>' + (below / PROXY.counted * 100).toFixed(0) + '%</b> of ' + PROXY.counted.toLocaleString() + ' bodies have a minimum <b>outbound</b> Earth-departure v∞ at or below the slider (' + PROXY.noWindow + ' have no window under C3 ≤ ' + PROXY.provenance.feasibleC3MaxKm2S2 + '). ' + PROXY.caveat + ' Green band: published Keck 2012 return arrivals (' + LIT.keck.lo.toFixed(2) + '–' + LIT.keck.hi.toFixed(2) + ' km/s, ' + LIT.keck.src + '). Red line: ' + LIT.nhats.src + '. Both are unverified leads.';
   }
 
   function prov() {

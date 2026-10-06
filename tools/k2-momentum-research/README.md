@@ -34,6 +34,7 @@ Skyhook supplies the **Rev A tether**. The sim answers three questions:
 | `build-snapshots.mjs` | Regenerates the two snapshots |
 | `index.html` | The simulation |
 | `PERPLEXITY_PROMPT.md` | Pre-research prompt for the open questions below |
+| `literature/` | Perplexity result (PDF), triage (`K2_LEARNINGS.md`), verification prompt (`VERIFY_PROMPT.md`) |
 
 ## Verification (2026-10-06, Skyhook @ `34935cb`, rev_a sha256 `d0828c1e…`)
 
@@ -46,6 +47,8 @@ Skyhook supplies the **Rev A tether**. The sim answers three questions:
   and RK4 energy drift (9e-11 over 1200 s). The closed forms restate the model's own formulas, so they guard against
   regressions; they are not an independent oracle. The independent oracle is section A plus the Python cross-check.
 - **C.** Snapshot hash matches the live `rev_a.json`.
+- **D.** Second oracle: Perplexity's independent recomputation (matching burns at v∞ 1–5, parabolic burn, escape speed,
+  carry-and-drop energy) agrees to its published rounding. It checks arithmetic only, from the same inputs.
 - **Caught by the gate.** A first oracle draft used the IAU μ (398,600.4418). Rev A pins 3.986e14 m³/s² to four
   significant figures. That gives a ~1e-6 relative difference. The oracle now uses Rev A's μ.
 
@@ -56,10 +59,12 @@ Skyhook supplies the **Rev A tether**. The sim answers three questions:
    3.18 / 3.54 / 4.24 km/s. Aerocapture is the real competitor and is not modeled.
 2. **[Certain] Drop mode is exactly momentum-neutral against an outbound throw.** One inbound kg dropped from the lower
    tip repays one outbound kg thrown (43.03 MJ/kg each at 2.5 km/s). Hold mode repays 0.57 of that.
-3. **[Likely, first-order] With fiber-only facility mass, one unbalanced 5 t throw is dangerous.** At 609.1 t
-   (Rev A fiber, 30% derate), CoM perigee drops from 610 to ~440 km, and the lower tip reaches ~119 km, inside the
-   atmosphere. Real facility mass is unknown because Rev A has no station, ballast or climber mass. This is the most
-   decision-relevant result for Skyhook. It means traffic balance or ballast mass is a design driver, not an ops detail.
+3. **[Likely, first-order] One unbalanced 5 t throw from Rev A's circular orbit is dangerous.** CoM perigee drops from
+   610 to ~440 km on the opposite side, and the lower tip reaches ~119 km, inside the atmosphere. *Corrected
+   2026-10-06 after the Perplexity pass:* this is not a missing-mass problem. Rev A fiber alone is ~122× payload,
+   and published MXER designs ran ~10×. MXER flew elliptical orbits and caught near perigee, where recoil lowers the
+   apogee instead (our derivation, pending verification). Orbit shape is a Rev B candidate question. See
+   `literature/K2_LEARNINGS.md`.
 4. **[Likely] Drop-mode entry is slow but steep.** Entry speed is 5.36 km/s against 11.1–12.2 km/s for direct entry,
    but the entry angle is fixed by geometry at ~14°, which gives a ballistic peak near 19 g.
 5. **[Likely] Plane alignment can cost as much as the catch itself.** An equatorial facility with a 15° asymptote

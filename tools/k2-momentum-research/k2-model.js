@@ -171,7 +171,21 @@
     var afterThrow = apsesAfter(-(inp.payloadT / M) * withdrawPerKg);
     var afterCatch = apsesAfter(+(inp.payloadT / M) * depositPerKg);
 
-    // 6. Annual traffic balance.
+    // 6. Missed catch. The matching burn happens before the catch, so a miss leaves the payload
+    //    on the post-burn conic through the upper-tip radius. A planner must show this outcome is
+    //    non-impacting before recommending a catch (Perplexity K2 result, L3-C). [Certain two-body]
+    var vAfter = vPeriUp - (dvMatchSigned >= 0 ? 1 : -1) * dvMatch;
+    var epsMiss = sq(vAfter) / 2 - mu / m.rUp;
+    var miss;
+    if (epsMiss >= 0) {
+      miss = { bound: false, perigeeAltKm: m.rUp - m.RE, apogeeAltKm: Infinity };
+    } else {
+      var aMiss = -mu / (2 * epsMiss), otherMiss = 2 * aMiss - m.rUp;
+      miss = { bound: true, perigeeAltKm: Math.min(otherMiss, m.rUp) - m.RE, apogeeAltKm: Math.max(otherMiss, m.rUp) - m.RE };
+    }
+    miss.safe = miss.perigeeAltKm > ASSUMPTIONS.ENTRY_INTERFACE_ALT_KM.value;
+
+    // 7. Annual traffic balance.
     var outT = inp.outboundTPerYr, inT = inp.inboundTPerYr;
     var debt = outT * withdrawPerKg;
     var repaid = inT * depositPerKg;
@@ -196,6 +210,7 @@
       bankRatio: bankRatio,
       afterThrow: afterThrow,
       afterCatch: afterCatch,
+      miss: miss,
       lowerTipAltAfterThrowKm: afterThrow.perigeeAltKm - m.L,
       debtTJperYr: debt * 1e3 / 1e6,                                    // t*MJ/kg -> TJ
       repaidTJperYr: repaid * 1e3 / 1e6,

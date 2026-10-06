@@ -62,6 +62,20 @@ const e0 = vLow ** 2 / 2 - mu / rLow;
 const last = pts[pts.length - 1];
 check('RK4 energy drift over 1200 s (dt=2 s)', last[2] ** 2 / 2 + last[3] ** 2 / 2 - mu / Math.hypot(last[0], last[1]), e0, 1e-8);
 
+console.log('\nD. Second oracle: independent recomputation in literature/PERPLEXITY_RESULT_2026-10-06.pdf');
+// Published there to 3-4 significant figures as "estimated" values. A different tool derived them
+// from the same inputs, so they check arithmetic and conventions, not the physics model itself.
+const P = { 1: 0.441, 2: 0.583, 3: 0.815, 4: 1.133, 5: 1.528 };
+for (const v of Object.keys(P)) {
+  const r = K.evaluate(revA, { vInf: +v, decDeg: 0, incDeg: 0, tolKms: 0, ispS: 450, mode: 'drop', facilityMassT: 609.1, payloadT: 5, outboundTPerYr: 0, inboundTPerYr: 0, directGammaDeg: 6 });
+  check(`Perplexity matching burn @ vInf=${v}`, r.dvMatch, P[v], 1.5e-3);
+}
+const r0 = K.evaluate(revA, { vInf: 0, decDeg: 0, incDeg: 0, tolKms: 0, ispS: 450, mode: 'drop', facilityMassT: 609.1, payloadT: 5, outboundTPerYr: 0, inboundTPerYr: 0, directGammaDeg: 6 });
+check('Perplexity parabolic matching burn', r0.dvMatch, 0.393, 1.5e-3);
+check('Perplexity escape speed at upper tip', r0.machine.vEscUp, 10.449, 1e-4);
+check('Perplexity carry-and-drop energy, MJ/kg', r0.depositMJperKg, 43.03, 1e-3);
+check('Missed catch after burn: perigee alt = upper-tip alt', r0.miss.perigeeAltKm, 930, 1e-9);
+
 const ai = process.argv.indexOf('--skyhook');
 if (ai >= 0) {
   console.log('\nC. Snapshot drift vs live Skyhook rev_a.json');
