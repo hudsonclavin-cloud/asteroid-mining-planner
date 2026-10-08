@@ -11,6 +11,10 @@ import {
   type Slice9Fixture,
   type Slice9NeaBody
 } from '../../../src/v2/boundary/slice9-nea-catalog.js';
+import {
+  cachedC3GridFromMetadata,
+  type CachedC3Grid
+} from '../../../src/v2/boundary/c3-grid.js';
 import { quantity, type SourceRef } from '../envelope/index.js';
 import { gitCommitForPath, readRepoJson } from '../resources/repo.js';
 
@@ -29,6 +33,7 @@ export const SCREENING_STATUS_VALUES = [
 export interface CatalogContext {
   catalog: Slice9CanonicalFixture;
   screenByBodyId: Map<string, LambertScreenResult>;
+  screeningGrid: CachedC3Grid;
   provenance: SourceRef[];
 }
 
@@ -41,6 +46,7 @@ export interface BodySummary {
   screeningStatus: LambertScreenStatus;
   inv014Tier: string;
   minC3: ReturnType<typeof quantity> | null;
+  grid: CachedC3Grid;
 }
 
 let contextPromise: Promise<CatalogContext> | null = null;
@@ -62,6 +68,7 @@ export async function loadCatalogContext(): Promise<CatalogContext> {
     return {
       catalog,
       screenByBodyId: screenIndex.byBodyId,
+      screeningGrid: cachedC3GridFromMetadata(screenCache.metadata),
       provenance: [
         {
           id: 'catalog-boundary',
@@ -86,7 +93,7 @@ export async function loadCatalogContext(): Promise<CatalogContext> {
   return contextPromise;
 }
 
-export function bodySummary(body: Slice9NeaBody, screen: LambertScreenResult): BodySummary {
+export function bodySummary(body: Slice9NeaBody, screen: LambertScreenResult, grid: CachedC3Grid): BodySummary {
   return {
     bodyId: body.bodyId,
     spkId: String(body.spkId),
@@ -100,11 +107,12 @@ export function bodySummary(body: Slice9NeaBody, screen: LambertScreenResult): B
       : quantity(screen.minC3, 'km^2/s^2', {
           confidence: 'derived',
           sourceIds: ['screen-cache-boundary']
-        })
+        }),
+    grid
   };
 }
 
-export function fullBodyRecord(body: Slice9NeaBody, screen: LambertScreenResult | null): Record<string, unknown> {
+export function fullBodyRecord(body: Slice9NeaBody, screen: LambertScreenResult | null, grid: CachedC3Grid): Record<string, unknown> {
   return {
     bodyId: body.bodyId,
     bodyClass: body.bodyClass,
@@ -180,6 +188,7 @@ export function fullBodyRecord(body: Slice9NeaBody, screen: LambertScreenResult 
             confidence: 'derived',
             sourceIds: ['screen-cache-boundary']
           }),
+      grid,
       minC3Date: screen.minC3Date,
       minC3TofDays: screen.minC3TofDays === null
         ? null

@@ -55,7 +55,7 @@ export function registerSearchBodiesTool(server: McpServer): void {
         .sort((left, right) => left.body.designation.localeCompare(right.body.designation));
 
       const page = allMatches.slice(offset, offset + limit);
-      const results = page.map(({ body, screen }) => bodySummary(body, screen));
+      const results = page.map(({ body, screen }) => bodySummary(body, screen, context.screeningGrid));
       const coverage = {
         returned: results.length,
         total: allMatches.length,

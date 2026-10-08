@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
+import { requestedC3GridFromArgs } from '../../../src/v2/boundary/c3-grid.js';
 import { makeEnvelope, quantity, refuse } from '../envelope/index.js';
 import { evidenceEnvelopeOutputSchema } from './envelope-schema.js';
 import { CLOSED_WORLD_TOOL_ANNOTATIONS, toolResult } from './common.js';
@@ -160,6 +161,15 @@ export async function runPorkchopScan(args: z.output<typeof porkchopScanInputSch
   return makeEnvelope({
     tool: 'porkchop_scan',
     value: {
+      grid: requestedC3GridFromArgs({
+        departureStartUtc: args.departureStart,
+        departureEndUtc: args.departureEnd,
+        tofMinDays: args.tofMinDays,
+        tofMaxDays: args.tofMaxDays,
+        nDep: args.gridDeparture,
+        nTof: args.gridTof,
+        M: args.M
+      }),
       summary: {
         feasibleCells: quantity(feasible.length, 'cells', {
           confidence: 'derived',

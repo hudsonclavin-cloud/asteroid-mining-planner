@@ -1,4 +1,5 @@
 import { h, type VNode } from 'preact';
+import { formatCachedC3GridDetails, formatCachedC3GridShort } from '../../boundary/c3-grid.js';
 import { formatC3 } from '../../porkchop/format-c3.js';
 import { fullTierDisclosure, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { requestFocus, selectBody, selectedBodySignal } from '../ui-store/index.js';
@@ -69,6 +70,8 @@ export function renderRow(
   const isSelected = selectedBodySignal.value === data.bodyId;
   const showPorkchopAffordance = typeof options.onOpenPorkchop === 'function';
   const affordanceDisabled = options.porkchopDisabled === true;
+  const c3GridShort = formatCachedC3GridShort(data.screeningGrid);
+  const c3GridDetails = formatCachedC3GridDetails(data.screeningGrid);
   // S18 Item 3: keep the number (a real two-body result) but read it as context,
   // not as a grade. A null C3 already renders '—' and needs no context.
   const deEmphasizeC3 = data.tier.tier === 'L0' && data.screen.minC3 !== null;
@@ -199,9 +202,9 @@ export function renderRow(
                   whiteSpace: 'nowrap',
                   textAlign: 'right',
                 },
-                title: L0_C3_TITLE,
+                title: `${L0_C3_TITLE} ${c3GridDetails}`,
               },
-              `C3 ${formatC3(data.screen.minC3)} km²/s² · ${L0_C3_CONTEXT}`,
+              `C3 ${formatC3(data.screen.minC3)} km²/s² (${c3GridShort}) · ${L0_C3_CONTEXT}`,
             ),
           )
         : h(
@@ -216,7 +219,7 @@ export function renderRow(
               },
             },
             h('span', null, `${data.orbitClass}${data.screen.isCoOrbital ? ' · co-orbital' : ''}`),
-            h('span', null, `C3 ${formatC3(data.screen.minC3)} km²/s²`),
+            h('span', { title: c3GridDetails }, `C3 ${formatC3(data.screen.minC3)} km²/s² (${c3GridShort})`),
           ),
     ),
     showPorkchopAffordance

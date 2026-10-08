@@ -24,6 +24,7 @@ import {
   createLambertScreenIndex,
   loadLambertScreenCacheAsync,
 } from '../../boundary/lambert-screen-cache.js';
+import { cachedC3GridFromMetadata, type CachedC3Grid } from '../../boundary/c3-grid.js';
 import { renderEmpty, type EmptyReason } from './empty.js';
 import {
   disclosureIntro,
@@ -56,6 +57,7 @@ const scrollTopSignal = signal(0);
 const viewportHeightSignal = signal(600);
 const popoverOpenSignal = signal(false);
 const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> | null>(null);
+const screeningGridSignal = signal<CachedC3Grid | null>(null);
 const screeningWindowSignal = signal<ScreeningWindow | null>(null);
 const tierAssignmentsSignal = signal<ReadonlyMap<string, TierAssignment> | null>(null);
 const ABOUT_ROUTE = '../about/';
@@ -70,6 +72,7 @@ const ABOUT_ROUTE = '../about/';
 loadLambertScreenCacheAsync()
   .then((cache) => {
     screeningIndexSignal.value = createLambertScreenIndex(cache);
+    screeningGridSignal.value = cachedC3GridFromMetadata(cache.metadata);
     screeningWindowSignal.value = cache.metadata.screeningWindow;
   })
   .catch((error) => {
@@ -86,8 +89,9 @@ let resizeListenerInstalled = false;
 function buildRowData(): CatalogListRowData[] {
   const catalog = catalogSignal.value;
   const screeningIndex = screeningIndexSignal.value;
+  const screeningGrid = screeningGridSignal.value;
   const tierAssignments = tierAssignmentsSignal.value;
-  if (!catalog || !screeningIndex || !tierAssignments) {
+  if (!catalog || !screeningIndex || !screeningGrid || !tierAssignments) {
     return [];
   }
 
@@ -106,6 +110,7 @@ function buildRowData(): CatalogListRowData[] {
       orbitClass: body.orbitClass,
       H: typeof body.H === 'number' ? body.H : null,
       screen,
+      screeningGrid,
       tier,
     });
   }

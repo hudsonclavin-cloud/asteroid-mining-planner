@@ -1,6 +1,7 @@
 import { h, render } from 'preact';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizons.js';
+import { formatGridDimensions } from '../../boundary/c3-grid.js';
 import type { AsteroidOrbitalElements } from '../../core/constants/asteroids.js';
 import {
   CAPE_CANAVERAL,
@@ -643,7 +644,7 @@ function PorkchopDedicatedPage() {
         },
         h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Grid'),
         h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Target: ${pageState.bodyLabel} (${pageState.bodyId})`),
-        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Grid: ${GRID_PARAMS.nDep}×${GRID_PARAMS.nTof}`),
+        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Grid: ${formatGridDimensions(GRID_PARAMS)}`),
         h(
           'label',
           {

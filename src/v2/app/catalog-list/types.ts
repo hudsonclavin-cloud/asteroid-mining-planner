@@ -1,4 +1,5 @@
 import type { LambertScreenResult } from '../../boundary/lambert-screen-cache.js';
+import type { CachedC3Grid } from '../../boundary/c3-grid.js';
 import type { TierAssignment } from '../../boundary/tier-assignments.js';
 
 /**
@@ -13,6 +14,7 @@ export interface CatalogListRowData {
   orbitClass: string;
   H: number | null;
   screen: LambertScreenResult;
+  screeningGrid: CachedC3Grid;
   tier: TierAssignment;
 }
 

@@ -42,7 +42,7 @@ export function registerGetBodyTool(server: McpServer): void {
       const screen = context.screenByBodyId.get(body.bodyId);
       return toolResult(makeEnvelope({
         tool: 'get_body',
-        value: fullBodyRecord(body, screen ?? null),
+        value: fullBodyRecord(body, screen ?? null, context.screeningGrid),
         provenance: context.provenance,
         assumptions: [
           'Physical-parameter confidence is assumed because the Slice 9 catalog boundary does not distinguish measured/derived/assumed per field.',

@@ -65,7 +65,21 @@ async function loadModules() {
         JSON.parse(fs.readFileSync(screenCachePath, 'utf8')).bodies.map((entry) => [entry.bodyId, entry]),
       );
       const tiers = JSON.parse(fs.readFileSync(tierArtifactPath, 'utf8')).records;
-      return { renderRow: row.renderRow, formatC3: formatC3Module.formatC3, screens, tiers };
+      const screenCache = JSON.parse(fs.readFileSync(screenCachePath, 'utf8'));
+      return {
+        renderRow: row.renderRow,
+        formatC3: formatC3Module.formatC3,
+        screens,
+        tiers,
+        screeningGrid: {
+          kind: 'screen-cache',
+          departureStepDays: screenCache.metadata.departureGridSpacingDays,
+          tofStepDays: screenCache.metadata.tofGridSpacingDays,
+          tofMinDays: screenCache.metadata.tofMinDays,
+          tofMaxDays: screenCache.metadata.tofMaxDays,
+          departureSpan: screenCache.metadata.screeningWindow,
+        },
+      };
     })();
   }
   return modulesPromise;
@@ -80,7 +94,17 @@ function committedRow(modules, designation, orbitClass) {
   assert.ok(tierRecord, `${designation} must be in the tier artifact`);
   // The whole committed record, exactly as loadTierAssignments hands it to the
   // panel — including the S18 Item 5 disclosure fields the tooltip reads.
-  return { bodyId, spkId: screen.spkId, designation, name: '', orbitClass, H: null, screen, tier: tierRecord };
+  return {
+    bodyId,
+    spkId: screen.spkId,
+    designation,
+    name: '',
+    orbitClass,
+    H: null,
+    screen,
+    screeningGrid: modules.screeningGrid,
+    tier: tierRecord,
+  };
 }
 
 function collectTexts(node, out = []) {
@@ -127,7 +151,7 @@ test('2018 LA (L0, verified impact): LOW C3 badge suppressed; C3 kept with the l
   const texts = collectTexts(modules.renderRow(data, 0));
   assert.ok(!texts.includes('low C3') && !texts.includes('high C3'), 'no quality badge on an L0 row');
   assert.ok(texts.includes('L0'), 'the tier badge stays');
-  const expected = `C3 ${modules.formatC3(data.screen.minC3)} km²/s² · ${CONTEXT}`;
+  const expected = `C3 ${modules.formatC3(data.screen.minC3)} km²/s² (cached screen: 7 d × 30 d grid) · ${CONTEXT}`;
   assert.ok(texts.includes(expected), `numeric C3 kept with context: ${expected}\n${JSON.stringify(texts)}`);
   assert.ok(!texts.includes(`C3 ${modules.formatC3(data.screen.minC3)} km²/s²`), 'the bare (undecorated) C3 line is gone');
   assert.ok(collectTitles(modules.renderRow(data, 0)).some((title) => title.startsWith('Computed from the last known orbit')));
@@ -142,7 +166,7 @@ test('2015 D1 (L0, hyperbolic): "—" stays, PROP FAIL badge stays, no context i
 
   const texts = collectTexts(modules.renderRow(data, 0));
   assert.ok(texts.includes('prop fail'), 'prop fail is not a quality badge and stays');
-  assert.ok(texts.includes('C3 — km²/s²'), 'unchanged');
+  assert.ok(texts.includes('C3 — km²/s² (cached screen: 7 d × 30 d grid)'), 'grid context stays adjacent to null C3');
   assert.ok(!texts.some((text) => text.includes(CONTEXT)));
 });
 
@@ -153,7 +177,7 @@ test('non-L0 rows are untouched: 433 (L2) and 99942 (L1) keep their badge and pl
     assert.notEqual(data.tier.tier, 'L0');
     const texts = collectTexts(modules.renderRow(data, 0));
     assert.ok(texts.includes(BADGE_TEXT[data.screen.status]), `${designation} keeps its '${BADGE_TEXT[data.screen.status]}' badge`);
-    assert.ok(texts.includes(`C3 ${modules.formatC3(data.screen.minC3)} km²/s²`), `${designation} plain C3 line`);
+    assert.ok(texts.includes(`C3 ${modules.formatC3(data.screen.minC3)} km²/s² (cached screen: 7 d × 30 d grid)`), `${designation} C3 line includes cache grid`);
     assert.ok(!texts.some((text) => text.includes(CONTEXT)), `${designation} carries no L0 context`);
   }
 });
@@ -186,7 +210,9 @@ test('the rule is exactly {L0} x {low, high}: every other tier/status combinatio
       };
       const data = {
         bodyId: 'asteroid-synthetic', spkId: 0, designation: 'synthetic', name: '', orbitClass: 'APO', H: null,
-        screen, tier: { des: 'synthetic', tier, subReason: 'synthetic', classification: 'synthetic' },
+        screen,
+        screeningGrid: modules.screeningGrid,
+        tier: { des: 'synthetic', tier, subReason: 'synthetic', classification: 'synthetic' },
       };
       const texts = collectTexts(modules.renderRow(data, 0));
       const badgeShown = texts.includes(BADGE_TEXT[status]);
@@ -197,4 +223,26 @@ test('the rule is exactly {L0} x {low, high}: every other tier/status combinatio
     }
   }
   assert.equal(seen.length, 12);
+});
+
+test('catalog C3 grid label is derived from cache metadata and its tooltip carries the full grid details', async () => {
+  const modules = await loadModules();
+  const data = committedRow(modules, '433', 'AMO');
+  const originalTexts = collectTexts(modules.renderRow(data, 0));
+  assert.ok(originalTexts.some((text) => text.includes('(cached screen: 7 d × 30 d grid)')));
+  const originalTitles = collectTitles(modules.renderRow(data, 0));
+  assert.ok(originalTitles.some((title) => title.includes('departures every 7 d') && title.includes('TOF every 30 d')));
+
+  const changedGrid = {
+    ...data,
+    screeningGrid: {
+      ...data.screeningGrid,
+      departureStepDays: 5,
+      tofStepDays: 11,
+    },
+  };
+  const changedTexts = collectTexts(modules.renderRow(changedGrid, 0));
+  assert.ok(changedTexts.some((text) => text.includes('(cached screen: 5 d × 11 d grid)')));
+  assert.ok(!changedTexts.some((text) => text.includes('(cached screen: 7 d × 30 d grid)')));
+  assert.equal(changedGrid.screen.minC3, data.screen.minC3, 'label change does not change C3');
 });
