@@ -1,7 +1,7 @@
 import { h, render } from 'preact';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizons.js';
-import { formatGridDimensions } from '../../boundary/c3-grid.js';
+import { C3_GRID_SAMPLING_DISCLOSURE, formatJdC3GridLabel } from '../../boundary/c3-grid.js';
 import type { AsteroidOrbitalElements } from '../../core/constants/asteroids.js';
 import {
   CAPE_CANAVERAL,
@@ -193,6 +193,7 @@ const GRID_PARAMS = {
   nDep: 200,
   nTof: 100,
 } as const;
+const PORKCHOP_GRID_LABEL = formatJdC3GridLabel(GRID_PARAMS);
 
 /**
  * S18 Item 5 (DEC-18-8): the body's full fidelity-tier disclosure, visible on
@@ -644,7 +645,8 @@ function PorkchopDedicatedPage() {
         },
         h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Grid'),
         h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Target: ${pageState.bodyLabel} (${pageState.bodyId})`),
-        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Grid: ${formatGridDimensions(GRID_PARAMS)}`),
+        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Sampling grid: ${PORKCHOP_GRID_LABEL}`),
+        h('div', { style: 'font-size:11px;color:#93a4bf;line-height:1.45;font-style:italic;' }, C3_GRID_SAMPLING_DISCLOSURE),
         h(
           'label',
           {
@@ -932,7 +934,7 @@ function PorkchopDedicatedPage() {
                   h('span', null, 'Margin'),
                   h('span', null, `${stackState.breakdown.marginKmps.toFixed(3)} km/s (${(DV_MARGIN_FRACTION * 100).toFixed(0)}%)`),
                   h('span', null, 'Pinned C3'),
-                  h('span', null, `${stackState.readout.c3.toFixed(6)} km²/s²`),
+                  h('span', null, `${stackState.readout.c3.toFixed(6)} km²/s² (${PORKCHOP_GRID_LABEL})`),
                   h('span', null, 'Pinned v∞ arr'),
                   h('span', null, `${stackState.vInfArrKmps.toFixed(6)} km/s`),
                 ),

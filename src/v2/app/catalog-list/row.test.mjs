@@ -151,7 +151,7 @@ test('2018 LA (L0, verified impact): LOW C3 badge suppressed; C3 kept with the l
   const texts = collectTexts(modules.renderRow(data, 0));
   assert.ok(!texts.includes('low C3') && !texts.includes('high C3'), 'no quality badge on an L0 row');
   assert.ok(texts.includes('L0'), 'the tier badge stays');
-  const expected = `C3 ${modules.formatC3(data.screen.minC3)} km²/s² (cached screen: 7 d × 30 d grid) · ${CONTEXT}`;
+  const expected = `C3 ${modules.formatC3(data.screen.minC3)} km²/s² (cached screen: 7 d \u00D7 30 d steps) · ${CONTEXT}`;
   assert.ok(texts.includes(expected), `numeric C3 kept with context: ${expected}\n${JSON.stringify(texts)}`);
   assert.ok(!texts.includes(`C3 ${modules.formatC3(data.screen.minC3)} km²/s²`), 'the bare (undecorated) C3 line is gone');
   assert.ok(collectTitles(modules.renderRow(data, 0)).some((title) => title.startsWith('Computed from the last known orbit')));
@@ -166,7 +166,7 @@ test('2015 D1 (L0, hyperbolic): "—" stays, PROP FAIL badge stays, no context i
 
   const texts = collectTexts(modules.renderRow(data, 0));
   assert.ok(texts.includes('prop fail'), 'prop fail is not a quality badge and stays');
-  assert.ok(texts.includes('C3 — km²/s² (cached screen: 7 d × 30 d grid)'), 'grid context stays adjacent to null C3');
+  assert.ok(texts.includes('C3 — km²/s² (cached screen: 7 d \u00D7 30 d steps)'), 'grid context stays adjacent to null C3');
   assert.ok(!texts.some((text) => text.includes(CONTEXT)));
 });
 
@@ -177,7 +177,7 @@ test('non-L0 rows are untouched: 433 (L2) and 99942 (L1) keep their badge and pl
     assert.notEqual(data.tier.tier, 'L0');
     const texts = collectTexts(modules.renderRow(data, 0));
     assert.ok(texts.includes(BADGE_TEXT[data.screen.status]), `${designation} keeps its '${BADGE_TEXT[data.screen.status]}' badge`);
-    assert.ok(texts.includes(`C3 ${modules.formatC3(data.screen.minC3)} km²/s² (cached screen: 7 d × 30 d grid)`), `${designation} C3 line includes cache grid`);
+    assert.ok(texts.includes(`C3 ${modules.formatC3(data.screen.minC3)} km²/s² (cached screen: 7 d \u00D7 30 d steps)`), `${designation} C3 line includes cache grid`);
     assert.ok(!texts.some((text) => text.includes(CONTEXT)), `${designation} carries no L0 context`);
   }
 });
@@ -229,7 +229,7 @@ test('catalog C3 grid label is derived from cache metadata and its tooltip carri
   const modules = await loadModules();
   const data = committedRow(modules, '433', 'AMO');
   const originalTexts = collectTexts(modules.renderRow(data, 0));
-  assert.ok(originalTexts.some((text) => text.includes('(cached screen: 7 d × 30 d grid)')));
+  assert.ok(originalTexts.some((text) => text.includes('(cached screen: 7 d \u00D7 30 d steps)')));
   const originalTitles = collectTitles(modules.renderRow(data, 0));
   assert.ok(originalTitles.some((title) => title.includes('departures every 7 d') && title.includes('TOF every 30 d')));
 
@@ -242,7 +242,7 @@ test('catalog C3 grid label is derived from cache metadata and its tooltip carri
     },
   };
   const changedTexts = collectTexts(modules.renderRow(changedGrid, 0));
-  assert.ok(changedTexts.some((text) => text.includes('(cached screen: 5 d × 11 d grid)')));
-  assert.ok(!changedTexts.some((text) => text.includes('(cached screen: 7 d × 30 d grid)')));
+  assert.ok(changedTexts.some((text) => text.includes('(cached screen: 5 d \u00D7 11 d steps)')));
+  assert.ok(!changedTexts.some((text) => text.includes('(cached screen: 7 d \u00D7 30 d steps)')));
   assert.equal(changedGrid.screen.minC3, data.screen.minC3, 'label change does not change C3');
 });

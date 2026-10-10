@@ -49,14 +49,14 @@ test('cached C3 grid descriptor and short label derive from cache metadata', asy
     tofMaxDays: 1826,
     departureSpan: { startUtc: '2026-01-01', endUtc: '2040-12-31' },
   });
-  assert.equal(grid.formatCachedC3GridShort(descriptor), 'cached screen: 7 d × 30 d grid');
+  assert.equal(grid.formatCachedC3GridShort(descriptor), 'cached screen: 7 d \u00D7 30 d steps');
 
   const changed = grid.cachedC3GridFromMetadata({
     ...metadata,
     departureGridSpacingDays: 5,
     tofGridSpacingDays: 11,
   });
-  assert.equal(grid.formatCachedC3GridShort(changed), 'cached screen: 5 d × 11 d grid');
+  assert.equal(grid.formatCachedC3GridShort(changed), 'cached screen: 5 d \u00D7 11 d steps');
 });
 
 test('requested C3 grid descriptor changes with the scan arguments', async () => {
@@ -82,10 +82,33 @@ test('requested C3 grid descriptor changes with the scan arguments', async () =>
   });
   const changed = grid.requestedC3GridFromArgs({ ...descriptor, nDep: 731, nTof: 100, M: 1 });
   assert.deepEqual(changed, { ...descriptor, nDep: 731, nTof: 100, M: 1 });
+  assert.notEqual(grid.formatRequestedC3GridLabel(descriptor), grid.formatRequestedC3GridLabel(changed));
 });
 
 test('porkchop grid dimension wording is derived rather than literal', async () => {
   const grid = await loadModule();
   assert.equal(grid.formatGridDimensions({ nDep: 200, nTof: 100 }), '200×100 grid');
   assert.equal(grid.formatGridDimensions({ nDep: 731, nTof: 100 }), '731×100 grid');
+});
+
+test('shared C3 grid label derives common step units from axis parameters', async () => {
+  const grid = await loadModule();
+  const label = grid.formatJdC3GridLabel({
+    depStartJD: 2461041.500800741,
+    depEndJD: 2466154.500800741,
+    tofMinDays: 182.5,
+    tofMaxDays: 1826.25,
+    nDep: 731,
+    nTof: 100,
+  });
+  assert.equal(label, '731×100 grid · 7.0 d × 16.6 d steps');
+  const changed = grid.formatJdC3GridLabel({
+    depStartJD: 2461041.500800741,
+    depEndJD: 2466154.500800741,
+    tofMinDays: 182.5,
+    tofMaxDays: 1826.25,
+    nDep: 200,
+    nTof: 100,
+  });
+  assert.equal(changed, '200×100 grid · 25.7 d × 16.6 d steps');
 });

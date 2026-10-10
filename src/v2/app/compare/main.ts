@@ -31,6 +31,11 @@
 import { h, render } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizons.js';
+import {
+  C3_GRID_SAMPLING_DISCLOSURE,
+  formatRequestedC3GridLabel,
+  requestedC3GridFromArgs,
+} from '../../boundary/c3-grid.js';
 import { loadLambertScreenCacheAsync } from '../../boundary/lambert-screen-cache.js';
 import {
   ASTEROID_DEFAULT_ALBEDO,
@@ -103,6 +108,15 @@ const TOF_MIN_DAYS = 182.5;
 const TOF_MAX_DAYS = 1826.25;
 const DELTA_KM2S2 = 5;
 const B_MIN_CELLS = 2;
+const COMPARE_GRID = requestedC3GridFromArgs({
+  departureStartUtc: DEPARTURE_WINDOW_START_UTC,
+  departureEndUtc: DEPARTURE_WINDOW_END_UTC,
+  tofMinDays: TOF_MIN_DAYS,
+  tofMaxDays: TOF_MAX_DAYS,
+  nDep: N_DEP,
+  nTof: N_TOF,
+  M: 0,
+});
 
 /**
  * FIXED REFERENCE rendezvous budget. Rendezvous ΔV is physically per-body — it
@@ -677,7 +691,8 @@ function renderOkRow(
     null,
   );
 
-  const globalMinLine = `global minimum ${formatC3WithUnits(echo.liveMin ?? Number.NaN)} (${echo.nDep}×${echo.nTof} grid)`;
+  const compareGridLabel = formatRequestedC3GridLabel(COMPARE_GRID);
+  const globalMinLine = `global minimum ${formatC3WithUnits(echo.liveMin ?? Number.NaN)} (${compareGridLabel})`;
 
   return h('tr', { key: result.bodyId }, [
     h('td', { style: CELL_STYLE }, [
@@ -707,7 +722,7 @@ function renderOkRow(
           ];
         })()
       : [
-          h('span', { style: 'color:#eef2ff;font-weight:600;' }, formatC3WithUnits(best.c3)),
+          h('span', { style: 'color:#eef2ff;font-weight:600;' }, `${formatC3WithUnits(best.c3)} (${compareGridLabel})`),
           h('span', { style: NOTE_STYLE }, `departs ${best.argmin.dateIso} · ${formatDays(best.argmin.tofDays)} d transfer`),
           h('span', { style: NOTE_STYLE }, globalMinLine),
         ]),
@@ -759,6 +774,7 @@ function MethodBadge(props: {
   if (echo) {
     lines.push(
       `Grid — ${echo.nDep} departures × ${echo.nTof} transfer times, sampled every ${formatDays(echo.depCellDays)} d.`,
+      C3_GRID_SAMPLING_DISCLOSURE,
     );
   }
   lines.push(

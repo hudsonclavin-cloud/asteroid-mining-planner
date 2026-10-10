@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../core/units.js';
-import { formatGridDimensions } from '../boundary/c3-grid.js';
+import { formatJdC3GridLabel } from '../boundary/c3-grid.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import {
   CAPE_CANAVERAL,
@@ -1381,7 +1381,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                       h(
                         'div',
                         { style: 'opacity:0.92;' },
-                        `${formatNumber(entry.c3, 6)} km²/s² (${formatGridDimensions(props.gridParams)}) · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}` +
+                        `${formatNumber(entry.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)}) · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}` +
                           (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
                             ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
                             : ''),
@@ -1415,7 +1415,7 @@ export function PorkchopView(props: PorkchopViewProps) {
             h('span', null, 'Branch index'),
             h('span', null, pinnedReadout.selectedBranchIndex === null ? 'n/a' : String(pinnedReadout.selectedBranchIndex)),
             h('span', null, 'C3'),
-            h('span', null, pinnedReadout.c3 === null ? 'n/a' : `${formatNumber(pinnedReadout.c3, 6)} km²/s² (${formatGridDimensions(props.gridParams)})`),
+            h('span', null, pinnedReadout.c3 === null ? 'n/a' : `${formatNumber(pinnedReadout.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)})`),
             h('span', null, 'DLA'),
             h(
               'span',
