@@ -63,3 +63,7 @@ export {
   isAsteroidBodyId,
   toAsteroidBodyId,
 } from './asteroids.js';
+export {
+  NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2,
+  isNearZeroC3Degenerate,
+} from './near-zero-c3.js';
