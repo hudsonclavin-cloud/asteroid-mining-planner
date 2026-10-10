@@ -32,6 +32,8 @@
  *   - Slice 14+ (composition, economics): filter on departure-energy status
  */
 
+import { isNearZeroC3Degenerate } from '../core/constants/near-zero-c3.js';
+
 export type LambertScreenStatus =
   | 'low_departure_c3'
   | 'high_departure_c3'
@@ -56,6 +58,7 @@ export interface LambertScreenResult {
   minC3TofDays: number | null;
   bestWindows: LambertScreenWindow[];
   isCoOrbital: boolean;
+  isNearZeroC3Degenerate: boolean;
 }
 
 export interface LambertScreenCacheMetadata {
@@ -107,7 +110,15 @@ export function validateLambertScreenCache(cache: unknown): LambertScreenCache {
     throw new Error('Cache missing bodies array');
   }
 
-  return cache as LambertScreenCache;
+  const bodies = (typedCache.bodies as LambertScreenResult[]).map((body) => ({
+    ...body,
+    isNearZeroC3Degenerate: isNearZeroC3Degenerate(body.minC3),
+  }));
+
+  return {
+    metadata: typedCache.metadata as LambertScreenCacheMetadata,
+    bodies,
+  };
 }
 
 const CACHE_FILENAME = 'lambert-screen-cache.json';

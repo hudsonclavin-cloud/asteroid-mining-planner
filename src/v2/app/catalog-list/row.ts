@@ -1,6 +1,7 @@
 import { h, type VNode } from 'preact';
 import { formatCachedC3GridDetails, formatCachedC3GridShort } from '../../boundary/c3-grid.js';
 import { formatC3 } from '../../porkchop/format-c3.js';
+import { isNearZeroC3Degenerate, renderNearZeroC3Badge } from '../../porkchop/near-zero-c3.js';
 import { fullTierDisclosure, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { requestFocus, selectBody, selectedBodySignal } from '../ui-store/index.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
@@ -72,6 +73,8 @@ export function renderRow(
   const affordanceDisabled = options.porkchopDisabled === true;
   const c3GridShort = formatCachedC3GridShort(data.screeningGrid);
   const c3GridDetails = formatCachedC3GridDetails(data.screeningGrid);
+  const nearZeroC3Flagged =
+    data.screen.isNearZeroC3Degenerate ?? isNearZeroC3Degenerate(data.screen.minC3);
   // S18 Item 3: keep the number (a real two-body result) but read it as context,
   // not as a grade. A null C3 already renders '—' and needs no context.
   const deEmphasizeC3 = data.tier.tier === 'L0' && data.screen.minC3 !== null;
@@ -163,6 +166,7 @@ export function renderRow(
           },
           statusBadgeText(data.screen.status),
         ),
+        renderNearZeroC3Badge(nearZeroC3Flagged),
         h('span', {
           style: {
             fontSize: '10px', padding: '2px 6px', borderRadius: '3px',

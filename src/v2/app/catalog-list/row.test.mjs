@@ -57,9 +57,11 @@ async function loadModules() {
         '--moduleResolution', 'NodeNext',
         '--isolatedModules', 'true',
         path.join(repoRoot, 'src', 'v2', 'app', 'catalog-list', 'row.ts'),
+        path.join(repoRoot, 'src', 'v2', 'app', 'catalog-list', 'honesty-disclosure.ts'),
       ]);
       assert.equal(result.status, 0, `tsc compilation failed\n${result.stderr || result.stdout}`);
       const row = await import(pathToFileURL(path.join(tempOutDir, 'app', 'catalog-list', 'row.js')).href);
+      const disclosure = await import(pathToFileURL(path.join(tempOutDir, 'app', 'catalog-list', 'honesty-disclosure.js')).href);
       const formatC3Module = await import(pathToFileURL(path.join(tempOutDir, 'porkchop', 'format-c3.js')).href);
       const screens = new Map(
         JSON.parse(fs.readFileSync(screenCachePath, 'utf8')).bodies.map((entry) => [entry.bodyId, entry]),
@@ -69,6 +71,7 @@ async function loadModules() {
       return {
         renderRow: row.renderRow,
         formatC3: formatC3Module.formatC3,
+        disclosureSections: disclosure.disclosureSections,
         screens,
         tiers,
         screeningGrid: {
@@ -180,6 +183,45 @@ test('non-L0 rows are untouched: 433 (L2) and 99942 (L1) keep their badge and pl
     assert.ok(texts.includes(`C3 ${modules.formatC3(data.screen.minC3)} km²/s² (cached screen: 7 d \u00D7 30 d steps)`), `${designation} C3 line includes cache grid`);
     assert.ok(!texts.some((text) => text.includes(CONTEXT)), `${designation} carries no L0 context`);
   }
+});
+
+test('near-zero C3 is a separate geometry flag and coexists with the screening status badge', async () => {
+  const modules = await loadModules();
+  const apophis = committedRow(modules, '99942', 'ATE');
+  const apophisTexts = collectTexts(modules.renderRow(apophis, 0));
+  const apophisTitles = collectTitles(modules.renderRow(apophis, 0));
+  assert.equal(apophis.screen.minC3, 0.00020641346871491306);
+  assert.ok(apophisTexts.includes('near-zero C3'));
+  assert.ok(apophisTexts.includes('low C3'));
+  assert.ok(apophisTexts.some((text) => text.includes(`C3 ${modules.formatC3(apophis.screen.minC3)} km`)));
+  const nearZeroTitle = apophisTitles.find((title) => title.includes('This flag is triggered because this value is below'));
+  assert.ok(nearZeroTitle);
+  assert.match(nearZeroTitle, /below 0\.1 km²\/s²/);
+  assert.match(nearZeroTitle, /typically indicate/);
+  assert.match(nearZeroTitle, /mathematically valid/);
+  assert.match(nearZeroTitle, /operationally meaningless/);
+  assert.match(nearZeroTitle, /not a planning number/);
+  assert.ok(!nearZeroTitle.toLowerCase().includes('invalid'));
+
+  const eros = committedRow(modules, '433', 'AMO');
+  const erosTexts = collectTexts(modules.renderRow(eros, 0));
+  assert.ok(!erosTexts.includes('near-zero C3'));
+});
+
+test('near-zero catalog disclosure remains byte-identical to the approved wording', async () => {
+  const modules = await loadModules();
+  const section = modules.disclosureSections(null).find((entry) => entry.title === 'Close-approach degeneracy');
+  assert.ok(section);
+  assert.equal(
+    section.body,
+    'For bodies that pass very close to Earth during the screening window, the Lambert ' +
+      'solver can find "transfer" geometries with near-zero relative velocity \u2014 the ' +
+      'spacecraft and target are accidentally in nearly the same heliocentric state because ' +
+      'Earth and the body are nearly co-located. Apophis at its 2029 close approach is the ' +
+      'canonical example. The resulting minC3 is mathematically valid but operationally ' +
+      'meaningless: it does not describe a real rendezvous mission. Treat any minC3 below ' +
+      '0.1 km\u00B2/s\u00B2 as a flag to inspect the geometry, not a real planning number.',
+  );
 });
 
 test('S18 Item 5: the tier badge tooltip is the full disclosure sentence, never the slug', async () => {

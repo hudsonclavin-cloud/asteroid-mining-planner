@@ -41,6 +41,7 @@ import type {
   SpacecraftDvBudget,
 } from './launch-vehicles.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
+import { isNearZeroC3Degenerate } from '../core/constants/near-zero-c3.js';
 
 /** DEC-17-6 compare multi-select cap. Mirrors COMPARE_BODIES_CAP in
  * compare-url.ts and SELECTED_BODY_SET_CAP in app/ui-store/store.ts. */
@@ -110,6 +111,8 @@ export interface CompareDataParams {
 export interface CompareEcho {
   /** Live grid minimum C3 over converged finite cells; null when none exists. */
   readonly liveMin: number | null;
+  readonly liveMinNearZeroC3Degenerate: boolean;
+  readonly bestPracticalNearZeroC3Degenerate: boolean;
   readonly deltaKm2S2: number;
   readonly absoluteKm2S2: number;
   readonly nDep: number;
@@ -365,6 +368,10 @@ export function computeCompareData(
       deliveredMass,
       echo: {
         liveMin,
+        liveMinNearZeroC3Degenerate: isNearZeroC3Degenerate(liveMin),
+        bestPracticalNearZeroC3Degenerate:
+          segmentation.bestPractical !== null &&
+          isNearZeroC3Degenerate(segmentation.bestPractical.c3),
         deltaKm2S2: params.deltaKm2S2,
         absoluteKm2S2: params.absoluteKm2S2,
         nDep: params.nDep,

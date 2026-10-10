@@ -414,8 +414,19 @@ test('D-04 echo carries liveMin, delta, absolute, and grid geometry from the com
     (params.depEndJdTdb - params.depStartJdTdb) / (params.nDep - 1),
     'A2 (N-1) sampling interval',
   );
+  assert.equal(result.echo.liveMinNearZeroC3Degenerate, false);
+  assert.equal(result.echo.bestPracticalNearZeroC3Degenerate, false);
   // The A2 copy rule needs all three quantities; none may be absent.
-  for (const key of ['liveMin', 'deltaKm2S2', 'absoluteKm2S2', 'nDep', 'nTof', 'depCellDays']) {
+  for (const key of [
+    'liveMin',
+    'liveMinNearZeroC3Degenerate',
+    'bestPracticalNearZeroC3Degenerate',
+    'deltaKm2S2',
+    'absoluteKm2S2',
+    'nDep',
+    'nTof',
+    'depCellDays',
+  ]) {
     assert.ok(key in result.echo, `echo must carry ${key}`);
     assert.notEqual(result.echo[key], undefined, `echo.${key} must not be undefined`);
   }

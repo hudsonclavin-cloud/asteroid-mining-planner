@@ -26,6 +26,7 @@ import {
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
 import { formatC3 } from '../../porkchop/format-c3.js';
+import { isNearZeroC3Degenerate, renderNearZeroC3Badge } from '../../porkchop/near-zero-c3.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
 import {
   buildDeltaVStack,
@@ -818,7 +819,12 @@ function PorkchopDedicatedPage() {
                 },
                 // S-S17-FRONTB-BATCH-2026-08-11-A (B0): cost-card C3 carries
                 // its units; hover/pin 6-decimal readouts stay untouched.
-                h('span', null, `Payload at C3 = ${formatC3(costCardState.c3)} km²/s²`),
+                h(
+                  'span',
+                  null,
+                  `Payload at C3 = ${formatC3(costCardState.c3)} km²/s²`,
+                  renderNearZeroC3Badge(isNearZeroC3Degenerate(costCardState.c3)),
+                ),
                 h(
                   'span',
                   null,
@@ -934,7 +940,12 @@ function PorkchopDedicatedPage() {
                   h('span', null, 'Margin'),
                   h('span', null, `${stackState.breakdown.marginKmps.toFixed(3)} km/s (${(DV_MARGIN_FRACTION * 100).toFixed(0)}%)`),
                   h('span', null, 'Pinned C3'),
-                  h('span', null, `${stackState.readout.c3.toFixed(6)} km²/s² (${PORKCHOP_GRID_LABEL})`),
+                  h(
+                    'span',
+                    null,
+                    `${stackState.readout.c3.toFixed(6)} km²/s² (${PORKCHOP_GRID_LABEL})`,
+                    renderNearZeroC3Badge(isNearZeroC3Degenerate(stackState.readout.c3)),
+                  ),
                   h('span', null, 'Pinned v∞ arr'),
                   h('span', null, `${stackState.vInfArrKmps.toFixed(6)} km/s`),
                 ),

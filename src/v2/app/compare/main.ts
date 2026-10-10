@@ -56,6 +56,7 @@ import {
 } from '../../porkchop/compare-data.js';
 import { COMPARE_BODIES_CAP, parseCompareBodies } from '../../porkchop/compare-url.js';
 import { formatC3 } from '../../porkchop/format-c3.js';
+import { renderNearZeroC3Badge } from '../../porkchop/near-zero-c3.js';
 import type { PorkchopCell } from '../../porkchop/grid-compute.js';
 import {
   deterministicMarginMps,
@@ -692,7 +693,12 @@ function renderOkRow(
   );
 
   const compareGridLabel = formatRequestedC3GridLabel(COMPARE_GRID);
-  const globalMinLine = `global minimum ${formatC3WithUnits(echo.liveMin ?? Number.NaN)} (${compareGridLabel})`;
+  const globalMinLine = h(
+    'span',
+    { style: NOTE_STYLE },
+    `global minimum ${formatC3WithUnits(echo.liveMin ?? Number.NaN)} (${compareGridLabel})`,
+    renderNearZeroC3Badge(echo.liveMinNearZeroC3Degenerate),
+  );
 
   return h('tr', { key: result.bodyId }, [
     h('td', { style: CELL_STYLE }, [
@@ -718,13 +724,18 @@ function renderOkRow(
           return [
             h('span', { style: 'color:#cbd5e1;' }, copy.headline),
             h('span', { style: NOTE_STYLE }, copy.note),
-            h('span', { style: NOTE_STYLE }, globalMinLine),
+            globalMinLine,
           ];
         })()
       : [
-          h('span', { style: 'color:#eef2ff;font-weight:600;' }, `${formatC3WithUnits(best.c3)} (${compareGridLabel})`),
+          h(
+            'span',
+            { style: 'color:#eef2ff;font-weight:600;' },
+            `${formatC3WithUnits(best.c3)} (${compareGridLabel})`,
+            renderNearZeroC3Badge(echo.bestPracticalNearZeroC3Degenerate),
+          ),
           h('span', { style: NOTE_STYLE }, `departs ${best.argmin.dateIso} · ${formatDays(best.argmin.tofDays)} d transfer`),
-          h('span', { style: NOTE_STYLE }, globalMinLine),
+          globalMinLine,
         ]),
 
     // Distinct opportunities at the active threshold.

@@ -13,6 +13,7 @@
  */
 
 import type { LambertScreenCacheMetadata } from '../../boundary/lambert-screen-cache.js';
+import { NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2 } from '../../core/constants/near-zero-c3.js';
 
 export type ScreeningWindow = LambertScreenCacheMetadata['screeningWindow'];
 
@@ -79,7 +80,7 @@ export function disclosureSections(window: ScreeningWindow | null): DisclosureSe
         'Earth and the body are nearly co-located. Apophis at its 2029 close approach is the ' +
         'canonical example. The resulting minC3 is mathematically valid but operationally ' +
         'meaningless: it does not describe a real rendezvous mission. Treat any minC3 below ' +
-        '0.1 km²/s² as a flag to inspect the geometry, not a real planning number.',
+        `${NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2} km²/s² as a flag to inspect the geometry, not a real planning number.`,
     },
   ];
 }

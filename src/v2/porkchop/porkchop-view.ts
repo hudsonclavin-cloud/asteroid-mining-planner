@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../core/units.js';
 import { formatJdC3GridLabel } from '../boundary/c3-grid.js';
+import { isNearZeroC3Degenerate, renderNearZeroC3Badge } from './near-zero-c3.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import {
   CAPE_CANAVERAL,
@@ -1385,6 +1386,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                           (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
                             ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
                             : ''),
+                        renderNearZeroC3Badge(isNearZeroC3Degenerate(entry.c3)),
                       ),
                     ),
                   ),
@@ -1415,7 +1417,16 @@ export function PorkchopView(props: PorkchopViewProps) {
             h('span', null, 'Branch index'),
             h('span', null, pinnedReadout.selectedBranchIndex === null ? 'n/a' : String(pinnedReadout.selectedBranchIndex)),
             h('span', null, 'C3'),
-            h('span', null, pinnedReadout.c3 === null ? 'n/a' : `${formatNumber(pinnedReadout.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)})`),
+            h(
+              'span',
+              null,
+              pinnedReadout.c3 === null
+                ? 'n/a'
+                : `${formatNumber(pinnedReadout.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)})`,
+              renderNearZeroC3Badge(
+                pinnedReadout.c3 !== null && isNearZeroC3Degenerate(pinnedReadout.c3),
+              ),
+            ),
             h('span', null, 'DLA'),
             h(
               'span',
