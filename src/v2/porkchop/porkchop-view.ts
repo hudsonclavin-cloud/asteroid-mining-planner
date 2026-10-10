@@ -2,7 +2,11 @@ import { h } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../core/units.js';
 import { formatJdC3GridLabel } from '../boundary/c3-grid.js';
-import { isNearZeroC3Degenerate, renderNearZeroC3Badge } from './near-zero-c3.js';
+import {
+  isNearZeroC3Degenerate,
+  nearZeroC3HiddenNotice,
+  renderNearZeroC3Badge,
+} from './near-zero-c3.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import {
   CAPE_CANAVERAL,
@@ -183,6 +187,7 @@ export interface PorkchopViewProps {
   readonly pinGlobalMinimumRequestId?: number | undefined;
   readonly showDlaOverlayControl?: boolean | undefined;
   readonly showDlaContours?: boolean | undefined;
+  readonly onHideNearZeroC3Change?: ((hidden: boolean) => void) | undefined;
   readonly launchSite?: LaunchSite | undefined;
   readonly validatedTarget?: {
     readonly depJD: number;
@@ -649,6 +654,7 @@ export function PorkchopView(props: PorkchopViewProps) {
   const [showContours, setShowContours] = useState(false);
   // S18 Item 7 (DEC-5 overlay ruling): the M=1 family kept as contour input only.
   const [showM1Contours, setShowM1Contours] = useState(false);
+  const [hideNearZeroC3, setHideNearZeroC3] = useState(false);
   const [m1Cells, setM1Cells] = useState<readonly PorkchopWorkerCell[] | null>(null);
   const m1ContourLayerEnabled = props.m1ContourLayer === true && props.showFamilyToggle !== true;
   // DEC-5: "Default state is "both" so the 28% gap is visible immediately."
@@ -656,6 +662,16 @@ export function PorkchopView(props: PorkchopViewProps) {
   const [familyGrids, setFamilyGrids] = useState<DualFamilyGrids | null>(null);
   const familyToggleEnabled = props.showFamilyToggle === true;
   const launchSite = props.launchSite ?? CAPE_CANAVERAL;
+  const nearZeroC3HiddenCount = useMemo(
+    () =>
+      cells === null
+        ? 0
+        : cells.reduce(
+            (count, cell) => count + (isNearZeroC3Degenerate(getSelectedBranchC3(cell)) ? 1 : 0),
+            0,
+          ),
+    [cells],
+  );
   const familyComposite = useMemo(
     () => (familyGrids === null ? null : compositeGrids(familyGrids.m0.cells, familyGrids.m1.cells)),
     [familyGrids],
@@ -1194,6 +1210,22 @@ export function PorkchopView(props: PorkchopViewProps) {
         }),
         `Show contours (${C3_CONTOUR_LEVELS.map((level) => level.value).join(', ')} km²/s²)`,
       ),
+      h(
+        'label',
+        {
+          style: 'display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;opacity:0.9;cursor:pointer;',
+        },
+        h('input', {
+          type: 'checkbox',
+          checked: hideNearZeroC3,
+          onInput: () => {
+            const next = !hideNearZeroC3;
+            setHideNearZeroC3(next);
+            props.onHideNearZeroC3Change?.(next);
+          },
+        }),
+        'Hide near-zero-C3 windows',
+      ),
       m1ContourLayerEnabled
         ? h(
             'label',
@@ -1382,11 +1414,13 @@ export function PorkchopView(props: PorkchopViewProps) {
                       h(
                         'div',
                         { style: 'opacity:0.92;' },
-                        `${formatNumber(entry.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)}) · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}` +
-                          (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
-                            ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
-                            : ''),
-                        renderNearZeroC3Badge(isNearZeroC3Degenerate(entry.c3)),
+                        isNearZeroC3Degenerate(entry.c3) && hideNearZeroC3
+                          ? nearZeroC3HiddenNotice(nearZeroC3HiddenCount)
+                          : `${formatNumber(entry.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)}) · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}` +
+                            (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
+                              ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
+                              : ''),
+                        renderNearZeroC3Badge(isNearZeroC3Degenerate(entry.c3) && !hideNearZeroC3),
                       ),
                     ),
                   ),
@@ -1422,9 +1456,13 @@ export function PorkchopView(props: PorkchopViewProps) {
               null,
               pinnedReadout.c3 === null
                 ? 'n/a'
-                : `${formatNumber(pinnedReadout.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)})`,
+                : isNearZeroC3Degenerate(pinnedReadout.c3) && hideNearZeroC3
+                  ? nearZeroC3HiddenNotice(nearZeroC3HiddenCount)
+                  : `${formatNumber(pinnedReadout.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)})`,
               renderNearZeroC3Badge(
-                pinnedReadout.c3 !== null && isNearZeroC3Degenerate(pinnedReadout.c3),
+                pinnedReadout.c3 !== null &&
+                  isNearZeroC3Degenerate(pinnedReadout.c3) &&
+                  !hideNearZeroC3,
               ),
             ),
             h('span', null, 'DLA'),

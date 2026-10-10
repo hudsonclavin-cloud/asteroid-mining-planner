@@ -56,7 +56,10 @@ import {
 } from '../../porkchop/compare-data.js';
 import { COMPARE_BODIES_CAP, parseCompareBodies } from '../../porkchop/compare-url.js';
 import { formatC3 } from '../../porkchop/format-c3.js';
-import { renderNearZeroC3Badge } from '../../porkchop/near-zero-c3.js';
+import {
+  nearZeroC3HiddenNotice,
+  renderNearZeroC3Badge,
+} from '../../porkchop/near-zero-c3.js';
 import type { PorkchopCell } from '../../porkchop/grid-compute.js';
 import {
   deterministicMarginMps,
@@ -676,6 +679,8 @@ function renderOkRow(
   dominance: DominanceVerdict | undefined,
   facts: BodyFacts | undefined,
   tier: TierAssignment | undefined,
+  hideNearZeroC3: boolean,
+  nearZeroC3HiddenCount: number,
 ) {
   const { segmentation, echo } = result;
   const best = segmentation.bestPractical;
@@ -693,12 +698,14 @@ function renderOkRow(
   );
 
   const compareGridLabel = formatRequestedC3GridLabel(COMPARE_GRID);
-  const globalMinLine = h(
-    'span',
-    { style: NOTE_STYLE },
-    `global minimum ${formatC3WithUnits(echo.liveMin ?? Number.NaN)} (${compareGridLabel})`,
-    renderNearZeroC3Badge(echo.liveMinNearZeroC3Degenerate),
-  );
+  const globalMinLine = echo.liveMinNearZeroC3Degenerate && hideNearZeroC3
+    ? h('span', { style: NOTE_STYLE }, nearZeroC3HiddenNotice(nearZeroC3HiddenCount))
+    : h(
+        'span',
+        { style: NOTE_STYLE },
+        `global minimum ${formatC3WithUnits(echo.liveMin ?? Number.NaN)} (${compareGridLabel})`,
+        renderNearZeroC3Badge(echo.liveMinNearZeroC3Degenerate),
+      );
 
   return h('tr', { key: result.bodyId }, [
     h('td', { style: CELL_STYLE }, [
@@ -728,12 +735,14 @@ function renderOkRow(
           ];
         })()
       : [
-          h(
-            'span',
-            { style: 'color:#eef2ff;font-weight:600;' },
-            `${formatC3WithUnits(best.c3)} (${compareGridLabel})`,
-            renderNearZeroC3Badge(echo.bestPracticalNearZeroC3Degenerate),
-          ),
+          echo.bestPracticalNearZeroC3Degenerate && hideNearZeroC3
+            ? h('span', { style: 'color:#cbd5e1;font-weight:600;' }, nearZeroC3HiddenNotice(nearZeroC3HiddenCount))
+            : h(
+                'span',
+                { style: 'color:#eef2ff;font-weight:600;' },
+                `${formatC3WithUnits(best.c3)} (${compareGridLabel})`,
+                renderNearZeroC3Badge(echo.bestPracticalNearZeroC3Degenerate),
+              ),
           h('span', { style: NOTE_STYLE }, `departs ${best.argmin.dateIso} · ${formatDays(best.argmin.tofDays)} d transfer`),
           globalMinLine,
         ]),
@@ -855,6 +864,7 @@ function ComparePage() {
   // labeled with values". Session state only — the DEC does not require URL
   // persistence.
   const [thresholdMode, setThresholdMode] = useState<'relative' | 'absolute'>('relative');
+  const [hideNearZeroC3, setHideNearZeroC3] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const requestedBodyIds = useMemo(() => parseCompareBodies(window.location.search), []);
@@ -1055,6 +1065,15 @@ function ComparePage() {
   const echo = firstOk && firstOk.ok ? firstOk.echo : null;
   // DEC-17-3 dominance verdicts, N<=5 — cheap enough to recompute per render.
   const dominance = computeDominance(data.results);
+  const nearZeroC3HiddenCount = data.results.reduce(
+    (count, result) =>
+      !result.ok
+        ? count
+        : count +
+          (result.echo.liveMinNearZeroC3Degenerate ? 1 : 0) +
+          (result.echo.bestPracticalNearZeroC3Degenerate ? 1 : 0),
+    0,
+  );
 
   const headers = [
     'Target',
@@ -1115,6 +1134,16 @@ function ComparePage() {
         ? h('span', { style: 'font-size:12px;color:#94a3b8;' }, 'Recomputing every grid…')
         : null,
     ]),
+    h(
+      'label',
+      { style: 'display:flex;align-items:center;gap:8px;margin:-6px 0 16px;font-size:12px;color:#cbd5e1;cursor:pointer;' },
+      h('input', {
+        type: 'checkbox',
+        checked: hideNearZeroC3,
+        onInput: () => setHideNearZeroC3((current) => !current),
+      }),
+      'Hide near-zero-C3 windows',
+    ),
 
     h('table', { style: 'width:100%;border-collapse:collapse;' + (busy ? 'opacity:0.45;pointer-events:none;' : '') }, [
       h('thead', null, h('tr', null, headers.map((header) =>
@@ -1136,7 +1165,18 @@ function ComparePage() {
         const rows = [
           isRefusal(result)
             ? renderRefusalRow(result, label, dominance.get(result.bodyId), data.facts.get(result.bodyId), data.tiers.get(result.bodyId))
-            : renderOkRow(result, label, data.vehicleName, isExpanded, onToggle, dominance.get(result.bodyId), data.facts.get(result.bodyId), data.tiers.get(result.bodyId)),
+            : renderOkRow(
+                result,
+                label,
+                data.vehicleName,
+                isExpanded,
+                onToggle,
+                dominance.get(result.bodyId),
+                data.facts.get(result.bodyId),
+                data.tiers.get(result.bodyId),
+                hideNearZeroC3,
+                nearZeroC3HiddenCount,
+              ),
         ];
         if (isExpanded && result.ok) {
           rows.push(h('tr', { key: `${result.bodyId}-grid` },

@@ -6,6 +6,7 @@ import { requestedC3GridFromArgs } from '../../../src/v2/boundary/c3-grid.js';
 import { makeEnvelope, quantity, refuse } from '../envelope/index.js';
 import { evidenceEnvelopeOutputSchema } from './envelope-schema.js';
 import { CLOSED_WORLD_TOOL_ANNOTATIONS, toolResult } from './common.js';
+import { nearZeroC3EnvelopeField } from './near-zero-c3.js';
 import {
   DEFAULT_GRID_DEPARTURE,
   DEFAULT_GRID_TOF,
@@ -139,6 +140,7 @@ export async function runPorkchopScan(args: z.output<typeof porkchopScanInputSch
           confidence: 'derived',
           sourceIds: ['grid-compute']
         }),
+        nearZeroC3: nearZeroC3EnvelopeField(branch.c3),
         vInfDep: quantity(branch.vInfDep, 'km/s', {
           confidence: 'derived',
           sourceIds: ['grid-compute']

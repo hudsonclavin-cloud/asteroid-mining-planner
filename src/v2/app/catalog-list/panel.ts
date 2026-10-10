@@ -56,6 +56,7 @@ const SORT_OPTIONS: ReadonlyArray<{ key: SortKey; label: string }> = [
 const scrollTopSignal = signal(0);
 const viewportHeightSignal = signal(600);
 const popoverOpenSignal = signal(false);
+const hideNearZeroC3Signal = signal(false);
 const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> | null>(null);
 const screeningGridSignal = signal<CachedC3Grid | null>(null);
 const screeningWindowSignal = signal<ScreeningWindow | null>(null);
@@ -242,6 +243,7 @@ export function trackPanelSignals(): void {
   scrollTopSignal.value;
   viewportHeightSignal.value;
   popoverOpenSignal.value;
+  hideNearZeroC3Signal.value;
 }
 
 /**
@@ -492,6 +494,10 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
   const starfieldBrightness = starfieldBrightnessSignal.value;
   const filteredRows = filteredRowsSignal.value;
   const popover = popoverOpenSignal.value ? renderPopover() : null;
+  const hideNearZeroC3 = hideNearZeroC3Signal.value;
+  const nearZeroC3HiddenCount = filteredRows.filter(
+    (row) => row.screen.isNearZeroC3Degenerate,
+  ).length;
 
   const totalHeight = filteredRows.length * CATALOG_LIST_ROW_HEIGHT_PX;
   const maxScrollTop = Math.max(0, totalHeight - viewportHeightSignal.value);
@@ -564,6 +570,8 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
             renderRow(row, (startIdx + index) * CATALOG_LIST_ROW_HEIGHT_PX, {
               onOpenPorkchop: options.onOpenPorkchop,
               porkchopDisabled: options.porkchopDisabled,
+              hideNearZeroC3,
+              nearZeroC3HiddenCount,
             }),
           ),
         );
@@ -749,6 +757,27 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
                 bodyLabelsVisible ? 'Labels on' : 'Labels off',
               ),
             ),
+          ),
+          h(
+            'label',
+            {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#aaa',
+                fontSize: '11px',
+                cursor: 'pointer',
+              },
+            },
+            h('input', {
+              type: 'checkbox',
+              checked: hideNearZeroC3,
+              onInput: () => {
+                hideNearZeroC3Signal.value = !hideNearZeroC3Signal.value;
+              },
+            }),
+            'Hide near-zero-C3 windows',
           ),
           h(
             'label',

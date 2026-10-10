@@ -8,6 +8,7 @@ import { estimateMissionCostInputSchema, runEstimateMissionCost } from '../src/t
 import { runExplainCell } from '../src/tools/explain-cell.js';
 import { runGetValidationReport } from '../src/tools/get-validation-report.js';
 import { porkchopScanInputSchema, runPorkchopScan } from '../src/tools/porkchop-scan.js';
+import { bodySummary, fullBodyRecord, loadCatalogContext } from '../src/tools/catalog-shared.js';
 import { readRepoJson, readRepoText } from '../src/resources/repo.js';
 import { earthSpanLabel, loadComputeContext, utcMidnightToJdTdb, withinEarthSpan } from '../src/tools/compute-shared.js';
 
@@ -57,11 +58,21 @@ test('T12 explain_cell lambert stage matches the pinned fixture', async () => {
   assert.equal(envelope.refusal, undefined);
   const lambertStage = (envelope.value as { stages: Array<Record<string, unknown>> }).stages.find(
     (stage) => stage.stage === 'lambert'
-  ) as Record<string, { value: number }>;
+  ) as {
+    c3: { value: number };
+    vInfDep: { value: number };
+    vInfArr: { value: number };
+    nearZeroC3: { degenerate: boolean; thresholdKm2S2: number };
+  };
   assert(lambertStage);
   assert(relError(lambertStage.c3.value, sample.expected.c3Km2S2!) <= fixture.toleranceRel);
   assert(relError(lambertStage.vInfDep.value, sample.expected.vInfDepKmps!) <= fixture.toleranceRel);
   assert(relError(lambertStage.vInfArr.value, sample.expected.vInfArrKmps!) <= fixture.toleranceRel);
+  assert.equal(
+    lambertStage.nearZeroC3.degenerate,
+    lambertStage.c3.value < lambertStage.nearZeroC3.thresholdKm2S2,
+  );
+  assert.equal(lambertStage.nearZeroC3.thresholdKm2S2, 0.1);
 });
 
 test('T13 explain_cell infeasible M2 inputs return feasible:false without refusal', async () => {
@@ -110,13 +121,38 @@ test('T15 porkchop_scan tiny grid reports coverage, sorted best cells, and infea
   assert.equal(envelope.coverage?.total, 25);
   const value = envelope.value as {
     summary: { feasibleCells: { value: number }; infeasibleCells: { value: number } };
-    bestCells: Array<{ c3: { value: number } }>;
+    bestCells: Array<{ c3: { value: number }; nearZeroC3: { degenerate: boolean; thresholdKm2S2: number } }>;
   };
   assert.equal(value.summary.feasibleCells.value + value.summary.infeasibleCells.value, 25);
   assert(value.summary.infeasibleCells.value > 0);
   for (let index = 1; index < value.bestCells.length; index += 1) {
     assert(value.bestCells[index - 1]!.c3.value <= value.bestCells[index]!.c3.value);
   }
+  for (const cell of value.bestCells) {
+    assert.equal(cell.nearZeroC3.thresholdKm2S2, 0.1);
+    assert.equal(cell.nearZeroC3.degenerate, cell.c3.value < cell.nearZeroC3.thresholdKm2S2);
+  }
+});
+
+test('DEC-19-1 catalog envelopes carry the structured near-zero-C3 field without changing minC3', async () => {
+  const context = await loadCatalogContext();
+  const apophis = Object.values(context.catalog.asteroids).find((body) => body.designation === '99942');
+  const eros = Object.values(context.catalog.asteroids).find((body) => body.designation === '433');
+  assert(apophis);
+  assert(eros);
+  const apophisScreen = context.screenByBodyId.get(apophis.bodyId);
+  const erosScreen = context.screenByBodyId.get(eros.bodyId);
+  assert(apophisScreen);
+  assert(erosScreen);
+
+  const apophisSummary = bodySummary(apophis, apophisScreen, context.screeningGrid);
+  const apophisRecord = fullBodyRecord(apophis, apophisScreen, context.screeningGrid);
+  const erosSummary = bodySummary(eros, erosScreen, context.screeningGrid);
+  assert.equal(apophisSummary.nearZeroC3.degenerate, true);
+  assert.equal(apophisSummary.nearZeroC3.thresholdKm2S2, 0.1);
+  assert.equal(apophisSummary.minC3?.value, apophisScreen.minC3);
+  assert.equal((apophisRecord.screening as { nearZeroC3: { degenerate: boolean } }).nearZeroC3.degenerate, true);
+  assert.equal(erosSummary.nearZeroC3.degenerate, false);
 });
 
 test('T16 porkchop_scan grid cap is an input error and ephemeris miss is an out_of_envelope refusal', async () => {
@@ -261,10 +297,14 @@ test('T20 estimate_mission_cost happy path keeps measured payload leaves and ass
   const value = envelope.value as {
     payloadAtC3: { confidence: string; sourceIds: string[] };
     deliveredMass: { value: number };
+    c3: { value: number };
+    nearZeroC3: { degenerate: boolean; thresholdKm2S2: number };
   };
   assert(value.deliveredMass.value > 0);
   assert.equal(value.payloadAtC3.confidence, 'measured');
   assert(value.payloadAtC3.sourceIds.includes('launch-vehicles'));
+  assert.equal(value.nearZeroC3.thresholdKm2S2, 0.1);
+  assert.equal(value.nearZeroC3.degenerate, value.c3.value < value.nearZeroC3.thresholdKm2S2);
   assert.deepEqual(validateLeafRefs(envelope), []);
   assert((envelope.assumptions ?? []).some((entry) => entry.includes('Margin policy: deterministic 5%')));
 });

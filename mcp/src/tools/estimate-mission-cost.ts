@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { dlaDegFromVInf } from '../../../src/v2/core/lambert/dla.js';
 import { makeEnvelope, quantity, refuse } from '../envelope/index.js';
 import { evidenceEnvelopeOutputSchema } from './envelope-schema.js';
+import { nearZeroC3EnvelopeField } from './near-zero-c3.js';
 import { gitCommitForPath } from '../resources/repo.js';
 import { CLOSED_WORLD_TOOL_ANNOTATIONS, toolResult } from './common.js';
 import {
@@ -186,6 +187,7 @@ export async function runEstimateMissionCost(args: z.output<typeof estimateMissi
         confidence: 'derived',
         sourceIds: ['grid-compute']
       }),
+      nearZeroC3: nearZeroC3EnvelopeField(selectedBranch.c3),
       payloadAtC3: quantity(missionCost.payloadKg, 'kg', {
         confidence: 'measured',
         sourceIds: ['launch-vehicles']

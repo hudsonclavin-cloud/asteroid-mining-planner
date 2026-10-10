@@ -6,6 +6,10 @@ import {
 
 export const NEAR_ZERO_C3_BADGE_TEXT = 'near-zero C3';
 
+export function nearZeroC3HiddenNotice(count: number): string {
+  return `near-zero-C3 window hidden (${count})`;
+}
+
 export function nearZeroC3Tooltip(): string {
   return (
     `This flag is triggered because this value is below ${NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2} km\u00B2/s\u00B2. ` +

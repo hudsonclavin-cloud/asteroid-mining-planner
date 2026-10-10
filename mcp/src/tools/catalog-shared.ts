@@ -17,6 +17,7 @@ import {
 } from '../../../src/v2/boundary/c3-grid.js';
 import { quantity, type SourceRef } from '../envelope/index.js';
 import { gitCommitForPath, readRepoJson } from '../resources/repo.js';
+import { nearZeroC3EnvelopeField } from './near-zero-c3.js';
 
 export const CATALOG_FIXTURE_PATH = 'tests/fixtures/v2/nea-catalog-slice9.json';
 export const CATALOG_BOUNDARY_PATH = 'src/v2/boundary/slice9-nea-catalog.ts';
@@ -46,6 +47,7 @@ export interface BodySummary {
   screeningStatus: LambertScreenStatus;
   inv014Tier: string;
   minC3: ReturnType<typeof quantity> | null;
+  nearZeroC3: ReturnType<typeof nearZeroC3EnvelopeField>;
   grid: CachedC3Grid;
 }
 
@@ -108,6 +110,7 @@ export function bodySummary(body: Slice9NeaBody, screen: LambertScreenResult, gr
           confidence: 'derived',
           sourceIds: ['screen-cache-boundary']
         }),
+    nearZeroC3: nearZeroC3EnvelopeField(screen.minC3),
     grid
   };
 }
@@ -188,6 +191,7 @@ export function fullBodyRecord(body: Slice9NeaBody, screen: LambertScreenResult 
             confidence: 'derived',
             sourceIds: ['screen-cache-boundary']
           }),
+      nearZeroC3: nearZeroC3EnvelopeField(screen.minC3),
       grid,
       minC3Date: screen.minC3Date,
       minC3TofDays: screen.minC3TofDays === null

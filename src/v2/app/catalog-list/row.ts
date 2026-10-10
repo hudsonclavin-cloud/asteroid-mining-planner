@@ -1,7 +1,11 @@
 import { h, type VNode } from 'preact';
 import { formatCachedC3GridDetails, formatCachedC3GridShort } from '../../boundary/c3-grid.js';
 import { formatC3 } from '../../porkchop/format-c3.js';
-import { isNearZeroC3Degenerate, renderNearZeroC3Badge } from '../../porkchop/near-zero-c3.js';
+import {
+  isNearZeroC3Degenerate,
+  nearZeroC3HiddenNotice,
+  renderNearZeroC3Badge,
+} from '../../porkchop/near-zero-c3.js';
 import { fullTierDisclosure, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { requestFocus, selectBody, selectedBodySignal } from '../ui-store/index.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
@@ -9,6 +13,8 @@ import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js'
 export interface CatalogRowRenderOptions {
   readonly onOpenPorkchop?: ((bodyId: string) => void) | undefined;
   readonly porkchopDisabled?: boolean | undefined;
+  readonly hideNearZeroC3?: boolean | undefined;
+  readonly nearZeroC3HiddenCount?: number | undefined;
 }
 
 function statusBadgeText(status: string): string {
@@ -75,6 +81,8 @@ export function renderRow(
   const c3GridDetails = formatCachedC3GridDetails(data.screeningGrid);
   const nearZeroC3Flagged =
     data.screen.isNearZeroC3Degenerate ?? isNearZeroC3Degenerate(data.screen.minC3);
+  const hideNearZeroC3 = options.hideNearZeroC3 === true && nearZeroC3Flagged;
+  const hiddenNotice = nearZeroC3HiddenNotice(options.nearZeroC3HiddenCount ?? 1);
   // S18 Item 3: keep the number (a real two-body result) but read it as context,
   // not as a grade. A null C3 already renders '—' and needs no context.
   const deEmphasizeC3 = data.tier.tier === 'L0' && data.screen.minC3 !== null;
@@ -166,7 +174,7 @@ export function renderRow(
           },
           statusBadgeText(data.screen.status),
         ),
-        renderNearZeroC3Badge(nearZeroC3Flagged),
+        renderNearZeroC3Badge(nearZeroC3Flagged && !hideNearZeroC3),
         h('span', {
           style: {
             fontSize: '10px', padding: '2px 6px', borderRadius: '3px',
@@ -208,7 +216,9 @@ export function renderRow(
                 },
                 title: `${L0_C3_TITLE} ${c3GridDetails}`,
               },
-              `C3 ${formatC3(data.screen.minC3)} km²/s² (${c3GridShort}) · ${L0_C3_CONTEXT}`,
+              hideNearZeroC3
+                ? hiddenNotice
+                : `C3 ${formatC3(data.screen.minC3)} km²/s² (${c3GridShort}) · ${L0_C3_CONTEXT}`,
             ),
           )
         : h(
@@ -223,7 +233,13 @@ export function renderRow(
               },
             },
             h('span', null, `${data.orbitClass}${data.screen.isCoOrbital ? ' · co-orbital' : ''}`),
-            h('span', { title: c3GridDetails }, `C3 ${formatC3(data.screen.minC3)} km²/s² (${c3GridShort})`),
+            h(
+              'span',
+              { title: c3GridDetails },
+              hideNearZeroC3
+                ? hiddenNotice
+                : `C3 ${formatC3(data.screen.minC3)} km²/s² (${c3GridShort})`,
+            ),
           ),
     ),
     showPorkchopAffordance

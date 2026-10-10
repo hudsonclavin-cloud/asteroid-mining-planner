@@ -224,6 +224,19 @@ test('near-zero catalog disclosure remains byte-identical to the approved wordin
   );
 });
 
+test('near-zero hide state replaces only the rendered value and badge, preserving the low-C3 badge and source value', async () => {
+  const modules = await loadModules();
+  const data = committedRow(modules, '99942', 'ATE');
+  const hiddenTexts = collectTexts(
+    modules.renderRow(data, 0, { hideNearZeroC3: true, nearZeroC3HiddenCount: 7 }),
+  );
+  assert.ok(hiddenTexts.includes('near-zero-C3 window hidden (7)'));
+  assert.ok(!hiddenTexts.includes('near-zero C3'));
+  assert.ok(hiddenTexts.includes('low C3'));
+  assert.ok(!hiddenTexts.some((text) => text.includes(`C3 ${modules.formatC3(data.screen.minC3)}`)));
+  assert.equal(data.screen.minC3, 0.00020641346871491306);
+});
+
 test('S18 Item 5: the tier badge tooltip is the full disclosure sentence, never the slug', async () => {
   const modules = await loadModules();
   const cases = [

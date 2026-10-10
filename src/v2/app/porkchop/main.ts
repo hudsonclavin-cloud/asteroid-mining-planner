@@ -26,7 +26,11 @@ import {
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
 import { formatC3 } from '../../porkchop/format-c3.js';
-import { isNearZeroC3Degenerate, renderNearZeroC3Badge } from '../../porkchop/near-zero-c3.js';
+import {
+  isNearZeroC3Degenerate,
+  nearZeroC3HiddenNotice,
+  renderNearZeroC3Badge,
+} from '../../porkchop/near-zero-c3.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
 import {
   buildDeltaVStack,
@@ -314,6 +318,7 @@ function PorkchopDedicatedPage() {
   const [pinnedReadout, setPinnedReadout] = useState<PorkchopPinnedReadout | null>(null);
   const [globalMinimumReadout, setGlobalMinimumReadout] = useState<PorkchopPinnedReadout | null>(null);
   const [showDlaContours, setShowDlaContours] = useState(true);
+  const [hideNearZeroC3, setHideNearZeroC3] = useState(false);
   const [selectedLaunchSite, setSelectedLaunchSite] = useState<LaunchSite>(CAPE_CANAVERAL);
   const [selectedVehicle, setSelectedVehicle] = useState<LaunchVehicle>(LAUNCH_VEHICLES[0]);
   const [selectedMode, setSelectedMode] = useState<MissionMode>('one-way');
@@ -822,8 +827,12 @@ function PorkchopDedicatedPage() {
                 h(
                   'span',
                   null,
-                  `Payload at C3 = ${formatC3(costCardState.c3)} km²/s²`,
-                  renderNearZeroC3Badge(isNearZeroC3Degenerate(costCardState.c3)),
+                  isNearZeroC3Degenerate(costCardState.c3) && hideNearZeroC3
+                    ? nearZeroC3HiddenNotice(1)
+                    : `Payload at C3 = ${formatC3(costCardState.c3)} km²/s²`,
+                  renderNearZeroC3Badge(
+                    isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3,
+                  ),
                 ),
                 h(
                   'span',
@@ -943,8 +952,12 @@ function PorkchopDedicatedPage() {
                   h(
                     'span',
                     null,
-                    `${stackState.readout.c3.toFixed(6)} km²/s² (${PORKCHOP_GRID_LABEL})`,
-                    renderNearZeroC3Badge(isNearZeroC3Degenerate(stackState.readout.c3)),
+                    isNearZeroC3Degenerate(stackState.readout.c3) && hideNearZeroC3
+                      ? nearZeroC3HiddenNotice(1)
+                      : `${stackState.readout.c3.toFixed(6)} km²/s² (${PORKCHOP_GRID_LABEL})`,
+                    renderNearZeroC3Badge(
+                      isNearZeroC3Degenerate(stackState.readout.c3) && !hideNearZeroC3,
+                    ),
                   ),
                   h('span', null, 'Pinned v∞ arr'),
                   h('span', null, `${stackState.vInfArrKmps.toFixed(6)} km/s`),
@@ -976,6 +989,7 @@ function PorkchopDedicatedPage() {
         // surfaces that do not opt in (overlay, smoke harness).
         showFamilyToggle: true,
         showGridExtremes: true,
+        onHideNearZeroC3Change: setHideNearZeroC3,
         onPinnedCellChange: setPinnedReadout,
         onGlobalMinimumCellChange: setGlobalMinimumReadout,
         onGlobalMinimumCellRectChange: handleGlobalMinimumCellRectChange,

@@ -7,6 +7,7 @@ import { type CanonicalState } from '../../../src/v2/core/types.js';
 import { payloadAtC3 } from '../../../src/v2/porkchop/launch-vehicles.js';
 import { makeEnvelope, quantity, refuse } from '../envelope/index.js';
 import { evidenceEnvelopeOutputSchema } from './envelope-schema.js';
+import { nearZeroC3EnvelopeField } from './near-zero-c3.js';
 import { CLOSED_WORLD_TOOL_ANNOTATIONS, toolResult } from './common.js';
 import {
   baseComputeProvenance,
@@ -202,6 +203,7 @@ export async function runExplainCell(args: z.output<typeof explainCellInputSchem
         confidence: 'derived',
         sourceIds: ['grid-compute']
       }),
+      nearZeroC3: nearZeroC3EnvelopeField(selectedBranch.c3),
       vInfDep: quantity(selectedBranch.vInfDep, 'km/s', {
         confidence: 'derived',
         sourceIds: ['grid-compute']
