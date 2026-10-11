@@ -91,6 +91,51 @@ test('porkchop grid dimension wording is derived rather than literal', async () 
   assert.equal(grid.formatGridDimensions({ nDep: 731, nTof: 100 }), '731×100 grid');
 });
 
+test('T5 compare and porkchop surface labels change with their grid parameters', async () => {
+  const grid = await loadModule();
+  const compareLabel = grid.formatRequestedC3GridLabel({
+    kind: 'requested-grid',
+    departureStartUtc: '2026-01-01',
+    departureEndUtc: '2040-01-01',
+    tofMinDays: 182.5,
+    tofMaxDays: 1826.25,
+    nDep: 731,
+    nTof: 100,
+    M: 0,
+  });
+  const changedCompareLabel = grid.formatRequestedC3GridLabel({
+    kind: 'requested-grid',
+    departureStartUtc: '2026-01-01',
+    departureEndUtc: '2040-01-01',
+    tofMinDays: 182.5,
+    tofMaxDays: 1826.25,
+    nDep: 200,
+    nTof: 100,
+    M: 0,
+  });
+  assert.notEqual(compareLabel, changedCompareLabel);
+
+  const porkchopLabel = grid.formatJdC3GridLabel({
+    depStartJD: 2461041.500800741,
+    depEndJD: 2466154.500800741,
+    tofMinDays: 182.5,
+    tofMaxDays: 1826.25,
+    nDep: 731,
+    nTof: 100,
+  });
+  const changedPorkchopLabel = grid.formatJdC3GridLabel({
+    depStartJD: 2461041.500800741,
+    depEndJD: 2466154.500800741,
+    tofMinDays: 182.5,
+    tofMaxDays: 1826.25,
+    nDep: 200,
+    nTof: 100,
+  });
+  assert.match(compareLabel, /grid/);
+  assert.match(porkchopLabel, /grid/);
+  assert.notEqual(porkchopLabel, changedPorkchopLabel);
+});
+
 test('shared C3 grid label derives common step units from axis parameters', async () => {
   const grid = await loadModule();
   const label = grid.formatJdC3GridLabel({

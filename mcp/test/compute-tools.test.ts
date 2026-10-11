@@ -11,6 +11,10 @@ import { porkchopScanInputSchema, runPorkchopScan } from '../src/tools/porkchop-
 import { bodySummary, fullBodyRecord, loadCatalogContext } from '../src/tools/catalog-shared.js';
 import { readRepoJson, readRepoText } from '../src/resources/repo.js';
 import { earthSpanLabel, loadComputeContext, utcMidnightToJdTdb, withinEarthSpan } from '../src/tools/compute-shared.js';
+import {
+  NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2,
+  isNearZeroC3Degenerate,
+} from '../../src/v2/core/constants/near-zero-c3.js';
 
 type PinnedFixture = {
   toleranceRel: number;
@@ -153,6 +157,102 @@ test('DEC-19-1 catalog envelopes carry the structured near-zero-C3 field without
   assert.equal(apophisSummary.minC3?.value, apophisScreen.minC3);
   assert.equal((apophisRecord.screening as { nearZeroC3: { degenerate: boolean } }).nearZeroC3.degenerate, true);
   assert.equal(erosSummary.nearZeroC3.degenerate, false);
+});
+
+test('T4 DEC-19-1 non-catalog MCP envelopes carry structured near-zero-C3 fields without changing C3', async () => {
+  const nearPorkchop = await runPorkchopScan({
+    designation: '99942',
+    departureStart: '2028-08-24',
+    departureEnd: '2028-08-25',
+    tofMinDays: 232.30,
+    tofMaxDays: 232.32,
+    M: 0,
+    gridDeparture: 2,
+    gridTof: 2,
+    topN: 4,
+  });
+  const normalPorkchop = await runPorkchopScan({
+    designation: '433',
+    departureStart: '2032-06-10',
+    departureEnd: '2032-06-11',
+    tofMinDays: 272,
+    tofMaxDays: 272.02,
+    M: 0,
+    gridDeparture: 2,
+    gridTof: 2,
+    topN: 4,
+  });
+  assert.equal(nearPorkchop.refusal, undefined);
+  assert.equal(normalPorkchop.refusal, undefined);
+  const nearCells = (nearPorkchop.value as {
+    bestCells: Array<{ c3: { value: number }; nearZeroC3: { degenerate: boolean; thresholdKm2S2: number } }>;
+  }).bestCells;
+  const normalCells = (normalPorkchop.value as {
+    bestCells: Array<{ c3: { value: number }; nearZeroC3: { degenerate: boolean; thresholdKm2S2: number } }>;
+  }).bestCells;
+  assert(nearCells.some((cell) => cell.c3.value < NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2));
+  assert(normalCells.some((cell) => cell.c3.value > NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2));
+  for (const cell of [...nearCells, ...normalCells]) {
+    assert.equal(cell.nearZeroC3.thresholdKm2S2, NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2);
+    assert.equal(cell.nearZeroC3.degenerate, isNearZeroC3Degenerate(cell.c3.value));
+  }
+
+  const nearDeparture = '2028-08-24';
+  const nearTofDays = 232.3;
+  const nearExplain = await runExplainCell({
+    designation: '99942',
+    departureDate: nearDeparture,
+    tofDays: nearTofDays,
+    M: 0,
+  });
+  const normalExplain = await runExplainCell({
+    designation: '433',
+    departureDate: '2032-06-10',
+    tofDays: 272,
+    M: 0,
+  });
+  const lambert = (envelope: typeof nearExplain) =>
+    (envelope.value as { stages: Array<Record<string, unknown>> }).stages.find(
+      (stage) => stage.stage === 'lambert',
+    ) as {
+      c3: { value: number };
+      nearZeroC3: { degenerate: boolean; thresholdKm2S2: number };
+    };
+  for (const stage of [lambert(nearExplain), lambert(normalExplain)]) {
+    assert(stage);
+    assert.equal(stage.nearZeroC3.thresholdKm2S2, NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2);
+    assert.equal(stage.nearZeroC3.degenerate, isNearZeroC3Degenerate(stage.c3.value));
+  }
+  assert(lambert(nearExplain).c3.value < NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2);
+  assert(lambert(normalExplain).c3.value > NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2);
+
+  const nearEstimate = await runEstimateMissionCost({
+    designation: '99942',
+    departureDate: nearDeparture,
+    tofDays: nearTofDays,
+    M: 0,
+    vehicleId: 'falcon-heavy-expendable',
+  });
+  const normalEstimate = await runEstimateMissionCost({
+    designation: '433',
+    departureDate: '2032-06-10',
+    tofDays: 272,
+    M: 0,
+    vehicleId: 'falcon-heavy-expendable',
+  });
+  for (const envelope of [nearEstimate, normalEstimate]) {
+    assert.equal(envelope.refusal, undefined);
+    const value = envelope.value as {
+      c3: { value: number };
+      nearZeroC3: { degenerate: boolean; thresholdKm2S2: number };
+    };
+    assert.equal(value.nearZeroC3.thresholdKm2S2, NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2);
+    assert.equal(value.nearZeroC3.degenerate, isNearZeroC3Degenerate(value.c3.value));
+  }
+  const nearEstimateValue = nearEstimate.value as { c3: { value: number } };
+  const normalEstimateValue = normalEstimate.value as { c3: { value: number } };
+  assert(nearEstimateValue.c3.value < NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2);
+  assert(normalEstimateValue.c3.value > NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2);
 });
 
 test('T16 porkchop_scan grid cap is an input error and ephemeris miss is an out_of_envelope refusal', async () => {
