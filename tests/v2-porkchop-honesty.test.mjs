@@ -416,5 +416,11 @@ test('T3 Porkchop extremes and pinned readout flag, hide, and restore the same C
     }), normalMount);
     await flushEffects();
     assert.doesNotMatch(normalMount.textContent, /near-zero C3/);
+
+    // Unmount both trees while the fake DOM is still installed, so no effect,
+    // timer or async state update outlives the test's globals.
+    render(null, mount);
+    render(null, normalMount);
+    await flushEffects();
   });
 });
