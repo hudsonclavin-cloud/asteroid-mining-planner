@@ -166,3 +166,18 @@ placeholder number (§5, "a kernel that cannot refuse does not ship").
 
 Unchanged by this promotion: K1, K3, K5, K13 states; H0's Slice-21 seat; C0's
 gate.
+
+### §6.3 Erratum — K4 quantity (appended 2026-10-12)
+
+§6.2 defined the K4 chip as heliocentric distance ÷ c. That is wrong for
+one-way communication latency, which depends on the Earth-to-body distance at
+the displayed epoch.
+
+A light time is only as accurate as the body's position. The chip must inherit
+the body's fidelity tier, display at most 2 significant figures, and refuse
+(show no number) for L0, PROP FAIL, a non-finite distance, or no selection.
+
+A first implementation in the Slice 19 close-out run used heliocentric
+distance, following §6.2, and was not committed. K4 is cut from Slice 19
+(founding doc §5 CUT RULE) and is reworked separately against this corrected
+definition.
