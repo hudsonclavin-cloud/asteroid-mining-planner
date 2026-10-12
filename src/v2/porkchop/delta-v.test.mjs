@@ -64,3 +64,13 @@ test('ΔV stack is mode-aware: one-way omits departure and sample return uses sy
   assert.equal(oneWay.marginKmps, oneWay.subtotalKmps * DV_MARGIN_FRACTION);
   assert.ok(oneWay.totalKmps < sampleReturn.totalKmps);
 });
+
+test('D10 labels name margin bases and preserve the displayed value expressions', () => {
+  const source = fs.readFileSync(path.join(repoRoot, 'src', 'v2', 'app', 'porkchop', 'main.ts'), 'utf8');
+
+  assert.ok(source.includes('Margin (\${DETERMINISTIC_MARGIN_PERCENT}% of deterministic maneuver \\u0394V; stationkeeping not margined)'));
+  assert.ok(source.includes('Margin (\${(DV_MARGIN_FRACTION * 100).toFixed(0)}% of full \\u0394V stack)'));
+  assert.ok(source.includes('departure = arrival v\u221e under the symmetric-return assumption'));
+  assert.ok(source.includes('stackState.breakdown.marginKmps.toFixed(3)'));
+  assert.ok(source.includes('costCardState.marginMps.toFixed(0)'));
+});

@@ -863,7 +863,7 @@ function PorkchopDedicatedPage() {
                         ? 'exceeds site capability'
                         : '— (no DLA for this cell)',
                 ),
-                h('span', null, `Margin (${DETERMINISTIC_MARGIN_PERCENT}%)`),
+                h('span', null, `Margin (${DETERMINISTIC_MARGIN_PERCENT}% of deterministic maneuver \u0394V; stationkeeping not margined)`),
                 h('span', null, `${costCardState.marginMps.toFixed(0)} m/s (deterministic lines)`),
                 h('span', { style: 'font-weight:700;color:#fff;' }, 'Delivered mass'),
                 h(
@@ -954,7 +954,7 @@ function PorkchopDedicatedPage() {
                   h('span', null, `${stackState.breakdown.stationkeepingKmps.toFixed(3)} km/s`),
                   h('span', null, 'Subtotal'),
                   h('span', null, `${stackState.breakdown.subtotalKmps.toFixed(3)} km/s`),
-                  h('span', null, 'Margin'),
+                  h('span', null, `Margin (${(DV_MARGIN_FRACTION * 100).toFixed(0)}% of full \u0394V stack)`),
                   h('span', null, `${stackState.breakdown.marginKmps.toFixed(3)} km/s (${(DV_MARGIN_FRACTION * 100).toFixed(0)}%)`),
                   h('span', null, 'Pinned C3'),
                   h(
