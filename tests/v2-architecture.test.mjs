@@ -68,3 +68,44 @@ test('src/v2 sources do not import relative modules outside src/v2', () => {
     `src/v2 import wall violations:\n${offenders.map((o) => `${o.file} -> ${o.specifier} (${o.resolved})`).join('\n')}`,
   );
 });
+
+test('C3 grid label sites use derived formatters and contain no literal dimension labels', () => {
+  const labelSites = [
+    {
+      file: 'src/v2/app/compare/main.ts',
+      formatter: 'formatRequestedC3GridLabel',
+      site: /const compareGridLabel\s*=\s*formatRequestedC3GridLabel\(COMPARE_GRID\)/,
+    },
+    {
+      file: 'src/v2/app/porkchop/main.ts',
+      formatter: 'formatJdC3GridLabel',
+      site: /const PORKCHOP_GRID_LABEL\s*=\s*formatJdC3GridLabel\(GRID_PARAMS\)/,
+    },
+    {
+      file: 'src/v2/porkchop/porkchop-view.ts',
+      formatter: 'formatJdC3GridLabel',
+      site: /formatJdC3GridLabel\(props\.gridParams\)/,
+    },
+  ];
+  const literalGridPattern = /\d+\s*[×x]\s*\d+\s+grid/g;
+  const siteFailures = [];
+  const literalFailures = [];
+
+  for (const { file, formatter, site } of labelSites) {
+    const source = fs.readFileSync(path.join(repoRoot, file), 'utf8');
+    if (!source.includes(formatter) || !site.test(source)) {
+      siteFailures.push(`${file}: expected ${formatter} at its grid-label site`);
+    }
+    for (const match of source.matchAll(literalGridPattern)) {
+      const line = source.slice(0, match.index).split('\n').length;
+      literalFailures.push(`${file}:${line}: ${match[0]}`);
+    }
+  }
+
+  assert.deepEqual(siteFailures, [], `grid-label formatter wiring failures:\n${siteFailures.join('\n')}`);
+  assert.deepEqual(
+    literalFailures,
+    [],
+    `literal grid labels (file:line: literal):\n${literalFailures.join('\n')}`,
+  );
+});

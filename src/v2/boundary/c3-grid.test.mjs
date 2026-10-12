@@ -91,7 +91,7 @@ test('porkchop grid dimension wording is derived rather than literal', async () 
   assert.equal(grid.formatGridDimensions({ nDep: 731, nTof: 100 }), '731×100 grid');
 });
 
-test('T5 compare and porkchop surface labels change with their grid parameters', async () => {
+test('T5 formatter output changes with its grid parameters', async () => {
   const grid = await loadModule();
   const compareLabel = grid.formatRequestedC3GridLabel({
     kind: 'requested-grid',
