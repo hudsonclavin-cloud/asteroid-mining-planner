@@ -246,3 +246,87 @@ Root verification measured `85` files, `318` tests, `0` failures, and `0` load-t
 
 The original T5 regression was mislabelled as a surface-label change test; it is now named for what it checks: formatter output changes with its grid parameters.
 
+# Slice 19 §9 Close Draft
+
+STATUS: DRAFT
+
+This is the additive §9 close draft for Hudson's hand-commit. The protected
+`src/v2/SLICE_19_FOUNDING.md` was not edited in this run. No LOCKED line is
+written here.
+
+## Close-out record
+
+- Front A is shipped in the prior Slice 19 history: span derivation at `0052ecb`, dead-weight removal at `69472a3`, and the earlier LF/provenance work recorded by the founding document.
+- Front B / DEC-19-1 is shipped at `b214e26`, `4343633`, `531eb30`, and test coverage at `3febf77`.
+- Front C / DEC-19-2 is shipped at `2393959` and `88e566b`; the preceding combined deployment build was `ddafa33`.
+- D10 / DEC-19-5 shipped at `fbe8e89`. The one-way surface omits Departure; sample-return shows Departure and states the symmetric-return assumption. The margin-base and wording correction shipped at `e0c3447`.
+- The AMBER DLA wording correction shipped at `fe61ef9`; the badge says `Raised inclination`, not a numeric ΔV penalty. The Slice 21 intake is `a15f76d`; this was a display mismatch, so no OQ-19-6 was opened.
+
+## K4 / DEC-19-6 state — CUT
+
+K4 is CUT under the founding document's §5 CUT RULE. The first implementation
+was not committed because it violated three honesty requirements: L8 used
+heliocentric rather than Earth-to-body distance; L10 did not constrain the
+chip to at most two significant figures; and L11 omitted the fidelity-tier
+caveat and the L0, PROP FAIL, non-finite-distance, and no-selection refusal
+states.
+
+The K4 patch is preserved for a follow-up at
+`C:\Users\hudso\AppData\Local\Temp\s19-close\k4-rework\K4.patch` (6,569 bytes).
+Reverse and forward `git apply --check` both passed, but the patch was not
+applied. The five K4 worktree paths were restored to the clean tip. No K4
+product code, test, or speed-of-light constant is in this close-out.
+
+The corrected kernel definition was recorded append-only in
+`strategy/IDEA_KERNELS_2026-09.md` by `5e51d5b`. Its additivity proof showed
+only `--- a/strategy/IDEA_KERNELS_2026-09.md` as a removed diff header.
+
+## D10 wording evidence
+
+The D10 fix is in `src/v2/app/porkchop/main.ts`:
+
+- line 866 names the cost-card margin as a percentage of deterministic
+  maneuver ΔV and says stationkeeping is not margined;
+- line 957 names the stack margin as a percentage of the full ΔV stack;
+- line 979 states that sample-return departure equals arrival v∞ under the
+  symmetric-return assumption and that one-way mode has no departure burn.
+
+The displayed value expressions remain `costCardState.marginMps.toFixed(0)`
+and `stackState.breakdown.marginKmps.toFixed(3)`.
+
+## Verification record
+
+- Clean-tip baseline at `a15f76d`: root `npm run verify` measured 87 files,
+  320 tests, 0 failures, and 0 load-timeouts; MCP tests were 28/28; MCP eval
+  was 10/10.
+- After the D10 wording fix `e0c3447`: root verification measured 87 files,
+  321 tests, 0 failures, and 0 load-timeouts.
+- After the docs build: root verification again measured 87 files, 321 tests,
+  0 failures, and 0 load-timeouts. MCP behavior was not changed. The eval
+  report and summary were restored because the only run differences were
+  `generatedAt` and `origin`.
+- The build commit is `03e2ba4`:
+  `porkchop-view-DIQWyODm.js` → `porkchop-view-BUTSEuRs.js`,
+  `porkchopV2-CqMV94y9.js` → `porkchopV2-C402DrAR.js`, and
+  `solarSystemV2-CJ3pA1d9.js` → `solarSystemV2-MvRu-sdm.js`, with the two
+  route HTML files updated to reference the new assets.
+- STATUS is pinned by `2983ef7`, intentionally one commit after the build.
+  The branch is clean, with no push, merge, or `ASTER_PROTECTED_OK` setting.
+
+## Open questions and exit state
+
+OQ-19-1 (whether degeneracy changes dominance) and OQ-19-2 (interaction with
+`low_departure_c3`) remain open and unchanged. OQ-19-3 (root routing) remains
+open and out of scope. OQ-19-4 is recorded: the L1 support boundary is
+arrival-based; no behavior changed. OQ-19-5 is disposed by the D10 ruling.
+Per-cell hover remains outside scope.
+
+The §8 exit condition is met for local code state: Fronts B and C are shipped;
+Front D is cut with this §9 record. Hudson still owns the browser/live
+verification and the separate audit before merge. No claim of push or live
+verification is made here.
+
+Next candidates are K4 rework, a per-body payload path, the K1 return leg,
+and H0 horizon extension past 2040.
+
+LOCKED 2026-10-12 — Hudson
