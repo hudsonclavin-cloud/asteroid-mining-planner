@@ -487,6 +487,20 @@ MCP tests were 28/28 and MCP eval was 10/10. The clean pre-D10-fix baseline
 was 87 files, 320 tests, 0 failures, and 0 load-timeouts. Eval artifacts were
 restored after the run because only `generatedAt` and `origin` changed.
 
+**CI red interval (runs #103/#104).** CI was red at `550c29b` and `cb18cc3`
+because `tests/v2-porkchop-honesty.test.mjs` left the two T3 `PorkchopView`
+trees mounted while the fake DOM was torn down. This was a test-harness race,
+not a product defect: product code was unchanged, the deployed site was
+unaffected, and Pages deploys succeeded. The test-only fix is
+`111cffa7f21f45dd0336823bb1724455c519167e`; it unmounts both trees before
+fake-DOM teardown.
+
+Slice 19 was locked before CI was confirmed green — a process miss:
+**“red CI blocks the next push” was not enforced before `cb18cc3`**. This
+STATUS commit pins the previous commit at
+`111cffa7f21f45dd0336823bb1724455c519167e` and is intentionally one commit
+after the fix.
+
 OQ-19-1 (dominance treatment) and OQ-19-2 (`low_departure_c3` interaction)
 remain open and unchanged; OQ-19-3 (root routing) remains open and out of
 scope. OQ-19-4 is recorded: the L1 support boundary is arrival-based, with no
