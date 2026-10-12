@@ -1,3 +1,5 @@
+import type { MissionMode } from './launch-vehicles.js';
+
 export const EARTH_MU_KM3_PER_S2 = 398_600.4418;
 export const LEO_PARKING_RADIUS_KM = 6_578.137;
 export const STATIONKEEPING_DV_KMPS = 0.150;
@@ -34,10 +36,13 @@ export function departureDvFromVInf(vInfArrKmps: number): number {
 export function buildDeltaVStack(
   c3Km2PerS2: number,
   vInfArrKmps: number,
+  missionMode: MissionMode,
 ): DeltaVStackBreakdown {
   const injectionKmps = injectionDvFromC3(c3Km2PerS2);
   const rendezvousKmps = rendezvousDvFromVInf(vInfArrKmps);
-  const departureKmps = departureDvFromVInf(vInfArrKmps);
+  // A one-way rendezvous ends at the target; only sample return pays the
+  // symmetric-return departure burn (the screening assumption is vInf_arr).
+  const departureKmps = missionMode === 'sample-return' ? departureDvFromVInf(vInfArrKmps) : 0;
   const stationkeepingKmps = STATIONKEEPING_DV_KMPS;
   const subtotalKmps = injectionKmps + rendezvousKmps + departureKmps + stationkeepingKmps;
   const marginKmps = subtotalKmps * DV_MARGIN_FRACTION;

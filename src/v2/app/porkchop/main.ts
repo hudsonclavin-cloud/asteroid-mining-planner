@@ -409,10 +409,10 @@ function PorkchopDedicatedPage() {
 
     return {
       readout: pinnedReadout,
-      breakdown: buildDeltaVStack(pinnedReadout.c3, pinnedReadout.vInfArr),
+      breakdown: buildDeltaVStack(pinnedReadout.c3, pinnedReadout.vInfArr, selectedMode),
       vInfArrKmps: pinnedReadout.vInfArr,
     };
-  }, [pinnedReadout]);
+  }, [pinnedReadout, selectedMode]);
 
   const costCardState: CostCardState | null = useMemo(() => {
     if (
@@ -911,7 +911,11 @@ function PorkchopDedicatedPage() {
         {
           style: 'border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;background:rgba(255,255,255,0.03);',
         },
-        h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'ΔV stack'),
+        h(
+          'div',
+          { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' },
+          `ΔV stack — ${MISSION_MODE_LABELS[selectedMode]}`,
+        ),
         pinnedReadout === null
           ? h('div', { style: 'font-size:12px;color:#93a4bf;line-height:1.6;' }, 'Pin a cell to see the ΔV stack.')
           : stackState === null
@@ -940,8 +944,12 @@ function PorkchopDedicatedPage() {
                   h('span', null, `${stackState.breakdown.injectionKmps.toFixed(3)} km/s`),
                   h('span', null, 'Rendezvous'),
                   h('span', null, `${stackState.breakdown.rendezvousKmps.toFixed(3)} km/s`),
-                  h('span', null, 'Departure'),
-                  h('span', null, `${stackState.breakdown.departureKmps.toFixed(3)} km/s`),
+                  selectedMode === 'sample-return'
+                    ? [
+                        h('span', { key: 'stack-departure-label' }, 'Departure'),
+                        h('span', { key: 'stack-departure-value' }, `${stackState.breakdown.departureKmps.toFixed(3)} km/s`),
+                      ]
+                    : null,
                   h('span', null, 'Stationkeeping'),
                   h('span', null, `${stackState.breakdown.stationkeepingKmps.toFixed(3)} km/s`),
                   h('span', null, 'Subtotal'),
@@ -968,7 +976,7 @@ function PorkchopDedicatedPage() {
                     key: 'stack-assumptions',
                     style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
                   },
-                  `Assumptions: 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
+                  `Assumptions: ${MISSION_MODE_LABELS[selectedMode]}; 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); rendezvous = arrival v∞; ${selectedMode === 'sample-return' ? 'departure = arrival v∞ under the symmetric-return assumption; ' : 'no departure burn in one-way mode; '}stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
                 ),
               ],
       ),
