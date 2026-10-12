@@ -187,4 +187,62 @@ entry; CI green; live bundles verified.
 ## §9. Amendments and corrections
 (Append only. Never edit above this line.)
 
+## Proposed Â§9 append â€” Slice 19 Phase B completion
+
+Run completed 2026-10-10 on `s19-batch`. The protected founding document was not edited in this run. Code commits were `2393959`, `4343633`, and `531eb30`; the deployment build commit was `ddafa33`. Test-only commits were `3febf77` and `88e566b`.
+
+### Â§2.5 probe and lattice result
+
+The production-path Eros (433) probe confirmed a lattice offset rather than a solver disagreement. At the cached minimum window (departure `2032-06-10`, TOF `272 d`), cached C3 was `1.6244339770173506 kmÂ²/sÂ²`; live recomputation was `1.6244339770314757 kmÂ²/sÂ²`. The absolute difference was `1.4125145497700942e-11 kmÂ²/sÂ²`, and the relative difference was `8.695426036111575e-12`. Verdict: agree.
+
+The cache uses UTC date labels converted through `utcStringToTdbSeconds` with `TDB_MINUS_UTC_SECONDS = 69.184`; the recovered grid date is therefore the UTC-labelled departure convention. The live path evaluates the corresponding TDB epoch. The derived lattices are:
+
+- Catalog cache: `7 d Ã— 30 d` steps.
+- Compare: `731 Ã— 100` cells, approximately `7.004109589041096 d Ã— 16.603535353535353 d` steps.
+- Dedicated porkchop: `200 Ã— 100` cells, approximately `25.693467336683415 d Ã— 16.603535353535353 d` steps.
+
+### OQ-19-4 â€” L1 support boundary and a window
+
+The L1 support boundary is applied to arrival, not departure. `src/v2/porkchop/support-boundary.ts:49-50` defines unsupported as `arrivalJd(cell) >= boundary.encounterJd`; `boundaryTofDaysAtDeparture` derives the per-departure TOF boundary at lines 53-55. The committed support-boundary tests independently pin the same rule at `src/v2/porkchop/support-boundary.test.mjs:106-125`.
+
+For Apophis, the earliest material encounter and support boundary is `2028-09-12`; the separate largest-drift observation is `2029-04-13`. The compare display can therefore say â€œsupported through 2028-09-12â€ while its best window departs `2028-08-24` and arrives approximately `2029-04-13`: the departure is before the boundary, but the arrival is past it. The dedicated porkchop marks such cells through its arrival-based support partition. Compare and the overlay do not carry a per-window support marker. This remains observation-only; no support-boundary behavior was changed.
+
+### OQ-19-5 â€” Î”V stack versus mission mode
+
+Verdict: `CONFIRMED [Certain] â€” DISPLAY`.
+
+`buildDeltaVStack(c3Km2PerS2, vInfArrKmps)` has no mission-mode argument and the displayed stack is mode-insensitive. Its displayed terms in both modes are injection, rendezvous, departure, stationkeeping, and margin; its margin is 10% of the full subtotal. The cost card is mode-sensitive:
+
+| Surface | Injection | Rendezvous | Departure | Stationkeeping | Margin |
+| --- | --- | --- | --- | --- | --- |
+| Displayed stack, both modes | yes | yes | yes | yes | yes, 10% of full subtotal |
+| Cost card, one-way | no, embodied in payload-at-C3 | yes | no | yes | yes, 5% maneuver margin |
+| Cost card, sample-return | no, embodied in payload-at-C3 | yes | yes | yes | yes, 5% maneuver margin |
+
+For the Eros pinned lowest-C3 cell in one-way rendezvous mode, the displayed stack total was `18.766155025611898 km/s` (`18.766` shown). A mode-consistent one-way stack would have been `11.28258166067245 km/s` (`11.283` shown). The departure term is generated from arrival v-infinity; the user-facing assumptions line does not state that assumption. This was read-only and no D09 fix was made.
+
+### DEC-19-2 amendment
+
+Every displayed C3 grid now states common derived step units: `<departure step> d Ã— <TOF step> d steps`. Compare retains its existing wording and receives an additive parenthetical with the cell dimensions and the same day-step units. The catalog cache, compare, dedicated porkchop lowest-C3 line, pinned C3 line, Î”V stack pinned C3 line, and sidebar now communicate their grids in comparable units. The lattice probe confirmed that minima are sampled on different points, so the existing sampled-minimum disclosure can say that the true minimum is at or below each surface's sampled minimum.
+
+### DEC-19-1 clarification
+
+Near-zero C3 uses the protected core threshold `0.1 kmÂ²/sÂ²` and its finite strict-less-than predicate. The UI toggle is default off. When enabled, a flagged value and its near-zero badge are replaced in place by the exact notice `near-zero-C3 window hidden (N)`. The underlying cells remain in data, computed results, argmin, ranking, dominance, and exports; no recomputation excludes flagged cells, and the porkchop plot is unchanged.
+
+The catalog, compare, dedicated porkchop grid-extreme and pinned readout, and the Î”V stack/cost-card pinned C3 surfaces hide in this view-only way. The existing dominance marking is unchanged and remains adjacent to the badge or notice. The existing `low_departure_c3` badge is unchanged; when both classifications apply, it remains visible alongside the near-zero badge, or alongside the in-place near-zero hidden notice when hiding is enabled. MCP does not hide values: catalog summary/full screening, porkchop-scan best cells, explain-cell Lambert stage output, and estimate-mission-cost root output carry the structured `nearZeroC3` field with `degenerate` and `thresholdKm2S2` members. Per-cell hover remains outside the committed Slice 19 scope.
+
+### Cuts and skips
+
+- The protected founding document was not edited; this file is the proposed additive Â§9 text for Hudson's hand-commit.
+- No browser/local production-build gate was run by Codex; that is the final Hudson gate.
+- No push, merge, or `ASTER_PROTECTED_OK` setting was performed.
+- OQ-19-1 dominance behavior and OQ-19-2 `low_departure_c3` behavior were not changed.
+- D09 was intentionally read-only; the mode mismatch was recorded rather than fixed.
+- The per-cell hover surface remained out of scope, and MCP received a structured field rather than a UI hide control.
+
+### Verification record
+
+Root verification measured `85` files, `318` tests, `0` failures, and `0` load-timeouts. MCP tests measured `28/28`; MCP eval remained `10/10`. The generated eval report/summary recorded origin `43436338ea790ed551413a57fa3fd1e62fad94ba` (the B2 commit) as the expected one-commit lag.
+
+The original T5 regression was mislabelled as a surface-label change test; it is now named for what it checks: formatter output changes with its grid parameters.
 
