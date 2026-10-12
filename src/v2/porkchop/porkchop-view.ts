@@ -138,7 +138,7 @@ const FEASIBILITY_BADGE_STYLE: Record<Exclude<FeasibilityClass, null>, string> =
 
 const FEASIBILITY_BADGE_LABEL: Record<Exclude<FeasibilityClass, null>, string> = {
   GREEN: 'Direct',
-  AMBER: 'Penalized',
+  AMBER: 'Raised inclination',
   RED: 'Dogleg req.',
 };
 
