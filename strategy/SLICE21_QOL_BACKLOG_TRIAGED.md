@@ -134,3 +134,14 @@ slot; recorded here only so the backlog does not re-raise it. Source:
 strategy/IDEA_KERNELS_2026-09.md §1 row 6 and §6.2. Derived from scene state
 (distance ÷ c); display only; no payload, no new data source, no math-layer
 code. Do not re-triage.
+
+## Slice 19 close-out intake — 2026-10-12
+
+- D10 mode-aware ΔV stack landed at `fbe8e89`; the one-way surface omits the
+  departure burn, while sample return states the symmetric-return assumption.
+- The AMBER DLA wording correction landed at `fe61ef9`: the badge now says
+  "Raised inclination" so it does not imply a numeric ΔV penalty. A3 was a
+  display mismatch, not a logic disagreement; no OQ-19-6 was opened.
+- K4 remains in the Slice 19 QOL slot and is pending the protected core
+  constant hand-commit and the K4 worktree gate.
+- No S19 workstream was halted at this intake step.
