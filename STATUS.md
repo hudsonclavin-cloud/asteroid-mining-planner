@@ -462,6 +462,42 @@ distinction already produced one wrong set of figures.
 
 ---
 
+## Slice 19 — close-out (2026-10-12)
+
+This close-out block is the current Slice 19 state. Branch `s19-close` is
+local-only; no push or merge was performed. Front A shipped at `0052ecb` and
+`69472a3`. Front B shipped at `b214e26`, `4343633`, `531eb30`, and
+`3febf77`. Front C shipped at `2393959` and `88e566b`; the combined earlier
+deployment build was `ddafa33`. D10 shipped at `fbe8e89`, with its margin-base
+and symmetric-return wording correction at `e0c3447`. The AMBER DLA wording
+correction is `fe61ef9`; the close-out intake is `a15f76d`.
+
+Front D (K4) is **CUT under the §5 CUT RULE**. The first implementation was
+not committed because it violated L8 (heliocentric rather than Earth-to-body
+distance), L10 (not at most two significant figures), and L11 (no fidelity-tier
+caveat or L0/PROP FAIL/non-finite/no-selection refusal). Its uncommitted patch
+is preserved at `C:\Users\hudso\AppData\Local\Temp\s19-close\k4-rework\K4.patch`
+(6,569 bytes). The corrected kernel definition is the append-only erratum at
+`5e51d5b`; no K4 product code or speed-of-light constant is in this close.
+
+The docs rebuild is `03e2ba4`, pinned here before this STATUS commit; the
+STATUS commit is intentionally one commit after the build. Post-build root
+verification measured 87 files, 321 tests, 0 failures, and 0 load-timeouts;
+MCP tests were 28/28 and MCP eval was 10/10. The clean pre-D10-fix baseline
+was 87 files, 320 tests, 0 failures, and 0 load-timeouts. Eval artifacts were
+restored after the run because only `generatedAt` and `origin` changed.
+
+OQ-19-1 (dominance treatment) and OQ-19-2 (`low_departure_c3` interaction)
+remain open and unchanged; OQ-19-3 (root routing) remains open and out of
+scope. OQ-19-4 is recorded: the L1 support boundary is arrival-based, with no
+behavior change. OQ-19-5 is disposed by the D10 ruling; no OQ-19-6 was opened.
+
+Next candidates are K4 rework, a per-body payload path, the K1 return leg, and
+H0 horizon extension past 2040. Hudson's browser/live verification and
+separate audit remain the merge gate.
+
+---
+
 ## Cleanup Queue
 
 | ID | Item |
