@@ -34,7 +34,7 @@ const STEP_COPY: Record<Fk3TourStep, { readonly title: string; readonly body: st
 const STEP_3_COPY: Record<Fk3TourVariant, string> = {
   'red-no-price': 'So Aster calls it: not feasible from this site as-is. Not a discount on the price — no price at all.',
   'red-with-price': 'So Aster calls it: not feasible from this site as-is. The number is still there — the verdict is what it won\'t soften.',
-  penalty: 'So Aster prices what the cheap number hid: this window flies only with a dogleg — a plane-change cost the energy chart never showed.',
+  penalty: 'This window needs a small plane change. At screening fidelity, launch geometry absorbs it with no added ΔV.',
 };
 
 const BACKDROP_STYLE = [
@@ -73,7 +73,7 @@ const HIGHLIGHT_BASE_STYLE = [
   'pointer-events:none',
 ].join(';');
 
-function stepBody(step: Fk3TourStep, variant: Fk3TourVariant): string {
+export function fk3TourStepBody(step: Fk3TourStep, variant: Fk3TourVariant): string {
   return step === 3 ? STEP_3_COPY[variant] : STEP_COPY[step].body;
 }
 
@@ -177,7 +177,7 @@ export function Fk3GuidedTour(props: Fk3GuidedTourProps): VNode {
         style: `${CARD_BASE_STYLE};${cardPosition(props.step, anchor)}`,
       },
       h('div', { style: TITLE_STYLE }, copy.title),
-      h('div', { style: BODY_STYLE }, stepBody(props.step, props.variant)),
+      h('div', { style: BODY_STYLE }, fk3TourStepBody(props.step, props.variant)),
       h(
         'div',
         { style: ACTION_ROW_STYLE },
