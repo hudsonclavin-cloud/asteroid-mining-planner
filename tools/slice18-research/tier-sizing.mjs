@@ -157,7 +157,10 @@ for (const b of bodies) {
   } else {
     classification = 'quiet';
     fidelityTier = 'L2';
-    subReason = 'unmeasured';
+    // The committed drift instrument measured 17 NEA bodies.  Preserve that
+    // distinction in the shipped tier artifact instead of making the UI infer
+    // it from a body-id list.  Structurally blind bodies take precedence above.
+    subReason = neaDrift.bodies[des]?.band === 'nea' ? 'measured-but-unbounded' : 'unmeasured';
   }
   counts[classification] = (counts[classification] || 0) + 1;
   const record = { des, tier: fidelityTier, subReason, classification, Q: +Q.toFixed(3), e: +e.toFixed(4), aAU: +aAU.toFixed(3), orbitClass: b.orbitClass, material: materialSet.has(des) };

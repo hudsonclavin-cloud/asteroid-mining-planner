@@ -28,6 +28,9 @@ export const L2_UNMEASURED_DISCLOSURE =
   'Aster has not measured the screening error for this object. Two-body propagation over the screening ' +
   'window drifted 0.46 to 330 million km across the 17 asteroids that were measured. This object was not among them.';
 
+export const L2_MEASURED_UNBOUNDED_DISCLOSURE =
+  'Aster measured the screening error for this object, but it exceeds the bound Aster can certify.';
+
 const MONTHS: Record<string, string> = {
   JAN: '01', FEB: '02', MAR: '03', APR: '04', MAY: '05', JUN: '06',
   JUL: '07', AUG: '08', SEP: '09', OCT: '10', NOV: '11', DEC: '12',
@@ -139,6 +142,8 @@ export function fullTierDisclosure(tier: TierAssignment): string | null {
     }
     case 'unmeasured':
       return L2_UNMEASURED_DISCLOSURE;
+    case 'measured-but-unbounded':
+      return L2_MEASURED_UNBOUNDED_DISCLOSURE;
     default:
       return null;
   }
@@ -161,6 +166,8 @@ export function shortTierLabel(tier: TierAssignment): string {
       return 'error cannot be bounded';
     case 'unmeasured':
       return 'error not measured';
+    case 'measured-but-unbounded':
+      return 'error exceeds certified bound';
     default:
       return 'unclassified';
   }

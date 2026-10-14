@@ -60,8 +60,7 @@ const VERBATIM = {
     'Aster cannot bound the screening error for this object. It is a comet, which Aster\'s catalog classifies ' +
     'as not safe for two-body Keplerian propagation.',
   '433':
-    'Aster has not measured the screening error for this object. Two-body propagation over the screening window ' +
-    'drifted 0.46 to 330 million km across the 17 asteroids that were measured. This object was not among them.',
+    'Aster measured the screening error for this object, but it exceeds the bound Aster can certify.',
 };
 
 const THRESHOLD_PROVENANCE =
@@ -108,7 +107,7 @@ test('the seven representative bodies render their sentences verbatim from the c
   assert.equal(records['99942'].subReason, 'materially-degraded-delta-v');
   assert.equal(records['3552'].subReason, 'structurally-blind-jupiter-crossing');
   assert.equal(records['162P'].subReason, 'structurally-blind-comet');
-  assert.equal(records['433'].subReason, 'unmeasured');
+  assert.equal(records['433'].subReason, 'measured-but-unbounded');
 });
 
 test('structurally blind splits by cause: 206 comets + 482 Jupiter-crossing = 688, each with its own sentence', async () => {
@@ -258,6 +257,14 @@ test('a record missing its value yields null (omit), never a sentence with a hol
   const bareImpactor = { des: 'y', tier: 'L0', subReason: 'verified-destroyed-ephemeris-termination', classification: 'nonExistent' };
   assert.equal(disclosure.fullTierDisclosure(bareImpactor), null);
   assert.equal(disclosure.legendLineFor('L0'), 'L0 — no longer exists or cannot be propagated');
+});
+
+test('L2 disclosure distinguishes a measured-but-unbounded body from an unmeasured body', async () => {
+  const { disclosure, records } = await loadModules();
+  assert.equal(disclosure.fullTierDisclosure(records['433']), 'Aster measured the screening error for this object, but it exceeds the bound Aster can certify.');
+  const unmeasured = Object.values(records).find((record) => record.subReason === 'unmeasured');
+  assert.ok(unmeasured, 'the committed artifact must retain unmeasured bodies');
+  assert.match(disclosure.fullTierDisclosure(unmeasured), /^Aster has not measured the screening error/);
 });
 
 test('threshold provenance is verbatim and rides with every mention of 10^6 km; legend has one line per key', async () => {
