@@ -81,3 +81,9 @@ test('deliveredMassKg New Glenn/Standard C3=5 one-way === 3494.511538898568 kg',
   assert.equal(isBeyondCurve(got), false, 'delivered-mass case unexpectedly BEYOND_CURVE');
   assert.equal(got, 3494.511538898568, `expected 3494.511538898568, got ${got}`);
 });
+
+test('every launch-vehicle anchor carries a source-derived basis', () => {
+  const anchors = LAUNCH_VEHICLES.flatMap((item) => item.curve);
+  assert.equal(anchors.length, 38);
+  assert.ok(anchors.every((anchor) => anchor.basis === 'official'));
+});

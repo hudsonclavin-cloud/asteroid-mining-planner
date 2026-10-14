@@ -16,9 +16,15 @@ export interface LaunchVehicle {
   readonly config: string;
   readonly site: string;
   readonly fairingM: number;
-  readonly curve: ReadonlyArray<{ readonly c3: number; readonly payloadKg: number }>;
+  readonly curve: ReadonlyArray<LaunchVehicleAnchor>;
   readonly source: string;
   readonly asOf: string;
+}
+
+export interface LaunchVehicleAnchor {
+  readonly c3: number;
+  readonly payloadKg: number;
+  readonly basis: 'official' | 'estimated';
 }
 
 export type MissionMode = 'one-way' | 'sample-return';
@@ -68,12 +74,12 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     source: ELVPERF_SOURCE,
     asOf: ELVPERF_AS_OF,
     curve: [
-      { c3: 0, payloadKg: 15010 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 10, payloadKg: 12345 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 20, payloadKg: 10115 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 30, payloadKg: 8225 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 40, payloadKg: 6640 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 55, payloadKg: 4670 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 0, payloadKg: 15010, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 10, payloadKg: 12345, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 20, payloadKg: 10115, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 30, payloadKg: 8225, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 40, payloadKg: 6640, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 55, payloadKg: 4670, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
     ],
   },
   {
@@ -84,12 +90,12 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     source: ELVPERF_SOURCE,
     asOf: ELVPERF_AS_OF,
     curve: [
-      { c3: 0, payloadKg: 6690 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 10, payloadKg: 5130 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 20, payloadKg: 3845 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 30, payloadKg: 2740 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 40, payloadKg: 1805 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 55, payloadKg: 650 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 0, payloadKg: 6690, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 10, payloadKg: 5130, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 20, payloadKg: 3845, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 30, payloadKg: 2740, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 40, payloadKg: 1805, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 55, payloadKg: 650, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
     ],
   },
   {
@@ -100,12 +106,12 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     source: ELVPERF_SOURCE,
     asOf: ELVPERF_AS_OF,
     curve: [
-      { c3: 0, payloadKg: 5920 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 10, payloadKg: 4750 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 20, payloadKg: 3710 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 30, payloadKg: 2790 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 40, payloadKg: 1970 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 55, payloadKg: 945 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 0, payloadKg: 5920, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 10, payloadKg: 4750, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 20, payloadKg: 3710, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 30, payloadKg: 2790, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 40, payloadKg: 1970, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 55, payloadKg: 945, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
     ],
   },
   {
@@ -116,12 +122,12 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     source: ELVPERF_SOURCE,
     asOf: ELVPERF_AS_OF,
     curve: [
-      { c3: 0, payloadKg: 8550 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 10, payloadKg: 7140 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 20, payloadKg: 5880 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 30, payloadKg: 4780 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 40, payloadKg: 3800 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 55, payloadKg: 2555 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 0, payloadKg: 8550, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 10, payloadKg: 7140, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 20, payloadKg: 5880, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 30, payloadKg: 4780, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 40, payloadKg: 3800, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 55, payloadKg: 2555, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
     ],
   },
   {
@@ -132,12 +138,12 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     source: ELVPERF_SOURCE,
     asOf: ELVPERF_AS_OF,
     curve: [
-      { c3: 0, payloadKg: 10850 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 10, payloadKg: 9130 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 20, payloadKg: 7630 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 30, payloadKg: 6310 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 40, payloadKg: 5150 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 55, payloadKg: 3685 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 0, payloadKg: 10850, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 10, payloadKg: 9130, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 20, payloadKg: 7630, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 30, payloadKg: 6310, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 40, payloadKg: 5150, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 55, payloadKg: 3685, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
     ],
   },
   {
@@ -148,10 +154,10 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     source: ELVPERF_SOURCE,
     asOf: ELVPERF_AS_OF,
     curve: [
-      { c3: 0, payloadKg: 7180 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 10, payloadKg: 4930 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 20, payloadKg: 2365 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 30, payloadKg: 120 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 0, payloadKg: 7180, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 10, payloadKg: 4930, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 20, payloadKg: 2365, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 30, payloadKg: 120, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
     ],
   },
   {
@@ -162,8 +168,8 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     source: ELVPERF_SOURCE,
     asOf: ELVPERF_AS_OF,
     curve: [
-      { c3: 0, payloadKg: 3310 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 10, payloadKg: 2220 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 0, payloadKg: 3310, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 10, payloadKg: 2220, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
     ],
   },
   {
@@ -174,8 +180,8 @@ export const LAUNCH_VEHICLES: ReadonlyArray<LaunchVehicle> = [
     source: ELVPERF_SOURCE,
     asOf: ELVPERF_AS_OF,
     curve: [
-      { c3: 0, payloadKg: 1770 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
-      { c3: 10, payloadKg: 875 }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 0, payloadKg: 1770, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
+      { c3: 10, payloadKg: 875, basis: 'official' }, // NASA LSP elvperf, as-of 2024-02-29, queried 2026-07-02
     ],
   },
 ];
