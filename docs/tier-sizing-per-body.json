@@ -1,5 +1,5 @@
 {
- "generatedAtUtc": "2026-09-21T05:53:06.567Z",
+ "generatedAtUtc": "2026-10-14T14:25:01.864Z",
  "cadFetchedAtUtc": "2026-09-11T04:27:49.000Z",
  "source": "tier-sizing.mjs over nea-catalog-slice9.json + dv-scope-results.json + cad-all-0.3.json",
  "catalogTotal": 41906,
@@ -14,7 +14,7 @@
   "433": {
    "des": "433",
    "tier": "L2",
-   "subReason": "unmeasured",
+   "subReason": "measured-but-unbounded",
    "classification": "quiet",
    "Q": 1.783,
    "e": 0.2229,
@@ -5366,7 +5366,7 @@
   "105140": {
    "des": "105140",
    "tier": "L2",
-   "subReason": "unmeasured",
+   "subReason": "measured-but-unbounded",
    "classification": "quiet",
    "Q": 1.661,
    "e": 0.817,
@@ -49580,7 +49580,7 @@
   "1979 XB": {
    "des": "1979 XB",
    "tier": "L2",
-   "subReason": "unmeasured",
+   "subReason": "measured-but-unbounded",
    "classification": "quiet",
    "Q": 3.806,
    "e": 0.7109,
@@ -102126,7 +102126,7 @@
   "2010 KD": {
    "des": "2010 KD",
    "tier": "L2",
-   "subReason": "unmeasured",
+   "subReason": "measured-but-unbounded",
    "classification": "quiet",
    "Q": 1.649,
    "e": 0.2176,
@@ -322354,7 +322354,7 @@
   "2021 CG6": {
    "des": "2021 CG6",
    "tier": "L2",
-   "subReason": "unmeasured",
+   "subReason": "measured-but-unbounded",
    "classification": "quiet",
    "Q": 3.634,
    "e": 0.7156,
@@ -438508,7 +438508,7 @@
   "2024 BB8": {
    "des": "2024 BB8",
    "tier": "L2",
-   "subReason": "unmeasured",
+   "subReason": "measured-but-unbounded",
    "classification": "quiet",
    "Q": 1.715,
    "e": 0.2173,
@@ -491424,7 +491424,7 @@
   "2025 KP4": {
    "des": "2025 KP4",
    "tier": "L2",
-   "subReason": "unmeasured",
+   "subReason": "measured-but-unbounded",
    "classification": "quiet",
    "Q": 1.602,
    "e": 0.8606,

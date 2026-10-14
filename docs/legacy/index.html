@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Real-time 3D asteroid mining mission planner. Identify high-value targets, simulate orbital burns, and calculate mission economics — in the browser.">
+<meta property="og:title" content="ASTER — Asteroid Mining Mission Planner">
+<meta property="og:description" content="The Bloomberg Terminal of space resource extraction. Find your asteroid, plan your burn, calculate your ROI.">
+<meta property="og:type" content="website">
+<title>ASTER — Asteroid Mining Mission Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>/* Styles extracted to src/styles/main.css */
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+    "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/asteroid-mining-planner/assets/legacy-C6NkCVYx.js"></script>
+  <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/three.module-CFyvS0yg.js">
+  <link rel="stylesheet" crossorigin href="/asteroid-mining-planner/assets/legacy-DBnyUIUO.css">
+</head>
+<body>
+
+<div id="slice-19-5-legacy-banner" style="position:fixed;top:0;left:0;right:0;z-index:10001;
+  box-sizing:border-box;padding:10px 16px;background:#2b1600;border-bottom:2px solid #f59e0b;
+  color:#fde68a;font:13px/1.4 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  text-align:center;">
+  This is the original 2026 prototype, frozen. Its economic and value figures are unsourced and known to be wrong. The current tool is here:
+  <a href="../v2/solar-system/" style="color:#fbbf24;font-weight:700;">current tool</a>.
+</div>
+
+<a href="/asteroid-mining-planner/v2/solar-system/" target="_self"
+   style="position:fixed;top:12px;right:12px;padding:6px 12px;
+          background:rgba(0,212,255,0.1);border:1px solid #00d4ff;
+          color:#00d4ff;font-family:'Space Mono',monospace;font-size:12px;
+          text-decoration:none;border-radius:2px;z-index:10000;">
+  v2 simulator →
+</a>
+
+<div id="toolbar">
+  <div id="toolbar-left"><span id="toolbar-logo">◈ ASTER</span></div>
+  <div id="toolbar-center">
+    <button class="tool-btn" id="btn-export-toolbar">↓ EXPORT</button>
+    <button class="tool-btn" id="btn-share-toolbar">⬡ SHARE</button>
+    <button class="tool-btn" id="btn-shortcuts-toolbar">? HELP</button>
+  </div>
+  <div id="toolbar-right">
+    <span class="hud-item" id="hud-date">—</span>
+    <span class="hud-sep">|</span>
+    <span class="hud-item" id="hud-ast-count">0 ASTEROIDS</span>
+    <span class="hud-sep">|</span>
+    <span class="hud-item" id="hud-selected">NONE SELECTED</span>
+    <span class="hud-sep">|</span>
+    <span class="hud-item" id="hud-filter-status">SHOWING ALL</span>
+    <span class="hud-sep">|</span>
+    <span class="hud-item" id="hud-nhats">NHATS: —</span>
+    <span class="hud-sep">|</span>
+    <span class="hud-item" id="hud-fps">— FPS</span>
+  </div>
+</div>
+
+<!-- Phase 9E: Honesty banner — shown on first visit, dismissible -->
+<div id="honesty-banner" style="display:none;position:fixed;top:36px;left:0;right:0;z-index:997;
+  background:#060a14;border-bottom:1px solid #0d1f33;border-left:3px solid #00d4ff;
+  padding:7px 16px 7px 14px;font-size:9px;font-family:'Space Mono',monospace;color:#8aa0b8;
+  align-items:center;gap:10px;line-height:1.4">
+  <span style="color:#00d4ff;flex-shrink:0">ⓘ</span>
+  <span>Aster is a mission planning aid. Results use Keplerian propagation and patched conics —
+    not validated for mission design. Verify critical parameters with
+    <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a>.</span>
+  <button id="banner-dismiss" style="margin-left:auto;flex-shrink:0;background:none;border:1px solid #1a2d44;
+    color:#6a8a9a;font-size:8px;font-family:'Space Mono',monospace;padding:2px 8px;cursor:pointer">Got it</button>
+</div>
+
+<div id="shortcut-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,5,8,0.92);z-index:200;
+  font-family:'Space Mono','Courier New',monospace;align-items:center;justify-content:center;padding:20px;">
+  <div style="border:1px solid #1a2235;padding:32px 40px;width:min(560px,calc(100vw - 40px));max-height:calc(100vh - 40px);overflow-y:auto">
+    <div style="color:#00d4ff;font-size:13px;letter-spacing:0.2em;margin-bottom:20px">⌨ KEYBOARD SHORTCUTS</div>
+    <table style="border-collapse:collapse;width:100%;font-size:12px">
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0;width:80px">?</td><td style="color:#e5e7eb">Toggle this panel</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">SPACE</td><td style="color:#e5e7eb">Play / Pause</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">[ / ]</td><td style="color:#e5e7eb">Slower / Faster</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">B</td><td style="color:#e5e7eb">Toggle burn mode</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">F</td><td style="color:#e5e7eb">Fly to selected</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">E</td><td style="color:#e5e7eb">Fly to Earth</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">R</td><td style="color:#e5e7eb">Reset camera</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">T</td><td style="color:#e5e7eb">Toggle trails</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">M</td><td style="color:#e5e7eb">Toggle left panel</td></tr>
+      <tr><td style="color:#60a5fa;padding:4px 16px 4px 0">ESC</td><td style="color:#e5e7eb">Cancel burn / close</td></tr>
+    </table>
+    <div style="margin-top:20px;font-size:10px;color:#4b5563;text-align:center">PRESS ? OR ESC TO CLOSE</div>
+    <div style="margin-top:16px;border-top:1px solid #1a2235;padding-top:12px;font-size:8px;color:#6a8a9a;line-height:1.8">
+      <div style="color:#c8d6e5;letter-spacing:0.1em;margin-bottom:6px">KNOWN LIMITATIONS</div>
+      <div>· Two-body Keplerian propagation (no J₂, lunar, solar radiation pressure)</div>
+      <div>· Impulsive burns only — no low-thrust or continuous-thrust modeling</div>
+      <div>· Gravity losses not included — real missions add 3–10%</div>
+      <div>· Earth return assumes free aerocapture (no orbit insertion burn)</div>
+      <div>· Commodity prices are static estimates, not live market data</div>
+      <div>· Composition fractions are spectral-type averages, not ground truth</div>
+      <div style="margin-top:8px;color:#3a5a6a">
+        Data sources:
+        <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a> ·
+        <a href="https://cneos.jpl.nasa.gov/nhats/" target="_blank" style="color:#00d4ff">NASA NHATS</a> ·
+        <a href="http://asterank.com" target="_blank" style="color:#00d4ff">Asterank</a>
+      </div>
+      <div style="margin-top:4px;color:#2a4a5a">Built by Hudson Clavin · Data: NASA/JPL (public domain)</div>
+    </div>
+  </div>
+</div>
+
+<div id="tour-overlay" style="display:none;position:fixed;inset:0;z-index:190;pointer-events:none">
+  <div id="tour-box" style="position:absolute;background:rgba(5,5,8,0.95);border:1px solid #00d4ff;
+    padding:16px 20px;max-width:280px;font-family:'Space Mono','Courier New',monospace;pointer-events:all">
+    <div style="color:#00d4ff;font-size:11px;letter-spacing:0.15em;margin-bottom:8px" id="tour-step-label">STEP 1 OF 5</div>
+    <div style="color:#e5e7eb;font-size:12px;line-height:1.6" id="tour-text"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+      <button id="btn-tour-skip" style="background:none;border:1px solid #1a2235;color:#4b5563;
+        font-family:inherit;font-size:10px;padding:4px 10px;cursor:pointer">SKIP</button>
+      <button id="btn-tour-next" style="background:none;border:1px solid #00d4ff;color:#00d4ff;
+        font-family:inherit;font-size:10px;padding:4px 10px;cursor:pointer">NEXT →</button>
+    </div>
+  </div>
+</div>
+
+<div id="perf-monitor" style="position:fixed;bottom:70px;right:8px;font-family:'Space Mono','Courier New',monospace;
+  font-size:9px;color:#4b5563;text-align:right;pointer-events:none;z-index:5">
+  <div id="fps-display">-- FPS</div>
+  <div id="obj-count-display"></div>
+</div>
+
+<div id="loading">
+  <h1>ASTER</h1>
+  <div id="loading-bar"></div>
+  <div id="loading-sub">Initializing solar system...</div>
+</div>
+
+<div id="jd-display">
+  <div id="calendar-date">2026-MAR-27</div>
+  <div id="jd-value">JD 2461126.5</div>
+</div>
+
+<div id="status">Loading asteroid catalog...</div>
+
+<div id="dv-display">
+  <span id="dv-total">ΔV TOTAL: 0.0 km/s</span>
+  <span id="dv-breakdown">P: 0.0  N: 0.0  R: 0.0</span>
+</div>
+
+<div id="burn-mode-badge">▶ BURN MODE — ESC TO EXIT</div>
+
+<div id="earth-hud" style="display:none; position:fixed; top:14px; left:50%; transform:translateX(-50%);
+  background:rgba(5,5,8,0.85); border:1px solid #1a2235; padding:10px 20px; z-index:10;
+  font-family:'Space Mono','Courier New',monospace; font-size:10px; color:#4b5563;
+  letter-spacing:0.1em; text-align:center;">
+  <div style="color:#00d4ff;font-size:12px;letter-spacing:0.2em">◉ EARTH LAYER</div>
+  <div id="sat-count" style="margin-top:4px">LOADING...</div>
+  <div style="margin-top:6px;display:flex;gap:12px;justify-content:center">
+    <span style="color:#3b82f6">● LEO</span>
+    <span style="color:#10b981">● MEO</span>
+    <span style="color:#fbbf24">● GEO</span>
+    <span style="color:#ff4af7">● ISS</span>
+  </div>
+  <div style="margin-top:6px;font-size:9px">ZOOM OUT TO RETURN TO SOLAR SYSTEM</div>
+</div>
+
+<!-- Orbit delta labels -->
+<div class="orbit-label" id="label-perihelion"></div>
+<div class="orbit-label" id="label-period"></div>
+<div class="orbit-label" id="label-moid"></div>
+
+<div id="btn-toggle-filters" onclick="toggleLeftPanel()" style="position:relative">⬡ FILTERS<span id="filter-badge"></span></div>
+
+<div id="left-panel">
+  <!-- Header + live count -->
+  <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span>⬡ ADVANCED FILTERS</span>
+    <span id="filter-count" style="color:#00d4ff;font-size:10px">0 / 0</span>
+  </div>
+
+  <!-- Presets row -->
+  <div style="display:flex;gap:4px;margin-bottom:6px">
+    <select id="filter-preset-select" class="aster-select" style="flex:1">
+      <option value="">— PRESET —</option>
+      <optgroup label="BUILT-IN">
+        <option value="easy">Easy Reach</option>
+        <option value="metal">High Metal Content</option>
+        <option value="nearterm">Near-Term</option>
+        <option value="deep">Deep Space</option>
+      </optgroup>
+      <optgroup id="saved-presets-group" label="SAVED"></optgroup>
+    </select>
+    <button class="ftoggle" id="btn-save-preset" style="white-space:nowrap;width:auto;padding:4px 8px;flex-shrink:0">+ SAVE</button>
+  </div>
+
+  <!-- Active filter status + Reset -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <span id="active-filter-label" style="color:#4b5563;font-size:9px;letter-spacing:0.08em">NO FILTERS ACTIVE</span>
+    <button class="ftoggle" id="btn-reset-filters" style="width:auto;padding:3px 8px;color:#fb923c;border-color:#fb923c">RESET ALL</button>
+  </div>
+
+  <!-- ΔV dual range -->
+  <div class="filter-group">
+    <div class="filter-row">
+      <span class="flabel">ΔV km/s</span>
+      <span class="fval" id="dv-range-display" style="min-width:80px;text-align:right;flex:1">0.0 – 10.0</span>
+    </div>
+    <div class="dual-range">
+      <div class="dual-range-track"><div class="dual-range-fill" id="dv-fill"></div></div>
+      <input type="range" id="dv-min" min="0" max="10" step="0.5" value="0">
+      <input type="range" id="dv-max" min="0" max="10" step="0.5" value="10">
+    </div>
+
+    <!-- Resource value log-scale dual range -->
+    <div class="filter-row" style="margin-top:8px">
+      <span class="flabel">VALUE</span>
+      <span class="fval" id="val-range-display" style="min-width:80px;text-align:right;flex:1">$0 – $100T</span>
+    </div>
+    <div class="dual-range">
+      <div class="dual-range-track"><div class="dual-range-fill" id="val-fill"></div></div>
+      <input type="range" id="val-min" min="0" max="100" step="1" value="0">
+      <input type="range" id="val-max" min="0" max="100" step="1" value="100">
+    </div>
+
+    <!-- Mission window -->
+    <div class="filter-row" style="margin-top:8px">
+      <span class="flabel">WINDOW</span>
+      <div style="display:flex;gap:4px;align-items:center;flex:1;justify-content:flex-end">
+        <input type="number" id="filter-win-start" min="2025" max="2045" value="2025" step="1"
+          style="width:52px;background:#0a0a10;border:1px solid #1a2235;color:#e5e7eb;font-family:inherit;font-size:10px;padding:2px 4px;text-align:center">
+        <span style="color:#4b5563;font-size:9px">–</span>
+        <input type="number" id="filter-win-end" min="2025" max="2045" value="2045" step="1"
+          style="width:52px;background:#0a0a10;border:1px solid #1a2235;color:#e5e7eb;font-family:inherit;font-size:10px;padding:2px 4px;text-align:center">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Spectral type chips -->
+  <div class="panel-header" style="margin-top:12px">SPECTRAL TYPE</div>
+  <div class="spec-chips">
+    <button class="spec-chip active" data-spec="C">C</button>
+    <button class="spec-chip active" data-spec="S">S</button>
+    <button class="spec-chip active" data-spec="M">M</button>
+    <button class="spec-chip active" data-spec="X">X</button>
+    <button class="spec-chip active" data-spec="D">D</button>
+    <button class="spec-chip active" data-spec="other">OTHER</button>
+  </div>
+
+  <!-- Quick toggles -->
+  <div class="panel-header" style="margin-top:12px">QUICK FILTERS</div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <button class="ftoggle" id="filter-nhats" data-on="false">◈ NHATS ACCESSIBLE ONLY</button>
+    <button class="ftoggle" id="filter-pha"   data-on="false">⚠ PHA ONLY</button>
+    <button class="ftoggle" id="filter-water" data-on="false">◉ HIGH WATER CONTENT</button>
+  </div>
+
+  <!-- Sort -->
+  <div class="panel-header" style="margin-top:12px">SORT BY</div>
+  <select id="lb-sort-select" class="aster-select" style="margin-bottom:8px">
+    <option value="dv">ΔV ↑ (most accessible)</option>
+    <option value="duration">Duration ↑</option>
+    <option value="value">Value ↓ (optimistic)</option>
+    <option value="diam">Diameter ↓</option>
+    <option value="name">Name A–Z</option>
+  </select>
+
+  <!-- Export catalog -->
+  <button class="ftoggle" id="btn-export-catalog" style="margin-bottom:10px">↓ EXPORT FILTERED CATALOG</button>
+
+  <!-- Leaderboard -->
+  <div class="panel-header">◈ ACCESSIBLE TARGETS</div>
+  <div id="leaderboard-list" style="max-height:360px;overflow-y:auto;margin-top:4px"></div>
+</div>
+
+<div id="right-panel">
+  <button id="btn-close-panel" style="position:absolute;top:10px;right:10px;background:transparent;border:none;
+    color:#4a5568;font-size:16px;cursor:pointer;font-family:'Space Mono',monospace;z-index:1;line-height:1"
+    title="Close (Esc)">✕</button>
+  <div id="panel-tabs">
+    <button class="tab-btn active" data-tab="inspector">◈ INSPECTOR</button>
+    <button class="tab-btn" data-tab="economics">$ ECONOMICS</button>
+    <button class="tab-btn" data-tab="materials">◆ MATERIALS</button>
+    <button class="tab-btn" data-tab="research">⬡ RESEARCH</button>
+  </div>
+  <div id="tab-inspector" style="display:flex;flex-direction:column;flex:1;overflow-y:auto;min-height:0">
+  <div class="panel-header">◈ TARGET INSPECTOR</div>
+  <div id="panel-idle">
+    CLICK ANY ASTEROID<br>
+    TO SELECT TARGET<br><br>
+    — SOLAR SYSTEM —<br>
+    8 PLANETS ACTIVE<br>
+    ASTERANK CATALOG<br>
+    LOADING...
+  </div>
+  <div id="sat-panel" style="display:none; flex-direction:column; gap:0;">
+    <div class="data-row"><span class="label">NAME</span><span class="value accent" id="sat-name">—</span></div>
+    <div class="data-row"><span class="label">NORAD ID</span><span class="value" id="sat-norad">—</span></div>
+    <div class="data-row"><span class="label">ALTITUDE</span><span class="value" id="sat-alt">—</span></div>
+    <div class="data-row"><span class="label">INCLINATION</span><span class="value" id="sat-inc-val">—</span></div>
+    <div class="data-row"><span class="label">PERIOD</span><span class="value" id="sat-period">—</span></div>
+    <div class="data-row"><span class="label">REGIME</span><span class="value accent" id="sat-regime">—</span></div>
+    <div class="data-row" style="margin-top:8px"><span class="label">EPOCH</span><span class="value" id="sat-epoch">—</span></div>
+  </div>
+  <div id="panel-data" style="display:none; flex-direction:column; gap:0;">
+    <div class="data-row"><span class="label">NAME</span><span class="value accent" id="ast-name">—</span></div>
+    <div class="data-row"><span class="label">TYPE</span><span class="value" id="ast-type">—</span></div>
+    <div class="data-row"><span class="label">TYPE NOTE</span><span class="value" id="ast-type-note">—</span></div>
+    <div class="data-row"><span class="label">DIAM</span><span class="value" id="ast-diam">—</span></div>
+    <div class="data-row"><span class="label">SMA</span><span class="value" id="ast-sma">—</span></div>
+    <div class="data-row"><span class="label">ECC</span><span class="value" id="ast-ecc">—</span></div>
+    <div class="data-row"><span class="label">INC</span><span class="value" id="ast-inc">—</span></div>
+    <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="ast-dv">—</span><span class="unc-icon" id="ast-dv-icon" style="display:none">ⓘ</span></div>
+    <div class="data-row"><span class="label">MOID</span><span class="value" id="ast-moid">—</span></div>
+    <div class="data-row"><span class="label">LAST OBS</span><span class="value" id="ast-last-obs">—</span></div>
+    <div class="data-row"><span class="label">COND CODE</span><span class="value" id="ast-cond-code">—</span></div>
+    <div class="data-row"><span class="label">DATA SOURCE</span><span class="value" id="ast-source">—</span></div>
+    <div class="data-row"><span class="label">VALUE SOURCE</span><span class="value" id="ast-value-source">—</span></div>
+    <div class="data-row"><span class="label">MODEL</span><span class="value" id="ast-resource-model">—</span></div>
+    <div class="data-row" style="margin-top:8px"><span class="label">PAPER VALUE</span><span class="value accent" id="ast-price">—</span></div>
+    <div class="data-row"><span class="label">ASTERANK PROFIT</span><span class="value profit" id="ast-profit">—</span></div>
+
+    <div class="panel-header" style="margin-top:10px">◆ COMPOSITION</div>
+    <div id="ast-composition" style="font-size:10px;color:#6a8a9a;line-height:1.8;white-space:pre;margin-bottom:8px"></div>
+
+    <div class="panel-header">$ RESOURCE VALUE</div>
+    <div class="data-row"><span class="label">WATER (space)</span><span class="value accent" id="ast-water-val">—</span></div>
+    <div class="data-row"><span class="label">METALS</span><span class="value" id="ast-metal-val">—</span></div>
+    <div class="data-row"><span class="label">WHOLE-BODY EST.</span><span class="value profit" id="ast-total-val">—</span></div>
+    <div id="feasibility-card" style="display:none;margin:6px 0 10px;padding:6px 8px;
+      border:1px solid #1a2235;font-size:9px;line-height:1.8;color:#c8d6e5">
+      <div style="color:#00d4ff;font-size:8px;letter-spacing:0.1em;margin-bottom:3px">◈ FEASIBILITY</div>
+      <div id="fi-dv">ΔV: —</div>
+      <div id="fi-dur">TOF: —</div>
+      <div id="fi-access">PATHS: —</div>
+      <div id="fi-value">VALUE: —</div>
+      <div id="fi-hazard">HAZARD: —</div>
+    </div>
+
+    <div id="nhats-badge" style="display:none;margin:6px 0 4px;padding:5px 8px;border:1px solid #fbbf24;color:#fbbf24;font-size:10px;letter-spacing:0.12em">
+      ◈ NHATS VERIFIED
+      <div id="nhats-details" style="color:#9ca3af;font-size:9px;margin-top:3px;line-height:1.7"></div>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <a id="link-jpl" href="#" target="_blank" class="ext-link">JPL →</a>
+      <a id="link-papers" href="#" target="_blank" class="ext-link">PAPERS →</a>
+    </div>
+
+    <button class="action-btn" id="btn-burn-mode">▶ BURN MODE [B]</button>
+    <button class="action-btn" id="btn-plan-mission"
+      style="margin-top:6px;background:linear-gradient(135deg,#004466,#006688);
+      border-color:#00d4ff;color:#00d4ff;font-weight:bold;letter-spacing:0.12em">⚡ PLAN MISSION</button>
+  </div>
+
+  <!-- Burn result panel (shown when burn is active) -->
+  <div id="burn-panel" style="display:none; margin-top:12px;">
+    <div class="panel-header">△ BURN RESULT</div>
+    <div class="compare-grid">
+      <span class="ch"></span><span class="ch">BEFORE</span><span class="ch">AFTER</span>
+      <span class="cl">SMA</span><span class="cv" id="bp-a-before">—</span><span class="cv new" id="bp-a-after">—</span>
+      <span class="cl">ECC</span><span class="cv" id="bp-e-before">—</span><span class="cv new" id="bp-e-after">—</span>
+      <span class="cl">INC</span><span class="cv" id="bp-i-before">—</span><span class="cv new" id="bp-i-after">—</span>
+      <span class="cl">PERIOD</span><span class="cv" id="bp-T-before">—</span><span class="cv new" id="bp-T-after">—</span>
+      <span class="cl">MOID</span><span class="cv" id="bp-moid-before">—</span><span class="cv new" id="bp-moid-after">—</span>
+      <span class="cl">ΔV</span><span class="cv">—</span><span class="cv warn" id="bp-dv">—</span>
+    </div>
+    <div class="data-row"><span class="label">FUEL MASS</span><span class="value warning" id="bp-fuel">—</span></div>
+    <div class="data-row"><span class="label">NEXT APPROACH</span><span class="value accent" id="bp-approach">—</span></div>
+    <button class="action-btn" id="btn-show-porkchop">◈ SHOW LAUNCH WINDOWS</button>
+  </div>
+
+  <!-- Porkchop plot panel -->
+  <div id="porkchop-panel">
+    <div class="panel-header">◈ LAUNCH WINDOWS</div>
+    <div style="position:relative">
+      <canvas id="porkchop-canvas" width="308" height="180"></canvas>
+      <div id="porkchop-tooltip"></div>
+    </div>
+    <div id="porkchop-axes">
+      <span id="pc-x-start">—</span>
+      <span>DEPARTURE →</span>
+      <span id="pc-x-end">—</span>
+    </div>
+    <div id="porkchop-yaxis" style="display:flex;justify-content:space-between;font-size:9px;color:#4b5563;margin-top:1px">
+      <span>TOF: <span id="pc-tof-min">60d</span></span>
+      <span style="color:#60a5fa">↕ TOF</span>
+      <span><span id="pc-tof-max">450d</span></span>
+    </div>
+    <div id="porkchop-status">READY</div>
+  </div>
+
+  <!-- Multi-burn sequence panel -->
+  <div id="burn-sequence">
+    <div class="panel-header" style="margin-top:12px;">▶ BURN SEQUENCE</div>
+    <div id="burn-list"></div>
+    <div class="btn-row">
+      <button class="action-btn" id="btn-add-burn">+ ADD BURN</button>
+      <button class="action-btn danger" id="btn-clear-burns">✕ CLEAR</button>
+    </div>
+    <div id="burn-seq-total">TOTAL ΔV: <span id="total-dv-val">0.0</span> km/s</div>
+    <div class="panel-header" style="margin-top:12px;">▣ SCENARIO</div>
+    <div id="scenario-bar">
+      <input type="text" id="scenario-name" placeholder="scenario name" maxlength="32">
+      <button id="btn-save-scenario">SAVE</button>
+      <button id="btn-load-scenario">LOAD</button>
+    </div>
+  </div>
+  </div><!-- /tab-inspector -->
+
+  <div id="tab-economics" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="econ-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
+      SELECT AN ASTEROID TO VIEW ECONOMICS
+    </div>
+    <div id="econ-content" style="display:none">
+      <div class="panel-header">◆ MISSION ECONOMICS</div>
+
+      <div class="data-row">
+        <span class="label">DRY MASS</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="eco-dry-mass" value="1000" min="100" max="10000"
+            style="width:60px;background:transparent;border:1px solid #1a2235;color:#e5e7eb;
+            font-family:'Space Mono','Courier New',monospace;font-size:12px;text-align:right;padding:2px 4px">
+          <span class="value">kg</span>
+        </span>
+      </div>
+      <div class="data-row">
+        <span class="label">Isp</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="eco-isp" value="450" min="100" max="10000"
+            style="width:60px;background:transparent;border:1px solid #1a2235;color:#e5e7eb;
+            font-family:'Space Mono','Courier New',monospace;font-size:12px;text-align:right;padding:2px 4px">
+          <span class="value">s</span>
+        </span>
+      </div>
+
+      <div class="panel-header" style="margin-top:10px">MISSION COST</div>
+      <div class="data-row"><span class="label">ΔV</span><span class="value warning" id="eco-dv">—</span></div>
+      <div class="data-row"><span class="label">PROPELLANT</span><span class="value" id="eco-propellant">—</span></div>
+      <div class="data-row"><span class="label">LAUNCH MASS</span><span class="value" id="eco-launch-mass">—</span></div>
+      <div class="data-row"><span class="label">LAUNCH COST</span><span class="value" id="eco-launch-cost">—</span></div>
+      <div class="data-row"><span class="label">TOTAL COST</span><span class="value warning" id="eco-total-cost">—</span><span class="unc-icon" id="eco-cost-icon" style="display:none">ⓘ</span></div>
+
+      <div class="panel-header" style="margin-top:10px">RETURNS</div>
+      <div class="data-row"><span class="label">WHOLE-BODY WATER</span><span class="value accent" id="eco-water">—</span></div>
+      <div class="data-row"><span class="label">WHOLE-BODY METALS</span><span class="value" id="eco-metals">—</span></div>
+      <div class="data-row"><span class="label">ASTERANK VALUE</span><span class="value accent" id="eco-asterank">—</span></div>
+      <div class="data-row"><span class="label">MISSION RETURN</span><span class="value" id="eco-returned-mass">—</span></div>
+      <div class="data-row"><span class="label">RETURNS MODEL</span><span class="value" id="eco-return-model">—</span></div>
+      <div class="data-row"><span class="label">PRICE SOURCE</span><span class="value" id="eco-price-source">—</span></div>
+      <div class="data-row"><span class="label">PAPER VALUE</span><span class="value accent" id="eco-paper-value">—</span></div>
+      <div class="data-row"><span class="label">REALIZABLE NPV</span><span class="value accent" id="eco-npv">—</span></div>
+      <div class="data-row" style="margin-top:6px"><span class="label">EST. ROI</span><span class="value profit" id="eco-roi">—</span></div>
+
+      <div id="eco-isru-note" style="display:none;border:1px solid #00d4ff;padding:8px;
+        color:#00d4ff;font-size:10px;line-height:1.6;margin-top:10px"></div>
+      <div id="eco-cost-warning" style="display:none;border:1px solid #7c3a00;padding:8px;
+        color:#fbbf24;font-size:10px;line-height:1.6;margin-top:10px"></div>
+
+      <button class="action-btn" id="btn-export-report" style="margin-top:10px">↓ EXPORT MISSION REPORT</button>
+      <button class="action-btn" id="btn-share" style="margin-top:4px">⬡ SHARE MISSION URL</button>
+    </div>
+  </div><!-- /tab-economics -->
+
+  <div id="tab-materials" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="mat-no-selection" style="color:#4b5563;font-size:11px;padding:8px">
+      SELECT AN ASTEROID TO VIEW MATERIALS
+    </div>
+    <div id="mat-content" style="display:none">
+      <div style="display:flex;gap:6px;margin:0 0 8px;align-items:center">
+        <button id="mat-price-toggle" class="action-btn" style="flex:1;font-size:9px;padding:5px 0">EARTH PRICES</button>
+        <button id="mat-price-refresh" class="action-btn" style="font-size:9px;padding:5px 8px" title="Refresh prices">↺</button>
+      </div>
+      <div class="panel-header">◆ COMPOSITION</div>
+      <div id="mat-donut" style="display:flex;justify-content:center;margin:6px 0"></div>
+      <div class="panel-header" style="margin-top:8px">◆ VALUE BY MATERIAL</div>
+      <div id="mat-bars" style="padding:4px 0;overflow:hidden"></div>
+      <div class="panel-header" style="margin-top:8px">◆ DETAILED BREAKDOWN</div>
+      <div id="mat-table" style="overflow-x:auto"></div>
+      <div id="mat-price-info" style="margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px;line-height:1.6"></div>
+    </div>
+  </div><!-- /tab-materials -->
+
+  <div id="tab-research" style="display:none;overflow-y:auto;flex:1;padding-top:4px">
+    <div id="research-prompt-hint" style="color:#4b5563;font-size:10px;text-align:center;padding:40px 12px;line-height:1.6">
+      Select an asteroid to load<br>an AI research briefing.
+    </div>
+    <div id="research-loading" style="display:none;text-align:center;padding:40px 12px">
+      <div style="color:#00d4ff;font-size:10px;letter-spacing:0.15em">FETCHING BRIEFING…</div>
+    </div>
+    <div id="research-error" style="display:none;padding:12px;border:1px solid #7f1d1d;color:#f87171;font-size:10px;line-height:1.6;margin:8px 0"></div>
+    <div id="research-content" style="display:none;font-size:10px;line-height:1.7;color:#d1d5db"></div>
+    <div id="research-meta" style="display:none;margin-top:8px;font-size:9px;color:#4b5563;border-top:1px solid #1a2235;padding-top:6px"></div>
+  </div><!-- /tab-research -->
+
+<div id="mission-planner" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;
+    border-bottom:1px solid #1a2235;flex-shrink:0">
+    <button id="btn-planner-back" style="background:transparent;border:1px solid #1a2235;
+      color:#6a8a9a;font-family:'Space Mono',monospace;font-size:9px;padding:4px 8px;
+      cursor:pointer;letter-spacing:0.08em">← BACK</button>
+    <div style="flex:1;min-width:0;overflow:hidden;font-size:11px;color:#00d4ff;letter-spacing:0.15em;
+      font-family:'Space Mono',monospace">⚡ MISSION PLANNER</div>
+    <div id="mp-target-name" style="font-size:9px;color:#6a8a9a;
+      font-family:'Space Mono',monospace;text-align:right;max-width:140px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+  </div>
+
+  <div id="mp-scroll" style="overflow-y:auto;flex:1;padding:12px 14px">
+
+    <div id="mp-type-toggle" style="display:flex;gap:6px;margin-bottom:14px">
+      <button id="btn-type-extract" class="ftoggle" data-on="true"
+        style="flex:1;text-align:center;padding:6px 8px;font-size:9px"
+        onclick="setMissionType('extract')">⚡ EXTRACT &amp; RETURN</button>
+      <button id="btn-type-redirect" class="ftoggle" data-on="false"
+        style="flex:1;text-align:center;padding:6px 8px;font-size:9px"
+        onclick="setMissionType('redirect')">↩ CAPTURE &amp; REDIRECT</button>
+    </div>
+
+    <div class="panel-header">◈ MISSION CONFIGURATION</div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">DELIVERY DESTINATION</div>
+      <select id="mp-destination" class="mp-select">
+        <option value="leo">Low Earth Orbit (LEO) — 400 km · Lowest cost, highest demand</option>
+        <option value="geo">High Earth Orbit (GEO) — 35,786 km · Telecom satellite refueling</option>
+        <option value="l1">Earth-Moon L1 — 326,000 km · Lunar gateway staging node</option>
+        <option value="l2">Earth-Moon L2 — 444,000 km · Deep space transit hub</option>
+        <option value="lunar">Lunar Surface — Direct delivery · In-situ resource use</option>
+        <option value="mars">Mars Orbit — Interplanetary · Long-range fuel depot</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">LAUNCH WINDOW</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="mp-year-start" type="number" min="2025" max="2044" value="2026"
+          class="mp-input" style="width:70px" placeholder="FROM">
+        <span style="color:#4b5563;font-size:10px">—</span>
+        <input id="mp-year-end" type="number" min="2026" max="2045" value="2035"
+          class="mp-input" style="width:70px" placeholder="TO">
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:6px">SPACECRAFT CLASS</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label class="mp-craft-card" data-craft="light">
+          <input type="radio" name="mp-craft" value="light" style="display:none">
+          <div class="mp-craft-name">LIGHT PROSPECTOR</div>
+          <div class="mp-craft-specs">500 kg dry · 200 kg payload · Isp 3000s (ion)</div>
+        </label>
+        <label class="mp-craft-card mp-craft-selected" data-craft="medium">
+          <input type="radio" name="mp-craft" value="medium" checked style="display:none">
+          <div class="mp-craft-name">MEDIUM MINER</div>
+          <div class="mp-craft-specs">5,000 kg dry · 2,000 kg payload · Isp 320s (chem)</div>
+        </label>
+        <label class="mp-craft-card" data-craft="heavy">
+          <input type="radio" name="mp-craft" value="heavy" style="display:none">
+          <div class="mp-craft-name">HEAVY HAULER</div>
+          <div class="mp-craft-specs">50,000 kg dry · 20,000 kg payload · Isp 320s (chem)</div>
+        </label>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">LAUNCH VEHICLE</div>
+      <select id="mp-launch-vehicle" class="mp-select">
+        <option value="f9_rs">Falcon 9 Rideshare — $5,000/kg · 1,000 kg max</option>
+        <option value="f9" selected>Falcon 9 — $2,700/kg · 22,800 kg max</option>
+        <option value="fh">Falcon Heavy — $1,500/kg · 63,800 kg max</option>
+        <option value="starship">Starship [projected] — $100/kg · 150,000 kg max</option>
+        <option value="vulcan">Vulcan Centaur — $4,000/kg · 27,200 kg max</option>
+        <option value="ng">New Glenn [projected] — $2,000/kg · 45,000 kg max</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">PARKING ORBIT ALTITUDE</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="mp-park-alt" type="number" min="200" max="2000" value="400"
+          class="mp-input" style="width:70px">
+        <span style="font-size:9px;color:#4b5563">km above Earth surface</span>
+      </div>
+    </div>
+
+    <div id="mp-redirect-config" style="display:none;margin-bottom:14px">
+      <div style="margin-bottom:10px">
+        <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">PROPULSION SYSTEM</div>
+        <select id="mp-redirect-propulsion" class="mp-select">
+          <option value="chemical_300">Chemical — Isp 300s · High thrust, heavy fuel load</option>
+          <option value="ion_3000">Ion Drive — Isp 3000s · Low thrust, very efficient</option>
+          <option value="nuclear_900">Nuclear Thermal — Isp 900s · High thrust + efficient</option>
+          <option value="sep_2500">Solar Electric — Isp 2500s · efficient, very low thrust</option>
+        </select>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">CAPTURE TARGET</div>
+        <select id="mp-redirect-target" class="mp-select">
+          <option value="lunar_orbit">Lunar Orbit — Stable capture, ISRU base</option>
+          <option value="el4">Earth-Luna L4 — Stable trojan, long-term storage</option>
+          <option value="el5">Earth-Luna L5 — Stable trojan, industrial hub</option>
+        </select>
+      </div>
+      <div style="margin-bottom:4px">
+        <div style="font-size:9px;color:#4b5563;letter-spacing:0.08em;margin-bottom:4px">MINING SPLIT — METALS vs WATER</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="mp-mining-split" type="range" min="0" max="100" value="50" style="flex:1"
+            oninput="onMiningSlider(this.value)">
+          <span id="mp-split-label" style="font-size:9px;color:#4af7c4;min-width:100px">50% metals</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:2px">
+          <span style="font-size:8px;color:#4b5563">← all water</span>
+          <span style="font-size:8px;color:#4b5563">all metals →</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-find-route" class="action-btn"
+      style="width:100%;font-size:11px;padding:10px;background:linear-gradient(135deg,#003322,#005544);
+      border-color:#00d4ff;color:#00d4ff;letter-spacing:0.15em">🚀 FIND BEST ROUTE</button>
+
+    <div id="mp-computing" style="display:none;margin-top:14px">
+      <div class="panel-header">◈ OPTIMIZING TRAJECTORY</div>
+      <div id="mp-progress-label" style="font-size:9px;color:#6a8a9a;margin-bottom:6px">Scanning launch windows...</div>
+      <div style="height:4px;background:#1a2235;margin-bottom:10px">
+        <div id="mp-progress-bar" style="height:100%;background:#00d4ff;width:0%;transition:width 0.2s"></div>
+      </div>
+    </div>
+
+    <div id="mp-results" style="display:none;margin-top:14px">
+      <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between">
+        ◈ TRAJECTORY OPTIONS
+        <span id="mp-result-count" style="color:#6a8a9a;font-size:9px;font-weight:normal"></span>
+      </div>
+      <div id="mp-results-error" style="display:none;margin-top:10px"></div>
+      <div id="mp-trajectory-list" style="display:flex;flex-direction:column;gap:4px"></div>
+    </div>
+
+    <div id="mp-profile" style="display:none;margin-top:14px">
+      <div class="panel-header">◈ MISSION PROFILE</div>
+      <div id="mp-profile-text" style="font-family:'Space Mono',monospace;font-size:8.5px;line-height:1.8;
+        color:#c8d6e5;background:#050810;border:1px solid #1a2235;padding:10px;
+        white-space:pre;overflow-x:auto;border-radius:2px"></div>
+    </div>
+
+    <!-- Phase 9E: Model Assumptions collapsible -->
+    <div id="mp-assumptions-wrap" style="display:none;margin-top:6px">
+      <button id="mp-assumptions-toggle"
+        style="width:100%;text-align:left;background:none;border:1px solid #1a2d44;
+          color:#6a8a9a;font-size:8px;font-family:'Space Mono',monospace;padding:4px 8px;
+          cursor:pointer;letter-spacing:0.08em">MODEL ASSUMPTIONS ▶</button>
+      <div id="mp-assumptions-content" style="display:none;background:#060a14;border:1px solid #0d1f33;
+        border-top:none;padding:8px 10px;font-size:8px;font-family:'Space Mono',monospace;
+        color:#6a8a9a;line-height:2">
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Propagation:</span>Keplerian (two-body, no perturbations)</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Burn model:</span>Impulsive (no gravity losses)</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Gravity losses:</span>Not modeled — add 3–5% margin</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Perturbations:</span>Not modeled (J₂, lunar, planetary)</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Spacecraft:</span>Single-stage Tsiolkovsky</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Margin reserves:</span>Not included — add ±10–20%</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Oberth effect:</span>Not modeled</div>
+        <div><span style="color:#4a6a7a;display:inline-block;width:130px">Low-thrust:</span>Not modeled (chemical only)</div>
+        <div style="margin-top:6px;color:#3a5a6a;border-top:1px solid #0d1f33;padding-top:6px">
+          For high-fidelity analysis: export to GMAT or verify in
+          <a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" style="color:#00d4ff">JPL Horizons</a>.
+        </div>
+      </div>
+    </div>
+
+    <div id="mp-verify-wrap" style="display:none;margin-top:6px;gap:6px;flex-wrap:wrap">
+      <button id="mp-verify-horizons"
+        style="flex:1;background:none;border:1px solid #1a2d44;color:#6a8a9a;
+          font-size:8px;font-family:'Space Mono',monospace;padding:4px 8px;cursor:pointer;text-align:left">
+        🔍 Verify in JPL Horizons
+      </button>
+    </div>
+
+    <div id="mp-burns" style="display:none;margin-top:14px">
+      <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+        ◈ DELTA-V BUDGET
+        <button id="btn-mp-reset-optimal" style="background:transparent;border:1px solid #1a2235;
+          font-family:'Space Mono',monospace;font-size:8px;color:#6a8a9a;padding:2px 6px;
+          cursor:pointer;letter-spacing:0.06em">↺ RESET</button>
+      </div>
+      <div id="mp-burn-table"></div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button id="btn-mp-add-burn" class="action-btn" style="flex:1;font-size:9px;padding:5px">+ ADD BURN</button>
+      </div>
+      <div style="font-size:9px;color:#4b5563;margin-top:6px;border-top:1px solid #1a2235;padding-top:6px">
+        TOTAL ΔV: <span id="mp-total-dv" style="color:#00d4ff">—</span> km/s
+        &nbsp;·&nbsp; FUEL: <span id="mp-total-fuel" style="color:#fbbf24">—</span> kg
+      </div>
+    </div>
+
+    <div id="mp-actions" style="display:none;margin-top:14px;padding-bottom:20px">
+      <div style="display:flex;gap:6px">
+        <button id="btn-mp-export" class="action-btn" style="flex:1;font-size:9px;padding:6px">↓ EXPORT PLAN</button>
+        <button id="btn-mp-share" class="action-btn" style="flex:1;font-size:9px;padding:6px">⬡ SHARE MISSION</button>
+      </div>
+      <div style="margin-top:6px">
+        <button id="btn-mp-play" class="action-btn"
+          style="width:100%;font-size:10px;padding:7px;letter-spacing:0.1em">▶ PLAY MISSION</button>
+      </div>
+      <div id="mp-anim-controls">
+        <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+          ◈ FLIGHT PREVIEW
+          <button id="btn-anim-stop" class="action-btn"
+            style="font-size:8px;padding:2px 8px;color:#ff4444;border-color:#ff4444">■ STOP</button>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:8px">
+          <button id="btn-anim-playpause" class="action-btn" style="flex:1;font-size:10px;padding:5px">▶</button>
+        </div>
+        <div style="display:flex;gap:3px">
+          <button class="anim-speed-btn" data-aspeed="10">10×</button>
+          <button class="anim-speed-btn" data-aspeed="100">100×</button>
+          <button class="anim-speed-btn" data-aspeed="1000">1K×</button>
+          <button class="anim-speed-btn" data-aspeed="10000">10K×</button>
+          <button class="anim-speed-btn anim-speed-active" data-aspeed="86400">1d/s</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="mp-redirect-results" style="display:none;margin-top:14px;padding-bottom:20px">
+
+      <div class="panel-header">◈ REDIRECT FEASIBILITY</div>
+      <div id="mp-redirect-error" style="display:none;margin-top:10px"></div>
+      <div id="rr-feasibility" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:9px;color:#4b5563;letter-spacing:0.08em">MISSION SCORE</span>
+          <span id="rr-score-val" style="font-size:14px;color:#4af7c4;font-weight:bold">—/100</span>
+        </div>
+      <div style="height:6px;background:#1a2235;border:1px solid #1f2937">
+          <div id="rr-score-bar" style="height:100%;width:0%;background:#4af7c4;transition:width 0.4s"></div>
+        </div>
+        <div id="rr-score-breakdown"></div>
+      </div>
+
+      <div id="rr-intercept" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
+        <div style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">INTERCEPT TRAJECTORY</div>
+        <pre id="rr-intercept-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
+      </div>
+
+      <div id="rr-asteroid" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
+        <div style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">ASTEROID MASS + PROPELLANT</div>
+        <pre id="rr-asteroid-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
+        <div id="rr-prop-warn" style="display:none;margin-top:6px;font-size:9px;color:#fb923c;
+          border:1px solid #7c3a00;padding:4px 6px">
+          ▲ HIGH PROPELLANT LOAD — mission may be marginally feasible
+        </div>
+      </div>
+
+      <div id="rr-capture" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
+        <div id="rr-capture-header" style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px" title="Lunar capture ΔV is a patched-conic approximation — not a high-fidelity solution">DESTINATION CAPTURE</div>
+        <pre id="rr-capture-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap" title="Capture ΔV figures are patched-conic approximations. Screening-grade only."></pre>
+      </div>
+
+      <div id="rr-isru" style="border:1px solid #1f2937;padding:8px;margin-bottom:8px">
+        <div style="font-size:9px;color:#60a5fa;letter-spacing:0.08em;margin-bottom:6px">ISRU YIELD ESTIMATE</div>
+        <pre id="rr-isru-text" style="font-size:9px;color:#e5e7eb;margin:0;line-height:1.6;white-space:pre-wrap"></pre>
+      </div>
+
+      <div id="rr-infeasible-msg" style="display:none;border:1px solid #7f1d1d;padding:8px;
+        background:#1a0808;color:#f87171;font-size:9px;letter-spacing:0.05em">
+        ✗ MISSION INFEASIBLE — propellant requirement exceeds 95% of asteroid mass.<br>
+        Try ion drive propulsion or select a smaller, closer target.
+      </div>
+
+    </div>
+
+  </div>
+</div><!-- /mission-planner -->
+</div><!-- /right-panel -->
+
+<div id="asteroid-tooltip"></div>
+<div id="burn-tooltip"></div>
+<div id="unc-popup" class="unc-popup"></div>
+
+<div id="mission-timeline">
+  <div id="mission-timeline-inner">
+    <div id="mt-cursor"></div>
+  </div>
+</div>
+
+<div id="bottom-bar">
+  <div id="date-display">2026-MAR-27</div>
+  <input type="range" id="time-scrubber" min="0" max="1" step="1" value="0">
+  <button id="btn-play-pause" class="speed-btn" title="Play / Pause (Space)">▶</button>
+  <div id="speed-controls">
+    <button class="speed-btn" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="10">10×</button>
+    <button class="speed-btn" data-speed="100">100×</button>
+    <button class="speed-btn active" data-speed="1000">1K×</button>
+    <button class="speed-btn" data-speed="10000">10K×</button>
+  </div>
+  <button id="btn-scale-mode" class="speed-btn" title="Toggle readable vs physically relative body sizes">SIZE: READ</button>
+  <button id="btn-moon-orbits" class="speed-btn active" title="Toggle Moon and major-moon orbit overlays">MOONS: ON</button>
+  <button id="btn-follow-spacecraft" class="speed-btn" title="Re-enable camera follow">⊙ Follow Spacecraft</button>
+  <div id="asteroid-count">▲ 0 ASTEROIDS</div>
+  <button id="btn-sat-toggle" class="speed-btn" onclick="toggleSatellites()" title="Toggle satellite orbits">SAT: OFF</button>
+  <div id="bottom-hints" style="font-size:9px;color:#4b5563;letter-spacing:0.08em;display:flex;gap:16px;align-items:center">
+    <span style="cursor:pointer" id="btn-shortcut-hint">? SHORTCUTS</span>
+    <a href="https://github.com/hudsonclavin/asteroid-mining-planner" target="_blank"
+      style="color:#4b5563;text-decoration:none">⬡ GITHUB</a>
+  </div>
+</div>
+
+</body>
+</html>

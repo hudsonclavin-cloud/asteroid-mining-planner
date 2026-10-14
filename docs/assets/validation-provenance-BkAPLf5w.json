@@ -9,7 +9,7 @@
     "framing": "Worst case across every validation surface, under the STRICT class. The trajectory solver itself agrees with the poliastro reference to machine precision (rows below); the largest error the tool shows on well-behaved inputs comes from interpolating published launch-vehicle payload curves."
   },
   "classDefinitions": {
-    "STRICT": "Error measured across the well-behaved curve segments the tool is designed to screen on. This is the gated figure.",
+    "STRICT": "Error measured across well-behaved published curve segments (held-out C3 = 15, 25, and 35); the final 40-55 anchor segment is excluded. This is the gated figure.",
     "OBSERVED": "Error including the one steep segment where the tool is knowingly optimistic. Disclosed here rather than gated, so the worst case is never hidden."
   },
   "observedDisclosure": "New Glenn payload between C3 = 20 and C3 = 30 is linearly interpolated across a steep final segment and may overestimate actual capability by up to ~3%. All other vehicles interpolate within 3% of NASA LSP published values.",
@@ -78,7 +78,8 @@
       "sourceArtifact": "tools/slice13-research/elvperf/oracle/oracle-report.md",
       "sourceCommit": "808e709",
       "class": "STRICT",
-      "note": "Excludes New Glenn's steep final segment — see the OBSERVED figure."
+      "scope": "well-behaved published curve segments at held-out C3 = 15, 25, and 35; excludes the final 40-55 anchor segment",
+      "note": "The final 40-55 anchor segment is OBSERVED rather than STRICT; see the disclosed figure."
     },
     {
       "id": "cost-oracle-observed",
@@ -91,6 +92,7 @@
       "sourceArtifact": "tools/slice13-research/elvperf/oracle/oracle-report.md",
       "sourceCommit": "808e709",
       "class": "OBSERVED",
+      "scope": "all 22 non-absent held-out comparisons, including the final 40-55 anchor segment",
       "note": "The single worst point; New Glenn between C3 = 20 and 30 may read ~3% high. See the disclosure."
     }
   ]
