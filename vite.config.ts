@@ -11,6 +11,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
+        root: resolve(__dirname, 'index.html'),
         legacy: resolve(__dirname, 'legacy/index.html'),
         v2Index: resolve(__dirname, 'v2/index.html'),
         earthMoonV2: resolve(__dirname, 'v2/earth-moon/index.html'),
