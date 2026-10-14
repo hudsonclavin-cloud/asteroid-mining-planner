@@ -980,7 +980,7 @@ function PorkchopDedicatedPage() {
                     key: 'stack-assumptions',
                     style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
                   },
-                  `Assumptions: ${MISSION_MODE_LABELS[selectedMode]}; 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); rendezvous = arrival v∞; ${selectedMode === 'sample-return' ? 'departure = arrival v∞ under the symmetric-return assumption; ' : 'no departure burn in one-way mode; '}stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
+                  `Assumptions: ${MISSION_MODE_LABELS[selectedMode]}; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); rendezvous = arrival v∞; ${selectedMode === 'sample-return' ? 'departure = arrival v∞ under the symmetric-return assumption; ' : 'no departure burn in one-way mode; '}stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
                 ),
               ],
       ),
