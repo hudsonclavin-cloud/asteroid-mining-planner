@@ -200,8 +200,9 @@ function formatMassKg(massKg: number): string {
 //  - Diameter relation D(km) = (1329/sqrt(pV)) * 10^(-H/5): computed by
 //    deriveAsteroidDiameterKmFromAbsoluteMagnitude — the SAME core function
 //    that generated the catalog's estimatedRadiusM at build time
-//    (tools/slice9-ingestion/derived-fields.mjs), so the display derivation
-//    cannot drift from the data. Relation + K = 1329 km verified with primary
+//    (tools/slice9-ingestion/derived-fields.mjs). The generator holds its own
+//    literal 0.14, so the display derivation can drift from the data if either
+//    side changes; this page discloses its assumption explicitly. Relation + K = 1329 km verified with primary
 //    citations in tools/slice17-research/literature/V6_H_TO_DIAMETER_VERIFIED.md
 //    (Fowler & Chillemi 1992; Pravec & Harris 2007 give K = 1329 ± 10 km).
 //  - Albedo medians: C-complex 0.053, S-complex 0.166 (Mainzer et al. 2011,
@@ -217,10 +218,21 @@ function formatMassKg(massKg: number): string {
 
 /** Mainzer et al. 2011 taxonomy-median albedos bounding the displayed range
  * (V6 items 3/3b). Higher albedo -> smaller diameter for the same H. */
-const ALBEDO_C_COMPLEX = 0.053;
-const ALBEDO_S_COMPLEX = 0.166;
-/** V6 item 5b: diameter factor across the unconstrained X-complex span. */
-const X_COMPLEX_WIDENING_FACTOR = '≈2.9';
+export const ALBEDO_C_COMPLEX = 0.053;
+export const ALBEDO_S_COMPLEX = 0.166;
+export const ALBEDO_LOW_REFLECTIVITY = 0.07;
+export const ALBEDO_HIGH_REFLECTIVITY = 0.60;
+export const COMPARE_DEFAULT_ALBEDO = ASTEROID_DEFAULT_ALBEDO;
+
+/** D is proportional to p^(-1/2), so this factor is derived from the page's
+ * reflectivity constants instead of being a displayed magic number. */
+export function diameterFactor(fromAlbedo: number, toAlbedo: number): number {
+  return Math.sqrt(fromAlbedo / toAlbedo);
+}
+
+function formatDiameterFactor(factor: number): string {
+  return `≈${factor.toFixed(1)}×`;
+}
 
 function formatDiameterKm(diameterKm: number): string {
   if (diameterKm < 1) {
@@ -238,7 +250,7 @@ interface SizeCell {
 /** DEC-17-4 SIZE RANGE. The range spans the C-to-S albedo medians; the NEA
  * default 0.14 — the assumption already baked into the 3D view's marker
  * radii — is disclosed as a point within it, per the OQ-17-9 disposition. */
-function describeSize(H: number | null): SizeCell {
+export function describeSize(H: number | null): SizeCell {
   if (H === null) {
     return {
       headline: 'no H on file',
@@ -250,12 +262,12 @@ function describeSize(H: number | null): SizeCell {
   // implies a SMALLER body: S-complex bounds the small end, C-complex the large.
   const smallKm = deriveAsteroidDiameterKmFromAbsoluteMagnitude(H, ALBEDO_S_COMPLEX);
   const largeKm = deriveAsteroidDiameterKmFromAbsoluteMagnitude(H, ALBEDO_C_COMPLEX);
-  const defaultKm = deriveAsteroidDiameterKmFromAbsoluteMagnitude(H, ASTEROID_DEFAULT_ALBEDO);
+  const defaultKm = deriveAsteroidDiameterKmFromAbsoluteMagnitude(H, COMPARE_DEFAULT_ALBEDO);
   return {
     headline: `${formatDiameterKm(smallKm)} – ${formatDiameterKm(largeKm)}`,
     notes: [
       `estimated from brightness (H ${H}) across dark-to-bright surface reflectivities (0.053–0.166) — an assumption, not a measurement`,
-      `at the survey-average reflectivity 0.14 assumed elsewhere in this tool: ≈ ${formatDiameterKm(defaultKm)}; a metallic-bright surface could shrink this ${X_COMPLEX_WIDENING_FACTOR}×`,
+      `at the survey-average reflectivity ${COMPARE_DEFAULT_ALBEDO} assumed elsewhere in this tool: ≈ ${formatDiameterKm(defaultKm)}; a high-reflectivity surface (${ALBEDO_HIGH_REFLECTIVITY}) could shrink this ${formatDiameterFactor(diameterFactor(ALBEDO_HIGH_REFLECTIVITY, COMPARE_DEFAULT_ALBEDO))}; a low-reflectivity surface (${ALBEDO_LOW_REFLECTIVITY}) could enlarge it ${formatDiameterFactor(diameterFactor(COMPARE_DEFAULT_ALBEDO, ALBEDO_LOW_REFLECTIVITY))}`,
     ],
     known: true,
   };

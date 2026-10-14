@@ -155,3 +155,18 @@ test('T2 compare hide state preserves practical order and dominance while replac
   assert.doesNotMatch(normalOnText, /near-zero-C3 window hidden/);
   assert.match(normalOnText, /1\.62 km/);
 });
+
+test('T3 compare size factors are derived from the imported albedo constants in both directions', async () => {
+  const {
+    describeSize,
+    diameterFactor,
+    COMPARE_DEFAULT_ALBEDO,
+    ALBEDO_LOW_REFLECTIVITY,
+    ALBEDO_HIGH_REFLECTIVITY,
+  } = await loadCompareRenderers();
+  assert.ok(Math.abs(diameterFactor(ALBEDO_HIGH_REFLECTIVITY, COMPARE_DEFAULT_ALBEDO) - 2.070196678) < 1e-6);
+  assert.ok(Math.abs(diameterFactor(COMPARE_DEFAULT_ALBEDO, ALBEDO_LOW_REFLECTIVITY) - 1.414213562) < 1e-6);
+  const note = describeSize(20).notes.join(' ');
+  assert.match(note, /≈2\.1×/);
+  assert.match(note, /≈1\.4×/);
+});
