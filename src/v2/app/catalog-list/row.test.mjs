@@ -192,6 +192,7 @@ test('near-zero C3 is a separate geometry flag and coexists with the screening s
   const apophisTitles = collectTitles(modules.renderRow(apophis, 0));
   assert.equal(apophis.screen.minC3, 0.00020641346871491306);
   assert.ok(apophisTexts.includes('near-zero C3'));
+  assert.ok(apophisTexts.includes('close approach — see caveat'));
   assert.ok(apophisTexts.includes('low C3'));
   assert.ok(apophisTexts.some((text) => text.includes(`C3 ${modules.formatC3(apophis.screen.minC3)} km`)));
   const nearZeroTitle = apophisTitles.find((title) => title.includes('This flag is triggered because this value is below'));
@@ -206,6 +207,7 @@ test('near-zero C3 is a separate geometry flag and coexists with the screening s
   const eros = committedRow(modules, '433', 'AMO');
   const erosTexts = collectTexts(modules.renderRow(eros, 0));
   assert.ok(!erosTexts.includes('near-zero C3'));
+  assert.ok(!erosTexts.includes('close approach — see caveat'));
 });
 
 test('near-zero catalog disclosure remains byte-identical to the approved wording', async () => {
@@ -243,7 +245,7 @@ test('S18 Item 5: the tier badge tooltip is the full disclosure sentence, never 
     ['2018 LA', 'APO', 'This object no longer exists. Its JPL ephemeris terminates 2018-06-02 at a verified Earth impact.'],
     ['2015 D1', 'JFC', 'Aster cannot propagate this object. Its eccentricity is 1.0035, which is not an elliptical orbit.'],
     ['99942', 'ATE', 'Screening for this object is supported through 2028-09-12. A close approach to Earth on that date'],
-    ['433', 'AMO', 'Aster has not measured the screening error for this object.'],
+    ['433', 'AMO', 'Aster measured the screening error for this object, but it exceeds the bound Aster can certify.'],
   ];
   for (const [designation, orbitClass, opening] of cases) {
     const data = committedRow(modules, designation, orbitClass);

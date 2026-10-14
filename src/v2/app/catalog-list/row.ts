@@ -175,6 +175,16 @@ export function renderRow(
           statusBadgeText(data.screen.status),
         ),
         renderNearZeroC3Badge(nearZeroC3Flagged && !hideNearZeroC3),
+        nearZeroC3Flagged
+          ? h(
+              'span',
+              {
+                title: 'Close approach — see the near-zero C3 caveat before treating this as a planning number.',
+                style: 'font-size:10px;color:#fbbf24;white-space:nowrap;flex-shrink:0;',
+              },
+              'close approach — see caveat',
+            )
+          : null,
         h('span', {
           style: {
             fontSize: '10px', padding: '2px 6px', borderRadius: '3px',
