@@ -15,13 +15,13 @@ function unique(values) {
   return [...new Set(values)];
 }
 
-test('all texture assets referenced by index.html exist on disk', () => {
-  const html = readRepoFile('index.html');
+test('all texture assets referenced by legacy/index.html exist on disk', () => {
+  const html = readRepoFile('legacy/index.html');
   const refs = unique(
     [...html.matchAll(/\b(2k_[A-Za-z0-9_.-]+)\b/g)].map((match) => match[1]),
   ).sort();
 
-  assert.ok(refs.length > 0, 'expected at least one texture filename reference in index.html');
+  assert.ok(refs.length > 0, 'expected at least one texture filename reference in legacy/index.html');
 
   const missing = refs.filter((asset) => !fs.existsSync(path.join(repoRoot, 'textures', asset)));
   assert.deepEqual(
@@ -74,7 +74,7 @@ test('worker README documents wildcard localhost development origin support', ()
 });
 
 test('physics worker no longer hardcodes NHATS and Asterank production route URLs', () => {
-  const workerSource = readRepoFile('physics.worker.js');
+  const workerSource = readRepoFile('legacy/physics.worker.js');
 
   assert.doesNotMatch(workerSource, /https:\/\/aster-proxy\.hudsonclavin\.workers\.dev\/api\/nhats/);
   assert.doesNotMatch(workerSource, /https:\/\/aster-proxy\.hudsonclavin\.workers\.dev\/api\/asterank/);

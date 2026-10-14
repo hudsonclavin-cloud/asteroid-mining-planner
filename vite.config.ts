@@ -11,7 +11,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        legacy: resolve(__dirname, 'index.html'),
+        legacy: resolve(__dirname, 'legacy/index.html'),
         v2Index: resolve(__dirname, 'v2/index.html'),
         earthMoonV2: resolve(__dirname, 'v2/earth-moon/index.html'),
         innerSolarSystemV2: resolve(__dirname, 'v2/inner-solar-system/index.html'),
@@ -37,8 +37,8 @@ export default defineConfig({
       writeBundle() {
         mkdirSync(resolve(__dirname, 'docs'), { recursive: true });
         copyFileSync(
-          resolve(__dirname, 'physics.worker.js'),
-          resolve(__dirname, 'docs/physics.worker.js')
+          resolve(__dirname, 'legacy/physics.worker.js'),
+          resolve(__dirname, 'docs/legacy/physics.worker.js')
         );
       },
     },
