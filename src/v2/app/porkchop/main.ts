@@ -677,8 +677,7 @@ function PorkchopDedicatedPage() {
             ),
           ),
         ),
-        showDlaContours
-          ? [
+        [
               h(
                 'label',
                 {
@@ -710,8 +709,7 @@ function PorkchopDedicatedPage() {
                 },
                 `Launch-feasibility bands are a screening estimate against ${selectedLaunchSite.name}'s azimuth corridor (sourced NASA limits). Day-specific launch geometry can bind tighter — e.g. MGS launched from Cape with DLA 36.5 deg (nominally AMBER) yet required a dogleg because its daily window forced the southerly azimuth side, where the effective ceiling is only ~39 deg. Dogleg cost is priced by a two-regime screening model: zero cost (with disclosure) for cells inside the direct-injection band, and a not-feasible verdict for cells outside it.`,
               ),
-            ]
-          : null,
+            ],
       ),
       h(
         'section',

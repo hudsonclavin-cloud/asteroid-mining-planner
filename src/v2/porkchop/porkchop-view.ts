@@ -1350,7 +1350,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                     h('span', null, '1000'),
                   ),
                   h('div', { style: 'font-size:10px;opacity:0.7;width:280px;text-align:right;' }, 'logarithmic scale'),
-                  props.showDlaOverlayControl === true && props.showDlaContours === true
+                  props.showDlaOverlayControl === true
                     ? [
                         h(
                           'div',
