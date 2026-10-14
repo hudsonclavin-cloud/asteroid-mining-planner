@@ -84,3 +84,14 @@ First `v2` slice:
 - No mission features
 - No readable-scale overrides in core
 - Full validation against external truth data
+
+## Slice 19.5 quarantine
+
+The original V1 prototype is served at `/legacy/` and is frozen. Its economic
+and value figures are unsourced and known to be wrong. The legacy entry is
+noindexed and carries a non-dismissible banner directing visitors to the
+current V2 tool at `/v2/solar-system/`.
+
+The site root is V2. The current front door is `/`, which redirects to
+`/v2/solar-system/`; new product and honesty work belongs in V2. The legacy
+runtime remains available only for historical reference and compatibility.
