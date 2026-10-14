@@ -25,7 +25,7 @@ import {
   loadLambertScreenCacheAsync,
 } from '../../boundary/lambert-screen-cache.js';
 import { cachedC3GridFromMetadata, type CachedC3Grid } from '../../boundary/c3-grid.js';
-import { renderEmpty, type EmptyReason } from './empty.js';
+import { catalogEmptyReason, renderEmpty } from './empty.js';
 import {
   disclosureIntro,
   disclosureSections,
@@ -61,6 +61,7 @@ const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> 
 const screeningGridSignal = signal<CachedC3Grid | null>(null);
 const screeningWindowSignal = signal<ScreeningWindow | null>(null);
 const tierAssignmentsSignal = signal<ReadonlyMap<string, TierAssignment> | null>(null);
+const tierLoadStateSignal = signal<'loading' | 'loaded' | 'failed'>('loading');
 const ABOUT_ROUTE = '../about/';
 
 // Module-scope fetch, deliberate: b6b7f92 moved the screening cache out
@@ -80,7 +81,11 @@ loadLambertScreenCacheAsync()
     console.error('Failed to load Lambert screen cache:', error);
   });
 
-loadTierAssignments().then((tiers) => { tierAssignmentsSignal.value = tiers; }).catch((error) => {
+loadTierAssignments().then((tiers) => {
+  tierAssignmentsSignal.value = tiers;
+  tierLoadStateSignal.value = 'loaded';
+}).catch((error) => {
+  tierLoadStateSignal.value = 'failed';
   console.error('Failed to load fidelity tier assignments:', error);
 });
 
@@ -235,6 +240,7 @@ export function trackPanelSignals(): void {
   filteredRowsSignal.value;
   screeningWindowSignal.value;
   tierAssignmentsSignal.value;
+  tierLoadStateSignal.value;
   layoutModeSignal.value;
   selectedBodySignal.value;
   bodyLabelsVisibleSignal.value;
@@ -548,15 +554,11 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
 
   let listContent: VNode;
   if (filteredRows.length === 0) {
-    let reason: EmptyReason;
-    if (screeningIndex === null) {
-      reason = 'loading';
-    } else if (catalog === null) {
-      reason = 'no-data';
-    } else {
-      reason = 'no-matches';
-    }
-    listContent = renderEmpty(reason);
+    listContent = renderEmpty(catalogEmptyReason({
+      catalogLoaded: catalog !== null,
+      screeningLoaded: screeningIndex !== null,
+      tierLoadState: tierLoadStateSignal.value,
+    }));
   } else {
     listContent = h(
           'div',
