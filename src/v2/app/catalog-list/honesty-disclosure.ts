@@ -66,9 +66,9 @@ export function disclosureSections(window: ScreeningWindow | null): DisclosureSe
       body:
         'Bodies marked co-orbital (cyan tint in the 3D view) have orbits very similar to ' +
         "Earth's — low eccentricity, low inclination, semi-major axis within 0.05 AU of 1 AU. " +
-        'The Keplerian propagation that drives this screen diverges from full N-body truth for ' +
-        'these bodies, by up to ~1 km/s on v∞_dep over a 4-year horizon (OQ-7). For most ' +
-        'co-orbital targets the divergence is small, but the tag is a flag to treat the ' +
+        'Both the catalog and comparison screens use patched-conic propagation; this is a ' +
+        'patched-conic-versus-patched-conic comparison, not an N-body truth run. For co-orbital ' +
+        'targets the approximation can diverge materially, so the tag is a flag to treat the ' +
         'numbers with extra caution and re-validate before committing to a mission profile.',
     },
     {
