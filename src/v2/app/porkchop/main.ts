@@ -896,7 +896,7 @@ function PorkchopDedicatedPage() {
                     costCardState.band === 'GREEN'
                       ? `Dogleg regime (this cell): GREEN — DLA within ${costCardState.readout.siteName}'s direct-injection band; no plane-change cost.`
                       : costCardState.band === 'AMBER'
-                        ? `Dogleg regime (this cell): AMBER — plane-matching from ${costCardState.readout.siteName} is handled by launch geometry at ~1 m/s-per-degree class cost (JPL DESCANSO Vol. 12 evidence), below screening error bars; zero added ΔV, disclosed rather than fabricated.`
+                        ? `Dogleg regime (this cell): AMBER — plane-matching from ${costCardState.readout.siteName} is handled by launch geometry (launch-geometry class; below screening error bars); zero added ΔV, disclosed rather than fabricated.`
                         : costCardState.band === 'RED'
                           ? `Dogleg regime (this cell): RED — beyond ${costCardState.readout.siteName}'s corridor; the honest cost is IXPE-class capacity destruction, so the card shows a verdict, not a number.`
                           : 'Dogleg regime (this cell): unavailable — the cell has no DLA value (null-band; screening model defines only GREEN/AMBER/RED).',
