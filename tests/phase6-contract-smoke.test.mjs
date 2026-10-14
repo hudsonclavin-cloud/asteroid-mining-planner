@@ -31,6 +31,21 @@ test('all texture assets referenced by legacy/index.html exist on disk', () => {
   );
 });
 
+test('legacy entry is frozen, noindexed, and points visitors to V2', () => {
+  const html = readRepoFile('legacy/index.html');
+  const bannerStart = html.indexOf('<div id="slice-19-5-legacy-banner"');
+  const bannerEnd = html.indexOf('</div>', bannerStart) + '</div>'.length;
+  const banner = html.slice(bannerStart, bannerEnd);
+
+  assert.ok(html.includes('<meta name="robots" content="noindex, nofollow">'));
+  assert.ok(banner.includes('This is the original 2026 prototype, frozen.'));
+  assert.ok(banner.includes('Its economic and value figures are unsourced and known to be wrong.'));
+  assert.ok(banner.includes('href="../v2/solar-system/"'));
+  assert.ok(banner.includes('current tool'));
+  assert.ok(banner.includes('position:fixed;top:0;'));
+  assert.ok(!banner.includes('banner-dismiss'));
+});
+
 test('worker README documents the worker routes implemented in worker/index.js', () => {
   const workerSource = readRepoFile('worker/index.js');
   const readme = readRepoFile('worker/README.md');
