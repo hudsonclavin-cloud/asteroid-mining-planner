@@ -20,6 +20,7 @@ interface ProvenanceRow {
   readonly sourceArtifact: string;
   readonly sourceCommit: string;
   readonly class: string | null;
+  readonly scope?: string;
   readonly note: string;
 }
 
@@ -84,6 +85,7 @@ function renderRow(row: ProvenanceRow) {
     h('div', { style: ROW_VALUE_STYLE }, valueText),
     h('div', { style: ROW_MUTED_STYLE }, row.measures),
     h('div', { style: ROW_MUTED_STYLE }, row.solverConfig),
+    row.scope ? h('div', { style: ROW_MUTED_STYLE }, `Scope: ${row.scope}`) : null,
     row.note ? h('div', { style: ROW_MUTED_STYLE }, row.note) : null,
     sourceLine(row),
   );

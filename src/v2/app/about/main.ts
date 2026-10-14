@@ -18,6 +18,7 @@ interface ProvenanceRow {
   readonly id: string;
   readonly value: string;
   readonly note: string;
+  readonly scope?: string;
 }
 
 interface ProvenanceDoc {
@@ -224,6 +225,10 @@ function noteById(doc: ProvenanceDoc | null, id: string): string {
   return doc?.rows.find((row) => row.id === id)?.note ?? '';
 }
 
+function scopeById(doc: ProvenanceDoc | null, id: string): string {
+  return doc?.rows.find((row) => row.id === id)?.scope ?? '';
+}
+
 const SUPERSCRIPT_DIGITS: Record<string, string> = {
   '0': '⁰',
   '1': '¹',
@@ -268,6 +273,8 @@ function ValidationSection({ doc }: { readonly doc: ProvenanceDoc | null }): VNo
   const multiRevMagnitude = compactScientific(valueById(doc, 'lambert-multirev-magnitude'));
   const strictMax = firstPercent(valueById(doc, 'cost-oracle-strict'));
   const observedMax = firstPercent(valueById(doc, 'cost-oracle-observed'));
+  const strictScope = scopeById(doc, 'cost-oracle-strict') || 'well-behaved published curve segments';
+  const observedScope = scopeById(doc, 'cost-oracle-observed') || 'the observed comparison set';
 
   return section(
     'Validation',
@@ -278,9 +285,13 @@ function ValidationSection({ doc }: { readonly doc: ProvenanceDoc | null }): VNo
       multiRevMagnitude || 'the measured bound',
       ', with the vector directions the feasibility overlay depends on validated separately. Delivered-mass pricing is within ',
       strictMax || 'the strict measured bound',
-      ' of published values on the curve segments the tool screens on, and up to ',
+      ' of published values on ',
+      strictScope,
+      ', and up to ',
       observedMax || 'the observed measured bound',
-      ' in the one steep segment where it is knowingly optimistic — a figure the tool discloses rather than hides.',
+      ' across ',
+      observedScope,
+      ' — a figure the tool discloses rather than hides.',
     ),
     paragraph(
       'Every number here carries its source file and commit in the validation panel beside the porkchop, and in the held-out validation report.',
