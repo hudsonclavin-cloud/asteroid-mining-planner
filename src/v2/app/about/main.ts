@@ -69,7 +69,7 @@ const ARTIFACTS = {
     label: 'SLICE_13_FOUNDING.md §8',
     commit: '8fc6f32',
     path: 'src/v2/SLICE_13_FOUNDING.md',
-    anchor: '8-engineering-record',
+    anchor: '8-engineering-record-running-log',
   },
   oracle: {
     label: 'oracle-report.md',
@@ -83,7 +83,7 @@ const ARTIFACTS = {
   },
   invariants: {
     label: 'INVARIANTS.md',
-    commit: 'b651519',
+    commit: 'b1075f3',
     path: 'INVARIANTS.md',
   },
   agents: {
