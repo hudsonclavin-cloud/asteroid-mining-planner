@@ -34,6 +34,9 @@ function lerpChannel(start: number, end: number, t: number): number {
 }
 
 export function c3ToViridisRgb(c3Km2S2: number): Rgb {
+  if (!Number.isFinite(c3Km2S2)) {
+    return NO_SOLUTION_RGB;
+  }
   const c3ClampedToFloor = Math.max(c3Km2S2, C3_COLOR_MIN);
   const normalized = clamp01(
     (Math.log(c3ClampedToFloor) - Math.log(C3_COLOR_MIN)) /

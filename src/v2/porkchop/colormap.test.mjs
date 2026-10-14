@@ -81,3 +81,10 @@ test('colorForPorkchopCell uses sentinel colors for no_solution and stall', asyn
   assert.deepEqual(colormap.colorForPorkchopCell('stall', null), [255, 0, 180]);
   assert.deepEqual(colormap.colorForPorkchopCell('ok', 0), [68, 1, 84]);
 });
+
+test('non-finite C3 values use the existing no-solution colour', async () => {
+  const colormap = await loadModule();
+  for (const value of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    assert.deepEqual(colormap.c3ToViridisRgb(value), colormap.NO_SOLUTION_RGB);
+  }
+});
