@@ -190,7 +190,7 @@ function utcMidnightToJdTdb(utcDate: string): number {
   return J2000_TDB_JULIAN_DATE + tdbSecondsSinceJ2000 / SECONDS_PER_DAY;
 }
 
-const GRID_PARAMS = {
+export const GRID_PARAMS = {
   depStartJD: utcMidnightToJdTdb('2026-01-01'),
   depEndJD: utcMidnightToJdTdb('2040-01-01'),
   tofMinDays: 182.5,
@@ -199,6 +199,7 @@ const GRID_PARAMS = {
   nTof: 100,
 } as const;
 const PORKCHOP_GRID_LABEL = formatJdC3GridLabel(GRID_PARAMS);
+const PORKCHOP_DEPARTURE_SPAN_LABEL = `${jdTdbToUtcDateString(GRID_PARAMS.depStartJD)}–${jdTdbToUtcDateString(GRID_PARAMS.depEndJD)}`;
 
 /**
  * S18 Item 5 (DEC-18-8): the body's full fidelity-tier disclosure, visible on
@@ -642,7 +643,7 @@ function PorkchopDedicatedPage() {
       h(
         'div',
         { style: 'font-size:13px;line-height:1.6;color:#cbd5e1;margin-bottom:20px;' },
-        `Transfer search from Earth departure to ${pageState.bodyLabel}, over both revolution families — M=0 (direct) and M=1 (one revolution). Grid spans 2026–2040 departures and 182.5–1826.25 day flight times. Use the transfer-family control to switch; click a cell to inspect its family, branch and ΔV stack.`,
+        `Transfer search from Earth departure to ${pageState.bodyLabel}, over both revolution families — M=0 (direct) and M=1 (one revolution). Grid spans ${PORKCHOP_DEPARTURE_SPAN_LABEL} departures and ${GRID_PARAMS.tofMinDays}–${GRID_PARAMS.tofMaxDays} day flight times. Use the transfer-family control to switch; click a cell to inspect its family, branch and ΔV stack.`,
       ),
       h(
         'section',

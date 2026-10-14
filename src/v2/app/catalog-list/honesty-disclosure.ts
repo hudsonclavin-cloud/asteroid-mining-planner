@@ -23,7 +23,7 @@ export interface DisclosureSection {
 }
 
 export function screeningWindowLabel(window: ScreeningWindow): string {
-  return `${window.startUtc.slice(0, 4)}–${window.endUtc.slice(0, 4)}`;
+  return `${window.startUtc}–${window.endUtc}`;
 }
 
 export function footerText(window: ScreeningWindow | null): string {
