@@ -809,7 +809,7 @@ function MethodBadge(props: {
 }) {
   const { echo } = props;
   const lines: string[] = [
-    'Method — Lambert patched-conic screen, the same solver the porkchop view uses.',
+    'Method — single-revolution (M=0) Lambert patched-conic screen, the same solver the porkchop view uses.',
   ];
   if (echo) {
     lines.push(

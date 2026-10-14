@@ -1114,7 +1114,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       title: 'Navigate',
       rows: [
         ['drag', 'orbit the camera'],
-        ['right-drag / Shift+drag', 'pan the view'],
+        ['right-drag / middle-drag / Shift+drag', 'pan the view'],
         ['scroll', 'zoom in / out'],
         ['⌂ Reset view (button)', 'top-down overview; clears pan'],
       ],
