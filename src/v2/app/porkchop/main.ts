@@ -15,6 +15,7 @@ import {
   deterministicMarginMps,
   isBeyondCurve,
   isInvalidInput,
+  isNonFiniteC3,
   LAUNCH_VEHICLES,
   payloadAtC3,
   SCREENING_ISP_S,
@@ -460,7 +461,7 @@ function PorkchopDedicatedPage() {
       stationkeepingMps,
       departureMps,
       marginMps,
-      deliveredKg: isBeyondCurve(delivered) || isInvalidInput(delivered) ? null : delivered,
+      deliveredKg: isBeyondCurve(delivered) || isInvalidInput(delivered) || isNonFiniteC3(delivered) ? null : delivered,
       invalidInput: isInvalidInput(delivered),
     };
   }, [pinnedReadout, selectedMode, selectedVehicle]);
@@ -838,7 +839,9 @@ function PorkchopDedicatedPage() {
                 h(
                   'span',
                   null,
-                  isBeyondCurve(costCardState.payload)
+                  isNonFiniteC3(costCardState.payload)
+                    ? 'No delivered-mass estimate: C3 was not computed for this cell.'
+                    : isBeyondCurve(costCardState.payload)
                     ? 'No published payload data past this C3 — not extrapolating.'
                     : formatKg(costCardState.payload),
                 ),

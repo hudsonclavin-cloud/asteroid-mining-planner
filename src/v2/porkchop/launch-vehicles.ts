@@ -36,14 +36,16 @@ export interface SpacecraftDvBudget {
 
 export const BEYOND_CURVE = Object.freeze({ kind: 'beyond-curve' } as const);
 export type BeyondCurve = typeof BEYOND_CURVE;
-export type PayloadAtC3Result = number | BeyondCurve;
+export const NON_FINITE_C3 = Object.freeze({ kind: 'non-finite-c3' } as const);
+export type NonFiniteC3 = typeof NON_FINITE_C3;
+export type PayloadAtC3Result = number | BeyondCurve | NonFiniteC3;
 
 // Phase F audit MED-2: a corrupted ΔV budget is NOT a curve statement — returning
 // BEYOND_CURVE for it would assert a falsehood under INV-023. Distinct sentinel,
 // same frozen-singleton construction so arithmetic on it is a compile error.
 export const INVALID_INPUT = Object.freeze({ kind: 'invalid-input' } as const);
 export type InvalidInput = typeof INVALID_INPUT;
-export type DeliveredMassResult = number | BeyondCurve | InvalidInput;
+export type DeliveredMassResult = number | BeyondCurve | InvalidInput | NonFiniteC3;
 
 // DEC-13-5: representative of 300-350 s storable bipropellant class; disclosed per INV-016e.
 export const SCREENING_ISP_S = 320;
@@ -186,6 +188,10 @@ export function isInvalidInput(value: DeliveredMassResult): value is InvalidInpu
   return value === INVALID_INPUT;
 }
 
+export function isNonFiniteC3(value: PayloadAtC3Result | DeliveredMassResult): value is NonFiniteC3 {
+  return value === NON_FINITE_C3;
+}
+
 const isNonNegativeFinite = (value: number): boolean => Number.isFinite(value) && value >= 0;
 
 export function deterministicMarginMps(...deterministicManeuversMps: readonly number[]): number {
@@ -197,7 +203,7 @@ export function deterministicMarginMps(...deterministicManeuversMps: readonly nu
 
 export function payloadAtC3(vehicle: LaunchVehicle, c3: number): PayloadAtC3Result {
   if (!Number.isFinite(c3)) {
-    return BEYOND_CURVE;
+    return NON_FINITE_C3;
   }
 
   const first = vehicle.curve[0];
@@ -236,6 +242,9 @@ export function deliveredMassKg(
   // properties (audit-verified order; a beyond-curve verdict is true regardless
   // of budget validity).
   const payloadKg = payloadAtC3(vehicle, c3);
+  if (isNonFiniteC3(payloadKg)) {
+    return NON_FINITE_C3;
+  }
   if (isBeyondCurve(payloadKg)) {
     return BEYOND_CURVE;
   }

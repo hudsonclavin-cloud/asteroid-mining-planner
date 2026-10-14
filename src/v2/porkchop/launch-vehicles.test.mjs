@@ -200,13 +200,13 @@ test('New Glenn keeps C3=30 anchor, interpolates steep interior, and stops after
   assert.equal(payloadAtC3(newGlenn, 35), BEYOND_CURVE);
 });
 
-test('payloadAtC3 guards non-finite and below-first C3 inputs', async () => {
-  const { BEYOND_CURVE, LAUNCH_VEHICLES, payloadAtC3 } = await loadModule();
+test('payloadAtC3 refuses non-finite C3 separately from beyond-curve inputs', async () => {
+  const { BEYOND_CURVE, NON_FINITE_C3, LAUNCH_VEHICLES, payloadAtC3 } = await loadModule();
   const fhExp = findVehicle(LAUNCH_VEHICLES, 'Falcon Heavy', 'Expendable');
 
-  assert.equal(payloadAtC3(fhExp, Number.NaN), BEYOND_CURVE);
-  assert.equal(payloadAtC3(fhExp, Number.POSITIVE_INFINITY), BEYOND_CURVE);
-  assert.equal(payloadAtC3(fhExp, Number.NEGATIVE_INFINITY), BEYOND_CURVE);
+  assert.equal(payloadAtC3(fhExp, Number.NaN), NON_FINITE_C3);
+  assert.equal(payloadAtC3(fhExp, Number.POSITIVE_INFINITY), NON_FINITE_C3);
+  assert.equal(payloadAtC3(fhExp, Number.NEGATIVE_INFINITY), NON_FINITE_C3);
   assert.equal(payloadAtC3(fhExp, -1), BEYOND_CURVE);
 });
 

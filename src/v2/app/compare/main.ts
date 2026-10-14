@@ -65,6 +65,7 @@ import {
   deterministicMarginMps,
   isBeyondCurve,
   isInvalidInput,
+  isNonFiniteC3,
   LAUNCH_VEHICLES,
   SPACECRAFT_STATIONKEEPING_MPS,
   type DeliveredMassResult,
@@ -366,6 +367,13 @@ function describeMass(mass: DeliveredMassResult | null, vehicleName: string): Ma
       text: 'unavailable',
       tone: 'error',
       note: 'delivered mass could not be computed from the configured ΔV budget',
+    };
+  }
+  if (isNonFiniteC3(mass)) {
+    return {
+      text: 'unavailable',
+      tone: 'error',
+      note: 'No delivered-mass estimate: C3 was not computed for this cell.',
     };
   }
   return { text: formatMassKg(mass), tone: 'value', note: null };
