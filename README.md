@@ -12,6 +12,8 @@ section.)*
 
 | Surface | URL |
 |---|---|
+| Site root (V2) | https://hudsonclavin-cloud.github.io/asteroid-mining-planner/ |
+| Legacy V1 prototype | https://hudsonclavin-cloud.github.io/asteroid-mining-planner/legacy/ |
 | Solar system + NEA catalog (41,906 bodies) | https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/solar-system/ |
 | Porkchop planner (C3, ΔV, DLA, delivered mass) | https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/ |
 | About / validation evidence | https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/about/ |
@@ -115,8 +117,8 @@ into their answers: design and amendment chain in
 `src/v2/SLICE_16_FOUNDING.md`, locked 30-scenario appendix, deterministic
 grader, and run harness under `tools/slice16-harness/`.
 
-**Status: designed; instrument corrected; no data collected; no results
-exist.** The first full-run attempt (2026-08-01) halted on provider credit
+Slice 16 reports descriptive per-condition results with confidence intervals.
+The pre-registered contrast analysis (DEC-16-8: difference vs 10 pp, Holm-corrected) has not been computed yet; it is scheduled for Slice 21. The first full-run attempt (2026-08-01) halted on provider credit
 exhaustion, and the post-incident audit found instrument defects that predated
 it — all recorded, not erased, in founding §21 and §23–§25. Remediation is in
 `tools/slice16-harness/REMEDIATION_REPORT.md`; no future paid run happens
