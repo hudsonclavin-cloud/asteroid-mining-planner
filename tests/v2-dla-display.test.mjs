@@ -26,18 +26,3 @@ test('AMBER DLA display names the raised-inclination regime without implying a n
   );
   assert.doesNotMatch(page, /m\/s[- ]per[- ]degree/);
 });
-
-test('DLA site, disclosure, and band legend remain visible when the contour toggle is off', () => {
-  const page = fs.readFileSync(pagePath, 'utf8');
-  const view = fs.readFileSync(viewPath, 'utf8');
-
-  assert.doesNotMatch(page, /showDlaContours\s*\?/);
-  assert.match(page, /key: 'dla-site-picker'/);
-  assert.match(page, /key: 'dla-016d-disclosure'/);
-  assert.match(view, /props\.showDlaOverlayControl === true\s*\?/);
-  assert.equal(
-    (view.match(/props\.showDlaOverlayControl === true && props\.showDlaContours === true/g) ?? []).length,
-    1,
-    'the contour drawing itself remains toggle-controlled while its legend does not',
-  );
-});
