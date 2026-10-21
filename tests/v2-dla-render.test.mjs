@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { render } from 'preact';
 import { runTsc } from './helpers/run-tsc.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -436,7 +437,25 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.match(onText, /Launch site/);
     assert.match(onText, /min direct inclination \(iMin\)/);
     assert.match(onText, /max direct declination \(ceiling\)/);
+
+    const modeLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('Mission mode'));
+    assert.ok(modeLabel, 'expected the mission-mode picker');
+    const modeSelect = findElements(modeLabel, 'select')[0];
+    assert.ok(modeSelect, 'expected the mission-mode select');
+    assert.match(onText, /ΔV stack — One-way rendezvous/);
+    assert.match(onText, /Assumptions: One-way rendezvous; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO/);
+    assert.match(onText, /no departure burn in one-way mode/);
+
+    modeSelect.value = 'sample-return';
+    modeSelect.dispatchEvent({ type: 'input' });
+    await flushEffects();
+    const sampleReturnText = document.app.textContent;
+    assert.match(sampleReturnText, /ΔV stack — Sample return/);
+    assert.match(sampleReturnText, /Assumptions: Sample return; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO/);
+    assert.match(sampleReturnText, /departure = arrival v∞ under the symmetric-return assumption/);
   } finally {
+    render(null, document.app);
+    await flushEffects(10);
     globalThis.document = previous.document;
     globalThis.window = previous.window;
     globalThis.Node = previous.Node;
