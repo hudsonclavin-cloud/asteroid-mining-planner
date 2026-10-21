@@ -1,6 +1,6 @@
 import { h, render, type ComponentChildren, type VNode } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
+import { SLICE9_NEA_CATALOG_TOTAL_BODIES } from '../../boundary/slice9-nea-catalog.js';
 
 const mount = document.getElementById('app');
 
@@ -319,7 +319,6 @@ function ValidationSection({ doc }: { readonly doc: ProvenanceDoc | null }): VNo
 
 function AboutPage(): VNode {
   const [doc, setDoc] = useState<ProvenanceDoc | null>(null);
-  const [catalogTotal, setCatalogTotal] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -335,18 +334,6 @@ function AboutPage(): VNode {
           setDoc(json);
         }
       });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadSlice9NeaCatalogFixture().then((catalog) => {
-      if (!cancelled) {
-        setCatalogTotal(catalog.catalog.totalBodies);
-      }
-    });
     return () => {
       cancelled = true;
     };
@@ -399,7 +386,7 @@ function AboutPage(): VNode {
         'What this is',
         paragraph(
           'Aster is a browser-based asteroid mission-planning tool. It computes Earth-departure launch windows as porkchop plots from a re-derived Lambert solver, screens each window against launch-site geometry (the declination of the launch asymptote), and prices delivered mass against published launch-vehicle performance curves — across a catalog of ',
-          catalogTotal === null ? 'the committed catalog' : catalogTotal.toLocaleString(),
+          SLICE9_NEA_CATALOG_TOTAL_BODIES.toLocaleString(),
           ' near-Earth objects. Where a result depends on an assumption, or falls outside a validated range, the tool states that rather than showing a confident number.',
         ),
         h(
