@@ -20,7 +20,10 @@ test('AMBER DLA display names the raised-inclination regime without implying a n
   const page = fs.readFileSync(pagePath, 'utf8');
   assert.match(page, /effective ceiling is only ~39 deg/);
   assert.doesNotMatch(page, /~34-39 deg/);
-  assert.match(page, /below screening error bars/);
+  assert.match(
+    page,
+    /Dogleg regime \(this cell\): AMBER — plane-matching from \$\{costCardState\.readout\.siteName\} is absorbed by launch geometry, below screening error bars; zero added ΔV, disclosed rather than fabricated\./,
+  );
   assert.doesNotMatch(page, /m\/s[- ]per[- ]degree/);
 });
 
