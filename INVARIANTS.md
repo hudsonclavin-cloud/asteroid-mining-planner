@@ -119,6 +119,13 @@ Symptom: all planet dots rendered offset from their true positions by `−camLoc
 
 **AMENDED (Slice 13, DEC-13-3 — clause (iii) superseded; clauses (i)–(ii) unchanged):** dogleg cost is now a labeled line in the mission cost card, priced per the two-regime screening model — GREEN: none; AMBER: zero added ΔV with an explicit disclosure that plane-matching is launch-geometry class (~1 m/s-per-degree, JPL DESCANSO evidence), below screening error bars; RED: a "not feasible at screening fidelity" verdict panel, never a fabricated number. The INV-016e disclosure surface states the regime applied to each cell. The vehicle-agnostic ΔV stack panel remains unpriced physics; the two shipped advisory strings were updated in the same commit as this amendment (`src/v2/app/porkchop/main.ts` INV-016d disclosure text, `src/v2/porkchop/porkchop-view.ts` RED advisory). See `src/v2/SLICE_13_FOUNDING.md` §2 / DEC-13-3.
 
+NOTE (Slice 19.5, 2026-10-14; audit B5-F06): the committed evidence
+(tools/slice13-research/literature/3d-verification-record.md:22) gives no
+per-degree figure and states that the DESCANSO lunar result is not a liftable
+formula for interplanetary DLA pricing. The "~1 m/s-per-degree" figure above
+is therefore unsourced. The shipped AMBER disclosure states the qualitative
+claim only (launch-geometry class, below screening error bars).
+
 ---
 
 ## §4. Math-layer validation oracles
