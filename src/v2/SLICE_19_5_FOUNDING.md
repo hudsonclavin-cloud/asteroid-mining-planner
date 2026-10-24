@@ -373,3 +373,70 @@ being used as an angle from ICRF Z (C4-F01).
 
 ## §9. Amendments and corrections
 (Append only. Never edit above this line.)
+
+### §9.1 Phase 0 ruling record — 2026-10-14 (Hudson)
+- Ruling packet: tools/audit/sanity-69472a3/phase0/RULINGS.md (Nova, 2026-10-13, with
+  Addendum 1 of 2026-10-14), accepted in full by Hudson 2026-10-14.
+- Dispositions: tools/audit/sanity-69472a3/phase0/TRIAGE.md, as reclassified by
+  RULINGS.md §2. In §6, "Front B: every FIX-USER row" means the visitor-visible rows
+  (RULINGS.md §2a: 30 firm + 3 conditional). The other 27 B-routed and 4 G-routed
+  rows are re-routed per RULINGS.md §2b; none are dropped (86 in, 86 out).
+- Unverified rows: any disposition on a row marked "audit only (unverified)" is a
+  hypothesis; fixing dispatches verify at HEAD first.
+- R1 INV-008..011: amend to test-time enforcement (Front C, INVARIANTS [P]).
+- R2 INV-014: namespace 014a (8.5 star background) / 014b (9 three-gate tier); the
+  index stays authority (Front C).
+- R3 INV-035/036: proposals take the next free IDs; 035/036 stay skipped (Front C).
+- R4 SLICE_11:63: annotated superseded by DEC-7; code matches DEC-7 (Front C).
+- R5 DEC-12-4 default: AMEND-ON; rationale quoted verbatim in the SLICE_12 DEC-12-4 amendment.
+- R6 INV-016d: code fixed; disclosure renders whenever a verdict renders.
+- R7 INV-022: basis field added to all 38 anchors.
+- R8 DEC-17-4 MPC spot check: to be run (sample → Clome → Hudson); result appended
+  to SLICE_17_FOUNDING.md §9. Not a waiver.
+- R9 DEC-17-5 on compare: fixed in F2; moves to Front B if F2 is cut.
+- R10 INV-001 atmosphere: amend to "shares its body's figure and orientation";
+  implemented in Front G (Slice 22).
+- R11 earth-moon camera-relative: recon in Front G before ruling.
+- R12 prototype ring profile: annotate as procedural/unsourced/not shipped;
+  docs/ check result: no hits.
+- R13 INV-025: the bare "(OQ-7)" identifier removed (c9a7476). INV-026: the
+  porkchop span literal is derived (446e3a7); the About catalog count is
+  rendered from SLICE9_NEA_CATALOG_TOTAL_BODIES, bound by a data test to
+  the committed catalog's totalBodies and record count (42e917d); the FIX1 loader
+  approach (20fb6ce) was reversed because it fetched the full catalog on /about/.
+  Whether a test-bound constant satisfies INV-026's 'never from literals' is a
+  Front C clarification.
+- R14 DEC-15-8 / INV-027 (MCP): fix in Slice 20 (math layer, audited).
+- R15 DEC-16-8: compute the registered contrast in Slice 21 D; never amend the
+  pre-registration; README carries the pending sentence.
+- B5-F06 "~1 m/s-per-degree": CONFIRMED (the audit is right). The committed
+  evidence (tools/slice13-research/literature/3d-verification-record.md:22)
+  gives no per-degree number and says the DESCANSO lunar result is "not a
+  liftable formula for interplanetary DLA pricing"; the figure appears only in
+  the project's own synthesis (:31). The batch's REFUTED verdict cited the
+  figure's existence, not its applicability; overturned by the independent verify run
+  (tools/audit/sanity-69472a3/s19-5-runs/verify-REPORT.md). UI number removed (5a2f9b2); INVARIANTS note
+  appended.
+- Evidence correction (B2, b25acdc): tools/slice18-research/tier-sizing.mjs
+  labelled 7 measured bodies (105140, 1979 XB, 2010 KD, 2021 CG6, 2024 BB8,
+  2025 KP4, 433) "unmeasured"; the generator was fixed and the JSON
+  regenerated. No keys were added or removed, and the only other changed value
+  is generatedAtUtc, so every measured value reproduced exactly. Slice 18 text
+  citing the old counts is DOC-ANNOTATE (Slice 24).
+- Process record: the A+B batch report attributed B8a's test proof to
+  tests/v2-fk3-guided-tour.test.mjs, which cannot fail for B8a; the real guard
+  is tests/v2-dla-display.test.mjs. An independent mutation run proved all 12
+  guards the batch left unproven (V1-V12). Nova's verify run checked only that
+  guards can fail, not that they test rendered behaviour. FIX2 converted the R6
+  and B9 guards to render tests (148b003, 79ab05e); the remaining source-text
+-  guards (FIX2 G4 list) route to Slice 20 E.
+- Evidence: S19.5 run reports are committed at tools/audit/sanity-69472a3/s19-5-runs/
+  (01fb28a1ce53db5a1b56d23c6ea201031f0f0215). The A+B batch log was lost from %TEMP% before commit; the batch report is
+  a recovered copy. Rule going forward: every run commits its own report and log.
+- DEC-19.5-2 LOCKED as amended: "A disposition on a row marked audit only
+  (unverified) is a hypothesis. The fixing dispatch verifies at HEAD first and may
+  reclassify to ALREADY-FIXED/REFUTED with evidence. Reclassification across fronts
+  requires Hudson's ruling."
+- DEC-19.5-3, -4, -5, -6, -7, -8: LOCKED as drafted in §3.
+- STATUS: this founding document is LOCKED as of 2026-10-14. This line supersedes
+  the DRAFT header, which stays unedited under the additive rule.
