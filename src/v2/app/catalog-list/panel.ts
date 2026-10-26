@@ -375,7 +375,7 @@ function renderFooter(): VNode {
   );
 }
 
-function renderPopover(): VNode {
+export function renderPopover(): VNode {
   const sections = disclosureSections(screeningWindowSignal.value).map((section) =>
     h(
       'div',
