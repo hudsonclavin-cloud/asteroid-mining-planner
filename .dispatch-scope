@@ -1,4 +1,4 @@
-# S18 — founding doc §9 C-5: L1 threshold fragility (additive)
-src/v2/SLICE_18_FOUNDING.md
-tools/slice18-research/tier-sizing.mjs
-tools/slice18-research/tier-sizing-results.json
+# aster-family — family hub (Hudson request, 2026-10-26 session)
+strategy/family/*
+tools/family/*
+strategy/ASTER_FAMILY_MASTER_PLAN.md
