@@ -55,7 +55,7 @@ import {
   type CompareEcho,
 } from '../../porkchop/compare-data.js';
 import { COMPARE_BODIES_CAP, parseCompareBodies } from '../../porkchop/compare-url.js';
-import { formatC3 } from '../../porkchop/format-c3.js';
+import { formatC3ValueText } from '../design/components/C3Value.js';
 import {
   nearZeroC3HiddenNotice,
   renderNearZeroC3Badge,
@@ -169,9 +169,9 @@ const C3_UNITS = 'km²/s²';
  * null pass through unadorned — "— km²/s²" reads as a broken value. */
 function formatC3WithUnits(c3: number | null): string {
   if (c3 === null || !Number.isFinite(c3)) {
-    return formatC3(c3);
+    return formatC3ValueText(c3, '');
   }
-  return `${formatC3(c3)} ${C3_UNITS}`;
+  return formatC3ValueText(c3, C3_UNITS);
 }
 
 /**
