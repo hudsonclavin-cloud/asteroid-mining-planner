@@ -1,6 +1,6 @@
 import { h, type VNode } from 'preact';
 import { formatCachedC3GridDetails, formatCachedC3GridShort } from '../../boundary/c3-grid.js';
-import { formatC3 } from '../../porkchop/format-c3.js';
+import { C3Value } from '../design/components/C3Value.js';
 import {
   isNearZeroC3Degenerate,
   nearZeroC3HiddenNotice,
@@ -17,6 +17,7 @@ export interface CatalogRowRenderOptions {
   readonly hideNearZeroC3?: boolean | undefined;
   readonly nearZeroC3HiddenCount?: number | undefined;
 }
+
 
 function statusBadgeText(status: string): string {
   switch (status) {
@@ -237,7 +238,10 @@ export function renderRow(
               },
               hideNearZeroC3
                 ? hiddenNotice
-                : `C3 ${formatC3(data.screen.minC3)} km²/s² (${c3GridShort}) · ${L0_C3_CONTEXT}`,
+                : h('span', null,
+                    h(C3Value, { value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' }),
+                    ` · ${L0_C3_CONTEXT}`,
+                  ),
             ),
           )
         : h(
@@ -257,7 +261,7 @@ export function renderRow(
               { title: c3GridDetails },
               hideNearZeroC3
                 ? hiddenNotice
-                : `C3 ${formatC3(data.screen.minC3)} km²/s² (${c3GridShort})`,
+                : h(C3Value, { value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' }),
             ),
           ),
     ),
