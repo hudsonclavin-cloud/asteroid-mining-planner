@@ -69,7 +69,11 @@ function component(c3, breadthCells, dateIso) {
     breadthDays: (breadthCells - 1) * 7,
     minC3: c3,
     c3,
-    argmin: { dateIso, tofDays: 232.3 },
+    argmin: {
+      depJd: Date.parse(`${dateIso}T00:00:00Z`) / 86_400_000 + 2_440_587.5,
+      dateIso,
+      tofDays: 232.3,
+    },
   };
 }
 
@@ -169,4 +173,40 @@ test('T3 compare size factors are derived from the imported albedo constants in 
   const note = describeSize(20).notes.join(' ');
   assert.match(note, /≈2\.1×/);
   assert.match(note, /≈1\.4×/);
+});
+
+test('W3a compare flags an Apophis window arriving after support without changing ranking data', async () => {
+  const { renderOkRow, computeDominance, constants } = await loadCompareRenderers();
+  const apophis = result('asteroid-99942', 1, 2, 1000, constants.isNearZeroC3Degenerate(1));
+  const other = result('asteroid-other', 2, 2, 900, constants.isNearZeroC3Degenerate(2));
+  const rows = [apophis, other];
+  const before = structuredClone(rows);
+  const rankingBefore = rows.map((row) => row.bodyId);
+  const dominance = computeDominance(rows);
+  const tierArtifact = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'docs', 'tier-sizing-per-body.json'), 'utf8'),
+  );
+  const tier = tierArtifact.records['99942'];
+  assert.equal(tier.tier, 'L1');
+
+  const text = textOf(renderOkRow(
+    apophis,
+    'Apophis',
+    'vehicle',
+    false,
+    () => {},
+    dominance.get(apophis.bodyId),
+    undefined,
+    tier,
+    false,
+    0,
+  ));
+
+  assert.match(text, /ARRIVES AFTER SUPPORTED DATE/);
+  assert.match(
+    text,
+    /This window arrives 2029-04-13, after 2028-09-12, the last date Aster's orbit for Apophis is supported\. Not certified; ranking unchanged\./,
+  );
+  assert.deepEqual(rows, before);
+  assert.deepEqual(rows.map((row) => row.bodyId), rankingBefore);
 });

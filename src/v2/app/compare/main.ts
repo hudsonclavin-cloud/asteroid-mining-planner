@@ -77,6 +77,11 @@ import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js';
 import { fullTierDisclosure, legendLineFor, shortTierLabel } from '../../porkchop/tier-disclosure.js';
+import {
+  arrivalJd,
+  isArrivalAfterEncounter,
+  supportBoundaryFor,
+} from '../../porkchop/support-boundary.js';
 
 const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',
@@ -690,6 +695,11 @@ function renderTierCell(tier: TierAssignment | undefined) {
   ]);
 }
 
+function formatArrivalDate(depJd: number, tofDays: number): string {
+  const arrival = arrivalJd({ depJD: depJd, tofDays });
+  return new Date((arrival - 2_440_587.5) * 86_400_000).toISOString().slice(0, 10);
+}
+
 function renderOkRow(
   result: CompareBodyOk,
   label: string,
@@ -704,6 +714,14 @@ function renderOkRow(
 ) {
   const { segmentation, echo } = result;
   const best = segmentation.bestPractical;
+  const supportBoundary = supportBoundaryFor(tier);
+  const arrivalAfterSupport =
+    best !== null &&
+    supportBoundary !== undefined &&
+    isArrivalAfterEncounter(
+      { depJD: best.argmin.depJd, tofDays: best.argmin.tofDays },
+      supportBoundary,
+    );
   const mass = describeMass(result.deliveredMass, vehicleName);
   const massColor =
     mass.tone === 'value' ? '#eef2ff' : mass.tone === 'error' ? '#fca5a5' : '#cbd5e1';
@@ -764,6 +782,23 @@ function renderOkRow(
                 renderNearZeroC3Badge(echo.bestPracticalNearZeroC3Degenerate),
               ),
           h('span', { style: NOTE_STYLE }, `departs ${best.argmin.dateIso} · ${formatDays(best.argmin.tofDays)} d transfer`),
+          arrivalAfterSupport && supportBoundary !== undefined
+            ? [
+                h(
+                  'span',
+                  {
+                    style:
+                      'display:block;width:fit-content;margin-top:6px;padding:2px 7px;border:1px solid rgba(251,191,36,0.55);border-radius:4px;color:#fbbf24;font-size:10px;font-weight:700;letter-spacing:0.04em;',
+                  },
+                  'ARRIVES AFTER SUPPORTED DATE',
+                ),
+                h(
+                  'span',
+                  { style: NOTE_STYLE + 'color:#fbbf24;' },
+                  `This window arrives ${formatArrivalDate(best.argmin.depJd, best.argmin.tofDays)}, after ${supportBoundary.encounterDateLabel}, the last date Aster's orbit for ${label} is supported. Not certified; ranking unchanged.`,
+                ),
+              ]
+            : null,
           globalMinLine,
         ]),
 
