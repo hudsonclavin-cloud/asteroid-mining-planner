@@ -26,7 +26,7 @@ import {
   type SpacecraftDvBudget,
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
-import { formatC3 } from '../../porkchop/format-c3.js';
+import { formatC3ValueText } from '../design/components/C3Value.js';
 import {
   isNearZeroC3Degenerate,
   nearZeroC3HiddenNotice,
@@ -839,7 +839,7 @@ function PorkchopDedicatedPage() {
                   null,
                   isNearZeroC3Degenerate(costCardState.c3) && hideNearZeroC3
                     ? nearZeroC3HiddenNotice(1)
-                    : `Payload at C3 = ${formatC3(costCardState.c3)} km²/s²`,
+                    : `Payload at C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')}`,
                   renderNearZeroC3Badge(
                     isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3,
                   ),
@@ -887,7 +887,7 @@ function PorkchopDedicatedPage() {
               h(
                 'div',
                 { key: 'card-injection-split', style: 'font-size:10px;color:#93a4bf;font-style:italic;margin-top:8px;line-height:1.4;' },
-                `Launch vehicle provides injection to C3 = ${formatC3(costCardState.c3)} km²/s² — embodied in payload-at-C3, not a spacecraft ΔV line.`,
+                `Launch vehicle provides injection to C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
               ),
               h(
                 'details',
