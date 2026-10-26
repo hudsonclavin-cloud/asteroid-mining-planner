@@ -257,7 +257,7 @@ export function trackPanelSignals(): void {
  * badges. One line per key, always visible above the footer; the long form is
  * on hover. Chips reuse the row badge colours so the legend reads as a key.
  */
-function renderTierLegend(): VNode {
+export function renderTierLegend(): VNode {
   return h(
     'div',
     {
