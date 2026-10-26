@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "prepare": "node tools/setup-hooks.mjs",
     "preview": "vite preview",
     "test": "node --test tests/*.test.mjs",
     "test:all": "node tools/run-tests.mjs",
