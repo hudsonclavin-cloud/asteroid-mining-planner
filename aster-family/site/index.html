@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aster Family</title>
+<meta name="description" content="One page for the five Aster-family repositories: what each is, how far along it is, what proves it, and how they connect. Every claim here is labelled and traceable to a repo file.">
+<style>
+  :root{
+    --bg:#0b0f17; --panel:#121826; --ink:#e6ebf2; --muted:#9aa6b8; --line:#243044;
+    --accent:#6fd3ff; --ok:#5fd38a; --warn:#f2c14e; --bad:#ff7b7b; --chip:#1b2435;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#f6f8fb; --panel:#ffffff; --ink:#131a26; --muted:#5a6678; --line:#dde3ec;
+      --accent:#0369a1; --ok:#1f8f4e; --warn:#a16207; --bad:#b42318; --chip:#eef2f7;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  main{max-width:1080px;margin:0 auto;padding:32px 16px 64px}
+  header h1{font-size:clamp(28px,5vw,40px);margin:0 0 6px;letter-spacing:-.01em}
+  header p.lede{color:var(--muted);margin:0 0 8px;max-width:70ch}
+  .status{display:inline-block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:2px 10px;margin:8px 0 24px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .card h2{font-size:20px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .role{font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--chip);color:var(--muted);border-radius:999px;padding:2px 8px}
+  .one{color:var(--muted);margin:0}
+  .bar{height:8px;background:var(--chip);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+  .bar > i{display:block;height:100%;background:var(--accent);width:0}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin:0}
+  .kv dt{color:var(--muted)} .kv dd{margin:0;overflow-wrap:anywhere}
+  .links a{display:inline-block;margin:0 10px 4px 0;color:var(--accent);text-decoration:none;font-size:14px}
+  .links a:hover{text-decoration:underline}
+  .note{font-size:13px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px;margin:0}
+  .lbl{font-size:12px;color:var(--muted)}
+  section.block{margin-top:40px}
+  section.block h2{font-size:22px;margin:0 0 10px}
+  .edges{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+  .edges li{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+  .edges b{color:var(--accent)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;background:var(--chip);padding:1px 5px;border-radius:5px}
+  footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+  footer p{margin:6px 0}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Aster</h1>
+    <p class="lede">A family of evidence-first space-engineering projects by Hudson Clavin: a mission planner that shows its sources, a tether-infrastructure study that shows its equations, a parts tool that measures what it makes, and a lab where agents build and honestly grade their own ideas.</p>
+    <p class="lede">The house line, shared by every member: <em>if the system cannot explain why it ranked, screened, or recommended something, it does not present the output as strong.</em></p>
+    <span class="status">Proposal · leads-grade · generated 2026-10-26</span>
+  </header>
+
+  <div class="grid" id="members"></div>
+
+  <section class="block">
+    <h2>How they connect</h2>
+    <ul class="edges" id="edges"></ul>
+  </section>
+
+  <section class="block">
+    <h2>What every member shares</h2>
+    <ul class="edges">
+      <li><b>Confidence labels</b> on claims: <code>[Certain]</code> / <code>[Likely]</code> / <code>[Speculative]</code>. PartForge adds a provenance axis (<code>cited</code> / <code>user</code> / <code>tool default</code>) that says who stands behind a number.</li>
+      <li><b>Provenance on every number</b>: a source, a retrieval date, and where it applies the commit it was computed from.</li>
+      <li><b>Structured refusal over invention</b>: when the data is absent or out of envelope, the tool says so and says what would help.</li>
+      <li><b>One canonical parameter source</b> per repo, with everything else reading it (<code>params/rev_a.json</code>, <code>INVARIANTS.md</code> + fixtures, <code>data/tables/*.json</code>).</li>
+      <li><b>Append-only decision records</b> and <b>one living state file</b> per repo, rewritten at the end of every session.</li>
+      <li><b>Verify before "done"</b>: run the thing and paste the output. A green badge is not a verified behaviour.</li>
+      <li><b>An honest-assessment section</b> in every public README: what it cannot do, stated plainly.</li>
+    </ul>
+    <p class="lbl" style="margin-top:10px">Full text with evidence, and the five places the repos disagree: <code>aster-family/CONVENTIONS.md</code>.</p>
+  </section>
+
+  <footer>
+    <p>Repo links point at GitHub. Live-site links are the ones each repo's own documentation names; they were not reachable from the sandbox that generated this page, so treat "live" as unverified until you click.</p>
+    <p>Completion percentages are the review's estimate toward each repo's <em>own</em> definition of done, with a confidence label. They are not a grade and not a promise. Source: <code>aster-family/REVIEW_2026-10-26.md</code>.</p>
+    <p>This page is a static file in <code>aster-family/site/</code> on the <code>aster-family</code> branch. It is not deployed. Publishing it is a separate decision (copy into <code>docs/family/</code> in a deploy commit).</p>
+  </footer>
+</main>
+<script>
+  // Single data block. Facts read from each repo on 2026-10-26 (see aster-family/MANIFEST.json).
+  // completion / role / verdict come from aster-family/REVIEW_2026-10-26.md.
+  const MEMBERS = [
+    {
+      id:'aster', name:'Aster', role:'PENDING REVIEW',
+      one:'Browser-based asteroid mission planner with evidence-carrying answers: a 41,906-body NEA catalog, Lambert/porkchop/ΔV/DLA screening, and an MCP server that refuses with a reason when a question is out of envelope.',
+      completion:null, label:'', verdict:'',
+      repo:'https://github.com/hudsonclavin-cloud/asteroid-mining-planner',
+      live:[['Solar system + catalog','https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/solar-system/'],['Porkchop planner','https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/'],['About / validation','https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/about/'],['npm aster-mission-mcp','https://www.npmjs.com/package/aster-mission-mcp']],
+      proves:'node tools/run-tests.mjs · CI: tsc, build, golden numbers',
+      state:'STATUS.md', since:'Mar 2026 (V1) · V2 Apr 2026 · main history rewritten Oct 2026',
+      note:'MIT. Founding docs are additive-only; src/v2/core is a protected math surface. Slice 16 agent-honesty study is pre-registered (Zenodo DOI).'
+    },
+    {
+      id:'skyhook', name:'Skyhook', role:'PENDING REVIEW',
+      one:'Phase 0 study of a rotating momentum-exchange tether in a 610 km orbit. Rev A (2.5 km/s tip) is canonical in params/rev_a.json; a tested Python finance model and decision grid price the program honestly, including the parts that do not close.',
+      completion:null, label:'', verdict:'',
+      repo:'https://github.com/hudsonclavin-cloud/skyhook',
+      live:[],
+      proves:'python3 -m pytest tests/ -v · CI: Rev A physics assertions',
+      state:'handoff.md (31 Aug 2026)', since:'Jul 2026',
+      note:'No LICENSE file. No public page. Weakest input is named in the data itself: fiber_cost_per_kg is null, "WEAKEST INPUT".'
+    },
+    {
+      id:'partforge', name:'PartForge', role:'PENDING REVIEW',
+      one:'Describe a part, get a printable parametric OpenSCAD model compiled in the browser. Flight grade turns the same tool on rocket-club machined parts: declared tolerances, a mesh CMM, engineering checks, and documents that say who stands behind every number.',
+      completion:null, label:'', verdict:'',
+      repo:'https://github.com/hudsonclavin-cloud/Partforge',
+      live:[['App','https://hudsonclavin-cloud.github.io/Partforge/'],['Engine Design Study (concept, not a plan)','https://hudsonclavin-cloud.github.io/Partforge/engine-study.html']],
+      proves:'node tests/run.mjs · headless parity vs browser',
+      state:'docs/STATUS.md (Gen 37)', since:'Sep 2026',
+      note:'Apache-2.0. No CI workflow; the local gate is the test. Headless CLI + MCP server for agents; a VM deploy kit tested in a container, not yet on a real VM.'
+    },
+    {
+      id:'ideabank', name:'Idea-Bank', role:'PENDING REVIEW',
+      one:'Seventy-five side projects that AI agents chose, built, tested and graded themselves, each with an honest assessment. Several are orbital-mechanics explorables or printable space objects (a Kirkwood-gap ruler, Kepler gears, a reaction-wheel simulator).',
+      completion:null, label:'', verdict:'',
+      repo:'https://github.com/hudsonclavin-cloud/Idea-Bank',
+      live:[['Gallery (implied by .nojekyll; unverified)','https://hudsonclavin-cloud.github.io/Idea-Bank/']],
+      proves:'node tools/check.mjs · 97 test files · phone-width smoke test',
+      state:'README ledger (generated)', since:'22–24 Oct 2026',
+      note:'No LICENSE file. No CI. House rules are strong: runs with nothing installed, works on a phone, proves itself, says what it is.'
+    },
+    {
+      id:'suborbital', name:'suborbital-leg-cost-model', role:'PENDING REVIEW',
+      one:'A one-commit stub from 2026-07-07. Its mandate (procure-vs-develop for the Skyhook suborbital leg, with sourced provider pricing) was folded back into the skyhook repo the same day.',
+      completion:null, label:'', verdict:'',
+      repo:'https://github.com/hudsonclavin-cloud/suborbital-leg-cost-model',
+      live:[],
+      proves:'nothing to run',
+      state:'STATUS.md ("nothing works yet")', since:'Jul 2026',
+      note:'Superseded by skyhook/finance/leg_cost.py and skyhook/docs/providers/. No unique content.'
+    },
+  ];
+
+  const EDGES = [
+    {from:'Aster', to:'Skyhook', text:'Kernel K2: is a returning payload’s Earth-arrival v∞ inside the Rev A tether’s catch envelope? Prototype exists on branch <code>claude/k2-momentum-bank</code> (tools/k2-momentum-research/), snapshots <code>params/rev_a.json</code> with its sha256, and reproduces Rev A’s derived numbers. Blocked on K1, the return-leg porkchop, which Aster does not have yet. <span class="lbl">[Certain the files exist · Likely on the findings]</span>'},
+    {from:'suborbital-leg-cost-model', to:'Skyhook', text:'Folded back on 2026-07-07; the leg-cost model lives in <code>skyhook/finance/leg_cost.py</code>. <span class="lbl">[Certain]</span>'},
+    {from:'Idea-Bank', to:'PartForge', text:'Seven ideas ship STL files and a print check (<code>tools/printcheck.py</code>). PartForge is the family’s printability and measurement authority. No code link today. <span class="lbl">[Certain: no link exists · Speculative: worth one]</span>'},
+    {from:'Skyhook', to:'PartForge', text:'The ST-001 splice field kit is a physical test rig with printable fixtures in scope. PartForge Flight grade could declare and measure them. No link today. <span class="lbl">[Speculative]</span>'},
+  ];
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const members = document.getElementById('members');
+  for (const m of MEMBERS) {
+    const pct = m.completion == null ? null : Math.max(0, Math.min(100, m.completion));
+    const live = m.live.map(([t,u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join('');
+    const compText = pct == null ? 'completion: pending measured review' : `${pct}% toward its own definition of done <span class="lbl">${esc(m.label)}</span>`;
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML = `
+      <h2>${esc(m.name)} <span class="role">${esc(m.role)}</span></h2>
+      <p class="one">${esc(m.one)}</p>
+      <div class="bar" aria-label="completion"><i style="width:${pct == null ? 0 : pct}%"></i></div>
+      <div class="lbl">${compText}</div>
+      ${m.verdict ? `<p class="one"><b>Verdict:</b> ${esc(m.verdict)}</p>` : ''}
+      <dl class="kv">
+        <dt>Since</dt><dd>${esc(m.since)}</dd>
+        <dt>State file</dt><dd><code>${esc(m.state)}</code></dd>
+        <dt>Proves it</dt><dd><code>${esc(m.proves)}</code></dd>
+      </dl>
+      <div class="links"><a href="${esc(m.repo)}" target="_blank" rel="noopener">GitHub ↗</a>${live}</div>
+      <p class="note">${esc(m.note)}</p>`;
+    members.appendChild(card);
+  }
+  const edges = document.getElementById('edges');
+  for (const e of EDGES) {
+    const li = document.createElement('li');
+    li.innerHTML = `<b>${esc(e.from)} → ${esc(e.to)}.</b> ${e.text}`;
+    edges.appendChild(li);
+  }
+</script>
+</body>
+</html>
