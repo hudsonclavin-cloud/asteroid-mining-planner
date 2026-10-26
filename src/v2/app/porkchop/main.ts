@@ -810,6 +810,13 @@ function PorkchopDedicatedPage() {
                         ? null
                         : h('span', { style: CARD_BADGE_STYLE[costCardState.band] }, costCardState.band),
                     ),
+                    costCardState.band === 'AMBER'
+                      ? h(
+                          'div',
+                          { style: 'font-size:11px;color:#fbbf24;line-height:1.45;margin-top:6px;' },
+                          'Delivered mass excludes the launch-site payload penalty named above; Aster does not model it.',
+                        )
+                      : null,
                   ),
               h(
                 'div',

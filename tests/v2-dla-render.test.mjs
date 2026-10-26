@@ -416,6 +416,10 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const pinnedText = document.app.textContent;
     assert.match(pinnedText, /Mission cost/);
     assert.match(pinnedText, /AMBER|Raised inclination/);
+    assert.match(
+      pinnedText,
+      /Delivered mass excludes the launch-site payload penalty named above; Aster does not model it\./,
+    );
 
     const dlaLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('DLA feasibility'));
     assert.ok(dlaLabel, 'expected the DLA contour toggle');
