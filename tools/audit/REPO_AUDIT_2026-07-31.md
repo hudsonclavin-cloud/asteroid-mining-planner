@@ -1,3 +1,6 @@
+> SUPERSEDED (2026-10-25). Historical record only; do not act on it.
+> Current state: STATUS.md. Current audit: tools/audit/sanity-69472a3/.
+
 # Aster Read-Only Repository Audit
 
 Marker: ASTER-REPO-AUDIT-2026-07-31-A
