@@ -9,7 +9,7 @@
     "branch": "aster-family",
     "why_here": "The Aster repo already carries the family seed: strategy/ASTER_FAMILY_MASTER_PLAN.md (2026-07-06), strategy/ASTER_FAMILY_CHARTERS.md (2026-07-21), kernel K2 in strategy/IDEA_KERNELS_2026-09.md, and the K2 prototype on branch claude/k2-momentum-bank (2026-10-06)."
   },
-  "live_check_note": "GitHub Pages URLs below are the ones each repo's own docs name. They could NOT be probed from the review sandbox (proxy returned 403 for github.io), so 'live' is unverified here. The npm registry WAS reachable: aster-mission-mcp has exactly one published version, 0.1.0, modified 2026-07-10T21:26Z.",
+  "live_check_note": "GitHub Pages URLs below are the ones each repo's own docs name. Direct HTTP probes were blocked from the review sandbox (proxy 403 for github.io), but the GitHub Actions API (read 2026-10-26) shows a successful 'pages build and deployment' run at the current HEAD of asteroid-mining-planner (62ddb17, 2026-10-25), Partforge (0974a62, 2026-10-25) and Idea-Bank (1e5b7c6, 2026-10-24), and deploy runs for skyhook since 2026-09-09 (27229e2). suborbital-leg-cost-model has no runs of any kind. The npm registry WAS reachable: aster-mission-mcp has exactly one published version, 0.1.0, modified 2026-07-10T21:26Z.",
   "members": [
     {
       "id": "aster",
@@ -40,7 +40,23 @@
       "test_command": "node tools/run-tests.mjs (CI); npm test = node --test tests/*.test.mjs",
       "source_of_truth": "INVARIANTS.md + committed fixtures (tests/fixtures/v2/*, src/v2/data/*); src/v2/core is the protected math surface",
       "role_in_family": "TBD — see REVIEW_2026-10-26.md",
-      "completion": { "percent": null, "label": null, "basis": "filled from REVIEW_2026-10-26.md" }
+      "completion": {
+        "percent": null,
+        "label": null,
+        "basis": "filled from REVIEW_2026-10-26.md"
+      },
+      "ci_last_run_on_main": {
+        "workflow": "CI",
+        "run": 108,
+        "head": "62ddb17",
+        "conclusion": "success",
+        "date": "2026-10-25",
+        "note": "run 107 at 361ddba was a failure; 108 fixed it (ci: full history for full-tests)"
+      },
+      "pages_deploy": {
+        "last": "run 357 at 62ddb17, success, 2026-10-25",
+        "total_runs_all_workflows": 463
+      }
     },
     {
       "id": "skyhook",
@@ -57,13 +73,31 @@
       "living_state_file": "handoff.md (dated 31 Aug 2026)",
       "decision_records": "docs/DECISION_LOG.md (append-only), docs/DEVIATIONS.md, docs/verification_memo.md (VM-001/VM-002), docs/program_manifest.md",
       "rules_file": "CLAUDE.md (nine execution rules; params/rev_a.json canonical)",
-      "deploy": "none — no GitHub Pages site named in the repo; simulators under tools/sims and tools/twin are opened locally",
-      "live_surfaces": [],
+      "deploy": "GitHub Pages is enabled (deploy runs on main since 2026-09-09) but no root index.html exists, so the site most likely serves the README; the interactive simulators under tools/sims and tools/twin are not linked from any page",
+      "live_surfaces": [
+        "https://hudsonclavin-cloud.github.io/skyhook/ (implied by Pages deploy runs; content unverified)"
+      ],
       "agent_surface": "none",
       "test_command": "python3 -m pytest tests/ -v",
       "source_of_truth": "params/rev_a.json (Rev A, three-tier ladder 2.5 / 2.8 / 3.5 km/s)",
       "role_in_family": "TBD — see REVIEW_2026-10-26.md",
-      "completion": { "percent": null, "label": null, "basis": "filled from REVIEW_2026-10-26.md" }
+      "completion": {
+        "percent": null,
+        "label": null,
+        "basis": "filled from REVIEW_2026-10-26.md"
+      },
+      "ci_last_run_on_main": {
+        "workflow": "Physics Verification",
+        "run": 18,
+        "head": "34935cb",
+        "conclusion": "success",
+        "date": "2026-09-11",
+        "note": "run 17 at 27229e2 was a failure (CRLF provenance hash); 18 fixed it"
+      },
+      "pages_deploy": {
+        "last": "run 2 at 27229e2, success, 2026-09-09",
+        "note": "Pages is enabled but the repo has no root index.html, so the site most likely renders README.md via Jekyll [Likely]; the repo docs never name the URL"
+      }
     },
     {
       "id": "partforge",
@@ -89,7 +123,16 @@
       "test_command": "node tests/run.mjs; cd headless && npm install && npm run test:parity",
       "source_of_truth": "data/tables/*.json projected into index.html by tools/db/embed.mjs (drift-tested)",
       "role_in_family": "TBD — see REVIEW_2026-10-26.md",
-      "completion": { "percent": null, "label": null, "basis": "filled from REVIEW_2026-10-26.md" }
+      "completion": {
+        "percent": null,
+        "label": null,
+        "basis": "filled from REVIEW_2026-10-26.md"
+      },
+      "ci_last_run_on_main": null,
+      "pages_deploy": {
+        "last": "run 72 at 0974a62, success, 2026-10-25",
+        "total_runs_all_workflows": 72
+      }
     },
     {
       "id": "ideabank",
@@ -106,15 +149,24 @@
       "living_state_file": "none — README.md ledger is regenerated by tools/gallery.mjs",
       "decision_records": "none (per-idea README 'Honest assessment' sections)",
       "rules_file": "README.md 'House rules for a deposit'",
-      "deploy": "GitHub Pages implied (.nojekyll present; README says 'or serve the repo with GitHub Pages'); not verified",
+      "deploy": "GitHub Pages from main (verified via Actions API: deploy runs 1-10, last success at HEAD 2026-10-24)",
       "live_surfaces": [
-        "https://hudsonclavin-cloud.github.io/Idea-Bank/ (implied, unverified)"
+        "https://hudsonclavin-cloud.github.io/Idea-Bank/"
       ],
       "agent_surface": "none",
       "test_command": "node tools/check.mjs (README format, size, per-idea tests, headless smoke)",
       "source_of_truth": "each idea folder is self-contained; 75 ideas, 7 with STL files",
       "role_in_family": "TBD — see REVIEW_2026-10-26.md",
-      "completion": { "percent": null, "label": null, "basis": "filled from REVIEW_2026-10-26.md" }
+      "completion": {
+        "percent": null,
+        "label": null,
+        "basis": "filled from REVIEW_2026-10-26.md"
+      },
+      "ci_last_run_on_main": null,
+      "pages_deploy": {
+        "last": "run 10 at 1e5b7c6, success, 2026-10-24",
+        "total_runs_all_workflows": 10
+      }
     },
     {
       "id": "suborbital",
@@ -138,7 +190,13 @@
       "source_of_truth": "n/a",
       "fold_back_note": "skyhook/docs/providers/README.md: 'Migrated 2026-07-07 from the short-lived suborbital-leg-cost-model repo — folded back into skyhook'. The leg-cost model now lives in skyhook/finance/leg_cost.py with LEG_COST_FINDINGS.md and LEG_COST_REUSE_FINDINGS.md.",
       "role_in_family": "TBD — see REVIEW_2026-10-26.md",
-      "completion": { "percent": null, "label": null, "basis": "filled from REVIEW_2026-10-26.md" }
+      "completion": {
+        "percent": null,
+        "label": null,
+        "basis": "filled from REVIEW_2026-10-26.md"
+      },
+      "ci_last_run_on_main": null,
+      "pages_deploy": null
     }
   ],
   "integrations": [

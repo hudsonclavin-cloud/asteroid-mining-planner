@@ -76,7 +76,7 @@
   </section>
 
   <footer>
-    <p>Repo links point at GitHub. Live-site links are the ones each repo's own documentation names; they were not reachable from the sandbox that generated this page, so treat "live" as unverified until you click.</p>
+    <p>Repo links point at GitHub. Live-site links are the ones each repo's own documentation names. The sandbox that generated this page could not fetch them, but GitHub's Actions API showed a successful Pages deployment at the current HEAD of Aster, PartForge and Idea-Bank on 2026-10-26, and deploy runs for Skyhook since September. What each page shows was not checked from here.</p>
     <p>Completion percentages are the review's estimate toward each repo's <em>own</em> definition of done, with a confidence label. They are not a grade and not a promise. Source: <code>aster-family/REVIEW_2026-10-26.md</code>.</p>
     <p>This page is a static file in <code>aster-family/site/</code> on the <code>aster-family</code> branch. It is not deployed. Publishing it is a separate decision (copy into <code>docs/family/</code> in a deploy commit).</p>
   </footer>
@@ -100,10 +100,10 @@
       one:'Phase 0 study of a rotating momentum-exchange tether in a 610 km orbit. Rev A (2.5 km/s tip) is canonical in params/rev_a.json; a tested Python finance model and decision grid price the program honestly, including the parts that do not close.',
       completion:null, label:'', verdict:'',
       repo:'https://github.com/hudsonclavin-cloud/skyhook',
-      live:[],
+      live:[['Pages site (deploys exist; content unverified)','https://hudsonclavin-cloud.github.io/skyhook/']],
       proves:'python3 -m pytest tests/ -v · CI: Rev A physics assertions',
       state:'handoff.md (31 Aug 2026)', since:'Jul 2026',
-      note:'No LICENSE file. No public page. Weakest input is named in the data itself: fiber_cost_per_kg is null, "WEAKEST INPUT".'
+      note:'No LICENSE file. Pages is enabled but no page links the simulators. Weakest input is named in the data itself: fiber_cost_per_kg is null, "WEAKEST INPUT".'
     },
     {
       id:'partforge', name:'PartForge', role:'PENDING REVIEW',
@@ -120,7 +120,7 @@
       one:'Seventy-five side projects that AI agents chose, built, tested and graded themselves, each with an honest assessment. Several are orbital-mechanics explorables or printable space objects (a Kirkwood-gap ruler, Kepler gears, a reaction-wheel simulator).',
       completion:null, label:'', verdict:'',
       repo:'https://github.com/hudsonclavin-cloud/Idea-Bank',
-      live:[['Gallery (implied by .nojekyll; unverified)','https://hudsonclavin-cloud.github.io/Idea-Bank/']],
+      live:[['Gallery','https://hudsonclavin-cloud.github.io/Idea-Bank/']],
       proves:'node tools/check.mjs · 97 test files · phone-width smoke test',
       state:'README ledger (generated)', since:'22–24 Oct 2026',
       note:'No LICENSE file. No CI. House rules are strong: runs with nothing installed, works on a phone, proves itself, says what it is.'
