@@ -82,6 +82,9 @@ import {
   isArrivalAfterEncounter,
   supportBoundaryFor,
 } from '../../porkchop/support-boundary.js';
+import { installGlobalFocusStyle } from '../design/global-style.js';
+
+installGlobalFocusStyle();
 
 const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',

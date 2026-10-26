@@ -1,4 +1,7 @@
 import { mountSolarSystem } from './runtime.js';
+import { installGlobalFocusStyle } from '../design/global-style.js';
+
+installGlobalFocusStyle();
 
 const mount = document.getElementById('app');
 

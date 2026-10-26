@@ -37,6 +37,7 @@ import { renderRow } from './row.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { TIER_LEGEND } from '../../porkchop/tier-disclosure.js';
 import { statusBadgeColor, tierBadgeColor } from './row.js';
+import { A11Y_OVERRIDES } from '../design/a11y-overrides.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
 export interface RenderPanelOptions {
@@ -348,7 +349,7 @@ function renderFooter(): VNode {
         {
           style: {
             marginLeft: '8px',
-            color: '#666',
+            color: A11Y_OVERRIDES.catalogHint.value,
             fontSize: '10px',
             display: 'inline-block',
             whiteSpace: 'nowrap',

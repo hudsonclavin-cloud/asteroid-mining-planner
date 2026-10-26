@@ -62,6 +62,9 @@ import {
   type TourAnchorRect,
 } from './fk3-guided-tour.js';
 import { ValidationCard } from './validation-card.js';
+import { installGlobalFocusStyle } from '../design/global-style.js';
+
+installGlobalFocusStyle();
 
 const mount = document.getElementById('app');
 

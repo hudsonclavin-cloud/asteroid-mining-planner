@@ -2,6 +2,9 @@ import { h, render, type ComponentChildren, type VNode } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { SLICE9_NEA_CATALOG_TOTAL_BODIES } from '../../boundary/slice9-nea-catalog.js';
 import { renderAboutAuditItems, type ArtifactLink } from './audit-copy.js';
+import { installGlobalFocusStyle } from '../design/global-style.js';
+
+installGlobalFocusStyle();
 
 const mount = document.getElementById('app');
 

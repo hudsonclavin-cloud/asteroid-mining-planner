@@ -8,6 +8,7 @@ import {
 } from '../../porkchop/near-zero-c3.js';
 import { fullTierDisclosure, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { requestFocus, selectBody, selectedBodySignal } from '../ui-store/index.js';
+import { A11Y_OVERRIDES } from '../design/a11y-overrides.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
 export interface CatalogRowRenderOptions {
@@ -35,7 +36,7 @@ function statusBadgeText(status: string): string {
 export function statusBadgeColor(status: string): string {
   switch (status) {
     case 'low_departure_c3':
-      return '#3a8d4a';
+      return A11Y_OVERRIDES.statusLowC3.value;
     case 'high_departure_c3':
       return '#666';
     case 'lambert_unconvergeable':
@@ -48,7 +49,7 @@ export function statusBadgeColor(status: string): string {
 }
 
 export function tierBadgeColor(tier: string): string {
-  return tier === 'L0' ? '#9a4a4a' : tier === 'L1' ? '#9a7a3a' : '#4f6680';
+  return tier === 'L0' ? '#9a4a4a' : tier === 'L1' ? A11Y_OVERRIDES.tierL1.value : '#4f6680';
 }
 
 /**
@@ -86,6 +87,13 @@ export function renderRow(
   // S18 Item 3: keep the number (a real two-body result) but read it as context,
   // not as a grade. A null C3 already renders '—' and needs no context.
   const deEmphasizeC3 = data.tier.tier === 'L0' && data.screen.minC3 !== null;
+  const activateRow = () => {
+    selectBody(data.bodyId);
+    if (data.tier.subReason === 'cannot-propagate-hyperbolic-orbit') {
+      return;
+    }
+    requestFocus();
+  };
 
   return h(
     'div',
@@ -104,7 +112,8 @@ export function renderRow(
     h(
       'button',
       {
-        type: 'button',
+      type: 'button',
+      tabIndex: 0,
         class: `catalog-list-row${isSelected ? ' catalog-list-row--selected' : ''}`,
         style: {
           position: 'absolute',
@@ -124,12 +133,12 @@ export function renderRow(
           textAlign: 'left',
           width: '100%',
         },
-        onClick: () => {
-          selectBody(data.bodyId);
-          if (data.tier.subReason === 'cannot-propagate-hyperbolic-orbit') {
-            return;
+        onClick: activateRow,
+        onKeyDown: (event: KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            (event.currentTarget as HTMLButtonElement).click();
           }
-          requestFocus();
         },
       },
       h(
