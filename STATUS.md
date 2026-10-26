@@ -9,7 +9,7 @@
 
 ## Identity
 
-**Canonical repo:** `/Users/hudsonclavin/asteroid-mining-planner` (macOS)
+**Canonical repo:** `C:\Users\hudso\asteroid-mining-planner` (Windows checkout)
 **Live site:** https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/solar-system/ · [about](https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/about/) · [porkchop](https://hudsonclavin-cloud.github.io/asteroid-mining-planner/v2/porkchop/)
 **MCP package:** `aster-mission-mcp@0.1.0` — published on npm, publisher `hudsoclavin`, handshake-verified 2026-07-10. 0.1.0 was baked from a dirty worktree (audit L6-3); a `prepublishOnly` clean-worktree gate now blocks a repeat.
 
@@ -17,15 +17,26 @@
 
 ## Git State
 
+The following is the command transcript used to rebuild this section (run before
+the STATUS commit itself):
+
+```text
+git log --oneline -8
+git rev-parse HEAD
+git rev-parse origin/main
+git ls-files -s .githooks
+Get-ChildItem docs -Recurse -File | Where-Object {$_.Extension -eq '.js'}
+```
+
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `81252f2` | Slice 18 Front C W1-W3 plus the 2026-09-20 docs rebuild; read via `git rev-parse origin/main` at the start of the close-out run — nothing has been pushed since |
-| Local HEAD (branch `claude/s18-close-out`) | `3d395fb` | Slice 18 close-out run (`d8c4681` … `4d3bae2`, founding close record `4d3267c`, STATUS `63841cc`, L1-boundary correction `d496532` + `b6d3373` + `4c1c58d`, STATUS `836bf2c`) and the four pre-merge follow-ups (`0a8bbac` results-file re-add reversed, `5ac5cb5` boundary ratified + largest-perturbation sentence, `052d0a2` comet sentence, `c6dc7dd` docs, `3d395fb` founding entry); this STATUS commit lands on top of it |
+| origin/main | `62ddb17` | CI repair base; read from `git rev-parse origin/main`; no push was performed by this run |
+| Local HEAD before this STATUS commit (branch `s19-5-close`) | `63dfa20` | Slice 19.5 close-batch W1-W3b; this STATUS commit intentionally lands one commit after it |
 
-**Measured pin lag (2026-09-21):** before this edit, `git rev-list --count 3d395fb..HEAD` measured 0 commits and `git rev-list --count 81252f2..HEAD` measured 19. After this STATUS commit lands, those measure 1 and 20. STATUS commits LAST in any sequence.
-**Push state:** origin/main is at `81252f2`. Branch `claude/s18-close-out` holds twenty local-only commits and is NOT merged. No agent pushes, ever. The merge is Hudson's: `git checkout main; git merge claude/s18-close-out --ff-only; git hpush`.
-**Rollback for the close-out run:** tag `pre-s18-close-run` and branch `backup/pre-s18-close-run`, both at `81252f2`, created by Hudson before the run and untouched by it. If the merge is ever to be undone: `git checkout main && git reset --hard pre-s18-close-run`.
-**Deploy boundary:** live `docs/` is `81252f2` (rebuilt 2026-09-20; live bundles `porkchopV2-Ci6r-fmN.js`, `solarSystemV2-DFJ0f0Yh.js`, `compareV2-CEg78aFw.js`). The branch's rebuild is `c6dc7dd` (after follow-ups 1-3; supersedes `4d3bae2` / `b6d3373`) — live only once merged and pushed — with entry bundles `porkchopV2-z3nhVK2W.js`, `solarSystemV2-Z_zaFg6C.js`, `compareV2-BbpSakkn.js`, shared chunks `porkchop-view-BTebVubw.js`, `tier-assignments-C-5EqJQL.js`, `resolve-catalog-body-pmopDgKo.js`, `store-CkJiJhKO.js`, and the tier artifact `docs/tier-sizing-per-body.json` (10,880,093 bytes, sha256 `eb118425…`, identical to the `tools/` copy). Bundle names from the earlier branch rebuilds (`porkchopV2-DPwWKoPv.js`, `solarSystemV2-BM6ai_je.js`, `compareV2-Br2FOkFz.js`) were never live and are gone. The `5a00907` boundary previously recorded here was stale: `81252f2` had already rebuilt `docs/` on 2026-09-20.
+**Measured pin lag (2026-10-26):** `git rev-list --count 63dfa20..HEAD` was 0 before this edit; after the STATUS commit it is 1. STATUS commits LAST in any sequence.
+**Push state:** origin/main is at `62ddb17`. Branch `s19-5-close` is local-only and NOT merged. No agent pushes, ever. Hudson's handoff is `git checkout main; git merge s19-5-close --ff-only; git hpush`.
+**Rollback for this run:** tag `s19-5-pre-close` and branch `backup/s19-5-pre-close`, both at `62ddb17`; they are untouched by this run.
+**Deploy boundary:** the checked-in `docs/` tree is the deploy payload at `62ddb17`; the command output lists entry bundles `solarSystemV2-eFven3Lq.js`, `porkchopV2-CeMrUCV7.js`, `compareV2-BS2LahKC.js`, `aboutV2-BvErNums.js`, and `legacy-C6NkCVYx.js`, plus the shared chunks `porkchop-view-C3RRaFF7.js`, `resolve-catalog-body-B93d1P1K.js`, `store-DfTWpS4r.js`, and `tier-assignments-BPJow_i-.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -512,11 +523,20 @@ separate audit remain the merge gate.
 
 ---
 
+## Done since the prior STATUS pin
+
+| Item | Commit | Disposition |
+|---|---|---|
+| C1 | `e70c00b` | tracked text normalized to LF via `.gitattributes` |
+| C12 | `c037448` | Slice 16 run ledgers landed as tracked evidence; `05c1359` records the ruling |
+| C17 | `f7b19e7` | additive-only hook now counts deletions with `--numstat` and covers the guarded founding paths |
+| payload item | `69472a3` | unfetched Slice 7/8 catalog payloads no longer emit |
+| branch merge | `62ddb17` | CI repair landed on `main`, the base for this close branch |
+
 ## Cleanup Queue
 
 | ID | Item |
 |---|---|
-| C1 | CRLF / `.gitattributes` normalization pass. |
 | C2 | Windows npm test shim cleanup: `process.execPath` + TypeScript bin, not `.bin` shims. |
 | C3 | G0 LOW L-1: `insufficient_data` refusal code defined but unused; do not imply it is emitted. |
 | C4 | G0 LOW L-2: `explain_cell` refusal envelopes carry `assumptions: []`; optional polish. |
@@ -527,12 +547,10 @@ separate audit remain the merge gate.
 | C9 | Slice 9 replacement propagation-accuracy guard from committed Horizons truth only. |
 | C10 | Propagate baked `dirty` into MCP SourceRefs — protected-path dispatch, next package release (= DD-7, founding §26.7). |
 | C11 | `.claude/agents` legacy routing (audit L1-1) — see remediation report Phase 6 disposition. |
-| C12 | Signed recovery dispatch for the halted attempt-1 ledger: checksum-pinned retry manifest; originals immutable. |
 | C13 | OQ-18-4: izzo `lambert()` negative/invalid-TOF hardening (F1/F2, LOW, unreachable on every shipped path) — bundle with the next math-layer change; protected path. |
 | C14 | OQ-18-5: the `GM_SUN` comment says "IAU 2015 nominal" on a DE430 value — one-line docs fix under `src/v2/core/`, needs `ASTER_PROTECTED_OK` + a Hudson dispatch. |
 | C15 | `tools/run-tests.mjs` `parseCounts` takes the FIRST `pass N` / `fail N` match in a child's interleaved stdout+stderr; one 2026-09-21 run's headline read 302 while the per-file `ℹ pass` summaries summed to 303 (re-run: 303). Anchor the regex to the `ℹ pass` summary line, or take the last match. Headline only — the per-file exit codes and accounting were correct. |
 | C16 | **Label collision: three different findings are named "F2".** (1) `SLICE_17_FOUNDING.md:716-719` — cache and view screen different spans, both labelled "2026-2040" (cache to 2040-12-31, view to 2040-01-01); still unfixed. (2) `STATUS.md` math-layer audit paragraph — "F2 (LOW) — izzo mislabels invalid input (NaN, zero, infinity TOF) as `no_convergence`"; carried as OQ-18-4 / C13. (3) `STATUS.md` Cleanup `C7` — the Slice 16 "F2 negative-control transcript". Cite them as **S17-F2 (span mismatch)**, **audit-F2 (izzo taxonomy)** and **S16-F2 (negative control)**; a bare "F2" is ambiguous across these three. |
-| C17 | **The additive-only hook misses deleted markdown bullets — the common case, not an edge case.** `.githooks/pre-commit:53` counts violations with `git diff --cached -- "$doc" \| grep -c '^-[^-]'`. A deleted bullet line (`- item`) renders in the diff as `-- item`, whose second character is also `-`, so the pattern does not match and the deletion passes unblocked. `INVARIANTS.md` and the `SLICE_*_FOUNDING.md` files are largely bullet lists, so most of what the rule protects is exactly what the pattern cannot see. Demonstrated 2026-09-22 against commit `2032b9e`, which deletes one bullet from `mcp/README.md`: `--stat` reports `1 deletion(-)`, the hook pattern reports `0`, and `grep '^-' \| grep -v '^--- a/'` reports `1`. Fix is the latter form; `.githooks/` is a protected path, so it needs `ASTER_PROTECTED_OK` plus a dispatch. Until then, every additive-only proof written into a report must use the corrected pattern — all appends in the 2026-09-22 docs-correction pass were re-verified with it and showed 0 real deletions. |
 
 ---
 
