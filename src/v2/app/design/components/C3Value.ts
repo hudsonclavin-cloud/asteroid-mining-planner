@@ -1,4 +1,3 @@
-import { h, type VNode } from 'preact';
 import { formatC3 } from '../../../porkchop/format-c3.js';
 
 export interface C3ValueProps {
@@ -16,10 +15,11 @@ export function formatC3ValueText(value: number | null, unit: string): string {
   return `${formatC3(value)} ${unit}`;
 }
 
-export function C3Value(props: C3ValueProps): VNode {
+export function C3Value(props: C3ValueProps): string {
   if (props.value === null) {
-    return h('span', null, props.refusal);
+    const prefix = props.prefix ? `${props.prefix} ` : '';
+    return `${prefix}${props.refusal} ${props.unit} (${props.grid})`;
   }
   const prefix = props.prefix ? `${props.prefix} ` : '';
-  return h('span', { title: props.grid }, `${prefix}${formatC3ValueText(props.value, props.unit)} (${props.grid})`);
+  return `${prefix}${formatC3ValueText(props.value, props.unit)} (${props.grid})`;
 }

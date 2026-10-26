@@ -238,9 +238,8 @@ export function renderRow(
               },
               hideNearZeroC3
                 ? hiddenNotice
-                : h('span', null,
-                    h(C3Value, { value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' }),
-                    ` · ${L0_C3_CONTEXT}`,
+                : h('span', { title: c3GridDetails },
+                    `${C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' })} · ${L0_C3_CONTEXT}`,
                   ),
             ),
           )
@@ -261,7 +260,7 @@ export function renderRow(
               { title: c3GridDetails },
               hideNearZeroC3
                 ? hiddenNotice
-                : h(C3Value, { value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' }),
+                : C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' }),
             ),
           ),
     ),
