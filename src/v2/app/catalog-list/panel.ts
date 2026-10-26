@@ -25,7 +25,7 @@ import {
   loadLambertScreenCacheAsync,
 } from '../../boundary/lambert-screen-cache.js';
 import { cachedC3GridFromMetadata, type CachedC3Grid } from '../../boundary/c3-grid.js';
-import { catalogEmptyReason, renderEmpty } from './empty.js';
+import { catalogEmptyReason, renderCatalogHeading, renderEmpty, type EmptyReason } from './empty.js';
 import {
   disclosureIntro,
   disclosureSections,
@@ -553,12 +553,14 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
         };
 
   let listContent: VNode;
+  let emptyReason: EmptyReason | null = null;
   if (filteredRows.length === 0) {
-    listContent = renderEmpty(catalogEmptyReason({
+    emptyReason = catalogEmptyReason({
       catalogLoaded: catalog !== null,
       screeningLoaded: screeningIndex !== null,
       tierLoadState: tierLoadStateSignal.value,
-    }));
+    });
+    listContent = renderEmpty(emptyReason);
   } else {
     listContent = h(
           'div',
@@ -606,17 +608,7 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
               marginBottom: '10px',
             },
           },
-          h(
-            'span',
-            {
-              style: {
-                color: '#fff',
-                fontWeight: 600,
-                fontSize: '14px',
-              },
-            },
-            `NEA Catalog (${filteredRows.length.toLocaleString()})`,
-          ),
+          renderCatalogHeading(emptyReason, filteredRows.length),
           h(
             'button',
             {

@@ -20,10 +20,27 @@ async function loadEmpty() {
   return import(pathToFileURL(path.join(outDir, 'app', 'catalog-list', 'empty.js')).href);
 }
 
-test('catalog distinguishes tier load failure/latency from a real empty filter', async () => {
+function renderedText(value) {
+  if (value === null || value === undefined || typeof value === 'boolean') return '';
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (Array.isArray(value)) return value.map(renderedText).join('');
+  return renderedText(value.props?.children);
+}
+
+test('catalog renders distinct loading, failed, and empty-after-filter states', async () => {
   const empty = await loadEmpty();
   assert.equal(empty.catalogEmptyReason({ catalogLoaded: true, screeningLoaded: true, tierLoadState: 'failed' }), 'tiers-not-loaded');
-  assert.equal(empty.catalogEmptyReason({ catalogLoaded: true, screeningLoaded: true, tierLoadState: 'loading' }), 'tiers-not-loaded');
+  assert.equal(empty.catalogEmptyReason({ catalogLoaded: false, screeningLoaded: false, tierLoadState: 'loading' }), 'loading');
   assert.equal(empty.catalogEmptyReason({ catalogLoaded: true, screeningLoaded: true, tierLoadState: 'loaded' }), 'no-matches');
-  assert.equal(empty.catalogEmptyReason({ catalogLoaded: false, screeningLoaded: true, tierLoadState: 'loaded' }), 'no-data');
+
+  const loadingText = renderedText(empty.renderEmpty('loading'));
+  assert.equal(loadingText, 'Loading the catalog\u2026');
+  assert.doesNotMatch(loadingText, /\(0\)|No catalog loaded/);
+  assert.equal(renderedText(empty.renderCatalogHeading('loading', 0)), 'Loading the catalog\u2026');
+  assert.doesNotMatch(renderedText(empty.renderCatalogHeading('loading', 0)), /\(0\)|No catalog loaded/);
+  assert.equal(
+    renderedText(empty.renderEmpty('tiers-not-loaded')),
+    "Fidelity tiers didn't load, so tier filters are unavailable. Reload to try again.",
+  );
+  assert.equal(renderedText(empty.renderEmpty('no-matches')), 'No bodies match the current filters.');
 });
