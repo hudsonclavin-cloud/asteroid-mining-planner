@@ -64,6 +64,7 @@ import {
   subscribeToStarfieldDisplay,
 } from '../ui-store/index.js';
 import { loadSlice9NeaCatalogFixture, loadSolarSystemStatesBrowser } from './loader.js';
+import { ephemerisStatusHud } from './ephemeris-status.js';
 import {
   buildSlice9RuntimePropagationBodies,
   isSlice9RuntimeEllipticBody,
@@ -955,8 +956,6 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const outOfCoverageWarning = document.createElement('div');
   outOfCoverageWarning.setAttribute('data-testid', 'ephemeris-coverage-warning');
-  outOfCoverageWarning.textContent =
-    'Current time is outside ephemeris coverage — showing nearest available date.';
   outOfCoverageWarning.style.color = '#ffd27a';
   outOfCoverageWarning.style.display = 'none';
   timeStatusHud.appendChild(outOfCoverageWarning);
@@ -1821,9 +1820,17 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     renderDateHud(dateHud, currentTdbSeconds);
     dateHud.textContent += `\n${formatUtcDateTimeLabel(currentTdbSeconds)}`;
     const wallClockTdbSeconds = nowTdbSeconds();
-    outOfCoverageWarning.style.display =
-      wallClockTdbSeconds < timeMin || wallClockTdbSeconds > timeMax ? 'block' : 'none';
-    trackingStatus.textContent = tracking ? 'LIVE' : 'SCRUBBED — press Shift+N for now';
+    const ephemerisStatus = ephemerisStatusHud({
+      tracking,
+      wallClockTdbSeconds,
+      timeMin,
+      timeMax,
+      coverageStartDate: formatTdbCoverageDateLabel(timeMin),
+      coverageEndDate: formatTdbCoverageDateLabel(timeMax),
+    });
+    outOfCoverageWarning.textContent = ephemerisStatus.warningText ?? '';
+    outOfCoverageWarning.style.display = ephemerisStatus.warningText === null ? 'none' : 'block';
+    trackingStatus.textContent = ephemerisStatus.trackingText;
     // B2 T2-3: target + camera distance. orbitRadius is the camera's distance
     // to the focus anchor in meters (scene units are meters — B2-1 recon).
     focusReadoutLine.textContent =
