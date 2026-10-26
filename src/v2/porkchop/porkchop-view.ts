@@ -68,7 +68,8 @@ const PANEL_STYLE = [
 const CANVAS_STYLE = [
   'display:block',
   `width:${DISPLAY_WIDTH}px`,
-  `height:${DISPLAY_HEIGHT}px`,
+  'height:auto',
+  `aspect-ratio:${DISPLAY_WIDTH}/${DISPLAY_HEIGHT}`,
   'max-width:100%',
   'background:#0a0d14',
   'border:1px solid rgba(255,255,255,0.16)',

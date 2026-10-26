@@ -607,10 +607,10 @@ function PorkchopDedicatedPage() {
 
   return h(
     'div',
-    { style: PAGE_STYLE },
+    { class: 'porkchop-page', style: PAGE_STYLE },
     h(
       'aside',
-      { style: SIDEBAR_STYLE },
+      { class: 'porkchop-sidebar', style: SIDEBAR_STYLE },
       h('div', { style: 'font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8da2c0;margin-bottom:10px;' }, 'Porkchop Analysis'),
       h('div', { style: 'font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;' }, pageState.bodyLabel),
       h('div', { style: 'font-size:13px;color:#93a4bf;margin-bottom:6px;' }, pageState.bodyId),
@@ -993,7 +993,7 @@ function PorkchopDedicatedPage() {
     ),
     h(
       'main',
-      { style: MAIN_STYLE },
+      { class: 'porkchop-main', style: MAIN_STYLE },
       h(PorkchopView, {
         client: pageState.client,
         bodyId: pageState.bodyId,
