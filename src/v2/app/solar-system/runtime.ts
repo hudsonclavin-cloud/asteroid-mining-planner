@@ -979,6 +979,13 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   // scale/frame chips below.
   frameReadoutLine.textContent = 'Frame heliocentric J2000 equatorial (ICRF)';
   timeStatusHud.appendChild(frameReadoutLine);
+
+  const axesDisclosure = document.createElement('div');
+  axesDisclosure.setAttribute('data-testid', 'axes-orientation-disclosure');
+  axesDisclosure.textContent =
+    "Planet spin axes and Saturn's ring plane are not oriented correctly yet. Don't read pole or ring directions from this view.";
+  axesDisclosure.style.color = '#ffd27a';
+  timeStatusHud.appendChild(axesDisclosure);
   mount.appendChild(timeStatusHud);
 
   // B2 T2-1 (S-S17-BATCH2-2026-08-12-A): scale/frame honesty chips. Every
