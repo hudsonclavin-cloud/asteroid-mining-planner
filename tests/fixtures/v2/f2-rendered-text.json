@@ -1,0 +1,47 @@
+{
+  "generatedFrom": "HEAD 6ae930c (before F2 migration)",
+  "states": [
+    "normal",
+    "near-zero C3",
+    "near-zero-C3 window hidden (1)",
+    "—",
+    "No solvable cells in this grid.",
+    "co-orbital",
+    "L0",
+    "L1",
+    "L2",
+    "GREEN",
+    "AMBER",
+    "RED",
+    "STRICT"
+  ],
+  "surfaces": {
+    "catalog": {
+      "normal": "C3 4.21 km²/s² (cached screen: 25.7 d × 16.6 d steps)",
+      "nearZero": "near-zero C3",
+      "hideOn": "near-zero-C3 window hidden (1)",
+      "refusal": "—",
+      "emptyNoWindow": "No solvable cells in this grid.",
+      "coOrbital": "NEA · co-orbital",
+      "tier": "L1"
+    },
+    "compare": {
+      "normal": "4.21 km²/s² (requested grid)",
+      "nearZero": "near-zero C3",
+      "hideOn": "near-zero-C3 window hidden (1)",
+      "refusal": "—",
+      "emptyNoWindow": "No solvable cells in this grid.",
+      "coOrbital": "co-orbital",
+      "tier": "L2"
+    },
+    "porkchop": {
+      "normal": "Payload at C3 = 4.21 km²/s²",
+      "nearZero": "near-zero C3",
+      "hideOn": "near-zero-C3 window hidden (1)",
+      "refusal": "—",
+      "emptyNoWindow": "No solvable cells in this grid.",
+      "coOrbital": "co-orbital",
+      "feasibility": "AMBER"
+    }
+  }
+}
