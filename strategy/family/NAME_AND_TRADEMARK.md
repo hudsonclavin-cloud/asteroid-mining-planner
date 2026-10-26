@@ -25,7 +25,7 @@
 | Aster Space Technologies (India), LISI "ASTER System" fasteners, Aster DM Healthcare, Aster Capital (Paris VC; probable owner of aster.com), TU/e student team "Aster in Space" | Various | Mostly rule out name forms ("Aster Space", "Aster Labs") and the .com | LOW | [Likely] |
 | npm `aster` (taken since 2014), PyPI `aster` (placeholder) | Package registries | Any future SDK needs a scoped or compound name | LOW | [Certain] |
 
-**Overall conflict risk for bare "Aster" as a house mark over space-engineering software: MEDIUM.** [Likely] A narrowly worded Class 9/42 application is registrable over the LogicMark mark; [Speculative] until the sound-alike (ASTRA, ASTRO, ASTERA, ASTREA…) and Class 42 searches are actually run, which this pass could not do from the sandbox.
+**Overall conflict risk for bare "Aster" as a house mark over space-engineering software: MEDIUM.** Calibrated guess from the review panel: a bare ASTER Class 9/42 application proceeding to registration without a §2(d) refusal or opposition, about 0.35 [Speculative]; a compound mark (Aster Orbital / Asterworks) clearing, about 0.7 [Speculative]. [Likely] A narrowly worded Class 9/42 application is registrable over the LogicMark mark; [Speculative] until the sound-alike (ASTRA, ASTRO, ASTERA, ASTREA…) and Class 42 searches are actually run, which this pass could not do from the sandbox.
 
 ## §3. What a real clearance looks at
 

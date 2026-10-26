@@ -1,0 +1,405 @@
+{
+  "family": "Aster",
+  "schema_version": "0.2.0",
+  "generated": "2026-10-26",
+  "generated_by": "tools/family/family-index.mjs (GitHub API via gh + local git); opinions from MEMBERS_EDITORIAL.json",
+  "status": "PROPOSAL — leads-grade. Facts are read by command at generation time; nothing here locks a DEC or changes a member repo.",
+  "hub": {
+    "repo": "hudsonclavin-cloud/asteroid-mining-planner",
+    "branch": "aster-family",
+    "home": "strategy/family/"
+  },
+  "proof_sheet": {
+    "answered": 0,
+    "required": 5,
+    "optional_rows": 1
+  },
+  "members": [
+    {
+      "id": "aster",
+      "repo": "hudsonclavin-cloud/asteroid-mining-planner",
+      "url": "https://github.com/hudsonclavin-cloud/asteroid-mining-planner",
+      "private": false,
+      "archived": false,
+      "has_pages": true,
+      "license": "NOASSERTION",
+      "default_branch": "main",
+      "head": "62ddb17",
+      "head_date": "2026-10-25",
+      "pushed_at": "2026-10-26T04:39:41Z",
+      "created_at": "2026-03-30T01:16:50Z",
+      "open_pulls": 1,
+      "remote_branches": 7,
+      "ci_workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "last_ci_run": {
+        "name": "CI",
+        "conclusion": "success",
+        "head": "62ddb17",
+        "date": "2026-10-25"
+      },
+      "last_pages_deploy": {
+        "conclusion": "success",
+        "head": "62ddb17",
+        "date": "2026-10-25"
+      },
+      "last_run_any": {
+        "name": "CI",
+        "conclusion": "success",
+        "date": "2026-10-25"
+      },
+      "local": {
+        "path": "/home/user/asteroid-mining-planner",
+        "head": "f077390",
+        "branch": "aster-family",
+        "commits_on_branch": 54,
+        "tracked_files": 1155,
+        "first_commit": "2026-10-12",
+        "dirty": 13
+      },
+      "editorial": {
+        "name": "Aster",
+        "role": "MEMBER + HUB (product: Lens L1 Transit shipped; P0 aster-mcp founded but broken at HEAD)",
+        "one_liner": "Browser-based asteroid mission planner with evidence-carrying answers: a 41,906-body NEA catalog, Lambert/porkchop/ΔV/DLA screening, and an MCP server that refuses with a reason when a question is out of envelope.",
+        "completion": {
+          "percent": 82,
+          "label": "[Likely]",
+          "basis": "Product-vision v1 (Slices 10-14) met mid-2026; 97/97 test files and a byte-identical rebuild measured 2026-10-26; held below 100 because the agent surface (mcp/) has not compiled since 2026-10-14 and the published package lags the site on disclosures. Against Slice 19.5's own exit the figure is ~30."
+        },
+        "verdict": "The one repo with a real, reproducible product whose core claim, one core two interfaces, is false today on the interface agents consume. Fix mcp/ and put it in CI before any family work touches it.",
+        "proves": "node tools/run-tests.mjs · npx tsc --noEmit · CI: tsc, build, golden numbers, full-tests",
+        "since": "Mar 2026 (V1) · V2 from Apr 2026 · main history rewritten 2026-10-12",
+        "note": "MIT, but the LICENSE file wraps the text in prose so GitHub reports NOASSERTION. Founding docs are additive-only; src/v2/core is a protected math surface. Slice 16 agent-honesty study is pre-registered (Zenodo DOI) and its promised REPORT.md is still owed."
+      }
+    },
+    {
+      "id": "skyhook",
+      "repo": "hudsonclavin-cloud/skyhook",
+      "url": "https://github.com/hudsonclavin-cloud/skyhook",
+      "private": true,
+      "archived": false,
+      "has_pages": false,
+      "license": null,
+      "default_branch": "main",
+      "head": "34935cb",
+      "head_date": "2026-09-11",
+      "pushed_at": "2026-10-23T01:45:55Z",
+      "created_at": "2026-07-02T03:59:41Z",
+      "open_pulls": 0,
+      "remote_branches": 8,
+      "ci_workflows": [
+        ".github/workflows/ci.yml"
+      ],
+      "last_ci_run": {
+        "name": "Physics Verification",
+        "conclusion": "success",
+        "head": "34935cb",
+        "date": "2026-09-11"
+      },
+      "last_pages_deploy": {
+        "conclusion": "success",
+        "head": "27229e2",
+        "date": "2026-09-09"
+      },
+      "last_run_any": {
+        "name": "Physics Verification",
+        "conclusion": "success",
+        "date": "2026-09-11"
+      },
+      "local": {
+        "path": "/home/user/skyhook",
+        "head": "34935cb",
+        "branch": "main",
+        "commits_on_branch": 50,
+        "tracked_files": 88,
+        "first_commit": "2026-07-02",
+        "dirty": 0
+      },
+      "editorial": {
+        "name": "Skyhook",
+        "role": "MEMBER (Works: the physical program; Lens L9 Momentum is the planning lens over it, not a rename of it)",
+        "one_liner": "Phase 0 study of a rotating momentum-exchange tether in a 610 km orbit. Rev A (2.5 km/s tip) is canonical in params/rev_a.json; a tested Python finance model prices the program honestly, including the conservative case that does not close.",
+        "completion": {
+          "percent": 12,
+          "label": "[Likely]",
+          "basis": "Against the repo's own Phase 0 exit (twin validated against flight data, joint statistics, capture demo): zero physical data. As a self-consistent paper study it is ~65% on main (73 passed / 1 skipped measured 2026-10-26), ~75% with the six unmerged agent branches."
+        },
+        "verdict": "The deepest physics in the family, resting on an un-spot-checked materials assumption (HMPE creep at SF 2.5) and a remote that has outrun the repo's own single-source-of-truth rule: 46 agent commits on six branches no file mentions. Reconcile, then run the $120 splice test before writing another finance module.",
+        "proves": "python3 -m pytest tests/ -v · python3 physics/skyhook_physics.py · CI: Rev A physics assertions (main only)",
+        "since": "Jul 2026",
+        "note": "Private, no LICENSE, Pages off. params/rev_a.json disagrees with itself on Earth radius (com_radius_km 6988 vs the 6371 the physics module uses). The weakest input is named in the data: fiber_cost_per_kg is null."
+      }
+    },
+    {
+      "id": "partforge",
+      "repo": "hudsonclavin-cloud/Partforge",
+      "url": "https://github.com/hudsonclavin-cloud/Partforge",
+      "private": false,
+      "archived": false,
+      "has_pages": true,
+      "license": "Apache-2.0",
+      "default_branch": "main",
+      "head": "0974a62",
+      "head_date": "2026-10-25",
+      "pushed_at": "2026-10-25T23:57:34Z",
+      "created_at": "2026-08-26T21:15:27Z",
+      "open_pulls": 0,
+      "remote_branches": 7,
+      "ci_workflows": [],
+      "last_ci_run": null,
+      "last_pages_deploy": {
+        "conclusion": "success",
+        "head": "0974a62",
+        "date": "2026-10-25"
+      },
+      "last_run_any": {
+        "name": "pages build and deployment",
+        "conclusion": "success",
+        "date": "2026-10-25"
+      },
+      "local": {
+        "path": "/home/user/Partforge",
+        "head": "0974a62",
+        "branch": "main",
+        "commits_on_branch": 58,
+        "tracked_files": 133,
+        "first_commit": "2026-09-15",
+        "dirty": 0
+      },
+      "editorial": {
+        "name": "PartForge",
+        "role": "MEMBER (Works: fabrication tool and the family's measurement authority)",
+        "one_liner": "Describe a part, get a printable parametric OpenSCAD model compiled in the browser. Flight grade turns the same tool on rocket-club machined parts: declared tolerances, a mesh CMM, engineering checks, and documents that say who stands behind every number.",
+        "completion": {
+          "percent": 55,
+          "label": "[Speculative]",
+          "basis": "The repo never defines done. Every re-runnable software claim matched (733 + 20 + 27 checks; 21/21 headless parity) but zero parts have ever been cut, the shipped flight template is 100% tool-default tolerances, roadmap items #3-#5 are unbuilt, and there is no CI."
+        },
+        "verdict": "A genuinely good idea (declare, measure, provenance, refuse) implemented as a 1.24 MB single HTML file that has never touched metal; it changes category from self-consistent to validated the day one centering ring is cut and calipered.",
+        "proves": "node tests/run.mjs · cd headless && npm run test:parity",
+        "since": "Aug 2026 (seed upload) · Gen 1 Sep 2026",
+        "note": "Apache-2.0. Pushes every commit straight to the Pages-served main with no CI; one deploy failed silently on 2026-10-05. Two pinned headless dependencies carry HIGH advisories. 85 of 94 commits are agent-authored and nothing in the repo says so."
+      }
+    },
+    {
+      "id": "ideabank",
+      "repo": "hudsonclavin-cloud/Idea-Bank",
+      "url": "https://github.com/hudsonclavin-cloud/Idea-Bank",
+      "private": false,
+      "archived": false,
+      "has_pages": true,
+      "license": null,
+      "default_branch": "main",
+      "head": "1e5b7c6",
+      "head_date": "2026-10-24",
+      "pushed_at": "2026-10-24T19:52:05Z",
+      "created_at": "2026-10-22T17:22:37Z",
+      "open_pulls": 0,
+      "remote_branches": 6,
+      "ci_workflows": [],
+      "last_ci_run": null,
+      "last_pages_deploy": {
+        "conclusion": "success",
+        "head": "1e5b7c6",
+        "date": "2026-10-24"
+      },
+      "last_run_any": {
+        "name": "pages build and deployment",
+        "conclusion": "success",
+        "date": "2026-10-24"
+      },
+      "local": {
+        "path": "/home/user/Idea-Bank",
+        "head": "1e5b7c6",
+        "branch": "main",
+        "commits_on_branch": 108,
+        "tracked_files": 691,
+        "first_commit": "2026-10-22",
+        "dirty": 0
+      },
+      "editorial": {
+        "name": "Idea-Bank",
+        "role": "LAB (sandbox: linked from the family, disclosed and licensed, otherwise frozen at 75)",
+        "one_liner": "Seventy-five side projects that AI agents chose, built, tested and graded themselves, each with an honest assessment. Several are orbital-mechanics explorables or printable space objects (a Kirkwood-gap ruler, Kepler gears, a reaction-wheel simulator).",
+        "completion": {
+          "percent": 90,
+          "label": "[Likely]",
+          "basis": "Per-deposit contract met for 75/75 when run uncontended (1,161 node tests, 108 Python, 148/148 phone+desktop smoke, 11/11 STLs). Withheld: no LICENSE, no CI, no pinned dependencies, 37 of 75 ideas never independently reviewed, and 30 review commits that now point at the wrong idea numbers."
+        },
+        "verdict": "The fastest-moving and most phone-tested surface in the family, with the weakest audit trail; a LICENSE, a one-job CI and a PROCESS.md turn a three-day sprint into a bank others can withdraw from.",
+        "proves": "node tools/check.mjs · node tools/smoke.mjs <idea> · python3 tools/printcheck.py <idea>",
+        "since": "22-24 Oct 2026",
+        "note": "No LICENSE, no CI. 98 of 108 commits are agent-authored; the 'Made by' names are agent personas and the README does not yet say so. Nothing has been printed or played by two people."
+      }
+    },
+    {
+      "id": "suborbital",
+      "repo": "hudsonclavin-cloud/suborbital-leg-cost-model",
+      "url": "https://github.com/hudsonclavin-cloud/suborbital-leg-cost-model",
+      "private": true,
+      "archived": false,
+      "has_pages": false,
+      "license": null,
+      "default_branch": "main",
+      "head": "9e6eef3",
+      "head_date": "2026-07-07",
+      "pushed_at": "2026-07-07T05:18:32Z",
+      "created_at": "2026-07-07T05:18:14Z",
+      "open_pulls": 0,
+      "remote_branches": 1,
+      "ci_workflows": [],
+      "last_ci_run": null,
+      "last_pages_deploy": null,
+      "last_run_any": null,
+      "local": {
+        "path": "/home/user/suborbital-leg-cost-model",
+        "head": "9e6eef3",
+        "branch": "main",
+        "commits_on_branch": 1,
+        "tracked_files": 7,
+        "first_commit": "2026-07-07",
+        "dirty": 0
+      },
+      "editorial": {
+        "name": "suborbital-leg-cost-model",
+        "role": "ARCHIVED (recommended: one pointer commit, then GitHub archive)",
+        "one_liner": "A one-commit stub from 2026-07-07. Its mandate (procure-vs-develop for the Skyhook suborbital leg, with sourced provider pricing) was folded back into the skyhook repo the same day and is itself still half-done there.",
+        "completion": {
+          "percent": 0,
+          "label": "[Certain]",
+          "basis": "Seven files, 134 lines, no code, no data, no sourced price; skyhook/docs/providers/README.md records the fold-back."
+        },
+        "verdict": "An honest, well-formed stub that is now an attractive nuisance: its STATUS still tells a reader to start work here. Archive with a forward pointer; carry its decision-record template to skyhook; finish its job inside skyhook.",
+        "proves": "nothing to run",
+        "since": "Jul 2026",
+        "note": "Private, no LICENSE. Its only unique content is docs/decisions/TEMPLATE.md (DRAFT → PROPOSED → LOCKED), used by no other repo."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "Aster",
+      "to": "Skyhook",
+      "text": "Kernel K2: is a returning payload's Earth-arrival v∞ inside the Rev A tether's catch envelope? A research prototype exists on branch <code>claude/k2-momentum-bank</code> (tools/k2-momentum-research/); it snapshots <code>params/rev_a.json</code> with its sha256 and a verify gate reproduces Rev A's derived numbers (the live file still matches, read 2026-10-26). PR #1 for that branch has been open since 2026-10-06. Blocked on K1, the return-leg porkchop, which Aster does not have. <span class=\"lbl\">[Certain the files exist · Likely on the findings]</span>"
+    },
+    {
+      "from": "Skyhook",
+      "to": "Aster",
+      "text": "PM-001 on skyhook's unmerged branch <code>claude/skyhook-fixes-2026-10-22</code> freezes aster-mission-mcp@0.1.0 tool results into a data file. Note the trap: 0.1.0 lacks the fidelity tiers the web app shows. <span class=\"lbl\">[Certain per the verified card]</span>"
+    },
+    {
+      "from": "suborbital-leg-cost-model",
+      "to": "Skyhook",
+      "text": "Folded back on 2026-07-07; the leg-cost model lives in <code>skyhook/finance/leg_cost.py</code>, with its procure anchor still an unsourced $15M constant. <span class=\"lbl\">[Certain]</span>"
+    },
+    {
+      "from": "Idea-Bank",
+      "to": "PartForge",
+      "text": "Seven ideas ship eleven STL files and a print check (<code>tools/printcheck.py</code>). PartForge is the family's printability and measurement authority. No code link today. <span class=\"lbl\">[Certain: no link exists · Speculative: worth one]</span>"
+    },
+    {
+      "from": "Skyhook",
+      "to": "PartForge",
+      "text": "The ST-001 splice field kit is a physical test rig; PartForge Flight grade could declare and measure a printed gauge clip for it (never the load-bearing capstan drum). No link today. <span class=\"lbl\">[Speculative]</span>"
+    }
+  ],
+  "rows": [
+    {
+      "id": 1,
+      "member": "aster",
+      "kind": "software / agents",
+      "optional": false,
+      "claim": "The browser app and the published aster-mission-mcp package share one core AND one set of disclosures; CI compiles and tests mcp/ on every push.",
+      "command": "grep -c mcp .github/workflows/ci.yml && (cd mcp && npx tsc -p . --noEmit) && npm view aster-mission-mcp version",
+      "checked_at": "2026-10-26",
+      "head": "62ddb17",
+      "status": "REFUSED",
+      "refusal": {
+        "code": "not_yet_true",
+        "reason": "ci.yml mentions mcp: false; mcp tsc: FAILS: src/tools/compute-shared.ts(262,5): error TS2322: Type 'number | Readonly<{ readonly kind: \"non-finite-c3\"; }>' is not assignable to type 'number'.; published 0.1.0 vs mcp/package.json 0.1.0",
+        "what_would_help": "route the NonFiniteC3 union at mcp/src/tools/compute-shared.ts into an out_of_envelope refusal, add a `cd mcp && npm ci && npm test` job to ci.yml, carry the fidelity tier into the envelope, publish 0.2.0"
+      }
+    },
+    {
+      "id": 2,
+      "member": "partforge",
+      "kind": "hardware",
+      "optional": false,
+      "claim": "One flight-grade part was cut or printed from a PartForge sheet and calipered; the committed record states N of M declared tolerances met and how many were tool defaults.",
+      "command": "ls docs/runs/ | grep first-article",
+      "checked_at": "2026-10-26",
+      "head": "0974a62",
+      "status": "REFUSED",
+      "refusal": {
+        "code": "no_physical_datum",
+        "reason": "no docs/runs/*first-article* directory (2 run dirs); every measurement in the app is of the mesh",
+        "what_would_help": "one shop or printer afternoon: cut or print the centering-ring template, caliper every declared row, commit photos and a measured-vs-declared table"
+      }
+    },
+    {
+      "id": 3,
+      "member": "skyhook",
+      "kind": "physics / experiment",
+      "optional": false,
+      "claim": "ST-001 ran (n ≥ 8 pulls per configuration in 1.75 mm HMPE); splice retention is recorded against the ≥ 85% requirement with CSV and video; the repo is public under a LICENSE.",
+      "command": "gh api repos/hudsonclavin-cloud/skyhook --jq \"{private,license}\" && ls docs/research/ | grep -i rn002",
+      "checked_at": "2026-10-26",
+      "head": "34935cb",
+      "status": "REFUSED",
+      "refusal": {
+        "code": "no_physical_datum",
+        "reason": "private: true; license: null; ST-001 results file: none; the protocol (docs/st001_splice_test.md) is complete and unexecuted",
+        "what_would_help": "buy the ~$110-190 kit (≥ 500 kg peak-hold scale, or pre-register a saturation rule), pull n ≥ 8 per configuration over one weekend, commit RN-002; add a LICENSE and flip public after the branch reconcile"
+      }
+    },
+    {
+      "id": 4,
+      "member": "ideabank",
+      "kind": "method",
+      "optional": false,
+      "claim": "75 deposits pass one CI job on every push; PROCESS.md states the build → hostile review → verify loop and says every Made-by name is an agent persona; a LICENSE is present.",
+      "command": "gh api repos/hudsonclavin-cloud/Idea-Bank --jq .license && ls .github/workflows PROCESS.md",
+      "checked_at": "2026-10-26",
+      "head": "1e5b7c6",
+      "status": "REFUSED",
+      "refusal": {
+        "code": "not_yet_true",
+        "reason": "license: null; CI workflows: 0; PROCESS.md: false",
+        "what_would_help": "LICENSE + package.json/lockfile + a check.yml running `node tools/check.mjs --no-smoke` on push (fix the load-sensitive idea-63 test first) + PROCESS.md with the reviewed/unreviewed list and the persona disclosure"
+      }
+    },
+    {
+      "id": 5,
+      "member": "aster",
+      "kind": "research",
+      "optional": false,
+      "claim": "The pre-registered, DOI-sealed Slice 16 agent-honesty study has its promised report: evals/honesty-study/REPORT.md, limits stated first, every figure pinned to the grades file by a test.",
+      "command": "ls evals/honesty-study/REPORT.md",
+      "checked_at": "2026-10-26",
+      "head": "62ddb17",
+      "status": "REFUSED",
+      "refusal": {
+        "code": "owed_deliverable",
+        "reason": "evals/honesty-study/REPORT.md does not exist; the data is on disk under tools/slice16-harness/runs/ and README says the DEC-16-8 contrast is uncomputed",
+        "what_would_help": "one weekend: write the domain-1 report with \"what the data does not support\" first, the DEC-16-8 contrast, and a words-test asserting every figure equals the grades JSON"
+      }
+    },
+    {
+      "id": 6,
+      "member": "aster",
+      "kind": "cross-repo mechanism",
+      "optional": true,
+      "claim": "The Aster → Skyhook interface prototype (K2) is on main and its gate passes: `node tools/k2-momentum-research/verify.mjs --skyhook ../skyhook` prints ALL PASS against the live rev_a.json.",
+      "command": "node tools/k2-momentum-research/verify.mjs --skyhook ../skyhook",
+      "checked_at": "2026-10-26",
+      "head": "62ddb17",
+      "status": "REFUSED",
+      "refusal": {
+        "code": "not_on_main",
+        "reason": "tools/k2-momentum-research/ exists only on branch claude/k2-momentum-bank (commits f90bbba, 8cb8d54); PR #1 open since 2026-10-06",
+        "what_would_help": "review and merge PR #1 (tooling only, no protected paths); label research-not-slice; no promotion toward src/v2 before K1"
+      }
+    }
+  ]
+}
