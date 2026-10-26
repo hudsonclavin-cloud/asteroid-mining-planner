@@ -145,6 +145,7 @@ interface PageData {
   readonly facts: ReadonlyMap<string, BodyFacts>;
   readonly tiers: ReadonlyMap<string, TierAssignment>;
   readonly vehicleName: string;
+  readonly vehicle: LaunchVehicle;
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly totalComputeMs: number;
 }
@@ -700,6 +701,28 @@ function formatArrivalDate(depJd: number, tofDays: number): string {
   return new Date((arrival - 2_440_587.5) * 86_400_000).toISOString().slice(0, 10);
 }
 
+function payloadCurveProvenance(vehicle: LaunchVehicle, c3: number): string | null {
+  const exact = vehicle.curve.find((anchor) => anchor.c3 === c3);
+  if (exact !== undefined) {
+    return (
+      `derived from official-published curve; exact anchor C3 ${formatC3WithUnits(exact.c3)} ` +
+      `at ${exact.payloadKg.toLocaleString('en-US')} kg`
+    );
+  }
+  for (let index = 0; index < vehicle.curve.length - 1; index += 1) {
+    const left = vehicle.curve[index];
+    const right = vehicle.curve[index + 1];
+    if (left !== undefined && right !== undefined && left.c3 < c3 && c3 < right.c3) {
+      return (
+        'derived from official-published curve; interpolated between ' +
+        `C3 ${formatC3WithUnits(left.c3)} at ${left.payloadKg.toLocaleString('en-US')} kg and ` +
+        `C3 ${formatC3WithUnits(right.c3)} at ${right.payloadKg.toLocaleString('en-US')} kg`
+      );
+    }
+  }
+  return null;
+}
+
 function renderOkRow(
   result: CompareBodyOk,
   label: string,
@@ -711,6 +734,7 @@ function renderOkRow(
   tier: TierAssignment | undefined,
   hideNearZeroC3: boolean,
   nearZeroC3HiddenCount: number,
+  vehicle?: LaunchVehicle,
 ) {
   const { segmentation, echo } = result;
   const best = segmentation.bestPractical;
@@ -817,6 +841,9 @@ function renderOkRow(
     h('td', { style: CELL_STYLE }, [
       h('span', { style: `color:${massColor};` }, mass.text),
       mass.note ? h('span', { style: NOTE_STYLE }, mass.note) : null,
+      typeof result.deliveredMass === 'number' && best !== null && vehicle !== undefined
+        ? h('span', { style: NOTE_STYLE }, payloadCurveProvenance(vehicle, best.c3))
+        : null,
     ]),
 
     h('td', { style: CELL_STYLE }, [
@@ -871,7 +898,8 @@ function MethodBadge(props: {
   }
   lines.push(
     `Delivered mass — interpolated from the published performance curve for ${props.vehicleName}, against a fixed reference rendezvous budget of ${REFERENCE_RENDEZVOUS_MPS} m/s plus ${SPACECRAFT_STATIONKEEPING_MPS} m/s stationkeeping. Rendezvous ΔV varies by target; a single reference budget is used here so the mass column is comparable across bodies, which means it is not a per-target mission estimate.`,
-    'Launch-vehicle performance figures are the operator-published curves and carry their contract context; quoted interior points on those curves are interpolations between published anchors, not independently verified performance.',
+    "NASA Launch Services contract context \u2014 these official-published curves reflect performance available through NASA's launch-services contract; terms, performance, and services may differ from provider advertising or commercial or other contracts. Mission-unique analysis can change usable performance.",
+    'New Glenn caveat \u2014 interior values on its steep final published-anchor segment are linearly interpolated and optimistic versus the held-out NASA LSP checks.',
     // A4c (S-S17-BATCH2-2026-08-12-A): size-column provenance — the formula
     // and reflectivity values, cited, so the per-row range is traceable.
     'Size column — diameters are estimated from brightness (absolute magnitude H) via D = (1329/√reflectivity) × 10^(−H/5); the range spans the dark-to-bright taxonomy median reflectivities 0.053–0.166 (Mainzer et al. 2011), and the survey-average 0.14 (Stuart & Binzel 2004) quoted beneath it is the same assumption behind this tool\'s 3D marker sizes. These are estimates, not measurements.',
@@ -1056,6 +1084,7 @@ function ComparePage() {
           facts: sources.facts,
           tiers: sources.tiers,
           vehicleName: `${sources.vehicle.name} — ${sources.vehicle.config}`,
+          vehicle: sources.vehicle,
           ephemerisSpan: sources.ephemerisSpan,
           totalComputeMs,
         });
@@ -1231,6 +1260,7 @@ function ComparePage() {
                 data.tiers.get(result.bodyId),
                 hideNearZeroC3,
                 nearZeroC3HiddenCount,
+                data.vehicle,
               ),
         ];
         if (isExpanded && result.ok) {
