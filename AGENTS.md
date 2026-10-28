@@ -107,6 +107,8 @@ do not have these local-hook checks.
 1. `.githooks/pre-push` blocks pushes unless the Hudson-only per-command
    `ASTER_PUSH_OK=1` override is present. Agents never push, set that override,
    or use `--no-verify`.
+   Do not change core.hooksPath and do not edit .githooks/; either is a violation
+   even if it "would help."
 2. `.githooks/pre-commit` fails closed when `.dispatch-scope` is absent and
    requires every staged path to match one of its raw scope lines (apart from
    the scope file itself). It blocks protected paths (`src/v2/core/*`,
@@ -115,6 +117,7 @@ do not have these local-hook checks.
    `src/v2/*_LOCKED.md`. The latter documents are additive-only unless Hudson
    supplies `ASTER_PROTECTED_OK=1` for the dispatch. Agents stage named paths
    only; every dispatch writes the exact LF `.dispatch-scope` file first.
+   Paste the .dispatch-scope contents in the final report.
 3. `ASTER_PROTECTED_OK=1` is a Hudson-only per-command override for protected
    paths and additive amendments. It is never persisted in a profile.
 4. STOP means stop: report and wait. Never improvise past a tripwire or repair
@@ -126,6 +129,9 @@ do not have these local-hook checks.
 7. Agents never start, spawn, or request another agent session (cloud, sibling,
    or sub-agent) unless the dispatch names that parallelism. Doing so is a
    tripwire.
+8. A "create" target that already exists is a TRIPWIRE — surface, do not
+   overwrite. (Origin: CFG1 rev A named an existing file as "create"; caught
+   pre-execution.)
 
 Note: hooks are drift-protection, not adversary-proofing. --no-verify and
 unsetting core.hooksPath exist; using them against these rules is itself a
