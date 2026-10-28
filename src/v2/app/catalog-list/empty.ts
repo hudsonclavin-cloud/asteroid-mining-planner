@@ -1,6 +1,6 @@
 import { h, type VNode } from 'preact';
 
-export type EmptyReason = 'no-data' | 'no-matches' | 'loading' | 'tiers-not-loaded';
+export type EmptyReason = 'no-matches' | 'loading' | 'tiers-not-loaded';
 
 export type TierLoadState = 'loading' | 'loaded' | 'failed';
 
@@ -9,23 +9,21 @@ export function catalogEmptyReason(args: {
   readonly screeningLoaded: boolean;
   readonly tierLoadState: TierLoadState;
 }): EmptyReason {
-  if (args.tierLoadState !== 'loaded') {
+  if (args.tierLoadState === 'failed') {
     return 'tiers-not-loaded';
   }
-  if (!args.screeningLoaded) {
+  if (!args.catalogLoaded || !args.screeningLoaded || args.tierLoadState === 'loading') {
     return 'loading';
   }
-  return args.catalogLoaded ? 'no-matches' : 'no-data';
+  return 'no-matches';
 }
 
 export function renderEmpty(reason: EmptyReason): VNode {
   const message =
     reason === 'loading'
-      ? 'Loading screening data…'
+      ? 'Loading the catalog\u2026'
       : reason === 'tiers-not-loaded'
         ? "Fidelity tiers didn't load, so tier filters are unavailable. Reload to try again."
-      : reason === 'no-data'
-        ? 'No catalog loaded.'
         : 'No bodies match the current filters.';
 
   return h(
@@ -40,5 +38,19 @@ export function renderEmpty(reason: EmptyReason): VNode {
       },
     },
     message,
+  );
+}
+
+export function renderCatalogHeading(reason: EmptyReason | null, count: number): VNode {
+  return h(
+    'span',
+    {
+      style: {
+        color: '#fff',
+        fontWeight: 600,
+        fontSize: '14px',
+      },
+    },
+    reason === 'loading' ? 'Loading the catalog\u2026' : `NEA Catalog (${count.toLocaleString()})`,
   );
 }

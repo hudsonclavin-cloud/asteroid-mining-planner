@@ -24,12 +24,21 @@ export const L1_CRITERION =
   "Tier L1 is assigned when the encounter's estimated deflection, carried to the end of the screening " +
   `window, adds at least 10^6 km of drift. ${THRESHOLD_PROVENANCE}`;
 
-export const L2_UNMEASURED_DISCLOSURE =
-  'Aster has not measured the screening error for this object. Two-body propagation over the screening ' +
-  'window drifted 0.46 to 330 million km across the 17 asteroids that were measured. This object was not among them.';
+export const L2_DISCLOSURE_TEXT = {
+  unmeasured: {
+    legend: 'not measured',
+    full:
+      'Aster has not measured the screening error for this object. Two-body propagation over the screening ' +
+      'window drifted 0.46 to 330 million km across the 17 asteroids that were measured. This object was not among them.',
+  },
+  measuredUnbounded: {
+    legend: 'measured, exceeds certified bound',
+    full: 'Aster measured the screening error for this object, but it exceeds the bound Aster can certify.',
+  },
+} as const;
 
-export const L2_MEASURED_UNBOUNDED_DISCLOSURE =
-  'Aster measured the screening error for this object, but it exceeds the bound Aster can certify.';
+export const L2_UNMEASURED_DISCLOSURE = L2_DISCLOSURE_TEXT.unmeasured.full;
+export const L2_MEASURED_UNBOUNDED_DISCLOSURE = L2_DISCLOSURE_TEXT.measuredUnbounded.full;
 
 const MONTHS: Record<string, string> = {
   JAN: '01', FEB: '02', MAR: '03', APR: '04', MAY: '05', JUN: '06',
@@ -200,7 +209,7 @@ export const TIER_LEGEND: readonly TierLegendEntry[] = [
   },
   {
     key: 'L2',
-    line: 'screening error unbounded or unmeasured',
+    line: `${L2_DISCLOSURE_TEXT.measuredUnbounded.legend} / ${L2_DISCLOSURE_TEXT.unmeasured.legend}`,
     title:
       'L2 — Aster cannot bound the screening error (comets, and orbits reaching beyond the 0.28 AU from ' +
       'Jupiter that the close-approach data covers) or has not measured it (two-body propagation drifted ' +

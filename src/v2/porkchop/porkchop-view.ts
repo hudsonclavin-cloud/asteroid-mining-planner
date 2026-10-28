@@ -68,7 +68,8 @@ const PANEL_STYLE = [
 const CANVAS_STYLE = [
   'display:block',
   `width:${DISPLAY_WIDTH}px`,
-  `height:${DISPLAY_HEIGHT}px`,
+  'height:auto',
+  `aspect-ratio:${DISPLAY_WIDTH}/${DISPLAY_HEIGHT}`,
   'max-width:100%',
   'background:#0a0d14',
   'border:1px solid rgba(255,255,255,0.16)',
@@ -1359,7 +1360,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                             style: 'display:flex;align-items:center;justify-content:flex-end;gap:6px;width:280px;font-size:10px;opacity:0.85;',
                           },
                           h('span', { style: 'display:inline-block;width:26px;border-top:2px dashed #22c55e;' }),
-                          h('span', null, `min direct inclination (iMin): ${formatNumber(launchSite.iMinDeg, 1)}°`),
+                          h('span', null, `min direct inclination (iMin): ${formatNumber(launchSite.iMinDeg, 1)}° from ${launchSite.name}`),
                         ),
                         h(
                           'div',
@@ -1372,8 +1373,8 @@ export function PorkchopView(props: PorkchopViewProps) {
                             'span',
                             null,
                             launchSite.dlaCeilingDeg >= 90
-                              ? 'no dogleg band — corridor covers all declinations'
-                              : `max direct declination (ceiling): ${formatNumber(launchSite.dlaCeilingDeg, 1)}°`,
+                              ? `no dogleg band — corridor covers all declinations from ${launchSite.name}`
+                              : `max direct declination (ceiling): ${formatNumber(launchSite.dlaCeilingDeg, 1)}° from ${launchSite.name}`,
                           ),
                         ),
                       ]

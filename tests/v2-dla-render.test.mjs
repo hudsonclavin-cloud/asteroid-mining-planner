@@ -416,6 +416,10 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const pinnedText = document.app.textContent;
     assert.match(pinnedText, /Mission cost/);
     assert.match(pinnedText, /AMBER|Raised inclination/);
+    assert.match(
+      pinnedText,
+      /Delivered mass excludes the launch-site payload penalty named above; Aster does not model it\./,
+    );
 
     const dlaLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('DLA feasibility'));
     assert.ok(dlaLabel, 'expected the DLA contour toggle');
@@ -437,6 +441,19 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.match(onText, /Launch site/);
     assert.match(onText, /min direct inclination \(iMin\)/);
     assert.match(onText, /max direct declination \(ceiling\)/);
+    assert.match(onText, /min direct inclination \(iMin\): 28\.5\u00b0 from Cape Canaveral/);
+    assert.match(onText, /max direct declination \(ceiling\): 57\.0\u00b0 from Cape Canaveral/);
+
+    const siteLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('Launch site'));
+    assert.ok(siteLabel, 'expected the launch-site picker');
+    const siteSelect = findElements(siteLabel, 'select')[0];
+    assert.ok(siteSelect, 'expected the launch-site select');
+    siteSelect.value = 'Vandenberg SFB';
+    siteSelect.dispatchEvent({ type: 'input' });
+    await flushEffects();
+    const vandenbergText = document.app.textContent;
+    assert.match(vandenbergText, /min direct inclination \(iMin\): 70\.0\u00b0 from Vandenberg SFB/);
+    assert.match(vandenbergText, /corridor covers all declinations from Vandenberg SFB/);
 
     const modeLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('Mission mode'));
     assert.ok(modeLabel, 'expected the mission-mode picker');

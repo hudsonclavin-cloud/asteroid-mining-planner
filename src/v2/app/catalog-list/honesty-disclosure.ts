@@ -59,7 +59,7 @@ export function disclosureSections(window: ScreeningWindow | null): DisclosureSe
         `time-of-flight) window in ${rangePhrase} with departure C3 ≤ 25 km²/s². ` +
         'That is a necessary condition for a low-energy launch, but not sufficient: arrival ' +
         'ΔV, stay time, and return ΔV are not factored in. NHATS-style accessibility verdicts ' +
-        'require the full mission stack, which later slices add.',
+        'require the full mission stack; a future version will add it.',
     },
     {
       title: 'Co-orbital targets are tagged for a reason',

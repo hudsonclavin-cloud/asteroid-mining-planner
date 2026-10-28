@@ -21,12 +21,46 @@
         background: #03050b;
         overflow: hidden;
       }
+
+      @media (max-width: 480px) {
+        html,
+        body,
+        #app {
+          height: auto;
+          min-height: 100%;
+        }
+
+        body {
+          overflow-x: hidden;
+          overflow-y: auto;
+        }
+
+        .porkchop-page {
+          flex-direction: column;
+          height: auto !important;
+          min-height: 100vh;
+        }
+
+        .porkchop-sidebar {
+          order: 2;
+          width: 100% !important;
+          border-right: 0 !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .porkchop-main {
+          order: 1;
+          width: 100%;
+          height: auto !important;
+          overflow: visible !important;
+        }
+      }
     </style>
-    <script type="module" crossorigin src="/asteroid-mining-planner/assets/porkchopV2-CeMrUCV7.js"></script>
+    <script type="module" crossorigin src="/asteroid-mining-planner/assets/porkchopV2-BHkfJah8.js"></script>
     <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/modulepreload-polyfill-B5Qt9EMX.js">
-    <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/slice9-nea-catalog-00URi76F.js">
-    <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/tier-assignments-BPJow_i-.js">
-    <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/porkchop-view-C3RRaFF7.js">
+    <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/global-style-CBLOWN73.js">
+    <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/tier-assignments-C97LqoPk.js">
+    <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/porkchop-view-Cbo79LiN.js">
     <link rel="modulepreload" crossorigin href="/asteroid-mining-planner/assets/resolve-catalog-body-B93d1P1K.js">
   </head>
   <body>

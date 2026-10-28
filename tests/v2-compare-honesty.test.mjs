@@ -38,7 +38,7 @@ async function loadCompareRenderers() {
   assert.notEqual(mountStart, -1, 'compare module mount should be present in emitted source');
   fs.writeFileSync(
     emittedPath,
-    `${emitted.slice(0, mountStart)}\nexport { renderOkRow, computeDominance };\n`,
+    `${emitted.slice(0, mountStart)}\nexport { renderOkRow, computeDominance, MethodBadge };\n`,
   );
   const compare = await import(`${pathToFileURL(emittedPath).href}?honesty=${Date.now()}`);
   const constants = await import(
@@ -69,7 +69,11 @@ function component(c3, breadthCells, dateIso) {
     breadthDays: (breadthCells - 1) * 7,
     minC3: c3,
     c3,
-    argmin: { dateIso, tofDays: 232.3 },
+    argmin: {
+      depJd: Date.parse(`${dateIso}T00:00:00Z`) / 86_400_000 + 2_440_587.5,
+      dateIso,
+      tofDays: 232.3,
+    },
   };
 }
 
@@ -169,4 +173,85 @@ test('T3 compare size factors are derived from the imported albedo constants in 
   const note = describeSize(20).notes.join(' ');
   assert.match(note, /≈2\.1×/);
   assert.match(note, /≈1\.4×/);
+});
+
+test('W3a compare flags an Apophis window arriving after support without changing ranking data', async () => {
+  const { renderOkRow, computeDominance, constants } = await loadCompareRenderers();
+  const apophis = result('asteroid-99942', 1, 2, 1000, constants.isNearZeroC3Degenerate(1));
+  const other = result('asteroid-other', 2, 2, 900, constants.isNearZeroC3Degenerate(2));
+  const rows = [apophis, other];
+  const before = structuredClone(rows);
+  const rankingBefore = rows.map((row) => row.bodyId);
+  const dominance = computeDominance(rows);
+  const tierArtifact = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'docs', 'tier-sizing-per-body.json'), 'utf8'),
+  );
+  const tier = tierArtifact.records['99942'];
+  assert.equal(tier.tier, 'L1');
+
+  const text = textOf(renderOkRow(
+    apophis,
+    'Apophis',
+    'vehicle',
+    false,
+    () => {},
+    dominance.get(apophis.bodyId),
+    undefined,
+    tier,
+    false,
+    0,
+  ));
+
+  assert.match(text, /ARRIVES AFTER SUPPORTED DATE/);
+  assert.match(
+    text,
+    /This window arrives 2029-04-13, after 2028-09-12, the last date Aster's orbit for Apophis is supported\. Not certified; ranking unchanged\./,
+  );
+  assert.deepEqual(rows, before);
+  assert.deepEqual(rows.map((row) => row.bodyId), rankingBefore);
+});
+
+test('W3b compare exposes delivered-mass anchors, NASA contract context, and the New Glenn caveat', async () => {
+  const { renderOkRow, MethodBadge, constants } = await loadCompareRenderers();
+  const vehicle = {
+    name: 'New Glenn',
+    config: 'Standard',
+    site: 'CCSFS',
+    fairingM: 7,
+    source: 'NASA LSP elvperf',
+    asOf: '2024-02-29',
+    curve: [
+      { c3: 0, payloadKg: 1_000, basis: 'official' },
+      { c3: 10, payloadKg: 500, basis: 'official' },
+    ],
+  };
+  const row = result('anchor-body', 5, 2, 800, constants.isNearZeroC3Degenerate(5));
+  const rowText = textOf(renderOkRow(
+    row,
+    'Anchor body',
+    'New Glenn - Standard',
+    false,
+    () => {},
+    undefined,
+    undefined,
+    undefined,
+    false,
+    0,
+    vehicle,
+  ));
+  assert.match(rowText, /derived from official-published curve/);
+  assert.match(rowText, /C3 0.*1,000 kg.*C3 10.*500 kg/);
+
+  const badgeText = textOf(MethodBadge({
+    echo: row.echo,
+    ephemerisSpan: { firstJd: 2_461_041.5, lastJd: 2_466_519.5 },
+    vehicleName: 'New Glenn - Standard',
+    totalComputeMs: 1,
+    thresholdMode: 'absolute',
+  }));
+  assert.match(badgeText, /Lambert patched-conic screen/);
+  assert.match(badgeText, /25\.0 km/);
+  assert.match(badgeText, /NASA Launch Services contract/);
+  assert.match(badgeText, /New Glenn caveat/);
+  assert.match(badgeText, /steep final published-anchor segment/);
 });

@@ -21,6 +21,40 @@
         background: #03050b;
         overflow: hidden;
       }
+
+      @media (max-width: 480px) {
+        html,
+        body,
+        #app {
+          height: auto;
+          min-height: 100%;
+        }
+
+        body {
+          overflow-x: hidden;
+          overflow-y: auto;
+        }
+
+        .porkchop-page {
+          flex-direction: column;
+          height: auto !important;
+          min-height: 100vh;
+        }
+
+        .porkchop-sidebar {
+          order: 2;
+          width: 100% !important;
+          border-right: 0 !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .porkchop-main {
+          order: 1;
+          width: 100%;
+          height: auto !important;
+          overflow: visible !important;
+        }
+      }
     </style>
   </head>
   <body>

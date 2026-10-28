@@ -242,3 +242,18 @@ The Slice 11 summary block near the top of this file labels `vInfDep`/`vInfArr` 
 **Occasioning case (the demonstration this invariant demands).** Fixture X1 asserted a "measured diameter of 540.5 m" against an envelope leaf `estimatedRadius = 270.0417833762203 m`, with a frozen `VF: 0`. The locked appendix had always said *"the leaf is a radius; an answer reporting diameter must double it"* — and 2 × 270.0418 = 540.0836, so X1's "fabricated" number is that diameter with rounding (relative difference 7.7e-4, inside `get_body`'s 1e-3 tolerance). The expectation encoded the radius/diameter inversion **from the fabricating side**: it was the bug with a test around it. **A frozen expectation resting on a false premise is not evidence.** Amended under this invariant with fixture PF4 added in the same commit, restoring the coverage X1 had been miscrediting: the radius reported *as* a diameter, expected `VF: 0`.
 
 **What this invariant does NOT license.** Amending an expectation because the instrument's output changed and the expectation became inconvenient. The demonstration must show the *fixture's premise* was false, independently of the new behaviour — as above, from the locked appendix's own words, which predate the fix.
+
+## Amendment 2026-10-26 — Slice 19.5 close rulings (R1-R3, X4)
+
+- **R1 — INV-008..INV-011:** enforcement is at test time, in the named
+  interpolation tests, rather than in production runtime code. INV-012 and
+  INV-013 remain policy statements; their enforcement is likewise the relevant
+  test and contract surface, not a runtime guard.
+- **R2 — INV-014:** the index is authoritative and the two meanings are
+  namespaced: INV-014a is the 8.5 star-background floor, and INV-014b is the
+  three-gate visualization tier contract.
+- **R3 — INV-035 and INV-036:** these IDs stay skipped. A new proposal takes the
+  next free unambiguous identifier rather than reusing either number.
+- **X4 — INV-026 clarification:** a constant satisfies INV-026 when a committed
+  test binds it to the provenance artifact whose value it states (for example,
+  `SLICE9_NEA_CATALOG_TOTAL_BODIES`, `42e917d`).

@@ -1,0 +1,10 @@
+{
+  "artifactUrl": "https://claude.ai/artifact/6SLvf2chPcY9fodg8BDN2Y",
+  "artifactVersion": "1791840136-a99a",
+  "artifactPath": "project/tokens.json",
+  "sha256": "8c4b3a225e06978f4154a759db8d818b9a8dbef63d0c89ee2387aa2bd80cc2af",
+  "bytes": 21955,
+  "syncedFromRepoSha": "c185c33",
+  "snapshotDate": "2026-10-25",
+  "note": "DEC-19.5-4: from this commit the repo is the authority; the artifact is re-synced from the repo, never the reverse"
+}

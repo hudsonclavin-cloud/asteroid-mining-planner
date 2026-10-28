@@ -1,6 +1,10 @@
 import { h, render, type ComponentChildren, type VNode } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { SLICE9_NEA_CATALOG_TOTAL_BODIES } from '../../boundary/slice9-nea-catalog.js';
+import { renderAboutAuditItems, type ArtifactLink } from './audit-copy.js';
+import { installGlobalFocusStyle } from '../design/global-style.js';
+
+installGlobalFocusStyle();
 
 const mount = document.getElementById('app');
 
@@ -25,13 +29,6 @@ interface ProvenanceDoc {
   readonly rows: readonly ProvenanceRow[];
 }
 
-interface ArtifactLink {
-  readonly label: string;
-  readonly commit: string;
-  readonly path: string;
-  readonly anchor?: string;
-}
-
 const REPO_ROOT_URL = 'https://github.com/hudsonclavin-cloud/asteroid-mining-planner';
 
 const ARTIFACTS = {
@@ -54,22 +51,6 @@ const ARTIFACTS = {
     label: 'SLICE_14_FOUNDING.md',
     commit: '8fcddb6',
     path: 'src/v2/SLICE_14_FOUNDING.md',
-  },
-  slice10Audit: {
-    label: 'SLICE_10_FOUNDING.md §OQ-8',
-    commit: '3d5f1cd',
-    path: 'src/v2/SLICE_10_FOUNDING.md',
-    // L3-4 fix: fragment regenerated from the document's actual heading,
-    // "OQ-8 — Multi-agent audit cycle (engineering record)". The old fragment
-    // pointed at a heading that no longer exists, so the evidence jump 404'd
-    // to the top of the file.
-    anchor: 'oq-8--multi-agent-audit-cycle-engineering-record',
-  },
-  slice13Audit: {
-    label: 'SLICE_13_FOUNDING.md §8',
-    commit: '8fc6f32',
-    path: 'src/v2/SLICE_13_FOUNDING.md',
-    anchor: '8-engineering-record-running-log',
   },
   oracle: {
     label: 'oracle-report.md',
@@ -415,16 +396,7 @@ function AboutPage(): VNode {
         h(
           'ul',
           { style: LIST_STYLE },
-          exhibit(
-            'Slice 10 audit cycle',
-            'nine findings across high/medium/low severity, each resolved, with honest reconciliation where the audit\'s own numbers differed from measurement.',
-            ARTIFACTS.slice10Audit,
-          ),
-          exhibit(
-            'Slice 13 audit',
-            'findings, severities, and the specific commits that closed them.',
-            ARTIFACTS.slice13Audit,
-          ),
+          ...renderAboutAuditItems(exhibit),
         ),
         h('h3', { style: SUBTITLE_STYLE }, 'Verify before lock'),
         paragraph(

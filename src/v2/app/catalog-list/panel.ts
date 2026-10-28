@@ -25,7 +25,7 @@ import {
   loadLambertScreenCacheAsync,
 } from '../../boundary/lambert-screen-cache.js';
 import { cachedC3GridFromMetadata, type CachedC3Grid } from '../../boundary/c3-grid.js';
-import { catalogEmptyReason, renderEmpty } from './empty.js';
+import { catalogEmptyReason, renderCatalogHeading, renderEmpty, type EmptyReason } from './empty.js';
 import {
   disclosureIntro,
   disclosureSections,
@@ -37,6 +37,7 @@ import { renderRow } from './row.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { TIER_LEGEND } from '../../porkchop/tier-disclosure.js';
 import { statusBadgeColor, tierBadgeColor } from './row.js';
+import { A11Y_OVERRIDES } from '../design/a11y-overrides.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
 export interface RenderPanelOptions {
@@ -257,7 +258,7 @@ export function trackPanelSignals(): void {
  * badges. One line per key, always visible above the footer; the long form is
  * on hover. Chips reuse the row badge colours so the legend reads as a key.
  */
-function renderTierLegend(): VNode {
+export function renderTierLegend(): VNode {
   return h(
     'div',
     {
@@ -348,7 +349,7 @@ function renderFooter(): VNode {
         {
           style: {
             marginLeft: '8px',
-            color: '#666',
+            color: A11Y_OVERRIDES.catalogHint.value,
             fontSize: '10px',
             display: 'inline-block',
             whiteSpace: 'nowrap',
@@ -375,7 +376,7 @@ function renderFooter(): VNode {
   );
 }
 
-function renderPopover(): VNode {
+export function renderPopover(): VNode {
   const sections = disclosureSections(screeningWindowSignal.value).map((section) =>
     h(
       'div',
@@ -553,12 +554,14 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
         };
 
   let listContent: VNode;
+  let emptyReason: EmptyReason | null = null;
   if (filteredRows.length === 0) {
-    listContent = renderEmpty(catalogEmptyReason({
+    emptyReason = catalogEmptyReason({
       catalogLoaded: catalog !== null,
       screeningLoaded: screeningIndex !== null,
       tierLoadState: tierLoadStateSignal.value,
-    }));
+    });
+    listContent = renderEmpty(emptyReason);
   } else {
     listContent = h(
           'div',
@@ -606,17 +609,7 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
               marginBottom: '10px',
             },
           },
-          h(
-            'span',
-            {
-              style: {
-                color: '#fff',
-                fontWeight: 600,
-                fontSize: '14px',
-              },
-            },
-            `NEA Catalog (${filteredRows.length.toLocaleString()})`,
-          ),
+          renderCatalogHeading(emptyReason, filteredRows.length),
           h(
             'button',
             {
