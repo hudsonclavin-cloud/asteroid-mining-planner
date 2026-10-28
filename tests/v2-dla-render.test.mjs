@@ -416,10 +416,14 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const pinnedText = document.app.textContent;
     assert.match(pinnedText, /Mission cost/);
     assert.match(pinnedText, /AMBER|Raised inclination/);
-    assert.match(
-      pinnedText,
-      /Delivered mass excludes the launch-site payload penalty named above; Aster does not model it\./,
-    );
+    // S19.5 tail2 F1/F2: AMBER says zero (DEC-13-3); one noun, "payload penalty".
+    assert.match(pinnedText, /zero added ΔV in this model/);
+    assert.match(pinnedText, /a payload penalty for this launch site and vehicle still applies/);
+    assert.match(pinnedText, /Dogleg penalty0 m\/s \(modelled; launch-geometry, AMBER\)/);
+    assert.doesNotMatch(pinnedText, /negligible/);
+    assert.doesNotMatch(pinnedText, /~0/);
+    assert.match(pinnedText, /Delivered mass excludes that payload penalty; Aster does not model it\./);
+    assert.doesNotMatch(pinnedText, /launch-site payload penalty named above/);
 
     const dlaLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('DLA feasibility'));
     assert.ok(dlaLabel, 'expected the DLA contour toggle');

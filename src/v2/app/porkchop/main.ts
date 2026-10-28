@@ -817,7 +817,7 @@ function PorkchopDedicatedPage() {
                       ? h(
                           'div',
                           { style: 'font-size:11px;color:#fbbf24;line-height:1.45;margin-top:6px;' },
-                          'Delivered mass excludes the launch-site payload penalty named above; Aster does not model it.',
+                          'Delivered mass excludes that payload penalty; Aster does not model it.',
                         )
                       : null,
                   ),
@@ -870,7 +870,7 @@ function PorkchopDedicatedPage() {
                   costCardState.band === 'GREEN'
                     ? 'none (GREEN)'
                     : costCardState.band === 'AMBER'
-                      ? '~0 (launch-geometry, AMBER)'
+                      ? '0 m/s (modelled; launch-geometry, AMBER)'
                       : costCardState.band === 'RED'
                         ? 'exceeds site capability'
                         : '— (no DLA for this cell)',
