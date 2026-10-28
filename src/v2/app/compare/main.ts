@@ -832,7 +832,12 @@ function renderOkRow(
     // Distinct opportunities at the active threshold.
     h('td', { style: CELL_STYLE }, [
       h('span', null, String(segmentation.components.length)),
-      h('span', { style: NOTE_STYLE }, `${segmentation.practical.length} meet the breadth qualifier`),
+      h(
+        'span',
+        { style: NOTE_STYLE },
+        `${segmentation.practical.length} meet the breadth qualifier ` +
+          `(a window at least ${B_MIN_CELLS} departure cells wide, ${formatDays((B_MIN_CELLS - 1) * echo.depCellDays)} d)`,
+      ),
     ]),
 
     // Widest window — A2 triple, sampling interval from the echo.
