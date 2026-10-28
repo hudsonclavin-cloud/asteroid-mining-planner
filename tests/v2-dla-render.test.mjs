@@ -471,6 +471,7 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const vandenbergText = document.app.textContent;
     assert.match(vandenbergText, /min direct inclination \(iMin\): 70\.0\u00b0 from Vandenberg SFB/);
     assert.match(vandenbergText, /corridor covers all declinations from Vandenberg SFB/);
+    assert.match(vandenbergText, /max direct declination \(ceiling\): none from Vandenberg SFB/);
 
     const modeLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('Mission mode'));
     assert.ok(modeLabel, 'expected the mission-mode picker');

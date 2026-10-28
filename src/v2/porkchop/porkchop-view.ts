@@ -1373,7 +1373,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                             'span',
                             null,
                             launchSite.dlaCeilingDeg >= 90
-                              ? `no dogleg band — corridor covers all declinations from ${launchSite.name}`
+                              ? `max direct declination (ceiling): none from ${launchSite.name}; no dogleg band, corridor covers all declinations from ${launchSite.name}`
                               : `max direct declination (ceiling): ${formatNumber(launchSite.dlaCeilingDeg, 1)}° from ${launchSite.name}`,
                           ),
                         ),
