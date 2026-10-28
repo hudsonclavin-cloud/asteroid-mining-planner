@@ -52,6 +52,7 @@ import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { fullTierDisclosure, L1_CRITERION, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { supportBoundaryFor } from '../../porkchop/support-boundary.js';
+import { PORKCHOP_DEPARTURE_END_UTC, PORKCHOP_DEPARTURE_START_UTC } from '../../porkchop/grid-span.js';
 import {
   Fk3GuidedTour,
   hasSeenFk3Tour,
@@ -194,8 +195,8 @@ function utcMidnightToJdTdb(utcDate: string): number {
 }
 
 export const GRID_PARAMS = {
-  depStartJD: utcMidnightToJdTdb('2026-01-01'),
-  depEndJD: utcMidnightToJdTdb('2040-01-01'),
+  depStartJD: utcMidnightToJdTdb(PORKCHOP_DEPARTURE_START_UTC),
+  depEndJD: utcMidnightToJdTdb(PORKCHOP_DEPARTURE_END_UTC),
   tofMinDays: 182.5,
   tofMaxDays: 1826.25,
   nDep: 200,
