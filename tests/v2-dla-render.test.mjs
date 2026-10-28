@@ -425,6 +425,19 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.match(pinnedText, /Delivered mass excludes that payload penalty; Aster does not model it\./);
     assert.doesNotMatch(pinnedText, /launch-site payload penalty named above/);
 
+    // S19.5 tail2 F3: no rendered attribute or tooltip leaks an internal storage key.
+    const replay = findElements(document.app, 'button').find((button) => button.textContent.includes('Replay tour'));
+    assert.ok(replay, 'expected the Replay tour control');
+    const replayTitle = replay.title ?? replay.attributes.get('title');
+    assert.equal(typeof replayTitle, 'string', 'Replay tour control should carry a tooltip');
+    const everyElement = (node) => [node, ...(node.childNodes ?? []).flatMap(everyElement)];
+    for (const element of everyElement(document.app)) {
+      if (element.nodeType !== 1) continue;
+      for (const value of [...element.attributes.values(), element.title, element.placeholder, element.alt]) {
+        if (typeof value === 'string') assert.doesNotMatch(value, /aster\.[a-z]/i, `attribute leaks a storage key: ${value}`);
+      }
+    }
+
     const dlaLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('DLA feasibility'));
     assert.ok(dlaLabel, 'expected the DLA contour toggle');
     const dlaInput = findElements(dlaLabel, 'input')[0];

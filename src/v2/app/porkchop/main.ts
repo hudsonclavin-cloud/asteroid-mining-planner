@@ -53,7 +53,6 @@ import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-as
 import { fullTierDisclosure, L1_CRITERION, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { supportBoundaryFor } from '../../porkchop/support-boundary.js';
 import {
-  FK3_TOUR_STORAGE_KEY,
   Fk3GuidedTour,
   hasSeenFk3Tour,
   markFk3TourSeen,
@@ -631,7 +630,7 @@ function PorkchopDedicatedPage() {
         {
           type: 'button',
           onClick: restoreDefaultsAndReplayTour,
-          title: `Restores FK3, Cape Canaveral, and DLA-on before replaying. First-visit flag: ${FK3_TOUR_STORAGE_KEY}`,
+          title: 'Restores FK3, Cape Canaveral, and DLA-on before replaying.',
           style: 'display:inline-block;background:transparent;border:0;color:#7dd3fc;text-decoration:none;margin:0 0 20px;padding:0;font:inherit;font-size:12px;cursor:pointer;',
         },
         'Replay tour →',
