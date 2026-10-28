@@ -440,3 +440,46 @@ being used as an angle from ICRF Z (C4-F01).
 - DEC-19.5-3, -4, -5, -6, -7, -8: LOCKED as drafted in §3.
 - STATUS: this founding document is LOCKED as of 2026-10-14. This line supersedes
   the DRAFT header, which stays unedited under the additive rule.
+
+### §9.2 Close record - 2026-10-26
+
+- **Routing (X1):** Slice 19.5 closes on Fronts A, B, C1-C4, and F1-F3 plus
+  the INVARIANTS rulings R1-R4. Front G routes to Slice 22 with its interim axes
+  disclosure shipped here; Fronts D and E route to Slices 21 and 20. C5-C9
+  route to Slice 24 and C12 to Slice 25.
+- **Open-question routing:** OQ-19.5-1 is struck under X3 because the nine
+  unrecoverable HIGH references were not recovered. OQ-19.5-2 routes F4 to
+  Slice 23. OQ-19.5-3 routes Front G to Slice 22 with C-3 shipped in
+  `59bc96f`. OQ-19.5-6 routes C12 to Slice 25. OQ-19-4 is the X2 interim:
+  compare flags arrivals after support and does not re-rank.
+- **Ephemeris (X5):** the clamped label is fixed in `05ddac1`; the common
+  intersection is 2026-07-18 through 2026-10-16 TDB. The read-only recon is
+  `tools/audit/sanity-69472a3/s19-5-runs/close-EPHEMERIS_RECON.md`; extending
+  coverage is a separate ruling. Ephemeris: the solar-system view's coverage is
+  2026-07-18 to 2026-10-16 TDB, so the root page reports NOT LIVE after
+  2026-10-16 (label fixed in this slice; extending coverage is a separate
+  ruling, X5).
+- **Front status:** F1 is complete (`0e3c446`, `6ae930c`); F3 is complete
+  (`931aa93`, with headless-mount correction `345f6c7`). F2 is PARTIAL
+  (characterization `9e819b1`, shared components `188914c`, compare `3838c1f`,
+  porkchop `3a0acc7`, catalog `ba8bc8b`, architecture guard `5c5b1ff`,
+  text-preservation correction `032a6ee`). C3Value is adopted on compare,
+  porkchop and catalog (formatting only; rendered text proven unchanged by the
+  characterization fixture, `032a6ee`). EvidenceBadge, FeasibilityBadge,
+  NearZeroC3Badge and StatusBadge exist with render tests but no app surface
+  imports them yet (NearZeroC3Badge is an alias of `renderNearZeroC3Badge`,
+  which the surfaces call directly); the porkchop validation card still builds
+  its STRICT/OBSERVED evidence badges inline; C3Value takes grid as a free
+  string. Per §5, the remaining F2 work (adopt the four badges on all three
+  surfaces, make grid a typed descriptor, extend the architecture guard beyond
+  formatC3) is cut to Slice 20 Front A. F1 and F3 are complete.
+- **Other close work:** W1-T1..T7 are `c04e352`, `2692eb7`, `c9a3225`,
+  `9f0bb06`, `df960f6`, `add39ef`, `59bc96f`; W2 is `05ddac1`; W3a/W3b are
+  `f7bfae9`/`63dfa20`; C1-C3 are `93fb929`, `23aec29`, `e5cdc9d`; the
+  evidence-link test correction is `cc41045`; the deploy rebuild is `84242f7`.
+- **Evidence:** this run's reports and logs are committed under
+  `tools/audit/sanity-69472a3/s19-5-runs/` (W10 commit `1ce716d`). The A+B
+  batch log was lost from `%TEMP%` before its evidence commit; the batch report
+  is a recovered copy.
+- **Exit evidence pending:** Clome cold read, live bundles, and fresh-Linux-clone
+  hook proof.
