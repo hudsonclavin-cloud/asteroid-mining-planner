@@ -95,37 +95,37 @@ git log --oneline -1      # confirm HEAD matches STATUS.md — if not, STOP and 
 - "It looks right" is not verification. "It reproduces value X against oracle Y within tolerance Z" is.
 - Diagnose before concluding: at least two independent recon passes before a DEC is written.
 
-### §2.1 Hook-enforced hard rules & overrides (added 2026-07-09, CFG1)
+### §2.1 Hook-enforced hard rules & overrides (updated 2026-10-26, DEC-19.5-7)
 
-These are enforced by .githooks/ where possible; they override anything a
-prompt implies.
+The repository hooks are installed by `npm ci` or `npm install` through the
+`prepare` script, which runs `tools/setup-hooks.mjs`. In a git worktree that
+script sets `core.hooksPath` to `.githooks`; outside a worktree it exits 0
+silently. The rules below are mechanically enforced only where those hooks are
+installed. A fresh clone before npm installation, web editors, and the GitHub UI
+do not have these local-hook checks.
 
-1. NEVER push. `git push` is Hudson's manual act. The pre-push hook blocks it.
-   Do not set ASTER_PUSH_OK, do not use --no-verify, do not change
-   core.hooksPath, do not edit .githooks/. Any of these is a violation even if
-   it "would help."
-2. Explicit staging only: `git add <named paths>` — never `-A`, never `.`. The
-   pre-commit hook validates staged paths against .dispatch-scope; write that
-   file in Step 1 of each dispatch from its staging list, and paste its
-   contents in the final report.
-3. Protected paths — no edits without a Hudson-signed dispatch AND
-   ASTER_PROTECTED_OK (Hudson sets it, not you): src/v2/core/**; line
-   DELETIONS in INVARIANTS.md and src/v2/*_FOUNDING.md (additive/annotation
-   only); .githooks/**; AGENTS.md; CLAUDE.md.
-4. STOP means stop: report and wait. Never improvise past a tripwire, never
-   "fix" out-of-scope things because they're adjacent.
-5. Report only verified facts (INV-033): every hash/path/count/version
-   confirmed in THIS repo. Honest UNKNOWN beats a confident wrong line.
-6. No installs or network beyond what the dispatch allows.
-7. If a build churns docs/ outside scope: `git restore docs/` before staging.
-8. A "create" target that already exists is a TRIPWIRE — surface, do not
-   overwrite. (Origin: CFG1 rev A named an existing file as "create"; caught
-   pre-execution.)
-
-Overrides (Hudson-only, per-command, NEVER profile-persisted): ASTER_PUSH_OK=1
-(push), ASTER_PROTECTED_OK=1 (protected paths / additive-rule amendments).
-Persisting either in a shell profile leaks it to agent-spawned shells and
-defeats the gate.
+1. `.githooks/pre-push` blocks pushes unless the Hudson-only per-command
+   `ASTER_PUSH_OK=1` override is present. Agents never push, set that override,
+   or use `--no-verify`.
+2. `.githooks/pre-commit` fails closed when `.dispatch-scope` is absent and
+   requires every staged path to match one of its raw scope lines (apart from
+   the scope file itself). It blocks protected paths (`src/v2/core/*`,
+   `.githooks/*`, `AGENTS.md`, `CLAUDE.md`) and counts deletions in
+   `INVARIANTS.md`, `SLICE_*_FOUNDING.md`, `src/v2/*_FOUNDING.md`, and
+   `src/v2/*_LOCKED.md`. The latter documents are additive-only unless Hudson
+   supplies `ASTER_PROTECTED_OK=1` for the dispatch. Agents stage named paths
+   only; every dispatch writes the exact LF `.dispatch-scope` file first.
+3. `ASTER_PROTECTED_OK=1` is a Hudson-only per-command override for protected
+   paths and additive amendments. It is never persisted in a profile.
+4. STOP means stop: report and wait. Never improvise past a tripwire or repair
+   an adjacent out-of-scope issue.
+5. Report only facts verified in this repository (INV-033). Honest UNKNOWN is
+   preferable to an unverified hash, path, count, or version.
+6. No installs, network, or deployment beyond the dispatch. If a build churns
+   docs outside scope, restore those files before staging.
+7. Agents never start, spawn, or request another agent session (cloud, sibling,
+   or sub-agent) unless the dispatch names that parallelism. Doing so is a
+   tripwire.
 
 Note: hooks are drift-protection, not adversary-proofing. --no-verify and
 unsetting core.hooksPath exist; using them against these rules is itself a
@@ -196,6 +196,10 @@ Codex receives a dispatch (written by Nova or Hudson) and executes it against th
 
 Nova is chat Claude: the advisor and dispatch writer. Nova does not execute code or touch the repo
 directly. Nova typically receives context via HANDOFF.md and founding docs shared by Hudson.
+
+Current routing is `STATUS.md` for repository state and
+`tools/audit/sanity-69472a3/` for the current audit. The 2026-07-31 audit and
+the older `HANDOFF.md` are historical records with supersession banners.
 
 **Nova does:**
 - Read STATUS.md to understand current state and active slice.
