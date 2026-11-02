@@ -161,6 +161,7 @@ const CARD_PICKER_LABEL_STYLE =
 const CARD_DISCLOSURE_STYLE =
   'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;';
 const DETERMINISTIC_MARGIN_PERCENT = (DETERMINISTIC_MARGIN_FRACTION * 100).toFixed(0);
+const STACK_MARGIN_PERCENT = (DV_MARGIN_FRACTION * 100).toFixed(0);
 const SPACECRAFT_STATIONKEEPING_DISPLAY_MPS = SPACECRAFT_STATIONKEEPING_MPS.toFixed(0);
 
 const vehicleKey = (vehicle: LaunchVehicle): string => `${vehicle.name} — ${vehicle.config}`;
@@ -890,6 +891,11 @@ function PorkchopDedicatedPage() {
                 `Launch vehicle provides injection to C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
               ),
               h(
+                'div',
+                { key: 'cost-margin-explainer', style: 'font-size:11px;color:#93a4bf;line-height:1.5;margin-top:8px;' },
+                `Margin here is ${DETERMINISTIC_MARGIN_PERCENT}% of rendezvous and departure \u0394V; the \u0394V stack below applies ${STACK_MARGIN_PERCENT}% to the full stack.`,
+              ),
+              h(
                 'details',
                 { key: 'card-016e-disclosure', style: CARD_DISCLOSURE_STYLE },
                 h('summary', { style: 'cursor:pointer;color:#a5b4cf;' }, 'Assumptions & sources'),
@@ -989,6 +995,11 @@ function PorkchopDedicatedPage() {
                     style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
                   },
                   `Assumptions: ${MISSION_MODE_LABELS[selectedMode]}; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); rendezvous = arrival v∞; ${selectedMode === 'sample-return' ? 'departure = arrival v∞ under the symmetric-return assumption; ' : 'no departure burn in one-way mode; '}stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
+                ),
+                h(
+                  'div',
+                  { key: 'stack-margin-explainer', style: 'margin-top:8px;color:#9fb0c8;' },
+                  `Margin here is ${STACK_MARGIN_PERCENT}% of the full stack; the cost card applies ${DETERMINISTIC_MARGIN_PERCENT}% to rendezvous and departure \u0394V only.`,
                 ),
               ],
       ),

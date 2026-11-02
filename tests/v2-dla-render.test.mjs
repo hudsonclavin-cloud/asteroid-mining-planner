@@ -355,6 +355,14 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     { cwd: repoRoot, encoding: 'utf8' },
   );
   assert.equal(result.status, 0, result.stderr || result.stdout || 'tsc failed');
+  const launchVehicleConstants = await import(
+    `${pathToFileURL(path.join(tempOutDir, 'porkchop', 'launch-vehicles.js')).href}?margin=${Date.now()}`,
+  );
+  const deltaVConstants = await import(
+    `${pathToFileURL(path.join(tempOutDir, 'porkchop', 'delta-v.js')).href}?margin=${Date.now()}`,
+  );
+  const costMarginPercent = (launchVehicleConstants.DETERMINISTIC_MARGIN_FRACTION * 100).toFixed(0);
+  const stackMarginPercent = (deltaVConstants.DV_MARGIN_FRACTION * 100).toFixed(0);
 
   const fixture = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src', 'v2', 'data', 'horizons-inner-solar-system-2026-2040.json'), 'utf8'));
   const catalog = JSON.parse(fs.readFileSync(path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json'), 'utf8'));
@@ -424,6 +432,10 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.doesNotMatch(pinnedText, /~0/);
     assert.match(pinnedText, /Delivered mass excludes that payload penalty; Aster does not model it\./);
     assert.doesNotMatch(pinnedText, /launch-site payload penalty named above/);
+    const costMarginSentence = `Margin here is ${costMarginPercent}% of rendezvous and departure \u0394V; the \u0394V stack below applies ${stackMarginPercent}% to the full stack.`;
+    const stackMarginSentence = `Margin here is ${stackMarginPercent}% of the full stack; the cost card applies ${costMarginPercent}% to rendezvous and departure \u0394V only.`;
+    assert.ok(pinnedText.includes(costMarginSentence), pinnedText);
+    assert.ok(pinnedText.includes(stackMarginSentence), pinnedText);
 
     // S19.5 tail2 F3: no rendered attribute or tooltip leaks an internal storage key.
     const replay = findElements(document.app, 'button').find((button) => button.textContent.includes('Replay tour'));
