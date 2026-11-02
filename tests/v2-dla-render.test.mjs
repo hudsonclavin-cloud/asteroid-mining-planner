@@ -291,7 +291,7 @@ function gridCells(gridParams, M) {
           c3: 1,
           vInfDep: 1,
           vInfArr: 2,
-          dlaDeg: 40,
+          dlaDeg: depIndex === 0 && tofIndex > 0 ? 40 : depIndex === 0 ? 0 : 80,
           x: 0,
         }],
         selectedBranch: 0,
@@ -437,6 +437,20 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.ok(pinnedText.includes(costMarginSentence), pinnedText);
     assert.ok(pinnedText.includes(stackMarginSentence), pinnedText);
 
+    const redPayloadCaption = 'Vehicle payload at this C3, before any dogleg or launch-site penalty. Not a delivered-mass estimate.';
+    assert.doesNotMatch(pinnedText, /Vehicle payload at this C3/);
+    canvas.dispatchEvent({ type: 'click', clientX: 1, clientY: 419 });
+    await flushEffects();
+    const greenText = document.app.textContent;
+    assert.match(greenText, /GREEN/);
+    assert.doesNotMatch(greenText, /Vehicle payload at this C3/);
+    canvas.dispatchEvent({ type: 'click', clientX: 759, clientY: 419 });
+    await flushEffects();
+    const redText = document.app.textContent;
+    assert.match(redText, /RED/);
+    assert.ok(redText.includes(redPayloadCaption), redText);
+    assert.match(redText, /no delivered-mass number is honest at screening fidelity/);
+
     // S19.5 tail2 F3: no rendered attribute or tooltip leaks an internal storage key.
     const replay = findElements(document.app, 'button').find((button) => button.textContent.includes('Replay tour'));
     assert.ok(replay, 'expected the Replay tour control');
@@ -499,6 +513,8 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const sampleReturnText = document.app.textContent;
     assert.match(sampleReturnText, /ΔV stack — Sample return/);
     assert.match(sampleReturnText, /Assumptions: Sample return; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO/);
+    assert.ok(sampleReturnText.includes(costMarginSentence), sampleReturnText);
+    assert.ok(sampleReturnText.includes(stackMarginSentence), sampleReturnText);
     assert.match(sampleReturnText, /departure = arrival v∞ under the symmetric-return assumption/);
   } finally {
     render(null, document.app);

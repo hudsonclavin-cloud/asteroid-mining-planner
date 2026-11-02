@@ -853,6 +853,13 @@ function PorkchopDedicatedPage() {
                     : isBeyondCurve(costCardState.payload)
                     ? 'No published payload data past this C3 — not extrapolating.'
                     : formatKg(costCardState.payload),
+                  costCardState.band === 'RED'
+                    ? h(
+                        'span',
+                        { style: 'display:block;font-size:10px;color:#fca5a5;line-height:1.4;margin-top:2px;' },
+                        'Vehicle payload at this C3, before any dogleg or launch-site penalty. Not a delivered-mass estimate.',
+                      )
+                    : null,
                 ),
                 h('span', null, 'Rendezvous burn'),
                 h('span', null, `${costCardState.rendezvousMps.toFixed(0)} m/s`),
