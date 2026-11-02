@@ -51,7 +51,7 @@ npm run verify
 
 | Track | Slice | State |
 |---|---|---|
-| Mission planning | **19.5** (Honest Front Door) | **CLOSED 2026-11-02 pending the §9.3 exit record**. F2 remains PARTIAL. The open ephemeris item is separate: common coverage ends 2026-10-16 TDB and the root reports NOT LIVE after that date. |
+| Mission planning | **19.5** (Honest Front Door) | **CLOSED 2026-11-02**. F2 remains PARTIAL. The open ephemeris item is separate: common coverage ends 2026-10-16 TDB and the root reports NOT LIVE after that date. |
 | Mission planning | 9 (catalog) · 10 (Lambert, C3) | COMPLETE |
 | Mission planning | 11 (porkchop + ΔV) · 12 (DLA overlay) | COMPLETE + DEPLOYED |
 | Mission planning | 13 (mission cost card) | COMPLETE + DEPLOYED (showcase figures labelled unreproducible-pending-regeneration, L3-6) |
