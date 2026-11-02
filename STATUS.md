@@ -1,6 +1,7 @@
 # STATUS.md — Aster Project Current State
 
 > Updated at the end of each session. Keep it short; agents read this before acting.
+> **Refreshed 2026-11-02 from command output on branch `s19-5-record`; this record commits STATUS one commit after `fa821cb`.**
 > **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`); truth-refreshed 2026-08-07 (`S-HYGIENE-2026-08-07-A`); truth-refreshed 2026-08-10 after Front A close; truth-refreshed 2026-08-12 after the Front B batch run (`S-S17-FRONTB-BATCH-2026-08-11-A`); truth-refreshed 2026-08-13 after Batch 2 ship (`S-S17-BATCH2-2026-08-12-A`).** If HEAD does not match the table below,
 > update this file before believing it. A stale STATUS forced a session-start stop-gate once
 > already (audit L3-1) — that is why this section exists.
@@ -21,22 +22,26 @@ The following is the command transcript used to rebuild this section (run before
 the STATUS commit itself):
 
 ```text
-git log --oneline -8
 git rev-parse HEAD
 git rev-parse origin/main
 git ls-files -s .githooks
-Get-ChildItem docs -Recurse -File | Where-Object {$_.Extension -eq '.js'}
+git rev-list --count fa821cb..HEAD
+Get-ChildItem -Path docs/v2 -Directory | ForEach-Object { rg -o "(?:solarSystemV2|porkchopV2|compareV2|aboutV2)-[A-Za-z0-9_-]+\.js" (Join-Path $_.FullName 'index.html') } | Sort-Object -Unique
+rg -n "legacy|noindex|V2|v2" docs/index.html docs/legacy/index.html
+npm run verify
 ```
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `62ddb17` | CI repair base; read from `git rev-parse origin/main`; no push was performed by this run |
-| Local HEAD before this STATUS commit (branch `s19-5-close`) | `63dfa20` | Slice 19.5 close-batch W1-W3b; this STATUS commit intentionally lands one commit after it |
+| origin/main | `fa821cb` | Read from `git rev-parse origin/main`; no push was performed by this run |
+| Local HEAD before this STATUS commit (branch `s19-5-record`) | `fa821cb` | Slice 19.5 close record; this STATUS commit intentionally lands one commit after it |
 
-**Measured pin lag (2026-10-26):** `git rev-list --count 63dfa20..HEAD` was 0 before this edit; after the STATUS commit it is 1. STATUS commits LAST in any sequence.
-**Push state:** origin/main is at `62ddb17`. Branch `s19-5-close` is local-only and NOT merged. No agent pushes, ever. Hudson's handoff is `git checkout main; git merge s19-5-close --ff-only; git hpush`.
-**Rollback for this run:** tag `s19-5-pre-close` and branch `backup/s19-5-pre-close`, both at `62ddb17`; they are untouched by this run.
-**Deploy boundary:** the checked-in `docs/` tree is the deploy payload at `62ddb17`; the command output lists entry bundles `solarSystemV2-eFven3Lq.js`, `porkchopV2-CeMrUCV7.js`, `compareV2-BS2LahKC.js`, `aboutV2-BvErNums.js`, and `legacy-C6NkCVYx.js`, plus the shared chunks `porkchop-view-C3RRaFF7.js`, `resolve-catalog-body-B93d1P1K.js`, `store-DfTWpS4r.js`, and `tier-assignments-BPJow_i-.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes.
+**Measured pin lag (2026-11-02):** `git rev-list --count fa821cb..HEAD` was 0 before this edit; this STATUS commit intentionally makes the branch one commit ahead. STATUS commits LAST in any sequence.
+**Push state:** origin/main is at `fa821cb`. Branch `s19-5-record` is local-only and NOT merged. No push was performed by this run. Hudson's handoff is to merge this branch fast-forward-only after the protected founding-doc record is committed.
+**Rollback for this run:** no rollback ref was created and no existing refs were changed by this record run.
+**Deploy boundary:** the checked-in `docs/` tree on main is the deploy payload. The command output lists entry bundles `solarSystemV2-kik0u_mV.js`, `porkchopV2-BB3lF6Vp.js`, `compareV2-CF7ZIRAI.js`, and `aboutV2-ca_cBGJA.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes. CI state: **confirm in Actions**.
+**Root/legacy boundary:** `docs/index.html` redirects to `/v2/solar-system/`; `docs/legacy/index.html` has `noindex, nofollow` and the Slice 19.5 legacy banner linking to the current v2 tool.
+**Baseline verification (2026-11-02):** `npm run verify` passed 107/107 files and 355/355 tests, with 0 failures and 0 load-timeouts.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -46,6 +51,7 @@ Get-ChildItem docs -Recurse -File | Where-Object {$_.Extension -eq '.js'}
 
 | Track | Slice | State |
 |---|---|---|
+| Mission planning | **19.5** (Honest Front Door) | **CLOSED 2026-11-02**. F2 remains PARTIAL. The open ephemeris item is separate: common coverage ends 2026-10-16 TDB and the root reports NOT LIVE after that date. |
 | Mission planning | 9 (catalog) · 10 (Lambert, C3) | COMPLETE |
 | Mission planning | 11 (porkchop + ΔV) · 12 (DLA overlay) | COMPLETE + DEPLOYED |
 | Mission planning | 13 (mission cost card) | COMPLETE + DEPLOYED (showcase figures labelled unreproducible-pending-regeneration, L3-6) |
