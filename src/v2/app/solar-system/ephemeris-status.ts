@@ -35,8 +35,11 @@ export function shiftNHelpText(
 
 export function ephemerisStatusHud(args: EphemerisStatusArgs): EphemerisStatusHud {
   if (!args.tracking) {
+    const outsideCoverage = args.wallClockTdbSeconds < args.timeMin || args.wallClockTdbSeconds > args.timeMax;
     return {
-      trackingText: 'SCRUBBED \u2014 press Shift+N for now',
+      trackingText: outsideCoverage
+        ? `SCRUBBED \u2014 live time is outside this view's ephemeris coverage; Shift+N will ${shiftNHelpText(args)}`
+        : 'SCRUBBED \u2014 press Shift+N for now',
       warningText: null,
       dateSuffix: '',
     };

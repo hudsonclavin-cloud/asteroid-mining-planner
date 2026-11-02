@@ -84,6 +84,15 @@ test('outside coverage the HUD date line is marked clamped and Shift+N help tell
   assert.equal(ephemerisStatusHud(before).dateSuffix, ' (clamped, not now)');
   assert.equal(ephemerisStatusHud(inside).dateSuffix, '');
   assert.equal(ephemerisStatusHud({ ...past, tracking: false }).dateSuffix, '');
+  assert.equal(
+    ephemerisStatusHud({ ...past, tracking: false }).trackingText,
+    'SCRUBBED \u2014 live time is outside this view\'s ephemeris coverage; Shift+N will jump to the end of coverage (live time is outside it)',
+  );
+  assert.equal(
+    ephemerisStatusHud({ ...before, tracking: false }).trackingText,
+    'SCRUBBED \u2014 live time is outside this view\'s ephemeris coverage; Shift+N will jump to the start of coverage (live time is outside it)',
+  );
+  assert.equal(ephemerisStatusHud({ ...inside, tracking: false }).trackingText, 'SCRUBBED \u2014 press Shift+N for now');
   assert.equal(shiftNHelpText(inside), 'resume live time');
   assert.equal(shiftNHelpText(past), 'jump to the end of coverage (live time is outside it)');
   assert.equal(shiftNHelpText(before), 'jump to the start of coverage (live time is outside it)');
