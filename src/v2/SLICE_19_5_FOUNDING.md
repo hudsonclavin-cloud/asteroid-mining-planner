@@ -483,3 +483,119 @@ being used as an angle from ICRF Z (C4-F01).
   is a recovered copy.
 - **Exit evidence pending:** Clome cold read, live bundles, and fresh-Linux-clone
   hook proof.
+
+### §9.3 Exit record - 2026-11-02
+
+- **Repository pin and verification.** This record was prepared on branch
+  `s19-5-record` from `fa821cb`; the STATUS commit is intentionally one commit
+  after that pin. The baseline verification was green.
+
+  ```powershell
+  git rev-parse HEAD
+  git rev-parse origin/main
+  git rev-list --count fa821cb..HEAD
+  npm run verify
+  ```
+
+  ```text
+  fa821cbf5c1e49365d6c5b3691dd2abd50968d34
+  fa821cbf5c1e49365d6c5b3691dd2abd50968d34
+  0
+  files discovered:    107
+  files passed:        107
+  files failed:        0
+  files LOAD-TIMEOUT:  0
+  tests passed:        355
+  tests failed:        0
+  ```
+
+- **Exit criteria — root and legacy (A1/A14).** The root serves the v2 solar
+  system route. The legacy route is explicitly `noindex, nofollow`, carries the
+  Slice 19.5 legacy banner, and links to the current v2 tool.
+
+  ```powershell
+  Select-String -Path docs/index.html,docs/legacy/index.html -Pattern 'refresh|noindex|slice-19-5-legacy-banner|current tool|v2/solar-system'
+  ```
+
+  ```text
+  docs/index.html:6:    <meta http-equiv="refresh" content="0; url=v2/solar-system/" />
+  docs/index.html:16:      <p>Redirecting to <a href="v2/solar-system/">v2/solar-system/</a>…</p>
+  docs/index.html:18:    <script>window.location.replace('v2/solar-system/');</script>
+  docs/legacy/index.html:7:<meta name="robots" content="noindex, nofollow">
+  docs/legacy/index.html:33:<div id="slice-19-5-legacy-banner" ...
+  docs/legacy/index.html:37:  This is the original 2026 prototype, frozen. Its economic and value figures are unsourced and known to be wrong. The current tool is here:
+  docs/legacy/index.html:38:  <a href="../v2/solar-system/" ...>current tool</a>.
+  ```
+
+- **Exit criteria - cold read and hook gate.** Close gate (live site,
+  2026-10-28): 12 PASS, 2 FAIL of 14 - A6 (AMBER wording said
+  "negligible"/"~0", DEC-13-3 says zero added dV) and A10 (a Replay-tour
+  tooltip exposed the storage key `aster.fk3TourSeen`) - both fixed in tail 2
+  (`aeef9ae`, `4c79fc0`). Narrow gate (2026-11-02): 10 PASS, 0 FAIL after
+  tail 2/3. Run records:
+  `tools/audit/sanity-69472a3/s19-5-runs/` (`close-REPORT.md`,
+  `tail2-REPORT.md`, `tail3-REPORT.md`).
+  Hook proof (Nova, 2026-10-28, Linux, fresh clone of `s19-5-close` at
+  `20dd7ca`, `npm ci` set `core.hooksPath=.githooks`, hooks mode 100755 after
+  `0741fee`): deleting one line from `INVARIANTS.md` and committing was
+  rejected with exactly:
+
+  ```text
+  BLOCKED out-of-scope path: INVARIANTS.md (not in .dispatch-scope)
+  BLOCKED: 1 deletion line(s) in INVARIANTS.md - additive/annotation only (needs ASTER_PROTECTED_OK)
+  See AGENTS.md section 2. Commit rejected.
+  ```
+
+  Before `0741fee` the same clone ACCEPTED the deletion, because the hook files
+  were mode 100644 and git ignored them.
+
+- **Exit criteria — CI and deploy payload.** CI on main at fa821cb: green,
+  confirmed by Hudson 2026-11-02. The checked-in
+  live bundles on main are the following:
+
+  ```powershell
+  Get-ChildItem -Path docs/v2 -Directory | ForEach-Object { rg -o "(?:solarSystemV2|porkchopV2|compareV2|aboutV2)-[A-Za-z0-9_-]+\.js" (Join-Path $_.FullName 'index.html') } | Sort-Object -Unique
+  ```
+
+  ```text
+  aboutV2-ca_cBGJA.js
+  compareV2-CF7ZIRAI.js
+  porkchopV2-BB3lF6Vp.js
+  solarSystemV2-kik0u_mV.js
+  ```
+
+- Hudson's own checks (375 px, Tab ring at 100% zoom, contrast hue): PASSED,
+  reported by Hudson 2026-11-02.
+
+- Acceptance item 'every Slice 18 evidence script runs from a clean clone' is
+  not met in this slice; Front D is routed to Slice 21 (X1, section 9.2).
+
+- **Residuals and destinations.** F2 remains partial: adopt `EvidenceBadge`,
+  `FeasibilityBadge`, `StatusBadge`, and `NearZeroC3Badge` on all three
+  surfaces; type `grid` as a descriptor rather than a free string; and widen
+  the architecture guard beyond `formatC3` -> **Slice 20 Front A first**.
+  The compare breadth qualifier still says `7.00 d` (cell width) without the
+  14-day minimum, and the `cached grids` versus `recomputes live` wording also
+  routes to **Slice 20 Front A**. Remaining `2040-01-01` literals in
+  `overlay.ts`, `porkchop-smoke`, and `compare` (INV-026) -> **Slice 24**.
+  Six-decimal readouts (B11) -> **Slice 22**. The eight source-text guards
+  (FIX2 G4) -> **Slice 20 E**. The Vandenberg phrase “corridor covers all
+  declinations” -> **Slice 22**. Ephemeris extension -> **OPEN, separate
+  ruling**, with recon at
+  `tools/audit/sanity-69472a3/s19-5-runs/close-EPHEMERIS_RECON.md`.
+
+- **Cut record.** Per §5, F2 is partially cut to Slice 20 Front A; F4, G, and
+  C5-C12 are routed per §9.2 X1.
+
+- Slice 19.5 CLOSED 2026-11-02.
+
+- **Additive proof.** The protected edit is append-only. The required proof
+  prints only the diff header as its deletion-looking line:
+
+  ```powershell
+  git diff -- src/v2/SLICE_19_5_FOUNDING.md | Select-String '^-'
+  ```
+
+  ```text
+  --- a/src/v2/SLICE_19_5_FOUNDING.md
+  ```
