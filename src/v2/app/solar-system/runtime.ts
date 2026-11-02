@@ -64,7 +64,7 @@ import {
   subscribeToStarfieldDisplay,
 } from '../ui-store/index.js';
 import { loadSlice9NeaCatalogFixture, loadSolarSystemStatesBrowser } from './loader.js';
-import { ephemerisStatusHud } from './ephemeris-status.js';
+import { ephemerisStatusHud, shiftNHelpText } from './ephemeris-status.js';
 import {
   buildSlice9RuntimePropagationBodies,
   isSlice9RuntimeEllipticBody,
@@ -1131,7 +1131,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       rows: [
         ['← / →', `scrub time ±${TIME_SCRUB_STEP_SECONDS / 60} min`],
         ['Home / End', 'jump to coverage start / end'],
-        ['Shift+N', 'resume live time'],
+        ['Shift+N', shiftNHelpText({ wallClockTdbSeconds: nowTdbSeconds(), timeMin, timeMax })],
       ],
     },
     {
@@ -1149,6 +1149,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       ],
     },
   ];
+  let shiftNActionCell: HTMLElement | null = null;
   for (const group of shortcutGroups) {
     const title = document.createElement('div');
     title.textContent = group.title;
@@ -1168,6 +1169,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       keyCell.style.color = '#7dd3fc';
       const actionCell = document.createElement('span');
       actionCell.textContent = action;
+      if (keys === 'Shift+N') shiftNActionCell = actionCell;
       row.appendChild(keyCell);
       row.appendChild(actionCell);
       shortcutCard.appendChild(row);
@@ -1184,6 +1186,9 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   function setShortcutOverlayOpen(open: boolean): void {
     shortcutOverlayOpen = open;
+    if (open && shiftNActionCell !== null) {
+      shiftNActionCell.textContent = shiftNHelpText({ wallClockTdbSeconds: nowTdbSeconds(), timeMin, timeMax });
+    }
     shortcutOverlay.style.display = open ? 'flex' : 'none';
   }
 
@@ -1818,7 +1823,6 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     });
     updateFocusedAsteroidHud(activeFocusBody);
     renderDateHud(dateHud, currentTdbSeconds);
-    dateHud.textContent += `\n${formatUtcDateTimeLabel(currentTdbSeconds)}`;
     const wallClockTdbSeconds = nowTdbSeconds();
     const ephemerisStatus = ephemerisStatusHud({
       tracking,
@@ -1828,6 +1832,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       coverageStartDate: formatTdbCoverageDateLabel(timeMin),
       coverageEndDate: formatTdbCoverageDateLabel(timeMax),
     });
+    dateHud.textContent += `\n${formatUtcDateTimeLabel(currentTdbSeconds)}${ephemerisStatus.dateSuffix}`;
     outOfCoverageWarning.textContent = ephemerisStatus.warningText ?? '';
     outOfCoverageWarning.style.display = ephemerisStatus.warningText === null ? 'none' : 'block';
     trackingStatus.textContent = ephemerisStatus.trackingText;

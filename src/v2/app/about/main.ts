@@ -323,12 +323,12 @@ function AboutPage(): VNode {
   const decisionRecord = useMemo(
     () => [
       exhibit(
-        'Launch-feasibility overlay — founding document ⭐',
+        'Launch-feasibility overlay — founding document',
         'its own header records that Nova drafted it for human review and lock.',
         ARTIFACTS.slice12,
       ),
       exhibit(
-        'Mission cost card — founding document ⭐',
+        'Mission cost card — founding document',
         'drafted by Nova and locked by the human engineer after independent re-verification of every launch-vehicle anchor.',
         ARTIFACTS.slice13,
       ),

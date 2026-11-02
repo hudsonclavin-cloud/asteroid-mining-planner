@@ -255,3 +255,10 @@ test('W3b compare exposes delivered-mass anchors, NASA contract context, and the
   assert.match(badgeText, /New Glenn caveat/);
   assert.match(badgeText, /steep final published-anchor segment/);
 });
+
+test('compare defines the breadth qualifier from B_min and the sampling interval (tail2 F7)', async () => {
+  const { renderOkRow } = await loadCompareRenderers();
+  const row = result('body', 1.62, 2, 1000, false);
+  const text = textOf(renderOkRow(row, 'Body', 'vehicle', false, () => {}, undefined, undefined, undefined, false, 0));
+  assert.match(text, /1 meet the breadth qualifier \(a window at least 2 departure cells wide, 7\.00 d\)/);
+});

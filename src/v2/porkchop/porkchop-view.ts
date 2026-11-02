@@ -1373,7 +1373,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                             'span',
                             null,
                             launchSite.dlaCeilingDeg >= 90
-                              ? `no dogleg band — corridor covers all declinations from ${launchSite.name}`
+                              ? `max direct declination (ceiling): none from ${launchSite.name}; no dogleg band, corridor covers all declinations from ${launchSite.name}`
                               : `max direct declination (ceiling): ${formatNumber(launchSite.dlaCeilingDeg, 1)}° from ${launchSite.name}`,
                           ),
                         ),
@@ -1502,7 +1502,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                   h(
                     'span',
                     { key: 'amber-advisory-text', style: 'font-size:11px;line-height:1.45;color:#fbbf24;font-style:italic;' },
-                    'Advisory: Raised-inclination injection — plane-matching handled by launch geometry at negligible ΔV (below screening error bars); a vehicle payload penalty still applies (vehicle-dependent).',
+                    'Advisory: Raised-inclination injection — plane-matching is absorbed by launch geometry: zero added ΔV in this model (below screening error bars); a payload penalty for this launch site and vehicle still applies.',
                   ),
                 ]
               : null,

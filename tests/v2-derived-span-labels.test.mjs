@@ -28,3 +28,13 @@ test('catalog and porkchop span labels derive full dates from their own paramete
   assert.match(source, /Grid spans \$\{PORKCHOP_DEPARTURE_SPAN_LABEL\}/);
   assert.doesNotMatch(source, /Grid spans 2026–2040/);
 });
+
+test('catalog footer quotes the cache end and the porkchop grid end from their own constants', async () => {
+  const disclosure = await loadDisclosure();
+  const span = await import(pathToFileURL(path.join(outDir, 'porkchop', 'grid-span.js')).href);
+  const footer = disclosure.footerText({ startUtc: '2026-01-01', endUtc: '2040-12-31' });
+  assert.ok(footer.includes('cached departures through 2040-12-31'), footer);
+  assert.ok(footer.includes(`the porkchop grid ends ${span.PORKCHOP_DEPARTURE_END_UTC}`), footer);
+  assert.equal(span.PORKCHOP_DEPARTURE_END_UTC, '2040-01-01');
+  assert.equal(disclosure.footerText(null), 'Patched-conic screen');
+});

@@ -13,6 +13,7 @@
  */
 
 import type { LambertScreenCacheMetadata } from '../../boundary/lambert-screen-cache.js';
+import { PORKCHOP_DEPARTURE_END_UTC } from '../../porkchop/grid-span.js';
 import { NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2 } from '../../core/constants/near-zero-c3.js';
 
 export type ScreeningWindow = LambertScreenCacheMetadata['screeningWindow'];
@@ -29,7 +30,8 @@ export function screeningWindowLabel(window: ScreeningWindow): string {
 export function footerText(window: ScreeningWindow | null): string {
   return window === null
     ? 'Patched-conic screen'
-    : `Patched-conic screen · ${screeningWindowLabel(window)}`;
+    : `Patched-conic screen \u2014 cached departures through ${window.endUtc}; ` +
+      `the porkchop grid ends ${PORKCHOP_DEPARTURE_END_UTC}.`;
 }
 
 export const FOOTER_CLICK_HINT = 'click for details';

@@ -291,7 +291,7 @@ function gridCells(gridParams, M) {
           c3: 1,
           vInfDep: 1,
           vInfArr: 2,
-          dlaDeg: 40,
+          dlaDeg: depIndex === 0 && tofIndex > 0 ? 40 : depIndex === 0 ? 0 : 80,
           x: 0,
         }],
         selectedBranch: 0,
@@ -355,6 +355,14 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     { cwd: repoRoot, encoding: 'utf8' },
   );
   assert.equal(result.status, 0, result.stderr || result.stdout || 'tsc failed');
+  const launchVehicleConstants = await import(
+    `${pathToFileURL(path.join(tempOutDir, 'porkchop', 'launch-vehicles.js')).href}?margin=${Date.now()}`,
+  );
+  const deltaVConstants = await import(
+    `${pathToFileURL(path.join(tempOutDir, 'porkchop', 'delta-v.js')).href}?margin=${Date.now()}`,
+  );
+  const costMarginPercent = (launchVehicleConstants.DETERMINISTIC_MARGIN_FRACTION * 100).toFixed(0);
+  const stackMarginPercent = (deltaVConstants.DV_MARGIN_FRACTION * 100).toFixed(0);
 
   const fixture = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src', 'v2', 'data', 'horizons-inner-solar-system-2026-2040.json'), 'utf8'));
   const catalog = JSON.parse(fs.readFileSync(path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json'), 'utf8'));
@@ -416,10 +424,45 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const pinnedText = document.app.textContent;
     assert.match(pinnedText, /Mission cost/);
     assert.match(pinnedText, /AMBER|Raised inclination/);
-    assert.match(
-      pinnedText,
-      /Delivered mass excludes the launch-site payload penalty named above; Aster does not model it\./,
-    );
+    // S19.5 tail2 F1/F2: AMBER says zero (DEC-13-3); one noun, "payload penalty".
+    assert.match(pinnedText, /zero added ΔV in this model/);
+    assert.match(pinnedText, /a payload penalty for this launch site and vehicle still applies/);
+    assert.match(pinnedText, /Dogleg penalty0 m\/s \(modelled; launch-geometry, AMBER\)/);
+    assert.doesNotMatch(pinnedText, /negligible/);
+    assert.doesNotMatch(pinnedText, /~0/);
+    assert.match(pinnedText, /Delivered mass excludes that payload penalty; Aster does not model it\./);
+    assert.doesNotMatch(pinnedText, /launch-site payload penalty named above/);
+    const costMarginSentence = `Margin here is ${costMarginPercent}% of rendezvous and departure \u0394V; the \u0394V stack below applies ${stackMarginPercent}% to the full stack.`;
+    const stackMarginSentence = `Margin here is ${stackMarginPercent}% of the full stack; the cost card applies ${costMarginPercent}% to rendezvous and departure \u0394V only.`;
+    assert.ok(pinnedText.includes(costMarginSentence), pinnedText);
+    assert.ok(pinnedText.includes(stackMarginSentence), pinnedText);
+
+    const redPayloadCaption = 'Vehicle payload at this C3, before any dogleg or launch-site penalty. Not a delivered-mass estimate.';
+    assert.doesNotMatch(pinnedText, /Vehicle payload at this C3/);
+    canvas.dispatchEvent({ type: 'click', clientX: 1, clientY: 419 });
+    await flushEffects();
+    const greenText = document.app.textContent;
+    assert.match(greenText, /GREEN/);
+    assert.doesNotMatch(greenText, /Vehicle payload at this C3/);
+    canvas.dispatchEvent({ type: 'click', clientX: 759, clientY: 419 });
+    await flushEffects();
+    const redText = document.app.textContent;
+    assert.match(redText, /RED/);
+    assert.ok(redText.includes(redPayloadCaption), redText);
+    assert.match(redText, /no delivered-mass number is honest at screening fidelity/);
+
+    // S19.5 tail2 F3: no rendered attribute or tooltip leaks an internal storage key.
+    const replay = findElements(document.app, 'button').find((button) => button.textContent.includes('Replay tour'));
+    assert.ok(replay, 'expected the Replay tour control');
+    const replayTitle = replay.title ?? replay.attributes.get('title');
+    assert.equal(typeof replayTitle, 'string', 'Replay tour control should carry a tooltip');
+    const everyElement = (node) => [node, ...(node.childNodes ?? []).flatMap(everyElement)];
+    for (const element of everyElement(document.app)) {
+      if (element.nodeType !== 1) continue;
+      for (const value of [...element.attributes.values(), element.title, element.placeholder, element.alt]) {
+        if (typeof value === 'string') assert.doesNotMatch(value, /aster\.[a-z]/i, `attribute leaks a storage key: ${value}`);
+      }
+    }
 
     const dlaLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('DLA feasibility'));
     assert.ok(dlaLabel, 'expected the DLA contour toggle');
@@ -454,6 +497,7 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const vandenbergText = document.app.textContent;
     assert.match(vandenbergText, /min direct inclination \(iMin\): 70\.0\u00b0 from Vandenberg SFB/);
     assert.match(vandenbergText, /corridor covers all declinations from Vandenberg SFB/);
+    assert.match(vandenbergText, /max direct declination \(ceiling\): none from Vandenberg SFB/);
 
     const modeLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('Mission mode'));
     assert.ok(modeLabel, 'expected the mission-mode picker');
@@ -469,6 +513,8 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const sampleReturnText = document.app.textContent;
     assert.match(sampleReturnText, /ΔV stack — Sample return/);
     assert.match(sampleReturnText, /Assumptions: Sample return; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO/);
+    assert.ok(sampleReturnText.includes(costMarginSentence), sampleReturnText);
+    assert.ok(sampleReturnText.includes(stackMarginSentence), sampleReturnText);
     assert.match(sampleReturnText, /departure = arrival v∞ under the symmetric-return assumption/);
   } finally {
     render(null, document.app);

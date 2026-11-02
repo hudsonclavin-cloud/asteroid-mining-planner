@@ -15,7 +15,7 @@ test('AMBER DLA display names the raised-inclination regime without implying a n
   assert.doesNotMatch(source, /AMBER:\s*'Penalized'/);
   assert.match(
     source,
-    /Advisory: Raised-inclination injection[^']*negligible ΔV/,
+    /Advisory: Raised-inclination injection[^']*zero added \u0394V/,
   );
   const page = fs.readFileSync(pagePath, 'utf8');
   assert.match(page, /effective ceiling is only ~39 deg/);
