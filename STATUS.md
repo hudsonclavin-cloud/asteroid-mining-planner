@@ -40,6 +40,7 @@ npm run verify
 **Push state:** origin/main is at `fa821cb`. Branch `s19-5-record` is local-only and NOT merged. No push was performed by this run. Hudson's handoff is to merge this branch fast-forward-only after the protected founding-doc record is committed.
 **Rollback for this run:** no rollback ref was created and no existing refs were changed by this record run.
 **Deploy boundary:** the checked-in `docs/` tree on main is the deploy payload. The command output lists entry bundles `solarSystemV2-kik0u_mV.js`, `porkchopV2-BB3lF6Vp.js`, `compareV2-CF7ZIRAI.js`, and `aboutV2-ca_cBGJA.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes. CI state: **confirm in Actions**.
+Solar-system ephemeris window 2026-11-01..2027-03-31 TDB; refresh due before 2027-03-31 (S20_00)
 **Root/legacy boundary:** `docs/index.html` redirects to `/v2/solar-system/`; `docs/legacy/index.html` has `noindex, nofollow` and the Slice 19.5 legacy banner linking to the current v2 tool.
 **Baseline verification (2026-11-02):** `npm run verify` passed 107/107 files and 355/355 tests, with 0 failures and 0 load-timeouts.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
