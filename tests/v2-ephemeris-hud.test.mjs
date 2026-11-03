@@ -97,3 +97,32 @@ test('outside coverage the HUD date line is marked clamped and Shift+N help tell
   assert.equal(shiftNHelpText(past), 'jump to the end of coverage (live time is outside it)');
   assert.equal(shiftNHelpText(before), 'jump to the start of coverage (live time is outside it)');
 });
+
+test('coverage line gains a refresh-due notice in the last 14 days of coverage only', async () => {
+  const { ephemerisStatusHud } = await loadModule();
+  const day = 86_400;
+  const tdbSeconds = (jd) => (jd - 2_451_545) * day;
+  const secondsCoverage = {
+    ...coverage,
+    timeMin: tdbSeconds(coverage.timeMin),
+    timeMax: tdbSeconds(coverage.timeMax),
+    tracking: true,
+  };
+  const base = `View ephemeris coverage ${coverage.coverageStartDate} – ${coverage.coverageEndDate} TDB`;
+
+  const tenDaysBefore = ephemerisStatusHud({ ...secondsCoverage, wallClockTdbSeconds: secondsCoverage.timeMax - 10 * day });
+  assert.equal(tenDaysBefore.coverageText, `${base} (coverage ends 2027-03-31 TDB - refresh due)`);
+  assert.equal(tenDaysBefore.trackingText, 'LIVE');
+
+  const thirtyDaysBefore = ephemerisStatusHud({ ...secondsCoverage, wallClockTdbSeconds: secondsCoverage.timeMax - 30 * day });
+  assert.equal(thirtyDaysBefore.coverageText, base);
+  assert.doesNotMatch(thirtyDaysBefore.coverageText, /refresh due/);
+
+  const afterEnd = ephemerisStatusHud({ ...secondsCoverage, wallClockTdbSeconds: secondsCoverage.timeMax + day });
+  assert.equal(afterEnd.trackingText, 'NOT LIVE · clamped to 2027-03-31 TDB');
+  assert.equal(
+    afterEnd.warningText,
+    "Current time is past this view's ephemeris coverage (ends 2027-03-31 TDB). Positions are shown for 2027-03-31, not now.",
+  );
+  assert.equal(afterEnd.coverageText, base);
+});
