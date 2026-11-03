@@ -48,17 +48,17 @@ const coverage = coverageFromRollingFixtures();
 
 test('tracking one day past coverage mounts NOT LIVE and the exact clamped-date warning', async () => {
   const { ephemerisStatusHud } = await loadModule();
-  assert.equal(coverage.coverageStartDate, '2026-07-18');
-  assert.equal(coverage.coverageEndDate, '2026-10-16');
+  assert.equal(coverage.coverageStartDate, '2026-11-01');
+  assert.equal(coverage.coverageEndDate, '2027-03-31');
   const hud = ephemerisStatusHud({
     ...coverage,
     tracking: true,
     wallClockTdbSeconds: coverage.timeMax + 1,
   });
-  assert.equal(hud.trackingText, 'NOT LIVE \u00b7 clamped to 2026-10-16 TDB');
+  assert.equal(hud.trackingText, 'NOT LIVE \u00b7 clamped to 2027-03-31 TDB');
   assert.equal(
     hud.warningText,
-    "Current time is past this view's ephemeris coverage (ends 2026-10-16 TDB). Positions are shown for 2026-10-16, not now.",
+    "Current time is past this view's ephemeris coverage (ends 2027-03-31 TDB). Positions are shown for 2027-03-31, not now.",
   );
   assert.doesNotMatch(hud.trackingText, /LIVE$/);
 });
