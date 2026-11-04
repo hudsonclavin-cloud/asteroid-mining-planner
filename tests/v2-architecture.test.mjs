@@ -44,14 +44,27 @@ function isWithinV2(resolvedPath) {
   return relative && !relative.startsWith('..') && !path.isAbsolute(relative) || resolvedPath === v2Root;
 }
 
-test('src/v2 sources do not import relative modules outside src/v2', () => {
+function resolveInternalSpecifier(filePath, specifier) {
+  if (specifier.startsWith('.')) {
+    return path.resolve(path.dirname(filePath), specifier);
+  }
+  if (specifier.startsWith('@/')) {
+    return path.resolve(repoRoot, 'src', specifier.slice(2));
+  }
+  if (specifier.startsWith('src/')) {
+    return path.resolve(repoRoot, specifier);
+  }
+  return null;
+}
+
+test('src/v2 sources do not import internal modules outside src/v2', () => {
   const offenders = [];
 
   for (const filePath of listSourceFiles(v2Root)) {
     const source = fs.readFileSync(filePath, 'utf8');
     for (const specifier of extractSpecifiers(source)) {
-      if (!specifier.startsWith('.')) continue;
-      const resolved = path.resolve(path.dirname(filePath), specifier);
+      const resolved = resolveInternalSpecifier(filePath, specifier);
+      if (resolved === null) continue;
       if (!isWithinV2(resolved)) {
         offenders.push({
           file: path.relative(repoRoot, filePath),
