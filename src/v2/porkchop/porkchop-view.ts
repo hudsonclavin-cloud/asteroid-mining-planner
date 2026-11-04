@@ -137,7 +137,7 @@ const FEASIBILITY_BADGE_STYLE: Record<Exclude<FeasibilityClass, null>, string> =
   RED: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#ef4444;color:#1f0505;font-size:11px;font-weight:700;',
 };
 
-const FEASIBILITY_BADGE_LABEL: Record<Exclude<FeasibilityClass, null>, string> = {
+export const FEASIBILITY_BADGE_LABEL: Record<Exclude<FeasibilityClass, null>, string> = {
   GREEN: 'Direct',
   AMBER: 'Raised inclination',
   RED: 'Dogleg req.',

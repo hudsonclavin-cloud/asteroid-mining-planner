@@ -213,7 +213,7 @@ export const GRID_PARAMS = {
   nTof: 100,
 } as const;
 const PORKCHOP_GRID_LABEL = formatJdC3GridLabel(GRID_PARAMS);
-const PORKCHOP_DEPARTURE_SPAN_LABEL = `${jdTdbToUtcDateString(GRID_PARAMS.depStartJD)}–${jdTdbToUtcDateString(GRID_PARAMS.depEndJD)}`;
+export const PORKCHOP_DEPARTURE_SPAN_LABEL = `${jdTdbToUtcDateString(GRID_PARAMS.depStartJD)}–${jdTdbToUtcDateString(GRID_PARAMS.depEndJD)}`;
 
 /**
  * S18 Item 5 (DEC-18-8): the body's full fidelity-tier disclosure, visible on

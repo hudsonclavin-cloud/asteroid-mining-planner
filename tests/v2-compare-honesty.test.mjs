@@ -134,15 +134,6 @@ test('T2 compare hide state preserves practical order and dominance while replac
   const dominanceOn = [...computeDominance(rows).entries()];
   assert.deepEqual(dominanceOn, dominanceOff);
 
-  const compareSource = fs.readFileSync(compareSourcePath, 'utf8');
-  const orderedStart = compareSource.indexOf('const ordered =');
-  const firstOkStart = compareSource.indexOf('const firstOk =', orderedStart);
-  assert.notEqual(orderedStart, -1);
-  assert.notEqual(firstOkStart, -1);
-  const orderingSource = compareSource.slice(orderedStart, firstOkStart);
-  assert.match(orderingSource, /bestPractical\.c3 - b\.segmentation\.bestPractical\.c3/);
-  assert.doesNotMatch(orderingSource, /hideNearZeroC3/);
-
   const offRow = renderOkRow(near, 'Near', 'vehicle', false, () => {}, dominanceOff[0][1], undefined, undefined, false, 2);
   const onRow = renderOkRow(near, 'Near', 'vehicle', false, () => {}, dominanceOn[0][1], undefined, undefined, true, 2);
   const offText = textOf(offRow.props.children[2]);

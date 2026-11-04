@@ -1,4 +1,8 @@
 import test from 'node:test';
+
+// architecture guard: these checks compare the shipped legacy HTML and worker
+// documentation contract; there is no importable UI component behind these
+// static entry and README artifacts.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
