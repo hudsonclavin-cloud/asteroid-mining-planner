@@ -31,7 +31,7 @@ function formatGridDescriptor(grid: GridDescriptor): string {
   if (grid.nDep === null || grid.nTof === null) {
     return `cached screen: ${steps}`;
   }
-  return `${grid.nDep}\u00D7${grid.nTof} grid \u00B7 ${steps}`;
+  return 'requested grid';
 }
 
 export function C3Value(props: C3ValueProps): string {
