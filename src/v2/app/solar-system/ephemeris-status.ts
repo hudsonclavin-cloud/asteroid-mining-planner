@@ -34,7 +34,7 @@ export function coverageLineText(
     args.wallClockTdbSeconds >= args.timeMin &&
     args.wallClockTdbSeconds <= args.timeMax &&
     args.timeMax - args.wallClockTdbSeconds <= COVERAGE_ENDING_NOTICE_SECONDS;
-  return endingSoon ? `${base} (coverage ends ${args.coverageEndDate} TDB - refresh due)` : base;
+  return endingSoon ? `${base} (coverage ends ${args.coverageEndDate} TDB \u2014 refresh due)` : base;
 }
 
 /**
