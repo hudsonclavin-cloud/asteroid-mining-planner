@@ -27,10 +27,11 @@ import {
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
 import { formatC3ValueText } from '../design/components/C3Value.js';
+import { FeasibilityBadge } from '../design/components/FeasibilityBadge.js';
+import { NearZeroC3Badge } from '../design/components/NearZeroC3Badge.js';
 import {
   isNearZeroC3Degenerate,
   nearZeroC3HiddenNotice,
-  renderNearZeroC3Badge,
 } from '../../porkchop/near-zero-c3.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
 import {
@@ -82,6 +83,7 @@ const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',
   import.meta.url,
 );
+const SYMMETRIC_RETURN_ERROR_URL = new URL('../../data/symmetric-return-error.json', import.meta.url);
 const ABOUT_ROUTE = '../about/';
 const FK3_TOUR_REPLAY_SESSION_KEY = 'aster.fk3TourReplay';
 
@@ -118,6 +120,14 @@ interface PageState {
   readonly client: PorkchopClient;
   /** S18 Item 5: the body's fidelity tier from the committed artifact; null if absent. */
   readonly tier: TierAssignment | null;
+  readonly symmetricReturnError: SymmetricReturnErrorArtifact;
+}
+
+interface SymmetricReturnErrorArtifact {
+  readonly derived: {
+    readonly minAbsErrorKmS: number;
+    readonly maxAbsErrorKmS: number;
+  };
 }
 
 interface StackState {
@@ -146,12 +156,6 @@ interface CostCardState {
 const MISSION_MODE_LABELS: Record<MissionMode, string> = {
   'one-way': 'One-way rendezvous',
   'sample-return': 'Sample return',
-};
-
-const CARD_BADGE_STYLE: Record<Exclude<FeasibilityClass, null>, string> = {
-  GREEN: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#22c55e;color:#04130a;font-size:11px;font-weight:700;',
-  AMBER: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#f59e0b;color:#170f02;font-size:11px;font-weight:700;',
-  RED: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#ef4444;color:#1f0505;font-size:11px;font-weight:700;',
 };
 
 const CARD_PICKER_SELECT_STYLE =
@@ -204,7 +208,7 @@ export const GRID_PARAMS = {
   nTof: 100,
 } as const;
 const PORKCHOP_GRID_LABEL = formatJdC3GridLabel(GRID_PARAMS);
-const PORKCHOP_DEPARTURE_SPAN_LABEL = `${jdTdbToUtcDateString(GRID_PARAMS.depStartJD)}–${jdTdbToUtcDateString(GRID_PARAMS.depEndJD)}`;
+export const PORKCHOP_DEPARTURE_SPAN_LABEL = `${jdTdbToUtcDateString(GRID_PARAMS.depStartJD)}–${jdTdbToUtcDateString(GRID_PARAMS.depEndJD)}`;
 
 /**
  * S18 Item 5 (DEC-18-8): the body's full fidelity-tier disclosure, visible on
@@ -315,6 +319,16 @@ async function loadLongWindowEarthSeries() {
   return horizonsStates.earth.map((sample) => sample.state);
 }
 
+async function loadSymmetricReturnError(): Promise<SymmetricReturnErrorArtifact> {
+  const response = await fetch(SYMMETRIC_RETURN_ERROR_URL);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load symmetric-return error artifact: ${response.status} ${response.statusText}`,
+    );
+  }
+  return (await response.json()) as SymmetricReturnErrorArtifact;
+}
+
 function PorkchopDedicatedPage() {
   const costCardRef = useRef<HTMLElement | null>(null);
   const requestedBodyId = useMemo(() => resolveRequestedBodyId(), []);
@@ -354,7 +368,8 @@ function PorkchopDedicatedPage() {
       loadLongWindowEarthSeries(),
       loadSlice9NeaCatalogFixture(),
       loadTierAssignments(),
-    ]).then(async ([earthStateSeries, catalog, tierAssignments]) => {
+      loadSymmetricReturnError(),
+    ]).then(async ([earthStateSeries, catalog, tierAssignments, symmetricReturnError]) => {
       // S18 Item 2: accept the same forms the compare page does (canonical
       // bodyId or bare designation) through the same shared resolver.
       const body = resolveSlice9CatalogBody(catalog, requestedBodyId);
@@ -375,6 +390,7 @@ function PorkchopDedicatedPage() {
         bodyElements: body.elements,
         client,
         tier: tierAssignments.get(body.designation) ?? null,
+        symmetricReturnError,
       });
       setLoading(false);
     }).catch((nextError: Error) => {
@@ -812,7 +828,7 @@ function PorkchopDedicatedPage() {
                       costCardState.invalidInput ? 'invalid cell data' : `delivered to ${pageState.bodyLabel}`,
                       costCardState.band === null
                         ? null
-                        : h('span', { style: CARD_BADGE_STYLE[costCardState.band] }, costCardState.band),
+                        : FeasibilityBadge({ label: costCardState.band, tone: costCardState.band }),
                     ),
                     costCardState.band === 'AMBER'
                       ? h(
@@ -841,9 +857,7 @@ function PorkchopDedicatedPage() {
                   isNearZeroC3Degenerate(costCardState.c3) && hideNearZeroC3
                     ? nearZeroC3HiddenNotice(1)
                     : `Payload at C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')}`,
-                  renderNearZeroC3Badge(
-                    isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3,
-                  ),
+                  NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3 }),
                 ),
                 h(
                   'span',
@@ -988,9 +1002,7 @@ function PorkchopDedicatedPage() {
                     isNearZeroC3Degenerate(stackState.readout.c3) && hideNearZeroC3
                       ? nearZeroC3HiddenNotice(1)
                       : `${stackState.readout.c3.toFixed(6)} km²/s² (${PORKCHOP_GRID_LABEL})`,
-                    renderNearZeroC3Badge(
-                      isNearZeroC3Degenerate(stackState.readout.c3) && !hideNearZeroC3,
-                    ),
+                    NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(stackState.readout.c3) && !hideNearZeroC3 }),
                   ),
                   h('span', null, 'Pinned v∞ arr'),
                   h('span', null, `${stackState.vInfArrKmps.toFixed(6)} km/s`),
@@ -1001,7 +1013,7 @@ function PorkchopDedicatedPage() {
                     key: 'stack-assumptions',
                     style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
                   },
-                  `Assumptions: ${MISSION_MODE_LABELS[selectedMode]}; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); rendezvous = arrival v∞; ${selectedMode === 'sample-return' ? 'departure = arrival v∞ under the symmetric-return assumption; ' : 'no departure burn in one-way mode; '}stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
+                  `Assumptions: ${MISSION_MODE_LABELS[selectedMode]}; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); rendezvous = arrival v∞; ${selectedMode === 'sample-return' ? 'departure = arrival v∞ under the symmetric-return assumption; ' : 'no departure burn in one-way mode; '}stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.${selectedMode === 'sample-return' ? ` An exploratory check of six windows (Aster pre-research, unvalidated) found this assumption off by ${pageState.symmetricReturnError.derived.minAbsErrorKmS}-${pageState.symmetricReturnError.derived.maxAbsErrorKmS} km/s, sometimes too high and sometimes too low, so treat sample-return totals as rough.` : ''}`,
                 ),
                 h(
                   'div',

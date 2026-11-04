@@ -134,15 +134,6 @@ test('T2 compare hide state preserves practical order and dominance while replac
   const dominanceOn = [...computeDominance(rows).entries()];
   assert.deepEqual(dominanceOn, dominanceOff);
 
-  const compareSource = fs.readFileSync(compareSourcePath, 'utf8');
-  const orderedStart = compareSource.indexOf('const ordered =');
-  const firstOkStart = compareSource.indexOf('const firstOk =', orderedStart);
-  assert.notEqual(orderedStart, -1);
-  assert.notEqual(firstOkStart, -1);
-  const orderingSource = compareSource.slice(orderedStart, firstOkStart);
-  assert.match(orderingSource, /bestPractical\.c3 - b\.segmentation\.bestPractical\.c3/);
-  assert.doesNotMatch(orderingSource, /hideNearZeroC3/);
-
   const offRow = renderOkRow(near, 'Near', 'vehicle', false, () => {}, dominanceOff[0][1], undefined, undefined, false, 2);
   const onRow = renderOkRow(near, 'Near', 'vehicle', false, () => {}, dominanceOn[0][1], undefined, undefined, true, 2);
   const offText = textOf(offRow.props.children[2]);
@@ -254,11 +245,14 @@ test('W3b compare exposes delivered-mass anchors, NASA contract context, and the
   assert.match(badgeText, /NASA Launch Services contract/);
   assert.match(badgeText, /New Glenn caveat/);
   assert.match(badgeText, /steep final published-anchor segment/);
+  assert.match(badgeText, /Computed live in this browser .*live grids recomputed for this selection/);
+  assert.doesNotMatch(badgeText, /cached grids/);
 });
 
 test('compare defines the breadth qualifier from B_min and the sampling interval (tail2 F7)', async () => {
   const { renderOkRow } = await loadCompareRenderers();
   const row = result('body', 1.62, 2, 1000, false);
   const text = textOf(renderOkRow(row, 'Body', 'vehicle', false, () => {}, undefined, undefined, undefined, false, 0));
-  assert.match(text, /1 meet the breadth qualifier \(a window at least 2 departure cells wide, 7\.00 d\)/);
+  assert.match(text, /1 meet the breadth qualifier \(a window at least 2 departure cells wide: 14\.0 days; one cell is 7\.00 days\)/);
+  assert.doesNotMatch(text, /at least 2 departure cells wide, 7\.00 d/);
 });

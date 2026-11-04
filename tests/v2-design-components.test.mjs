@@ -33,7 +33,19 @@ async function load() {
 
 test('shared honesty components preserve the characterization fixture', async () => {
   const modules = Object.fromEntries(await load());
-  const c3 = text(modules.C3Value.C3Value({ value: 4.21, unit: 'km²/s²', grid: 'requested grid', refusal: '—' }));
+  const c3 = text(modules.C3Value.C3Value({
+    value: 4.21,
+    unit: 'km²/s²',
+    grid: {
+      spanStartUtc: '2026-01-01',
+      spanEndUtc: '2040-01-01',
+      nDep: 731,
+      nTof: 100,
+      departureStepLabel: '7.0 d',
+      tofStepLabel: '16.6 d',
+    },
+    refusal: '—',
+  }));
   assert.equal(c3, fixture.surfaces.compare.normal);
   assert.equal(text(modules.NearZeroC3Badge.NearZeroC3Badge(true)), fixture.surfaces.catalog.nearZero);
   assert.equal(text(modules.StatusBadge.StatusBadge('low_departure_c3')), 'low C3');

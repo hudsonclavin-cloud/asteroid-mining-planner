@@ -1,3 +1,5 @@
 import { renderNearZeroC3Badge } from '../../../porkchop/near-zero-c3.js';
 
-export const NearZeroC3Badge = renderNearZeroC3Badge;
+export function NearZeroC3Badge(props: { readonly flagged: boolean } | boolean) {
+  return renderNearZeroC3Badge(typeof props === 'boolean' ? props : props.flagged);
+}

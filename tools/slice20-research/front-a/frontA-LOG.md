@@ -1,0 +1,21 @@
+# S20 Front A log - 2026-11-04
+
+- Phase 0 passed on `main` at `01e4bb7`; origin was synchronized and the tree was clean.
+- Slice 20 founding document contained `LOCKED as of 2026-11-04`.
+- Baseline `npm run verify`: 107/107 files, 356/356 tests, 0 failures, 0 load-timeouts.
+- Safety tag `s20-pre-front-a` and backup branch `backup/s20-pre-front-a` were created; work ran on `s20-front-a`.
+- W1-1 through W1-5 committed as `b4d1bce`, `6bf2cfc`, `8ff32f1`, `cd02dab`, `5ad9a9b`.
+- W1-4 derived symmetric-return range: `0.08-5.1 km/s`; artifact mutation to 5.2 failed at `tests/v2-symmetric-return.test.mjs:15` and was restored.
+- W2 E1-E6 committed as `6a8b3b4`, `0078621`, `4f6c0e0`, `3bf8349`, `bf0c539`; all target tests passed and every deliberate mutation failed.
+- W3 appended the DEC-20-13 Claude Code paragraph directly before `## §4`; additive proof printed only `--- a/AGENTS.md`; AGENTS.md stayed unstaged.
+- W4-0 recon: 9 badge/color construction sites, 2 C3Value calls, 4 raw C3 formatter sites; below the 40-site halt threshold.
+- W4-1 typed grid descriptor committed in `4ce6ee4`; the compatibility/fixture-preservation correction committed in `a680954`.
+- W4 compare committed in `6f08d6f`; target tests and unchanged F2 fixture passed.
+- W4 porkchop and validation committed in `4f5e24a`; `npm run verify` passed 109/109 files, 359/359 tests, 0 failures.
+- W4 catalog committed in `3fac375`; catalog target tests passed and the StatusBadge mutation failed 6/9 row tests before restoration.
+- W4-3 architecture guard and remaining porkchop-view migration committed in `4bd3244`; guard mutation reported `src/v2/app/compare/main.ts:451: CARD_BADGE_STYLE` and was restored.
+- Final `npm run verify`: 109/109 files, 360/360 tests, 0 failures, 0 load-timeouts.
+- `npm run build` passed; generated docs-only commit is `adda2ab`.
+- Entry bundles: `aboutV2-ca_cBGJA.js`, `compareV2-DpGmp5zP.js`, `porkchopV2-BuZQKmsX.js`, `solarSystemV2-C6dR6zLr.js`, `legacy-C6NkCVYx.js`.
+- W6 evidence copy is the final documentation-only commit after the three temp artifacts are copied byte-for-byte.
+- No push, merge, override, or subsession was used. One initial `.dispatch-scope` typo was rejected by the hook and corrected without override.

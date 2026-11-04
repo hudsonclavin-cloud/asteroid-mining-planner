@@ -103,14 +103,14 @@ test('99942: the boundary comes from the committed artifact, and the partition m
   assert.equal(partition.supported + partition.unsupported, cells.length);
   assert.ok(partition.supported > 0 && partition.unsupported > 0);
 
-  // Different formulation: per column, cells at/after the boundary TOF are unsupported.
+  // Independent DEC-18-6/-7 formulation: arrival = departure + TOF, and an
+  // arrival at or after the earliest encounter is unsupported.
   let unsupportedByColumn = 0;
   for (let depIndex = 0; depIndex < GRID.nDep; depIndex += 1) {
     const column = cells.slice(depIndex * GRID.nTof, (depIndex + 1) * GRID.nTof);
-    const boundaryTof = boundary.boundaryTofDaysAtDeparture(column[0].depJD, b);
     let flipped = false;
     for (const cell of column) {
-      const unsupported = cell.tofDays >= boundaryTof;
+      const unsupported = cell.depJD + cell.tofDays >= b.encounterJd;
       assert.equal(boundary.isArrivalAfterEncounter(cell, b), unsupported);
       // Monotone within a column: once unsupported, every longer TOF is unsupported.
       if (flipped) assert.equal(unsupported, true);

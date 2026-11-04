@@ -24,3 +24,39 @@ test('C3 formatting is owned by C3Value outside the pure formatter', () => {
   walk(root);
   assert.deepEqual(violations, []);
 });
+
+test('badge construction is owned by shared design components', () => {
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', 'v2', 'app');
+  const viewPath = path.resolve(root, '..', 'porkchop', 'porkchop-view.ts');
+  const violations = [];
+  const forbidden = [
+    'renderNearZeroC3Badge(',
+    'FEASIBILITY_BADGE_STYLE',
+    'CARD_BADGE_STYLE',
+    'STRICT_BADGE_STYLE',
+    'OBSERVED_BADGE_STYLE',
+    'statusBadgeColor(',
+    'tierBadgeColor(',
+  ];
+  function scan(filePath) {
+    const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
+    lines.forEach((line, index) => {
+      for (const token of forbidden) {
+        if (line.includes(token)) violations.push(`${filePath}:${index + 1}: ${token}`);
+      }
+    });
+  }
+  function walk(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const fullPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'design') walk(fullPath);
+      } else if (entry.name.endsWith('.ts')) {
+        scan(fullPath);
+      }
+    }
+  }
+  walk(root);
+  scan(viewPath);
+  assert.deepEqual(violations, []);
+});

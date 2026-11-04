@@ -111,7 +111,7 @@ test('coverage line gains a refresh-due notice in the last 14 days of coverage o
   const base = `View ephemeris coverage ${coverage.coverageStartDate} – ${coverage.coverageEndDate} TDB`;
 
   const tenDaysBefore = ephemerisStatusHud({ ...secondsCoverage, wallClockTdbSeconds: secondsCoverage.timeMax - 10 * day });
-  assert.equal(tenDaysBefore.coverageText, `${base} (coverage ends 2027-03-31 TDB - refresh due)`);
+  assert.equal(tenDaysBefore.coverageText, `${base} (coverage ends 2027-03-31 TDB \u2014 refresh due)`);
   assert.equal(tenDaysBefore.trackingText, 'LIVE');
 
   const thirtyDaysBefore = ephemerisStatusHud({ ...secondsCoverage, wallClockTdbSeconds: secondsCoverage.timeMax - 30 * day });

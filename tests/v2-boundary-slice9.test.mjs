@@ -22,6 +22,11 @@ const EXPECTED_CLASS_DISTRIBUTION = {
 };
 const EXPECTED_MISSING_H_COUNT = 210;
 const EXPECTED_ANOMALY_TAIL_COUNT = 208;
+const EXPECTED_TIER_DISTRIBUTION = {
+  'visualization-tier': 41558,
+  'planning-tier': 0,
+  'not-kepler-safe': 348,
+};
 
 let compiledModulesPromise = null;
 
@@ -64,8 +69,11 @@ function readFixture() {
   return JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
 }
 
-function expectedTierDistributionFromFixture(fixture) {
-  return fixture.catalog.inv014TierDistribution;
+function countTierRecords(asteroids) {
+  return Object.values(asteroids).reduce(
+    (counts, asteroid) => ({ ...counts, [asteroid.inv014Tier]: counts[asteroid.inv014Tier] + 1 }),
+    { 'visualization-tier': 0, 'planning-tier': 0, 'not-kepler-safe': 0 },
+  );
 }
 
 function findAsteroid(catalog, designation) {
@@ -78,7 +86,6 @@ function findAsteroid(catalog, designation) {
 test('Slice 9 fixture exists and contains the live 41,906-body NEA catalog', () => {
   assert.ok(fs.existsSync(fixturePath), `Fixture not found: ${fixturePath}`);
   const fixture = readFixture();
-  const expectedTierDistribution = expectedTierDistributionFromFixture(fixture);
 
   assert.equal(fixture.selectionSource, 'JPL SBDB Query API (sb-group=neo)');
   assert.equal(typeof fixture.anchorSource, 'string');
@@ -88,7 +95,8 @@ test('Slice 9 fixture exists and contains the live 41,906-body NEA catalog', () 
   assert.equal(fixture.catalog.totalBodies, EXPECTED_TOTAL_BODIES);
   assert.equal(Object.keys(fixture.asteroids).length, EXPECTED_TOTAL_BODIES);
   assert.deepEqual(fixture.catalog.classDistribution, EXPECTED_CLASS_DISTRIBUTION);
-  assert.deepEqual(fixture.catalog.inv014TierDistribution, expectedTierDistribution);
+  assert.deepEqual(countTierRecords(fixture.asteroids), EXPECTED_TIER_DISTRIBUTION);
+  assert.deepEqual(fixture.catalog.inv014TierDistribution, EXPECTED_TIER_DISTRIBUTION);
   assert.equal(fixture.catalog.missingAbsoluteMagnitudeCount, EXPECTED_MISSING_H_COUNT);
   assert.equal(fixture.catalog.anomalyTailCount, EXPECTED_ANOMALY_TAIL_COUNT);
 });
@@ -96,14 +104,13 @@ test('Slice 9 fixture exists and contains the live 41,906-body NEA catalog', () 
 test('Slice 9 boundary ingestion preserves the full catalog and tier counts', async () => {
   const { core, slice9Catalog } = await loadModules();
   const fixture = readFixture();
-  const expectedTierDistribution = expectedTierDistributionFromFixture(fixture);
   const catalog = slice9Catalog.ingestSlice9Fixture(fixture);
 
   assert.equal(catalog.frame, core.FRAME_HELIO_J2000_ICRF);
   assert.equal(catalog.catalog.totalBodies, EXPECTED_TOTAL_BODIES);
   assert.equal(Object.keys(catalog.asteroids).length, EXPECTED_TOTAL_BODIES);
   assert.deepEqual(catalog.catalog.classDistribution, EXPECTED_CLASS_DISTRIBUTION);
-  assert.deepEqual(catalog.catalog.inv014TierDistribution, expectedTierDistribution);
+  assert.deepEqual(catalog.catalog.inv014TierDistribution, EXPECTED_TIER_DISTRIBUTION);
   assert.equal(catalog.closeApproachWindow.start, '2026-05-01');
   assert.equal(catalog.closeApproachWindow.stop, '2026-07-30');
   assert.equal(catalog.closeApproachWindow.distMaxAu, '0.05');
@@ -156,7 +163,6 @@ test('Slice 9 boundary spot-checks preserve Bennu, Apophis, Eros, Atira-class, f
 test('Slice 9 quality metadata and anchor semantics stay internally consistent', async () => {
   const { slice9Catalog } = await loadModules();
   const fixture = readFixture();
-  const expectedTierDistribution = expectedTierDistributionFromFixture(fixture);
   const catalog = slice9Catalog.ingestSlice9Fixture(fixture);
 
   let nullHCount = 0;
@@ -197,7 +203,7 @@ test('Slice 9 quality metadata and anchor semantics stay internally consistent',
 
   assert.equal(nullHCount, EXPECTED_MISSING_H_COUNT);
   assert.equal(anomalyTailCount, EXPECTED_ANOMALY_TAIL_COUNT);
-  assert.equal(notKeplerSafeCount, expectedTierDistribution['not-kepler-safe']);
+  assert.equal(notKeplerSafeCount, EXPECTED_TIER_DISTRIBUTION['not-kepler-safe']);
 });
 
 test('Slice 9 browser loader fetches and ingests the NEA catalog fixture', async () => {

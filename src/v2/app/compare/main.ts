@@ -56,9 +56,9 @@ import {
 } from '../../porkchop/compare-data.js';
 import { COMPARE_BODIES_CAP, parseCompareBodies } from '../../porkchop/compare-url.js';
 import { formatC3ValueText } from '../design/components/C3Value.js';
+import { NearZeroC3Badge } from '../design/components/NearZeroC3Badge.js';
 import {
   nearZeroC3HiddenNotice,
-  renderNearZeroC3Badge,
 } from '../../porkchop/near-zero-c3.js';
 import type { PorkchopCell } from '../../porkchop/grid-compute.js';
 import {
@@ -189,9 +189,8 @@ function formatBreadth(component: WindowComponent, samplingDays: number): string
   );
 }
 
-function formatComputeTime(totalComputeMs: number): string {
-  const roundedMs = Math.round(totalComputeMs);
-  return roundedMs < 1 ? '< 1 ms (cached grids)' : `${roundedMs} ms`;
+function formatComputeTime(): string {
+  return 'live grids recomputed for this selection; solver timing is not instrumented here';
 }
 
 function formatMassKg(massKg: number): string {
@@ -769,7 +768,7 @@ function renderOkRow(
         'span',
         { style: NOTE_STYLE },
         `global minimum ${formatC3WithUnits(echo.liveMin ?? Number.NaN)} (${compareGridLabel})`,
-        renderNearZeroC3Badge(echo.liveMinNearZeroC3Degenerate),
+        NearZeroC3Badge({ flagged: echo.liveMinNearZeroC3Degenerate }),
       );
 
   return h('tr', { key: result.bodyId }, [
@@ -806,7 +805,7 @@ function renderOkRow(
                 'span',
                 { style: 'color:#eef2ff;font-weight:600;' },
                 `${formatC3WithUnits(best.c3)} (${compareGridLabel})`,
-                renderNearZeroC3Badge(echo.bestPracticalNearZeroC3Degenerate),
+                NearZeroC3Badge({ flagged: echo.bestPracticalNearZeroC3Degenerate }),
               ),
           h('span', { style: NOTE_STYLE }, `departs ${best.argmin.dateIso} · ${formatDays(best.argmin.tofDays)} d transfer`),
           arrivalAfterSupport && supportBoundary !== undefined
@@ -836,7 +835,7 @@ function renderOkRow(
         'span',
         { style: NOTE_STYLE },
         `${segmentation.practical.length} meet the breadth qualifier ` +
-          `(a window at least ${B_MIN_CELLS} departure cells wide, ${formatDays((B_MIN_CELLS - 1) * echo.depCellDays)} d)`,
+          `(a window at least ${B_MIN_CELLS} departure cells wide: ${formatDays(B_MIN_CELLS * echo.depCellDays)} days; one cell is ${formatDays(echo.depCellDays)} days)`,
       ),
     ]),
 
@@ -914,7 +913,7 @@ function MethodBadge(props: {
     // S-S17-FRONTB-BATCH-2026-08-11-A (D1): plain-English legend for the
     // DEC-17-3 badge — three named measurements, no composite score.
     'Dominance badge — each compared body is checked on three measurements: best practical window energy (lower is better), widest window in departure columns (higher), and delivered mass (higher). A body is "dominated" when another selected body is at least as good on all three and better on at least one; "nondominated" otherwise. There is no combined score. Rows missing any of the three measurements read "insufficient data" and are not compared.',
-    `Computed live in this browser — ${formatComputeTime(props.totalComputeMs)} of solver time for this comparison.`,
+    `Computed live in this browser — ${formatComputeTime()}.`,
   );
 
   return h(

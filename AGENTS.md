@@ -172,6 +172,8 @@ Claude Code operates directly in the canonical repo (path in STATUS.md §Identit
 
 ---
 
+§3 amendment (2026-11-04, Slice 20 DEC-20-13): Claude Code is the execution agent whenever Codex is unavailable. When it executes a dispatch it may build, run tests and edit TypeScript, under exactly the same rules as Codex (§2, §2.1, §4): the dispatch's write scope, explicit staging, no push, no merge, no overrides, no sessions. Any sentence above that says otherwise is superseded by this paragraph.
+
 ## §4. Codex role
 
 Codex receives a dispatch (written by Nova or Hudson) and executes it against the repo.

@@ -1,14 +1,14 @@
 import { h, type VNode } from 'preact';
-import { formatCachedC3GridDetails, formatCachedC3GridShort } from '../../boundary/c3-grid.js';
-import { C3Value } from '../design/components/C3Value.js';
+import { formatCachedC3GridDetails } from '../../boundary/c3-grid.js';
+import { C3Value, type GridDescriptor } from '../design/components/C3Value.js';
+import { NearZeroC3Badge } from '../design/components/NearZeroC3Badge.js';
+import { StatusBadge } from '../design/components/StatusBadge.js';
 import {
   isNearZeroC3Degenerate,
   nearZeroC3HiddenNotice,
-  renderNearZeroC3Badge,
 } from '../../porkchop/near-zero-c3.js';
 import { fullTierDisclosure, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { requestFocus, selectBody, selectedBodySignal } from '../ui-store/index.js';
-import { A11Y_OVERRIDES } from '../design/a11y-overrides.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
 export interface CatalogRowRenderOptions {
@@ -16,41 +16,6 @@ export interface CatalogRowRenderOptions {
   readonly porkchopDisabled?: boolean | undefined;
   readonly hideNearZeroC3?: boolean | undefined;
   readonly nearZeroC3HiddenCount?: number | undefined;
-}
-
-
-function statusBadgeText(status: string): string {
-  switch (status) {
-    case 'low_departure_c3':
-      return 'low C3';
-    case 'high_departure_c3':
-      return 'high C3';
-    case 'lambert_unconvergeable':
-      return 'unconv.';
-    case 'propagator_failed':
-      return 'prop fail';
-    default:
-      return status;
-  }
-}
-
-export function statusBadgeColor(status: string): string {
-  switch (status) {
-    case 'low_departure_c3':
-      return A11Y_OVERRIDES.statusLowC3.value;
-    case 'high_departure_c3':
-      return '#666';
-    case 'lambert_unconvergeable':
-      return '#9a4a4a';
-    case 'propagator_failed':
-      return '#7a3a7a';
-    default:
-      return '#555';
-  }
-}
-
-export function tierBadgeColor(tier: string): string {
-  return tier === 'L0' ? '#9a4a4a' : tier === 'L1' ? A11Y_OVERRIDES.tierL1.value : '#4f6680';
 }
 
 /**
@@ -79,8 +44,15 @@ export function renderRow(
   const isSelected = selectedBodySignal.value === data.bodyId;
   const showPorkchopAffordance = typeof options.onOpenPorkchop === 'function';
   const affordanceDisabled = options.porkchopDisabled === true;
-  const c3GridShort = formatCachedC3GridShort(data.screeningGrid);
   const c3GridDetails = formatCachedC3GridDetails(data.screeningGrid);
+  const c3GridDescriptor: GridDescriptor = {
+    spanStartUtc: data.screeningGrid.departureSpan.startUtc,
+    spanEndUtc: data.screeningGrid.departureSpan.endUtc,
+    nDep: null,
+    nTof: null,
+    departureStepLabel: `${data.screeningGrid.departureStepDays} d`,
+    tofStepLabel: `${data.screeningGrid.tofStepDays} d`,
+  };
   const nearZeroC3Flagged =
     data.screen.isNearZeroC3Degenerate ?? isNearZeroC3Degenerate(data.screen.minC3);
   const hideNearZeroC3 = options.hideNearZeroC3 === true && nearZeroC3Flagged;
@@ -168,23 +140,8 @@ export function renderRow(
         ),
         isSuppressedQualityBadge(data)
           ? null
-          : h(
-          'span',
-          {
-            style: {
-              fontSize: '10px',
-              padding: '2px 6px',
-              borderRadius: '3px',
-              background: statusBadgeColor(data.screen.status),
-              color: '#fff',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              flexShrink: 0,
-            },
-          },
-          statusBadgeText(data.screen.status),
-        ),
-        renderNearZeroC3Badge(nearZeroC3Flagged && !hideNearZeroC3),
+          : StatusBadge({ status: data.screen.status }),
+        NearZeroC3Badge({ flagged: nearZeroC3Flagged && !hideNearZeroC3 }),
         nearZeroC3Flagged
           ? h(
               'span',
@@ -195,16 +152,13 @@ export function renderRow(
               'close approach — see caveat',
             )
           : null,
-        h('span', {
-          style: {
-            fontSize: '10px', padding: '2px 6px', borderRadius: '3px',
-            background: tierBadgeColor(data.tier.tier), color: '#fff',
-            letterSpacing: '0.5px', flexShrink: 0,
-          },
+        StatusBadge({
+          status: data.tier.tier,
+          label: data.tier.tier,
           // S18 Item 5: the FULL disclosure sentence (values from the committed
           // artifact), never the slug; the legend line if a value is missing.
           title: fullTierDisclosure(data.tier) ?? legendLineFor(data.tier.tier),
-        }, data.tier.tier),
+        }),
       ),
       deEmphasizeC3
         ? h(
@@ -239,7 +193,7 @@ export function renderRow(
               hideNearZeroC3
                 ? hiddenNotice
                 : h('span', { title: c3GridDetails },
-                    `${C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' })} · ${L0_C3_CONTEXT}`,
+                    `${C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridDescriptor, refusal: '—', prefix: 'C3' })} · ${L0_C3_CONTEXT}`,
                   ),
             ),
           )
@@ -260,7 +214,7 @@ export function renderRow(
               { title: c3GridDetails },
               hideNearZeroC3
                 ? hiddenNotice
-                : C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' }),
+                : C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridDescriptor, refusal: '—', prefix: 'C3' }),
             ),
           ),
     ),

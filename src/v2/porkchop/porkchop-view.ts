@@ -5,7 +5,6 @@ import { formatJdC3GridLabel } from '../boundary/c3-grid.js';
 import {
   isNearZeroC3Degenerate,
   nearZeroC3HiddenNotice,
-  renderNearZeroC3Badge,
 } from './near-zero-c3.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import {
@@ -18,6 +17,8 @@ import type { PorkchopGridParams } from './grid-compute.js';
 import type { PorkchopClient } from './porkchop-client.js';
 import type { PorkchopWorkerCell } from './porkchop.worker.js';
 import { C3_COLOR_MAX, C3_COLOR_MIN, colorForPorkchopCell } from './colormap.js';
+import { NearZeroC3Badge } from '../app/design/components/NearZeroC3Badge.js';
+import { FeasibilityBadge } from '../app/design/components/FeasibilityBadge.js';
 import { computeDualFamilyGrids, type DualFamilyGrids } from './dual-m-compute.js';
 import { compositeGrids, gridExtremes } from './composite-grid.js';
 import { assessPropagation } from './propagation-guard.js';
@@ -131,13 +132,7 @@ const TOOLTIP_STYLE = [
   'z-index:2',
 ].join(';');
 
-const FEASIBILITY_BADGE_STYLE: Record<Exclude<FeasibilityClass, null>, string> = {
-  GREEN: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#22c55e;color:#04130a;font-size:11px;font-weight:700;',
-  AMBER: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#f59e0b;color:#170f02;font-size:11px;font-weight:700;',
-  RED: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#ef4444;color:#1f0505;font-size:11px;font-weight:700;',
-};
-
-const FEASIBILITY_BADGE_LABEL: Record<Exclude<FeasibilityClass, null>, string> = {
+export const FEASIBILITY_BADGE_LABEL: Record<Exclude<FeasibilityClass, null>, string> = {
   GREEN: 'Direct',
   AMBER: 'Raised inclination',
   RED: 'Dogleg req.',
@@ -419,7 +414,7 @@ function renderFeasibilityBadge(feasibility: FeasibilityClass) {
   if (feasibility === null) {
     return null;
   }
-  return h('span', { style: FEASIBILITY_BADGE_STYLE[feasibility] }, FEASIBILITY_BADGE_LABEL[feasibility]);
+  return FeasibilityBadge({ label: FEASIBILITY_BADGE_LABEL[feasibility], tone: feasibility });
 }
 
 function getGridIndicesForCell(
@@ -1421,7 +1416,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                             (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
                               ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
                               : ''),
-                        renderNearZeroC3Badge(isNearZeroC3Degenerate(entry.c3) && !hideNearZeroC3),
+                        NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(entry.c3) && !hideNearZeroC3 }),
                       ),
                     ),
                   ),
@@ -1460,11 +1455,11 @@ export function PorkchopView(props: PorkchopViewProps) {
                 : isNearZeroC3Degenerate(pinnedReadout.c3) && hideNearZeroC3
                   ? nearZeroC3HiddenNotice(nearZeroC3HiddenCount)
                   : `${formatNumber(pinnedReadout.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)})`,
-              renderNearZeroC3Badge(
-                pinnedReadout.c3 !== null &&
+              NearZeroC3Badge({
+                flagged: pinnedReadout.c3 !== null &&
                   isNearZeroC3Degenerate(pinnedReadout.c3) &&
                   !hideNearZeroC3,
-              ),
+              }),
             ),
             h('span', null, 'DLA'),
             h(

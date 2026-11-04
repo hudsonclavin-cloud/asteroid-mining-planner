@@ -1,5 +1,6 @@
 import { h, type ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
+import { EvidenceBadge } from '../design/components/EvidenceBadge.js';
 
 // Front 2 validation card. Renders EXCLUSIVELY from the committed provenance JSON —
 // no validation number is a literal in this file (INV-026). The JSON is loaded at
@@ -44,10 +45,6 @@ const PANEL_STYLE =
 const TITLE_STYLE = 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;';
 const INTRO_STYLE = 'font-size:12px;color:#93a4bf;line-height:1.6;margin-bottom:12px;';
 const HEADLINE_VALUE_STYLE = 'font-size:24px;font-weight:700;color:#fff;line-height:1.25;';
-const STRICT_BADGE_STYLE =
-  'display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(125,211,252,0.16);color:#7dd3fc;';
-const OBSERVED_BADGE_STYLE =
-  'display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(251,191,36,0.16);color:#fbbf24;';
 const HEADLINE_SUB_STYLE = 'font-size:11px;color:#93a4bf;line-height:1.5;margin-top:4px;';
 const FRAMING_STYLE = 'font-size:12px;color:#cbd5e1;line-height:1.5;margin-top:8px;';
 const CLASSDEF_STYLE = 'font-size:11px;color:#9fb0c8;line-height:1.5;margin-top:8px;';
@@ -150,7 +147,7 @@ export function ValidationCard() {
             'div',
             { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' },
             h('span', { style: HEADLINE_VALUE_STYLE }, headlineRow.value),
-            h('span', { style: STRICT_BADGE_STYLE }, doc.headline.className),
+            EvidenceBadge({ label: doc.headline.className, tone: 'strict' }),
           ),
           h('div', { style: HEADLINE_SUB_STYLE }, `${doc.headline.label} · ${doc.headline.surface}`),
           h('div', { style: FRAMING_STYLE }, doc.headline.framing),
@@ -171,7 +168,7 @@ export function ValidationCard() {
               'div',
               { style: 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;' },
               h('span', { style: OBSERVED_VALUE_STYLE }, observedRow.value),
-              observedRow.class ? h('span', { style: OBSERVED_BADGE_STYLE }, observedRow.class) : null,
+              observedRow.class ? EvidenceBadge({ label: observedRow.class, tone: 'observed' }) : null,
             ),
             h('div', { style: ROW_MUTED_STYLE }, observedRow.solverConfig),
             sourceLine(observedRow),
