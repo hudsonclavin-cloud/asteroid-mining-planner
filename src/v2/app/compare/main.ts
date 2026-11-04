@@ -56,9 +56,9 @@ import {
 } from '../../porkchop/compare-data.js';
 import { COMPARE_BODIES_CAP, parseCompareBodies } from '../../porkchop/compare-url.js';
 import { formatC3ValueText } from '../design/components/C3Value.js';
+import { NearZeroC3Badge } from '../design/components/NearZeroC3Badge.js';
 import {
   nearZeroC3HiddenNotice,
-  renderNearZeroC3Badge,
 } from '../../porkchop/near-zero-c3.js';
 import type { PorkchopCell } from '../../porkchop/grid-compute.js';
 import {
@@ -768,7 +768,7 @@ function renderOkRow(
         'span',
         { style: NOTE_STYLE },
         `global minimum ${formatC3WithUnits(echo.liveMin ?? Number.NaN)} (${compareGridLabel})`,
-        renderNearZeroC3Badge(echo.liveMinNearZeroC3Degenerate),
+        NearZeroC3Badge({ flagged: echo.liveMinNearZeroC3Degenerate }),
       );
 
   return h('tr', { key: result.bodyId }, [
@@ -805,7 +805,7 @@ function renderOkRow(
                 'span',
                 { style: 'color:#eef2ff;font-weight:600;' },
                 `${formatC3WithUnits(best.c3)} (${compareGridLabel})`,
-                renderNearZeroC3Badge(echo.bestPracticalNearZeroC3Degenerate),
+                NearZeroC3Badge({ flagged: echo.bestPracticalNearZeroC3Degenerate }),
               ),
           h('span', { style: NOTE_STYLE }, `departs ${best.argmin.dateIso} · ${formatDays(best.argmin.tofDays)} d transfer`),
           arrivalAfterSupport && supportBoundary !== undefined
