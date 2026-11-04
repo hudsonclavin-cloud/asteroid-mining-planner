@@ -82,6 +82,7 @@ const HORIZONS_FIXTURE_URL = new URL(
   '../../data/horizons-inner-solar-system-2026-2040.json',
   import.meta.url,
 );
+const SYMMETRIC_RETURN_ERROR_URL = new URL('../../data/symmetric-return-error.json', import.meta.url);
 const ABOUT_ROUTE = '../about/';
 const FK3_TOUR_REPLAY_SESSION_KEY = 'aster.fk3TourReplay';
 
@@ -118,6 +119,14 @@ interface PageState {
   readonly client: PorkchopClient;
   /** S18 Item 5: the body's fidelity tier from the committed artifact; null if absent. */
   readonly tier: TierAssignment | null;
+  readonly symmetricReturnError: SymmetricReturnErrorArtifact;
+}
+
+interface SymmetricReturnErrorArtifact {
+  readonly derived: {
+    readonly minAbsErrorKmS: number;
+    readonly maxAbsErrorKmS: number;
+  };
 }
 
 interface StackState {
@@ -315,6 +324,16 @@ async function loadLongWindowEarthSeries() {
   return horizonsStates.earth.map((sample) => sample.state);
 }
 
+async function loadSymmetricReturnError(): Promise<SymmetricReturnErrorArtifact> {
+  const response = await fetch(SYMMETRIC_RETURN_ERROR_URL);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load symmetric-return error artifact: ${response.status} ${response.statusText}`,
+    );
+  }
+  return (await response.json()) as SymmetricReturnErrorArtifact;
+}
+
 function PorkchopDedicatedPage() {
   const costCardRef = useRef<HTMLElement | null>(null);
   const requestedBodyId = useMemo(() => resolveRequestedBodyId(), []);
@@ -354,7 +373,8 @@ function PorkchopDedicatedPage() {
       loadLongWindowEarthSeries(),
       loadSlice9NeaCatalogFixture(),
       loadTierAssignments(),
-    ]).then(async ([earthStateSeries, catalog, tierAssignments]) => {
+      loadSymmetricReturnError(),
+    ]).then(async ([earthStateSeries, catalog, tierAssignments, symmetricReturnError]) => {
       // S18 Item 2: accept the same forms the compare page does (canonical
       // bodyId or bare designation) through the same shared resolver.
       const body = resolveSlice9CatalogBody(catalog, requestedBodyId);
@@ -375,6 +395,7 @@ function PorkchopDedicatedPage() {
         bodyElements: body.elements,
         client,
         tier: tierAssignments.get(body.designation) ?? null,
+        symmetricReturnError,
       });
       setLoading(false);
     }).catch((nextError: Error) => {
@@ -1001,7 +1022,7 @@ function PorkchopDedicatedPage() {
                     key: 'stack-assumptions',
                     style: 'margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;line-height:1.55;color:#9fb0c8;',
                   },
-                  `Assumptions: ${MISSION_MODE_LABELS[selectedMode]}; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); rendezvous = arrival v∞; ${selectedMode === 'sample-return' ? 'departure = arrival v∞ under the symmetric-return assumption; ' : 'no departure burn in one-way mode; '}stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.`,
+                  `Assumptions: ${MISSION_MODE_LABELS[selectedMode]}; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO (r = ${LEO_PARKING_RADIUS_KM.toFixed(3)} km); rendezvous = arrival v∞; ${selectedMode === 'sample-return' ? 'departure = arrival v∞ under the symmetric-return assumption; ' : 'no departure burn in one-way mode; '}stationkeeping ${STATIONKEEPING_DV_KMPS.toFixed(3)} km/s (${(STATIONKEEPING_DV_KMPS * 1000).toFixed(0)} m/s); ${(DV_MARGIN_FRACTION * 100).toFixed(0)}% margin.${selectedMode === 'sample-return' ? ` An exploratory check of six windows (Aster pre-research, unvalidated) found this assumption off by ${pageState.symmetricReturnError.derived.minAbsErrorKmS}-${pageState.symmetricReturnError.derived.maxAbsErrorKmS} km/s, sometimes too high and sometimes too low, so treat sample-return totals as rough.` : ''}`,
                 ),
                 h(
                   'div',

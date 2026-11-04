@@ -368,6 +368,7 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
   const catalog = JSON.parse(fs.readFileSync(path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json'), 'utf8'));
   const tiers = JSON.parse(fs.readFileSync(path.join(repoRoot, 'tools', 'slice18-research', 'tier-sizing-per-body.json'), 'utf8'));
   const provenance = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src', 'v2', 'data', 'validation-provenance.json'), 'utf8'));
+  const symmetricReturnError = JSON.parse(fs.readFileSync(path.join(repoRoot, 'src', 'v2', 'data', 'symmetric-return-error.json'), 'utf8'));
 
   const previous = {
     document: globalThis.document,
@@ -409,6 +410,7 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     if (url.includes('nea-catalog-slice9')) return jsonResponse(catalog);
     if (url.includes('tier-sizing-per-body')) return jsonResponse(tiers);
     if (url.includes('validation-provenance')) return jsonResponse(provenance);
+    if (url.includes('symmetric-return-error')) return jsonResponse(symmetricReturnError);
     throw new Error(`Unexpected test fetch: ${url}`);
   };
 
@@ -516,6 +518,7 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.ok(sampleReturnText.includes(costMarginSentence), sampleReturnText);
     assert.ok(sampleReturnText.includes(stackMarginSentence), sampleReturnText);
     assert.match(sampleReturnText, /departure = arrival v∞ under the symmetric-return assumption/);
+    assert.match(sampleReturnText, /off by 0\.08-5\.1 km\/s, sometimes too high and sometimes too low, so treat sample-return totals as rough/);
   } finally {
     render(null, document.app);
     await flushEffects(10);

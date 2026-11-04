@@ -1,0 +1,16 @@
+{
+  "source": "tools/slice20-research/recon/S20_01-REPORT.md R3",
+  "status": "exploratory, unvalidated",
+  "rows": [
+    { "body": "433", "window": "min-C3", "epochAndTof": "2032-06-11, 265.5", "assumed": "6.905", "computedAsteroidDepartureVInfKmS": { "M=0": "3.034", "M=1": "1.795" } },
+    { "body": "433", "window": "best stack", "epochAndTof": "2035-01-19, 365.1", "assumed": "1.146", "computedAsteroidDepartureVInfKmS": { "M=0": "2.254", "M=1": "1.223" } },
+    { "body": "99942", "window": "min-C3", "epochAndTof": "2028-08-24, 232.3", "assumed": "5.841", "computedAsteroidDepartureVInfKmS": { "M=0": "1.092", "M=1": "1.102" } },
+    { "body": "99942", "window": "best stack", "epochAndTof": "2029-04-12, 182.5", "assumed": "0.103", "computedAsteroidDepartureVInfKmS": { "M=0": "1.972", "M=1": "1.565" } },
+    { "body": "2000 SG344", "window": "min-C3", "epochAndTof": "2027-08-05, 282.1", "assumed": "1.389", "computedAsteroidDepartureVInfKmS": { "M=0": "0.148", "M=1": "0.131" } },
+    { "body": "2000 SG344", "window": "best stack", "epochAndTof": "2028-05-11, 298.7", "assumed": "0.0640", "computedAsteroidDepartureVInfKmS": { "M=0": "0.2244", "M=1": "0.3084" } }
+  ],
+  "derived": {
+    "minAbsErrorKmS": 0.08,
+    "maxAbsErrorKmS": 5.1
+  }
+}
