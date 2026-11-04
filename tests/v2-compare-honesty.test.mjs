@@ -254,6 +254,8 @@ test('W3b compare exposes delivered-mass anchors, NASA contract context, and the
   assert.match(badgeText, /NASA Launch Services contract/);
   assert.match(badgeText, /New Glenn caveat/);
   assert.match(badgeText, /steep final published-anchor segment/);
+  assert.match(badgeText, /Computed live in this browser .*live grids recomputed for this selection/);
+  assert.doesNotMatch(badgeText, /cached grids/);
 });
 
 test('compare defines the breadth qualifier from B_min and the sampling interval (tail2 F7)', async () => {

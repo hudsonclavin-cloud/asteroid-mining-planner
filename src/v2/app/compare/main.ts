@@ -189,9 +189,8 @@ function formatBreadth(component: WindowComponent, samplingDays: number): string
   );
 }
 
-function formatComputeTime(totalComputeMs: number): string {
-  const roundedMs = Math.round(totalComputeMs);
-  return roundedMs < 1 ? '< 1 ms (cached grids)' : `${roundedMs} ms`;
+function formatComputeTime(): string {
+  return 'live grids recomputed for this selection; solver timing is not instrumented here';
 }
 
 function formatMassKg(massKg: number): string {
@@ -914,7 +913,7 @@ function MethodBadge(props: {
     // S-S17-FRONTB-BATCH-2026-08-11-A (D1): plain-English legend for the
     // DEC-17-3 badge — three named measurements, no composite score.
     'Dominance badge — each compared body is checked on three measurements: best practical window energy (lower is better), widest window in departure columns (higher), and delivered mass (higher). A body is "dominated" when another selected body is at least as good on all three and better on at least one; "nondominated" otherwise. There is no combined score. Rows missing any of the three measurements read "insufficient data" and are not compared.',
-    `Computed live in this browser — ${formatComputeTime(props.totalComputeMs)} of solver time for this comparison.`,
+    `Computed live in this browser — ${formatComputeTime()}.`,
   );
 
   return h(
