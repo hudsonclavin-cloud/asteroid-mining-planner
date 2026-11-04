@@ -5,7 +5,6 @@ import { formatJdC3GridLabel } from '../boundary/c3-grid.js';
 import {
   isNearZeroC3Degenerate,
   nearZeroC3HiddenNotice,
-  renderNearZeroC3Badge,
 } from './near-zero-c3.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import {
@@ -18,6 +17,7 @@ import type { PorkchopGridParams } from './grid-compute.js';
 import type { PorkchopClient } from './porkchop-client.js';
 import type { PorkchopWorkerCell } from './porkchop.worker.js';
 import { C3_COLOR_MAX, C3_COLOR_MIN, colorForPorkchopCell } from './colormap.js';
+import { NearZeroC3Badge } from '../app/design/components/NearZeroC3Badge.js';
 import { FeasibilityBadge } from '../app/design/components/FeasibilityBadge.js';
 import { computeDualFamilyGrids, type DualFamilyGrids } from './dual-m-compute.js';
 import { compositeGrids, gridExtremes } from './composite-grid.js';
@@ -1416,7 +1416,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                             (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
                               ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
                               : ''),
-                        renderNearZeroC3Badge(isNearZeroC3Degenerate(entry.c3) && !hideNearZeroC3),
+                        NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(entry.c3) && !hideNearZeroC3 }),
                       ),
                     ),
                   ),
@@ -1455,11 +1455,11 @@ export function PorkchopView(props: PorkchopViewProps) {
                 : isNearZeroC3Degenerate(pinnedReadout.c3) && hideNearZeroC3
                   ? nearZeroC3HiddenNotice(nearZeroC3HiddenCount)
                   : `${formatNumber(pinnedReadout.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)})`,
-              renderNearZeroC3Badge(
-                pinnedReadout.c3 !== null &&
+              NearZeroC3Badge({
+                flagged: pinnedReadout.c3 !== null &&
                   isNearZeroC3Degenerate(pinnedReadout.c3) &&
                   !hideNearZeroC3,
-              ),
+              }),
             ),
             h('span', null, 'DLA'),
             h(
