@@ -1,6 +1,6 @@
 import { h, type VNode } from 'preact';
-import { formatCachedC3GridDetails, formatCachedC3GridShort } from '../../boundary/c3-grid.js';
-import { C3Value } from '../design/components/C3Value.js';
+import { formatCachedC3GridDetails } from '../../boundary/c3-grid.js';
+import { C3Value, type GridDescriptor } from '../design/components/C3Value.js';
 import {
   isNearZeroC3Degenerate,
   nearZeroC3HiddenNotice,
@@ -79,8 +79,15 @@ export function renderRow(
   const isSelected = selectedBodySignal.value === data.bodyId;
   const showPorkchopAffordance = typeof options.onOpenPorkchop === 'function';
   const affordanceDisabled = options.porkchopDisabled === true;
-  const c3GridShort = formatCachedC3GridShort(data.screeningGrid);
   const c3GridDetails = formatCachedC3GridDetails(data.screeningGrid);
+  const c3GridDescriptor: GridDescriptor = {
+    spanStartUtc: data.screeningGrid.departureSpan.startUtc,
+    spanEndUtc: data.screeningGrid.departureSpan.endUtc,
+    nDep: null,
+    nTof: null,
+    departureStepLabel: `${data.screeningGrid.departureStepDays} d`,
+    tofStepLabel: `${data.screeningGrid.tofStepDays} d`,
+  };
   const nearZeroC3Flagged =
     data.screen.isNearZeroC3Degenerate ?? isNearZeroC3Degenerate(data.screen.minC3);
   const hideNearZeroC3 = options.hideNearZeroC3 === true && nearZeroC3Flagged;
@@ -239,7 +246,7 @@ export function renderRow(
               hideNearZeroC3
                 ? hiddenNotice
                 : h('span', { title: c3GridDetails },
-                    `${C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' })} · ${L0_C3_CONTEXT}`,
+                    `${C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridDescriptor, refusal: '—', prefix: 'C3' })} · ${L0_C3_CONTEXT}`,
                   ),
             ),
           )
@@ -260,7 +267,7 @@ export function renderRow(
               { title: c3GridDetails },
               hideNearZeroC3
                 ? hiddenNotice
-                : C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridShort, refusal: '—', prefix: 'C3' }),
+                : C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridDescriptor, refusal: '—', prefix: 'C3' }),
             ),
           ),
     ),
