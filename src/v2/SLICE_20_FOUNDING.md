@@ -336,3 +336,36 @@ Deploy points: (1) Front A; (2) Fronts B+C+D together after the audit; (3) Front
 
 ## §9. Amendments and corrections
 (Append only. Never edit above this line.)
+
+### §9.1 Lock record — 2026-11-04 (Hudson)
+- Rulings: Hudson, 2026-11-04, "all as recommended". DEC-20-1, -2, -3, -4, -5, -7, -8, -9, -10, -12 and -13
+  LOCKED as drafted in §3. DEC-20-6 was RULED by Hudson on 2026-11-03; its implementation rules are LOCKED as
+  drafted. DEC-20-11 (K4) LOCKED as restated.
+- OQ-20-10 RULED: a one-click, user-reversible filter that always shows how many windows it hides satisfies
+  DEC-18-7's "de-emphasized, never suppressed". Front C appends this as an additive amendment to
+  `src/v2/SLICE_18_FOUNDING.md` §9 [P].
+- Open questions OQ-20-1 … OQ-20-9 keep the defaults written in §4 until a front needs them ruled.
+- Verification record: the S20_03 prompt was run twice in fresh threads.
+  - Run 1: `tools/slice20-research/literature/S20_03_verify_return_leg_results.md`.
+  - Run 2: `tools/slice20-research/literature/S20_03b_verify_return_leg_results_run2.md`.
+  - They disagree on 2 of 16 items:
+    - #10 Hayabusa2: run 2 found 11.8 km/s inertial, Prabhu et al. 2022.
+    - #14 Keck 2012 Earth-arrival C3: run 1 UNVERIFIABLE, run 2 CONFIRMED from the KISS presentation to ESA
+      ESTEC, slide 31.
+  - On 2026-11-04 Hudson opened slide 31 directly and confirmed run 2's values: 2008 HU4 1.8 / 1.7 / 1.6 / 1.6 /
+    1.6 km²/s² (250 / 400 / 650 / 950 / 1300 t); 1998 KY26 2.0 / 2.0 (30 / 60 t); 2000 SG344 2.0 / 2.1
+    (1800 / 3600 t); 0.0 for the direct Sun–Earth L2 stable-manifold cases (2008 HU4 200 t, 2000 SG344 100 t).
+    The slide's KY26 trajectory shows Earth-arrival v∞ 1.41 km/s, consistent with C3 2.0.
+  - Every case on slide 31 uses solar-electric propulsion with lunar or Sun–Earth L2 capture, so OQ-20-7's default
+    stands: context only, not a Lambert test anchor.
+  - The values this document's DECs rest on were CONFIRMED by both runs from different primary sources (the CNEOS
+    NHATS caveats page and Barbee et al. 2013): NHATS ≤ 12 km/s at 125 km (#11); NHATS minimum stay 8 days (#12);
+    NHATS separate outbound and return Lambert legs (#13).
+- Rule going forward: an external number a DEC rests on needs two agreeing verification runs, or its primary source
+  opened directly by Hudson or Clome.
+- OQ-20-11 (new): NHATS's worked 2000 SG344 example (346-day round trip; NEA arrival Δv 0.128 km/s, departure Δv
+  0.217 km/s; Barbee et al. 2013, slide 16) as a non-blocking sanity check for K1. It needs that trajectory's epochs
+  from slide 16, and NHATS's Δv bookkeeping may differ from Aster's. Default: attempt it in Front B after the oracle
+  passes; a mismatch is a finding, not a gate.
+- STATUS: this founding document is LOCKED as of 2026-11-04. This line supersedes the DRAFT header, which stays
+  unedited under the additive rule.
