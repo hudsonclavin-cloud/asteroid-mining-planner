@@ -34,9 +34,9 @@ import {
   type ScreeningWindow,
 } from './honesty-disclosure.js';
 import { renderRow } from './row.js';
+import { StatusBadge } from '../design/components/StatusBadge.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { TIER_LEGEND } from '../../porkchop/tier-disclosure.js';
-import { statusBadgeColor, tierBadgeColor } from './row.js';
 import { A11Y_OVERRIDES } from '../design/a11y-overrides.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
 
@@ -280,21 +280,11 @@ export function renderTierLegend(): VNode {
           title: entry.title,
           style: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
         },
-        h(
-          'span',
-          {
-            style: {
-              fontSize: '9px',
-              padding: '1px 5px',
-              borderRadius: '3px',
-              background: entry.key === 'PROP FAIL' ? statusBadgeColor('propagator_failed') : tierBadgeColor(entry.key),
-              color: '#fff',
-              letterSpacing: '0.5px',
-              flexShrink: 0,
-            },
-          },
-          entry.key,
-        ),
+        StatusBadge({
+          status: entry.key === 'PROP FAIL' ? 'propagator_failed' : entry.key,
+          label: entry.key,
+          compact: true,
+        }),
         h('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, entry.line),
       ),
     ),
