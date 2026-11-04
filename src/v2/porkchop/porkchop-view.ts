@@ -18,6 +18,7 @@ import type { PorkchopGridParams } from './grid-compute.js';
 import type { PorkchopClient } from './porkchop-client.js';
 import type { PorkchopWorkerCell } from './porkchop.worker.js';
 import { C3_COLOR_MAX, C3_COLOR_MIN, colorForPorkchopCell } from './colormap.js';
+import { FeasibilityBadge } from '../app/design/components/FeasibilityBadge.js';
 import { computeDualFamilyGrids, type DualFamilyGrids } from './dual-m-compute.js';
 import { compositeGrids, gridExtremes } from './composite-grid.js';
 import { assessPropagation } from './propagation-guard.js';
@@ -130,12 +131,6 @@ const TOOLTIP_STYLE = [
   'color:#eef2ff',
   'z-index:2',
 ].join(';');
-
-const FEASIBILITY_BADGE_STYLE: Record<Exclude<FeasibilityClass, null>, string> = {
-  GREEN: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#22c55e;color:#04130a;font-size:11px;font-weight:700;',
-  AMBER: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#f59e0b;color:#170f02;font-size:11px;font-weight:700;',
-  RED: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#ef4444;color:#1f0505;font-size:11px;font-weight:700;',
-};
 
 export const FEASIBILITY_BADGE_LABEL: Record<Exclude<FeasibilityClass, null>, string> = {
   GREEN: 'Direct',
@@ -419,7 +414,7 @@ function renderFeasibilityBadge(feasibility: FeasibilityClass) {
   if (feasibility === null) {
     return null;
   }
-  return h('span', { style: FEASIBILITY_BADGE_STYLE[feasibility] }, FEASIBILITY_BADGE_LABEL[feasibility]);
+  return FeasibilityBadge({ label: FEASIBILITY_BADGE_LABEL[feasibility], tone: feasibility });
 }
 
 function getGridIndicesForCell(

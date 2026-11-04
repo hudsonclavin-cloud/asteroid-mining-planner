@@ -27,10 +27,11 @@ import {
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
 import { formatC3ValueText } from '../design/components/C3Value.js';
+import { FeasibilityBadge } from '../design/components/FeasibilityBadge.js';
+import { NearZeroC3Badge } from '../design/components/NearZeroC3Badge.js';
 import {
   isNearZeroC3Degenerate,
   nearZeroC3HiddenNotice,
-  renderNearZeroC3Badge,
 } from '../../porkchop/near-zero-c3.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
 import {
@@ -155,12 +156,6 @@ interface CostCardState {
 const MISSION_MODE_LABELS: Record<MissionMode, string> = {
   'one-way': 'One-way rendezvous',
   'sample-return': 'Sample return',
-};
-
-const CARD_BADGE_STYLE: Record<Exclude<FeasibilityClass, null>, string> = {
-  GREEN: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#22c55e;color:#04130a;font-size:11px;font-weight:700;',
-  AMBER: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#f59e0b;color:#170f02;font-size:11px;font-weight:700;',
-  RED: 'display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;background:#ef4444;color:#1f0505;font-size:11px;font-weight:700;',
 };
 
 const CARD_PICKER_SELECT_STYLE =
@@ -833,7 +828,7 @@ function PorkchopDedicatedPage() {
                       costCardState.invalidInput ? 'invalid cell data' : `delivered to ${pageState.bodyLabel}`,
                       costCardState.band === null
                         ? null
-                        : h('span', { style: CARD_BADGE_STYLE[costCardState.band] }, costCardState.band),
+                        : FeasibilityBadge({ label: costCardState.band, tone: costCardState.band }),
                     ),
                     costCardState.band === 'AMBER'
                       ? h(
@@ -862,9 +857,7 @@ function PorkchopDedicatedPage() {
                   isNearZeroC3Degenerate(costCardState.c3) && hideNearZeroC3
                     ? nearZeroC3HiddenNotice(1)
                     : `Payload at C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')}`,
-                  renderNearZeroC3Badge(
-                    isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3,
-                  ),
+                  NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3 }),
                 ),
                 h(
                   'span',
@@ -1009,9 +1002,7 @@ function PorkchopDedicatedPage() {
                     isNearZeroC3Degenerate(stackState.readout.c3) && hideNearZeroC3
                       ? nearZeroC3HiddenNotice(1)
                       : `${stackState.readout.c3.toFixed(6)} km²/s² (${PORKCHOP_GRID_LABEL})`,
-                    renderNearZeroC3Badge(
-                      isNearZeroC3Degenerate(stackState.readout.c3) && !hideNearZeroC3,
-                    ),
+                    NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(stackState.readout.c3) && !hideNearZeroC3 }),
                   ),
                   h('span', null, 'Pinned v∞ arr'),
                   h('span', null, `${stackState.vInfArrKmps.toFixed(6)} km/s`),
