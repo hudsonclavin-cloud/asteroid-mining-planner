@@ -64,7 +64,7 @@ import {
   subscribeToStarfieldDisplay,
 } from '../ui-store/index.js';
 import { loadSlice9NeaCatalogFixture, loadSolarSystemStatesBrowser } from './loader.js';
-import { ephemerisStatusHud, shiftNHelpText } from './ephemeris-status.js';
+import { coverageLineText, ephemerisStatusHud, shiftNHelpText } from './ephemeris-status.js';
 import {
   buildSlice9RuntimePropagationBodies,
   isSlice9RuntimeEllipticBody,
@@ -950,8 +950,13 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
 
   const coverageLine = document.createElement('div');
   coverageLine.setAttribute('data-testid', 'ephemeris-coverage-line');
-  coverageLine.textContent =
-    `View ephemeris coverage ${formatTdbCoverageDateLabel(timeMin)} – ${formatTdbCoverageDateLabel(timeMax)} TDB`;
+  coverageLine.textContent = coverageLineText({
+    wallClockTdbSeconds: nowTdbSeconds(),
+    timeMin,
+    timeMax,
+    coverageStartDate: formatTdbCoverageDateLabel(timeMin),
+    coverageEndDate: formatTdbCoverageDateLabel(timeMax),
+  });
   timeStatusHud.appendChild(coverageLine);
 
   const outOfCoverageWarning = document.createElement('div');
@@ -1833,6 +1838,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
       coverageEndDate: formatTdbCoverageDateLabel(timeMax),
     });
     dateHud.textContent += `\n${formatUtcDateTimeLabel(currentTdbSeconds)}${ephemerisStatus.dateSuffix}`;
+    coverageLine.textContent = ephemerisStatus.coverageText;
     outOfCoverageWarning.textContent = ephemerisStatus.warningText ?? '';
     outOfCoverageWarning.style.display = ephemerisStatus.warningText === null ? 'none' : 'block';
     trackingStatus.textContent = ephemerisStatus.trackingText;
