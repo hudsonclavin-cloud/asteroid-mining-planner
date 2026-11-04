@@ -60,6 +60,31 @@ function magnitude(point) {
   return Math.hypot(point.x, point.y, point.z);
 }
 
+function expectedCanonicalPosition(elements, trueAnomalyRad) {
+  const radiusM = (elements.aM * (1 - elements.e * elements.e)) /
+    (1 + elements.e * Math.cos(trueAnomalyRad));
+  const x = radiusM * Math.cos(trueAnomalyRad);
+  const y = radiusM * Math.sin(trueAnomalyRad);
+  const cosOm = Math.cos(elements.omRad);
+  const sinOm = Math.sin(elements.omRad);
+  const cosI = Math.cos(elements.iRad);
+  const sinI = Math.sin(elements.iRad);
+  const cosW = Math.cos(elements.wRad);
+  const sinW = Math.sin(elements.wRad);
+  const ecliptic = {
+    x: (cosOm * cosW - sinOm * sinW * cosI) * x + (-cosOm * sinW - sinOm * cosW * cosI) * y,
+    y: (sinOm * cosW + cosOm * sinW * cosI) * x + (-sinOm * sinW + cosOm * cosW * cosI) * y,
+    z: sinW * sinI * x + cosW * sinI * y,
+  };
+  // Independent nominal J2000 ecliptic-to-equatorial rotation.
+  const obliquityRad = (84381.448 * Math.PI) / (180 * 3600);
+  return {
+    x: ecliptic.x,
+    y: ecliptic.y * Math.cos(obliquityRad) - ecliptic.z * Math.sin(obliquityRad),
+    z: ecliptic.y * Math.sin(obliquityRad) + ecliptic.z * Math.cos(obliquityRad),
+  };
+}
+
 test('Vesta orbit samples close cleanly at 64 segments', async () => {
   const core = await loadKeplerian();
   const fixture = readJson(fixturePath);
@@ -101,5 +126,21 @@ test('sampled orbit points satisfy the conic radius equation for Vesta', async (
   for (const sample of samples) {
     const expectedRadiusM = semiLatusRectumM / (1 + elements.e * Math.cos(sample.trueAnomalyRad));
     assert.ok(Math.abs(magnitude(sample) - expectedRadiusM) <= 1e-3);
+  }
+});
+
+test('sampled orbit vectors preserve the independently derived canonical orientation', async () => {
+  const core = await loadKeplerian();
+  const fixture = readJson(fixturePath);
+  const vesta = fixture.asteroids['asteroid-4'];
+  const elements = toCoreElements(vesta);
+  const samples = core.sampleOrbitEllipse(elements, 64);
+
+  for (const index of [7, 19, 37, 52]) {
+    const sample = samples[index];
+    const expected = expectedCanonicalPosition(elements, sample.trueAnomalyRad);
+    assert.ok(Math.abs(sample.x - expected.x) <= 1, `x orientation at sample ${index}`);
+    assert.ok(Math.abs(sample.y - expected.y) <= 1, `y orientation at sample ${index}`);
+    assert.ok(Math.abs(sample.z - expected.z) <= 1, `z orientation at sample ${index}`);
   }
 });
