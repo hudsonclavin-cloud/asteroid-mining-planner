@@ -836,7 +836,7 @@ function renderOkRow(
         'span',
         { style: NOTE_STYLE },
         `${segmentation.practical.length} meet the breadth qualifier ` +
-          `(a window at least ${B_MIN_CELLS} departure cells wide, ${formatDays((B_MIN_CELLS - 1) * echo.depCellDays)} d)`,
+          `(a window at least ${B_MIN_CELLS} departure cells wide: ${formatDays(B_MIN_CELLS * echo.depCellDays)} days; one cell is ${formatDays(echo.depCellDays)} days)`,
       ),
     ]),
 

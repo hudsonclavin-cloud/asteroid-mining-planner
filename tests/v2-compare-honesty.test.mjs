@@ -260,5 +260,6 @@ test('compare defines the breadth qualifier from B_min and the sampling interval
   const { renderOkRow } = await loadCompareRenderers();
   const row = result('body', 1.62, 2, 1000, false);
   const text = textOf(renderOkRow(row, 'Body', 'vehicle', false, () => {}, undefined, undefined, undefined, false, 0));
-  assert.match(text, /1 meet the breadth qualifier \(a window at least 2 departure cells wide, 7\.00 d\)/);
+  assert.match(text, /1 meet the breadth qualifier \(a window at least 2 departure cells wide: 14\.0 days; one cell is 7\.00 days\)/);
+  assert.doesNotMatch(text, /at least 2 departure cells wide, 7\.00 d/);
 });
