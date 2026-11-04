@@ -1,0 +1,41 @@
+# S20_03 — Verification results: return-leg numbers and claims
+
+- **Source:** Perplexity, fresh thread, prompt `S20_03_VERIFY_RETURN_LEG.md` (verification pass; no follow-up chain).
+- **Retrieved:** 2026-11-03 by Hudson. Transcribed by Nova, 2026-11-03. Verdicts and source lines are as returned; broken math rendering in items 6, 13 and 16 is reconstructed.
+- **Verifies:** the LOAD-BEARING NUMBERS of `S20_02_return_leg_perplexity.md`, plus three checks Nova added (items 13–15).
+- **Rule:** CONFIRMED values may enter the Slice 20 founding doc with their source and convention. REFUTED and UNVERIFIABLE values do not enter a DEC.
+
+## Verdicts
+
+| # | Claim checked | Verdict | Value as the source states it | Primary source |
+|---|---|---|---|---|
+| 1 | Stardust nominal inertial entry speed 12.9 km/s | CONFIRMED | 12.9 km/s, nominal inertial entry velocity at entry-interface geocentric radius 6503.14 km | Desai, Lyons, Tooley, Kangas, *Entry, Descent, and Landing Operations Analysis for the Stardust Entry Capsule*, 2008, nominal entry-interface conditions. https://ntrs.nasa.gov/api/citations/20090004445/downloads/20090004445.pdf |
+| 2 | Stardust entry interface at geocentric radius 6503.14 km | CONFIRMED | Radius 6503.14 km from Earth's centre, not an altitude | Desai et al., 2008 (as #1) |
+| 3 | Stardust nominal inertial EFPA −8.2° | CONFIRMED | −8.2°, nominal inertial entry flight-path angle at geocentric radius 6503.14 km | Desai et al., 2008 (as #1) |
+| 4 | OSIRIS-REx EDL paper quotes Stardust at 12.8 km/s | CONFIRMED (quote only) | "12.8 km/sec"; the comparison paragraph does not say inertial or atmosphere-relative, so neither convention is verified by that quotation | Francis, Johnson, Queen, Williams, *Entry, Descent, and Landing Analysis for the OSIRIS-REx Sample Return Capsule*, 2024, p. 5, "Entry Overview". https://ntrs.nasa.gov/api/citations/20240000629/downloads/OREX_EDL_paper_011124_afternoon.pdf |
+| 5 | OSIRIS-REx requirement: atmosphere-relative entry speed ≤ 12.4 km/s | CONFIRMED | Earth atmosphere-relative re-entry speed ≤ 12.4 km/s, requirement FDS-F-163 / MRD-163 | Getzandanner et al., *OSIRIS-REx Earth Return & Entry: Navigation Operations & Lessons-Learned*, 2024, p. 4, Table 1. https://ntrs.nasa.gov/api/citations/20240000800/downloads/O_REx_Earth_Return_Entry_Nav_Ops_LL_v4.pdf |
+| 6 | OSIRIS-REx pre-entry compliance value 12.38 km/s | CONFIRMED | V_entry = 12.38 km/s, pre-entry mission-design compliance value for the atmosphere-relative requirement; not a reconstructed flight measurement | Getzandanner et al., 2024, p. 4, Table 1, FDS-F-163 (as #5) |
+| 7 | OSIRIS-REx interface at geocentric radius 6503.142 km (~133 km MSL) | CONFIRMED | Entry-interface geocentric radius 6503.142 km, described as approximately 133 km above mean sea level | Getzandanner et al., 2024, p. 3, "Earth Return Targeting Strategy" (as #5) |
+| 8 | OSIRIS-REx nominal inertial EFPA −8.2°, allowance ±0.08° | CONFIRMED | Nominal inertial (J2000) EFPA −8.2°; overall error allowance ±0.08° (3σ), distinct from the FDS-only allocation ±0.07° (3σ), which excludes SRC release error | Getzandanner et al., 2024, pp. 3–4, "Earth Return Targeting Strategy" and Table 1, FDS-F-34 (as #5) |
+| 9 | Hayabusa 12.2 km/s, −12.3°, and the altitude they refer to | CONFIRMED | Nominal inertial speed 12.2 km/s and angle −12.3° for the JAXA-provided initial state, nominally at 200 km altitude; the specific datum is 202.03 km at 13:51:12 UTC, whereas the separately designated 121.9 km (400 kft) entry interface occurs at approximately 13:51:46 UTC | Grinstead et al., *Airborne Observation of the Hayabusa Sample Return Capsule Re-entry*, 2011, pp. 3–4, §III.A. https://ntrs.nasa.gov/api/citations/20160000307/downloads/20160000307.pdf |
+| 10 | Hayabusa2 entry speed ~12 km/s; official interface EFPA | CONFIRMED (speed only) | Approximately 12 km/s atmospheric re-entry speed; the official source gives no reference frame or interface altitude; an official interface-specific flight-path angle was not verified | JAXA Hayabusa2 Project, *Overview: Capsule Recovery*, 2020, "Capsule re-entry". https://www.hayabusa2.jaxa.jp/en/topics/20201204_ts3/ |
+| 11 | NHATS entry-speed constraint 12 km/s, and at what altitude | CONFIRMED | Earth atmospheric entry speed ≤ 12 km/s at altitude 125 km; the criteria page does not say inertial or atmosphere-relative | NASA/JPL CNEOS, *Assumptions and Caveats for NHATS-Compliant NEAs*, undated, §3 constraint 6. https://cneos.jpl.nasa.gov/nhats/caveats.html |
+| 12 | NHATS total duration ≤ 450 days; is it the only time bound? | CONFIRMED | Total round-trip duration ≤ 450 days; not the only time constraint: minimum asteroid stay is 8 days; the NHATS API also exposes duration filters of 60–450 days in 30-day steps | CNEOS caveats page, §3 constraints 4–5 (as #11); NASA/JPL SSD, *NHATS API*, undated, "Query Parameters", `dur`. https://ssd-api.jpl.nasa.gov/doc/nhats.html |
+| 13 | NHATS solves outbound and return as separate Lambert legs and does not assume departure Δv = outbound arrival v∞ | CONFIRMED | Patched-conic Lambert solutions over independently varied outbound flight time, asteroid stay time and inbound flight time, using full-precision Earth/NEA ephemerides from JPL Horizons; asteroid-arrival velocity matching and asteroid departure are separately included manoeuvres, not an imposed equality between departure Δv and outbound arrival v∞ | CNEOS caveats page, §3 constraint 3 and §4 (as #11) |
+| 14 | Keck 2012: Earth-arrival C3 ≈ 1.6–2.1 km²/s² for 2008 HU4, 1998 KY26, 2000 SG344 | UNVERIFIABLE | One 2008 HU4 example lists arrival C3 = 1.8 km²/s²; the full table's values for the three asteroids were not verified, so the 1.6–2.1 km²/s² range remains unverified | Brophy, Culick, Friedman et al., *Asteroid Retrieval Feasibility Study*, KISS/Caltech/JPL, 2012, §VI "Mission Design", arrival-C3 trajectory table. https://www.kiss.caltech.edu/final_reports/Asteroid_final_report.pdf |
+| 15 | poliastro has a non-Izzo Lambert solver | CONFIRMED | `poliastro.iod.vallado.lambert`, released version 0.17.0: universal-variable approach with Vallado's suggested bisection iteration, distinct from Izzo's algorithm; **multiple revolutions not supported** | poliastro 0.17.0 documentation, 2022, `poliastro.iod.vallado`, "Notes". https://docs.poliastro.space/en/stable/autoapi/poliastro/iod/vallado/index.html |
+| 16 | A literature-standard low-v∞ invalidity threshold (e.g. 1.5 km/s) | UNVERIFIABLE | No specific threshold, including 1.5 km/s, was found in a primary source; no numerical cutoff established | ESA ACT, *Global Trajectory Optimisation: Can We Prune the Solution Space?* (study report), patched-conic discussion; no qualifying numerical threshold located. https://www.esa.int/gsp/ACT/doc/ARI/ARI%20Study%20Report/ACT-RPT-MAD-ARI-06-4101-CanWePrune-Ecole-des-Mines.pdf |
+
+## What this settles (Nova's triage)
+
+- **Usable in a DEC, with convention attached:**
+  - NHATS entry-speed criterion ≤ 12 km/s at 125 km altitude (#11). NHATS does not state inertial vs atmosphere-relative, so Aster must label which one it computes.
+  - NHATS minimum asteroid stay of 8 days (#12): the only verified stay-time precedent.
+  - NHATS separate-leg method (#13): the published precedent against the symmetric-return assumption.
+  - The mission entry states (#1–3, #5–9) as reference context for the capsule profiles; none is an arrival-v∞ value.
+- **Conflict resolved:** S20_02 flagged "125 km" as unverified; #11 confirms it for NHATS specifically. The K2 prototype's note ("NHATS caps entry at 12 km/s at 125 km") was right. 125 km is an NHATS convention, not a universal interface (Stardust and OSIRIS-REx use radius 6503.14 / 6503.142 km).
+- **Still open:**
+  - The Stardust 12.9 vs 12.8 km/s difference: #4 confirms only that the OSIRIS-REx paper says 12.8, not its convention. Log it; don't use 12.8.
+  - The Keck return C3 range (#14): only 2008 HU4 at 1.8 km²/s² has partial support. It can't be a test anchor.
+  - No weak-arrival threshold exists in the literature (#16), so Aster sets no numeric cutoff.
+- **Oracle design (#15):** `vallado.lambert` gives a formulation-independent check for M = 0 only. For M ≥ 1, independence must come from endpoint-closure propagation.
