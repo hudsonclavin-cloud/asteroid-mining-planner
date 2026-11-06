@@ -12,7 +12,7 @@
     "STRICT": "Error measured across well-behaved published curve segments (held-out C3 = 15, 25, and 35); the final 40-55 anchor segment is excluded. This is the gated figure.",
     "OBSERVED": "Error including the one steep segment where the tool is knowingly optimistic. Disclosed here rather than gated, so the worst case is never hidden."
   },
-  "observedDisclosure": "New Glenn payload between C3 = 20 and C3 = 30 is linearly interpolated across a steep final segment and may overestimate actual capability by up to ~3%. All other vehicles interpolate within 3% of NASA LSP published values.",
+  "observedDisclosure": "New Glenn payload between C3 = 20 and C3 = 30 is linearly interpolated across a steep final segment and may overestimate actual capability by up to 3.11% (OBSERVED max). All other vehicles interpolate within 3% of NASA LSP published values.",
   "rows": [
     {
       "id": "data-source",
