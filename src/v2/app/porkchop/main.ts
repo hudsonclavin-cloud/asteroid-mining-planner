@@ -831,7 +831,8 @@ function PorkchopDedicatedPage() {
                         : FeasibilityBadge({
                             // 2026-11-04 live review fix 1.2: the badge is the DLA launch-geometry
                             // band, not overall feasibility. When no delivered mass can be stated
-                            // (beyond the published curve), say so in the badge itself.
+                            // (deliveredKg is null: beyond the published curve, or invalid /
+                            // non-finite input, see costCardState), say so in the badge itself.
                             label:
                               costCardState.deliveredKg === null
                                 ? `${costCardState.band} \u00B7 launch geometry`
