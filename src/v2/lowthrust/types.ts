@@ -65,8 +65,15 @@ export function thrustAccelerationMps2(engine: LowThrustEngine, massKg: number):
 
 /**
  * Structural validity of a leg: finite, ordered epochs; every segment inside
- * the leg, ordered, with throttle in [0, 1]; a 'custom' segment carries a
- * finite vector. Returns the first violation as text, or null when valid.
+ * the leg, ordered and non-overlapping, with throttle in [0, 1]; a 'custom'
+ * segment carries a finite, non-zero 3-vector. Returns the first violation as
+ * text, or null when valid.
+ *
+ * Semantics the validator deliberately does NOT enforce, stated so a renderer
+ * need not guess: segments need not be contiguous — any interval of the leg
+ * not covered by a segment is an implicit coast (throttle 0), and an empty
+ * `segments` array is a pure coast leg. A 'custom' vector is a direction only;
+ * consumers normalise it. A `vector` on a 'tangential' segment is ignored.
  */
 export function validateLowThrustLeg(leg: LowThrustLeg): string | null {
   if (!Number.isFinite(leg.departJD) || !Number.isFinite(leg.arriveJD)) {
@@ -80,6 +87,9 @@ export function validateLowThrustLeg(leg: LowThrustLeg): string | null {
     const segment = leg.segments[index];
     if (!Number.isFinite(segment.startJD) || !Number.isFinite(segment.endJD)) {
       return `segment ${index}: startJD and endJD must be finite`;
+    }
+    if (segment.startJD < leg.departJD) {
+      return `segment ${index}: starts before the leg departs`;
     }
     if (segment.startJD < previousEnd) {
       return `segment ${index}: starts before the previous segment ends`;
@@ -97,6 +107,9 @@ export function validateLowThrustLeg(leg: LowThrustLeg): string | null {
       const vector = segment.vector;
       if (!vector || vector.length !== 3 || !vector.every((component) => Number.isFinite(component))) {
         return `segment ${index}: a custom direction needs a finite 3-vector`;
+      }
+      if (!(Math.hypot(vector[0], vector[1], vector[2]) > 0)) {
+        return `segment ${index}: a custom direction vector must be non-zero`;
       }
     }
     previousEnd = segment.endJD;

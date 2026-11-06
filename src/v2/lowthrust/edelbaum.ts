@@ -8,6 +8,11 @@
  *   never a path. Reference form: Edelbaum (1961), coplanar case Δi = 0, where
  *   ΔV = |V0 − V1| with V = sqrt(μ / r) the circular speed at each radius, and
  *   time of flight = ΔV / a for constant acceleration a.
+ *   Bias of that last relation: with a taken as F / m0 (initial mass), ΔV / a is
+ *   an UPPER bound on the constant-thrust time of flight; the mass-flow value is
+ *   (m0 · ve / F) · (1 − exp(−ΔV / ve)), roughly 9 % lower for Isp 3000 s and
+ *   ΔV ≈ 5.5 km/s. Solar-power throttling with heliocentric distance (listed in
+ *   types.ts) is likewise not modelled here.
  *
  * Math-layer code: flag-gated OFF (src/v2/flags.ts LOW_THRUST_ENABLED) and must
  * pass the multi-agent audit before any slice enables it. Nothing in src/v2/app

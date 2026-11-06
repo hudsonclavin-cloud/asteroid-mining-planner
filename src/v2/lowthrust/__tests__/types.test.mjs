@@ -56,3 +56,25 @@ test('validateLowThrustLeg accepts an ordered thrust/coast leg and names the fir
   assert.match(t.validateLowThrustLeg({ ...good, segments: [{ ...good.segments[0], endJD: good.arriveJD + 1 }] }), /after the leg arrives/);
   assert.match(t.validateLowThrustLeg({ ...good, departJD: NaN }), /finite/);
 });
+
+test('validateLowThrustLeg: leg-start violations are named as such, zero custom vectors are rejected, coasts are implicit', async () => {
+  const t = await loadTypes();
+  const leg = (segments) => ({ departJD: 100, arriveJD: 200, segments });
+  const seg = (startJD, endJD, extra = {}) => ({ startJD, endJD, throttle: 1, direction: 'tangential', ...extra });
+  // A first segment that starts before the leg departs is a leg-start violation, not an overlap.
+  assert.match(t.validateLowThrustLeg(leg([seg(99, 150)])), /segment 0: starts before the leg departs/);
+  // A later segment that starts before the leg departs is also named that way (it would also overlap).
+  assert.match(t.validateLowThrustLeg(leg([seg(100, 120), seg(90, 130)])), /segment 1: starts before the leg departs/);
+  // Overlap between in-range segments still reads as overlap.
+  assert.match(t.validateLowThrustLeg(leg([seg(100, 150), seg(140, 160)])), /segment 1: starts before the previous segment ends/);
+  // Custom direction: a zero vector is rejected; a non-unit vector is accepted (consumers normalise).
+  assert.match(t.validateLowThrustLeg(leg([seg(100, 150, { direction: 'custom', vector: [0, 0, 0] })])), /non-zero/);
+  assert.equal(t.validateLowThrustLeg(leg([seg(100, 150, { direction: 'custom', vector: [3, 4, 0] })])), null);
+  // A vector on a tangential segment is ignored, not an error.
+  assert.equal(t.validateLowThrustLeg(leg([seg(100, 150, { vector: [1, 0, 0] })])), null);
+  // Coast semantics: gaps, a late first start, an early last end, and no segments at all are all valid legs.
+  assert.equal(t.validateLowThrustLeg(leg([seg(100, 120), seg(150, 170)])), null);
+  assert.equal(t.validateLowThrustLeg(leg([seg(110, 150)])), null);
+  assert.equal(t.validateLowThrustLeg(leg([seg(100, 150)])), null);
+  assert.equal(t.validateLowThrustLeg(leg([])), null);
+});
