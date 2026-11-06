@@ -429,10 +429,20 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     // S19.5 tail2 F1/F2: AMBER says zero (DEC-13-3); one noun, "payload penalty".
     assert.match(pinnedText, /zero added ΔV in this model/);
     assert.match(pinnedText, /a payload penalty for this launch site and vehicle still applies/);
-    assert.match(pinnedText, /Dogleg penalty0 m\/s \(modelled; launch-geometry, AMBER\)/);
+    // 2026-11-04 live review fix 1.1: the dogleg line and the delivered-mass note must agree on
+    // what is modelled. The 0 m/s ΔV is modelled; the launch-site payload penalty is not.
+    assert.match(pinnedText, /Dogleg penalty0 m\/s ΔV \(plane-matching absorbed by launch geometry — AMBER\); the launch-site payload penalty is NOT modelled/);
+    assert.doesNotMatch(pinnedText, /0 m\/s \(modelled/);
     assert.doesNotMatch(pinnedText, /negligible/);
     assert.doesNotMatch(pinnedText, /~0/);
-    assert.match(pinnedText, /Delivered mass excludes that payload penalty; Aster does not model it\./);
+    assert.match(pinnedText, /Delivered mass excludes the launch-site payload penalty for this DLA band; Aster does not model that penalty yet\./);
+    // Guard against the contradiction itself: no AMBER sentence may call the payload penalty "modelled"
+    // while another says Aster "does not model" it.
+    const amberPenaltySentences = pinnedText.match(/[^.]*payload penalty[^.]*\./g) ?? [];
+    assert.ok(amberPenaltySentences.length >= 2, pinnedText);
+    for (const sentence of amberPenaltySentences) {
+      assert.doesNotMatch(sentence, /payload penalty[^.]*\bis modelled\b/, sentence);
+    }
     assert.doesNotMatch(pinnedText, /launch-site payload penalty named above/);
     const costMarginSentence = `Margin here is ${costMarginPercent}% of rendezvous and departure \u0394V; the \u0394V stack below applies ${stackMarginPercent}% to the full stack.`;
     const stackMarginSentence = `Margin here is ${stackMarginPercent}% of the full stack; the cost card applies ${costMarginPercent}% to rendezvous and departure \u0394V only.`;
