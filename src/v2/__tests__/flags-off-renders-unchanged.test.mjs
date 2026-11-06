@@ -25,16 +25,34 @@ const repoRoot = path.resolve(__dirname, '..', '..', '..');
 const v2Root = path.join(repoRoot, 'src', 'v2');
 const tempOutDir = path.join(repoRoot, '.tmp-tests', 'v2-flags-off-guard');
 
-const SCAFFOLD_PREFIXES = ['flags', 'lowthrust/', 'livedata/'];
-const SCAFFOLD_OWN_DIRS = ['lowthrust', 'livedata', '__tests__'];
+// The scaffold: one module file and two directories, all relative to src/v2.
+const SCAFFOLD_MODULES = ['flags'];
+const SCAFFOLD_DIRS = ['lowthrust', 'livedata'];
+// Every extension Vite resolves by default; tests/v2-architecture.test.mjs walks the same set.
+const SOURCE_FILE = /\.(?:ts|tsx|mts|cts|js|mjs|cjs|jsx)$/;
+const TEST_FILE = /\.test\.(?:mjs|ts|js)$/;
 
-function walk(dir, out = []) {
+function walk(dir, out = [], filter = SOURCE_FILE) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, out);
-    else if (/\.(ts|mjs|js)$/.test(entry.name)) out.push(full);
+    if (entry.isDirectory()) walk(full, out, filter);
+    else if (filter.test(entry.name)) out.push(full);
   }
   return out;
+}
+
+const stripExtension = (p) => p.replace(/\.(?:js|ts|mjs|mts|cjs|cts|tsx|jsx)$/, '');
+
+/** True when a src/v2-relative, extension-less path is the scaffold module or lies inside a scaffold dir. */
+function isScaffoldPath(rel) {
+  if (SCAFFOLD_MODULES.includes(rel)) return true;
+  return SCAFFOLD_DIRS.some((dir) => rel === dir || rel.startsWith(`${dir}/`));
+}
+
+/** A glob is an offender unless its literal root is provably outside every scaffold path. */
+function globReachesScaffold(rel) {
+  const root = rel.split('*')[0];
+  return [...SCAFFOLD_MODULES, ...SCAFFOLD_DIRS].some((p) => p.startsWith(root) || root.startsWith(`${p}/`) || root === p);
 }
 
 test('every feature flag defaults to OFF', async () => {
@@ -70,24 +88,47 @@ function resolveSpecifier(file, spec) {
 
 test('no production module under src/v2 imports a scaffold module', () => {
   const offenders = [];
+  // Every way Vite can pull a module in from source text. Specifiers in template literals cannot be
+  // resolved statically, so they are offenders outright (none exist under src/v2 today).
+  const forms = [
+    ['from', /\bfrom\s+['"]([^'"]+)['"]/g],                                       // import … from / export … from
+    ['import', /\bimport\s+['"]([^'"]+)['"]/g],                                     // side-effect import 'x'
+    ['import()', /\bimport\s*\(\s*(?:\/\*[\s\S]*?\*\/\s*)?['"]([^'"]+)['"]/g],   // dynamic import, optional leading comment
+    ['new URL', /\bnew\s+URL\s*\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url/g],  // new URL('x', import.meta.url), workers and assets
+  ];
+  const globForm = /\bimport\.meta\.glob\s*\(\s*(?:\[\s*)?['"]([^'"]+)['"]/g;
+  const templateForm = /\bimport\s*\(\s*`|\bimport\.meta\.glob\s*\(\s*(?:\[\s*)?`/g;
   for (const file of walk(v2Root)) {
     const rel = path.relative(v2Root, file).split(path.sep).join('/');
     const top = rel.split('/')[0];
-    if (SCAFFOLD_OWN_DIRS.includes(top) || rel === 'flags.ts') continue;
-    if (/\.test\.mjs$/.test(rel)) continue;
+    if (SCAFFOLD_DIRS.includes(top) || stripExtension(rel) === 'flags') continue; // the scaffold itself
+    if (TEST_FILE.test(rel)) continue;                                              // test files, wherever they live
     const source = fs.readFileSync(file, 'utf8');
-    // Three import forms: `... from 'x'` (static import / re-export), `import('x')` (dynamic),
-    // and the bare side-effect form `import 'x'` that has no `from` clause.
-    const importPattern = /from\s+['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|\bimport\s+['"]([^'"]+)['"]/g;
-    for (const match of source.matchAll(importPattern)) {
-      const spec = (match[1] ?? match[2] ?? match[3] ?? '').replace(/\.js$/, '');
-      const resolved = resolveSpecifier(file, spec);
-      if (SCAFFOLD_PREFIXES.some((prefix) => resolved === prefix || resolved.startsWith(prefix))) {
-        offenders.push(`${rel} -> ${spec}`);
+    for (const [label, pattern] of forms) {
+      for (const match of source.matchAll(pattern)) {
+        const spec = match[1];
+        const resolved = stripExtension(resolveSpecifier(file, spec));
+        if (isScaffoldPath(resolved)) offenders.push(`${rel} -> ${label} ${spec}`);
       }
     }
+    for (const match of source.matchAll(globForm)) {
+      const resolved = resolveSpecifier(file, match[1]);
+      if (globReachesScaffold(resolved)) offenders.push(`${rel} -> import.meta.glob ${match[1]}`);
+    }
+    if (templateForm.test(source)) offenders.push(`${rel} -> template-literal import specifier (unresolvable)`);
   }
   assert.deepEqual(offenders, [], `scaffold modules must stay unwired: ${offenders.join(', ')}`);
+});
+
+test('no HTML entry or vite input references a scaffold module', () => {
+  // The wall above is rooted at src/v2; a page could still load a scaffold through an HTML
+  // <script src> or a vite rollupOptions.input entry, so scan those too.
+  const htmlFiles = [path.join(repoRoot, 'index.html'), ...walk(path.join(repoRoot, 'v2'), [], /\.html$/)];
+  const files = [...htmlFiles, path.join(repoRoot, 'vite.config.ts')].filter((f) => fs.existsSync(f));
+  assert.ok(files.length >= 3, `expected the HTML entries and vite.config.ts, found ${files.length}`);
+  const reference = /(?:src\/v2|@\/v2)\/(?:flags\b|lowthrust\b|livedata\b)/;
+  const offenders = files.filter((f) => reference.test(fs.readFileSync(f, 'utf8'))).map((f) => path.relative(repoRoot, f));
+  assert.deepEqual(offenders, [], `entries must not reference scaffold modules: ${offenders.join(', ')}`);
 });
 
 test('the 2026-11-04 live-review wording is present verbatim in production source', () => {
