@@ -100,7 +100,7 @@ test('the 2026-11-04 live-review wording is present verbatim in production sourc
     [porkchop, '\\u00B7 launch geometry'],
     [porkchop, 'C3 used for payload lookup:'],
     [provenance, 'may overestimate actual capability by up to 3.11% (OBSERVED max).'],
-    [compare, 'a constant read from the screening cache (the grids themselves are recomputed live, see badge below).'],
+    [compare, 'a constant read from the screening cache (the grids themselves are recomputed live in this browser; see the segmentation-mode line that follows).'],
   ];
   for (const [source, needle] of expected) {
     assert.ok(source.includes(needle), `missing: ${needle}`);
