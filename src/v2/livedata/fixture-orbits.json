@@ -1,0 +1,68 @@
+{
+  "source": "tests/fixtures/v2/nea-catalog-slice9.json (JPL SBDB sb-group=neo; anchorSource horizons-reanchor)",
+  "note": "Three records copied verbatim from the committed catalog fixture. The catalog records no fetch date; asOf is the element epoch (epochTdbJd 2461161.5 = 2026-05-01 TDB), stated as such.",
+  "asOf": "2026-05-01",
+  "frame": "ICRF/J2000",
+  "timeScale": "TDB",
+  "units": {
+    "anchorPosition": "km",
+    "anchorVelocity": "km/s",
+    "anchorTime": "TDB JD",
+    "semiMajorAxis": "km",
+    "estimatedRadius": "m",
+    "angles": "rad",
+    "dataArc": "days",
+    "sigmaA": "au",
+    "sigmaE": "unitless"
+  },
+  "bodies": {
+    "433": {
+      "designation": "433",
+      "name": "433 Eros (A898 PA)",
+      "spkId": 20000433,
+      "elementsFrame": "FRAME_HELIO_J2000_ECLIPTIC",
+      "anchorSource": "horizons-reanchor",
+      "elements": {
+        "aKm": 218150587.6896261,
+        "e": 0.22288929294611265,
+        "iRad": 0.18899384901473204,
+        "omRad": 5.310478612736303,
+        "wRad": 3.1226809007487173,
+        "maRad": 0.710056713354084,
+        "epochTdbJd": 2461161.5
+      }
+    },
+    "99942": {
+      "designation": "99942",
+      "name": "99942 Apophis (2004 MN4)",
+      "spkId": 20099942,
+      "elementsFrame": "FRAME_HELIO_J2000_ECLIPTIC",
+      "anchorSource": "horizons-reanchor",
+      "elements": {
+        "aKm": 137983836.49472314,
+        "e": 0.19114292963930402,
+        "iRad": 0.0583104793547796,
+        "omRad": 3.558669667479859,
+        "wRad": 2.210936757854796,
+        "maRad": 2.3027310118528863,
+        "epochTdbJd": 2461161.5
+      }
+    },
+    "101955": {
+      "designation": "101955",
+      "name": "101955 Bennu (1999 RQ36)",
+      "spkId": 20101955,
+      "elementsFrame": "FRAME_HELIO_J2000_ECLIPTIC",
+      "anchorSource": "horizons-reanchor",
+      "elements": {
+        "aKm": 168444415.86363044,
+        "e": 0.20369784790713552,
+        "iRad": 0.10529366531720277,
+        "omRad": 0.03433468367554138,
+        "wRad": 1.1591643158154996,
+        "maRad": 0.7029021135002829,
+        "epochTdbJd": 2461161.5
+      }
+    }
+  }
+}
