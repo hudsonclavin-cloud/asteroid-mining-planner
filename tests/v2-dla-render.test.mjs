@@ -438,8 +438,8 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.doesNotMatch(pinnedText, /negligible/);
     assert.doesNotMatch(pinnedText, /~0/);
     assert.match(pinnedText, /Delivered mass excludes the launch-site payload penalty for this DLA band; Aster does not model that penalty yet\./);
-    // Guard against the contradiction itself: no AMBER sentence may call the payload penalty "modelled"
-    // while another says Aster "does not model" it.
+    // The direct doesNotMatch above is what catches the original contradiction ('0 m/s (modelled; …)').
+    // This loop guards the explicit phrase only: no AMBER "payload penalty" sentence may say it "is modelled".
     const amberPenaltySentences = pinnedText.match(/[^.]*payload penalty[^.]*\./g) ?? [];
     assert.ok(amberPenaltySentences.length >= 2, pinnedText);
     for (const sentence of amberPenaltySentences) {
