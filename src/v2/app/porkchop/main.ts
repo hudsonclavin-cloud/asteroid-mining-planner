@@ -865,7 +865,7 @@ function PorkchopDedicatedPage() {
                   null,
                   isNearZeroC3Degenerate(costCardState.c3) && hideNearZeroC3
                     ? nearZeroC3HiddenNotice(1)
-                    : `Payload at C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')}`,
+                    : `C3 used for payload lookup: ${formatC3ValueText(costCardState.c3, 'km²/s²')} (pinned cell)`,
                   NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3 }),
                 ),
                 h(
