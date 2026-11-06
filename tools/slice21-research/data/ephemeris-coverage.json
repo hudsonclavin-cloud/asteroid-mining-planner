@@ -1,6 +1,6 @@
 {
-  "generatedAtUtc": "2026-11-06T19:44:19.379Z",
-  "headCommit": "3faae3791ea4725bd130a1642b200d7f4e015a51",
+  "generatedAtUtc": "2026-11-06T22:08:40.200Z",
+  "headCommit": "4c536a70a2e9495c3e80d242a3e7b08c5b3c352e",
   "fixture": {
     "path": "src/v2/data/horizons-inner-solar-system-2026-2040.json",
     "onDiskBytes": 7214102,
@@ -98,7 +98,8 @@
     "endDateUtcPageConvention": "2040-12-30",
     "dateConventionNote": "A JD ending in .5 is TDB midnight of *DateTdb. The page convention (jdTdbToUtcDateString in app/porkchop/main.ts) subtracts TDB-UTC = 69.184 s, which lands that midnight on the previous UTC calendar day.",
     "spanDays": 5478,
-    "bytesPerDay": 1316.9225994888645
+    "bytesPerDay": 1316.9225994888645,
+    "bytesPerDayBasis": "onDiskBytes / spanDays (JD span, 5478 days). The per-sample rate, onDiskBytes / 5479 samples per body, is 0.02% lower; the extension estimates use the per-day figure."
   },
   "grid": {
     "departureStartUtc": "2026-01-01",

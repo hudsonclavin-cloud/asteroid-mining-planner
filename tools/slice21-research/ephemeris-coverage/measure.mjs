@@ -3,15 +3,18 @@
  * Slice 21 pre-research — ephemeris coverage boundary (measurement, not a feature).
  *
  * Imports the PRODUCTION loader (ingestSlice2Fixture, src/v2/boundary/horizons.ts) and the
- * production grid-span constants; nothing is reimplemented. Reports, per body, the series
+ * production grid-span constants. The page's private TDB/UTC date helpers and the worker's
+ * private linspace are copied here because they are not exported; each copy's comment names
+ * its original so the two can be diffed by eye. Reports, per body, the series
  * start/end (JD TDB and calendar date), the body count, bytes on disk and in the committed
  * blob, and — for the porkchop grid — the first departure column whose arrival epoch falls
  * past coverage. The grid is body-independent (GRID_PARAMS in src/v2/app/porkchop/main.ts),
  * so the column is the same for 433, 99942 and 101955; the script reports each explicitly.
  *
- * Writes tools/slice21-research/data/ephemeris-coverage.json by side-file + atomic rename.
- * Repo read-only otherwise; compiles into .tmp-tests/ (gitignored). Run from the repo root:
- *   node tools/slice21-research/ephemeris-coverage/measure.mjs
+ * Writes tools/slice21-research/data/ephemeris-coverage.json (a TRACKED file; a re-run changes
+ * only generatedAtUtc and headCommit when the fixture is unchanged) by side-file + atomic rename,
+ * or the path given with `--out <path>`. Compiles into .tmp-tests/ (gitignored). Run from the repo root:
+ *   node tools/slice21-research/ephemeris-coverage/measure.mjs [--out <path>]
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -60,8 +63,15 @@ const { PORKCHOP_DEPARTURE_START_UTC, PORKCHOP_DEPARTURE_END_UTC } = await impor
 // GRID_PARAMS lives in the porkchop PAGE module, which boots a DOM on import; read its literal
 // numbers from source instead of importing it, and record that this was a source read.
 const mainSource = fs.readFileSync(path.join(repoRoot, MAIN_REL), 'utf8');
-const gridBlock = mainSource.match(/export const GRID_PARAMS = \{([\s\S]*?)\};/);
+// The literal ends `} as const;` in main.ts; match that terminator exactly and refuse a block that
+// carries keys other than the six GRID_PARAMS fields (a lazy `};` match would run on past it).
+const gridBlock = mainSource.match(/export const GRID_PARAMS = \{([\s\S]*?)\}\s*(?:as const)?;/);
 if (!gridBlock) throw new Error(`GRID_PARAMS not found in ${MAIN_REL}`);
+const gridKeys = [...gridBlock[1].matchAll(/^\s*([A-Za-z_]\w*)\s*:/gm)].map((k) => k[1]).sort();
+const expectedGridKeys = ['nDep', 'nTof', 'tofMaxDays', 'tofMinDays', 'depStartJD', 'depEndJD'].sort();
+if (JSON.stringify(gridKeys) !== JSON.stringify(expectedGridKeys)) {
+  throw new Error(`GRID_PARAMS block has unexpected keys: ${gridKeys.join(', ')} (expected ${expectedGridKeys.join(', ')})`);
+}
 const gridNumber = (key) => {
   const m = gridBlock[1].match(new RegExp(`${key}:\\s*([0-9.]+)`));
   if (!m) throw new Error(`GRID_PARAMS.${key} not found`);
@@ -78,6 +88,8 @@ const grid = {
 };
 
 // Same conventions as the page: UTC midnight -> JD TDB with TDB-UTC = 69.184 s; JD TDB -> calendar date.
+// COPIES of the non-exported originals `utcMidnightToJdTdb` and `jdTdbToUtcDateString` in
+// src/v2/app/porkchop/main.ts; keep them byte-equivalent in behaviour.
 const UNIX_TO_J2000_SECONDS = 946_728_000;
 const TDB_MINUS_UTC_SECONDS = 69.184;
 const utcMidnightToJdTdb = (utcDate) =>
@@ -182,13 +194,15 @@ const result = {
     dateConventionNote: 'A JD ending in .5 is TDB midnight of *DateTdb. The page convention (jdTdbToUtcDateString in app/porkchop/main.ts) subtracts TDB-UTC = 69.184 s, which lands that midnight on the previous UTC calendar day.',
     spanDays,
     bytesPerDay,
+    bytesPerDayBasis: 'onDiskBytes / spanDays (JD span, 5478 days). The per-sample rate, onDiskBytes / 5479 samples per body, is 0.02% lower; the extension estimates use the per-day figure.',
   },
   grid,
   gridCoverageByBody: bodiesReport,
   extensionEstimates: [extensionTo('2044-12-31'), extensionTo('2049-12-31'), extensionTo('2050-12-31'), extensionTo('2052-01-01')],
 };
 
-const outPath = path.join(repoRoot, OUT_REL);
+const outFlag = process.argv.indexOf('--out');
+const outPath = outFlag > -1 && process.argv[outFlag + 1] ? path.resolve(process.argv[outFlag + 1]) : path.join(repoRoot, OUT_REL);
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 const sidePath = `${outPath}.tmp-${process.pid}`;
 fs.writeFileSync(sidePath, `${JSON.stringify(result, null, 2)}\n`);
