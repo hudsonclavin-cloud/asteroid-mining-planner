@@ -15,7 +15,11 @@
  *     since J2000) with the repo's own unit helpers. The AU value is IAU 2012
  *     (149 597 870 700 m) and is stated here because src/v2/core does not export one.
  *   - `asOf` is the element epoch SBDB reports, rendered as a TDB calendar date.
- *   - Timeout 10 s via AbortController; every failure is an OrbitSourceError.
+ *   - Timeout 10 s via AbortController; every failure is an OrbitSourceError (the fetch
+ *     response, the JSON, each row and each cell are validated; any other throw inside the
+ *     parser is re-wrapped as 'malformed').
+ *   - The row whose `pdes` equals the requested designation is used; a payload with rows for
+ *     other bodies only is 'not-found', never silently another body's elements.
  *   - Tests use an injected fetch; no network is touched in tests.
  */
 import { jdTdbToSecondsSinceJ2000, SECONDS_PER_DAY } from '../core/units.js';
@@ -58,9 +62,18 @@ export function buildSbdbQueryUrl(designation: string, baseUrl: string = SBDB_QU
 
 function parseNumber(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined) return null;
-  const parsed = typeof value === 'number' ? value : Number(String(value).trim());
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  // SBDB delivers numbers as strings; an empty or whitespace cell is a missing value, not 0
+  // (Number('') === 0). Same guard as tools/slice7-research/fetch-sbdb.mjs.
+  const text = String(value).trim();
+  if (text === '') return null;
+  const parsed = Number(text);
   return Number.isFinite(parsed) ? parsed : null;
 }
+
+/** Epochs outside this JD window (years ~763 to ~3501) cannot be a real SBDB osculating epoch. */
+const EPOCH_JD_MIN = 2_000_000;
+const EPOCH_JD_MAX = 3_000_000;
 
 function tdbJdToIsoDate(jdTdb: number): string {
   // Calendar date of a TDB Julian Date; TDB−UTC (~69 s) is ignored for a date label.
@@ -80,10 +93,29 @@ export function parseSbdbQueryPayload(payload: unknown, designation: string): So
   if (data.length === 0) {
     throw new OrbitSourceError('not-found', SBDB_ORBIT_SOURCE_ID, designation, 'no matching body');
   }
-  const row = data[0];
+  const pdesIndex = fields.indexOf('pdes');
+  if (pdesIndex < 0) {
+    throw new OrbitSourceError('malformed', SBDB_ORBIT_SOURCE_ID, designation, 'payload lacks a pdes column');
+  }
+  const wanted = designation.trim();
+  let row: readonly (string | number | null)[] | undefined;
+  for (const candidate of data) {
+    if (!Array.isArray(candidate)) {
+      throw new OrbitSourceError('malformed', SBDB_ORBIT_SOURCE_ID, designation, 'a data row is not an array');
+    }
+    const pdes = candidate[pdesIndex];
+    if (pdes !== null && pdes !== undefined && String(pdes).trim() === wanted) {
+      row = candidate;
+      break;
+    }
+  }
+  if (row === undefined) {
+    throw new OrbitSourceError('not-found', SBDB_ORBIT_SOURCE_ID, designation, `no row with pdes = ${wanted}`);
+  }
+  const selected = row;
   const column = (name: (typeof SBDB_FIELDS)[number]): number | null => {
     const index = fields.indexOf(name);
-    return index < 0 ? null : parseNumber(row[index] ?? null);
+    return index < 0 ? null : parseNumber(selected[index] ?? null);
   };
   const aAu = column('a');
   const e = column('e');
@@ -97,6 +129,9 @@ export function parseSbdbQueryPayload(payload: unknown, designation: string): So
     if (value === null) {
       throw new OrbitSourceError('malformed', SBDB_ORBIT_SOURCE_ID, designation, `missing or non-numeric ${key}`);
     }
+  }
+  if ((epochJd as number) < EPOCH_JD_MIN || (epochJd as number) > EPOCH_JD_MAX) {
+    throw new OrbitSourceError('malformed', SBDB_ORBIT_SOURCE_ID, designation, `epoch JD ${epochJd} is outside ${EPOCH_JD_MIN}..${EPOCH_JD_MAX}`);
   }
   return {
     aM: (aAu as number) * ASTRONOMICAL_UNIT_M,
@@ -146,6 +181,9 @@ export class SbdbOrbitSource implements OrbitSource {
         throw new OrbitSourceError(aborted ? 'timeout' : 'network', this.id, designation,
           aborted ? `no response within ${this.timeoutMs} ms` : `fetch failed: ${describe(error)}`);
       }
+      if (!response || typeof response !== 'object') {
+        throw new OrbitSourceError('network', this.id, designation, 'fetch resolved without a response object');
+      }
       if (!response.ok) {
         throw new OrbitSourceError('network', this.id, designation, `HTTP ${response.status}`);
       }
@@ -155,7 +193,12 @@ export class SbdbOrbitSource implements OrbitSource {
       } catch (error) {
         throw new OrbitSourceError('malformed', this.id, designation, `invalid JSON: ${describe(error)}`);
       }
-      return parseSbdbQueryPayload(payload, designation);
+      try {
+        return parseSbdbQueryPayload(payload, designation);
+      } catch (error) {
+        if (error instanceof OrbitSourceError) throw error;
+        throw new OrbitSourceError('malformed', this.id, designation, `unparseable payload: ${describe(error)}`);
+      }
     } finally {
       clearTimeout(timer);
     }

@@ -147,3 +147,67 @@ test('SBDB source: parseSbdbQueryPayload is pure and exported', async () => {
   assert.equal(parsed.e, 0.2228);
   assert.throws(() => sbdbSource.parseSbdbQueryPayload(null, '433'), /payload/);
 });
+
+test('SBDB source: every malformed shape is a typed OrbitSourceError, never a bare throw', async () => {
+  const { sbdbSource, adapter } = await loadModules();
+  const fields = sbdbPayloadFor433.fields;
+  const row = sbdbPayloadFor433.data[0];
+  const withCell = (name, value) => {
+    const copy = row.slice();
+    copy[fields.indexOf(name)] = value;
+    return { fields, data: [copy] };
+  };
+  const kindOf = (payload) => {
+    try {
+      sbdbSource.parseSbdbQueryPayload(payload, '433');
+      return 'parsed';
+    } catch (error) {
+      return error instanceof adapter.OrbitSourceError ? error.kind : `BARE:${error.name}`;
+    }
+  };
+  // Empty and whitespace cells are missing values, not 0 (Number('') === 0 would have parsed e = 0).
+  assert.equal(kindOf(withCell('e', '')), 'malformed');
+  assert.equal(kindOf(withCell('a', '   ')), 'malformed');
+  assert.equal(kindOf(withCell('i', 'abc')), 'malformed');
+  // A row that is not an array.
+  assert.equal(kindOf({ fields, data: [null] }), 'malformed');
+  assert.equal(kindOf({ fields, data: [42] }), 'malformed');
+  // An epoch no real SBDB record can carry (would otherwise reach Date#toISOString and RangeError).
+  assert.equal(kindOf(withCell('epoch', '1e20')), 'malformed');
+  assert.equal(kindOf(withCell('epoch', '-5')), 'malformed');
+  // No pdes column at all.
+  const noPdes = { fields: fields.filter((f) => f !== 'pdes'), data: [row.filter((_, i) => fields[i] !== 'pdes')] };
+  assert.equal(kindOf(noPdes), 'malformed');
+  // The control row still parses.
+  assert.equal(kindOf(sbdbPayloadFor433), 'parsed');
+});
+
+test('SBDB source: the row is selected by pdes, so another body\'s row is never returned as the requested one', async () => {
+  const { sbdbSource, adapter } = await loadModules();
+  const fields = sbdbPayloadFor433.fields;
+  const eros = sbdbPayloadFor433.data[0];
+  const apophis = ['99942', '99942 Apophis (2004 MN4)', '2461000.5', '0.1911', '0.9226', '3.339', '203.96', '126.68', '100.00'];
+  // Apophis first, Eros second: the parser must pick Eros for '433'.
+  const picked = sbdbSource.parseSbdbQueryPayload({ fields, data: [apophis, eros] }, '433');
+  assert.equal(picked.e, 0.2228);
+  // A payload containing only another body is not-found, not silently Apophis.
+  await assert.rejects(
+    async () => sbdbSource.parseSbdbQueryPayload({ fields, data: [apophis] }, '433'),
+    (error) => error instanceof adapter.OrbitSourceError && error.kind === 'not-found',
+  );
+  // Whitespace around pdes is tolerated.
+  const padded = eros.slice();
+  padded[fields.indexOf('pdes')] = ' 433 ';
+  assert.equal(sbdbSource.parseSbdbQueryPayload({ fields, data: [padded] }, '433').e, 0.2228);
+});
+
+test('SBDB source: a fetch that resolves to nothing is a typed network error', async () => {
+  const { sbdbSource, adapter } = await loadModules();
+  for (const value of [undefined, null]) {
+    const source = new sbdbSource.SbdbOrbitSource({ fetchImpl: async () => value });
+    await assert.rejects(
+      () => source.fetchElements('433'),
+      (error) => error instanceof adapter.OrbitSourceError && error.kind === 'network',
+    );
+  }
+});
