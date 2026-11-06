@@ -157,3 +157,28 @@ low-thrust Edelbaum (keep the types) → the return screening cache (keep the su
 
 ## §9. Amendments and corrections
 (Append only. Never edit above this line.)
+
+### §9.1 — 2026-11-06 — execution agent: pre-lock corrections from the adversarial review (NOT a lock; Hudson rules at lock)
+Source: a read-only, two-refuter adversarial review of this branch run by the execution agent after Phase 4 (83 agents;
+full result in the dispatch report of 2026-11-06). Each line below corrects or completes a line above §9 without editing it.
+- §2 "see §8 for the commit": the ephemeris-coverage measurement is commit `95d06e1` (JSON headCommit `3faae37`, the Phase 1
+  tip at generation time), amended by `73d9758` (regex terminator, `--out`, documented conventions; measurements unchanged).
+- §3 DEC-21-4 vs §4 OQ-21-4: DEC-21-4's "committed fixture source is the offline default" is the PROPOSED default for the
+  second half of OQ-21-4, not a ruling. OQ-21-4 stays OPEN on both halves (endpoint shape, offline rule); Hudson's call.
+- §3 DEC-21-3 vs §4 OQ-21-2: Edelbaum is the scaffolded default (flag OFF), not a pre-selection; if Hudson rules Sims-Flanagan
+  or direct integration at lock, `src/v2/lowthrust/edelbaum.ts` is retained as a screening cross-check or removed, Hudson's call.
+- §4 OQ-21-1: the measurable half is answered by the JSON above (series ends JD 2466519.5; column 143 of 200 reaches past
+  coverage at max TOF; latest grid arrival 2044-12-31); the open half is the end date and is OQ-20-3's question. The "GitHub
+  Pages size budget" named there has no governing definition in any doc; Hudson may split or reword the OQ at lock.
+- §4 OQ-21-3: compare URLs accept bare designations and the `asteroid-NNNN` slug alike (`src/v2/porkchop/compare-url.ts`);
+  the slug is rendered in the porkchop Grid section, the porkchop `?body=` link, and compare's table rows.
+- §8 COPY-VERSION: a missing marker is an AGENTS §2.2 tripwire. The agent proceeded because Hudson authored the dispatch
+  directly; that is a waiver the agent cannot grant itself. Hudson to ratify or reject it here at lock.
+- §8 math-layer STOP gate (AGENTS §2): `5ad2f22` committed `edelbaum.ts` before any oracle existed, a sequencing violation
+  by the agent. `d7002bf` adds an independent-method oracle (RK4 tangential-thrust propagation converging to the closed form:
+  relative error 9.6e-3 → 1.0e-3 → 4.6e-5 as a/g falls 1.7e-2 → 5.1e-3 → 1.7e-3). A published reference value is still
+  owed to the multi-agent audit before LOW_THRUST_ENABLED is ever true; the dispatch's own 3.2 test spec asked for the
+  hand-written closed form only, which `5ad2f22` met.
+- §8 Phase 3 commits (for Hudson to cite at lock): `95d06e1` measurement; `5ad2f22` lowthrust; `840e937` livedata;
+  `4c536a7` flags-off guard. Review follow-ups: `e2d8e55` compare note, `24d3f19` porkchop comments, `73d9758` research tool,
+  `d52e548` lowthrust validator/header, `d7002bf` oracle test, `b60113c` livedata hardening, `f4d3c00` guard bypass routes.
