@@ -73,10 +73,16 @@ test('Edelbaum dV -> 0 as the radii converge, and is symmetric in direction', as
   }
   assert.equal(edelbaum.edelbaumCoplanarDeltaVMps(mu, r0, r0), 0);
   // First-order: dV ~= v0 * eps / 2 for r1 = r0 * (1 + eps). At eps = 1e-6 and v0 ~= 29.8 km/s
-  // that is ~0.0149 m/s, so bound by the linearised value with a 2x margin rather than a magic number.
+  // that is ~0.0149 m/s. Pin the linearised value itself (coefficient 1/2 included) to 0.1 %, so a
+  // factor-of-2, missing-sqrt, or sign error in the closed form cannot pass; the second-order term
+  // at eps = 1e-6 is ~3e-7 relative, far inside that margin.
   const v0 = edelbaum.circularSpeedMps(mu, r0);
   const epsilon = 1e-6;
-  assert.ok(previous < v0 * epsilon, `near-identical radii should give near-zero dV (< v0*eps = ${v0 * epsilon}), got ${previous}`);
+  const linearised = (v0 * epsilon) / 2;
+  assert.ok(
+    Math.abs(previous - linearised) < linearised * 1e-3,
+    `near-identical radii: dV should be ~v0*eps/2 = ${linearised}, got ${previous}`,
+  );
   assert.equal(
     edelbaum.edelbaumCoplanarDeltaVMps(mu, r0, 1.5 * r0),
     edelbaum.edelbaumCoplanarDeltaVMps(mu, 1.5 * r0, r0),
