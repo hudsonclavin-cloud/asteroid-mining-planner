@@ -828,7 +828,16 @@ function PorkchopDedicatedPage() {
                       costCardState.invalidInput ? 'invalid cell data' : `delivered to ${pageState.bodyLabel}`,
                       costCardState.band === null
                         ? null
-                        : FeasibilityBadge({ label: costCardState.band, tone: costCardState.band }),
+                        : FeasibilityBadge({
+                            // 2026-11-04 live review fix 1.2: the badge is the DLA launch-geometry
+                            // band, not overall feasibility. When no delivered mass can be stated
+                            // (beyond the published curve), say so in the badge itself.
+                            label:
+                              costCardState.deliveredKg === null
+                                ? `${costCardState.band} \u00B7 launch geometry`
+                                : costCardState.band,
+                            tone: costCardState.band,
+                          }),
                     ),
                     costCardState.band === 'AMBER'
                       ? h(

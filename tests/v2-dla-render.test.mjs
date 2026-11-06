@@ -288,7 +288,9 @@ function gridCells(gridParams, M) {
         branches: [{
           branch: 'single',
           converged: true,
-          c3: 1,
+          // The GREEN cell (depIndex 0, tofIndex 0) sits past every published payload curve so the
+          // card renders its "no delivered mass" state (2026-11-04 live review fix 1.2).
+          c3: depIndex === 0 && tofIndex === 0 ? 10_000 : 1,
           vInfDep: 1,
           vInfArr: 2,
           dlaDeg: depIndex === 0 && tofIndex > 0 ? 40 : depIndex === 0 ? 0 : 80,
@@ -456,6 +458,9 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const greenText = document.app.textContent;
     assert.match(greenText, /GREEN/);
     assert.doesNotMatch(greenText, /Vehicle payload at this C3/);
+    // Fix 1.2: with delivered mass unavailable, the badge names the launch-geometry band.
+    assert.match(greenText, /No published payload data past this C3 \u2014 not extrapolating\./);
+    assert.match(greenText, /GREEN \u00B7 launch geometry/);
     canvas.dispatchEvent({ type: 'click', clientX: 759, clientY: 419 });
     await flushEffects();
     const redText = document.app.textContent;
