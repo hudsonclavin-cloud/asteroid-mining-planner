@@ -153,6 +153,17 @@ Facts not already stated above; included only where absent upstream.
 
 ---
 
+§2.1 amendment (2026-11-09, Hudson): agent sessions and parallelism.
+1. A prompt that asks for sub-agents or a swarm must state a maximum number of agents and must be read-only. A
+   sub-agent spawns further agents only if that prompt states a separate cap for it. A swarm prompt with no stated
+   cap means zero: the agent asks before spawning anything.
+2. A session that has been given a swarm or audit prompt never executes a dispatch that edits files. Code
+   dispatches run in a fresh session.
+3. Every dispatch an agent executes carries the line "Reviewed by Nova: <date>". Without it, the agent runs Phase 0
+   read-only, reports what it found, and stops before changing anything.
+(Origin: the 2026-11-06 scaffold session inherited an uncapped swarm prompt, spawned 83 agents for a review the
+dispatch did not ask for, and executed a dispatch written without the timeline.)
+
 ## §3. Claude Code role
 
 Claude Code operates directly in the canonical repo (path in STATUS.md §Identity).
