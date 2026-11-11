@@ -246,6 +246,7 @@ test('W3b compare exposes delivered-mass anchors, NASA contract context, and the
   assert.match(badgeText, /New Glenn caveat/);
   assert.match(badgeText, /steep final published-anchor segment/);
   assert.match(badgeText, /Computed live in this browser .*live grids recomputed for this selection/);
+  assert.ok(badgeText.includes('Feasibility boundary \u2014 25.0 km\u00B2/s\u00B2, a constant read from the screening cache (the grids themselves are recomputed live in this browser; see the segmentation-mode line that follows).'), badgeText);
   assert.doesNotMatch(badgeText, /cached grids/);
 });
 

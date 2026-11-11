@@ -893,7 +893,7 @@ function MethodBadge(props: {
   );
   if (echo) {
     lines.push(
-      `Feasibility boundary — ${formatC3WithUnits(echo.absoluteKm2S2)}, a constant read from the screening cache (the grids themselves are recomputed live, see badge below).`,
+      `Feasibility boundary — ${formatC3WithUnits(echo.absoluteKm2S2)}, a constant read from the screening cache (the grids themselves are recomputed live in this browser; see the segmentation-mode line that follows).`,
       // S-S17-FRONTB-BATCH-2026-08-11-A (D2): the badge states the active
       // mode, so it also discloses that switching recomputes.
       `Segmentation mode — ${
