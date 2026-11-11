@@ -200,6 +200,7 @@ test('W3a compare flags an Apophis window arriving after support without changin
     text,
     /This window arrives 2029-04-13, after 2028-09-12, the last date Aster's orbit for Apophis is supported\. Not certified; ranking unchanged\./,
   );
+  assert.doesNotMatch(text, /asteroid-[0-9A-Z]/);
   assert.deepEqual(rows, before);
   assert.deepEqual(rows.map((row) => row.bodyId), rankingBefore);
 });

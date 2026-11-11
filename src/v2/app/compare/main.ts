@@ -645,7 +645,6 @@ function renderRefusalRow(
   return h('tr', { key: result.bodyId, style: 'background:rgba(148,163,184,0.05);' }, [
     h('td', { style: CELL_STYLE }, [
       h('strong', null, label),
-      h('span', { style: NOTE_STYLE }, result.bodyId),
       renderDominanceChip(dominance),
     ]),
     renderTierCell(tier),
@@ -781,7 +780,6 @@ function renderOkRow(
   return h('tr', { key: result.bodyId }, [
     h('td', { style: CELL_STYLE }, [
       h('strong', null, label),
-      h('span', { style: NOTE_STYLE }, result.bodyId),
       renderDominanceChip(dominance),
       h(
         'button',

@@ -426,6 +426,7 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     await flushEffects();
 
     const pinnedText = document.app.textContent;
+    assert.doesNotMatch(pinnedText, /asteroid-[0-9A-Z]/);
     assert.match(pinnedText, /Mission cost/);
     assert.match(pinnedText, /AMBER|Raised inclination/);
     // S19.5 tail2 F1/F2: AMBER says zero (DEC-13-3); one noun, "payload penalty".

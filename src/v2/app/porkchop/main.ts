@@ -633,7 +633,6 @@ function PorkchopDedicatedPage() {
       { class: 'porkchop-sidebar', style: SIDEBAR_STYLE },
       h('div', { style: 'font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8da2c0;margin-bottom:10px;' }, 'Porkchop Analysis'),
       h('div', { style: 'font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;' }, pageState.bodyLabel),
-      h('div', { style: 'font-size:13px;color:#93a4bf;margin-bottom:6px;' }, pageState.bodyId),
       renderTierDisclosure(pageState.tier),
       h(
         'a',
@@ -672,7 +671,7 @@ function PorkchopDedicatedPage() {
           style: 'border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;background:rgba(255,255,255,0.03);margin-bottom:16px;',
         },
         h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Grid'),
-        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Target: ${pageState.bodyLabel} (${pageState.bodyId})`),
+        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Target: ${pageState.bodyLabel}`),
         h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Sampling grid: ${PORKCHOP_GRID_LABEL}`),
         h('div', { style: 'font-size:11px;color:#93a4bf;line-height:1.45;font-style:italic;' }, C3_GRID_SAMPLING_DISCLOSURE),
         h(
