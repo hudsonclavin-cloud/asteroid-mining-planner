@@ -77,7 +77,7 @@ function component(c3, breadthCells, dateIso) {
   };
 }
 
-function result(bodyId, c3, breadthCells, deliveredMass, nearZeroC3Degenerate) {
+function result(bodyId, c3, breadthCells, deliveredMass, nearZeroC3Degenerate, payloadAtC3 = null, dvBudgetMps = 1200) {
   const practical = component(c3, breadthCells, '2028-08-24');
   return {
     ok: true,
@@ -90,12 +90,14 @@ function result(bodyId, c3, breadthCells, deliveredMass, nearZeroC3Degenerate) {
       threshold: { mode: 'relative', valueKm2S2: c3 + 5 },
     },
     deliveredMass,
+    payloadAtC3,
     echo: {
       liveMin: c3,
       liveMinNearZeroC3Degenerate: nearZeroC3Degenerate,
       bestPracticalNearZeroC3Degenerate: nearZeroC3Degenerate,
       deltaKm2S2: 5,
       absoluteKm2S2: 25,
+      dvBudgetMps,
       nDep: 731,
       nTof: 100,
       depCellDays: 7,
@@ -216,7 +218,7 @@ test('W3b compare exposes delivered-mass anchors, NASA contract context, and the
       { c3: 10, payloadKg: 500, basis: 'official' },
     ],
   };
-  const row = result('anchor-body', 5, 2, 800, constants.isNearZeroC3Degenerate(5));
+  const row = result('anchor-body', 5, 2, 800, constants.isNearZeroC3Degenerate(5), 750, 1200);
   const rowText = textOf(renderOkRow(
     row,
     'Anchor body',
@@ -230,7 +232,10 @@ test('W3b compare exposes delivered-mass anchors, NASA contract context, and the
     0,
     vehicle,
   ));
-  assert.match(rowText, /derived from official-published curve/);
+  assert.match(rowText, /800 kg delivered after 1\.20 km\/s ΔV budget/);
+  assert.match(rowText, /launch payload at C3 5\.00 km²\/s²: 750 kg, interpolated between C3 0\.00 km²\/s² at 1,000 kg and C3 10\.0 km²\/s² at 500 kg \(official-published curve\)/);
+  assert.equal(row.deliveredMass, 800);
+  assert.ok(row.payloadAtC3 > 500 && row.payloadAtC3 < 1000);
   assert.match(rowText, /C3 0.*1,000 kg.*C3 10.*500 kg/);
 
   const badgeText = textOf(MethodBadge({

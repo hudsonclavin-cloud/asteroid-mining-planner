@@ -343,6 +343,20 @@ test('D-02 computeCompareData threads the injected anchor into argmin.dateIso', 
   assert.equal(result.segmentation.components[0].argmin.dateIso, '2026-01-01');
 });
 
+test('T1 compare result carries payload-at-C3 and the full spacecraft budget', async () => {
+  const { compareData, launchVehicles } = await loadModules();
+  const [result] = compareData.computeCompareData(
+    [BODY],
+    baseParams({ bMinCells: 1 }),
+    makeDeps((i) => (i === 0 ? 5 : 99)),
+  );
+  assert.equal(result.ok, true);
+  assert.ok(Math.abs(result.segmentation.bestPractical.c3 - 5) < 1e-12);
+  assert.equal(result.payloadAtC3, launchVehicles.payloadAtC3(VEHICLE, 5));
+  assert.equal(result.echo.dvBudgetMps, 1250);
+  assert.equal(result.deliveredMass, launchVehicles.deliveredMassKg(VEHICLE, 5, DV_BUDGET));
+});
+
 // ---------------------------------------------------------------------------
 // D-03 — absolute threshold injection
 // ---------------------------------------------------------------------------

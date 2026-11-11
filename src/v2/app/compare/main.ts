@@ -189,10 +189,6 @@ function formatBreadth(component: WindowComponent, samplingDays: number): string
   );
 }
 
-function formatComputeTime(): string {
-  return 'live grids recomputed for this selection; solver timing is not instrumented here';
-}
-
 function formatMassKg(massKg: number): string {
   // A confident "0 kg" overstates precision when exp() underflows; the porkchop
   // page floors the same way.
@@ -703,12 +699,12 @@ function formatArrivalDate(depJd: number, tofDays: number): string {
   return new Date((arrival - 2_440_587.5) * 86_400_000).toISOString().slice(0, 10);
 }
 
-function payloadCurveProvenance(vehicle: LaunchVehicle, c3: number): string | null {
+function payloadCurveProvenance(vehicle: LaunchVehicle, c3: number, payloadKg: number): string | null {
   const exact = vehicle.curve.find((anchor) => anchor.c3 === c3);
   if (exact !== undefined) {
     return (
-      `derived from official-published curve; exact anchor C3 ${formatC3WithUnits(exact.c3)} ` +
-      `at ${exact.payloadKg.toLocaleString('en-US')} kg`
+      `launch payload at C3 ${formatC3WithUnits(exact.c3)}: ${formatMassKg(payloadKg)}, ` +
+      `exact anchor at ${exact.payloadKg.toLocaleString('en-US')} kg (official-published curve)`
     );
   }
   for (let index = 0; index < vehicle.curve.length - 1; index += 1) {
@@ -716,9 +712,11 @@ function payloadCurveProvenance(vehicle: LaunchVehicle, c3: number): string | nu
     const right = vehicle.curve[index + 1];
     if (left !== undefined && right !== undefined && left.c3 < c3 && c3 < right.c3) {
       return (
-        'derived from official-published curve; interpolated between ' +
+        `launch payload at C3 ${formatC3WithUnits(c3)}: ${formatMassKg(payloadKg)}, ` +
+        'interpolated between ' +
         `C3 ${formatC3WithUnits(left.c3)} at ${left.payloadKg.toLocaleString('en-US')} kg and ` +
-        `C3 ${formatC3WithUnits(right.c3)} at ${right.payloadKg.toLocaleString('en-US')} kg`
+        `C3 ${formatC3WithUnits(right.c3)} at ${right.payloadKg.toLocaleString('en-US')} kg ` +
+        '(official-published curve)'
       );
     }
   }
@@ -751,6 +749,14 @@ function renderOkRow(
   const mass = describeMass(result.deliveredMass, vehicleName);
   const massColor =
     mass.tone === 'value' ? '#eef2ff' : mass.tone === 'error' ? '#fca5a5' : '#cbd5e1';
+  const hasMassDetails =
+    typeof result.deliveredMass === 'number' &&
+    best !== null &&
+    vehicle !== undefined &&
+    typeof result.payloadAtC3 === 'number';
+  const massSummary = hasMassDetails
+    ? `${mass.text} delivered after ${(result.echo.dvBudgetMps / 1000).toPrecision(3)} km/s \u0394V budget`
+    : mass.text;
 
   // Widest window by departure breadth — the A2 triple renders it.
   const widest = segmentation.components.reduce<WindowComponent | null>(
@@ -846,10 +852,10 @@ function renderOkRow(
 
     // Delivered mass.
     h('td', { style: CELL_STYLE }, [
-      h('span', { style: `color:${massColor};` }, mass.text),
+      h('span', { style: `color:${massColor};` }, massSummary),
       mass.note ? h('span', { style: NOTE_STYLE }, mass.note) : null,
-      typeof result.deliveredMass === 'number' && best !== null && vehicle !== undefined
-        ? h('span', { style: NOTE_STYLE }, payloadCurveProvenance(vehicle, best.c3))
+      hasMassDetails
+        ? h('span', { style: NOTE_STYLE }, payloadCurveProvenance(vehicle, best.c3, result.payloadAtC3))
         : null,
     ]),
 
@@ -868,6 +874,10 @@ function renderOkRow(
 // ---------------------------------------------------------------------------
 // Method badge (provenance)
 // ---------------------------------------------------------------------------
+
+function formatComputeTime(): string {
+  return 'live grids recomputed for this selection; solver timing is not instrumented here';
+}
 
 function MethodBadge(props: {
   readonly echo: CompareEcho | null;
