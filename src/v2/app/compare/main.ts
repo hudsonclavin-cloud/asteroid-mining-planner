@@ -151,6 +151,7 @@ interface PageData {
   readonly vehicle: LaunchVehicle;
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly totalComputeMs: number;
+  readonly timingAvailable: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -875,8 +876,11 @@ function renderOkRow(
 // Method badge (provenance)
 // ---------------------------------------------------------------------------
 
-function formatComputeTime(): string {
-  return 'live grids recomputed for this selection; solver timing is not instrumented here';
+function formatComputeTime(totalComputeMs: number, timingAvailable: boolean): string {
+  if (!timingAvailable || !Number.isFinite(totalComputeMs) || totalComputeMs <= 0) {
+    return 'live grids recomputed for this selection; solver timing is not instrumented here';
+  }
+  return `${totalComputeMs.toFixed(1)} ms of solver time for this selection`;
 }
 
 function MethodBadge(props: {
@@ -884,6 +888,7 @@ function MethodBadge(props: {
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly vehicleName: string;
   readonly totalComputeMs: number;
+  readonly timingAvailable: boolean;
   readonly thresholdMode: 'relative' | 'absolute';
 }) {
   const { echo } = props;
@@ -923,7 +928,7 @@ function MethodBadge(props: {
     // S-S17-FRONTB-BATCH-2026-08-11-A (D1): plain-English legend for the
     // DEC-17-3 badge — three named measurements, no composite score.
     'Dominance badge — each compared body is checked on three measurements: best practical window energy (lower is better), widest window in departure columns (higher), and delivered mass (higher). A body is "dominated" when another selected body is at least as good on all three and better on at least one; "nondominated" otherwise. There is no combined score. Rows missing any of the three measurements read "insufficient data" and are not compared.',
-    `Computed live in this browser — ${formatComputeTime()}.`,
+    `Computed live in this browser — ${formatComputeTime(props.totalComputeMs, props.timingAvailable)}.`,
   );
 
   return h(
@@ -1086,6 +1091,7 @@ function ComparePage() {
               interpolateBodyStateSeries('earth', sources.earthStateSeries, tdbSeconds),
             propagateTargetStateAtTdbSeconds: (bodyElements, tdbSeconds) =>
               propagateKeplerianStateVectors(bodyElements, tdbSeconds),
+            nowMs: () => performance.now(),
           },
         );
         if (cancelled) {
@@ -1095,6 +1101,7 @@ function ComparePage() {
           (sum, result) => sum + (result.ok ? result.grid.computeMs : 0),
           0,
         );
+        const successfulResults = results.filter((result): result is CompareBodyOk => result.ok);
         setData({
           results,
           labels: sources.labels,
@@ -1104,6 +1111,8 @@ function ComparePage() {
           vehicle: sources.vehicle,
           ephemerisSpan: sources.ephemerisSpan,
           totalComputeMs,
+          timingAvailable:
+            successfulResults.length > 0 && successfulResults.every((result) => result.grid.computeMs > 0),
         });
       } catch (computeError) {
         if (!cancelled) {
@@ -1297,6 +1306,7 @@ function ComparePage() {
       ephemerisSpan: data.ephemerisSpan,
       vehicleName: data.vehicleName,
       totalComputeMs: data.totalComputeMs,
+      timingAvailable: data.timingAvailable,
       thresholdMode,
     }),
   ]);

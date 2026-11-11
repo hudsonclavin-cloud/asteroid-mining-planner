@@ -243,6 +243,7 @@ test('W3b compare exposes delivered-mass anchors, NASA contract context, and the
     ephemerisSpan: { firstJd: 2_461_041.5, lastJd: 2_466_519.5 },
     vehicleName: 'New Glenn - Standard',
     totalComputeMs: 1,
+    timingAvailable: true,
     thresholdMode: 'absolute',
   }));
   assert.match(badgeText, /Lambert patched-conic screen/);
@@ -250,9 +251,23 @@ test('W3b compare exposes delivered-mass anchors, NASA contract context, and the
   assert.match(badgeText, /NASA Launch Services contract/);
   assert.match(badgeText, /New Glenn caveat/);
   assert.match(badgeText, /steep final published-anchor segment/);
-  assert.match(badgeText, /Computed live in this browser .*live grids recomputed for this selection/);
+  assert.match(badgeText, /Computed live in this browser .*1\.0 ms of solver time for this selection/);
   assert.ok(badgeText.includes('Feasibility boundary \u2014 25.0 km\u00B2/s\u00B2, a constant read from the screening cache (the grids themselves are recomputed live in this browser; see the segmentation-mode line that follows).'), badgeText);
   assert.doesNotMatch(badgeText, /cached grids/);
+});
+
+test('T7 compare badge refuses timing when any grid lacks a measurement', async () => {
+  const { MethodBadge } = await loadCompareRenderers();
+  const common = {
+    echo: null,
+    ephemerisSpan: { firstJd: 2_461_041.5, lastJd: 2_466_519.5 },
+    vehicleName: 'Test vehicle',
+    thresholdMode: 'relative',
+  };
+  const measured = textOf(MethodBadge({ ...common, totalComputeMs: 30, timingAvailable: true }));
+  assert.match(measured, /Computed live in this browser .*30\.0 ms of solver time for this selection/);
+  const missing = textOf(MethodBadge({ ...common, totalComputeMs: 0, timingAvailable: false }));
+  assert.match(missing, /Computed live in this browser .*solver timing is not instrumented here/);
 });
 
 test('compare defines the breadth qualifier from B_min and the sampling interval (tail2 F7)', async () => {
