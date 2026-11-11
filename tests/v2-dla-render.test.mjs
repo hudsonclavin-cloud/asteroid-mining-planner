@@ -433,11 +433,11 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.match(pinnedText, /a payload penalty for this launch site and vehicle still applies/);
     // 2026-11-04 live review fix 1.1: the dogleg line and the delivered-mass note must agree on
     // what is modelled. The 0 m/s ΔV is modelled; the launch-site payload penalty is not.
-    assert.match(pinnedText, /Dogleg penalty0 m\/s ΔV \(plane-matching absorbed by launch geometry — AMBER\); the launch-site payload penalty is NOT modelled/);
+    assert.match(pinnedText, /Dogleg penalty0 m\/s ΔV \(plane-matching absorbed by launch geometry — AMBER\); the launch-site payload penalty is not modelled/);
     assert.doesNotMatch(pinnedText, /0 m\/s \(modelled/);
     assert.doesNotMatch(pinnedText, /negligible/);
     assert.doesNotMatch(pinnedText, /~0/);
-    assert.match(pinnedText, /Delivered mass excludes the launch-site payload penalty for this DLA band; Aster does not model that penalty yet\./);
+    assert.match(pinnedText, /Delivered mass excludes the launch-site payload penalty for this DLA band; Aster does not model that penalty\./);
     // The direct doesNotMatch above is what catches the original contradiction ('0 m/s (modelled; …)').
     // This loop guards the explicit phrase only: no AMBER "payload penalty" sentence may say it "is modelled".
     const amberPenaltySentences = pinnedText.match(/[^.]*payload penalty[^.]*\./g) ?? [];
