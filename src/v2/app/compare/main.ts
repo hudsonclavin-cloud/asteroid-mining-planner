@@ -151,6 +151,7 @@ interface PageData {
   readonly vehicle: LaunchVehicle;
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly totalComputeMs: number;
+  readonly timingAvailable: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -187,10 +188,6 @@ function formatBreadth(component: WindowComponent, samplingDays: number): string
     `${component.breadthCells} ${departures} in this window, ` +
     `${formatDays(samplingDays)} d sampling`
   );
-}
-
-function formatComputeTime(): string {
-  return 'live grids recomputed for this selection; solver timing is not instrumented here';
 }
 
 function formatMassKg(massKg: number): string {
@@ -648,7 +645,6 @@ function renderRefusalRow(
   return h('tr', { key: result.bodyId, style: 'background:rgba(148,163,184,0.05);' }, [
     h('td', { style: CELL_STYLE }, [
       h('strong', null, label),
-      h('span', { style: NOTE_STYLE }, result.bodyId),
       renderDominanceChip(dominance),
     ]),
     renderTierCell(tier),
@@ -703,12 +699,12 @@ function formatArrivalDate(depJd: number, tofDays: number): string {
   return new Date((arrival - 2_440_587.5) * 86_400_000).toISOString().slice(0, 10);
 }
 
-function payloadCurveProvenance(vehicle: LaunchVehicle, c3: number): string | null {
+function payloadCurveProvenance(vehicle: LaunchVehicle, c3: number, payloadKg: number): string | null {
   const exact = vehicle.curve.find((anchor) => anchor.c3 === c3);
   if (exact !== undefined) {
     return (
-      `derived from official-published curve; exact anchor C3 ${formatC3WithUnits(exact.c3)} ` +
-      `at ${exact.payloadKg.toLocaleString('en-US')} kg`
+      `launch payload at C3 ${formatC3WithUnits(exact.c3)}: ${formatMassKg(payloadKg)}, ` +
+      `exact anchor at ${exact.payloadKg.toLocaleString('en-US')} kg (official-published curve)`
     );
   }
   for (let index = 0; index < vehicle.curve.length - 1; index += 1) {
@@ -716,9 +712,11 @@ function payloadCurveProvenance(vehicle: LaunchVehicle, c3: number): string | nu
     const right = vehicle.curve[index + 1];
     if (left !== undefined && right !== undefined && left.c3 < c3 && c3 < right.c3) {
       return (
-        'derived from official-published curve; interpolated between ' +
+        `launch payload at C3 ${formatC3WithUnits(c3)}: ${formatMassKg(payloadKg)}, ` +
+        'interpolated between ' +
         `C3 ${formatC3WithUnits(left.c3)} at ${left.payloadKg.toLocaleString('en-US')} kg and ` +
-        `C3 ${formatC3WithUnits(right.c3)} at ${right.payloadKg.toLocaleString('en-US')} kg`
+        `C3 ${formatC3WithUnits(right.c3)} at ${right.payloadKg.toLocaleString('en-US')} kg ` +
+        '(official-published curve)'
       );
     }
   }
@@ -751,6 +749,14 @@ function renderOkRow(
   const mass = describeMass(result.deliveredMass, vehicleName);
   const massColor =
     mass.tone === 'value' ? '#eef2ff' : mass.tone === 'error' ? '#fca5a5' : '#cbd5e1';
+  const hasMassDetails =
+    typeof result.deliveredMass === 'number' &&
+    best !== null &&
+    vehicle !== undefined &&
+    typeof result.payloadAtC3 === 'number';
+  const massSummary = hasMassDetails
+    ? `${mass.text} delivered after ${(result.echo.dvBudgetMps / 1000).toPrecision(3)} km/s \u0394V budget`
+    : mass.text;
 
   // Widest window by departure breadth — the A2 triple renders it.
   const widest = segmentation.components.reduce<WindowComponent | null>(
@@ -774,7 +780,6 @@ function renderOkRow(
   return h('tr', { key: result.bodyId }, [
     h('td', { style: CELL_STYLE }, [
       h('strong', null, label),
-      h('span', { style: NOTE_STYLE }, result.bodyId),
       renderDominanceChip(dominance),
       h(
         'button',
@@ -846,10 +851,10 @@ function renderOkRow(
 
     // Delivered mass.
     h('td', { style: CELL_STYLE }, [
-      h('span', { style: `color:${massColor};` }, mass.text),
+      h('span', { style: `color:${massColor};` }, massSummary),
       mass.note ? h('span', { style: NOTE_STYLE }, mass.note) : null,
-      typeof result.deliveredMass === 'number' && best !== null && vehicle !== undefined
-        ? h('span', { style: NOTE_STYLE }, payloadCurveProvenance(vehicle, best.c3))
+      hasMassDetails
+        ? h('span', { style: NOTE_STYLE }, payloadCurveProvenance(vehicle, best.c3, result.payloadAtC3))
         : null,
     ]),
 
@@ -869,11 +874,19 @@ function renderOkRow(
 // Method badge (provenance)
 // ---------------------------------------------------------------------------
 
+function formatComputeTime(totalComputeMs: number, timingAvailable: boolean): string {
+  if (!timingAvailable || !Number.isFinite(totalComputeMs) || totalComputeMs <= 0) {
+    return 'live grids recomputed for this selection; solver timing is not instrumented here';
+  }
+  return `${totalComputeMs.toFixed(1)} ms of solver time for this selection`;
+}
+
 function MethodBadge(props: {
   readonly echo: CompareEcho | null;
   readonly ephemerisSpan: { readonly firstJd: number; readonly lastJd: number };
   readonly vehicleName: string;
   readonly totalComputeMs: number;
+  readonly timingAvailable: boolean;
   readonly thresholdMode: 'relative' | 'absolute';
 }) {
   const { echo } = props;
@@ -893,7 +906,7 @@ function MethodBadge(props: {
   );
   if (echo) {
     lines.push(
-      `Feasibility boundary — ${formatC3WithUnits(echo.absoluteKm2S2)}, read from the screening cache rather than assumed.`,
+      `Feasibility boundary — ${formatC3WithUnits(echo.absoluteKm2S2)}, a constant read from the screening cache (the grids themselves are recomputed live in this browser; see the segmentation-mode line that follows).`,
       // S-S17-FRONTB-BATCH-2026-08-11-A (D2): the badge states the active
       // mode, so it also discloses that switching recomputes.
       `Segmentation mode — ${
@@ -913,7 +926,7 @@ function MethodBadge(props: {
     // S-S17-FRONTB-BATCH-2026-08-11-A (D1): plain-English legend for the
     // DEC-17-3 badge — three named measurements, no composite score.
     'Dominance badge — each compared body is checked on three measurements: best practical window energy (lower is better), widest window in departure columns (higher), and delivered mass (higher). A body is "dominated" when another selected body is at least as good on all three and better on at least one; "nondominated" otherwise. There is no combined score. Rows missing any of the three measurements read "insufficient data" and are not compared.',
-    `Computed live in this browser — ${formatComputeTime()}.`,
+    `Computed live in this browser — ${formatComputeTime(props.totalComputeMs, props.timingAvailable)}.`,
   );
 
   return h(
@@ -1076,6 +1089,7 @@ function ComparePage() {
               interpolateBodyStateSeries('earth', sources.earthStateSeries, tdbSeconds),
             propagateTargetStateAtTdbSeconds: (bodyElements, tdbSeconds) =>
               propagateKeplerianStateVectors(bodyElements, tdbSeconds),
+            nowMs: () => performance.now(),
           },
         );
         if (cancelled) {
@@ -1085,6 +1099,7 @@ function ComparePage() {
           (sum, result) => sum + (result.ok ? result.grid.computeMs : 0),
           0,
         );
+        const successfulResults = results.filter((result): result is CompareBodyOk => result.ok);
         setData({
           results,
           labels: sources.labels,
@@ -1094,6 +1109,8 @@ function ComparePage() {
           vehicle: sources.vehicle,
           ephemerisSpan: sources.ephemerisSpan,
           totalComputeMs,
+          timingAvailable:
+            successfulResults.length > 0 && successfulResults.every((result) => result.grid.computeMs > 0),
         });
       } catch (computeError) {
         if (!cancelled) {
@@ -1287,6 +1304,7 @@ function ComparePage() {
       ephemerisSpan: data.ephemerisSpan,
       vehicleName: data.vehicleName,
       totalComputeMs: data.totalComputeMs,
+      timingAvailable: data.timingAvailable,
       thresholdMode,
     }),
   ]);

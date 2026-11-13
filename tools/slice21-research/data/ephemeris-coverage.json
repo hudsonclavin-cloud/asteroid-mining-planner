@@ -1,0 +1,181 @@
+{
+  "generatedAtUtc": "2026-11-06T22:08:40.200Z",
+  "headCommit": "4c536a70a2e9495c3e80d242a3e7b08c5b3c352e",
+  "fixture": {
+    "path": "src/v2/data/horizons-inner-solar-system-2026-2040.json",
+    "onDiskBytes": 7214102,
+    "onDiskSha256": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+    "committedBlobBytes": 7214102,
+    "source": "NASA/JPL Horizons API",
+    "frame": "ICRF/J2000",
+    "timeScale": "TDB",
+    "units": {
+      "position": "km",
+      "velocity": "km/s",
+      "time": "TDB Julian Date"
+    },
+    "loader": "ingestSlice2Fixture (src/v2/boundary/horizons.ts), imported from a tsc build in .tmp-tests/"
+  },
+  "bodies": {
+    "count": 6,
+    "keys": [
+      "sun",
+      "mercury",
+      "venus",
+      "earth",
+      "moon",
+      "mars"
+    ],
+    "perBody": {
+      "sun": {
+        "samples": 5479,
+        "firstJdTdb": 2461041.5,
+        "lastJdTdb": 2466519.5,
+        "firstDateTdb": "2026-01-01",
+        "lastDateTdb": "2040-12-31",
+        "firstDateUtcPageConvention": "2025-12-31",
+        "lastDateUtcPageConvention": "2040-12-30",
+        "cadenceDays": 1
+      },
+      "mercury": {
+        "samples": 5479,
+        "firstJdTdb": 2461041.5,
+        "lastJdTdb": 2466519.5,
+        "firstDateTdb": "2026-01-01",
+        "lastDateTdb": "2040-12-31",
+        "firstDateUtcPageConvention": "2025-12-31",
+        "lastDateUtcPageConvention": "2040-12-30",
+        "cadenceDays": 1
+      },
+      "venus": {
+        "samples": 5479,
+        "firstJdTdb": 2461041.5,
+        "lastJdTdb": 2466519.5,
+        "firstDateTdb": "2026-01-01",
+        "lastDateTdb": "2040-12-31",
+        "firstDateUtcPageConvention": "2025-12-31",
+        "lastDateUtcPageConvention": "2040-12-30",
+        "cadenceDays": 1
+      },
+      "earth": {
+        "samples": 5479,
+        "firstJdTdb": 2461041.5,
+        "lastJdTdb": 2466519.5,
+        "firstDateTdb": "2026-01-01",
+        "lastDateTdb": "2040-12-31",
+        "firstDateUtcPageConvention": "2025-12-31",
+        "lastDateUtcPageConvention": "2040-12-30",
+        "cadenceDays": 1
+      },
+      "moon": {
+        "samples": 5479,
+        "firstJdTdb": 2461041.5,
+        "lastJdTdb": 2466519.5,
+        "firstDateTdb": "2026-01-01",
+        "lastDateTdb": "2040-12-31",
+        "firstDateUtcPageConvention": "2025-12-31",
+        "lastDateUtcPageConvention": "2040-12-30",
+        "cadenceDays": 1
+      },
+      "mars": {
+        "samples": 5479,
+        "firstJdTdb": 2461041.5,
+        "lastJdTdb": 2466519.5,
+        "firstDateTdb": "2026-01-01",
+        "lastDateTdb": "2040-12-31",
+        "firstDateUtcPageConvention": "2025-12-31",
+        "lastDateUtcPageConvention": "2040-12-30",
+        "cadenceDays": 1
+      }
+    }
+  },
+  "coverage": {
+    "startJdTdb": 2461041.5,
+    "endJdTdb": 2466519.5,
+    "startDateTdb": "2026-01-01",
+    "endDateTdb": "2040-12-31",
+    "startDateUtcPageConvention": "2025-12-31",
+    "endDateUtcPageConvention": "2040-12-30",
+    "dateConventionNote": "A JD ending in .5 is TDB midnight of *DateTdb. The page convention (jdTdbToUtcDateString in app/porkchop/main.ts) subtracts TDB-UTC = 69.184 s, which lands that midnight on the previous UTC calendar day.",
+    "spanDays": 5478,
+    "bytesPerDay": 1316.9225994888645,
+    "bytesPerDayBasis": "onDiskBytes / spanDays (JD span, 5478 days). The per-sample rate, onDiskBytes / 5479 samples per body, is 0.02% lower; the extension estimates use the per-day figure."
+  },
+  "grid": {
+    "departureStartUtc": "2026-01-01",
+    "departureEndUtc": "2040-01-01",
+    "tofMinDays": 182.5,
+    "tofMaxDays": 1826.25,
+    "nDep": 200,
+    "nTof": 100,
+    "readFrom": "src/v2/app/porkchop/main.ts (GRID_PARAMS literal, read from source) + src/v2/porkchop/grid-span.ts (imported)"
+  },
+  "gridCoverageByBody": {
+    "433": {
+      "note": "The porkchop grid is body-independent; this column is identical for every body.",
+      "outboundDepartureBeyondCoverage": null,
+      "arrivalAtMinTofBeyondCoverage": null,
+      "arrivalAtMaxTofBeyondCoverage": {
+        "index": 143,
+        "departureJdTdb": 2464715.6666298867,
+        "departureDate": "2036-01-23"
+      },
+      "lastColumnDepartureDate": "2040-01-01",
+      "latestArrivalDate": "2044-12-31"
+    },
+    "99942": {
+      "note": "The porkchop grid is body-independent; this column is identical for every body.",
+      "outboundDepartureBeyondCoverage": null,
+      "arrivalAtMinTofBeyondCoverage": null,
+      "arrivalAtMaxTofBeyondCoverage": {
+        "index": 143,
+        "departureJdTdb": 2464715.6666298867,
+        "departureDate": "2036-01-23"
+      },
+      "lastColumnDepartureDate": "2040-01-01",
+      "latestArrivalDate": "2044-12-31"
+    },
+    "101955": {
+      "note": "The porkchop grid is body-independent; this column is identical for every body.",
+      "outboundDepartureBeyondCoverage": null,
+      "arrivalAtMinTofBeyondCoverage": null,
+      "arrivalAtMaxTofBeyondCoverage": {
+        "index": 143,
+        "departureJdTdb": 2464715.6666298867,
+        "departureDate": "2036-01-23"
+      },
+      "lastColumnDepartureDate": "2040-01-01",
+      "latestArrivalDate": "2044-12-31"
+    }
+  },
+  "extensionEstimates": [
+    {
+      "endUtc": "2044-12-31",
+      "extraDays": 1461,
+      "estimatedExtraBytes": 1924025,
+      "estimatedTotalBytes": 9138127,
+      "basis": "linear extrapolation of measured bytes/day at the same cadence and body count — an ESTIMATE, not a measurement"
+    },
+    {
+      "endUtc": "2049-12-31",
+      "extraDays": 3287,
+      "estimatedExtraBytes": 4328726,
+      "estimatedTotalBytes": 11542828,
+      "basis": "linear extrapolation of measured bytes/day at the same cadence and body count — an ESTIMATE, not a measurement"
+    },
+    {
+      "endUtc": "2050-12-31",
+      "extraDays": 3652,
+      "estimatedExtraBytes": 4809402,
+      "estimatedTotalBytes": 12023504,
+      "basis": "linear extrapolation of measured bytes/day at the same cadence and body count — an ESTIMATE, not a measurement"
+    },
+    {
+      "endUtc": "2052-01-01",
+      "extraDays": 4018,
+      "estimatedExtraBytes": 5291396,
+      "estimatedTotalBytes": 12505498,
+      "basis": "linear extrapolation of measured bytes/day at the same cadence and body count — an ESTIMATE, not a measurement"
+    }
+  ]
+}

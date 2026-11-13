@@ -633,7 +633,6 @@ function PorkchopDedicatedPage() {
       { class: 'porkchop-sidebar', style: SIDEBAR_STYLE },
       h('div', { style: 'font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8da2c0;margin-bottom:10px;' }, 'Porkchop Analysis'),
       h('div', { style: 'font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;' }, pageState.bodyLabel),
-      h('div', { style: 'font-size:13px;color:#93a4bf;margin-bottom:6px;' }, pageState.bodyId),
       renderTierDisclosure(pageState.tier),
       h(
         'a',
@@ -672,7 +671,7 @@ function PorkchopDedicatedPage() {
           style: 'border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;background:rgba(255,255,255,0.03);margin-bottom:16px;',
         },
         h('div', { style: 'font-size:15px;font-weight:600;color:#fff;margin-bottom:8px;' }, 'Grid'),
-        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Target: ${pageState.bodyLabel} (${pageState.bodyId})`),
+        h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Target: ${pageState.bodyLabel}`),
         h('div', { style: 'font-size:12px;color:#cbd5e1;line-height:1.6;' }, `Sampling grid: ${PORKCHOP_GRID_LABEL}`),
         h('div', { style: 'font-size:11px;color:#93a4bf;line-height:1.45;font-style:italic;' }, C3_GRID_SAMPLING_DISCLOSURE),
         h(
@@ -828,13 +827,23 @@ function PorkchopDedicatedPage() {
                       costCardState.invalidInput ? 'invalid cell data' : `delivered to ${pageState.bodyLabel}`,
                       costCardState.band === null
                         ? null
-                        : FeasibilityBadge({ label: costCardState.band, tone: costCardState.band }),
+                        : FeasibilityBadge({
+                            // 2026-11-04 live review fix 1.2: the badge is the DLA launch-geometry
+                            // band, not overall feasibility. When no delivered mass can be stated
+                            // (deliveredKg is null: beyond the published curve, or invalid /
+                            // non-finite input, see costCardState), say so in the badge itself.
+                            label:
+                              costCardState.deliveredKg === null
+                                ? `${costCardState.band} \u00B7 launch geometry`
+                                : costCardState.band,
+                            tone: costCardState.band,
+                          }),
                     ),
                     costCardState.band === 'AMBER'
                       ? h(
                           'div',
                           { style: 'font-size:11px;color:#fbbf24;line-height:1.45;margin-top:6px;' },
-                          'Delivered mass excludes that payload penalty; Aster does not model it.',
+                          'Delivered mass excludes the launch-site payload penalty for this DLA band; Aster does not model that penalty.',
                         )
                       : null,
                   ),
@@ -856,7 +865,7 @@ function PorkchopDedicatedPage() {
                   null,
                   isNearZeroC3Degenerate(costCardState.c3) && hideNearZeroC3
                     ? nearZeroC3HiddenNotice(1)
-                    : `Payload at C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')}`,
+                    : `C3 used for payload lookup: ${formatC3ValueText(costCardState.c3, 'km²/s²')} (pinned cell)`,
                   NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3 }),
                 ),
                 h(
@@ -892,7 +901,7 @@ function PorkchopDedicatedPage() {
                   costCardState.band === 'GREEN'
                     ? 'none (GREEN)'
                     : costCardState.band === 'AMBER'
-                      ? '0 m/s (modelled; launch-geometry, AMBER)'
+                      ? '0 m/s \u0394V (plane-matching absorbed by launch geometry \u2014 AMBER); the launch-site payload penalty is not modelled'
                       : costCardState.band === 'RED'
                         ? 'exceeds site capability'
                         : '— (no DLA for this cell)',

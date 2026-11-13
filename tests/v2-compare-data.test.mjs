@@ -92,7 +92,7 @@ const ELEMENTS = {
 
 /** Stub solver whose C3 is a pure function of the call index. grid-compute
  * calls it exactly once per cell. */
-function makeDeps(c3ForCallIndex) {
+function makeDeps(c3ForCallIndex, nowMs = () => 0) {
   let callIndex = 0;
   return {
     getEarthStateAtTdbSeconds: () => ZERO_STATE,
@@ -118,7 +118,7 @@ function makeDeps(c3ForCallIndex) {
         ],
       };
     },
-    nowMs: () => 0,
+    nowMs,
   };
 }
 
@@ -341,6 +341,42 @@ test('D-02 computeCompareData threads the injected anchor into argmin.dateIso', 
   );
   assert.equal(result.ok, true);
   assert.equal(result.segmentation.components[0].argmin.dateIso, '2026-01-01');
+});
+
+test('T1 compare result carries payload-at-C3 and the full spacecraft budget', async () => {
+  const { compareData, launchVehicles } = await loadModules();
+  const [result] = compareData.computeCompareData(
+    [BODY],
+    baseParams({ bMinCells: 1 }),
+    makeDeps((i) => (i === 0 ? 5 : 99)),
+  );
+  assert.equal(result.ok, true);
+  assert.ok(Math.abs(result.segmentation.bestPractical.c3 - 5) < 1e-12);
+  assert.equal(result.payloadAtC3, launchVehicles.payloadAtC3(VEHICLE, 5));
+  assert.equal(result.echo.dvBudgetMps, 1250);
+  assert.equal(result.deliveredMass, launchVehicles.deliveredMassKg(VEHICLE, 5, DV_BUDGET));
+});
+
+test('T7 compare data preserves measured grid timing and exposes missing timing as zero', async () => {
+  const { compareData } = await loadModules();
+  const [measured] = compareData.computeCompareData(
+    [BODY],
+    baseParams({ bMinCells: 1 }),
+    makeDeps(() => 5, (() => {
+      const values = [10, 40];
+      return () => values.shift();
+    })()),
+  );
+  assert.equal(measured.ok, true);
+  assert.equal(measured.grid.computeMs, 30);
+
+  const [missing] = compareData.computeCompareData(
+    [BODY],
+    baseParams({ bMinCells: 1 }),
+    makeDeps(() => 5),
+  );
+  assert.equal(missing.ok, true);
+  assert.equal(missing.grid.computeMs, 0);
 });
 
 // ---------------------------------------------------------------------------

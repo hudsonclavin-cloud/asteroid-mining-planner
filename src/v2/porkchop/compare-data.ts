@@ -33,11 +33,12 @@ import type {
   SegmentGridCell,
   SegmentWindowsResult,
 } from './segment-windows.js';
-import { deliveredMassKg } from './launch-vehicles.js';
+import { deliveredMassKg, payloadAtC3 } from './launch-vehicles.js';
 import type {
   DeliveredMassResult,
   LaunchVehicle,
   MissionMode,
+  PayloadAtC3Result,
   SpacecraftDvBudget,
 } from './launch-vehicles.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
@@ -115,6 +116,8 @@ export interface CompareEcho {
   readonly bestPracticalNearZeroC3Degenerate: boolean;
   readonly deltaKm2S2: number;
   readonly absoluteKm2S2: number;
+  /** Full spacecraft budget carried by the computation, including margin. */
+  readonly dvBudgetMps: number;
   readonly nDep: number;
   readonly nTof: number;
   /** (depEnd - depStart) / (nDep - 1) — the A2 sampling interval. */
@@ -132,6 +135,8 @@ export interface CompareBodyOk {
   /** Delivered mass at bestPractical.c3; null on NO-PRACTICAL-WINDOW — never a
    * fabricated number for a body with no practical window. */
   readonly deliveredMass: DeliveredMassResult | null;
+  /** Launch payload at bestPractical.c3, from the same committed curve lookup. */
+  readonly payloadAtC3: PayloadAtC3Result | null;
   readonly echo: CompareEcho;
 }
 
@@ -350,12 +355,20 @@ export function computeCompareData(
       bMinCells: params.bMinCells,
     });
 
+    const bestC3 = segmentation.bestPractical?.c3 ?? null;
+    const payloadAtBestC3: PayloadAtC3Result | null =
+      bestC3 === null ? null : payloadAtC3(params.vehicle, bestC3);
+    const dvBudgetMps =
+      params.dvBudget.rendezvousMps +
+      params.dvBudget.stationkeepingMps +
+      params.dvBudget.marginMps +
+      (params.missionMode === 'sample-return' ? params.dvBudget.departureMps ?? 0 : 0);
     const deliveredMass: DeliveredMassResult | null =
-      segmentation.bestPractical === null
+      bestC3 === null
         ? null
         : deliveredMassKg(
             params.vehicle,
-            segmentation.bestPractical.c3,
+            bestC3,
             params.dvBudget,
             params.missionMode ?? 'one-way',
           );
@@ -366,6 +379,7 @@ export function computeCompareData(
       grid: { cells: gridResult.cells, computeMs: gridResult.compute_ms },
       segmentation,
       deliveredMass,
+      payloadAtC3: payloadAtBestC3,
       echo: {
         liveMin,
         liveMinNearZeroC3Degenerate: isNearZeroC3Degenerate(liveMin),
@@ -374,6 +388,7 @@ export function computeCompareData(
           isNearZeroC3Degenerate(segmentation.bestPractical.c3),
         deltaKm2S2: params.deltaKm2S2,
         absoluteKm2S2: params.absoluteKm2S2,
+        dvBudgetMps,
         nDep: params.nDep,
         nTof: params.nTof,
         depCellDays,
