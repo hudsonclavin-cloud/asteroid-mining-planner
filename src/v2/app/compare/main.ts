@@ -62,12 +62,14 @@ import {
 } from '../../porkchop/near-zero-c3.js';
 import type { PorkchopCell } from '../../porkchop/grid-compute.js';
 import {
+  DETERMINISTIC_MARGIN_FRACTION,
   deterministicMarginMps,
   isBeyondCurve,
   isInvalidInput,
   isNonFiniteC3,
   LAUNCH_VEHICLES,
   SPACECRAFT_STATIONKEEPING_MPS,
+  spacecraftDvTotalMps,
   type DeliveredMassResult,
   type LaunchVehicle,
 } from '../../porkchop/launch-vehicles.js';
@@ -140,6 +142,12 @@ const COMPARE_GRID = requestedC3GridFromArgs({
  * budget and says so on the surface. Per-body budgets are a contract change.
  */
 const REFERENCE_RENDEZVOUS_MPS = 1000;
+const REFERENCE_DV_BUDGET = {
+  rendezvousMps: REFERENCE_RENDEZVOUS_MPS,
+  stationkeepingMps: SPACECRAFT_STATIONKEEPING_MPS,
+  marginMps: deterministicMarginMps(REFERENCE_RENDEZVOUS_MPS),
+} as const;
+const REFERENCE_DV_TOTAL_KMPS = spacecraftDvTotalMps(REFERENCE_DV_BUDGET, 'one-way') / 1000;
 
 interface PageData {
   readonly results: readonly CompareBodyResult[];
@@ -917,7 +925,7 @@ function MethodBadge(props: {
     );
   }
   lines.push(
-    `Delivered mass — interpolated from the published performance curve for ${props.vehicleName}, against a fixed reference rendezvous budget of ${REFERENCE_RENDEZVOUS_MPS} m/s plus ${SPACECRAFT_STATIONKEEPING_MPS} m/s stationkeeping. Rendezvous ΔV varies by target; a single reference budget is used here so the mass column is comparable across bodies, which means it is not a per-target mission estimate.`,
+    `Delivered mass — interpolated from the published performance curve for ${props.vehicleName}, against a fixed reference rendezvous budget of ${REFERENCE_RENDEZVOUS_MPS} m/s plus ${SPACECRAFT_STATIONKEEPING_MPS} m/s stationkeeping and a ${(DETERMINISTIC_MARGIN_FRACTION * 100).toFixed(0)}% margin on the rendezvous budget (${REFERENCE_DV_TOTAL_KMPS.toFixed(2)} km/s in all). Rendezvous ΔV varies by target; a single reference budget is used here so the mass column is comparable across bodies, which means it is not a per-target mission estimate.`,
     "NASA Launch Services contract context \u2014 these official-published curves reflect performance available through NASA's launch-services contract; terms, performance, and services may differ from provider advertising or commercial or other contracts. Mission-unique analysis can change usable performance.",
     'New Glenn caveat \u2014 interior values on its steep final published-anchor segment are linearly interpolated and optimistic versus the held-out NASA LSP checks.',
     // A4c (S-S17-BATCH2-2026-08-12-A): size-column provenance — the formula
@@ -1078,11 +1086,7 @@ function ComparePage() {
               lastSample: sources.ephemerisSpan.lastJd,
             },
             vehicle: sources.vehicle,
-            dvBudget: {
-              rendezvousMps: REFERENCE_RENDEZVOUS_MPS,
-              stationkeepingMps: SPACECRAFT_STATIONKEEPING_MPS,
-              marginMps: deterministicMarginMps(REFERENCE_RENDEZVOUS_MPS),
-            },
+            dvBudget: REFERENCE_DV_BUDGET,
           },
           {
             getEarthStateAtTdbSeconds: (tdbSeconds) =>

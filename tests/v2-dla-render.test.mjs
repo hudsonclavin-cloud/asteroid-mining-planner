@@ -447,10 +447,12 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
       assert.doesNotMatch(sentence, /payload penalty[^.]*\bis modelled\b/, sentence);
     }
     assert.doesNotMatch(pinnedText, /launch-site payload penalty named above/);
-    const costMarginSentence = `Margin here is ${costMarginPercent}% of rendezvous and departure \u0394V; the \u0394V stack below applies ${stackMarginPercent}% to the full stack.`;
-    const stackMarginSentence = `Margin here is ${stackMarginPercent}% of the full stack; the cost card applies ${costMarginPercent}% to rendezvous and departure \u0394V only.`;
-    assert.ok(pinnedText.includes(costMarginSentence), pinnedText);
-    assert.ok(pinnedText.includes(stackMarginSentence), pinnedText);
+    const oneWayCostMarginSentence = `Margin here is ${costMarginPercent}% of rendezvous \u0394V; the \u0394V stack below applies ${stackMarginPercent}% to the full stack.`;
+    const oneWayStackMarginSentence = `Margin here is ${stackMarginPercent}% of the full stack; the cost card applies ${costMarginPercent}% to rendezvous \u0394V only.`;
+    assert.ok(pinnedText.includes(oneWayCostMarginSentence), pinnedText);
+    assert.ok(pinnedText.includes(oneWayStackMarginSentence), pinnedText);
+    assert.match(pinnedText, /Rendezvous burn[0-9,]+ m\/s/);
+    assert.doesNotMatch(pinnedText, /Rendezvous burn\d{4,} m\/s/);
 
     const redPayloadCaption = 'Vehicle payload at this C3, before any dogleg or launch-site penalty. Not a delivered-mass estimate.';
     assert.doesNotMatch(pinnedText, /Vehicle payload at this C3/);
@@ -531,8 +533,11 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const sampleReturnText = document.app.textContent;
     assert.match(sampleReturnText, /ΔV stack — Sample return/);
     assert.match(sampleReturnText, /Assumptions: Sample return; impulsive, patched-conic, no gravity assists, no SEP; 200 km circular LEO/);
-    assert.ok(sampleReturnText.includes(costMarginSentence), sampleReturnText);
-    assert.ok(sampleReturnText.includes(stackMarginSentence), sampleReturnText);
+    const sampleReturnCostMarginSentence = `Margin here is ${costMarginPercent}% of rendezvous and departure \u0394V; the \u0394V stack below applies ${stackMarginPercent}% to the full stack.`;
+    const sampleReturnStackMarginSentence = `Margin here is ${stackMarginPercent}% of the full stack; the cost card applies ${costMarginPercent}% to rendezvous and departure \u0394V only.`;
+    assert.ok(sampleReturnText.includes(sampleReturnCostMarginSentence), sampleReturnText);
+    assert.ok(sampleReturnText.includes(sampleReturnStackMarginSentence), sampleReturnText);
+    assert.match(sampleReturnText, /This stack counts launch injection as \u0394V \(a vehicle-agnostic total\); the cost card above does not/);
     assert.match(sampleReturnText, /departure = arrival v∞ under the symmetric-return assumption/);
     assert.match(sampleReturnText, /off by 0\.08-5\.1 km\/s, sometimes too high and sometimes too low, so treat sample-return totals as rough/);
   } finally {

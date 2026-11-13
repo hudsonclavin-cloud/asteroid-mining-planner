@@ -12,7 +12,7 @@ import {
 import {
   deliveredMassKg,
   DETERMINISTIC_MARGIN_FRACTION,
-  deterministicMarginMps,
+  deterministicMarginPolicy,
   isBeyondCurve,
   isInvalidInput,
   isNonFiniteC3,
@@ -147,6 +147,7 @@ interface CostCardState {
   readonly stationkeepingMps: number;
   readonly departureMps: number; // 0 in one-way mode
   readonly marginMps: number; // DEC-13-6: 5% of deterministic maneuver lines only
+  readonly marginBaseText: string;
   readonly deliveredKg: number | null; // null = beyond published curve OR invalid input
   /** True when deliveredMassKg rejected the inputs (INVALID_INPUT) — renders an
    *  em-dash + "invalid cell data", never the beyond-curve copy (audit MED-2). */
@@ -185,6 +186,10 @@ function formatKg(valueKg: number): string {
     return '< 1 kg';
   }
   return `${Math.round(valueKg).toLocaleString('en-US')} kg`;
+}
+
+function formatMps(valueMps: number): string {
+  return `${Math.round(valueMps).toLocaleString('en-US')} m/s`;
 }
 
 function utcMidnightToJdTdb(utcDate: string): number {
@@ -460,10 +465,8 @@ function PorkchopDedicatedPage() {
     const stationkeepingMps = SPACECRAFT_STATIONKEEPING_MPS;
     // DEC-13-6: margin on deterministic maneuver lines only; stationkeeping is
     // the generic allocation and is not margined.
-    const marginMps =
-      selectedMode === 'sample-return'
-        ? deterministicMarginMps(rendezvousMps, departureMps)
-        : deterministicMarginMps(rendezvousMps);
+    const marginPolicy = deterministicMarginPolicy(rendezvousMps, departureMps, selectedMode);
+    const marginMps = marginPolicy.marginMps;
     const budget: SpacecraftDvBudget =
       selectedMode === 'sample-return'
         ? { rendezvousMps, stationkeepingMps, marginMps, departureMps }
@@ -481,6 +484,7 @@ function PorkchopDedicatedPage() {
       stationkeepingMps,
       departureMps,
       marginMps,
+      marginBaseText: marginPolicy.baseText,
       deliveredKg: isBeyondCurve(delivered) || isInvalidInput(delivered) || isNonFiniteC3(delivered) ? null : delivered,
       invalidInput: isInvalidInput(delivered),
     };
@@ -885,15 +889,15 @@ function PorkchopDedicatedPage() {
                     : null,
                 ),
                 h('span', null, 'Rendezvous burn'),
-                h('span', null, `${costCardState.rendezvousMps.toFixed(0)} m/s`),
+                h('span', null, formatMps(costCardState.rendezvousMps)),
                 selectedMode === 'sample-return'
                   ? [
                       h('span', { key: 'dep-label' }, 'Departure burn (sample return)'),
-                      h('span', { key: 'dep-value' }, `${costCardState.departureMps.toFixed(0)} m/s`),
+                      h('span', { key: 'dep-value' }, formatMps(costCardState.departureMps)),
                     ]
                   : null,
                 h('span', null, 'Stationkeeping'),
-                h('span', null, `${costCardState.stationkeepingMps.toFixed(0)} m/s`),
+                h('span', null, formatMps(costCardState.stationkeepingMps)),
                 h('span', null, 'Dogleg penalty'),
                 h(
                   'span',
@@ -907,7 +911,7 @@ function PorkchopDedicatedPage() {
                         : '— (no DLA for this cell)',
                 ),
                 h('span', null, `Margin (${DETERMINISTIC_MARGIN_PERCENT}% of deterministic maneuver \u0394V; stationkeeping not margined)`),
-                h('span', null, `${costCardState.marginMps.toFixed(0)} m/s (deterministic lines)`),
+                h('span', null, `${formatMps(costCardState.marginMps)} (deterministic lines)`),
                 h('span', { style: 'font-weight:700;color:#fff;' }, 'Delivered mass'),
                 h(
                   'span',
@@ -923,7 +927,7 @@ function PorkchopDedicatedPage() {
               h(
                 'div',
                 { key: 'cost-margin-explainer', style: 'font-size:11px;color:#93a4bf;line-height:1.5;margin-top:8px;' },
-                `Margin here is ${DETERMINISTIC_MARGIN_PERCENT}% of rendezvous and departure \u0394V; the \u0394V stack below applies ${STACK_MARGIN_PERCENT}% to the full stack.`,
+                `Margin here is ${DETERMINISTIC_MARGIN_PERCENT}% of ${costCardState.marginBaseText}; the \u0394V stack below applies ${STACK_MARGIN_PERCENT}% to the full stack.`,
               ),
               h(
                 'details',
@@ -984,6 +988,11 @@ function PorkchopDedicatedPage() {
                 ),
                 h(
                   'div',
+                  { key: 'stack-injection-explainer', style: 'font-size:11px;color:#9fb0c8;line-height:1.5;margin-bottom:10px;' },
+                  'This stack counts launch injection as ΔV (a vehicle-agnostic total); the cost card above does not, because the launch-vehicle payload at this C3 already pays for injection.',
+                ),
+                h(
+                  'div',
                   {
                     key: 'stack-lines',
                     style: 'display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;font-size:12px;line-height:1.6;color:#d8e1f1;',
@@ -1027,7 +1036,7 @@ function PorkchopDedicatedPage() {
                 h(
                   'div',
                   { key: 'stack-margin-explainer', style: 'margin-top:8px;color:#9fb0c8;' },
-                  `Margin here is ${STACK_MARGIN_PERCENT}% of the full stack; the cost card applies ${DETERMINISTIC_MARGIN_PERCENT}% to rendezvous and departure \u0394V only.`,
+                  `Margin here is ${STACK_MARGIN_PERCENT}% of the full stack; the cost card applies ${DETERMINISTIC_MARGIN_PERCENT}% to ${costCardState?.marginBaseText ?? deterministicMarginPolicy(0, 0, selectedMode).baseText} only.`,
                 ),
               ],
       ),
