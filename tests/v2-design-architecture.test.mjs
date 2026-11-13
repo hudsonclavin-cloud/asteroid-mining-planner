@@ -16,7 +16,9 @@ test('C3 formatting is owned by C3Value outside the pure formatter', () => {
       else if (entry.name.endsWith('.ts') && !fullPath.endsWith(path.join('design', 'components', 'C3Value.ts'))) {
         const lines = fs.readFileSync(fullPath, 'utf8').split(/\r?\n/);
         lines.forEach((line, index) => {
-          if (line.includes('formatC3(')) violations.push(`${fullPath}:${index + 1}`);
+          if (line.includes('formatC3(') || line.includes('formatC3ValueText(')) {
+            violations.push(`${fullPath}:${index + 1}`);
+          }
         });
       }
     }

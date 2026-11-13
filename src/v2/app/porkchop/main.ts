@@ -26,11 +26,12 @@ import {
   type SpacecraftDvBudget,
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
-import { formatC3ValueText } from '../design/components/C3Value.js';
+import { C3Value, type GridDescriptor } from '../design/components/C3Value.js';
 import { FeasibilityBadge } from '../design/components/FeasibilityBadge.js';
 import { NearZeroC3Badge } from '../design/components/NearZeroC3Badge.js';
 import {
   isNearZeroC3Degenerate,
+  NEAR_ZERO_C3_MASS_CAVEAT,
   nearZeroC3HiddenNotice,
 } from '../../porkchop/near-zero-c3.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
@@ -50,6 +51,7 @@ import {
 } from '../../porkchop/porkchop-view.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js';
+import { displayBodyLabel } from '../../boundary/display-body-label.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { fullTierDisclosure, L1_CRITERION, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { supportBoundaryFor } from '../../porkchop/support-boundary.js';
@@ -213,6 +215,14 @@ export const GRID_PARAMS = {
   nTof: 100,
 } as const;
 const PORKCHOP_GRID_LABEL = formatJdC3GridLabel(GRID_PARAMS);
+const PORKCHOP_C3_GRID_DESCRIPTOR: GridDescriptor = {
+  spanStartUtc: PORKCHOP_DEPARTURE_START_UTC,
+  spanEndUtc: PORKCHOP_DEPARTURE_END_UTC,
+  nDep: GRID_PARAMS.nDep,
+  nTof: GRID_PARAMS.nTof,
+  departureStepLabel: `${(GRID_PARAMS.depEndJD - GRID_PARAMS.depStartJD) / (GRID_PARAMS.nDep - 1)} d`,
+  tofStepLabel: `${(GRID_PARAMS.tofMaxDays - GRID_PARAMS.tofMinDays) / (GRID_PARAMS.nTof - 1)} d`,
+};
 export const PORKCHOP_DEPARTURE_SPAN_LABEL = `${jdTdbToUtcDateString(GRID_PARAMS.depStartJD)}–${jdTdbToUtcDateString(GRID_PARAMS.depEndJD)}`;
 
 /**
@@ -391,7 +401,7 @@ function PorkchopDedicatedPage() {
 
       setPageState({
         bodyId: body.bodyId,
-        bodyLabel: body.name || body.designation,
+        bodyLabel: displayBodyLabel(body.name, body.designation),
         bodyElements: body.elements,
         client,
         tier: tierAssignments.get(body.designation) ?? null,
@@ -822,7 +832,7 @@ function PorkchopDedicatedPage() {
                       costCardState.invalidInput
                         ? '—'
                         : costCardState.deliveredKg === null
-                          ? 'No published payload data past this C3 — not extrapolating.'
+                          ? '— (see payload row)'
                           : formatKg(costCardState.deliveredKg),
                     ),
                     h(
@@ -869,7 +879,7 @@ function PorkchopDedicatedPage() {
                   null,
                   isNearZeroC3Degenerate(costCardState.c3) && hideNearZeroC3
                     ? nearZeroC3HiddenNotice(1)
-                    : `C3 used for payload lookup: ${formatC3ValueText(costCardState.c3, 'km²/s²')} (pinned cell)`,
+                    : `C3 used for payload lookup: ${C3Value({ value: costCardState.c3, unit: 'km²/s²', grid: PORKCHOP_C3_GRID_DESCRIPTOR, refusal: 'not computed', includeGrid: false })} (pinned cell, shown to 3 significant figures)`,
                   NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3 }),
                 ),
                 h(
@@ -888,6 +898,14 @@ function PorkchopDedicatedPage() {
                       )
                     : null,
                 ),
+                isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3
+                  ? h(
+                      'span',
+                      { style: 'grid-column:1 / -1;color:#fbbf24;font-size:11px;line-height:1.45;' },
+                      NEAR_ZERO_C3_MASS_CAVEAT,
+                      NearZeroC3Badge({ flagged: true }),
+                    )
+                  : null,
                 h('span', null, 'Rendezvous burn'),
                 h('span', null, formatMps(costCardState.rendezvousMps)),
                 selectedMode === 'sample-return'
@@ -922,7 +940,7 @@ function PorkchopDedicatedPage() {
               h(
                 'div',
                 { key: 'card-injection-split', style: 'font-size:10px;color:#93a4bf;font-style:italic;margin-top:8px;line-height:1.4;' },
-                `Launch vehicle provides injection to C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
+                `Launch vehicle provides injection to C3 = ${C3Value({ value: costCardState.c3, unit: 'km²/s²', grid: PORKCHOP_C3_GRID_DESCRIPTOR, refusal: 'not computed', includeGrid: false })} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
               ),
               h(
                 'div',
