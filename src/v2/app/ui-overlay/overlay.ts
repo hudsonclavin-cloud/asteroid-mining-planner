@@ -5,6 +5,7 @@ import { ingestSlice2Fixture } from '../../boundary/horizons.js';
 import type { CanonicalStateSample, HorizonsFixture } from '../../boundary/horizons.js';
 import { loadSlice9NeaCatalogFixture } from '../../boundary/slice9-nea-catalog.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
+import { PORKCHOP_DEPARTURE_END_UTC } from '../../porkchop/grid-span.js';
 import { createPorkchopClient } from '../../porkchop/porkchop-client.js';
 import type { PorkchopClient } from '../../porkchop/porkchop-client.js';
 import { PorkchopView } from '../../porkchop/porkchop-view.js';
@@ -158,7 +159,7 @@ function utcMidnightToJdTdb(utcDate: string): number {
 function buildPorkchopGridParams() {
   return {
     depStartJD: utcMidnightToJdTdb('2026-01-01'),
-    depEndJD: utcMidnightToJdTdb('2040-01-01'),
+    depEndJD: utcMidnightToJdTdb(PORKCHOP_DEPARTURE_END_UTC),
     tofMinDays: 182.5,
     tofMaxDays: 1826.25,
     nDep: 200,

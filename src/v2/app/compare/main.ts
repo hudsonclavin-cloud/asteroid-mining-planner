@@ -55,10 +55,11 @@ import {
   type CompareEcho,
 } from '../../porkchop/compare-data.js';
 import { COMPARE_BODIES_CAP, parseCompareBodies } from '../../porkchop/compare-url.js';
-import { formatC3ValueText } from '../design/components/C3Value.js';
+import { C3Value, type GridDescriptor } from '../design/components/C3Value.js';
 import { NearZeroC3Badge } from '../design/components/NearZeroC3Badge.js';
 import {
   nearZeroC3HiddenNotice,
+  NEAR_ZERO_C3_MASS_CAVEAT,
 } from '../../porkchop/near-zero-c3.js';
 import type { PorkchopCell } from '../../porkchop/grid-compute.js';
 import {
@@ -85,6 +86,7 @@ import {
   supportBoundaryFor,
 } from '../../porkchop/support-boundary.js';
 import { installGlobalFocusStyle } from '../design/global-style.js';
+import { PORKCHOP_DEPARTURE_END_UTC } from '../../porkchop/grid-span.js';
 
 installGlobalFocusStyle();
 
@@ -114,7 +116,7 @@ function tdbSecondsToJd(tdbSeconds: number): number {
 }
 
 const DEPARTURE_WINDOW_START_UTC = '2026-01-01';
-const DEPARTURE_WINDOW_END_UTC = '2040-01-01';
+const DEPARTURE_WINDOW_END_UTC = PORKCHOP_DEPARTURE_END_UTC;
 
 /** Locked compare resolution. */
 const N_DEP = 731;
@@ -132,6 +134,14 @@ const COMPARE_GRID = requestedC3GridFromArgs({
   nTof: N_TOF,
   M: 0,
 });
+const COMPARE_C3_GRID_DESCRIPTOR: GridDescriptor = {
+  spanStartUtc: COMPARE_GRID.departureStartUtc,
+  spanEndUtc: COMPARE_GRID.departureEndUtc,
+  nDep: COMPARE_GRID.nDep,
+  nTof: COMPARE_GRID.nTof,
+  departureStepLabel: `${(Date.parse(COMPARE_GRID.departureEndUtc) - Date.parse(COMPARE_GRID.departureStartUtc)) / 86_400_000 / (COMPARE_GRID.nDep - 1)} d`,
+  tofStepLabel: `${(COMPARE_GRID.tofMaxDays - COMPARE_GRID.tofMinDays) / (COMPARE_GRID.nTof - 1)} d`,
+};
 
 /**
  * FIXED REFERENCE rendezvous budget. Rendezvous ΔV is physically per-body — it
@@ -177,10 +187,13 @@ const C3_UNITS = 'km²/s²';
  * running prose need their unit or the sentence is ambiguous. Non-finite and
  * null pass through unadorned — "— km²/s²" reads as a broken value. */
 function formatC3WithUnits(c3: number | null): string {
-  if (c3 === null || !Number.isFinite(c3)) {
-    return formatC3ValueText(c3, '');
-  }
-  return formatC3ValueText(c3, C3_UNITS);
+  return C3Value({
+    value: c3,
+    unit: Number.isFinite(c3) && c3 !== null ? C3_UNITS : '',
+    grid: COMPARE_C3_GRID_DESCRIPTOR,
+    refusal: '—',
+    includeGrid: false,
+  });
 }
 
 /**
@@ -765,6 +778,9 @@ function renderOkRow(
   const massSummary = hasMassDetails
     ? `${mass.text} delivered after ${(result.echo.dvBudgetMps / 1000).toPrecision(3)} km/s \u0394V budget`
     : mass.text;
+  const nearZeroMassCaveat = result.echo.bestPracticalNearZeroC3Degenerate && !hideNearZeroC3
+    ? h('span', { style: NOTE_STYLE }, NEAR_ZERO_C3_MASS_CAVEAT, NearZeroC3Badge({ flagged: true }))
+    : null;
 
   // Widest window by departure breadth — the A2 triple renders it.
   const widest = segmentation.components.reduce<WindowComponent | null>(
@@ -860,9 +876,10 @@ function renderOkRow(
     // Delivered mass.
     h('td', { style: CELL_STYLE }, [
       h('span', { style: `color:${massColor};` }, massSummary),
+      nearZeroMassCaveat,
       mass.note ? h('span', { style: NOTE_STYLE }, mass.note) : null,
       hasMassDetails
-        ? h('span', { style: NOTE_STYLE }, payloadCurveProvenance(vehicle, best.c3, result.payloadAtC3))
+        ? h('span', { style: NOTE_STYLE }, payloadCurveProvenance(vehicle, best.c3, result.payloadAtC3), nearZeroMassCaveat)
         : null,
     ]),
 
