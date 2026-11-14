@@ -1,0 +1,29 @@
+{
+  "schema": "aster-s20-longrun-lr2-lookup-verification/1",
+  "generatedAtUtc": "2026-11-14T01:36:16.637Z",
+  "headCommit": "0d31cda3d1dca81d29f45092be26b94bb44294c1",
+  "node": "v22.23.4",
+  "fixture": {
+    "path": "src/v2/data/horizons-inner-solar-system-2026-2040.json",
+    "sha256": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+    "samples": 5479,
+    "firstTdbSeconds": 820497600,
+    "lastTdbSeconds": 1293796800
+  },
+  "seed": 533915687,
+  "randomEpochs": 5000,
+  "totalEpochsCompared": 10485,
+  "maxAbsDiff": 0,
+  "frameOrEpochMismatch": 0,
+  "exactSampleEpochs": 5479,
+  "sameObjectOnExactSample": 5479,
+  "outOfRange": {
+    "productionThrowsBeforeFirst": true,
+    "indexedThrowsBeforeFirst": true,
+    "productionThrowsAfterLast": true,
+    "indexedThrowsAfterLast": true,
+    "indexedThrowsOnNaN": true
+  },
+  "gate": "max abs difference exactly 0 over >= 2,000 random epochs plus both endpoints",
+  "verdict": "PASS"
+}

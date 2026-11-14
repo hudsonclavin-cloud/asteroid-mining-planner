@@ -39,3 +39,20 @@ git-bundle delivery (no push). Zero sub-agents, zero workflows.
 ## LR4 fresh-clone build reproducibility (run while LR2 computes)
 - 01:41:06Z fresh clone of origin/main (0d31cda, not shallow) into scratch aster-clean; npm ci exit 0; npm run build -- --outDir <scratch>/lr4/out --emptyOutDir exit 0 (4.87 s). Node v22.23.4, vite 5.4.21.
 - compare-build.mjs: 55/55 tracked docs/ files byte-identical; 51 emitted into the scratch outDir, 4 written by hard-coded writeBundle plugin paths into the clone's own docs/ (physics.worker.js, lambert-screen-cache.json, tier-sizing-per-body.json, .nojekyll), all four rewritten by the build and identical. git status clean in the clone after the build.
+
+## LR3 mutation campaign (clock started 01:43Z)
+- 01:43Z throwaway copies under scratch aster-mutants/w0..w3 (plain copies of the LR4 fresh clone incl. its own .git and node_modules; marker file .lr3-throwaway-copy; mutate.mjs refuses to run without it).
+- mutate.mjs enumerate: 48 production .ts files under src/v2/core and src/v2/porkchop, 2,364 mutants (1,660 inside exported functions, 704 inside module-private helpers). By operator: arithmetic-swap 836, argument-swap 671, constant-nudge 394, guard-removal 192, relational-swap 154, sign-flip 36, loop bound -1 / +1 / start +1 27 each.
+- First baseline pass stopped on purpose at 25/109: each test file compiles 25-35 modules, so the import graph alone would run ~100 test files per surviving core mutant. Added function-level selection from Node's NODE_V8_COVERAGE (no new dependency) and restarted.
+- 02:07:19Z baseline with coverage: 109/109 test files pass unmutated in the copy (sum of per-file wall 1,148 s, inflated by coverage and by LR2 using 3 of 4 cores). Per mutant, tests that import the module AND execute the function: 0 for 28 mutants, 1-3 for 1,643, 4-10 for 482, 11-30 for 168, 31+ for 43.
+- plan.mjs: six priority tiers (honesty exported 120, math exported 911, plumbing exported 53, honesty+math private helpers 472, view exported 576, plumbing+view private 232), seeded shuffle inside each.
+- Worker 0 started on the one free core (max 10,200 s). Workers 1-3 start when LR2 frees its cores.
+
+## LR2 result (logged 02:41:48Z)
+- 02:40Z all three shards complete: 13,969 + 13,969 + 13,968 = 41,906 bodies in 3,604 / 3,713 / 3,734 s (one run, no restart needed).
+- Status: ok 39,993; all-return-cells-refused 1,451; no-practical-window 461; outbound-refused:not-propagatable 1.
+- PRIMARY (compare best practical window): median |error| 8.972 km/s, p90 17.838, p99 28.362, overcharge share 97.3%. 81.0% of measured bodies are above the 5.1 km/s top of the DEC-20-7 interim range.
+- SECONDARY (best sample-return stack cell, beyond dispatch scope): median |error| 0.775 km/s, p90 3.194, overcharge 33.7% / undercharge 66.3%; 87.3% inside 0.08-5.1.
+- Refusals: primary 792,784,488 of 2,996,401,200 return cells refused (26.5%); 19,234 bodies lose at least one cell; 1,451 lose all.
+- Noticed in the extremes table: the largest undercharges are all windows with ~72,2xx of 72,300 cells refused. Added a split by refusal share to summarize.mjs. Complete windows only: primary n 22,210, median 9.453, overcharge 99.7%; secondary n 20,019, median 0.612, p99 3.920, overcharge 40.3%.
+- Support (primary, 9,875 L1 measured): chosen return departs at/after the support date for 8,389; 7,796 L1 bodies have no supported converged return cell.

@@ -43,8 +43,21 @@ export function sha256File(filePath) {
   return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
+const git = (...args) => spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8' }).stdout.trim();
+
+/**
+ * Identity of the PRODUCTION code the tools ran against. Evidence commits on the research branch
+ * move HEAD without touching src/, so the identity is the src/v2 tree hash plus the commit the
+ * branch forked from origin/main (falls back to HEAD when origin/main is not available).
+ */
 export function gitHead() {
-  return spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim();
+  return git('merge-base', 'HEAD', 'origin/main') || git('rev-parse', 'HEAD');
+}
+export function srcV2Tree() {
+  return git('rev-parse', 'HEAD:src/v2');
+}
+export function srcDirty() {
+  return git('status', '--porcelain', '--', 'src/').length > 0;
 }
 
 /** Compile production modules into scratch. Call ONCE (build.mjs); workers use importV2(). */
@@ -70,6 +83,8 @@ export function buildV2() {
   );
   const stamp = {
     head: gitHead(),
+    srcV2Tree: srcV2Tree(),
+    srcDirtyAtBuild: srcDirty(),
     node: process.version,
     tscStatus: tsc.status,
     tscOutput: `${tsc.stdout ?? ''}${tsc.stderr ?? ''}`.trim().split('\n').slice(0, 40),
@@ -88,8 +103,8 @@ export function readBuildStamp() {
     throw new Error(`no build at ${buildDir}; run tools/slice20-research/longrun/lib/build.mjs first`);
   }
   const stamp = JSON.parse(fs.readFileSync(stampPath, 'utf8'));
-  if (stamp.head !== gitHead()) {
-    throw new Error(`build stamp HEAD ${stamp.head} != repo HEAD ${gitHead()}; rebuild`);
+  if (stamp.srcV2Tree !== srcV2Tree() || stamp.srcDirtyAtBuild || srcDirty()) {
+    throw new Error(`build is stale or src/ is modified (stamp tree ${stamp.srcV2Tree}, now ${srcV2Tree()}); rebuild from a clean src/`);
   }
   return stamp;
 }
