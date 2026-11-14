@@ -209,6 +209,19 @@ excluded by `.gitignore:17`, never committed, unrecoverable.
 | INV-V1-001 | `src/v2/SLICE_V1_FOUNDING.md` | Visual asset provenance must be confirmed before shipping (CC/public domain) |
 | INV-037 | `src/v2/SLICE_16_FOUNDING.md` Amendment A12 | Frozen-expectation amendment: a frozen negative-control expectation may be amended ONLY when the fixture is demonstrated to encode a defect in the instrument rather than a property of the subject, ONLY with Hudson's explicit authorization, and ONLY with the original expectation, the demonstrated defect, and a replacement fixture preserving or increasing adversarial coverage all recorded additively |
 
+## Index corrections (2026-11-13; audit A2-F01, A2-F07, A2-F08, A2-F14)
+
+The original index rows above remain unchanged. The authoritative additive corrections are:
+
+- The `INV-017..020` row's old summary is incomplete and incorrectly says "no partial renders". `INV-019` is the Slice 11 containment rule: M=1 solutions use the audited Slice 10 Lambert layer, production multi-revolution code lives in `src/v2/core/lambert/`, and it passes its own audit before integration. `INV-017`, `INV-018`, and `INV-020` retain their meanings in `src/v2/SLICE_11_FOUNDING.md`.
+- `INV-014` is namespaced by source: `INV-014a` is the Slice 8.5 star-background floor and `INV-014b` is the Slice 9 three-gate visualization tier contract. Both meanings remain live and are not interchangeable.
+- `INV-007` is referenced by the inherited V2 material but has no definition in the repository. It is retired as an undefined number; no new rule may cite it.
+- The `INV-015` text in `src/v2/SLICE_10_FOUNDING.md` is stale. The shipped solver is a clean-room TypeScript implementation, and `INV-024` forbids porting external astrodynamics source; the old PyKEP/WebAssembly wording is not an implementation claim.
+
+### INV-015 amendment
+
+`INV-015` is amended additively: the operative requirement is that the shipped Lambert solver trace to the peer-reviewed algorithm named by the Slice 10 founding record, while its implementation remains the repository's clean-room TypeScript code. PyKEP source and WebAssembly are not production dependencies.
+
 ---
 
 ## Amendment 2026-08-01 — invariant-number namespace mapping (additive; audit L2-1)
