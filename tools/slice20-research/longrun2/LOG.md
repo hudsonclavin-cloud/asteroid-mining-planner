@@ -72,3 +72,7 @@ One agent, zero sub-agents, zero workflows. Host pre-waived by the dispatch (lap
 ## XR3 (logged 09:32:32Z)
 - XR3 shards started by the autostart at 08:29:01Z, 08:34:51Z, 08:36:11Z and 08:39:12Z (as census shards finished); --max-seconds 10800 each. 0.62-0.77 s per body per shard.
 - Interim commit at PARTIAL: 20506 of 41906: M=0 values equal LR2's committed rows for every body so far.
+- 10:38:32Z XR3 COMPLETE: four shards finished 10:24:00Z, 10:31:59Z, 10:32:19Z, 10:36:57Z (6,898-7,063 s each), 41,906 of 41,906 bodies inside the 3 h box. M=0 values equal LR2's committed rows for all 41,906 (primary error, primary computed, secondary error, status).
+- Primary (39,993 bodies): median |error| 8.972 (M=0) -> 9.262 km/s (M=0+M=1); overcharge 97.3% -> 97.4%; an M=1 cell is the minimum for 20,455 (51.1%); median gain when it is 0.402 km/s.
+- Secondary (37,842): median |error| 0.775 -> 0.526 km/s; overcharge 33.7% -> 47.0%; M=1 is the minimum for 59.7%.
+- Through-Sun check on the chosen minima (beyond the dispatch): no M=1 minimum is flagged. LR2's OWN M=0 minimum is a flagged arc for 1 primary body (154300) and 6 secondary bodies, all on pairing windows where 71,199-72,297 of 72,300 cells were refused (3 to 1,101 admissible cells). LR2's committed numbers are not touched; XR2's shown-window count (0) is unaffected because LR2 values are not shown on the site.

@@ -98,6 +98,11 @@ function measure(label, errM0Of, errBestOf, retOf, errValidOf) {
         return ch.length ? { bodies: ch.length, medianIncreaseKmS: quantile(ch, 0.5), maxIncreaseKmS: ch[ch.length - 1] } : { bodies: 0 };
       })(),
       noUnflaggedCell: list.filter((r) => !retOf(r).bestValid).length,
+      flaggedMinimumBodies: list.filter((r) => retOf(r).best.flagged === 1 || retOf(r).computedFlagged === 1).map((r) => ({
+        des: r.des, tier: r.tier, cls: r.cls, best: r6(retOf(r).best.v), bestM: retOf(r).best.M, perihelionAu: Number((retOf(r).best.qKm / 149597870.7).toPrecision(3)),
+        eccentricity: Number(retOf(r).best.ecc.toPrecision(7)), retDepJdTdb: r6(retOf(r).best.dep), retTofDays: r6(retOf(r).best.tof),
+        bestUnflagged: retOf(r).bestValid ? r6(retOf(r).bestValid.v) : null, refusedCells: retOf(r).refused, admissibleCells: retOf(r).cells - retOf(r).refused,
+      })),
     };
   };
   const by = (keyOf) => Object.fromEntries([...new Set(paired.map(keyOf))].sort().map((k) => [k, block(paired.filter((r) => keyOf(r) === k))]));
@@ -156,6 +161,7 @@ fs.writeFileSync(path.join(here, 'xr3-summary.json'), `${JSON.stringify(summary,
 const f = (x, d = 3) => (typeof x === 'number' && Number.isFinite(x) ? x.toFixed(d) : 'n/a');
 const pct = (x) => (typeof x === 'number' && Number.isFinite(x) ? `${(100 * x).toFixed(1)}%` : 'n/a');
 const n = (x) => (typeof x === 'number' ? x.toLocaleString('en-US') : String(x));
+const nb = (x) => `${n(x)} ${x === 1 ? 'body' : 'bodies'}`;
 const L = [];
 const row = (c) => L.push(`| ${c.join(' | ')} |`);
 L.push('# XR3 — LR2 with M=1 returns admitted');
@@ -186,11 +192,19 @@ for (const m of [primary, secondary]) {
   const g = m.all.gainWhenM1WinsKmS;
   L.push(`**How often an M=1 cell is the minimum:** ${n(w.bodies)} of ${n(m.all.bodies)} bodies (${pct(w.share)}); left branch ${n(w.leftBranch)}, right branch ${n(w.rightBranch)}. Complete windows only: ${n(m.completeWindows.m1IsTheMinimum.bodies)} of ${n(m.completeWindows.bodies)} (${pct(m.completeWindows.m1IsTheMinimum.share)}).`);
   L.push(`**By how much it beats the best M=0 cell when it does:** median ${f(g.median)} km/s, p90 ${f(g.p90)}, p99 ${f(g.p99)}, max ${f(g.max)}; median relative gain ${pct(g.medianRelative)}.`);
-  L.push(`Error sign changes when M=1 is admitted: ${n(m.all.errorSignChanges.bodies)} bodies (${n(m.all.errorSignChanges.underchargeToOvercharge)} from undercharge to overcharge; the computed value can only go down, so the error can only go up).`);
+  L.push(`Error sign changes when M=1 is admitted: ${nb(m.all.errorSignChanges.bodies)} (${n(m.all.errorSignChanges.underchargeToOvercharge)} from undercharge to overcharge; the computed value can only go down, so the error can only go up).`);
   const fm = m.all.flaggedMinima;
   const uv = m.all.m0PlusM1Unflagged;
-  L.push(`**Is the minimum a through-Sun arc? (beyond the dispatch)** Using LR1's flag on the chosen cells: the M=0 minimum is flagged for ${n(fm.m0MinimumFlagged)} bodies, the M=1 minimum for ${n(fm.m1MinimumFlagged)}, the overall minimum for ${n(fm.overallMinimumFlagged)} (${n(fm.overallMinimumFlaggedAndM1)} of them M=1). M=1 "wins" only because of a flagged arc for ${n(fm.m1WinsOnlyBecauseOfAFlaggedArc)} bodies. Excluding flagged cells changes the minimum for ${n(m.all.minimumChangedByExcludingFlagged.bodies)} bodies${m.all.minimumChangedByExcludingFlagged.bodies ? ` (median increase ${f(m.all.minimumChangedByExcludingFlagged.medianIncreaseKmS)} km/s, max ${f(m.all.minimumChangedByExcludingFlagged.maxIncreaseKmS)})` : ''}. Over unflagged cells only, M=0 and M=1: median |error| ${f(uv.medianAbs)} km/s, p90 ${f(uv.p90Abs)}, overcharge share ${pct(uv.overchargeShare)}, inside 0.08-5.1 km/s ${pct(uv.withinInterimRange)}; an M=1 cell is the minimum for ${n(m.all.m1IsTheMinimumUnflagged.bodies)} bodies (${pct(m.all.m1IsTheMinimumUnflagged.share)}).`);
-  L.push(`Return cells: ${n(m.returnCells.m0Converged)} converged at M=0; ${n(m.returnCells.m1CellsWithAConvergedBranch)} cells have a converged M=1 branch, ${n(m.returnCells.m1CellsWithout)} admissible cells have none; ${n(m.returnCells.refused)} refused. Bodies where only M=1 converges: ${m.m1OnlyBodies.length}${m.m1OnlyBodies.length ? ` (${m.m1OnlyBodies.slice(0, 10).join(', ')})` : ''}.`);
+  L.push(`**Is the minimum a through-Sun arc? (beyond the dispatch)** Using LR1's flag on the chosen cells: the M=0 minimum is flagged for ${nb(fm.m0MinimumFlagged)}, the M=1 minimum for ${nb(fm.m1MinimumFlagged)}, the overall minimum for ${nb(fm.overallMinimumFlagged)} (${n(fm.overallMinimumFlaggedAndM1)} of them M=1). M=1 "wins" only because of a flagged arc for ${nb(fm.m1WinsOnlyBecauseOfAFlaggedArc)}. Excluding flagged cells changes the minimum for ${nb(m.all.minimumChangedByExcludingFlagged.bodies)}${m.all.minimumChangedByExcludingFlagged.bodies ? ` (median increase ${f(m.all.minimumChangedByExcludingFlagged.medianIncreaseKmS)} km/s, max ${f(m.all.minimumChangedByExcludingFlagged.maxIncreaseKmS)})` : ''}. Over unflagged cells only, M=0 and M=1: median |error| ${f(uv.medianAbs)} km/s, p90 ${f(uv.p90Abs)}, overcharge share ${pct(uv.overchargeShare)}, inside 0.08-5.1 km/s ${pct(uv.withinInterimRange)}; an M=1 cell is the minimum for ${nb(m.all.m1IsTheMinimumUnflagged.bodies)} (${pct(m.all.m1IsTheMinimumUnflagged.share)}).`);
+  if (m.all.flaggedMinimumBodies.length) {
+    const adm = m.all.flaggedMinimumBodies.map((x) => x.admissibleCells);
+    L.push(`Bodies whose chosen minimum (LR2's M=0 value or the overall one) is a flagged arc, every one listed. Note the refused-cell counts: each pairing window lost most of its 72,300 cells to the fixture end, so the minimum was taken over ${Math.min(...adm) === Math.max(...adm) ? n(adm[0]) : `${n(Math.min(...adm))} to ${n(Math.max(...adm))}`} admissible cells.`);
+    row(['Body', 'tier', 'class', 'minimum km/s', 'M', 'transfer perihelion AU', 'eccentricity', 'return TOF d', 'minimum over unflagged cells', 'admissible / refused cells']);
+    row(['---', '---', '---', '---:', '---:', '---:', '---:', '---:', '---:', '---']);
+    for (const x of m.all.flaggedMinimumBodies) row([x.des, x.tier, x.cls, f(x.best), x.bestM, String(x.perihelionAu), String(x.eccentricity), f(x.retTofDays, 1), x.bestUnflagged === null ? 'none (every admissible cell is flagged)' : f(x.bestUnflagged), `${n(x.admissibleCells)} / ${n(x.refusedCells)}`]);
+    L.push('');
+  }
+  L.push(`Return cells: ${n(m.returnCells.m0Converged)} converged at M=0; ${n(m.returnCells.m1CellsWithAConvergedBranch)} cells have a converged M=1 branch, ${n(m.returnCells.m1CellsWithout)} admissible cells have none; ${n(m.returnCells.refused)} refused. Bodies where only M=1 converges: ${n(m.m1OnlyBodies.length)}${m.m1OnlyBodies.length ? ` (${m.m1OnlyBodies.slice(0, 10).join(', ')})` : ''}.`);
   L.push('');
   L.push('Ten largest gains from M=1:');
   row(['Body', 'tier', 'class', 'best M=0', 'best overall', 'branch', 'gain', 'error M=0', 'error with M=1', 'refused cells']);
