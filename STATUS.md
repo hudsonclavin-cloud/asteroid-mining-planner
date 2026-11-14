@@ -1,7 +1,7 @@
 # STATUS.md — Aster Project Current State
 
 > Updated at the end of each session. Keep it short; agents read this before acting.
-> **Refreshed 2026-11-02 from command output on branch `s19-5-record`; this record commits STATUS one commit after `fa821cb`.**
+> **Refreshed 2026-11-13 from command output on branch `s20-text-sweep`; this record commits STATUS one commit after `1691d96`.**
 > **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`); truth-refreshed 2026-08-07 (`S-HYGIENE-2026-08-07-A`); truth-refreshed 2026-08-10 after Front A close; truth-refreshed 2026-08-12 after the Front B batch run (`S-S17-FRONTB-BATCH-2026-08-11-A`); truth-refreshed 2026-08-13 after Batch 2 ship (`S-S17-BATCH2-2026-08-12-A`).** If HEAD does not match the table below,
 > update this file before believing it. A stale STATUS forced a session-start stop-gate once
 > already (audit L3-1) — that is why this section exists.
@@ -24,25 +24,23 @@ the STATUS commit itself):
 ```text
 git rev-parse HEAD
 git rev-parse origin/main
-git ls-files -s .githooks
-git rev-list --count fa821cb..HEAD
+git rev-list --count origin/main..HEAD
 Get-ChildItem -Path docs/v2 -Directory | ForEach-Object { rg -o "(?:solarSystemV2|porkchopV2|compareV2|aboutV2)-[A-Za-z0-9_-]+\.js" (Join-Path $_.FullName 'index.html') } | Sort-Object -Unique
 rg -n "legacy|noindex|V2|v2" docs/index.html docs/legacy/index.html
-npm run verify
 ```
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `fa821cb` | Read from `git rev-parse origin/main`; no push was performed by this run |
-| Local HEAD before this STATUS commit (branch `s19-5-record`) | `fa821cb` | Slice 19.5 close record; this STATUS commit intentionally lands one commit after it |
+| origin/main | `0d31cda` | Read from `git rev-parse origin/main`; no push was performed by this run |
+| Local HEAD before this STATUS commit (branch `s20-text-sweep`) | `1691d96` | Slice 20 W1-W9 sweep commits are landed; this STATUS commit intentionally pins the previous tip |
 
-**Measured pin lag (2026-11-02):** `git rev-list --count fa821cb..HEAD` was 0 before this edit; this STATUS commit intentionally makes the branch one commit ahead. STATUS commits LAST in any sequence.
-**Push state:** origin/main is at `fa821cb`. Branch `s19-5-record` is local-only and NOT merged. No push was performed by this run. Hudson's handoff is to merge this branch fast-forward-only after the protected founding-doc record is committed.
+**Measured pin lag (2026-11-13):** `git rev-list --count 0d31cda..1691d96` was 14 before this edit; this STATUS commit intentionally makes the branch 15 commits ahead. STATUS commits LAST in any sequence.
+**Push state:** origin/main is at `0d31cda`. Branch `s20-text-sweep` is local-only and NOT merged. No push was performed by this run. Hudson's handoff is to commit the protected edits, complete W11/W12, then merge and push only after the handoff gate is satisfied.
 **Rollback for this run:** no rollback ref was created and no existing refs were changed by this record run.
-**Deploy boundary:** the checked-in `docs/` tree on main is the deploy payload. The command output lists entry bundles `aboutV2-ca_cBGJA.js`, `compareV2-CGn7MKlJ.js`, `porkchopV2-4fKCXVgU.js`, and `solarSystemV2-GybKye0-.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes. CI state: **confirm in Actions**.
+**Deploy boundary:** the checked-in `docs/` tree is the deploy payload. The command output lists entry bundles `aboutV2-DL_Fcx9X.js`, `compareV2-F3OpNprt.js`, `porkchopV2-V_mxVt_g.js`, and `solarSystemV2-C6dR6zLr.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes. CI state: local W11 verification is pending; GitHub Actions has not run for this branch.
 Solar-system ephemeris window 2026-11-01..2027-03-31 TDB; refresh due before 2027-03-31 (S20_00)
 **Root/legacy boundary:** `docs/index.html` redirects to `/v2/solar-system/`; `docs/legacy/index.html` has `noindex, nofollow` and the Slice 19.5 legacy banner linking to the current v2 tool.
-**Baseline verification (2026-11-02):** `npm run verify` passed 107/107 files and 355/355 tests, with 0 failures and 0 load-timeouts.
+**Baseline verification (2026-11-13, before the S20 text sweep):** `npm run verify` passed 109/109 files and 363/363 tests, with 0 failures and 0 load-timeouts.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -53,6 +51,7 @@ Solar-system ephemeris window 2026-11-01..2027-03-31 TDB; refresh due before 202
 | Track | Slice | State |
 |---|---|---|
 | Mission planning | **19.5** (Honest Front Door) | **CLOSED 2026-11-02**. F2 remains PARTIAL. The open ephemeris item is separate: common coverage ends 2026-10-16 TDB and the root reports NOT LIVE after that date. |
+| Mission planning | **20** (Front A text sweep) | **IN PROGRESS** on `s20-text-sweep`; W1-W9 landed through `1691d96`; W6 core constant and W9 protected annotations remain unstaged. W10 is this record; W11 verification/build and W12 evidence remain. |
 | Mission planning | 9 (catalog) · 10 (Lambert, C3) | COMPLETE |
 | Mission planning | 11 (porkchop + ΔV) · 12 (DLA overlay) | COMPLETE + DEPLOYED |
 | Mission planning | 13 (mission cost card) | COMPLETE + DEPLOYED (showcase figures labelled unreproducible-pending-regeneration, L3-6) |
