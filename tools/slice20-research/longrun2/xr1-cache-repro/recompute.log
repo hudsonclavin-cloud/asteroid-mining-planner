@@ -1,0 +1,188 @@
+Departure grid: 783 dates
+TOF grid:       55 TOFs
+Grid per body:  43065
+Precomputing Earth states at all departure dates...
+  Precomputed 783 Earth states
+Loading catalog...
+  Catalog size: 41906
+  250 / 41906 bodies, 14s elapsed, ETA 2382s, 753k solves/s
+  500 / 41906 bodies, 29s elapsed, ETA 2394s, 745k solves/s
+  750 / 41906 bodies, 43s elapsed, ETA 2349s, 755k solves/s
+  1000 / 41906 bodies, 58s elapsed, ETA 2361s, 746k solves/s
+  1250 / 41906 bodies, 73s elapsed, ETA 2370s, 739k solves/s
+  1500 / 41906 bodies, 88s elapsed, ETA 2384s, 730k solves/s
+  1750 / 41906 bodies, 105s elapsed, ETA 2403s, 720k solves/s
+  2000 / 41906 bodies, 120s elapsed, ETA 2393s, 718k solves/s
+  2250 / 41906 bodies, 136s elapsed, ETA 2400s, 712k solves/s
+  2500 / 41906 bodies, 151s elapsed, ETA 2376s, 714k solves/s
+  2750 / 41906 bodies, 165s elapsed, ETA 2351s, 717k solves/s
+  3000 / 41906 bodies, 180s elapsed, ETA 2331s, 719k solves/s
+  3250 / 41906 bodies, 194s elapsed, ETA 2309s, 721k solves/s
+  3500 / 41906 bodies, 209s elapsed, ETA 2291s, 722k solves/s
+  3750 / 41906 bodies, 224s elapsed, ETA 2279s, 721k solves/s
+  4000 / 41906 bodies, 239s elapsed, ETA 2261s, 722k solves/s
+  4250 / 41906 bodies, 254s elapsed, ETA 2248s, 721k solves/s
+  4500 / 41906 bodies, 268s elapsed, ETA 2231s, 722k solves/s
+  4750 / 41906 bodies, 283s elapsed, ETA 2214s, 723k solves/s
+  5000 / 41906 bodies, 297s elapsed, ETA 2190s, 726k solves/s
+  5250 / 41906 bodies, 311s elapsed, ETA 2173s, 727k solves/s
+  5500 / 41906 bodies, 326s elapsed, ETA 2158s, 727k solves/s
+  5750 / 41906 bodies, 341s elapsed, ETA 2143s, 727k solves/s
+  6000 / 41906 bodies, 356s elapsed, ETA 2129s, 726k solves/s
+  6250 / 41906 bodies, 371s elapsed, ETA 2116s, 726k solves/s
+  6500 / 41906 bodies, 386s elapsed, ETA 2103s, 725k solves/s
+  6750 / 41906 bodies, 401s elapsed, ETA 2090s, 724k solves/s
+  7000 / 41906 bodies, 416s elapsed, ETA 2077s, 724k solves/s
+  7250 / 41906 bodies, 432s elapsed, ETA 2063s, 723k solves/s
+  7500 / 41906 bodies, 447s elapsed, ETA 2053s, 722k solves/s
+  7750 / 41906 bodies, 463s elapsed, ETA 2039s, 721k solves/s
+  8000 / 41906 bodies, 477s elapsed, ETA 2023s, 722k solves/s
+  8250 / 41906 bodies, 492s elapsed, ETA 2007s, 722k solves/s
+  8500 / 41906 bodies, 508s elapsed, ETA 1995s, 721k solves/s
+  8750 / 41906 bodies, 523s elapsed, ETA 1982s, 721k solves/s
+  9000 / 41906 bodies, 539s elapsed, ETA 1970s, 719k solves/s
+  9250 / 41906 bodies, 554s elapsed, ETA 1955s, 719k solves/s
+  9500 / 41906 bodies, 568s elapsed, ETA 1939s, 720k solves/s
+  9750 / 41906 bodies, 583s elapsed, ETA 1924s, 720k solves/s
+  10000 / 41906 bodies, 599s elapsed, ETA 1912s, 719k solves/s
+  10250 / 41906 bodies, 615s elapsed, ETA 1899s, 718k solves/s
+  10500 / 41906 bodies, 630s elapsed, ETA 1884s, 718k solves/s
+  10750 / 41906 bodies, 645s elapsed, ETA 1870s, 718k solves/s
+  11000 / 41906 bodies, 660s elapsed, ETA 1855s, 717k solves/s
+  11250 / 41906 bodies, 676s elapsed, ETA 1843s, 717k solves/s
+  11500 / 41906 bodies, 691s elapsed, ETA 1826s, 717k solves/s
+  11750 / 41906 bodies, 706s elapsed, ETA 1813s, 716k solves/s
+  12000 / 41906 bodies, 722s elapsed, ETA 1800s, 716k solves/s
+  12250 / 41906 bodies, 739s elapsed, ETA 1788s, 714k solves/s
+  12500 / 41906 bodies, 754s elapsed, ETA 1773s, 714k solves/s
+  12750 / 41906 bodies, 768s elapsed, ETA 1757s, 715k solves/s
+  13000 / 41906 bodies, 783s elapsed, ETA 1742s, 715k solves/s
+  13250 / 41906 bodies, 802s elapsed, ETA 1734s, 712k solves/s
+  13500 / 41906 bodies, 820s elapsed, ETA 1725s, 709k solves/s
+  13750 / 41906 bodies, 838s elapsed, ETA 1715s, 707k solves/s
+  14000 / 41906 bodies, 856s elapsed, ETA 1706s, 704k solves/s
+  14250 / 41906 bodies, 874s elapsed, ETA 1696s, 702k solves/s
+  14500 / 41906 bodies, 894s elapsed, ETA 1690s, 698k solves/s
+  14750 / 41906 bodies, 914s elapsed, ETA 1682s, 695k solves/s
+  15000 / 41906 bodies, 933s elapsed, ETA 1673s, 693k solves/s
+  15250 / 41906 bodies, 951s elapsed, ETA 1662s, 691k solves/s
+  15500 / 41906 bodies, 970s elapsed, ETA 1652s, 688k solves/s
+  15750 / 41906 bodies, 989s elapsed, ETA 1643s, 686k solves/s
+  16000 / 41906 bodies, 1007s elapsed, ETA 1631s, 684k solves/s
+  16250 / 41906 bodies, 1026s elapsed, ETA 1620s, 682k solves/s
+  16500 / 41906 bodies, 1046s elapsed, ETA 1611s, 679k solves/s
+  16750 / 41906 bodies, 1066s elapsed, ETA 1601s, 677k solves/s
+  17000 / 41906 bodies, 1086s elapsed, ETA 1591s, 674k solves/s
+  17250 / 41906 bodies, 1105s elapsed, ETA 1580s, 672k solves/s
+  17500 / 41906 bodies, 1125s elapsed, ETA 1569s, 670k solves/s
+  17750 / 41906 bodies, 1144s elapsed, ETA 1556s, 668k solves/s
+  18000 / 41906 bodies, 1163s elapsed, ETA 1545s, 666k solves/s
+  18250 / 41906 bodies, 1183s elapsed, ETA 1534s, 664k solves/s
+  18500 / 41906 bodies, 1203s elapsed, ETA 1522s, 662k solves/s
+  18750 / 41906 bodies, 1223s elapsed, ETA 1510s, 660k solves/s
+  19000 / 41906 bodies, 1243s elapsed, ETA 1498s, 658k solves/s
+  19250 / 41906 bodies, 1261s elapsed, ETA 1484s, 657k solves/s
+  19500 / 41906 bodies, 1280s elapsed, ETA 1471s, 656k solves/s
+  19750 / 41906 bodies, 1300s elapsed, ETA 1459s, 654k solves/s
+  20000 / 41906 bodies, 1320s elapsed, ETA 1446s, 653k solves/s
+  20250 / 41906 bodies, 1339s elapsed, ETA 1432s, 651k solves/s
+  20500 / 41906 bodies, 1358s elapsed, ETA 1418s, 650k solves/s
+  20750 / 41906 bodies, 1378s elapsed, ETA 1405s, 649k solves/s
+  21000 / 41906 bodies, 1397s elapsed, ETA 1391s, 647k solves/s
+  21250 / 41906 bodies, 1415s elapsed, ETA 1375s, 647k solves/s
+  21500 / 41906 bodies, 1435s elapsed, ETA 1362s, 645k solves/s
+  21750 / 41906 bodies, 1454s elapsed, ETA 1348s, 644k solves/s
+  22000 / 41906 bodies, 1473s elapsed, ETA 1333s, 643k solves/s
+  22250 / 41906 bodies, 1494s elapsed, ETA 1320s, 641k solves/s
+  22500 / 41906 bodies, 1514s elapsed, ETA 1306s, 640k solves/s
+  22750 / 41906 bodies, 1533s elapsed, ETA 1291s, 639k solves/s
+  23000 / 41906 bodies, 1552s elapsed, ETA 1276s, 638k solves/s
+  23250 / 41906 bodies, 1571s elapsed, ETA 1261s, 637k solves/s
+  23500 / 41906 bodies, 1589s elapsed, ETA 1245s, 637k solves/s
+  23750 / 41906 bodies, 1608s elapsed, ETA 1229s, 636k solves/s
+  24000 / 41906 bodies, 1627s elapsed, ETA 1214s, 635k solves/s
+  24250 / 41906 bodies, 1645s elapsed, ETA 1198s, 635k solves/s
+  24500 / 41906 bodies, 1664s elapsed, ETA 1182s, 634k solves/s
+  24750 / 41906 bodies, 1683s elapsed, ETA 1167s, 633k solves/s
+  25000 / 41906 bodies, 1703s elapsed, ETA 1151s, 632k solves/s
+  25250 / 41906 bodies, 1720s elapsed, ETA 1135s, 632k solves/s
+  25500 / 41906 bodies, 1738s elapsed, ETA 1118s, 632k solves/s
+  25750 / 41906 bodies, 1755s elapsed, ETA 1101s, 632k solves/s
+  26000 / 41906 bodies, 1773s elapsed, ETA 1085s, 632k solves/s
+  26250 / 41906 bodies, 1791s elapsed, ETA 1068s, 631k solves/s
+  26500 / 41906 bodies, 1809s elapsed, ETA 1052s, 631k solves/s
+  26750 / 41906 bodies, 1828s elapsed, ETA 1036s, 630k solves/s
+  27000 / 41906 bodies, 1846s elapsed, ETA 1019s, 630k solves/s
+  27250 / 41906 bodies, 1864s elapsed, ETA 1003s, 630k solves/s
+  27500 / 41906 bodies, 1882s elapsed, ETA 986s, 629k solves/s
+  27750 / 41906 bodies, 1901s elapsed, ETA 970s, 629k solves/s
+  28000 / 41906 bodies, 1920s elapsed, ETA 953s, 628k solves/s
+  28250 / 41906 bodies, 1938s elapsed, ETA 937s, 628k solves/s
+  28500 / 41906 bodies, 1957s elapsed, ETA 921s, 627k solves/s
+  28750 / 41906 bodies, 1976s elapsed, ETA 904s, 627k solves/s
+  29000 / 41906 bodies, 1995s elapsed, ETA 888s, 626k solves/s
+  29250 / 41906 bodies, 2014s elapsed, ETA 871s, 626k solves/s
+  29500 / 41906 bodies, 2032s elapsed, ETA 855s, 625k solves/s
+  29750 / 41906 bodies, 2050s elapsed, ETA 838s, 625k solves/s
+  30000 / 41906 bodies, 2068s elapsed, ETA 821s, 625k solves/s
+  30250 / 41906 bodies, 2086s elapsed, ETA 804s, 624k solves/s
+  30500 / 41906 bodies, 2104s elapsed, ETA 787s, 624k solves/s
+  30750 / 41906 bodies, 2121s elapsed, ETA 770s, 624k solves/s
+  31000 / 41906 bodies, 2139s elapsed, ETA 752s, 624k solves/s
+  31250 / 41906 bodies, 2155s elapsed, ETA 735s, 624k solves/s
+  31500 / 41906 bodies, 2171s elapsed, ETA 717s, 625k solves/s
+  31750 / 41906 bodies, 2185s elapsed, ETA 699s, 626k solves/s
+  32000 / 41906 bodies, 2200s elapsed, ETA 681s, 627k solves/s
+  32250 / 41906 bodies, 2215s elapsed, ETA 663s, 627k solves/s
+  32500 / 41906 bodies, 2231s elapsed, ETA 646s, 627k solves/s
+  32750 / 41906 bodies, 2248s elapsed, ETA 628s, 627k solves/s
+  33000 / 41906 bodies, 2263s elapsed, ETA 611s, 628k solves/s
+  33250 / 41906 bodies, 2278s elapsed, ETA 593s, 628k solves/s
+  33500 / 41906 bodies, 2295s elapsed, ETA 576s, 629k solves/s
+  33750 / 41906 bodies, 2311s elapsed, ETA 559s, 629k solves/s
+  34000 / 41906 bodies, 2327s elapsed, ETA 541s, 629k solves/s
+  34250 / 41906 bodies, 2344s elapsed, ETA 524s, 629k solves/s
+  34500 / 41906 bodies, 2360s elapsed, ETA 507s, 630k solves/s
+  34750 / 41906 bodies, 2375s elapsed, ETA 489s, 630k solves/s
+  35000 / 41906 bodies, 2390s elapsed, ETA 472s, 631k solves/s
+  35250 / 41906 bodies, 2403s elapsed, ETA 454s, 632k solves/s
+  35500 / 41906 bodies, 2416s elapsed, ETA 436s, 633k solves/s
+  35750 / 41906 bodies, 2430s elapsed, ETA 418s, 634k solves/s
+  36000 / 41906 bodies, 2443s elapsed, ETA 401s, 635k solves/s
+  36250 / 41906 bodies, 2457s elapsed, ETA 383s, 635k solves/s
+  36500 / 41906 bodies, 2470s elapsed, ETA 366s, 636k solves/s
+  36750 / 41906 bodies, 2484s elapsed, ETA 348s, 637k solves/s
+  37000 / 41906 bodies, 2497s elapsed, ETA 331s, 638k solves/s
+  37250 / 41906 bodies, 2510s elapsed, ETA 314s, 639k solves/s
+  37500 / 41906 bodies, 2523s elapsed, ETA 296s, 640k solves/s
+  37750 / 41906 bodies, 2536s elapsed, ETA 279s, 641k solves/s
+  38000 / 41906 bodies, 2549s elapsed, ETA 262s, 642k solves/s
+  38250 / 41906 bodies, 2563s elapsed, ETA 245s, 643k solves/s
+  38500 / 41906 bodies, 2576s elapsed, ETA 228s, 644k solves/s
+  38750 / 41906 bodies, 2589s elapsed, ETA 211s, 645k solves/s
+  39000 / 41906 bodies, 2602s elapsed, ETA 194s, 645k solves/s
+  39250 / 41906 bodies, 2615s elapsed, ETA 177s, 646k solves/s
+  39500 / 41906 bodies, 2629s elapsed, ETA 160s, 647k solves/s
+  39750 / 41906 bodies, 2643s elapsed, ETA 143s, 648k solves/s
+  40000 / 41906 bodies, 2656s elapsed, ETA 127s, 649k solves/s
+  40250 / 41906 bodies, 2669s elapsed, ETA 110s, 649k solves/s
+  40500 / 41906 bodies, 2683s elapsed, ETA 93s, 650k solves/s
+  40750 / 41906 bodies, 2697s elapsed, ETA 76s, 651k solves/s
+  41000 / 41906 bodies, 2710s elapsed, ETA 60s, 651k solves/s
+  41250 / 41906 bodies, 2724s elapsed, ETA 43s, 652k solves/s
+  41500 / 41906 bodies, 2737s elapsed, ETA 27s, 653k solves/s
+  41750 / 41906 bodies, 2751s elapsed, ETA 10s, 654k solves/s
+
+Precompute complete in 2760.3s
+Total solves: 1804638825
+Solves/sec:   654k
+
+Status breakdown:
+  low_departure_c3             41422 (98.85%)
+  high_departure_c3            483 (1.15%)
+  lambert_unconvergeable       0 (0.00%)
+  propagator_failed            1 (0.00%)
+Co-orbital bodies tagged: 130
+
+Cache written: tests/fixtures/v2/lambert-screen-cache.json (33691 KB)
+EXIT 0

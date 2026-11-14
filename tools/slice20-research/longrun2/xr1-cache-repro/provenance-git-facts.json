@@ -1,0 +1,414 @@
+{
+  "obtained": "by hand, with git, in a full-history throwaway clone of origin/main (the committing worktree belongs to a shallow clone and cannot answer these); no committed script reads git history",
+  "head": "75606da39d4a6a0bb7022b3457e0e06ed7f6a8dd",
+  "isAncestorOfHead": true,
+  "commitsSince": 647,
+  "solverCommitDate": "2026-05-29",
+  "solverCommitSubject": "fix(v2): Slice 10 regenerate Phase C.1 screening cache after initial-guess fix (audit Finding 1)",
+  "scriptDriftExplanation": [
+    "The recorded hash 44d94435... is the script as committed in 9e93ffc (2026-05-30, \"refactor(v2): Slice 10 cache contract overhaul (audit Findings 2, 3, 4, 5)\"), the commit that last changed the cache file. So the cache was written by that version of the script, run in a tree whose HEAD was still 8471659; the recorded solverCommit is the parent of the commit that carries the cache.",
+    "8471659 -> 9e93ffc changed nothing under src/v2/core, so the recorded commit does identify the solver source the cache was built with.",
+    "Two later commits changed the script: be5ef60 (2026-08-05, repoint the Horizons fixture path from tests/fixtures to src/v2/data) and 6d9b8bc (2026-08-05, invoke tsc through process.execPath instead of the .bin shim). Neither touches the grid, the solver call or the output (script-diff-9e93ffc-to-HEAD.patch).",
+    "Nothing in the repo recomputes these hashes or compares them with the files beside the cache (the drift went unnoticed from 2026-08-05 until this run)."
+  ],
+  "scriptShaByCommit": {
+    "8471659": "785516923ce5154d...",
+    "9e93ffc": "44d9443500cb280a... (= recorded)",
+    "be5ef60": "6e3352d3a3bbce16...",
+    "6d9b8bc and HEAD": "124637322914b33e... (= now)"
+  },
+  "coreAndPorkchopFilesDiffering": [
+    {
+      "status": "M",
+      "file": "src/v2/core/constants/index.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/core/constants/near-zero-c3.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/core/lambert/dla.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/core/lambert/feasibility.ts"
+    },
+    {
+      "status": "M",
+      "file": "src/v2/core/lambert/householder.ts"
+    },
+    {
+      "status": "M",
+      "file": "src/v2/core/lambert/hyp2f1b.ts"
+    },
+    {
+      "status": "M",
+      "file": "src/v2/core/lambert/initial-guess.ts"
+    },
+    {
+      "status": "M",
+      "file": "src/v2/core/lambert/izzo.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/core/lambert/lambert-multi-rev.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/colormap.test.mjs"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/colormap.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/compare-data.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/compare-url.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/composite-grid.test.mjs"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/composite-grid.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/delta-v.test.mjs"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/delta-v.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/dual-m-compute.test.mjs"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/dual-m-compute.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/format-c3.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/grid-compute.test.mjs"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/grid-compute.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/grid-span.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/launch-vehicles.test.mjs"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/launch-vehicles.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/near-zero-c3.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/porkchop-client.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/porkchop-view.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/porkchop.worker.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/propagation-guard.test.mjs"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/propagation-guard.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/segment-windows.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/support-boundary.test.mjs"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/support-boundary.ts"
+    },
+    {
+      "status": "A",
+      "file": "src/v2/porkchop/tier-disclosure.ts"
+    }
+  ],
+  "modulesTheScriptCompiles": [
+    {
+      "file": "src/v2/boundary/horizons.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/boundary/slice9-nea-catalog.ts",
+      "changed": true,
+      "added": 7,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": [
+        "41b560b 2026-07-07 Slice 14 Phase E: About catalog count renders from real source (INV-026)"
+      ]
+    },
+    {
+      "file": "src/v2/core/constants/asteroids.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/constants/bodies.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/constants/index.ts",
+      "changed": true,
+      "added": 4,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": [
+        "b214e26 2026-10-10 feat(core): near-zero C3 degeneracy threshold + predicate (DEC-19-1)"
+      ]
+    },
+    {
+      "file": "src/v2/core/constants/near-zero-c3.ts",
+      "changed": true,
+      "added": 10,
+      "deleted": 0,
+      "presentAtSolverCommit": false,
+      "commits": [
+        "b214e26 2026-10-10 feat(core): near-zero C3 degeneracy threshold + predicate (DEC-19-1)"
+      ]
+    },
+    {
+      "file": "src/v2/core/frames/ids.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/frames/index.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/frames/transform.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/index.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/interpolators/hermite.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/interpolators/index.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/invariants/assertions.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/invariants/index.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/invariants/round-trip.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/invariants/runtime.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/lambert/householder.ts",
+      "changed": true,
+      "added": 3,
+      "deleted": 1,
+      "presentAtSolverCommit": true,
+      "commits": [
+        "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)"
+      ]
+    },
+    {
+      "file": "src/v2/core/lambert/hyp2f1b.ts",
+      "changed": true,
+      "added": 11,
+      "deleted": 13,
+      "presentAtSolverCommit": true,
+      "commits": [
+        "f455697 2026-05-30 docs(v2): Slice 10 narrow hyp2f1b documented domain to [0, 0.5] (audit Finding 8)"
+      ]
+    },
+    {
+      "file": "src/v2/core/lambert/initial-guess.ts",
+      "changed": true,
+      "added": 4,
+      "deleted": 1,
+      "presentAtSolverCommit": true,
+      "commits": [
+        "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)"
+      ]
+    },
+    {
+      "file": "src/v2/core/lambert/izzo.ts",
+      "changed": true,
+      "added": 18,
+      "deleted": 2,
+      "presentAtSolverCommit": true,
+      "commits": [
+        "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)",
+        "dbf8f42 2026-05-30 feat(v2): Slice 10 lambert() rejects M != 0 explicitly (audit Finding 7)"
+      ]
+    },
+    {
+      "file": "src/v2/core/lambert/tof.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/lambert/vec3.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/propagators/index.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/propagators/keplerian.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/state.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/types.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/units.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    },
+    {
+      "file": "src/v2/core/units/utc-to-tdb.ts",
+      "changed": false,
+      "added": 0,
+      "deleted": 0,
+      "presentAtSolverCommit": true,
+      "commits": []
+    }
+  ],
+  "executableChangesInCompiledModules": [
+    "boundary/slice9-nea-catalog.ts: a new check that catalog.totalBodies equals 41,906 (41b560b)",
+    "core/lambert/izzo.ts: lambert() returns ok:false for M != 0 (dbf8f42); the script calls it with the default M = 0",
+    "core/constants/index.ts and near-zero-c3.ts: a new exported constant and predicate (b214e26); not used by the script",
+    "householder.ts, hyp2f1b.ts, initial-guess.ts: comment-only changes (read from solver-diff-8471659-to-HEAD.patch)"
+  ],
+  "addedButNotImported": [
+    "src/v2/core/lambert/dla.ts",
+    "src/v2/core/lambert/feasibility.ts",
+    "src/v2/core/lambert/lambert-multi-rev.ts"
+  ]
+}

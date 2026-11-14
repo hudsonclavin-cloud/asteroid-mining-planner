@@ -1,0 +1,30 @@
+diff --git a/tools/build/precompute-lambert-screen.mjs b/tools/build/precompute-lambert-screen.mjs
+index 0bbef91..26f3c0a 100644
+--- a/tools/build/precompute-lambert-screen.mjs
++++ b/tools/build/precompute-lambert-screen.mjs
+@@ -39,10 +39,11 @@ const tempOutDir = path.join(repoRoot, '.tmp-tests', 'lambert-screen-precompute'
+ fs.rmSync(tempOutDir, { recursive: true, force: true });
+ fs.mkdirSync(tempOutDir, { recursive: true });
+ 
+-const tscBin = path.join(repoRoot, 'node_modules', '.bin', 'tsc');
++const tscBin = path.join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc');
+ const tscResult = spawnSync(
+-  tscBin,
++  process.execPath,
+   [
++    tscBin,
+     '--pretty', 'false',
+     '--outDir', tempOutDir,
+     '--rootDir', path.join(repoRoot, 'src', 'v2'),
+@@ -157,9 +158,9 @@ console.log(`Grid per body:  ${departureTdbs.length * tofSecondsList.length}`);
+ 
+ const HORIZONS_FIXTURE = path.join(
+   repoRoot,
+-  'tests',
+-  'fixtures',
++  'src',
+   'v2',
++  'data',
+   'horizons-inner-solar-system-2026-2040.json',
+ );
+ const NEA_FIXTURE = path.join(repoRoot, 'tests', 'fixtures', 'v2', 'nea-catalog-slice9.json');

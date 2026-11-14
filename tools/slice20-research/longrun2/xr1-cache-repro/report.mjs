@@ -1,0 +1,162 @@
+#!/usr/bin/env node
+// XR1 — REPORT.md from xr1-cache-diff.json and xr1-second-solver.json. No number is typed by hand.
+//   node report.mjs
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const d = JSON.parse(fs.readFileSync(path.join(here, 'xr1-cache-diff.json'), 'utf8'));
+const s2Path = path.join(here, 'xr1-second-solver.json');
+const s2 = fs.existsSync(s2Path) ? JSON.parse(fs.readFileSync(s2Path, 'utf8')) : null;
+const n = (x) => (typeof x === 'number' ? x.toLocaleString('en-US') : String(x));
+const e = (x) => (typeof x === 'number' ? x.toExponential(3) : 'n/a');
+const L = [];
+const row = (c) => L.push(`| ${c.join(' | ')} |`);
+const P = d.provenance;
+const drift = ['catalogFixture', 'horizonsFixture', 'precomputeScript', 'docsVsTestsCache'].filter((k) => P[k].verdict === 'DRIFT');
+const g = P.solverCommit;
+
+L.push('# XR1 — shipped screening cache: provenance, reproducibility, solver drift');
+L.push('');
+L.push(`**${d.label}**`);
+L.push('');
+L.push(`**Provenance: ${drift.length ? `DRIFT (${drift.join(', ')})` : 'MATCH on every hash'}.** **Reproducibility: ${d.recompute.bodiesSectionByteIdentical ? 'the recomputed cache\'s bodies section is byte-identical to the shipped one' : `the recomputed cache differs from the shipped one for ${n(d.minC3.bodiesChanged)} bodies in minC3`}.** Bodies the catalog would show differently: **${n(d.displayed.bodiesShownDifferently)}**.`);
+L.push('');
+L.push('## 1. Provenance check (done before the recompute started)');
+row(['Check', 'Verdict', 'Now', 'Recorded in the cache']);
+row(['---', '---', '---', '---']);
+row([`sha256 of \`${P.catalogFixture.name}\``, P.catalogFixture.verdict, `\`${P.catalogFixture.now}\``, `\`${P.catalogFixture.recorded}\``]);
+row([`sha256 of \`${P.horizonsFixture.name}\``, P.horizonsFixture.verdict, `\`${P.horizonsFixture.now}\``, `\`${P.horizonsFixture.recorded}\``]);
+row([`sha256 of \`${P.precomputeScript.name}\``, `**${P.precomputeScript.verdict}**`, `\`${P.precomputeScript.now}\``, `\`${P.precomputeScript.recorded}\``]);
+row(['`docs/` cache byte-identical to `tests/fixtures/v2/` cache', P.docsVsTestsCache.verdict, `\`${P.docsVsTestsCache.docs.sha256}\` (${n(P.docsVsTestsCache.docs.bytes)} bytes)`, `\`${P.docsVsTestsCache.tests.sha256}\` (${n(P.docsVsTestsCache.tests.bytes)} bytes)`]);
+L.push('');
+L.push(`**solverCommit \`${g.recorded.slice(0, 7)}\`** (${g.solverCommitDate}, "${g.solverCommitSubject}"): ${g.isAncestorOfHead ? 'IS' : 'is NOT'} an ancestor of HEAD \`${g.head.slice(0, 7)}\`; ${n(g.commitsSince)} commits later.`);
+L.push('');
+L.push('What the script hash drift is:');
+for (const line of g.scriptDriftExplanation) L.push(`- ${line}`);
+L.push('');
+L.push(`Files under \`src/v2/core\` and \`src/v2/porkchop\` that differ between \`${g.recorded.slice(0, 7)}\` and HEAD: **${g.coreAndPorkchopFilesDiffering.length}** (${g.coreAndPorkchopFilesDiffering.filter((x) => x.status === 'A').length} added, ${g.coreAndPorkchopFilesDiffering.filter((x) => x.status === 'M').length} modified). Full list in \`provenance-git-facts.json\`. Of the modules the precompute script actually compiles:`);
+row(['Module', 'Changed since the recorded commit', 'Lines +/-', 'Commits that touched it']);
+row(['---', '---', '---', '---']);
+for (const m of g.modulesTheScriptCompiles) row([`\`${m.file}\``, m.changed ? '**yes**' : 'no', m.changed ? `+${m.added} / -${m.deleted}` : '', m.commits.join('; ')]);
+L.push('');
+L.push(`Not imported by the script (so they cannot affect the cache): ${g.addedButNotImported.map((x) => `\`${x}\``).join(', ')}. They were added after the recorded commit.`);
+L.push('');
+L.push('## 2. Recompute');
+const r = d.recompute;
+L.push(`\`node tools/build/precompute-lambert-screen.mjs\`, unedited, no arguments, in a throwaway full-history clone at \`${g.head.slice(0, 7)}\`; it wrote to its hard-coded path inside that clone and the result was copied to scratch. Exit ${r.log.exit}. ${r.log.completeLine ?? ''}. ${r.log.totalSolvesLine ?? ''} (shipped metadata: ${n(r.metadata.shipped.totalSolves)} solves in ${r.metadata.shipped.wallTimeSeconds} s). ${r.log.coOrbitalLine ?? ''}.`);
+L.push('');
+row(['', 'Shipped', 'Recomputed']);
+row(['---', '---', '---']);
+row(['sha256', `\`${r.shippedFile.sha256}\``, `\`${r.file.sha256}\``]);
+row(['bytes', n(r.shippedFile.bytes), n(r.file.bytes)]);
+row(['generatedAt', r.metadata.shipped.generatedAt, r.metadata.recomputed.generatedAt]);
+row(['provenance.solverCommit', `\`${r.metadata.shipped.provenance.solverCommit.slice(0, 7)}\``, `\`${r.metadata.recomputed.provenance.solverCommit.slice(0, 7)}\``]);
+row(['provenance.precomputeScriptSha256', `\`${r.metadata.shipped.provenance.precomputeScriptSha256.slice(0, 12)}...\``, `\`${r.metadata.recomputed.provenance.precomputeScriptSha256.slice(0, 12)}...\``]);
+L.push('');
+L.push(`Whole file identical: ${r.wholeFileIdentical ? 'yes' : 'no (the metadata block necessarily differs: generatedAt, wallTimeSeconds, provenance)'}. **Bodies section (everything after the metadata) byte-identical: ${r.bodiesSectionByteIdentical ? 'YES' : 'NO'}.** The recomputed file: ${d.recomputedCopy}.`);
+L.push('');
+L.push('## 3. Diff, all bodies');
+row(['Measure', 'Value']);
+row(['---', '---:']);
+row(['Bodies shipped / recomputed', `${n(d.bodies.shipped)} / ${n(d.bodies.recomputed)}`]);
+row(['Same body order', d.bodies.sameOrder ? 'yes' : 'no']);
+row(['Missing from / extra in the recompute', `${d.bodies.missingInRecomputed.length} / ${d.bodies.extraInRecomputed.length}`]);
+row(['Status changes', n(d.statusChanges.length)]);
+row(['isCoOrbital changes', n(d.isCoOrbitalChanges.length)]);
+row(['Bodies whose minC3 changes at all', n(d.minC3.bodiesChanged)]);
+row(['max relative minC3 difference', d.minC3.bodiesChanged ? e(d.minC3.maxRelDiff) : '0']);
+row(['median relative difference among changed', d.minC3.bodiesChanged ? e(d.minC3.medianRelDiffAmongChanged) : 'n/a']);
+row(['minC3Date / minC3TofDays changes', `${n(d.minC3CellChanges.count)} (${n(d.minC3CellChanges.withSameC3)} with the same C3)`]);
+row(['Different top window in bestWindows', n(d.bestWindows.differentTopWindow)]);
+row(['Different top-5 set', n(d.bestWindows.differentTop5Set)]);
+row(['Same five cells, different stored values', n(d.bestWindows.sameCellsDifferentValues)]);
+row(['Metadata differences other than generatedAt, wallTimeSeconds, totalSolves, provenance', n(d.metadataDifferencesOtherThanExpected.length)]);
+L.push('');
+L.push('Status matrix, shipped (rows) to recomputed (columns):');
+const ST = Object.keys(d.statusMatrixFromTo);
+row(['from \\ to', ...ST]);
+row(['---', ...ST.map(() => '---:')]);
+for (const a of ST) row([a, ...ST.map((b) => n(d.statusMatrixFromTo[a][b]))]);
+L.push('');
+L.push(`totalSolves: shipped ${n(r.metadata.shipped.totalSolves)}, recomputed ${n(r.metadata.recomputed.totalSolves)}. Co-orbital bodies: shipped ${d.coOrbitalCount.shipped}, recomputed ${d.coOrbitalCount.recomputed}.`);
+if (d.minC3.largest25.length) {
+  L.push('');
+  L.push('Largest minC3 differences:');
+  row(['Body', 'shipped', 'recomputed', 'relative']);
+  row(['---', '---:', '---:', '---:']);
+  for (const x of d.minC3.largest25) row([x.des, String(x.shipped), String(x.recomputed), e(x.rel)]);
+}
+if (d.metadataDifferencesOtherThanExpected.length) {
+  L.push('');
+  L.push(`Metadata differences: ${d.metadataDifferencesOtherThanExpected.map((x) => `${x.key}: ${JSON.stringify(x.shipped)} -> ${JSON.stringify(x.recomputed)}`).join('; ')}.`);
+}
+L.push('');
+const oc = fs.existsSync(path.join(here, 'xr1-old-solver-check.json')) ? JSON.parse(fs.readFileSync(path.join(here, 'xr1-old-solver-check.json'), 'utf8')) : null;
+if (!d.recompute.bodiesSectionByteIdentical) {
+  L.push('');
+  L.push('### Why the last digits differ: the source, or the machine?');
+  L.push(`The cache does not record which machine or Node version built it. This recompute ran on ${d.node}, linux x64. What can be measured here:`);
+  L.push('- Both input fixtures hash-match the recorded values, so the inputs are the same bytes.');
+  L.push('- Compiled with the same tsc, the six solver modules at the recorded commit and at HEAD differ only in comments and in one new guard in `izzo.js` (`if (M !== 0) return ...`, never taken by the script); `tof.js` and `vec3.js` are byte-identical.');
+  if (oc) {
+    const g = oc.byGroup;
+    L.push(`- Decisive check (\`old-solver-check.mjs\`): the recorded commit's solver and today's solver were both run on this host over ${oc.bodies} bodies (${n(oc.cells)} cells). They agree **bit for bit on ${n(oc.cellsBitIdenticalOldVsCurrent)} of ${n(oc.cells)} cells**. The old solver run here reproduces the shipped minC3 for ${g['largest shipped-vs-recomputed difference'].oldSolverHereEqualsShipped} of the ${g['largest shipped-vs-recomputed difference'].bodies} most-changed bodies, ${g['seeded from the other changed bodies'].oldSolverHereEqualsShipped} of ${g['seeded from the other changed bodies'].bodies} other changed bodies, and ${g['seeded from the unchanged bodies'].oldSolverHereEqualsShipped} of ${g['seeded from the unchanged bodies'].bodies} unchanged ones.`);
+    L.push('- So the source changes since the recorded commit are not what moved the values: the same old source, run here, lands on the recomputed digits, not the shipped ones. What differs is the machine or runtime that did the arithmetic. Which one built the shipped file is not recorded anywhere this run could read.');
+  }
+  L.push('');
+}
+L.push('## 4. How many bodies would the catalog show differently');
+const dp = d.displayed;
+L.push(`**${n(dp.bodiesShownDifferently)}.** Derived from the production code that consumes the cache: ${dp.how}.`);
+L.push('');
+row(['What the site renders from the cache', 'Bodies that change']);
+row(['---', '---:']);
+row(['Status badge (low C3 / high C3 / unconv. / prop fail)', n(dp.byComponent.status)]);
+row(['LOW/HIGH C3 classification specifically', n(dp.lowHighClassificationChanges)]);
+row(['C3 text (formatC3: three significant figures)', n(dp.byComponent.c3Text)]);
+row(['Co-orbital tag', n(dp.byComponent.coOrbital)]);
+row(['Near-zero-C3 flag (minC3 < 0.1)', n(dp.byComponent.nearZero)]);
+row(['3D point colour (8-bit hex of getScreeningColor)', n(dp.byComponent.colour)]);
+row(['A stored value changes but nothing displayed does', n(dp.valueChangedButNothingDisplayedChanges)]);
+L.push('');
+L.push('Read from the source, not measured: the V2 site does not show `minC3Date`, `minC3TofDays` or `bestWindows`. `mcp/src/tools/catalog-shared.ts` returns the first two; no non-test module under `src/v2` or `mcp/src` reads `bestWindows`.');
+L.push('');
+if (s2) {
+  const a = s2.inSample;
+  const x = s2.extraNearestThreshold;
+  L.push('## 5. Second mechanism: izzo.ts (catalog) against lambert-multi-rev.ts at M=0 (porkchop page)');
+  L.push(`${a.bodies} bodies (seed ${s2.seed}; ${Object.entries(s2.sample.reasons).map(([k, v]) => `${v} ${k}`).join(', ')}; shipped status sizes ${Object.entries(s2.sample.shippedStatusSizes).map(([k, v]) => `${k} ${n(v)}`).join(', ')}). Same screening grid, same epochs, same Earth states, same constants; only the solver call differs.`);
+  L.push('');
+  row(['Measure', `Sample (${a.bodies} bodies)`, `Extra: 25 nearest the threshold (${x.bodies} not already sampled)`]);
+  row(['---', '---:', '---:']);
+  row(['Cells swept', n(a.cells), n(x.cells)]);
+  row(['Both solvers converge', n(a.bothConverged), n(x.bothConverged)]);
+  row(['Only izzo converges', n(a.onlyIzzoConverged), n(x.onlyIzzoConverged)]);
+  row(['Only lambert-multi-rev converges', n(a.onlyMultiRevConverged), n(x.onlyMultiRevConverged)]);
+  row(['Neither converges', n(a.neitherConverged), n(x.neitherConverged)]);
+  row(['Cells where the propagator refused', n(a.propagatorFailedCells), n(x.propagatorFailedCells)]);
+  row(['max per-cell relative C3 difference', e(a.maxPerCellRelC3Diff), e(x.maxPerCellRelC3Diff)]);
+  row(['minC3, multi-rev vs SHIPPED: max / median relative', `${e(a.relMinC3MultiRevVsShipped.max)} / ${e(a.relMinC3MultiRevVsShipped.median)}`, `${e(x.relMinC3MultiRevVsShipped.max)} / ${e(x.relMinC3MultiRevVsShipped.median)}`]);
+  row(['minC3, multi-rev vs RECOMPUTED: max / median relative', `${e(a.relMinC3MultiRevVsRecomputed.max)} / ${e(a.relMinC3MultiRevVsRecomputed.median)}`, `${e(x.relMinC3MultiRevVsRecomputed.max)} / ${e(x.relMinC3MultiRevVsRecomputed.median)}`]);
+  row(['Same argmin cell from both solvers', n(a.sameArgminCell), n(x.sameArgminCell)]);
+  row(['Bodies where the two solvers straddle 25 km²/s²', n(a.straddleThreshold.length), n(x.straddleThreshold.length)]);
+  row(['This loop\'s izzo minC3 bit-equal to the recomputed cache', n(a.izzoLoopEqualsRecomputedBitwise), n(x.izzoLoopEqualsRecomputedBitwise)]);
+  row(['This loop\'s izzo minC3 bit-equal to the shipped cache', n(a.izzoLoopEqualsShippedBitwise), n(x.izzoLoopEqualsShippedBitwise)]);
+  L.push('');
+  const str = [...a.straddleThreshold, ...x.straddleThreshold];
+  L.push(str.length ? `Straddling bodies: ${str.map((b) => `${b.des} (shipped ${b.shipped}, multi-rev ${b.multiRev})`).join('; ')}.` : 'No body has the two solvers on opposite sides of the screening threshold, including the 25 bodies closest to it.');
+  if (a.differentArgminCell.length || x.differentArgminCell.length) L.push(`Bodies where the two solvers pick a different minimum cell: ${[...a.differentArgminCell, ...x.differentArgminCell].map((b) => `${b.des} (izzo ${b.izzo.join(' + ')} d, multi-rev ${b.multiRev.join(' + ')} d)`).join('; ')}.`);
+  L.push('');
+  L.push('XR2\'s sweep adds the same comparison for every body (kernel epochs differ from the script\'s by rounding); see `../xr2-validity/REPORT.md`.');
+  L.push('');
+}
+L.push('## Files');
+L.push('- `diff-cache.mjs` (steps 1, 3, 4), `second-solver.mjs` (step 5), `report.mjs`.');
+L.push('- `xr1-cache-diff.json` — every number in sections 1 to 4; `xr1-second-solver.json` — section 5 with per-body rows.');
+L.push('- `xr1-old-solver-check.json` and `old-solver-check.mjs` — the source-versus-machine check.');
+L.push('- `provenance-git-facts.json` — the answers that needed git history, taken by hand in a full-history clone; `solver-diff-8471659-to-HEAD.patch`, `script-diff-9e93ffc-to-HEAD.patch` — the actual source differences; `recompute.log` — the script\'s own output.');
+L.push('');
+fs.writeFileSync(path.join(here, 'REPORT.md'), `${L.join('\n')}\n`);
+console.log(L.slice(0, 5).join('\n'));

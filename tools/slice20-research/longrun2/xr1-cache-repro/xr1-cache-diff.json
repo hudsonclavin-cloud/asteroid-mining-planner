@@ -1,0 +1,765 @@
+{
+  "schema": "aster-s20-longrun2-xr1-diff/1",
+  "label": "LEADS-grade research evidence. Nothing here enters a DEC, a test, a fixture or the site.",
+  "generatedAtUtc": "2026-11-14T07:52:41.405Z",
+  "node": "v22.23.4",
+  "provenance": {
+    "catalogFixture": {
+      "name": "tests/fixtures/v2/nea-catalog-slice9.json",
+      "verdict": "MATCH",
+      "now": "f88028d2839842299b7aae20644d15fef265b19e3bbca576c5dd0faf7d231418",
+      "recorded": "f88028d2839842299b7aae20644d15fef265b19e3bbca576c5dd0faf7d231418"
+    },
+    "horizonsFixture": {
+      "name": "src/v2/data/horizons-inner-solar-system-2026-2040.json",
+      "verdict": "MATCH",
+      "now": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+      "recorded": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15"
+    },
+    "precomputeScript": {
+      "name": "tools/build/precompute-lambert-screen.mjs",
+      "verdict": "DRIFT",
+      "now": "124637322914b33e388a362ee96e87cde40718c2366c93f21b355afe2995c780",
+      "recorded": "44d9443500cb280a625fc99cfd12756c2928430390cda8c46d7b55763f6db4f7"
+    },
+    "docsVsTestsCache": {
+      "name": "docs/lambert-screen-cache.json vs tests/fixtures/v2/lambert-screen-cache.json",
+      "verdict": "MATCH",
+      "docs": {
+        "sha256": "bd27b9bd882a65343399f772e37218b5fb05644bea5a822aafcb65e81e750206",
+        "bytes": 34499477
+      },
+      "tests": {
+        "sha256": "bd27b9bd882a65343399f772e37218b5fb05644bea5a822aafcb65e81e750206",
+        "bytes": 34499477
+      }
+    },
+    "solverCommit": {
+      "recorded": "8471659bb1c66c7adc6998730e28da31e60b367d",
+      "obtained": "by hand, with git, in a full-history throwaway clone of origin/main (the committing worktree belongs to a shallow clone and cannot answer these); no committed script reads git history",
+      "head": "75606da39d4a6a0bb7022b3457e0e06ed7f6a8dd",
+      "isAncestorOfHead": true,
+      "commitsSince": 647,
+      "solverCommitDate": "2026-05-29",
+      "solverCommitSubject": "fix(v2): Slice 10 regenerate Phase C.1 screening cache after initial-guess fix (audit Finding 1)",
+      "scriptDriftExplanation": [
+        "The recorded hash 44d94435... is the script as committed in 9e93ffc (2026-05-30, \"refactor(v2): Slice 10 cache contract overhaul (audit Findings 2, 3, 4, 5)\"), the commit that last changed the cache file. So the cache was written by that version of the script, run in a tree whose HEAD was still 8471659; the recorded solverCommit is the parent of the commit that carries the cache.",
+        "8471659 -> 9e93ffc changed nothing under src/v2/core, so the recorded commit does identify the solver source the cache was built with.",
+        "Two later commits changed the script: be5ef60 (2026-08-05, repoint the Horizons fixture path from tests/fixtures to src/v2/data) and 6d9b8bc (2026-08-05, invoke tsc through process.execPath instead of the .bin shim). Neither touches the grid, the solver call or the output (script-diff-9e93ffc..HEAD.patch).",
+        "Nothing in the repo recomputes these hashes or compares them with the files beside the cache (the drift went unnoticed from 2026-08-05 until this run)."
+      ],
+      "scriptShaByCommit": {
+        "8471659": "785516923ce5154d...",
+        "9e93ffc": "44d9443500cb280a... (= recorded)",
+        "be5ef60": "6e3352d3a3bbce16...",
+        "6d9b8bc and HEAD": "124637322914b33e... (= now)"
+      },
+      "coreAndPorkchopFilesDiffering": [
+        {
+          "status": "M",
+          "file": "src/v2/core/constants/index.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/core/constants/near-zero-c3.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/core/lambert/dla.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/core/lambert/feasibility.ts"
+        },
+        {
+          "status": "M",
+          "file": "src/v2/core/lambert/householder.ts"
+        },
+        {
+          "status": "M",
+          "file": "src/v2/core/lambert/hyp2f1b.ts"
+        },
+        {
+          "status": "M",
+          "file": "src/v2/core/lambert/initial-guess.ts"
+        },
+        {
+          "status": "M",
+          "file": "src/v2/core/lambert/izzo.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/core/lambert/lambert-multi-rev.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/colormap.test.mjs"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/colormap.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/compare-data.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/compare-url.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/composite-grid.test.mjs"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/composite-grid.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/delta-v.test.mjs"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/delta-v.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/dual-m-compute.test.mjs"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/dual-m-compute.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/format-c3.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/grid-compute.test.mjs"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/grid-compute.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/grid-span.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/launch-vehicles.test.mjs"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/launch-vehicles.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/near-zero-c3.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/porkchop-client.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/porkchop-view.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/porkchop.worker.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/propagation-guard.test.mjs"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/propagation-guard.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/segment-windows.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/support-boundary.test.mjs"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/support-boundary.ts"
+        },
+        {
+          "status": "A",
+          "file": "src/v2/porkchop/tier-disclosure.ts"
+        }
+      ],
+      "modulesTheScriptCompiles": [
+        {
+          "file": "src/v2/boundary/horizons.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/boundary/slice9-nea-catalog.ts",
+          "changed": true,
+          "added": 7,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": [
+            "41b560b 2026-07-07 Slice 14 Phase E: About catalog count renders from real source (INV-026)"
+          ]
+        },
+        {
+          "file": "src/v2/core/constants/asteroids.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/constants/bodies.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/constants/index.ts",
+          "changed": true,
+          "added": 4,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": [
+            "b214e26 2026-10-10 feat(core): near-zero C3 degeneracy threshold + predicate (DEC-19-1)"
+          ]
+        },
+        {
+          "file": "src/v2/core/constants/near-zero-c3.ts",
+          "changed": true,
+          "added": 10,
+          "deleted": 0,
+          "presentAtSolverCommit": false,
+          "commits": [
+            "b214e26 2026-10-10 feat(core): near-zero C3 degeneracy threshold + predicate (DEC-19-1)"
+          ]
+        },
+        {
+          "file": "src/v2/core/frames/ids.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/frames/index.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/frames/transform.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/index.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/interpolators/hermite.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/interpolators/index.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/invariants/assertions.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/invariants/index.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/invariants/round-trip.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/invariants/runtime.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/lambert/householder.ts",
+          "changed": true,
+          "added": 3,
+          "deleted": 1,
+          "presentAtSolverCommit": true,
+          "commits": [
+            "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)"
+          ]
+        },
+        {
+          "file": "src/v2/core/lambert/hyp2f1b.ts",
+          "changed": true,
+          "added": 11,
+          "deleted": 13,
+          "presentAtSolverCommit": true,
+          "commits": [
+            "f455697 2026-05-30 docs(v2): Slice 10 narrow hyp2f1b documented domain to [0, 0.5] (audit Finding 8)"
+          ]
+        },
+        {
+          "file": "src/v2/core/lambert/initial-guess.ts",
+          "changed": true,
+          "added": 4,
+          "deleted": 1,
+          "presentAtSolverCommit": true,
+          "commits": [
+            "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)"
+          ]
+        },
+        {
+          "file": "src/v2/core/lambert/izzo.ts",
+          "changed": true,
+          "added": 18,
+          "deleted": 2,
+          "presentAtSolverCommit": true,
+          "commits": [
+            "b7d3329 2026-07-11 docs(core): unify Lambert provenance wording — clean-room per DEC-1 Rev 2 / INV-015, poliastro as oracle per INV-024 (comment-only diff, 3 files)",
+            "dbf8f42 2026-05-30 feat(v2): Slice 10 lambert() rejects M != 0 explicitly (audit Finding 7)"
+          ]
+        },
+        {
+          "file": "src/v2/core/lambert/tof.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/lambert/vec3.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/propagators/index.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/propagators/keplerian.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/state.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/types.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/units.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        },
+        {
+          "file": "src/v2/core/units/utc-to-tdb.ts",
+          "changed": false,
+          "added": 0,
+          "deleted": 0,
+          "presentAtSolverCommit": true,
+          "commits": []
+        }
+      ],
+      "executableChangesInCompiledModules": [
+        "boundary/slice9-nea-catalog.ts: a new check that catalog.totalBodies equals 41,906 (41b560b)",
+        "core/lambert/izzo.ts: lambert() returns ok:false for M != 0 (dbf8f42); the script calls it with the default M = 0",
+        "core/constants/index.ts and near-zero-c3.ts: a new exported constant and predicate (b214e26); not used by the script",
+        "householder.ts, hyp2f1b.ts, initial-guess.ts: comment-only changes (read from solver-diff-8471659..HEAD.patch)"
+      ],
+      "addedButNotImported": [
+        "src/v2/core/lambert/dla.ts",
+        "src/v2/core/lambert/feasibility.ts",
+        "src/v2/core/lambert/lambert-multi-rev.ts"
+      ]
+    }
+  },
+  "recompute": {
+    "file": {
+      "sha256": "7225df829c41f1ab9e13a5360931000680f7592e9073ad321d88517c514fd9e5",
+      "bytes": 34499447
+    },
+    "shippedFile": {
+      "sha256": "bd27b9bd882a65343399f772e37218b5fb05644bea5a822aafcb65e81e750206",
+      "bytes": 34499477
+    },
+    "wholeFileIdentical": false,
+    "bodiesSectionByteIdentical": false,
+    "metadata": {
+      "shipped": {
+        "schemaVersion": 1,
+        "generatedAt": "2026-05-30T04:43:31.918Z",
+        "catalogSize": 41906,
+        "screeningWindow": {
+          "startUtc": "2026-01-01",
+          "endUtc": "2040-12-31"
+        },
+        "departureGridSpacingDays": 7,
+        "tofGridSpacingDays": 30,
+        "tofMinDays": 182,
+        "tofMaxDays": 1826,
+        "feasibleC3MaxKm2S2": 25,
+        "coorbitalCriteria": {
+          "eMax": 0.1,
+          "iMaxRad": 0.08726646259971647,
+          "aDeltaKm": 7479893.535
+        },
+        "totalSolves": 1804638825,
+        "wallTimeSeconds": 3137.744173,
+        "provenance": {
+          "solverCommit": "8471659bb1c66c7adc6998730e28da31e60b367d",
+          "catalogFixtureSha256": "f88028d2839842299b7aae20644d15fef265b19e3bbca576c5dd0faf7d231418",
+          "horizonsFixtureSha256": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+          "precomputeScriptSha256": "44d9443500cb280a625fc99cfd12756c2928430390cda8c46d7b55763f6db4f7"
+        }
+      },
+      "recomputed": {
+        "schemaVersion": 1,
+        "generatedAt": "2026-11-14T07:52:30.975Z",
+        "catalogSize": 41906,
+        "screeningWindow": {
+          "startUtc": "2026-01-01",
+          "endUtc": "2040-12-31"
+        },
+        "departureGridSpacingDays": 7,
+        "tofGridSpacingDays": 30,
+        "tofMinDays": 182,
+        "tofMaxDays": 1826,
+        "feasibleC3MaxKm2S2": 25,
+        "coorbitalCriteria": {
+          "eMax": 0.1,
+          "iMaxRad": 0.08726646259971647,
+          "aDeltaKm": 7479893.535
+        },
+        "totalSolves": 1804638825,
+        "wallTimeSeconds": 2760.338056845,
+        "provenance": {
+          "solverCommit": "75606da39d4a6a0bb7022b3457e0e06ed7f6a8dd",
+          "catalogFixtureSha256": "f88028d2839842299b7aae20644d15fef265b19e3bbca576c5dd0faf7d231418",
+          "horizonsFixtureSha256": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+          "precomputeScriptSha256": "124637322914b33e388a362ee96e87cde40718c2366c93f21b355afe2995c780"
+        }
+      }
+    },
+    "log": {
+      "exit": "0",
+      "completeLine": "Precompute complete in 2760.3s",
+      "totalSolvesLine": "Total solves: 1804638825",
+      "coOrbitalLine": "Co-orbital bodies tagged: 130"
+    }
+  },
+  "bodies": {
+    "shipped": 41906,
+    "recomputed": 41906,
+    "sameOrder": true,
+    "missingInRecomputed": [],
+    "extraInRecomputed": []
+  },
+  "statusCounts": {
+    "shipped": {
+      "low_departure_c3": 41422,
+      "high_departure_c3": 483,
+      "lambert_unconvergeable": 0,
+      "propagator_failed": 1
+    },
+    "recomputed": {
+      "low_departure_c3": 41422,
+      "high_departure_c3": 483,
+      "lambert_unconvergeable": 0,
+      "propagator_failed": 1
+    }
+  },
+  "statusMatrixFromTo": {
+    "low_departure_c3": {
+      "low_departure_c3": 41422,
+      "high_departure_c3": 0,
+      "lambert_unconvergeable": 0,
+      "propagator_failed": 0
+    },
+    "high_departure_c3": {
+      "low_departure_c3": 0,
+      "high_departure_c3": 483,
+      "lambert_unconvergeable": 0,
+      "propagator_failed": 0
+    },
+    "lambert_unconvergeable": {
+      "low_departure_c3": 0,
+      "high_departure_c3": 0,
+      "lambert_unconvergeable": 0,
+      "propagator_failed": 0
+    },
+    "propagator_failed": {
+      "low_departure_c3": 0,
+      "high_departure_c3": 0,
+      "lambert_unconvergeable": 0,
+      "propagator_failed": 1
+    }
+  },
+  "statusChanges": [],
+  "isCoOrbitalChanges": [],
+  "coOrbitalCount": {
+    "shipped": 130,
+    "recomputed": 130
+  },
+  "identityChanges": [],
+  "minC3": {
+    "bodiesChanged": 1787,
+    "maxRelDiff": 2.1173720492082248e-13,
+    "medianRelDiffAmongChanged": 3.908089201478773e-15,
+    "largest25": [
+      {
+        "des": "2004 TD18",
+        "shipped": 0.023611689120174573,
+        "recomputed": 0.023611689120169574,
+        "rel": 2.1173720492082248e-13
+      },
+      {
+        "des": "2025 YG2",
+        "shipped": 0.02954995262411882,
+        "recomputed": 0.029549952624125058,
+        "rel": 2.1110238987392005e-13
+      },
+      {
+        "des": "367789",
+        "shipped": 0.003195179553984123,
+        "recomputed": 0.00319517955398471,
+        "rel": 1.8364232927614392e-13
+      },
+      {
+        "des": "2025 HA19",
+        "shipped": 0.0007717787174555122,
+        "recomputed": 0.0007717787174553732,
+        "rel": 1.8009659422961967e-13
+      },
+      {
+        "des": "2008 VM",
+        "shipped": 0.00966949036949314,
+        "recomputed": 0.009669490369491605,
+        "rel": 1.5877054711001782e-13
+      },
+      {
+        "des": "2015 TJ",
+        "shipped": 0.03884260538544474,
+        "recomputed": 0.03884260538545084,
+        "rel": 1.5702571135508854e-13
+      },
+      {
+        "des": "2019 TX",
+        "shipped": 0.002713517363852585,
+        "recomputed": 0.0027135173638521944,
+        "rel": 1.4399998620572804e-13
+      },
+      {
+        "des": "2025 UU7",
+        "shipped": 0.037431531621525085,
+        "recomputed": 0.03743153162152016,
+        "rel": 1.3161670010160822e-13
+      },
+      {
+        "des": "2022 FA",
+        "shipped": 0.051990186361905374,
+        "recomputed": 0.05199018636191158,
+        "rel": 1.1931811720987484e-13
+      },
+      {
+        "des": "2017 KG5",
+        "shipped": 0.2987156422150467,
+        "recomputed": 0.2987156422150119,
+        "rel": 1.1651713838588348e-13
+      },
+      {
+        "des": "247360",
+        "shipped": 0.19786101899823103,
+        "recomputed": 0.19786101899820813,
+        "rel": 1.157294650499024e-13
+      },
+      {
+        "des": "2017 YQ1",
+        "shipped": 0.06496251343228211,
+        "recomputed": 0.06496251343227481,
+        "rel": 1.1236813357783234e-13
+      },
+      {
+        "des": "2024 YO",
+        "shipped": 0.021090072823899606,
+        "recomputed": 0.02109007282390172,
+        "rel": 1.001842531025017e-13
+      },
+      {
+        "des": "2013 UR1",
+        "shipped": 0.04695163200410645,
+        "recomputed": 0.04695163200411088,
+        "rel": 9.428882707007115e-14
+      },
+      {
+        "des": "2011 UD21",
+        "shipped": 0.022914651314776092,
+        "recomputed": 0.022914651314778243,
+        "rel": 9.387256566388034e-14
+      },
+      {
+        "des": "2021 TX2",
+        "shipped": 0.24493950679381346,
+        "recomputed": 0.24493950679379053,
+        "rel": 9.359905128660338e-14
+      },
+      {
+        "des": "2022 KU4",
+        "shipped": 0.010615259176297355,
+        "recomputed": 0.010615259176296367,
+        "rel": 9.314820909080006e-14
+      },
+      {
+        "des": "2011 WN46",
+        "shipped": 0.3964060494304886,
+        "recomputed": 0.3964060494304519,
+        "rel": 9.270388826782184e-14
+      },
+      {
+        "des": "2017 YC6",
+        "shipped": 0.041851847788737975,
+        "recomputed": 0.04185184778874173,
+        "rel": 8.969595849060621e-14
+      },
+      {
+        "des": "2020 VO3",
+        "shipped": 0.39873476644510963,
+        "recomputed": 0.3987347664450747,
+        "rel": 8.756827109849682e-14
+      },
+      {
+        "des": "2009 WR52",
+        "shipped": 0.004725366819166099,
+        "recomputed": 0.004725366819165694,
+        "rel": 8.553633725601961e-14
+      },
+      {
+        "des": "2005 KA",
+        "shipped": 0.15198728096310013,
+        "recomputed": 0.15198728096308722,
+        "rel": 8.491725478266093e-14
+      },
+      {
+        "des": "2024 DP1",
+        "shipped": 1.221875513771594,
+        "recomputed": 1.2218755137716901,
+        "rel": 7.868666885365792e-14
+      },
+      {
+        "des": "2021 JC1",
+        "shipped": 0.1929139541397601,
+        "recomputed": 0.192913954139745,
+        "rel": 7.826822690059712e-14
+      },
+      {
+        "des": "2025 TS1",
+        "shipped": 0.28716091221000534,
+        "recomputed": 0.2871609122099836,
+        "rel": 7.57776227801483e-14
+      }
+    ]
+  },
+  "minC3CellChanges": {
+    "count": 0,
+    "withSameC3": 0,
+    "first25": []
+  },
+  "bestWindows": {
+    "differentTopWindow": 0,
+    "differentTop5Set": 0,
+    "sameCellsDifferentValues": 6795,
+    "firstTopWindowChanges": []
+  },
+  "metadataDifferencesOtherThanExpected": [],
+  "displayed": {
+    "how": "production StatusBadge labels (one per status), formatC3, isCoOrbital, isNearZeroC3Degenerate, getScreeningColor(...).getHexString()",
+    "bodiesShownDifferently": 0,
+    "byComponent": {
+      "status": 0,
+      "c3Text": 0,
+      "coOrbital": 0,
+      "nearZero": 0,
+      "colour": 0
+    },
+    "lowHighClassificationChanges": 0,
+    "valueChangedButNothingDisplayedChanges": 1787,
+    "first50": []
+  },
+  "recomputedCopy": "recomputed-lambert-screen-cache.json.gz (8250979 bytes gzip)"
+}
