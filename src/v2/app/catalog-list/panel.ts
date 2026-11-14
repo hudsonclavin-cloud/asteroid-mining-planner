@@ -762,6 +762,8 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
             },
             h('input', {
               type: 'checkbox',
+              id: 'catalog-hide-near-zero-c3',
+              name: 'catalog-hide-near-zero-c3',
               checked: hideNearZeroC3,
               onInput: () => {
                 hideNearZeroC3Signal.value = !hideNearZeroC3Signal.value;
@@ -785,6 +787,8 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
             h('span', { style: { color: '#888', fontVariantNumeric: 'tabular-nums' } }, `${Math.round(starfieldBrightness * 100)}%`),
             h('input', {
               type: 'range',
+              id: 'catalog-starfield-brightness',
+              name: 'catalog-starfield-brightness',
               min: '0',
               max: '1',
               step: '0.05',

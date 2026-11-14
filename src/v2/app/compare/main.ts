@@ -1268,6 +1268,8 @@ function ComparePage() {
       { style: 'display:flex;align-items:center;gap:8px;margin:-6px 0 16px;font-size:12px;color:#cbd5e1;cursor:pointer;' },
       h('input', {
         type: 'checkbox',
+        id: 'compare-hide-near-zero-c3',
+        name: 'compare-hide-near-zero-c3',
         checked: hideNearZeroC3,
         onInput: () => setHideNearZeroC3((current) => !current),
       }),

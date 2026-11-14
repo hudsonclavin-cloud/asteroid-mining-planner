@@ -696,6 +696,8 @@ function PorkchopDedicatedPage() {
           },
           h('input', {
             type: 'checkbox',
+            id: 'porkchop-dla-contours',
+            name: 'porkchop-dla-contours',
             checked: showDlaContours,
             onInput: () => setShowDlaContours((current) => !current),
           }),
@@ -721,6 +723,8 @@ function PorkchopDedicatedPage() {
                 h(
                   'select',
                   {
+                    id: 'porkchop-launch-site',
+                    name: 'porkchop-launch-site',
                     value: selectedLaunchSite.name,
                     style: 'width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,0.18);border-radius:6px;background:#0b1220;color:#eef2ff;padding:7px 8px;font:inherit;',
                     onInput: (event: Event) => {
@@ -760,6 +764,8 @@ function PorkchopDedicatedPage() {
           h(
             'select',
             {
+              id: 'porkchop-launch-vehicle',
+              name: 'porkchop-launch-vehicle',
               value: vehicleKey(selectedVehicle),
               style: CARD_PICKER_SELECT_STYLE,
               onInput: (event: Event) => {
@@ -782,6 +788,8 @@ function PorkchopDedicatedPage() {
           h(
             'select',
             {
+              id: 'porkchop-mission-mode',
+              name: 'porkchop-mission-mode',
               value: selectedMode,
               style: CARD_PICKER_SELECT_STYLE,
               onInput: (event: Event) => {

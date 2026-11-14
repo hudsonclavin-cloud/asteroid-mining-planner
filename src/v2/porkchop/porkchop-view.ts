@@ -1184,6 +1184,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                 { style: 'display:flex;align-items:center;gap:8px;cursor:pointer;opacity:0.95;' },
                 h('input', {
                   type: 'radio',
+                  id: `porkchop-family-${value}`,
                   name: 'porkchop-family-mode',
                   value,
                   checked: familyMode === value,
@@ -1208,6 +1209,8 @@ export function PorkchopView(props: PorkchopViewProps) {
         },
         h('input', {
           type: 'checkbox',
+          id: 'porkchop-show-contours',
+          name: 'porkchop-show-contours',
           checked: showContours,
           onInput: () => setShowContours((current) => !current),
         }),
@@ -1220,6 +1223,8 @@ export function PorkchopView(props: PorkchopViewProps) {
         },
         h('input', {
           type: 'checkbox',
+          id: 'porkchop-hide-near-zero-c3',
+          name: 'porkchop-hide-near-zero-c3',
           checked: hideNearZeroC3,
           onInput: () => {
             const next = !hideNearZeroC3;
@@ -1238,6 +1243,8 @@ export function PorkchopView(props: PorkchopViewProps) {
             },
             h('input', {
               type: 'checkbox',
+              id: 'porkchop-show-m1-contours',
+              name: 'porkchop-show-m1-contours',
               checked: showM1Contours,
               disabled: m1Cells === null,
               onInput: () => setShowM1Contours((current) => !current),

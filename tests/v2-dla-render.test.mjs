@@ -420,6 +420,13 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     await import(`${pathToFileURL(path.join(tempOutDir, 'app', 'porkchop', 'main.js')).href}?dla-render=${Date.now()}`);
     await flushEffects();
 
+    for (const localName of ['input', 'select', 'textarea']) {
+      for (const control of findElements(document.app, localName)) {
+        assert.ok(control.id ?? control.getAttribute('id'), `CK-14 ${localName} must have an id`);
+        assert.ok(control.name ?? control.getAttribute('name'), `CK-14 ${localName} must have a name`);
+      }
+    }
+
     const canvas = findElements(document.app, 'canvas')[0];
     assert.ok(canvas, 'expected the rendered porkchop heatmap canvas');
     canvas.dispatchEvent({ type: 'click', clientX: 1, clientY: 1 });
