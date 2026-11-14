@@ -346,6 +346,7 @@ async function loadSymmetricReturnError(): Promise<SymmetricReturnErrorArtifact>
 
 function PorkchopDedicatedPage() {
   const costCardRef = useRef<HTMLElement | null>(null);
+  const hasBodyParameter = useMemo(() => new URLSearchParams(location.search).has('body'), []);
   const requestedBodyId = useMemo(() => resolveRequestedBodyId(), []);
   const [pageState, setPageState] = useState<PageState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -373,6 +374,13 @@ function PorkchopDedicatedPage() {
   useEffect(() => {
     let cancelled = false;
     let activeClient: PorkchopClient | null = null;
+
+    if (!hasBodyParameter) {
+      setLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     setLoading(true);
     setError(null);
@@ -427,7 +435,7 @@ function PorkchopDedicatedPage() {
         activeClient = null;
       }
     };
-  }, [requestedBodyId]);
+  }, [hasBodyParameter, requestedBodyId]);
 
   const isDefaultTourState =
     requestedBodyId === DEFAULT_BODY_ID &&
@@ -611,6 +619,25 @@ function PorkchopDedicatedPage() {
       window.removeEventListener('resize', measureCostCard);
     };
   }, [costCardState, tourStep]);
+
+  if (!hasBodyParameter) {
+    return h(
+      'div',
+      { style: PAGE_STYLE },
+      h(
+        'div',
+        {
+          style: 'margin:auto;max-width:640px;padding:24px;border:1px solid rgba(255,255,255,0.12);border-radius:16px;background:rgba(255,255,255,0.03);',
+        },
+        h('div', { style: 'font-size:24px;font-weight:700;margin-bottom:12px;' }, 'No target selected'),
+        h(
+          'div',
+          { style: 'font-size:15px;line-height:1.6;color:#cbd5e1;' },
+          'This view plots one body at a time, and this address names none. Open a target from the catalog, or add a body parameter to the address.',
+        ),
+      ),
+    );
+  }
 
   if (loading) {
     return h(
