@@ -117,8 +117,10 @@ test('T1 compare rows render the near-zero flag only for sub-threshold minima an
   const nearText = textOf(renderOkRow(near, 'Near', 'vehicle', false, () => {}, undefined, undefined, undefined, false, 0));
   const normalText = textOf(renderOkRow(normal, 'Normal', 'vehicle', false, () => {}, undefined, undefined, undefined, false, 0));
   assert.match(nearText, /near-zero C3/);
+  assert.match(nearText, /C3 is near zero here: the payload and delivered mass are mathematically valid but operationally meaningless\./);
   assert.match(nearText, /5\.50e-5 km/);
   assert.doesNotMatch(normalText, /near-zero C3/);
+  assert.doesNotMatch(normalText, /C3 is near zero here/);
   assert.match(normalText, /1\.62 km/);
 });
 

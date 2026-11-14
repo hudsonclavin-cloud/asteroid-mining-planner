@@ -290,7 +290,7 @@ function gridCells(gridParams, M) {
           converged: true,
           // The GREEN cell (depIndex 0, tofIndex 0) sits past every published payload curve so the
           // card renders its "no delivered mass" state (2026-11-04 live review fix 1.2).
-          c3: depIndex === 0 && tofIndex === 0 ? 10_000 : 1,
+          c3: depIndex === 0 && tofIndex === 0 ? 10_000 : depIndex === gridParams.nDep - 1 && tofIndex === gridParams.nTof - 1 ? 0.00005 : 1,
           vInfDep: 1,
           vInfArr: 2,
           dlaDeg: depIndex === 0 && tofIndex > 0 ? 40 : depIndex === 0 ? 0 : 80,
@@ -428,6 +428,8 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     const pinnedText = document.app.textContent;
     assert.doesNotMatch(pinnedText, /asteroid-[0-9A-Z]/);
     assert.match(pinnedText, /Mission cost/);
+    assert.match(pinnedText, /Target: 2020 FK3/);
+    assert.doesNotMatch(pinnedText, /Target: \(2020 FK3\)/);
     assert.match(pinnedText, /AMBER|Raised inclination/);
     // S19.5 tail2 F1/F2: AMBER says zero (DEC-13-3); one noun, "payload penalty".
     assert.match(pinnedText, /zero added ΔV in this model/);
@@ -447,6 +449,7 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
       assert.doesNotMatch(sentence, /payload penalty[^.]*\bis modelled\b/, sentence);
     }
     assert.doesNotMatch(pinnedText, /launch-site payload penalty named above/);
+    assert.ok(pinnedText.includes('Launch vehicle provides injection to C3 = 1.00 km\u00B2/s\u00B2 \u2014 embodied in payload-at-C3, not a spacecraft \u0394V line.'), pinnedText);
     const oneWayCostMarginSentence = `Margin here is ${costMarginPercent}% of rendezvous \u0394V; the \u0394V stack below applies ${stackMarginPercent}% to the full stack.`;
     const oneWayStackMarginSentence = `Margin here is ${stackMarginPercent}% of the full stack; the cost card applies ${costMarginPercent}% to rendezvous \u0394V only.`;
     assert.ok(pinnedText.includes(oneWayCostMarginSentence), pinnedText);
@@ -462,7 +465,9 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.match(greenText, /GREEN/);
     assert.doesNotMatch(greenText, /Vehicle payload at this C3/);
     // Fix 1.2: with delivered mass unavailable, the badge names the launch-geometry band.
+    assert.match(greenText, /— \(see payload row\)/);
     assert.match(greenText, /No published payload data past this C3 \u2014 not extrapolating\./);
+    assert.match(greenText, /pinned cell, shown to 3 significant figures/);
     assert.match(greenText, /GREEN \u00B7 launch geometry/);
     canvas.dispatchEvent({ type: 'click', clientX: 759, clientY: 419 });
     await flushEffects();
@@ -470,6 +475,12 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     assert.match(redText, /RED/);
     assert.ok(redText.includes(redPayloadCaption), redText);
     assert.match(redText, /no delivered-mass number is honest at screening fidelity/);
+
+    canvas.dispatchEvent({ type: 'click', clientX: 759, clientY: 1 });
+    await flushEffects();
+    const nearZeroText = document.app.textContent;
+    assert.match(nearZeroText, /C3 is near zero here: the payload and delivered mass are mathematically valid but operationally meaningless\./);
+    assert.match(nearZeroText, /near-zero C3/);
 
     // S19.5 tail2 F3: no rendered attribute or tooltip leaks an internal storage key.
     const replay = findElements(document.app, 'button').find((button) => button.textContent.includes('Replay tour'));
@@ -516,8 +527,7 @@ test('DLA disclosure, site picker, and band legend render with contours off and 
     await flushEffects();
     const vandenbergText = document.app.textContent;
     assert.match(vandenbergText, /min direct inclination \(iMin\): 70\.0\u00b0 from Vandenberg SFB/);
-    assert.match(vandenbergText, /corridor covers all declinations from Vandenberg SFB/);
-    assert.match(vandenbergText, /max direct declination \(ceiling\): none from Vandenberg SFB/);
+    assert.match(vandenbergText, /max direct declination \(ceiling\): none - direct launches from Vandenberg SFB reach every declination \(minimum inclination 70\.0°\)/);
 
     const modeLabel = findElements(document.app, 'label').find((label) => label.textContent.includes('Mission mode'));
     assert.ok(modeLabel, 'expected the mission-mode picker');
