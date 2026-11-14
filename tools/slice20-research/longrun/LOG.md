@@ -27,3 +27,15 @@ git-bundle delivery (no push). Zero sub-agents, zero workflows.
 - First report showed closure tail: farnocchia max 1.40 km, cowell max 32.5 km. Probed 7 cells in scratch (probe_outliers.py, not committed): the outliers are near-rectilinear transfer orbits (e ~0.99999, perihelion ~1,500 km from the Sun's centre); the two poliastro propagators and scipy DOP853 disagree with each other there. Added transferOrbit (a, e, q, revolutions) and propagatorDisagreementKm to the driver output and reran (180 s).
 - report.mjs: izzo max |dv-inf,E| 1.614e-12 km/s (RMS 3.02e-14) over 14,124; vallado M=0 tight max 1.875e-10 (5,986 solved, 14 'max iterations' errors), default max 3.420e-7 (5,994 solved, 6 errors); closure farnocchia max 1.399 km overall, 1.055e-4 km for transfer perihelion >= 0.1 AU (11,596 branches); energy rel diff max 4.49e-13; h rel diff max 3.26e-14.
 - 219 of 14,124 sampled converged branches (1.55%) fly an arc that passes inside the Sun (transfer perihelion < 695,700 km and the arc passes perihelion); the kernel has no perihelion check. Smallest asteroid-departure v-inf among them: 9.307 km/s.
+
+## LR2 catalog-wide symmetric-return error
+- 01:39:15Z verify-lookup.mjs: indexed (bisection) Earth lookup vs production over 10,485 epochs (5,000 seeded random + both endpoints + 4 edge epochs + all 5,479 sample epochs): max abs diff 0, same object returned on every exact sample, both throw out of range. Gate PASS.
+- lib/common.mjs: build stamp now keyed to the src/v2 tree hash and a clean src/ (the first version keyed to HEAD, which every evidence commit moves; caught when verify-lookup refused to run after the LR1 commit).
+- run-shard.mjs trial (10 bodies): ~0.12 s outbound + up to 0.10 s return per body.
+- Spot check against S20_01 R3 (--only "433,99942,2000 SG344", M=0): all six rows reproduce. Five match to the printed digits (433 min-C3 6.905/3.034; 433 best stack 1.146/2.254; 99942 5.841/1.092 and 0.103/1.972; 2000 SG344 min-C3 1.389/0.148). 2000 SG344 best stack gives 0.2427 against S20_01's 0.2244: S20_01's return window started at arrival, this one starts at arrival + 8 d (DEC-20-2 S_min).
+- Added a SECONDARY window per body (outbound cell minimizing the production sample-return dV stack, S20_01 R3's second definition). Beyond the dispatch's stated procedure; labelled secondary throughout.
+- Launched 3 shard processes (seeded shuffle 2026111302, positions p % 3), detached, time box 28,000 s each.
+
+## LR4 fresh-clone build reproducibility (run while LR2 computes)
+- 01:41:06Z fresh clone of origin/main (0d31cda, not shallow) into scratch aster-clean; npm ci exit 0; npm run build -- --outDir <scratch>/lr4/out --emptyOutDir exit 0 (4.87 s). Node v22.23.4, vite 5.4.21.
+- compare-build.mjs: 55/55 tracked docs/ files byte-identical; 51 emitted into the scratch outDir, 4 written by hard-coded writeBundle plugin paths into the clone's own docs/ (physics.worker.js, lambert-screen-cache.json, tier-sizing-per-body.json, .nojekyll), all four rewritten by the build and identical. git status clean in the clone after the build.

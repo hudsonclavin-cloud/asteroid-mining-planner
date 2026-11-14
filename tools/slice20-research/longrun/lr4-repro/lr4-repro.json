@@ -1,0 +1,534 @@
+{
+  "schema": "aster-s20-longrun-lr4-repro/1",
+  "generatedAtUtc": "2026-11-14T01:40:36.627Z",
+  "cloneHead": "0d31cda3d1dca81d29f45092be26b94bb44294c1",
+  "node": "v22.23.4",
+  "platform": "linux x64",
+  "trackedDocsFiles": 55,
+  "builtFilesInOutDir": 51,
+  "identical": 55,
+  "differing": [],
+  "missingFromBuild": [],
+  "onlyInBuild": [],
+  "emittedIntoOutDir": 51,
+  "notEmittedIntoOutDir": [
+    {
+      "file": "docs/.nojekyll",
+      "builtFrom": "clone-docs (unchanged working-tree file; not emitted into outDir)",
+      "identical": true
+    },
+    {
+      "file": "docs/lambert-screen-cache.json",
+      "builtFrom": "clone-docs (unchanged working-tree file; not emitted into outDir)",
+      "identical": true
+    },
+    {
+      "file": "docs/legacy/physics.worker.js",
+      "builtFrom": "clone-docs (unchanged working-tree file; not emitted into outDir)",
+      "identical": true
+    },
+    {
+      "file": "docs/tier-sizing-per-body.json",
+      "builtFrom": "clone-docs (unchanged working-tree file; not emitted into outDir)",
+      "identical": true
+    }
+  ],
+  "cloneDocsStatusAfterBuild": [],
+  "rows": [
+    {
+      "file": "docs/.nojekyll",
+      "committedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committedBytes": 0,
+      "builtFrom": "clone-docs (unchanged working-tree file; not emitted into outDir)",
+      "builtSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "builtBytes": 0,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_earth_clouds.jpg",
+      "committedSha256": "fffd7f68d41b37274822150e54a6ef605af1d3ec35624d9f628c3b896bfa42ed",
+      "committedBytes": 965676,
+      "builtFrom": "outDir",
+      "builtSha256": "fffd7f68d41b37274822150e54a6ef605af1d3ec35624d9f628c3b896bfa42ed",
+      "builtBytes": 965676,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_earth_daymap.jpg",
+      "committedSha256": "767ee1dc6eb3802699bfccf6f264880f8acd0b80de3191cd24984fe279b07b7c",
+      "committedBytes": 463087,
+      "builtFrom": "outDir",
+      "builtSha256": "767ee1dc6eb3802699bfccf6f264880f8acd0b80de3191cd24984fe279b07b7c",
+      "builtBytes": 463087,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_earth_nightmap.jpg",
+      "committedSha256": "6d6e89cab3264e8e3630bf2563e03998e66397a6b49aa155243d77a95b490843",
+      "committedBytes": 1333492,
+      "builtFrom": "outDir",
+      "builtSha256": "6d6e89cab3264e8e3630bf2563e03998e66397a6b49aa155243d77a95b490843",
+      "builtBytes": 1333492,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_earth_normal.jpg",
+      "committedSha256": "f185c0d07e6e9eee077e77bc46e8ce9251c0b856a85254cfefdadc35dfe84b84",
+      "committedBytes": 101001,
+      "builtFrom": "outDir",
+      "builtSha256": "f185c0d07e6e9eee077e77bc46e8ce9251c0b856a85254cfefdadc35dfe84b84",
+      "builtBytes": 101001,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_earth_specular.jpg",
+      "committedSha256": "aced74f550d27422f4c0dab1261e12a9bf68b4e07b83ac57d7540255d17bec1a",
+      "committedBytes": 255258,
+      "builtFrom": "outDir",
+      "builtSha256": "aced74f550d27422f4c0dab1261e12a9bf68b4e07b83ac57d7540255d17bec1a",
+      "builtBytes": 255258,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_jupiter.jpg",
+      "committedSha256": "b0f04d005350252636b0e3396fc592548cbd9e9126b269d32d5c6abd4b0e4f2b",
+      "committedBytes": 498976,
+      "builtFrom": "outDir",
+      "builtSha256": "b0f04d005350252636b0e3396fc592548cbd9e9126b269d32d5c6abd4b0e4f2b",
+      "builtBytes": 498976,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_mars.jpg",
+      "committedSha256": "2d187f3e77a98eaa8cea5f4cc722f633c122ef170b9e94ace6b5fb6cbc3f8e01",
+      "committedBytes": 750547,
+      "builtFrom": "outDir",
+      "builtSha256": "2d187f3e77a98eaa8cea5f4cc722f633c122ef170b9e94ace6b5fb6cbc3f8e01",
+      "builtBytes": 750547,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_mercury.jpg",
+      "committedSha256": "5a5c80607f643496bac9a631e71957def35ed788895f18b678ac849c2b38e48a",
+      "committedBytes": 872555,
+      "builtFrom": "outDir",
+      "builtSha256": "5a5c80607f643496bac9a631e71957def35ed788895f18b678ac849c2b38e48a",
+      "builtBytes": 872555,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_moon.jpg",
+      "committedSha256": "2764ba6535ea0481a062846ee033cc7a909dae05b31a8fd13f3e98f3a7fd92bd",
+      "committedBytes": 1053869,
+      "builtFrom": "outDir",
+      "builtSha256": "2764ba6535ea0481a062846ee033cc7a909dae05b31a8fd13f3e98f3a7fd92bd",
+      "builtBytes": 1053869,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_neptune.jpg",
+      "committedSha256": "cb42ea82709741d28b0af44d8b283cbc6dbd0c521a7f0e1e1e010ade00977df6",
+      "committedBytes": 241580,
+      "builtFrom": "outDir",
+      "builtSha256": "cb42ea82709741d28b0af44d8b283cbc6dbd0c521a7f0e1e1e010ade00977df6",
+      "builtBytes": 241580,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_saturn.jpg",
+      "committedSha256": "54a900ca9bf7ab62e70f862852759abdf342e6d6436a95a2fe9ebdb6bcd3bbac",
+      "committedBytes": 199916,
+      "builtFrom": "outDir",
+      "builtSha256": "54a900ca9bf7ab62e70f862852759abdf342e6d6436a95a2fe9ebdb6bcd3bbac",
+      "builtBytes": 199916,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_saturn_ring_alpha.png",
+      "committedSha256": "4b0644b2f3ef259fd0bfaedd9dc52f9e7d9738f65f50363e8c4dd19f650d7334",
+      "committedBytes": 12119,
+      "builtFrom": "outDir",
+      "builtSha256": "4b0644b2f3ef259fd0bfaedd9dc52f9e7d9738f65f50363e8c4dd19f650d7334",
+      "builtBytes": 12119,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_sun.jpg",
+      "committedSha256": "ff0f076ba65e03b5ab518451bc96699325be38e3ccbdd5869ee1c00f3a0c8816",
+      "committedBytes": 822427,
+      "builtFrom": "outDir",
+      "builtSha256": "ff0f076ba65e03b5ab518451bc96699325be38e3ccbdd5869ee1c00f3a0c8816",
+      "builtBytes": 822427,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_uranus.jpg",
+      "committedSha256": "d15239d46f82d3ea13d2b260b5b29b2a382f42f2916dae0694d0387b1204a09d",
+      "committedBytes": 77751,
+      "builtFrom": "outDir",
+      "builtSha256": "d15239d46f82d3ea13d2b260b5b29b2a382f42f2916dae0694d0387b1204a09d",
+      "builtBytes": 77751,
+      "identical": true
+    },
+    {
+      "file": "docs/2k_venus_surface.jpg",
+      "committedSha256": "dbe5db1c794a8ab4cbf7dd6bf193540c400fc833ce1e6cc399318aa68026278b",
+      "committedBytes": 885075,
+      "builtFrom": "outDir",
+      "builtSha256": "dbe5db1c794a8ab4cbf7dd6bf193540c400fc833ce1e6cc399318aa68026278b",
+      "builtBytes": 885075,
+      "identical": true
+    },
+    {
+      "file": "docs/_staging_v1/2k_earth_clouds.jpg",
+      "committedSha256": "fffd7f68d41b37274822150e54a6ef605af1d3ec35624d9f628c3b896bfa42ed",
+      "committedBytes": 965676,
+      "builtFrom": "outDir",
+      "builtSha256": "fffd7f68d41b37274822150e54a6ef605af1d3ec35624d9f628c3b896bfa42ed",
+      "builtBytes": 965676,
+      "identical": true
+    },
+    {
+      "file": "docs/_staging_v1/2k_earth_normal_map.tif",
+      "committedSha256": "f518ce2646ca935dbc17e316041de4fea7a5da0ec441e4eb22e711eabd843ba2",
+      "committedBytes": 521376,
+      "builtFrom": "outDir",
+      "builtSha256": "f518ce2646ca935dbc17e316041de4fea7a5da0ec441e4eb22e711eabd843ba2",
+      "builtBytes": 521376,
+      "identical": true
+    },
+    {
+      "file": "docs/_staging_v1/2k_earth_specular_map.tif",
+      "committedSha256": "6b90ecfce248591a1ecc9a3e49acca1a7059b6828877e718302ed9a6b4471bd7",
+      "committedBytes": 338524,
+      "builtFrom": "outDir",
+      "builtSha256": "6b90ecfce248591a1ecc9a3e49acca1a7059b6828877e718302ed9a6b4471bd7",
+      "builtBytes": 338524,
+      "identical": true
+    },
+    {
+      "file": "docs/_staging_v1/earth_lights_4800.tif",
+      "committedSha256": "75611d54420d4d99ebdba39839c72a0389aa02088e9e703486c38d070f0cac0e",
+      "committedBytes": 7072234,
+      "builtFrom": "outDir",
+      "builtSha256": "75611d54420d4d99ebdba39839c72a0389aa02088e9e703486c38d070f0cac0e",
+      "builtBytes": 7072234,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/aboutV2-DL_Fcx9X.js",
+      "committedSha256": "8f2e78bff86b7f9174f2e68146fc3730791d75763866d9bae951224c6d8b6ccd",
+      "committedBytes": 10164,
+      "builtFrom": "outDir",
+      "builtSha256": "8f2e78bff86b7f9174f2e68146fc3730791d75763866d9bae951224c6d8b6ccd",
+      "builtBytes": 10164,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/asteroid-propagation-worker-7DDT4qvy.js",
+      "committedSha256": "735cabde50434e9561bf8bb695d46b5f79c81bcccb82e6b4429a02113ada5351",
+      "committedBytes": 2815,
+      "builtFrom": "outDir",
+      "builtSha256": "735cabde50434e9561bf8bb695d46b5f79c81bcccb82e6b4429a02113ada5351",
+      "builtBytes": 2815,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/compareV2-F3OpNprt.js",
+      "committedSha256": "b4ddc08bd3b3267035d84c4b38c26da6ed4386dd73292bd1d2aceb97c22e1fad",
+      "committedBytes": 32939,
+      "builtFrom": "outDir",
+      "builtSha256": "b4ddc08bd3b3267035d84c4b38c26da6ed4386dd73292bd1d2aceb97c22e1fad",
+      "builtBytes": 32939,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/global-style-CBLOWN73.js",
+      "committedSha256": "a09981c4654fa00ceee5a1f88c256ac692033cc5df6c837d06c94d8095f62e4d",
+      "committedBytes": 25812,
+      "builtFrom": "outDir",
+      "builtSha256": "a09981c4654fa00ceee5a1f88c256ac692033cc5df6c837d06c94d8095f62e4d",
+      "builtBytes": 25812,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/grid-span-_zGx4W8K.js",
+      "committedSha256": "db5b18805f224b9059831e5e8bd324a3a14e84f0a402c4be08b25eefc7216026",
+      "committedBytes": 26871,
+      "builtFrom": "outDir",
+      "builtSha256": "db5b18805f224b9059831e5e8bd324a3a14e84f0a402c4be08b25eefc7216026",
+      "builtBytes": 26871,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/horizons-inner-solar-system-2026-2040-Bl0fvEH3.json",
+      "committedSha256": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+      "committedBytes": 7214102,
+      "builtFrom": "outDir",
+      "builtSha256": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+      "builtBytes": 7214102,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/horizons-inner-system-rolling-COKYn11o.json",
+      "committedSha256": "686aa629b7ab62b5b5db5fd04cbb25d2019897bb72d32f3164729b43db5c63a8",
+      "committedBytes": 200060,
+      "builtFrom": "outDir",
+      "builtSha256": "686aa629b7ab62b5b5db5fd04cbb25d2019897bb72d32f3164729b43db5c63a8",
+      "builtBytes": 200060,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/horizons-jupiter-system-rolling-D7NnnMbz.json",
+      "committedSha256": "31793c57a1d8ebcba91d2dfbb2719123cde251c55da18adfed2cee55962448b2",
+      "committedBytes": 1295812,
+      "builtFrom": "outDir",
+      "builtSha256": "31793c57a1d8ebcba91d2dfbb2719123cde251c55da18adfed2cee55962448b2",
+      "builtBytes": 1295812,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/horizons-mars-system-rolling-BbEEuyA2.json",
+      "committedSha256": "406534ce0c09b8c8e28440a66233e01e7bfb2ac13f68601ce5b8533ffc65d174",
+      "committedBytes": 2463346,
+      "builtFrom": "outDir",
+      "builtSha256": "406534ce0c09b8c8e28440a66233e01e7bfb2ac13f68601ce5b8533ffc65d174",
+      "builtBytes": 2463346,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/horizons-saturn-system-rolling-d_v3Lj_T.json",
+      "committedSha256": "679aa36e6493536665fd835e979d98e974895a5067cbb68472493270aabc3b81",
+      "committedBytes": 3074744,
+      "builtFrom": "outDir",
+      "builtSha256": "679aa36e6493536665fd835e979d98e974895a5067cbb68472493270aabc3b81",
+      "builtBytes": 3074744,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/legacy-C6NkCVYx.js",
+      "committedSha256": "de3c0aea8db5f86231f71c23f07c8f6e77f75785e875a1bbe6cad3e9c6509649",
+      "committedBytes": 178820,
+      "builtFrom": "outDir",
+      "builtSha256": "de3c0aea8db5f86231f71c23f07c8f6e77f75785e875a1bbe6cad3e9c6509649",
+      "builtBytes": 178820,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/legacy-DBnyUIUO.css",
+      "committedSha256": "274b6fc8fcfd7ddeef15900b5b87b05b8213829cd22727d805a25530b5386684",
+      "committedBytes": 21009,
+      "builtFrom": "outDir",
+      "builtSha256": "274b6fc8fcfd7ddeef15900b5b87b05b8213829cd22727d805a25530b5386684",
+      "builtBytes": 21009,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/modulepreload-polyfill-B5Qt9EMX.js",
+      "committedSha256": "d2a32840421496e872ade591618d2fa5c33797605d1aec04301717e5a90757d0",
+      "committedBytes": 711,
+      "builtFrom": "outDir",
+      "builtSha256": "d2a32840421496e872ade591618d2fa5c33797605d1aec04301717e5a90757d0",
+      "builtBytes": 711,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/nea-catalog-slice9-BkYibDG0.json",
+      "committedSha256": "f88028d2839842299b7aae20644d15fef265b19e3bbca576c5dd0faf7d231418",
+      "committedBytes": 52969826,
+      "builtFrom": "outDir",
+      "builtSha256": "f88028d2839842299b7aae20644d15fef265b19e3bbca576c5dd0faf7d231418",
+      "builtBytes": 52969826,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/porkchop.worker-WAXxJDr5.js",
+      "committedSha256": "273bb1839e0ef72c6e8a063b5ef1ab15d1b14fba56ab6c4ee4ed1567286bd7d9",
+      "committedBytes": 11763,
+      "builtFrom": "outDir",
+      "builtSha256": "273bb1839e0ef72c6e8a063b5ef1ab15d1b14fba56ab6c4ee4ed1567286bd7d9",
+      "builtBytes": 11763,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/porkchopV2-V_mxVt_g.js",
+      "committedSha256": "309e29c36cc01f2187bba45ca87aa9e5ab64f5264ae34be4b6c5f4fb95d8f946",
+      "committedBytes": 31301,
+      "builtFrom": "outDir",
+      "builtSha256": "309e29c36cc01f2187bba45ca87aa9e5ab64f5264ae34be4b6c5f4fb95d8f946",
+      "builtBytes": 31301,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/resolve-catalog-body-B93d1P1K.js",
+      "committedSha256": "3393f7586df3340238fbd04baeb60009e7ebba48a572521488174caf707c6dcf",
+      "committedBytes": 3509,
+      "builtFrom": "outDir",
+      "builtSha256": "3393f7586df3340238fbd04baeb60009e7ebba48a572521488174caf707c6dcf",
+      "builtBytes": 3509,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/solarSystemV2-C6dR6zLr.js",
+      "committedSha256": "d9704658b9ef3ae3363855dfb1a194880d05353e4f0ca33aec4d24a6f7d0b75e",
+      "committedBytes": 102492,
+      "builtFrom": "outDir",
+      "builtSha256": "d9704658b9ef3ae3363855dfb1a194880d05353e4f0ca33aec4d24a6f7d0b75e",
+      "builtBytes": 102492,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/star-catalog-tycho2-mag75-Lh18dL25.bin",
+      "committedSha256": "5909f7ad127b469a9f9683034677f4f62b96225dcf262904ba99a6a9574642c8",
+      "committedBytes": 1120016,
+      "builtFrom": "outDir",
+      "builtSha256": "5909f7ad127b469a9f9683034677f4f62b96225dcf262904ba99a6a9574642c8",
+      "builtBytes": 1120016,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/store-By7ryBjG.js",
+      "committedSha256": "574c108c0661b61b10032dad9352f1eb7964606c04289c4a4bc7a741baadfd2e",
+      "committedBytes": 16763,
+      "builtFrom": "outDir",
+      "builtSha256": "574c108c0661b61b10032dad9352f1eb7964606c04289c4a4bc7a741baadfd2e",
+      "builtBytes": 16763,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/three.module-CFyvS0yg.js",
+      "committedSha256": "b41b82556746adde736c68b8d0b0e38c6db4e5f6e9a070de992f7ed6e54deaeb",
+      "committedBytes": 513113,
+      "builtFrom": "outDir",
+      "builtSha256": "b41b82556746adde736c68b8d0b0e38c6db4e5f6e9a070de992f7ed6e54deaeb",
+      "builtBytes": 513113,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/tier-assignments-DzBtElQh.js",
+      "committedSha256": "c385ef9c2be685ae5aac27d5438b0d9a69010bddc053f3780207e2595df4cec6",
+      "committedBytes": 14285,
+      "builtFrom": "outDir",
+      "builtSha256": "c385ef9c2be685ae5aac27d5438b0d9a69010bddc053f3780207e2595df4cec6",
+      "builtBytes": 14285,
+      "identical": true
+    },
+    {
+      "file": "docs/assets/validation-provenance-DUvzvU-t.json",
+      "committedSha256": "16d587aeb99a85cb46966e0b6ed228bad302eefa9fa46cc4ae984632b753dfac",
+      "committedBytes": 6516,
+      "builtFrom": "outDir",
+      "builtSha256": "16d587aeb99a85cb46966e0b6ed228bad302eefa9fa46cc4ae984632b753dfac",
+      "builtBytes": 6516,
+      "identical": true
+    },
+    {
+      "file": "docs/index.html",
+      "committedSha256": "47ec5d9801c90043be7b15f648d9cbc57f10e9c5b66413b0c89cb04602aa2a1a",
+      "committedBytes": 947,
+      "builtFrom": "outDir",
+      "builtSha256": "47ec5d9801c90043be7b15f648d9cbc57f10e9c5b66413b0c89cb04602aa2a1a",
+      "builtBytes": 947,
+      "identical": true
+    },
+    {
+      "file": "docs/lambert-screen-cache.json",
+      "committedSha256": "bd27b9bd882a65343399f772e37218b5fb05644bea5a822aafcb65e81e750206",
+      "committedBytes": 34499477,
+      "builtFrom": "clone-docs (unchanged working-tree file; not emitted into outDir)",
+      "builtSha256": "bd27b9bd882a65343399f772e37218b5fb05644bea5a822aafcb65e81e750206",
+      "builtBytes": 34499477,
+      "identical": true
+    },
+    {
+      "file": "docs/legacy/index.html",
+      "committedSha256": "8ff2ddd559056d7b0c845671a4b038e474b3333c97b433b961ac4a034e7a9d4e",
+      "committedBytes": 49139,
+      "builtFrom": "outDir",
+      "builtSha256": "8ff2ddd559056d7b0c845671a4b038e474b3333c97b433b961ac4a034e7a9d4e",
+      "builtBytes": 49139,
+      "identical": true
+    },
+    {
+      "file": "docs/legacy/physics.worker.js",
+      "committedSha256": "c6ff88766ac022d3187a4931e13af523d54d73254688eb764c20943812f3fa6d",
+      "committedBytes": 77218,
+      "builtFrom": "clone-docs (unchanged working-tree file; not emitted into outDir)",
+      "builtSha256": "c6ff88766ac022d3187a4931e13af523d54d73254688eb764c20943812f3fa6d",
+      "builtBytes": 77218,
+      "identical": true
+    },
+    {
+      "file": "docs/tier-sizing-per-body.json",
+      "committedSha256": "dff569ab5ea0751122bfb37c8f6c472c06658b7cb1d9931e0eba1cbc25974c31",
+      "committedBytes": 10880177,
+      "builtFrom": "clone-docs (unchanged working-tree file; not emitted into outDir)",
+      "builtSha256": "dff569ab5ea0751122bfb37c8f6c472c06658b7cb1d9931e0eba1cbc25974c31",
+      "builtBytes": 10880177,
+      "identical": true
+    },
+    {
+      "file": "docs/v2/about/index.html",
+      "committedSha256": "336ba987beb15409ae295ae19b3fa91ee40dd4a2811709399784de0e600e8968",
+      "committedBytes": 875,
+      "builtFrom": "outDir",
+      "builtSha256": "336ba987beb15409ae295ae19b3fa91ee40dd4a2811709399784de0e600e8968",
+      "builtBytes": 875,
+      "identical": true
+    },
+    {
+      "file": "docs/v2/compare/index.html",
+      "committedSha256": "0586d3aefb65608e48d9e4de4d8541bbe9972e5252ece647b8442420cfa59a86",
+      "committedBytes": 1266,
+      "builtFrom": "outDir",
+      "builtSha256": "0586d3aefb65608e48d9e4de4d8541bbe9972e5252ece647b8442420cfa59a86",
+      "builtBytes": 1266,
+      "identical": true
+    },
+    {
+      "file": "docs/v2/earth-moon/index.html",
+      "committedSha256": "9351440785b1ac6bfd77b0d56d15fc48f858a2d2e9123eec3f843344500676df",
+      "committedBytes": 1012,
+      "builtFrom": "outDir",
+      "builtSha256": "9351440785b1ac6bfd77b0d56d15fc48f858a2d2e9123eec3f843344500676df",
+      "builtBytes": 1012,
+      "identical": true
+    },
+    {
+      "file": "docs/v2/index.html",
+      "committedSha256": "65c35f74d77f283f992bbcc02182b9c239d8332a8f3dd85cce65cc2381b7a4f5",
+      "committedBytes": 1145,
+      "builtFrom": "outDir",
+      "builtSha256": "65c35f74d77f283f992bbcc02182b9c239d8332a8f3dd85cce65cc2381b7a4f5",
+      "builtBytes": 1145,
+      "identical": true
+    },
+    {
+      "file": "docs/v2/inner-solar-system/index.html",
+      "committedSha256": "e97535b68f9e80d2684ba3300c0d3d6ca47059b3abe2d3f09ddc10fc776cc156",
+      "committedBytes": 1028,
+      "builtFrom": "outDir",
+      "builtSha256": "e97535b68f9e80d2684ba3300c0d3d6ca47059b3abe2d3f09ddc10fc776cc156",
+      "builtBytes": 1028,
+      "identical": true
+    },
+    {
+      "file": "docs/v2/porkchop/index.html",
+      "committedSha256": "5f30d57e2b945b78dae0673beb172db1cf131d82bd74cd1ead9ce0acdbd66997",
+      "committedBytes": 1928,
+      "builtFrom": "outDir",
+      "builtSha256": "5f30d57e2b945b78dae0673beb172db1cf131d82bd74cd1ead9ce0acdbd66997",
+      "builtBytes": 1928,
+      "identical": true
+    },
+    {
+      "file": "docs/v2/solar-system/index.html",
+      "committedSha256": "ed9733b3b0806bfbd49566ec8d439bb1ca543f7e96f6ad0ab10b308650ae472e",
+      "committedBytes": 1369,
+      "builtFrom": "outDir",
+      "builtSha256": "ed9733b3b0806bfbd49566ec8d439bb1ca543f7e96f6ad0ab10b308650ae472e",
+      "builtBytes": 1369,
+      "identical": true
+    }
+  ]
+}
