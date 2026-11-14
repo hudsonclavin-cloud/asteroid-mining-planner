@@ -76,3 +76,9 @@ One agent, zero sub-agents, zero workflows. Host pre-waived by the dispatch (lap
 - Primary (39,993 bodies): median |error| 8.972 (M=0) -> 9.262 km/s (M=0+M=1); overcharge 97.3% -> 97.4%; an M=1 cell is the minimum for 20,455 (51.1%); median gain when it is 0.402 km/s.
 - Secondary (37,842): median |error| 0.775 -> 0.526 km/s; overcharge 33.7% -> 47.0%; M=1 is the minimum for 59.7%.
 - Through-Sun check on the chosen minima (beyond the dispatch): no M=1 minimum is flagged. LR2's OWN M=0 minimum is a flagged arc for 1 primary body (154300) and 6 secondary bodies, all on pairing windows where 71,199-72,297 of 72,300 cells were refused (3 to 1,101 admissible cells). LR2's committed numbers are not touched; XR2's shown-window count (0) is unaffected because LR2 values are not shown on the site.
+
+## FINAL
+- 10:40Z npm run verify in the worktree after all XRs: exit 0, files 109/109, tests 363 passed / 0 failed, wall 471.1 s. Same N/N as the start (109 / 363).
+- Free disk at the end: 23G (lowest seen 23 GB; floor 5 GB never approached).
+- No push, no merge, no ASTER_* override at any point. No sub-agent, swarm, workflow or second session.
+- 10:40:17Z final-report.mjs builds REPORT.md from the committed summaries plus run facts; REPORT.md and this LOG.md are copied into tools/slice20-research/longrun2/ and their sha256 checked against the scratch sources before the final commit.
