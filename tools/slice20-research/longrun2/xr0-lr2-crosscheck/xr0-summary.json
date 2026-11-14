@@ -1,0 +1,92 @@
+{
+  "schema": "aster-s20-longrun2-xr0/1",
+  "generatedAtUtc": "2026-11-14T08:30:13.114Z",
+  "state": "COMPLETE",
+  "node": "v22.23.4",
+  "bodiesComputed": 540,
+  "bodiesByReason": {
+    "gate": 3,
+    "first-500": 498,
+    "lr2-extreme": 39
+  },
+  "statusCounts": {
+    "ok": 503,
+    "all-return-cells-refused": 15,
+    "no-practical-window": 22
+  },
+  "lr2ShardsRead": [
+    "lr2-symmetric-0of3.json",
+    "lr2-symmetric-1of3.json",
+    "lr2-symmetric-2of3.json"
+  ],
+  "compared": 540,
+  "notInLr2": [],
+  "agreeAtCommittedPrecision": 540,
+  "differ": 0,
+  "comparisonPrecision": "LR2 committed its rows rounded to 6 decimals; XR0 values are rounded the same way (Math.round(x * 1e6) / 1e6) and compared for exact equality, field by field",
+  "maxAbsDErrorKmS": 0,
+  "medianAbsDErrorKmS": 0,
+  "measuredWithError": 503,
+  "fullPrecision": {
+    "note": "against LR2's full-precision scratch NDJSON found on this host; that file is NOT committed evidence",
+    "compared": 503,
+    "bitIdentical": 503,
+    "maxAbsDErrorKmS": 0,
+    "maxAbsDAssumedKmS": 0,
+    "maxAbsDComputedKmS": 0
+  },
+  "gate": [
+    {
+      "des": "433",
+      "assumed": 6.90485729483507,
+      "computed": 3.033664072147393,
+      "s2001Assumed": 6.905,
+      "s2001Computed": 3.034,
+      "reproduced": true
+    },
+    {
+      "des": "99942",
+      "assumed": 5.840697299464409,
+      "computed": 1.0916317984389794,
+      "s2001Assumed": 5.841,
+      "s2001Computed": 1.092,
+      "reproduced": true
+    },
+    {
+      "des": "2000 SG344",
+      "assumed": 1.3890629746915717,
+      "computed": 0.1475691246221468,
+      "s2001Assumed": 1.389,
+      "s2001Computed": 0.148,
+      "reproduced": true
+    }
+  ],
+  "verdict": "VALIDATES",
+  "disagreements": [],
+  "secondsPerBodyMedian": 4.561,
+  "definitions": {
+    "COMPARE": {
+      "startUtc": "2026-01-01",
+      "endUtc": "2040-01-01",
+      "nDep": 731,
+      "nTof": 100,
+      "tofMinDays": 182.5,
+      "tofMaxDays": 1826.25
+    },
+    "SEGMENT": {
+      "thresholdMode": "relative",
+      "deltaKm2S2": 5,
+      "absoluteKm2S2": 25,
+      "connectivity": 8,
+      "bMinCells": 2
+    },
+    "PAIRING": {
+      "stayMinDays": 8,
+      "stayMaxDays": 730.5,
+      "nDep": 723,
+      "nTof": 100,
+      "tofMinDays": 182.5,
+      "tofMaxDays": 1826.25
+    }
+  }
+}

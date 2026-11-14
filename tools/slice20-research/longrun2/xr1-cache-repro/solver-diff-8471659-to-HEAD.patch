@@ -1,0 +1,138 @@
+diff --git a/src/v2/boundary/slice9-nea-catalog.ts b/src/v2/boundary/slice9-nea-catalog.ts
+index 7c99bbc..d238e36 100644
+--- a/src/v2/boundary/slice9-nea-catalog.ts
++++ b/src/v2/boundary/slice9-nea-catalog.ts
+@@ -17,6 +17,8 @@ import {
+ export type Slice9Inv014Tier = 'visualization-tier' | 'planning-tier' | 'not-kepler-safe';
+ export type Slice9AnchorSource = 'sbdb' | 'horizons-reanchor' | 'stale-unanchored';
+ 
++export const SLICE9_NEA_CATALOG_TOTAL_BODIES = 41_906;
++
+ export interface Slice9AsteroidAnchorFixture {
+   epochTdbJd: number;
+   positionKm: [number, number, number];
+@@ -254,6 +256,11 @@ function assertSlice9FixtureShape(fixture: Slice9Fixture): void {
+   if (asteroidCount <= 0) {
+     throw new Error('Slice 9 fixture must define at least one asteroid');
+   }
++  if (fixture.catalog.totalBodies !== SLICE9_NEA_CATALOG_TOTAL_BODIES) {
++    throw new Error(
++      `Slice 9 catalog.totalBodies must equal ${SLICE9_NEA_CATALOG_TOTAL_BODIES}; received ${fixture.catalog.totalBodies}`,
++    );
++  }
+   if (fixture.catalog.totalBodies !== asteroidCount) {
+     throw new Error(
+       `Slice 9 catalog.totalBodies must equal the asteroid record count (${asteroidCount}); received ${fixture.catalog.totalBodies}`,
+diff --git a/src/v2/core/lambert/householder.ts b/src/v2/core/lambert/householder.ts
+index 48f4727..8baf600 100644
+--- a/src/v2/core/lambert/householder.ts
++++ b/src/v2/core/lambert/householder.ts
+@@ -2,7 +2,9 @@
+  * Householder iteration (third-order) for solving T(x) - T_star = 0.
+  *
+  * Reference: Izzo (2014), "Revisiting Lambert's Problem", arXiv:1403.2705 Eq. (24)
+- * Mirrors: poliastro/core/iod.py householder()
++ * Householder iteration from Izzo 2014 (arXiv:1403.2705).
++ * Validation-oracle correspondence: poliastro core/iod.py
++ * householder() (INV-024 - oracle only, no code ported).
+  *
+  * The iteration formula:
+  *   delta = f * (f'^2 - f * f'' / 2) / (f' * (f'^2 - f * f'') + f''' * f^2 / 6)
+diff --git a/src/v2/core/lambert/hyp2f1b.ts b/src/v2/core/lambert/hyp2f1b.ts
+index 07d3694..5c91d0e 100644
+--- a/src/v2/core/lambert/hyp2f1b.ts
++++ b/src/v2/core/lambert/hyp2f1b.ts
+@@ -1,21 +1,19 @@
+ /**
+- * Gauss hypergeometric function 2F1(3, 1; 5/2; x).
++ * Compute the Gauss hypergeometric function 2F1(3, 1; 5/2; x) via series expansion.
+  *
+- * Used by Izzo's Lambert solver in the M=0 single-revolution case for
+- * x in the range (sqrt(0.6), sqrt(1.4)) — see poliastro reference and
+- * Izzo 2014 paper section 3.
++ * DOMAIN: x ∈ [0, 0.5]. The function 2F1(3, 1; 5/2; x) is mathematically defined
++ * for x ∈ [0, 1), but this implementation uses a raw truncated series (MAX_ITER = 1000)
++ * with no near-1 transformation. The series converges slowly as x → 1, and outside
++ * the documented domain its precision degrades materially before becoming severe near 1.
+  *
+- * Computed by direct power series:
+- *   2F1(a, b; c; x) = sum_{n=0}^{inf} ((a)_n * (b)_n / (c)_n) * x^n / n!
++ * USAGE: This helper is called by the Izzo Lambert iteration (src/v2/core/lambert/tof.ts)
++ * with arguments in the range x ≈ S_1 ∈ [0, ~0.4], well within the safe domain.
+  *
+- * For our specialized case 2F1(3, 1; 5/2; x):
+- *   term_0 = 1
+- *   term_{n+1} = term_n * (n + 3)(n + 1) / ((n + 5/2)(n + 1)) * x
+- *             = term_n * (n + 3) / (n + 5/2) * x
++ * If a future caller needs accurate evaluation near x → 1, this helper will need to
++ * be extended with a Pfaff or Euler transformation. Do not use this helper outside
++ * the documented [0, 0.5] domain without that work.
+  *
+- * Series diverges for |x| >= 1. We require x < 1 (caller's responsibility).
+- * For x close to 1, convergence is slow; we cap iterations at 1000 with
+- * a relative-tolerance break.
++ * Reference: NIST DLMF §15.2.1 for the series definition.
+  */
+ 
+ const MAX_ITER = 1000;
+diff --git a/src/v2/core/lambert/initial-guess.ts b/src/v2/core/lambert/initial-guess.ts
+index c98f58c..b60f8ed 100644
+--- a/src/v2/core/lambert/initial-guess.ts
++++ b/src/v2/core/lambert/initial-guess.ts
+@@ -35,7 +35,10 @@ export function initial_guess_single_rev(T: number, lam: number): number {
+         return ((2.5 * T_1) / T) * ((T_1 - T) / (1 - Math.pow(lam, 5))) + 1;
+     } else {
+         // Log-interpolation in the T_1 < T < T_0 region.
+-        // Corrected formula matches poliastro/core/iod.py _initial_guess.
++        // Starter formula corrected in the Slice 10 multi-agent audit
++        // (Dispatch 23a); corrected form verified against the validation
++        // oracle poliastro core/iod.py _initial_guess (INV-024 - oracle
++        // only, no code ported).
+         // Original implementation had a wrong algebraic form that produced bad starters
+         // for negative-lambda cases near the T_1 boundary (verified in Dispatch 22).
+         return Math.exp(Math.log(2) * Math.log(T / T_0) / Math.log(T_1 / T_0)) - 1;
+diff --git a/src/v2/core/lambert/izzo.ts b/src/v2/core/lambert/izzo.ts
+index 8508e15..6edd0e7 100644
+--- a/src/v2/core/lambert/izzo.ts
++++ b/src/v2/core/lambert/izzo.ts
+@@ -6,7 +6,11 @@
+  * under central gravity with parameter k (= GM of the central body).
+  *
+  * Reference: Izzo (2014), "Revisiting Lambert's Problem", arXiv:1403.2705
+- * Implementation mirrors poliastro/core/iod.py:izzo()
++ * Clean-room TypeScript implementation of Izzo 2014
++ * (arXiv:1403.2705), written from the paper's math per DEC-1 Rev 2
++ * (Slice 10 founding doc). poliastro core/iod.py izzo() is the
++ * validation oracle for this function (INV-015, INV-024 - oracle
++ * only, no code ported).
+  *
+  * Returns a discriminated union:
+  *   { ok: true, v1, v2, iterations, x }  on success
+@@ -32,7 +36,7 @@ export interface LambertSuccess {
+ 
+ export interface LambertFailure {
+     ok: false;
+-    reason: 'no_convergence' | 'invalid_geometry';
++    reason: 'no_convergence' | 'invalid_geometry' | 'multi_rev_not_supported';
+ }
+ 
+ export type LambertResult = LambertSuccess | LambertFailure;
+@@ -65,6 +69,18 @@ export function lambert(
+     const rtol = opts.rtol ?? 1e-8;
+     const max_iter = opts.max_iter ?? 35;
+ 
++    // Slice 10 supports single-revolution transfers only (DEC-2).
++    // Multi-rev support (M >= 1) is deferred to Slice 11+. The lower-layer code
++    // (initial-guess multi-rev branch, tof multi-rev terms, householder) is partially
++    // implemented but not end-to-end validated. Rejecting M !== 0 here prevents
++    // footgun usage while preserving the lower-layer code for future Slice 11 work.
++    if (M !== 0) {
++        return {
++            ok: false,
++            reason: 'multi_rev_not_supported',
++        };
++    }
++
+     const c = sub(r2, r1);
+     const c_norm = norm(c);
+     const r1_norm = norm(r1);
