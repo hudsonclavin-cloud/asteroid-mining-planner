@@ -1,0 +1,46 @@
+# S20_LONGRUN2 real-time log
+
+One agent, zero sub-agents, zero workflows. Host pre-waived by the dispatch (laptop or cloud).
+
+## XR0 Phase 0
+- 2026-11-14T07:01:54Z host: Linux 6.18.44-fc-v470 x86_64; node v22.23.4; npm 10.9.9; python3 3.13.18; 4 cores; 15 GB RAM; free disk 24G. Cloud Linux container (the same one the first long run used).
+- canonical tree C:\Users\hudso\asteroid-mining-planner: ABSENT on this host (expected; recorded per the dispatch).
+- pwd (container clone): /home/user/asteroid-mining-planner; remote https://github.com/hudsonclavin-cloud/asteroid-mining-planner
+- origin/main at start: 75606da39d4a6a0bb7022b3457e0e06ed7f6a8dd
+- CONTEXT MISMATCH (recorded, not a halt): the dispatch expects Front A's sweep fix and six protected hand-commits on main. origin/main holds exactly 7 commits past 0d31cda: the six s20-longrun-research commits and merge 75606da (PR #13). No path outside tools/slice20-research/longrun/ differs from 0d31cda. So src/ is still the 0d31cda tree.
+- worktree: /tmp/claude-0/-home-user-asteroid-mining-planner/76d3aa99-c371-5f08-8711-bae4d2219800/scratchpad/aster-longrun2 (branch s20-longrun2-research, HEAD 75606da); scratch: /tmp/claude-0/-home-user-asteroid-mining-planner/76d3aa99-c371-5f08-8711-bae4d2219800/scratchpad/aster-longrun2-scratch
+- npm ci exit 0; core.hooksPath .githooks
+- poliastro venv ~/.aster-slice11-venv: present from the first run (python 3.12.3, poliastro 0.17.0); nothing installed in this run so far.
+- tools/slice20-research/longrun/ present on main (first long run merged).
+
+## XR1 step 1 - cheap provenance check (logged BEFORE the recompute starts, 07:04:50Z)
+- catalog fixture sha256: MATCH (f88028d2...1418 both sides).
+- horizons fixture sha256: MATCH (b278dd55...9c15 both sides).
+- precompute script sha256: DRIFT. Now 12463732...c780; recorded 44d94435...b4f7. The recorded hash equals the script blob at commit 9e93ffc (2026-05-30, the commit that last changed the cache). Two commits have changed the script since: be5ef60 (repoint the Horizons fixture path) and 6d9b8bc (invoke tsc through process.execPath).
+- metadata.provenance.solverCommit 8471659 (2026-05-29): IS an ancestor of HEAD; 647 commits later. 8471659 -> 9e93ffc changed nothing under src/v2/core, so the recorded commit does identify the solver the cache was built with.
+- Files under src/v2/core and src/v2/porkchop that differ between 8471659 and HEAD: 35 (30 added, 5 modified). Of the modules the precompute script compiles (izzo.ts and what it imports, keplerian.ts, units, hermite.ts, slice9-nea-catalog.ts, horizons.ts), these changed: core/lambert/izzo.ts (+18/-2), householder.ts (+3/-1), hyp2f1b.ts (+11/-13), initial-guess.ts (+4/-1), boundary/slice9-nea-catalog.ts (+7/-0). tof.ts, vec3.ts, keplerian.ts, units and hermite.ts did not. dla.ts, feasibility.ts and lambert-multi-rev.ts were ADDED after 8471659; the script does not import them.
+- docs/lambert-screen-cache.json vs tests/fixtures/v2/lambert-screen-cache.json: MATCH, byte-identical (bd27b9bd...0206, 34,499,477 bytes).
+- Throwaway clone for the recompute: /tmp/claude-0/-home-user-asteroid-mining-planner/76d3aa99-c371-5f08-8711-bae4d2219800/scratchpad/aster-tmp-xr1, full history, HEAD 75606da (the container's own clone is shallow and could not answer the ancestry question).
+- 2026-11-14T07:06:25Z recompute launched in the throwaway clone: node tools/build/precompute-lambert-screen.mjs, unedited, no arguments (script sha256 12463732...c780, as on main). A first launch one minute earlier died before node started (the wrapper called /usr/bin/time, which this host lacks); nothing ran.
+- 07:10:20Z npm run verify baseline: files discovered: 109;files passed: 109;tests passed: 363;tests failed: 0;VERIFY_EXIT 0; (the dispatch expected 111 files / 370 tests after Front A's sweep fix; that fix is not on origin/main, so the real number is the same as the first run's).
+- 07:10:39Z XR0 gate: the independent path reproduces the three S20_01 R3 min-C3 rows at M=0 (433: 6.9049 / 3.0337; 99942: 5.8407 / 1.0916; 2000 SG344: 1.3891 / 0.1476). Full XR0 run started: 540 bodies (3 gate, 500 in catalog order, the rest from LR2's extremes tables), one process, production linear-scan Earth lookup, 1.1-2.0 s per body.
+
+## XR2 outbound census (started 07:14:38Z, while the XR1 recompute runs)
+- The precompute script takes no hooks and may not be edited, so the census is the dispatch's fallback: an independent sweep of the same screening grid (783 departures x 55 TOF) with the production kernel computePorkchopGrid, plus the compare page's 731 x 100 grid through computeCompareData, per body, in catalog order, 3 shards.
+- Validity definition copied from LR1 (lr1-oracle/oracle_driver.py transferOrbit; lr1-oracle/report.mjs perihelionPassages and the band "q < 1 solar radius AND the flown arc passes perihelion"); constants AU 149,597,870.7 km, solar radius 695,700 km.
+- Trial on 7 bodies: 265-413 ms per body with the machine busy; every body has flagged cells on the screening grid (4 to 492 of 43,065); the kernel's minimum C3 equals the shipped cache's to 1e-12..6e-11 relative with the same date and TOF.
+- Shards 0 and 1 started; shard 2 starts when XR0 frees its core.
+- 07:19:30Z XR2 shard 2 started now rather than after XR0 (five processes on four cores for a while; the recompute is at 718k solves/s with ETA well under the script's own 75-minute abort).
+
+## XR3 worker prepared (07:19:30Z); it starts when the census frees the cores
+- xr3-m1-returns/run-shard-m1.mjs is a copy of LR2's merged run-shard.mjs with the return leg run at M=0 and M=1 (header lists every change). LR2's lib is reused; its build was made into this run's scratch.
+- Trial (--only "433,99942,2000 SG344") against S20_01 R3's M=1 column: 433 min-C3 1.7950 (R3 1.795), 433 best stack 1.2229 (1.223), 99942 min-C3 1.1016 (1.102), 99942 best stack 1.5648 (1.565), 2000 SG344 best stack 0.3084 (0.3084); 2000 SG344 min-C3 0.1424 against R3's 0.131 (R3's window had no 8-day minimum stay). The M=0 values equal LR2's.
+- Cost: the M=1 pass costs about 1.5-2.5 times the M=0 pass per return grid; about 1 s per body per core expected.
+- Schedule decision: XR3 starts with 4 shards when the XR2 census is done, so its 3 h box gets four full cores; starting it now would spend the box on a shared machine.
+
+## XR0 result (07:43:24Z)
+- Run complete: 540 bodies in 1,917 s (3 gate, 498 further bodies from the first 500 in catalog order, 39 from LR2's extremes tables). Status: ok 503; all-return-cells-refused 15; no-practical-window 22.
+- Joined to LR2's committed shards: 540 compared; 540 agree on every compared field after LR2's 6-decimal rounding (status, window, assumed, refused count, computed, its cell, error); 0 differ; max |d error| 0.
+- LR2's full-precision working file was still in the first run's scratch on this host (not committed evidence): 503 of 503 bodies with an error on both sides are bit-identical in window, assumed, computed and error.
+- VERDICT: VALIDATES LR2's primary column on these 540 bodies. LR2's committed numbers were not touched.
+- Return census (XR2 step 4) started on the core XR0 freed.
