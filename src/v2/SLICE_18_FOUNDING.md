@@ -369,3 +369,15 @@ The value is not at 2046-01-01. Verified by reading `tests/fixtures/v2/nea-drift
 **Do not rename the field.** It is consumed by name, and a rename would silently break those consumers. Read it as "at the last sampled arrival", and read any statement of the form "no drift is measured past 2046-01-01" — including the ones in §8 and in `strategy/INTAKE_2026-09-11_EXTERNAL_AI_SESSION.md` §9.1 — as **past 2045-12-28**. Four days is small against a twenty-year horizon, but DEC-18-3 makes the date the disclosure unit, so the offset is recorded rather than rounded away.
 
 Independently, the same epoch bounds the other Slice 18 instrument: `tools/slice18-research/dv-scope-results.json` carries `windowEndJd: 2468342.5` — the identical Julian date. Both instruments stop at 2045-12-28, so a horizon extension must move both.
+
+### D3-1 — Front B completion date correction (2026-11-13; audit C2-F03/C2-F04)
+
+The original Front B date in this document is 2026-09-02. The committed truth fixture landed at `0d927e4` on 2026-09-05, the drift artifacts landed at `d663e9c` on 2026-09-06, and STATUS first recorded Front B completion at `6e89131` on 2026-09-06. The authoritative Front B completion date is therefore **2026-09-06**; 2026-09-02 was Front A's close date. The original text remains unchanged.
+
+### D3-4 — measured-unbounded tier-count correction (2026-11-13; audit C2-F08, evidence `b25acdc`)
+
+The tier-count text above predates `b25acdc` (2026-10-14), which corrected seven measured bodies that had been labelled `unmeasured` in the per-body artifact. Read those records as `measured-but-unbounded`; the unmeasured population excludes them. This annotation records the evidence correction without rewriting the locked counts or prose.
+
+### D2 — GM_SUN provenance correction (2026-11-13; audit A4-F09/B2-F04)
+
+The historical OQ-18-5 wording says the numeric value is a DE430 value. The value `1.32712440018e20` is the DE405-era figure; the numeric constant is unchanged, and the core comment carries the additive correction. The old OQ wording remains as history.
