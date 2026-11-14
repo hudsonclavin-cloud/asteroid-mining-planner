@@ -1314,7 +1314,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                         style: `${TOOLTIP_STYLE};left:${formatNumber(hoverTooltipPosition.x, 0)}px;top:${formatNumber(hoverTooltipPosition.y, 0)}px;`,
                       },
                       h('div', { style: 'font-weight:600;margin-bottom:6px;' }, 'Hover cell'),
-                      h('div', null, `Status: ${hoverReadout.status}`),
+                      h('div', null, `Solver status: ${hoverReadout.status}`),
                       familyToggleEnabled
                         ? h('div', null, `Family: M=${hoverReadout.M}`)
                         : null,
@@ -1446,7 +1446,7 @@ export function PorkchopView(props: PorkchopViewProps) {
         : h(
             'div',
             { style: 'display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;font-size:13px;line-height:1.5;' },
-            h('span', null, 'Status'),
+            h('span', null, 'Solver status'),
             h('span', null, pinnedReadout.status),
             h('span', null, 'Departure'),
             h('span', null, formatJdTdb(pinnedReadout.depJD)),
