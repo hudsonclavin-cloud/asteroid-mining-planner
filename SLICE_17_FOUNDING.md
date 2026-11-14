@@ -685,6 +685,10 @@ constant, a committed measurement, or a verified primary source
 (INV-025/026).
 
 ═══════════════════════════════════════════════════════════════════════════
+### D3-3 — §1 thesis sample correction (2026-11-13; audit C3-F01)
+
+The §1 sentence saying that body 163693 has the second-best minimum C3 of the five is incorrect. The committed five-body measurement artifact `tools/slice17-research/data/s17-structure-7day.json` records live minima of 0.00005501593238631661 (99942), 0.5230068387747006 (101955), 0.8314966301088486 (1566), 1.6396903345121228 (433), and 6.7561195189011825 (163693). Therefore 163693 has the highest, worst minimum C3 in that sample. The thesis about minimum-only ranking versus structure is unchanged; this annotation corrects only the rank wording.
+
 §10. ANCESTOR ANNOTATIONS & PROPOSALS (queued, additive-only)
 ═══════════════════════════════════════════════════════════════════════════
 - SLICE_11_FOUNDING.md OQ-5 (multi-body comparison, deferred) → CLOSED by
