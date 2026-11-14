@@ -68,3 +68,10 @@ git-bundle delivery (no push). Zero sub-agents, zero workflows.
 - Selection check: 12 of 12 still survive against every importing test (142 test-file runs), 0 killed only without the selection.
 - All five throwaway copies show a clean git status except the marker file.
 - Hand readings in survivor-notes.json: 163 entries (per mutant, per function, per file).
+
+## FINAL
+- 04:52Z npm run verify in the worktree after all LRs: exit 0, files 109/109, tests 363 passed / 0 failed, wall 316.9 s. Same as the baseline. git status --porcelain shows only the not-yet-committed final-report.mjs.
+- Free disk at the end: 25G (lowest seen 25 GB; tripwire (e) floor 5 GB never approached).
+- No push, no merge, no ASTER_* override at any point. No sub-agent, workflow or second session was started.
+- 04:53:09Z final-report.mjs builds REPORT.md from the committed summary files plus run facts (commit list, verify results); REPORT.md and this LOG.md are copied from scratch into tools/slice20-research/longrun/ and the copies' sha256 are checked against the sources before the final commit "docs(research): Slice 20 long run evidence".
+- Delivery: git bundle of origin/main..s20-longrun-research, sent to Hudson as a file. The worktree stays in place for as long as the container lives.
