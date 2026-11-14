@@ -1,0 +1,654 @@
+{
+  "src/v2/porkchop/propagation-guard.ts#2249": {
+    "assessment": "REAL GAP (honesty). With this guard gone, a NaN semi-major axis passes every later check (NaN <= 0 is false) and assessPropagation returns propagatable: true. No test hands the guard a non-finite element.",
+    "suggestion": "For each of the seven element keys, call assessPropagation with that one element set to NaN (and once to Infinity) on otherwise valid elements; assert propagatable === false and reason === 'non-finite-element'."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2254": {
+    "assessment": "REAL GAP (honesty). Read from propagation-guard.test.mjs: the only refusal it drives through assessPropagation is a non-positive semi-major axis (it asserts reason === 'non-positive-semi-major-axis'). The eccentricity check never decides anything in a test, so deleting it changes no result.",
+    "suggestion": "assessPropagation with aM > 0 and e = 1.2, and again with e = -0.1: assert propagatable === false and reason === 'eccentricity-not-elliptical'."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2252": {
+    "assessment": "Boundary not tested: aM exactly 0.",
+    "suggestion": "assessPropagation with aM = 0 on otherwise valid elements: assert the refusal and reason === 'non-positive-semi-major-axis'."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2255": {
+    "assessment": "Boundary not tested: e exactly 0. Under the mutant a circular orbit would be refused.",
+    "suggestion": "assessPropagation with e = 0 and aM > 0: assert propagatable === true."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2256": {
+    "assessment": "Boundary not tested: e exactly 1 with a positive semi-major axis.",
+    "suggestion": "assessPropagation with e = 1 and aM > 0: assert the refusal and reason === 'eccentricity-not-elliptical'."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2257": {
+    "assessment": "Same boundary as the line above, reached through the constant: e in [1, 1.001) with aM > 0 is never tested.",
+    "suggestion": "assessPropagation with e = 1.0005 and aM > 0: assert the refusal."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2362": {
+    "assessment": "REAL GAP (honesty). Without this guard a record whose date or delta-v cannot be formatted produces a disclosure sentence containing the text 'null' instead of no sentence. No test feeds fullTierDisclosure such a record.",
+    "suggestion": "fullTierDisclosure for a 'materially-degraded-delta-v' record with an unparseable encounter.cd, and for one with encounter.dvKmS = NaN: assert the result is null."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2351": {
+    "assessment": "REAL GAP (honesty). Without this guard a NaN or negative delta-v is formatted ('NaN', '-12.0') and flows into the disclosure sentence. No test passes one.",
+    "suggestion": "formatMetersPerSecond(NaN), formatMetersPerSecond(Infinity) and formatMetersPerSecond(-0.001): assert null for each."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2352": {
+    "assessment": "Boundary not tested: a delta-v of exactly 0.",
+    "suggestion": "formatMetersPerSecond(0): assert '0.0' (the mutant returns null)."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2356": {
+    "assessment": "Boundary not tested: exactly 100 m/s, where the format switches from one decimal to a grouped integer.",
+    "suggestion": "formatMetersPerSecond(0.1): assert '100' (the mutant returns '100.0')."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2357": {
+    "assessment": "Same switch point as the line above, reached through the constant.",
+    "suggestion": "formatMetersPerSecond(0.10005): assert '100' (the mutant returns '100.0' or '100.1')."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2359": {
+    "assessment": "EQUIVALENT MUTANT. toFixed truncates its argument to an integer, so toFixed(1.001) is toFixed(1).",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2360": {
+    "assessment": "EQUIVALENT MUTANT. toFixed truncates its argument to an integer, so toFixed(2.002) is toFixed(2).",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2350": {
+    "assessment": "EQUIVALENT MUTANT. toPrecision truncates its argument to an integer.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2349": {
+    "assessment": "Weak gap. The tested value rounds to the same three significant figures after a 0.1% change, so the divisor is pinned only to about 0.2%.",
+    "suggestion": "formatMillionKm(253_600_000): assert '254 million' (the mutant gives '253 million')."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2347": {
+    "assessment": "Boundary not tested: a drift of exactly 0 km.",
+    "suggestion": "formatMillionKm(0): assert null (the mutant returns '0 million')."
+  },
+  "src/v2/porkchop/support-boundary.ts#2337": {
+    "assessment": "Defensive branch not tested: an L1 record whose encounter.jd is not finite. Without the guard such a record yields a boundary with a NaN epoch, and every later comparison against it is false (nothing is flagged unsupported).",
+    "suggestion": "supportBoundaryFor of an L1 record with encounter.jd = NaN: assert undefined."
+  },
+  "src/v2/porkchop/support-boundary.ts#2340": {
+    "assessment": "No test calls boundaryTofDaysAtDeparture at all (measured by function coverage), although it is exported and draws the support boundary curve.",
+    "suggestion": "boundaryTofDaysAtDeparture(depJD, boundary) for a known encounter: assert encounterJd - depJD, and that isArrivalAfterEncounter flips exactly at that TOF."
+  },
+  "src/v2/porkchop/format-c3.ts#1309": {
+    "assessment": "REAL GAP (honesty, small). With this guard gone formatC3(null) falls through to the non-finite branch and returns the text 'null' instead of the dash. No test calls formatC3(null).",
+    "suggestion": "formatC3(null): assert the em dash."
+  },
+  "src/v2/porkchop/format-c3.ts#1310": {
+    "assessment": "EQUIVALENT MUTANT. For NaN and for +/-Infinity the code below this guard produces the same strings ('NaN', 'Infinity', '-Infinity') as String(c3).",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/format-c3.ts#1312": {
+    "assessment": "Boundary not tested: |C3| exactly 1e-4, where the format switches to exponential.",
+    "suggestion": "formatC3(1e-4): assert '0.000100' (the mutant returns '1.00e-4')."
+  },
+  "src/v2/porkchop/format-c3.ts#1313": {
+    "assessment": "Same switch point as the line above, reached through the constant.",
+    "suggestion": "formatC3(1.0005e-4): assert the plain (non-exponential) form."
+  },
+  "src/v2/porkchop/format-c3.ts#1314": {
+    "assessment": "Boundary not tested: |C3| exactly 1e5.",
+    "suggestion": "formatC3(1e5): assert '1.00e+5' (the mutant returns '100000')."
+  },
+  "src/v2/porkchop/format-c3.ts#1315": {
+    "assessment": "Same switch point as the line above, reached through the constant.",
+    "suggestion": "formatC3(100_050): assert the exponential form."
+  },
+  "src/v2/porkchop/format-c3.ts#1316": {
+    "assessment": "EQUIVALENT MUTANT. toExponential truncates its argument to an integer.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/format-c3.ts#1317": {
+    "assessment": "EQUIVALENT MUTANT. toPrecision truncates its argument to an integer.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/invariants/assertions.ts#236": {
+    "assessment": "REAL GAP (the interpolation error-bar invariant). With a minus sign in the norm, an error that is mostly along z gives a negative radicand, the square root is NaN, NaN > bar is false, and the invariant stays silent. The tests never present a failing case with error on more than one axis.",
+    "suggestion": "assertInterpolationError with the estimate displaced by bar x 0.6 on each of x, y and z (norm about 1.04 x bar): assert the invariant fires. Repeat with the displacement on z only."
+  },
+  "src/v2/core/invariants/assertions.ts#237": {
+    "assessment": "Same gap as the previous mutant, on the y term.",
+    "suggestion": "Same test: an error just over the bar spread across all three axes must fire the invariant; add a y-only case."
+  },
+  "src/v2/core/invariants/assertions.ts#241": {
+    "assessment": "Boundary not tested: an error exactly equal to the bar (the code allows it; the mutant refuses it).",
+    "suggestion": "assertInterpolationError with a single-axis displacement of exactly the bar: assert it does NOT fire."
+  },
+  "src/v2/core/invariants/assertions.ts#251": {
+    "assessment": "REAL GAP (INV-012, the Keplerian error bar). Same mechanism as the interpolation assertion: a z-dominated error makes the radicand negative and the assertion can no longer fire.",
+    "suggestion": "assertKeplerianError with the estimate displaced by bar x 0.6 on each axis, and with a z-only displacement just over the bar: assert INV-012 fires."
+  },
+  "src/v2/core/invariants/assertions.ts#252": {
+    "assessment": "Same gap as the previous mutant, on the y term.",
+    "suggestion": "Same test, plus a y-only displacement just over the bar."
+  },
+  "src/v2/core/invariants/assertions.ts#256": {
+    "assessment": "Boundary not tested: an error exactly equal to the 100,000 km bar.",
+    "suggestion": "assertKeplerianError with a single-axis displacement of exactly ASTEROID_KEPLERIAN_ERROR_BAR_M: assert it does NOT fire."
+  },
+  "src/v2/core/invariants/assertions.ts#259": {
+    "assessment": "The failure's reported context is not asserted: tests check that INV-012 fires, not the measuredErrorKm it reports. Under the mutant the reported error is a million times too large.",
+    "suggestion": "On a failing assertKeplerianError call, assert context.measuredErrorKm equals the displacement in km."
+  },
+  "src/v2/core/invariants/assertions.ts#260": {
+    "assessment": "Same unasserted context value as the previous mutant.",
+    "suggestion": "Same assertion, to better than 0.1%."
+  },
+  "src/v2/core/invariants/assertions.ts#261": {
+    "assessment": "The failure's reported bar (barKm) is not asserted.",
+    "suggestion": "On a failing assertKeplerianError call, assert context.barKm === 100000."
+  },
+  "src/v2/core/invariants/assertions.ts#262": {
+    "assessment": "Same unasserted context value as the previous mutant.",
+    "suggestion": "Same assertion, exact."
+  },
+  "src/v2/core/invariants/round-trip.ts#278": {
+    "assessment": "EQUIVALENT MUTANT. sixAxisDiffNorm is a hypot of differences, so swapping its arguments cannot change the value.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/invariants/round-trip.ts#279": {
+    "assessment": "EQUIVALENT MUTANT. Math.max is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/invariants/round-trip.ts#280": {
+    "assessment": "Equivalent in practice: the floor of 1 only matters for a state whose six-axis norm is between 1 and 1.001 (metres and metres per second); real states are ~1e11.",
+    "suggestion": "None needed unless near-zero states become a supported input."
+  },
+  "src/v2/core/invariants/round-trip.ts#283": {
+    "assessment": "Boundary not tested: a round-trip error exactly equal to 10 x Number.EPSILON.",
+    "suggestion": "Hard to construct with real transforms; a unit test of the comparison with an injected error value would pin it. Low priority."
+  },
+  "src/v2/porkchop/delta-v.ts#1298": {
+    "assessment": "REAL GAP (math, shipped dV stack). Read from the test file: delta-v.test.mjs asserts the structure of the stack (departure is 0 or the arrival v-infinity, margin is the fraction of the subtotal, one-way total is below sample-return total) and never a numeric value of injectionDvFromC3. The other test that runs it (v2-dla-render) passes too. The injection formula is unpinned.",
+    "suggestion": "Pin injectionDvFromC3 against an independently computed value: C3 = 0 gives 3.2243 km/s and C3 = 10 gives 3.6695 km/s from the 6,578.137 km parking orbit (values printed by the production function at 0d31cda; confirm them by hand or against an oracle before pinning). Assert to 1e-6."
+  },
+  "src/v2/porkchop/delta-v.ts#1300": {
+    "assessment": "REAL GAP (math, shipped dV stack). Read from the test file: delta-v.test.mjs asserts the structure of the stack (departure is 0 or the arrival v-infinity, margin is the fraction of the subtotal, one-way total is below sample-return total) and never a numeric value of injectionDvFromC3. The other test that runs it (v2-dla-render) passes too. The injection formula is unpinned.",
+    "suggestion": "Pin injectionDvFromC3 against an independently computed value: C3 = 0 gives 3.2243 km/s and C3 = 10 gives 3.6695 km/s from the 6,578.137 km parking orbit (values printed by the production function at 0d31cda; confirm them by hand or against an oracle before pinning). Assert to 1e-6."
+  },
+  "src/v2/porkchop/delta-v.ts#1302": {
+    "assessment": "REAL GAP (math, shipped dV stack). Read from the test file: delta-v.test.mjs asserts the structure of the stack (departure is 0 or the arrival v-infinity, margin is the fraction of the subtotal, one-way total is below sample-return total) and never a numeric value of injectionDvFromC3. The other test that runs it (v2-dla-render) passes too. The injection formula is unpinned.",
+    "suggestion": "Pin injectionDvFromC3 against an independently computed value: C3 = 0 gives 3.2243 km/s and C3 = 10 gives 3.6695 km/s from the 6,578.137 km parking orbit (values printed by the production function at 0d31cda; confirm them by hand or against an oracle before pinning). Assert to 1e-6."
+  },
+  "src/v2/porkchop/delta-v.ts#1303": {
+    "assessment": "REAL GAP (math, shipped dV stack). Read from the test file: delta-v.test.mjs asserts the structure of the stack (departure is 0 or the arrival v-infinity, margin is the fraction of the subtotal, one-way total is below sample-return total) and never a numeric value of injectionDvFromC3. The other test that runs it (v2-dla-render) passes too. The injection formula is unpinned.",
+    "suggestion": "Pin injectionDvFromC3 against an independently computed value: C3 = 0 gives 3.2243 km/s and C3 = 10 gives 3.6695 km/s from the 6,578.137 km parking orbit (values printed by the production function at 0d31cda; confirm them by hand or against an oracle before pinning). Assert to 1e-6."
+  },
+  "src/v2/porkchop/delta-v.ts#1308": {
+    "assessment": "REAL GAP (math, shipped dV stack). The total is only compared between modes (one-way < sample-return), which stays true when the margin is subtracted instead of added.",
+    "suggestion": "Assert totalKmps === subtotalKmps + marginKmps on a concrete stack, and pin one total (C3 = 10, v-infinity 3, one-way: 7.5015 km/s at 0d31cda; confirm independently before pinning)."
+  },
+  "src/v2/porkchop/grid-compute.ts#1352": {
+    "assessment": "EQUIVALENT MUTANT. magnitude3 is Math.hypot, symmetric in its arguments.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/grid-compute.ts#1365": {
+    "assessment": "REAL GAP (math, grid kernel). With the departure linspace built from (end, start) the grid is computed in reverse departure order. The three test files that run computePorkchopGrid still pass, so none of them pins which departure date sits at index 0. Every consumer indexes cells as depIdx * nTof + tofIdx.",
+    "suggestion": "On a grid with nDep >= 3 and distinct start/end: assert cells[0].depJD === depStartJD, cells[(nDep-1)*nTof].depJD === depEndJD and that depJD is non-decreasing with index."
+  },
+  "src/v2/porkchop/grid-compute.ts#1367": {
+    "assessment": "REAL GAP (math, grid kernel). Same as the departure axis, for time of flight: with (max, min) the TOF axis is reversed and no test notices.",
+    "suggestion": "On a grid with nTof >= 3: assert cells[0].tofDays === tofMinDays, cells[nTof-1].tofDays === tofMaxDays and that tofDays increases inside a departure row."
+  },
+  "src/v2/porkchop/compare-data.ts#1209": {
+    "assessment": "REAL GAP (math, compare). With the TOF cell width computed from (max, min) it is negative, so every argmin TOF and every tofSpanDays that compare reports is wrong. The two tests that run this only check departure-direction quantities.",
+    "suggestion": "In the asymmetric-grid test, also assert bestPractical.argmin.tofDays against the known cell and tofSpanDays >= 0."
+  },
+  "src/v2/porkchop/compare-data.ts#1210": {
+    "assessment": "REAL GAP (math, compare). cellWidth(min, nTof, max) passes the cell count as the end of the range; same unasserted TOF quantities as the neighbouring mutant.",
+    "suggestion": "Same assertion: argmin.tofDays and tofSpanDays on a grid whose TOF step is known."
+  },
+  "src/v2/porkchop/compare-data.ts#1180": {
+    "assessment": "Defensive branch not tested: a cells array whose length is not nDep * nTof.",
+    "suggestion": "toSegmentGrid with one cell too few: assert it throws the shape-mismatch error."
+  },
+  "src/v2/porkchop/compare-data.ts#1213": {
+    "assessment": "Low: the mutated number appears only in the cap-exceeded refusal detail text, which is not asserted.",
+    "suggestion": "Assert the detail string of a cap-exceeded refusal (selection 6 of 6)."
+  },
+  "src/v2/porkchop/compare-data.ts#1214": {
+    "assessment": "Low: the mutated number appears only in the cap-exceeded refusal detail text, which is not asserted.",
+    "suggestion": "Assert the detail string of a cap-exceeded refusal (selection 6 of 6)."
+  },
+  "src/v2/porkchop/compare-data.ts#1216": {
+    "assessment": "Boundary not tested: a departure window starting exactly on the first Earth sample (the code accepts it; the mutant refuses it).",
+    "suggestion": "computeCompareData with depStartJdTdb === earthSpanJdTdb.firstSample: assert it is not refused."
+  },
+  "src/v2/porkchop/compare-data.ts#1226": {
+    "assessment": "The echoed dvBudgetMps is not asserted, so adding or subtracting the margin in it goes unnoticed. It is a displayed provenance value (D-04).",
+    "suggestion": "Assert echo.dvBudgetMps equals rendezvous + stationkeeping + margin for the budget passed in."
+  },
+  "src/v2/porkchop/launch-vehicles.ts#1394": {
+    "assessment": "EQUIVALENT MUTANT. Verified: with this guard removed an out-of-range C3 matches no anchor and no bracket and reaches the final return BEYOND_CURVE; payloadAtC3 returns BEYOND_CURVE just outside both ends of the curve.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/launch-vehicles.ts#1401": {
+    "assessment": "Reading (not executed): the loop only reaches the extra index when no bracket matched, which the range guard above already excludes for an in-range C3. Equivalent for every reachable input.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/launch-vehicles.ts#1402": {
+    "assessment": "Reading (not executed): the loop only reaches the extra index when no bracket matched, which the range guard above already excludes for an in-range C3. Equivalent for every reachable input.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/launch-vehicles.ts#1409": {
+    "assessment": "Reading (not executed): an exact anchor match returns from the loop above, so left.c3 === c3 never reaches this comparison. Equivalent.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/launch-vehicles.ts#1426": {
+    "assessment": "Defensive branch not tested: a budget whose sum is not finite (for example a NaN margin). Without the guard deliveredMassKg returns NaN instead of INVALID_INPUT.",
+    "suggestion": "deliveredMassKg with marginMps = NaN: assert the INVALID_INPUT sentinel."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#752": {
+    "assessment": "Guard not tested: a non-positive time of flight or mu. Without it the solver runs on tof <= 0.",
+    "suggestion": "lambertMultiRev with tof = 0, tof = -1 and mu = 0: assert null for each."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#753": {
+    "assessment": "Boundary not tested: tof exactly 0 and mu exactly 0.",
+    "suggestion": "Covered by the tof = 0 / mu = 0 cases above."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#754": {
+    "assessment": "Boundary not tested: tof exactly 0 and mu exactly 0.",
+    "suggestion": "Covered by the tof = 0 / mu = 0 cases above."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#764": {
+    "assessment": "Guard not tested: an M = 0 solve whose Householder iteration reports not-ok. No test produces a non-converging M = 0 case, so the null return is unpinned.",
+    "suggestion": "Find or construct an M = 0 input for which householder returns ok === false (or inject one) and assert lambertMultiRev returns null rather than a branch."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#767": {
+    "assessment": "Defensive branch not tested (velocity reconstruction returning null, T_min not found, no branch built). Reading: these need non-finite intermediate values; no test reaches them.",
+    "suggestion": "A test with inputs that make compute_y non-finite (lambda and x at the edge of the domain), asserting null."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#769": {
+    "assessment": "Defensive branch not tested (velocity reconstruction returning null, T_min not found, no branch built). Reading: these need non-finite intermediate values; no test reaches them.",
+    "suggestion": "A test with inputs that make compute_y non-finite (lambda and x at the edge of the domain), asserting null."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#780": {
+    "assessment": "Defensive branch not tested (velocity reconstruction returning null, T_min not found, no branch built). Reading: these need non-finite intermediate values; no test reaches them.",
+    "suggestion": "A test with inputs that make compute_y non-finite (lambda and x at the edge of the domain), asserting null."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#639": {
+    "assessment": "tMinForM(lambda, 0) === 0 is not asserted directly. Reading: lambertMultiRev never calls tMinForM with M = 0, so this matters only to direct callers.",
+    "suggestion": "tMinForM(lambda, 0): assert exactly 0."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#641": {
+    "assessment": "Defensive branches not tested (Halley iteration failing, non-finite y at the minimum).",
+    "suggestion": "A direct tMinForM call at a lambda for which the Halley iteration does not converge, asserting null."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#643": {
+    "assessment": "Defensive branches not tested (Halley iteration failing, non-finite y at the minimum).",
+    "suggestion": "A direct tMinForM call at a lambda for which the Halley iteration does not converge, asserting null."
+  },
+  "src/v2/core/interpolators/hermite.ts#186": {
+    "assessment": "EQUIVALENT UP TO ROUNDING. Verified on the Earth series (2,000 epochs): swapping the bracket samples changes position by at most 6.1e-5 m and any component by at most 1.5e-11 relative. A cubic Hermite through two states is the same curve from either end.",
+    "suggestion": "None needed (a bit-exact pin would catch it, but nothing depends on the bit pattern except DEC-20-4-style exact-equality checks)."
+  },
+  "src/v2/core/interpolators/hermite.ts#184": {
+    "assessment": "Reading (not executed): an epoch equal to a sample time returns from the exact-match loop above, so the strict and non-strict comparisons agree on every reachable input. Equivalent.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/interpolators/hermite.ts#185": {
+    "assessment": "Reading (not executed): an epoch equal to a sample time returns from the exact-match loop above, so the strict and non-strict comparisons agree on every reachable input. Equivalent.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/interpolators/hermite.ts#171": {
+    "assessment": "Guard not tested: an empty sample series. Without it the function still fails, but with a TypeError from samples[0] instead of the INV-008 invariant.",
+    "suggestion": "interpolateBodyStateSeries with an empty array: assert the failure is the interpolation invariant (by id), not just that something throws."
+  },
+  "src/v2/core/interpolators/hermite.ts#176": {
+    "assessment": "Reading (not executed): the extra iteration is reached only for an out-of-range epoch, where it throws a TypeError before the invariant failure. Tests that expect \"throws\" pass either way.",
+    "suggestion": "Out-of-range epoch: assert the failure is the interpolation invariant (by id)."
+  },
+  "src/v2/core/interpolators/hermite.ts#179": {
+    "assessment": "Reading (not executed): the extra iteration is reached only for an out-of-range epoch, where it throws a TypeError before the invariant failure. Tests that expect \"throws\" pass either way.",
+    "suggestion": "Out-of-range epoch: assert the failure is the interpolation invariant (by id)."
+  },
+  "src/v2/core/interpolators/hermite.ts#190": {
+    "assessment": "Low: maxTdbSeconds in the out-of-range failure context is not asserted.",
+    "suggestion": "Out-of-range epoch: assert context.maxTdbSeconds equals the last sample time."
+  },
+  "src/v2/core/propagators/keplerian.ts#1003": {
+    "assessment": "Boundary not tested: aM exactly 0.",
+    "suggestion": "propagateKeplerianStateVectors with aM = 0: assert the RangeError."
+  },
+  "src/v2/core/propagators/keplerian.ts#1050": {
+    "assessment": "Boundary not tested: eccentricity exactly 1 (and just above) handed to solveKeplerEquation.",
+    "suggestion": "solveKeplerEquation(M, 1) and (M, 1.0005): assert the RangeError."
+  },
+  "src/v2/core/propagators/keplerian.ts#1051": {
+    "assessment": "Boundary not tested: eccentricity exactly 1 (and just above) handed to solveKeplerEquation.",
+    "suggestion": "solveKeplerEquation(M, 1) and (M, 1.0005): assert the RangeError."
+  },
+  "src/v2/core/propagators/keplerian.ts#1052": {
+    "assessment": "Reading (not executed): Newton converges in a handful of iterations, far below the iteration cap, and a 0.1% looser tolerance changes the result below test tolerances. Convergence-budget mutants; equivalent for every tested input.",
+    "suggestion": "Only a test at very high eccentricity near perihelion, asserting the iteration count or a tolerance near 1e-12, would see these. Low priority."
+  },
+  "src/v2/core/propagators/keplerian.ts#1058": {
+    "assessment": "Reading (not executed): Newton converges in a handful of iterations, far below the iteration cap, and a 0.1% looser tolerance changes the result below test tolerances. Convergence-budget mutants; equivalent for every tested input.",
+    "suggestion": "Only a test at very high eccentricity near perihelion, asserting the iteration count or a tolerance near 1e-12, would see these. Low priority."
+  },
+  "src/v2/core/propagators/keplerian.ts#1059": {
+    "assessment": "Reading (not executed): Newton converges in a handful of iterations, far below the iteration cap, and a 0.1% looser tolerance changes the result below test tolerances. Convergence-budget mutants; equivalent for every tested input.",
+    "suggestion": "Only a test at very high eccentricity near perihelion, asserting the iteration count or a tolerance near 1e-12, would see these. Low priority."
+  },
+  "src/v2/core/propagators/keplerian.ts#1060": {
+    "assessment": "Reading (not executed): Newton converges in a handful of iterations, far below the iteration cap, and a 0.1% looser tolerance changes the result below test tolerances. Convergence-budget mutants; equivalent for every tested input.",
+    "suggestion": "Only a test at very high eccentricity near perihelion, asserting the iteration count or a tolerance near 1e-12, would see these. Low priority."
+  },
+  "src/v2/core/propagators/keplerian.ts#1061": {
+    "assessment": "Reading (not executed): Newton converges in a handful of iterations, far below the iteration cap, and a 0.1% looser tolerance changes the result below test tolerances. Convergence-budget mutants; equivalent for every tested input.",
+    "suggestion": "Only a test at very high eccentricity near perihelion, asserting the iteration count or a tolerance near 1e-12, would see these. Low priority."
+  },
+  "src/v2/core/propagators/keplerian.ts#1063": {
+    "assessment": "Reading (not executed): Newton converges in a handful of iterations, far below the iteration cap, and a 0.1% looser tolerance changes the result below test tolerances. Convergence-budget mutants; equivalent for every tested input.",
+    "suggestion": "Only a test at very high eccentricity near perihelion, asserting the iteration count or a tolerance near 1e-12, would see these. Low priority."
+  },
+  "src/v2/core/propagators/keplerian.ts#1054": {
+    "assessment": "Boundary not tested: the starting guess switches at eccentricity exactly 0.8 and mean anomaly exactly 0. Reading: both guesses converge to the same root, so the result is unchanged; equivalent in outcome.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/propagators/keplerian.ts#1056": {
+    "assessment": "Boundary not tested: the starting guess switches at eccentricity exactly 0.8 and mean anomaly exactly 0. Reading: both guesses converge to the same root, so the result is unchanged; equivalent in outcome.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/propagators/keplerian.ts#1077": {
+    "assessment": "Guard not tested: sampleOrbitEllipse with a non-integer or too-small segment count.",
+    "suggestion": "sampleOrbitEllipse(elements, 2.5) and (elements, 0): assert the RangeError."
+  },
+  "src/v2/core/propagators/keplerian.ts#1101": {
+    "assessment": "Guard not tested: a non-positive GM handed to propagateKeplerianStateVectors.",
+    "suggestion": "propagateKeplerianStateVectors with options.gmM3S2 = 0 and = -1: assert the RangeError."
+  },
+  "src/v2/core/propagators/keplerian.ts#1102": {
+    "assessment": "Guard not tested: a non-positive GM handed to propagateKeplerianStateVectors.",
+    "suggestion": "propagateKeplerianStateVectors with options.gmM3S2 = 0 and = -1: assert the RangeError."
+  },
+  "src/v2/porkchop/composite-grid.ts#1266": {
+    "assessment": "The per-family provenance counters (cells taken from M = 0 / from M = 1) are not asserted as exact integers: adding 1.001 per cell goes unnoticed.",
+    "suggestion": "On a small composite with a known split, assert counts.fromM0 and counts.fromM1 exactly."
+  },
+  "src/v2/porkchop/composite-grid.ts#1281": {
+    "assessment": "The per-family provenance counters (cells taken from M = 0 / from M = 1) are not asserted as exact integers: adding 1.001 per cell goes unnoticed.",
+    "suggestion": "On a small composite with a known split, assert counts.fromM0 and counts.fromM1 exactly."
+  },
+  "src/v2/porkchop/composite-grid.ts#1285": {
+    "assessment": "Tie not tested: two cells with exactly the same minimum C3 (first wins in the code; last wins under the mutant).",
+    "suggestion": "minSelectedC3 on a grid with a duplicated minimum: assert the returned cell is the first."
+  },
+  "src/v2/porkchop/composite-grid.ts#1240": {
+    "assessment": "Reading (not executed): without the guard a non-ok cell falls through to the branch lookup, which yields undefined and so null for a null selectedBranch; a stall cell that still carries a selected branch would differ. No test has one.",
+    "suggestion": "selectedC3 on a cell with status \"stall\" and a populated branches array: assert null."
+  },
+  "src/v2/porkchop/segment-windows.ts#2268": {
+    "assessment": "Tie-break not tested: two components with exactly equal minC3 (DEC-17: ties go to the earlier departure, then the shorter TOF).",
+    "suggestion": "compareByMinC3 on two components with equal minC3 and different depJd, both orders: assert the sign."
+  },
+  "src/v2/porkchop/segment-windows.ts#2269": {
+    "assessment": "Tie-break not tested: two components with exactly equal minC3 (DEC-17: ties go to the earlier departure, then the shorter TOF).",
+    "suggestion": "compareByMinC3 on two components with equal minC3 and different depJd, both orders: assert the sign."
+  },
+  "src/v2/porkchop/segment-windows.ts#2306": {
+    "assessment": "Tie-break not tested: two cells in one component with exactly equal C3 (the code keeps the earliest departure, then the lowest TOF index).",
+    "suggestion": "A component with a duplicated minimum at two departure columns: assert argmin is the earlier one."
+  },
+  "src/v2/porkchop/segment-windows.ts#2307": {
+    "assessment": "Tie-break not tested: two cells in one component with exactly equal C3 (the code keeps the earliest departure, then the lowest TOF index).",
+    "suggestion": "A component with a duplicated minimum at two departure columns: assert argmin is the earlier one."
+  },
+  "src/v2/porkchop/segment-windows.ts#2288": {
+    "assessment": "EQUIVALENT MUTANT. member and visited are Uint8Array; 1.001 is stored as 1.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/segment-windows.ts#2294": {
+    "assessment": "EQUIVALENT MUTANT. member and visited are Uint8Array; 1.001 is stored as 1.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/segment-windows.ts#2295": {
+    "assessment": "Reading (not executed): argDep and argTof are overwritten by the first cell popped (its C3 is below the Infinity start value), so the starting value never survives. Equivalent.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/segment-windows.ts#2296": {
+    "assessment": "Reading (not executed): argDep and argTof are overwritten by the first cell popped (its C3 is below the Infinity start value), so the starting value never survives. Equivalent.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/segment-windows.ts#2297": {
+    "assessment": "Reading (not executed): argDep and argTof are overwritten by the first cell popped (its C3 is below the Infinity start value), so the starting value never survives. Equivalent.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/segment-windows.ts#2309": {
+    "assessment": "EQUIVALENT MUTANT. Assigning minDep = depIdx when they are already equal changes nothing.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/segment-windows.ts#2310": {
+    "assessment": "EQUIVALENT MUTANT. Assigning minDep = depIdx when they are already equal changes nothing.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/dla.ts#288": {
+    "assessment": "EQUIVALENT MUTANT. Math.hypot is symmetric in its arguments.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/dla.ts#289": {
+    "assessment": "EQUIVALENT MUTANT. Math.hypot is symmetric in its arguments.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/dla.ts#293": {
+    "assessment": "Reading (not executed): |vz / mag| cannot exceed 1 by more than rounding, so an upper clamp of 1.001 only matters at exactly vertical v-infinity, where asin(1 + rounding) would be NaN.",
+    "suggestion": "dlaDegFromVInf(0, 0, v): assert exactly 90."
+  },
+  "src/v2/core/lambert/householder.ts#324": {
+    "assessment": "Reading (not executed): these change the Householder update step, not the equation being solved, so the iteration still lands on the same root to within the tolerance (it may take more iterations). Convergence-rate mutants.",
+    "suggestion": "A test that asserts the iteration count for a reference case (Izzo reports 2-3 for single-rev) would pin the update formula."
+  },
+  "src/v2/core/lambert/householder.ts#325": {
+    "assessment": "Reading (not executed): these change the Householder update step, not the equation being solved, so the iteration still lands on the same root to within the tolerance (it may take more iterations). Convergence-rate mutants.",
+    "suggestion": "A test that asserts the iteration count for a reference case (Izzo reports 2-3 for single-rev) would pin the update formula."
+  },
+  "src/v2/core/lambert/householder.ts#326": {
+    "assessment": "Reading (not executed): these change the Householder update step, not the equation being solved, so the iteration still lands on the same root to within the tolerance (it may take more iterations). Convergence-rate mutants.",
+    "suggestion": "A test that asserts the iteration count for a reference case (Izzo reports 2-3 for single-rev) would pin the update formula."
+  },
+  "src/v2/core/lambert/householder.ts#334": {
+    "assessment": "Reading (not executed): these change the Householder update step, not the equation being solved, so the iteration still lands on the same root to within the tolerance (it may take more iterations). Convergence-rate mutants.",
+    "suggestion": "A test that asserts the iteration count for a reference case (Izzo reports 2-3 for single-rev) would pin the update formula."
+  },
+  "src/v2/core/lambert/householder.ts#308": {
+    "assessment": "Reading (not executed): one iteration fewer in a budget of 35+; convergence takes a handful. Equivalent for every tested input.",
+    "suggestion": "None needed unless the iteration budget is ever tightened."
+  },
+  "src/v2/core/lambert/householder.ts#309": {
+    "assessment": "Reading (not executed): one iteration fewer in a budget of 35+; convergence takes a handful. Equivalent for every tested input.",
+    "suggestion": "None needed unless the iteration budget is ever tightened."
+  },
+  "src/v2/core/lambert/hyp2f1b.ts#344": {
+    "assessment": "Reading (not executed): one term fewer in a series that converges well before the cap. Equivalent for every tested input.",
+    "suggestion": "None needed."
+  },
+  "file:src/v2/core/lambert/stumpff.ts": {
+    "assessment": "LOW RISK. At 0d31cda no V2 production module imports this file (grep over src/v2 and mcp/src; the legacy solver under src/physics has its own copy). Only its own test runs it, and that test does not pin the series or the hyperbolic branch.",
+    "suggestion": "Either pin stumpff_c2 / stumpff_c3 at one value per branch (elliptic, hyperbolic, series) against a reference, or record that the module is unused."
+  },
+  "file:src/v2/core/lambert/izzo.ts": {
+    "assessment": "LOWER RISK. At 0d31cda no V2 production module imports this file; the grid uses lambert-multi-rev.ts. The three test files that run it never use a geometry with the orbit normal pointing south (i_h[2] < 0) or the retrograde option, so the sign handling is unpinned.",
+    "suggestion": "One izzo test with r1 x r2 pointing to -Z and one with prograde: false, each compared with a reference velocity."
+  },
+  "src/v2/core/frames/transform.ts#74": {
+    "assessment": "EQUIVALENT MUTANT. Vector addition is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#75": {
+    "assessment": "EQUIVALENT MUTANT. Vector addition is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#83": {
+    "assessment": "EQUIVALENT MUTANT. Vector addition is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#84": {
+    "assessment": "EQUIVALENT MUTANT. Vector addition is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#89": {
+    "assessment": "EQUIVALENT MUTANT. Vector addition is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#90": {
+    "assessment": "EQUIVALENT MUTANT. Vector addition is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#91": {
+    "assessment": "EQUIVALENT MUTANT. Vector addition is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#92": {
+    "assessment": "EQUIVALENT MUTANT. Vector addition is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#69": {
+    "assessment": "EQUIVALENT MUTANT. Read from the source: assertSupportedTransform accepts a pair in either order.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/frames/transform.ts#68": {
+    "assessment": "Identity transform not tested. Without this early return a transform from a frame to itself reaches assertSupportedTransform, which rejects the pair and throws INV-004. No test asks for from === to.",
+    "suggestion": "transformCanonicalState(state, F, F, t): assert the state comes back unchanged with frame F."
+  },
+  "src/v2/core/lambert/tof.ts#841": {
+    "assessment": "EQUIVALENT MUTANT. Without the guard the function takes Math.sqrt of a negative number, which is NaN, the same value the guard returns.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/tof.ts#842": {
+    "assessment": "Boundary not tested: the argument exactly 0 (the code returns 0; the mutant returns NaN).",
+    "suggestion": "compute_y at lambda = 1, x = 0 (argument 1 - lambda^2 (1 - x^2) = 0): assert 0, not NaN."
+  },
+  "fn:src/v2/core/lambert/lambert-multi-rev.ts::initialGuessMultiRev": {
+    "assessment": "Reading (not executed): an iteration-path mutant. It changes the starting point, the step or the iteration budget of a root-finder, not the equation being solved, so the solver still lands on the same root within its tolerance. The pinned-value tests check the answer, not the route.",
+    "suggestion": "Only an assertion on iteration count (or on the initial guess itself, exported for the purpose) would see these. Low priority; note that a starting guess pushed outside (-1, 1) is caught by the clamp."
+  },
+  "fn:src/v2/core/lambert/lambert-multi-rev.ts::halleyForTMin": {
+    "assessment": "Reading (not executed): an iteration-path mutant. It changes the starting point, the step or the iteration budget of a root-finder, not the equation being solved, so the solver still lands on the same root within its tolerance. The pinned-value tests check the answer, not the route. The guards in this function (non-finite y, zero or non-finite derivatives) are also never reached by a test.",
+    "suggestion": "tMinForM pinned at several lambda values to a tolerance near 1e-10 would catch a wrong minimum; a direct test with a lambda that makes the derivatives degenerate would pin the guards."
+  },
+  "fn:src/v2/core/lambert/lambert-multi-rev.ts::solveOneBranch": {
+    "assessment": "Reading (not executed): an iteration-path mutant. It changes the starting point, the step or the iteration budget of a root-finder, not the equation being solved, so the solver still lands on the same root within its tolerance. The pinned-value tests check the answer, not the route. The non-finite guards in the loop are never reached by a test.",
+    "suggestion": "An assertion on the iteration count for a reference M = 1 case would pin the update formula; a constructed non-finite intermediate would pin the guards."
+  },
+  "fn:src/v2/core/lambert/lambert-multi-rev.ts::clamp": {
+    "assessment": "EQUIVALENT MUTANT. Math.min and Math.max are commutative.",
+    "suggestion": "None needed."
+  },
+  "fn:src/v2/core/lambert/lambert-multi-rev.ts::velocityFromX": {
+    "assessment": "Defensive branches not tested (non-finite y; negative or zero sigma squared). sigmaSq is 0 only for collinear r1, r2, which buildGeometry already refuses.",
+    "suggestion": "A direct test is not possible (module-private); a lambertMultiRev call at the edge of the x domain asserting null would reach the first guard."
+  },
+  "fn:src/v2/core/lambert/lambert-multi-rev.ts::makeBranch": {
+    "assessment": "Defensive branch not tested (velocity reconstruction returning null).",
+    "suggestion": "See velocityFromX."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#654": {
+    "assessment": "REAL GAP, measured with a second-order check. solveOneBranch has two fail-closed checks on x squared > 0.90: one on x at the top of the loop (line 161) and one on the new iterate (line 195). Each survives alone because the other refuses the same case one step later. Deleting BOTH at once (done by hand in a spare throwaway copy, outside the campaign) still leaves lambert-multi-rev.test.mjs and grid-compute.test.mjs passing - the only two test files that execute this function. Read from the test: its boundary-case block accepts either a null result or all-non-converged branches, and its other M = 1 case has x squared well under the limit. So no committed test fails when the 0.90 fail-closed limit is removed entirely.",
+    "suggestion": "An M = 1 input whose right-branch root lies beyond x = sqrt(0.90) = 0.9487 (large normalized T): assert the result is non-null and that branch has converged === false. The assertion must not accept null."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#655": {
+    "assessment": "Boundary not tested: x squared exactly equal to the 0.90 fail-closed limit.",
+    "suggestion": "Low priority (an exact floating-point boundary); a unit test on the comparison with an injected x would pin it."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#695": {
+    "assessment": "Boundary not tested: x squared exactly equal to the 0.90 fail-closed limit.",
+    "suggestion": "Low priority (an exact floating-point boundary); a unit test on the comparison with an injected x would pin it."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#771": {
+    "assessment": "Boundary not tested: normalized T exactly equal to T_min (the code solves; the mutant refuses).",
+    "suggestion": "Low priority (exact floating-point equality); documentable as a convention instead."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#751": {
+    "assessment": "EQUIVALENT MUTANT. M is checked to be an integer first, so M > 2 and M > 2.002 agree.",
+    "suggestion": "None needed."
+  },
+  "fn:src/v2/core/lambert/tof.ts::compute_psi": {
+    "assessment": "Boundaries not tested: x exactly -1, exactly 1 and just outside (the elliptic / hyperbolic / parabolic switch).",
+    "suggestion": "compute_psi (through tof_equation) at x = 1 exactly and x = -1 exactly, asserting the documented branch value."
+  },
+  "src/v2/core/lambert/tof.ts#864": {
+    "assessment": "Boundary not tested: x exactly at the edges of the series window (sqrt(0.6), sqrt(1.4)) where tof_equation switches formula. Reading: both formulas agree there to the series accuracy, so the result is the same within tolerance.",
+    "suggestion": "None needed unless the series accuracy claim itself is to be pinned."
+  },
+  "src/v2/core/lambert/tof.ts#865": {
+    "assessment": "Boundary not tested: x exactly at the edges of the series window (sqrt(0.6), sqrt(1.4)) where tof_equation switches formula. Reading: both formulas agree there to the series accuracy, so the result is the same within tolerance.",
+    "suggestion": "None needed unless the series accuracy claim itself is to be pinned."
+  },
+  "fn:src/v2/core/lambert/hyp2f1b.ts::hyp2f1b": {
+    "assessment": "Reading (not executed): an iteration-path mutant. It changes the starting point, the step or the iteration budget of a root-finder, not the equation being solved, so the solver still lands on the same root within its tolerance. The pinned-value tests check the answer, not the route. (Here the \"root-finder\" is a series summed until it stops changing.)",
+    "suggestion": "hyp2f1b pinned against a reference value at x = 0.9 to 1e-9 (the accuracy the solver header claims) would catch a series stopped early."
+  },
+  "fn:src/v2/core/lambert/householder.ts::householder": {
+    "assessment": "Reading (not executed): an iteration-path mutant. It changes the starting point, the step or the iteration budget of a root-finder, not the equation being solved, so the solver still lands on the same root within its tolerance. The pinned-value tests check the answer, not the route.",
+    "suggestion": "An assertion on the iteration count for a reference single-rev case."
+  },
+  "fn:src/v2/core/lambert/initial-guess.ts::initial_guess_single_rev": {
+    "assessment": "Boundaries not tested: T exactly equal to T_0 or T_1, where the initial-guess formula switches. Reading: the solver converges from either formula.",
+    "suggestion": "None needed."
+  },
+  "fn:src/v2/core/constants/asteroids.ts::createAsteroidCatalogIndex": {
+    "assessment": "Validation guards not tested. One test file runs this function and none of its catalog-consistency refusals (wrong body id form, id/designation mismatch, wrong frame, band or orbit-line mismatch, duplicate id / designation / SPK id) is exercised with a bad record.",
+    "suggestion": "One test per guard: a catalog with exactly that defect, asserting the thrown error."
+  },
+  "fn:src/v2/core/constants/asteroids.ts::assertFinitePositive": {
+    "assessment": "Boundary not tested: a value of exactly 0.",
+    "suggestion": "Call a public function that uses it with 0 and assert the error."
+  },
+  "fn:src/v2/core/invariants/round-trip.ts::sixAxisNorm": {
+    "assessment": "EQUIVALENT MUTANT. Math.hypot is symmetric in its arguments.",
+    "suggestion": "None needed."
+  },
+  "fn:src/v2/core/invariants/round-trip.ts::sixAxisDiffNorm": {
+    "assessment": "EQUIVALENT MUTANT. Math.hypot is symmetric in its arguments.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/dla.ts#292": {
+    "assessment": "EQUIVALENT MUTANT. Math.min and Math.max are commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/dla.ts#294": {
+    "assessment": "EQUIVALENT MUTANT. Math.min and Math.max are commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/dla.ts#296": {
+    "assessment": "Reading (not executed): vz / mag cannot be below -1 by more than rounding, so a lower clamp of -1.001 matters only at exactly vertical v-infinity.",
+    "suggestion": "dlaDegFromVInf(0, 0, -v): assert exactly -90."
+  },
+  "src/v2/core/lambert/dla.ts#291": {
+    "assessment": "Boundary not tested: |v-infinity| exactly equal to the epsilon below which DLA is refused.",
+    "suggestion": "dlaDegFromVInf with a magnitude exactly at the epsilon: assert the documented side."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#548": {
+    "assessment": "REAL GAP for the retrograde option only. The sign flips inside the if (!prograde) block survive: no multi-rev test passes lw = false (grep of the two multi-rev test files finds none). The production grid always passes true (grid-compute.ts:193), so nothing shipped takes this branch today.",
+    "suggestion": "lambertMultiRev with lw = false compared against a reference solution, asserting the full v1 and v2 vectors."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#550": {
+    "assessment": "REAL GAP for the retrograde option only. The sign flips inside the if (!prograde) block survive: no multi-rev test passes lw = false (grep of the two multi-rev test files finds none). The production grid always passes true (grid-compute.ts:193), so nothing shipped takes this branch today.",
+    "suggestion": "lambertMultiRev with lw = false compared against a reference solution, asserting the full v1 and v2 vectors."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#551": {
+    "assessment": "REAL GAP for the retrograde option only. The sign flips inside the if (!prograde) block survive: no multi-rev test passes lw = false (grep of the two multi-rev test files finds none). The production grid always passes true (grid-compute.ts:193), so nothing shipped takes this branch today.",
+    "suggestion": "lambertMultiRev with lw = false compared against a reference solution, asserting the full v1 and v2 vectors."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#553": {
+    "assessment": "REAL GAP for the retrograde option only. The sign flips inside the if (!prograde) block survive: no multi-rev test passes lw = false (grep of the two multi-rev test files finds none). The production grid always passes true (grid-compute.ts:193), so nothing shipped takes this branch today.",
+    "suggestion": "lambertMultiRev with lw = false compared against a reference solution, asserting the full v1 and v2 vectors."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#542": {
+    "assessment": "Boundary not tested: the orbit normal exactly in the XY plane (iH[2] === 0), where the prograde sense is decided.",
+    "suggestion": "Low priority (an exact floating-point boundary). r1 and r2 chosen so that (r1 x r2).z === 0 with a non-zero cross product would pin the convention."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#539": {
+    "assessment": "EQUIVALENT MUTANT. Math.min is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#540": {
+    "assessment": "Reading (not executed): cMag / s cannot exceed 1 (triangle inequality: the chord is at most the semiperimeter), so the clamp at 1 versus 1.001 differs only if rounding pushes the ratio above 1.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/lambert/lambert-multi-rev.ts#694": {
+    "assessment": "REAL GAP, measured with a second-order check. solveOneBranch has two fail-closed checks on x squared > 0.90: one on x at the top of the loop (line 161) and one on the new iterate (line 195). Each survives alone because the other refuses the same case one step later. Deleting BOTH at once (done by hand in a spare throwaway copy, outside the campaign) still leaves lambert-multi-rev.test.mjs and grid-compute.test.mjs passing - the only two test files that execute this function. Read from the test: its boundary-case block accepts either a null result or all-non-converged branches, and its other M = 1 case has x squared well under the limit. So no committed test fails when the 0.90 fail-closed limit is removed entirely.",
+    "suggestion": "An M = 1 input whose right-branch root lies beyond x = sqrt(0.90) = 0.9487 (large normalized T): assert the result is non-null and that branch has converged === false. The assertion must not accept null."
+  }
+}
