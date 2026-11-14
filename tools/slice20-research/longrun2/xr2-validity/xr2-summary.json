@@ -1,0 +1,914 @@
+{
+  "schema": "aster-s20-longrun2-xr2-summary/1",
+  "label": "LEADS-grade research evidence. Nothing here enters a DEC, a test, a fixture or the site.",
+  "generatedAtUtc": "2026-11-14T08:39:35.342Z",
+  "state": "COMPLETE",
+  "bodies": 41906,
+  "catalogBodies": 41906,
+  "node": "v22.23.4",
+  "definition": {
+    "flag": "transfer perihelion below one solar radius AND the flown arc passes perihelion (LR1 definition; lib/common2.mjs cites the source lines)",
+    "constants": {
+      "AU_KM": 149597870.7,
+      "SOLAR_RADIUS_KM": 695700,
+      "MU": 132712440018
+    },
+    "perihelionHistogram": {
+      "minLog10Au": -7,
+      "maxLog10Au": 1.5,
+      "bins": 850,
+      "note": "deciles are bin upper edges; 0.01 dex per bin (about 2.3% in perihelion distance)"
+    }
+  },
+  "shards": [
+    {
+      "shard": 0,
+      "state": "complete",
+      "done": 13969,
+      "total": 13969,
+      "secondsThisRun": 428
+    },
+    {
+      "shard": 1,
+      "state": "complete",
+      "done": 13969,
+      "total": 13969,
+      "secondsThisRun": 344
+    },
+    {
+      "shard": 2,
+      "state": "complete",
+      "done": 13968,
+      "total": 13968,
+      "secondsThisRun": 603
+    }
+  ],
+  "notPropagatable": [
+    "2015 D1"
+  ],
+  "screeningGrid": {
+    "grid": {
+      "startUtc": "2026-01-01",
+      "endUtc": "2040-12-31",
+      "depStepDays": 7,
+      "tofMinDays": 182,
+      "tofMaxDays": 1826,
+      "tofStepDays": 30,
+      "nDep": 783,
+      "nTof": 55
+    },
+    "solver": "computePorkchopGrid -> lambert-multi-rev.ts at M=0 (the cache itself was built with izzo.ts)",
+    "all": {
+      "bodies": 41905,
+      "cells": 1804638825,
+      "converged": 1804638824,
+      "below01Au": 309211890,
+      "below001Au": 74794529,
+      "belowSun": 43557554,
+      "flagged": 5563614,
+      "hyperbolic": 16302520,
+      "bodiesWithFlagged": 39920,
+      "bodiesWithBelowSun": 41905,
+      "flaggedShareOfConverged": 0.0030829515169512943,
+      "belowSunShare": 0.02413643850543692,
+      "below001AuShare": 0.04144570537068308,
+      "below01AuShare": 0.17134281158521722,
+      "perihelionDecilesAu": {
+        "p10": 0.03981071705534969,
+        "p20": 0.13182567385564073,
+        "p30": 0.26302679918953814,
+        "p40": 0.4073802778041122,
+        "p50": 0.5623413251903491,
+        "p60": 0.7079457843841388,
+        "p70": 0.8317637711026709,
+        "p80": 0.9332543007969905,
+        "p90": 0.9772372209558111
+      }
+    },
+    "byTier": {
+      "L0": {
+        "bodies": 10,
+        "cells": 430650,
+        "converged": 430650,
+        "below01Au": 78260,
+        "below001Au": 21682,
+        "belowSun": 13628,
+        "flagged": 3156,
+        "hyperbolic": 10053,
+        "bodiesWithFlagged": 10,
+        "bodiesWithBelowSun": 10,
+        "flaggedShareOfConverged": 0.007328456983629397,
+        "belowSunShare": 0.03164518750725647,
+        "below001AuShare": 0.05034714965749448,
+        "below01AuShare": 0.18172529896667827,
+        "perihelionDecilesAu": {
+          "p10": 0.03388441561392028,
+          "p20": 0.12022644346174131,
+          "p30": 0.25118864315095824,
+          "p40": 0.39810717055349776,
+          "p50": 0.5623413251903491,
+          "p60": 0.7079457843841388,
+          "p70": 0.8317637711026709,
+          "p80": 0.9120108393559097,
+          "p90": 0.9772372209558111
+        }
+      },
+      "L1": {
+        "bodies": 10150,
+        "cells": 437109750,
+        "converged": 437109749,
+        "below01Au": 76720400,
+        "below001Au": 20225115,
+        "belowSun": 12117731,
+        "flagged": 669844,
+        "hyperbolic": 907576,
+        "bodiesWithFlagged": 9168,
+        "bodiesWithBelowSun": 10150,
+        "flaggedShareOfConverged": 0.001532438939036338,
+        "belowSunShare": 0.027722399300684552,
+        "below001AuShare": 0.0462701073272104,
+        "below01AuShare": 0.17551747627573505,
+        "perihelionDecilesAu": {
+          "p10": 0.03630780547701017,
+          "p20": 0.1288249551693135,
+          "p30": 0.25703957827688645,
+          "p40": 0.4073802778041122,
+          "p50": 0.5495408738576248,
+          "p60": 0.6918309709189363,
+          "p70": 0.8128305161640995,
+          "p80": 0.9120108393559097,
+          "p90": 0.9772372209558111
+        }
+      },
+      "L2": {
+        "bodies": 31745,
+        "cells": 1367098425,
+        "converged": 1367098425,
+        "below01Au": 232413230,
+        "below001Au": 54547732,
+        "belowSun": 31426195,
+        "flagged": 4890614,
+        "hyperbolic": 15384891,
+        "bodiesWithFlagged": 30742,
+        "bodiesWithBelowSun": 31745,
+        "flaggedShareOfConverged": 0.003577367884100956,
+        "belowSunShare": 0.022987514596836726,
+        "below001AuShare": 0.03990036928028792,
+        "below01AuShare": 0.1700047529496642,
+        "perihelionDecilesAu": {
+          "p10": 0.041686938347033464,
+          "p20": 0.13489628825916533,
+          "p30": 0.26302679918953814,
+          "p40": 0.41686938347033553,
+          "p50": 0.5623413251903491,
+          "p60": 0.7079457843841388,
+          "p70": 0.8317637711026709,
+          "p80": 0.9332543007969905,
+          "p90": 1
+        }
+      }
+    },
+    "byOrbitClass": {
+      "AMO": {
+        "bodies": 14516,
+        "cells": 625131540,
+        "converged": 625131540,
+        "below01Au": 104792066,
+        "below001Au": 24111374,
+        "belowSun": 13703123,
+        "flagged": 2174098,
+        "hyperbolic": 6452598,
+        "bodiesWithFlagged": 14431,
+        "bodiesWithBelowSun": 14516,
+        "flaggedShareOfConverged": 0.0034778248430722275,
+        "belowSunShare": 0.021920383348438953,
+        "below001AuShare": 0.038570080786517344,
+        "below01AuShare": 0.16763202509347072,
+        "perihelionDecilesAu": {
+          "p10": 0.04265795188015926,
+          "p20": 0.13803842646028866,
+          "p30": 0.2691534803926914,
+          "p40": 0.42657951880159256,
+          "p50": 0.5754399373371566,
+          "p60": 0.7244359600749891,
+          "p70": 0.8511380382023759,
+          "p80": 0.9332543007969905,
+          "p90": 1
+        }
+      },
+      "APO": {
+        "bodies": 23757,
+        "cells": 1023095205,
+        "converged": 1023095204,
+        "below01Au": 175184308,
+        "below001Au": 43119962,
+        "belowSun": 25364798,
+        "flagged": 3173628,
+        "hyperbolic": 7857471,
+        "bodiesWithFlagged": 22096,
+        "bodiesWithBelowSun": 23757,
+        "flaggedShareOfConverged": 0.0031019869779391517,
+        "belowSunShare": 0.024792216697753184,
+        "below001AuShare": 0.042146578179052825,
+        "below01AuShare": 0.1712297226251097,
+        "perihelionDecilesAu": {
+          "p10": 0.03981071705534969,
+          "p20": 0.13182567385564073,
+          "p30": 0.26302679918953814,
+          "p40": 0.41686938347033553,
+          "p50": 0.5623413251903491,
+          "p60": 0.7079457843841388,
+          "p70": 0.8317637711026709,
+          "p80": 0.9332543007969905,
+          "p90": 0.9772372209558111
+        }
+      },
+      "ATE": {
+        "bodies": 3387,
+        "cells": 145861155,
+        "converged": 145861155,
+        "below01Au": 27115934,
+        "below001Au": 7035891,
+        "belowSun": 4193517,
+        "flagged": 67146,
+        "hyperbolic": 0,
+        "bodiesWithFlagged": 3150,
+        "bodiesWithBelowSun": 3387,
+        "flaggedShareOfConverged": 0.0004603418915749022,
+        "belowSunShare": 0.028750060288498334,
+        "below001AuShare": 0.04823690721494698,
+        "below01AuShare": 0.18590236722038847,
+        "perihelionDecilesAu": {
+          "p10": 0.03311311214825908,
+          "p20": 0.11481536214968817,
+          "p30": 0.23442288153199226,
+          "p40": 0.363078054770101,
+          "p50": 0.5011872336272725,
+          "p60": 0.6309573444801942,
+          "p70": 0.7413102413009177,
+          "p80": 0.8511380382023759,
+          "p90": 0.9549925860214349
+        }
+      },
+      "ETC": {
+        "bodies": 6,
+        "cells": 258390,
+        "converged": 258390,
+        "below01Au": 44221,
+        "below001Au": 10224,
+        "belowSun": 5481,
+        "flagged": 1195,
+        "hyperbolic": 5058,
+        "bodiesWithFlagged": 6,
+        "bodiesWithBelowSun": 6,
+        "flaggedShareOfConverged": 0.00462479198111382,
+        "belowSunShare": 0.021212121212121213,
+        "below001AuShare": 0.039568094740508535,
+        "below01AuShare": 0.17114052401408722,
+        "perihelionDecilesAu": {
+          "p10": 0.04365158322401665,
+          "p20": 0.13182567385564073,
+          "p30": 0.25703957827688645,
+          "p40": 0.39810717055349776,
+          "p50": 0.5370317963702521,
+          "p60": 0.6760829753919819,
+          "p70": 0.8128305161640995,
+          "p80": 0.9332543007969905,
+          "p90": 1
+        }
+      },
+      "HTC": {
+        "bodies": 36,
+        "cells": 1550340,
+        "converged": 1550340,
+        "below01Au": 423989,
+        "below001Au": 130692,
+        "belowSun": 78024,
+        "flagged": 76782,
+        "hyperbolic": 1353387,
+        "bodiesWithFlagged": 36,
+        "bodiesWithBelowSun": 36,
+        "flaggedShareOfConverged": 0.049525910445450676,
+        "belowSunShare": 0.05032702503966872,
+        "below001AuShare": 0.08429892797708889,
+        "below01AuShare": 0.2734813008759369,
+        "perihelionDecilesAu": {
+          "p10": 0.013489628825916533,
+          "p20": 0.05128613839913648,
+          "p30": 0.12589254117941662,
+          "p40": 0.239883291901949,
+          "p50": 0.38904514499428045,
+          "p60": 0.5623413251903491,
+          "p70": 0.7413102413009177,
+          "p80": 0.8912509381337459,
+          "p90": 0.9772372209558111
+        }
+      },
+      "IEO": {
+        "bodies": 38,
+        "cells": 1636470,
+        "converged": 1636470,
+        "below01Au": 343352,
+        "below001Au": 69262,
+        "belowSun": 34923,
+        "flagged": 1065,
+        "hyperbolic": 0,
+        "bodiesWithFlagged": 37,
+        "bodiesWithBelowSun": 38,
+        "flaggedShareOfConverged": 0.0006507910319162588,
+        "belowSunShare": 0.021340446204330052,
+        "below001AuShare": 0.042324026716041234,
+        "below01AuShare": 0.20981258440423595,
+        "perihelionDecilesAu": {
+          "p10": 0.03090295432513592,
+          "p20": 0.09332543007969925,
+          "p30": 0.18197008586099828,
+          "p40": 0.2754228703338169,
+          "p50": 0.38018939632056126,
+          "p60": 0.47863009232263803,
+          "p70": 0.5888436553555896,
+          "p80": 0.6918309709189363,
+          "p90": 0.7943282347242822
+        }
+      },
+      "JFC": {
+        "bodies": 165,
+        "cells": 7105725,
+        "converged": 7105725,
+        "below01Au": 1308020,
+        "below001Au": 317124,
+        "belowSun": 177688,
+        "flagged": 69700,
+        "hyperbolic": 634006,
+        "bodiesWithFlagged": 164,
+        "bodiesWithBelowSun": 165,
+        "flaggedShareOfConverged": 0.009808992045146694,
+        "belowSunShare": 0.025006315330244274,
+        "below001AuShare": 0.044629365757892406,
+        "below01AuShare": 0.18407973852069986,
+        "perihelionDecilesAu": {
+          "p10": 0.034673685045253165,
+          "p20": 0.11748975549395303,
+          "p30": 0.239883291901949,
+          "p40": 0.38904514499428045,
+          "p50": 0.5370317963702521,
+          "p60": 0.6918309709189363,
+          "p70": 0.8128305161640995,
+          "p80": 0.9332543007969905,
+          "p90": 1
+        }
+      }
+    },
+    "flaggedCellsPerBody": {
+      "min": 0,
+      "median": 58,
+      "max": 6297
+    }
+  },
+  "compareGrid": {
+    "grid": "731 departures 2026-01-01..2040-01-01 x 100 TOF 182.5-1826.25 d, production computeCompareData",
+    "all": {
+      "bodies": 41905,
+      "cells": 3063255500,
+      "converged": 3063255500,
+      "below01Au": 525202145,
+      "below001Au": 127110658,
+      "belowSun": 74032681,
+      "flagged": 9297858,
+      "hyperbolic": 24953775,
+      "bodiesWithFlagged": 40237,
+      "bodiesWithBelowSun": 41904,
+      "flaggedShareOfConverged": 0.00303528647871521,
+      "belowSunShare": 0.024167974561704043,
+      "below001AuShare": 0.041495284346996196,
+      "below01AuShare": 0.17145228173098848,
+      "perihelionDecilesAu": {
+        "p10": 0.03981071705534969,
+        "p20": 0.13182567385564073,
+        "p30": 0.26302679918953814,
+        "p40": 0.4073802778041122,
+        "p50": 0.5623413251903491,
+        "p60": 0.7079457843841388,
+        "p70": 0.8317637711026709,
+        "p80": 0.9332543007969905,
+        "p90": 0.9772372209558111
+      }
+    },
+    "byTier": {
+      "L0": {
+        "bodies": 10,
+        "cells": 731000,
+        "converged": 731000,
+        "below01Au": 132797,
+        "below001Au": 36911,
+        "belowSun": 22984,
+        "flagged": 5253,
+        "hyperbolic": 15829,
+        "bodiesWithFlagged": 10,
+        "bodiesWithBelowSun": 10,
+        "flaggedShareOfConverged": 0.007186046511627907,
+        "belowSunShare": 0.03144186046511628,
+        "below001AuShare": 0.05049384404924761,
+        "below01AuShare": 0.18166484268125854,
+        "perihelionDecilesAu": {
+          "p10": 0.03311311214825908,
+          "p20": 0.12022644346174131,
+          "p30": 0.25118864315095824,
+          "p40": 0.4073802778041122,
+          "p50": 0.5623413251903491,
+          "p60": 0.7079457843841388,
+          "p70": 0.8317637711026709,
+          "p80": 0.9120108393559097,
+          "p90": 0.9772372209558111
+        }
+      },
+      "L1": {
+        "bodies": 10150,
+        "cells": 741965000,
+        "converged": 741965000,
+        "below01Au": 130443516,
+        "below001Au": 34429206,
+        "belowSun": 20632699,
+        "flagged": 1119437,
+        "hyperbolic": 1341249,
+        "bodiesWithFlagged": 9335,
+        "bodiesWithBelowSun": 10150,
+        "flaggedShareOfConverged": 0.0015087463694379115,
+        "belowSunShare": 0.027808183674432083,
+        "below001AuShare": 0.046402735978112175,
+        "below01AuShare": 0.17580817963111467,
+        "perihelionDecilesAu": {
+          "p10": 0.03630780547701017,
+          "p20": 0.1288249551693135,
+          "p30": 0.25703957827688645,
+          "p40": 0.4073802778041122,
+          "p50": 0.5495408738576248,
+          "p60": 0.6918309709189363,
+          "p70": 0.8128305161640995,
+          "p80": 0.9120108393559097,
+          "p90": 0.9772372209558111
+        }
+      },
+      "L2": {
+        "bodies": 31745,
+        "cells": 2320559500,
+        "converged": 2320559500,
+        "below01Au": 394625832,
+        "below001Au": 92644541,
+        "belowSun": 53376998,
+        "flagged": 8173168,
+        "hyperbolic": 23596697,
+        "bodiesWithFlagged": 30892,
+        "bodiesWithBelowSun": 31744,
+        "flaggedShareOfConverged": 0.003522067846137968,
+        "belowSunShare": 0.02300177952773889,
+        "below001AuShare": 0.03992336374051172,
+        "below01AuShare": 0.1700563299497384,
+        "perihelionDecilesAu": {
+          "p10": 0.041686938347033464,
+          "p20": 0.13489628825916533,
+          "p30": 0.26302679918953814,
+          "p40": 0.41686938347033553,
+          "p50": 0.5623413251903491,
+          "p60": 0.7079457843841388,
+          "p70": 0.8317637711026709,
+          "p80": 0.9332543007969905,
+          "p90": 1
+        }
+      }
+    },
+    "byOrbitClass": {
+      "AMO": {
+        "bodies": 14516,
+        "cells": 1061119600,
+        "converged": 1061119600,
+        "below01Au": 177959937,
+        "below001Au": 40966756,
+        "belowSun": 23291275,
+        "flagged": 3633217,
+        "hyperbolic": 9772775,
+        "bodiesWithFlagged": 14443,
+        "bodiesWithBelowSun": 14516,
+        "flaggedShareOfConverged": 0.003423946744551698,
+        "belowSunShare": 0.02194971707242049,
+        "below001AuShare": 0.038607105174572214,
+        "below01AuShare": 0.16770959371592042,
+        "perihelionDecilesAu": {
+          "p10": 0.04265795188015926,
+          "p20": 0.13803842646028866,
+          "p30": 0.2691534803926914,
+          "p40": 0.42657951880159256,
+          "p50": 0.5754399373371566,
+          "p60": 0.7244359600749891,
+          "p70": 0.8511380382023759,
+          "p80": 0.9332543007969905,
+          "p90": 1
+        }
+      },
+      "APO": {
+        "bodies": 23757,
+        "cells": 1736636700,
+        "converged": 1736636700,
+        "below01Au": 297529608,
+        "below001Au": 73287171,
+        "belowSun": 43117571,
+        "flagged": 5303690,
+        "hyperbolic": 11868283,
+        "bodiesWithFlagged": 22344,
+        "bodiesWithBelowSun": 23757,
+        "flaggedShareOfConverged": 0.00305400087421854,
+        "belowSunShare": 0.024828204425254862,
+        "below001AuShare": 0.04220063470960852,
+        "below01AuShare": 0.17132518735783944,
+        "perihelionDecilesAu": {
+          "p10": 0.03981071705534969,
+          "p20": 0.13182567385564073,
+          "p30": 0.26302679918953814,
+          "p40": 0.41686938347033553,
+          "p50": 0.5623413251903491,
+          "p60": 0.7079457843841388,
+          "p70": 0.8317637711026709,
+          "p80": 0.9332543007969905,
+          "p90": 0.9772372209558111
+        }
+      },
+      "ATE": {
+        "bodies": 3387,
+        "cells": 247589700,
+        "converged": 247589700,
+        "below01Au": 46124288,
+        "below001Au": 11965686,
+        "belowSun": 7124529,
+        "flagged": 113425,
+        "hyperbolic": 0,
+        "bodiesWithFlagged": 3206,
+        "bodiesWithBelowSun": 3387,
+        "flaggedShareOfConverged": 0.00045811679565022296,
+        "belowSunShare": 0.02877554680182576,
+        "below001AuShare": 0.04832869057153832,
+        "below01AuShare": 0.18629324240871087,
+        "perihelionDecilesAu": {
+          "p10": 0.03311311214825908,
+          "p20": 0.11481536214968817,
+          "p30": 0.23442288153199226,
+          "p40": 0.363078054770101,
+          "p50": 0.5011872336272725,
+          "p60": 0.6309573444801942,
+          "p70": 0.7413102413009177,
+          "p80": 0.8511380382023759,
+          "p90": 0.9549925860214349
+        }
+      },
+      "ETC": {
+        "bodies": 6,
+        "cells": 438600,
+        "converged": 438600,
+        "below01Au": 74868,
+        "below001Au": 17258,
+        "belowSun": 9179,
+        "flagged": 1979,
+        "hyperbolic": 8066,
+        "bodiesWithFlagged": 6,
+        "bodiesWithBelowSun": 6,
+        "flaggedShareOfConverged": 0.004512083903328773,
+        "belowSunShare": 0.02092795257637939,
+        "below001AuShare": 0.039347925216598266,
+        "below01AuShare": 0.17069767441860464,
+        "perihelionDecilesAu": {
+          "p10": 0.04466835921509626,
+          "p20": 0.13182567385564073,
+          "p30": 0.25703957827688645,
+          "p40": 0.39810717055349776,
+          "p50": 0.5370317963702521,
+          "p60": 0.6760829753919819,
+          "p70": 0.8128305161640995,
+          "p80": 0.9332543007969905,
+          "p90": 1
+        }
+      },
+      "HTC": {
+        "bodies": 36,
+        "cells": 2631600,
+        "converged": 2631600,
+        "below01Au": 713221,
+        "below001Au": 216957,
+        "belowSun": 128605,
+        "flagged": 126544,
+        "hyperbolic": 2283518,
+        "bodiesWithFlagged": 36,
+        "bodiesWithBelowSun": 36,
+        "flaggedShareOfConverged": 0.048086335309317524,
+        "belowSunShare": 0.04886950904392765,
+        "below001AuShare": 0.08244300045599635,
+        "below01AuShare": 0.2710218118255054,
+        "perihelionDecilesAu": {
+          "p10": 0.013803842646028866,
+          "p20": 0.052480746024977334,
+          "p30": 0.12589254117941662,
+          "p40": 0.239883291901949,
+          "p50": 0.38904514499428045,
+          "p60": 0.5754399373371566,
+          "p70": 0.7413102413009177,
+          "p80": 0.8912509381337459,
+          "p90": 0.9772372209558111
+        }
+      },
+      "IEO": {
+        "bodies": 38,
+        "cells": 2777800,
+        "converged": 2777800,
+        "below01Au": 583966,
+        "below001Au": 118784,
+        "belowSun": 60034,
+        "flagged": 1848,
+        "hyperbolic": 0,
+        "bodiesWithFlagged": 38,
+        "bodiesWithBelowSun": 38,
+        "flaggedShareOfConverged": 0.0006652746778025776,
+        "belowSunShare": 0.02161206710346317,
+        "below001AuShare": 0.04276189790481676,
+        "below01AuShare": 0.21022607819137448,
+        "perihelionDecilesAu": {
+          "p10": 0.03019951720402013,
+          "p20": 0.09332543007969925,
+          "p30": 0.17782794100389226,
+          "p40": 0.2754228703338169,
+          "p50": 0.38018939632056126,
+          "p60": 0.47863009232263803,
+          "p70": 0.5888436553555896,
+          "p80": 0.6918309709189363,
+          "p90": 0.7943282347242822
+        }
+      },
+      "JFC": {
+        "bodies": 165,
+        "cells": 12061500,
+        "converged": 12061500,
+        "below01Au": 2216257,
+        "below001Au": 538046,
+        "belowSun": 301488,
+        "flagged": 117155,
+        "hyperbolic": 1021133,
+        "bodiesWithFlagged": 164,
+        "bodiesWithBelowSun": 164,
+        "flaggedShareOfConverged": 0.009713136840359822,
+        "belowSunShare": 0.024995896032831737,
+        "below001AuShare": 0.04460854785888985,
+        "below01AuShare": 0.18374638311984412,
+        "perihelionDecilesAu": {
+          "p10": 0.034673685045253165,
+          "p20": 0.11748975549395303,
+          "p30": 0.239883291901949,
+          "p40": 0.38904514499428045,
+          "p50": 0.5370317963702521,
+          "p60": 0.6918309709189363,
+          "p70": 0.8128305161640995,
+          "p80": 0.9332543007969905,
+          "p90": 1
+        }
+      }
+    },
+    "flaggedCellsPerBody": {
+      "min": 0,
+      "median": 96,
+      "max": 10481
+    }
+  },
+  "rulingCritical": {
+    "shippedCellsThatCouldNotBeMatchedToTheGrid": 0,
+    "cacheMinC3Cell": {
+      "bodiesChecked": 41905,
+      "flagged": 0,
+      "bodies": []
+    },
+    "cacheBestWindows": {
+      "windowsChecked": 209525,
+      "flaggedWindows": 0,
+      "bodies": []
+    },
+    "compareBestPractical": {
+      "bodiesWithAWindow": 41444,
+      "windowCellsChecked": 1364717,
+      "argminFlagged": 0,
+      "windowsWithAFlaggedCell": 0,
+      "flaggedCellsInsideWindows": 0,
+      "windowsWithACellBelowOneSolarRadiusNotFlown": 0,
+      "smallestWindowPerihelionAu": 0.4771145496914565,
+      "bodies": []
+    },
+    "totalShownWindowsOrCellsFlagged": 0
+  },
+  "kernelMinC3VersusShippedCache": {
+    "note": "bonus from the same sweep: the kernel (lambert-multi-rev, M=0) minimum over the screening grid against the shipped izzo value, ALL bodies. The kernel reaches each departure epoch through a Julian date, so its epochs differ from the script's by rounding (well under a millisecond); XR1 step 5 repeats this on identical epochs for 300 bodies.",
+    "bodies": 41905,
+    "maxRelDiff": 1.198925694762575e-8,
+    "medianRelDiff": 8.440489302766074e-12,
+    "sameArgminCell": 41905,
+    "differentArgminCell": 0,
+    "straddle25": [],
+    "largest10": [
+      {
+        "des": "154269",
+        "rel": 1.198925694762575e-8,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.07322226328451673,
+        "shipped": 0.07322226240663621
+      },
+      {
+        "des": "2012 TO139",
+        "rel": 5.352333136008463e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.07950026816954796,
+        "shipped": 0.07950026774403604
+      },
+      {
+        "des": "2017 MZ3",
+        "rel": 4.681413734942692e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.02025178080259399,
+        "shipped": 0.020251780707787024
+      },
+      {
+        "des": "2010 FM",
+        "rel": 2.585785374925204e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.028854745047252786,
+        "shipped": 0.02885474497264061
+      },
+      {
+        "des": "2025 HA19",
+        "rel": 2.3876814521076936e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.0007717787192982739,
+        "shipped": 0.0007717787174555122
+      },
+      {
+        "des": "741491",
+        "rel": 1.9762307607696717e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.03454980266880063,
+        "shipped": 0.03454980273707901
+      },
+      {
+        "des": "2010 VB1",
+        "rel": 1.7830535545380165e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.01685353972150831,
+        "shipped": 0.016853539751559073
+      },
+      {
+        "des": "2021 PC7",
+        "rel": 1.7111923957028733e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.005772996207289644,
+        "shipped": 0.005772996217168351
+      },
+      {
+        "des": "2022 CO",
+        "rel": 1.6970587832442856e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.0016147934997314403,
+        "shipped": 0.0016147934969910408
+      },
+      {
+        "des": "2023 GQ2",
+        "rel": 1.6881744034306223e-9,
+        "sameCell": true,
+        "straddle": false,
+        "kernel": 0.005901308017600599,
+        "shipped": 0.005901308007638162
+      }
+    ]
+  },
+  "returnCensus": {
+    "state": "COMPLETE",
+    "bodies": 400,
+    "seed": 20261116,
+    "skippedNotPropagatable": [],
+    "tierCounts": {
+      "L1": 116,
+      "L2": 284
+    },
+    "admissibleCells": 25508400,
+    "refusedCells": 3731600,
+    "byGroup": {
+      "M0 single": {
+        "converged": 25508400,
+        "below01Au": 4363839,
+        "belowSun": 619805,
+        "flagged": 79648,
+        "flaggedSelected": 79648,
+        "bodiesWithFlagged": 365,
+        "minFlaggedVInfDep": 3.9736731638351888,
+        "flaggedShare": 0.0031224224177133805,
+        "perihelionDecilesAu": {
+          "p10": 0.03981071705534969,
+          "p20": 0.13182567385564073,
+          "p30": 0.26302679918953814,
+          "p40": 0.41686938347033553,
+          "p50": 0.5623413251903491,
+          "p60": 0.7079457843841388,
+          "p70": 0.8317637711026709,
+          "p80": 0.9332543007969905,
+          "p90": 0.9772372209558111
+        }
+      },
+      "M1 left": {
+        "converged": 15648717,
+        "below01Au": 2959390,
+        "belowSun": 403052,
+        "flagged": 403052,
+        "flaggedSelected": 163199,
+        "bodiesWithFlagged": 400,
+        "minFlaggedVInfDep": 4.855409871820883,
+        "flaggedShare": 0.02575623292312079,
+        "perihelionDecilesAu": {
+          "p10": 0.03388441561392028,
+          "p20": 0.1122018454301963,
+          "p30": 0.22908676527677746,
+          "p40": 0.363078054770101,
+          "p50": 0.5128613839913648,
+          "p60": 0.6606934480075964,
+          "p70": 0.7943282347242822,
+          "p80": 0.9120108393559097,
+          "p90": 0.9772372209558111
+        }
+      },
+      "M1 right": {
+        "converged": 15648717,
+        "below01Au": 3086214,
+        "belowSun": 450860,
+        "flagged": 450860,
+        "flaggedSelected": 108506,
+        "bodiesWithFlagged": 400,
+        "minFlaggedVInfDep": 3.978340990066566,
+        "flaggedShare": 0.028811307661835792,
+        "perihelionDecilesAu": {
+          "p10": 0.03090295432513592,
+          "p20": 0.10471285480509007,
+          "p30": 0.21877616239495518,
+          "p40": 0.354813389233576,
+          "p50": 0.5128613839913648,
+          "p60": 0.6606934480075964,
+          "p70": 0.7943282347242822,
+          "p80": 0.9120108393559097,
+          "p90": 0.9772372209558111
+        }
+      }
+    },
+    "all": {
+      "convergedBranches": 56805834,
+      "flagged": 933560,
+      "flaggedShare": 0.016434227512617805
+    },
+    "m1": {
+      "convergedBranches": 31297434,
+      "flagged": 853912,
+      "flaggedShare": 0.02728377029247829
+    },
+    "lr1": {
+      "convergedBranches": 14124,
+      "flagged": 219,
+      "flaggedShare": 0.015505522514868308,
+      "m0": {
+        "n": 6000,
+        "flagged": 17
+      },
+      "m1": {
+        "n": 8124,
+        "flagged": 202
+      },
+      "source": "tools/slice20-research/longrun/lr1-oracle/REPORT.md (closure by transfer-orbit perihelion, first row)"
+    },
+    "minFlaggedVInfDepKmS": 3.9736731638351888
+  },
+  "files": [
+    {
+      "file": "xr2-outbound-0of3.json",
+      "bytes": 2245849,
+      "rows": 13969,
+      "sha256": "9bf748848fecdf5ec2269359e18927186c841cdefe84506f002f1dcf009e02ef"
+    },
+    {
+      "file": "xr2-outbound-1of3.json",
+      "bytes": 2245293,
+      "rows": 13969,
+      "sha256": "74756f5d3d94cf0b123d605a74148d0a6ca51ee0c51b778a1a269a3fce784076"
+    },
+    {
+      "file": "xr2-outbound-2of3.json",
+      "bytes": 2244957,
+      "rows": 13968,
+      "sha256": "7a7f951662cca489961a727da8ae13f29757b1f13aba52752b1c58c0b67f5ad1"
+    }
+  ]
+}
