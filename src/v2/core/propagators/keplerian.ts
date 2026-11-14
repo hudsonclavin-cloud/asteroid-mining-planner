@@ -6,6 +6,8 @@ import { J2000_ECLIPTIC_OBLIQUITY_RAD } from '../units.js';
 const TWO_PI = 2 * Math.PI;
 
 // IAU 2015 nominal heliocentric GM used in Slice 7 pre-research and cutover bars.
+// Correction (2026-11-13, audit A4-F09/B2-F04): 1.32712440018e20 is the DE405-era
+// value; the historical label above is retained, and the numeric constant is unchanged.
 export const GM_SUN_M3_S2 = 1.32712440018e20;
 
 export interface KeplerSolverOptions {
