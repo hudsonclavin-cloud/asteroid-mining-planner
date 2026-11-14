@@ -362,7 +362,7 @@ function report() {
   L.push('- It checks the pipeline: grid construction, locating the window\'s cell, the endpoint swap, the Earth lookup, the refusal rule, the minimum search and the subtraction. Two paths that share none of that code give the same numbers.');
   L.push('- It does not check what both sides share by definition: the production solver (LR1 compared it with poliastro), the propagator, `segmentWindows`, or the choice of a 723 x 100 return grid.');
   L.push('- It does not cover LR2\'s secondary (best-stack) column, which the dispatch did not ask XR0 to re-derive.');
-  L.push(`- Sample: ${compared.length} of 41,906 bodies, not random: the first 500 in catalog order (mostly numbered, well-observed objects) plus LR2\'s most extreme rows, which are where a pipeline fault would most plausibly show.`);
+  L.push(`- Sample: ${compared.length} of 41,906 bodies, not random: the first 500 in catalog order (all of them numbered objects) plus LR2\'s most extreme rows, which are where a pipeline fault would most plausibly show.`);
   L.push('');
   L.push('## What is different about this path');
   L.push('- No file from `tools/slice20-research/longrun/` is imported or copied.');

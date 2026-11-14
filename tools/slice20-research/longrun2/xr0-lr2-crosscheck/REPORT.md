@@ -9,7 +9,7 @@ State: COMPLETE. 540 bodies computed (3 gate, 498 first-500, 39 lr2-extreme); 54
 - It checks the pipeline: grid construction, locating the window's cell, the endpoint swap, the Earth lookup, the refusal rule, the minimum search and the subtraction. Two paths that share none of that code give the same numbers.
 - It does not check what both sides share by definition: the production solver (LR1 compared it with poliastro), the propagator, `segmentWindows`, or the choice of a 723 x 100 return grid.
 - It does not cover LR2's secondary (best-stack) column, which the dispatch did not ask XR0 to re-derive.
-- Sample: 540 of 41,906 bodies, not random: the first 500 in catalog order (mostly numbered, well-observed objects) plus LR2's most extreme rows, which are where a pipeline fault would most plausibly show.
+- Sample: 540 of 41,906 bodies, not random: the first 500 in catalog order (all of them numbered objects) plus LR2's most extreme rows, which are where a pipeline fault would most plausibly show.
 
 ## What is different about this path
 - No file from `tools/slice20-research/longrun/` is imported or copied.
