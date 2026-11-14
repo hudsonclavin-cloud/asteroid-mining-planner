@@ -1,0 +1,162 @@
+{
+  "src/v2/porkchop/propagation-guard.ts#2249": {
+    "assessment": "REAL GAP (honesty). With this guard gone, a NaN semi-major axis passes every later check (NaN <= 0 is false) and assessPropagation returns propagatable: true. No test hands the guard a non-finite element.",
+    "suggestion": "For each of the seven element keys, call assessPropagation with that one element set to NaN (and once to Infinity) on otherwise valid elements; assert propagatable === false and reason === 'non-finite-element'."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2254": {
+    "assessment": "REAL GAP (honesty). The tests refuse only hyperbolic bodies whose semi-major axis is already <= 0, so the earlier aM check does the refusing and the eccentricity check never decides anything. The refusal reason is not asserted either.",
+    "suggestion": "assessPropagation with aM > 0 and e = 1.2, and again with e = -0.1: assert propagatable === false and reason === 'eccentricity-not-elliptical'."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2252": {
+    "assessment": "Boundary not tested: aM exactly 0.",
+    "suggestion": "assessPropagation with aM = 0 on otherwise valid elements: assert the refusal and reason === 'non-positive-semi-major-axis'."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2255": {
+    "assessment": "Boundary not tested: e exactly 0. Under the mutant a circular orbit would be refused.",
+    "suggestion": "assessPropagation with e = 0 and aM > 0: assert propagatable === true."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2256": {
+    "assessment": "Boundary not tested: e exactly 1 with a positive semi-major axis.",
+    "suggestion": "assessPropagation with e = 1 and aM > 0: assert the refusal and reason === 'eccentricity-not-elliptical'."
+  },
+  "src/v2/porkchop/propagation-guard.ts#2257": {
+    "assessment": "Same boundary as the line above, reached through the constant: e in [1, 1.001) with aM > 0 is never tested.",
+    "suggestion": "assessPropagation with e = 1.0005 and aM > 0: assert the refusal."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2362": {
+    "assessment": "REAL GAP (honesty). Without this guard a record whose date or delta-v cannot be formatted produces a disclosure sentence containing the text 'null' instead of no sentence. No test feeds fullTierDisclosure such a record.",
+    "suggestion": "fullTierDisclosure for a 'materially-degraded-delta-v' record with an unparseable encounter.cd, and for one with encounter.dvKmS = NaN: assert the result is null."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2351": {
+    "assessment": "REAL GAP (honesty). Without this guard a NaN or negative delta-v is formatted ('NaN', '-12.0') and flows into the disclosure sentence. No test passes one.",
+    "suggestion": "formatMetersPerSecond(NaN), formatMetersPerSecond(Infinity) and formatMetersPerSecond(-0.001): assert null for each."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2352": {
+    "assessment": "Boundary not tested: a delta-v of exactly 0.",
+    "suggestion": "formatMetersPerSecond(0): assert '0.0' (the mutant returns null)."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2356": {
+    "assessment": "Boundary not tested: exactly 100 m/s, where the format switches from one decimal to a grouped integer.",
+    "suggestion": "formatMetersPerSecond(0.1): assert '100' (the mutant returns '100.0')."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2357": {
+    "assessment": "Same switch point as the line above, reached through the constant.",
+    "suggestion": "formatMetersPerSecond(0.10005): assert '100' (the mutant returns '100.0' or '100.1')."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2359": {
+    "assessment": "EQUIVALENT MUTANT. toFixed truncates its argument to an integer, so toFixed(1.001) is toFixed(1).",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2360": {
+    "assessment": "EQUIVALENT MUTANT. toFixed truncates its argument to an integer, so toFixed(2.002) is toFixed(2).",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2350": {
+    "assessment": "EQUIVALENT MUTANT. toPrecision truncates its argument to an integer.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2349": {
+    "assessment": "Weak gap. The tested value rounds to the same three significant figures after a 0.1% change, so the divisor is pinned only to about 0.2%.",
+    "suggestion": "formatMillionKm(253_600_000): assert '254 million' (the mutant gives '253 million')."
+  },
+  "src/v2/porkchop/tier-disclosure.ts#2347": {
+    "assessment": "Boundary not tested: a drift of exactly 0 km.",
+    "suggestion": "formatMillionKm(0): assert null (the mutant returns '0 million')."
+  },
+  "src/v2/porkchop/support-boundary.ts#2337": {
+    "assessment": "Defensive branch not tested: an L1 record whose encounter.jd is not finite. Without the guard such a record yields a boundary with a NaN epoch, and every later comparison against it is false (nothing is flagged unsupported).",
+    "suggestion": "supportBoundaryFor of an L1 record with encounter.jd = NaN: assert undefined."
+  },
+  "src/v2/porkchop/support-boundary.ts#2340": {
+    "assessment": "No test calls boundaryTofDaysAtDeparture at all (measured by function coverage), although it is exported and draws the support boundary curve.",
+    "suggestion": "boundaryTofDaysAtDeparture(depJD, boundary) for a known encounter: assert encounterJd - depJD, and that isArrivalAfterEncounter flips exactly at that TOF."
+  },
+  "src/v2/porkchop/format-c3.ts#1309": {
+    "assessment": "REAL GAP (honesty, small). With this guard gone formatC3(null) falls through to the non-finite branch and returns the text 'null' instead of the dash. No test calls formatC3(null).",
+    "suggestion": "formatC3(null): assert the em dash."
+  },
+  "src/v2/porkchop/format-c3.ts#1310": {
+    "assessment": "EQUIVALENT MUTANT. For NaN and for +/-Infinity the code below this guard produces the same strings ('NaN', 'Infinity', '-Infinity') as String(c3).",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/format-c3.ts#1312": {
+    "assessment": "Boundary not tested: |C3| exactly 1e-4, where the format switches to exponential.",
+    "suggestion": "formatC3(1e-4): assert '0.000100' (the mutant returns '1.00e-4')."
+  },
+  "src/v2/porkchop/format-c3.ts#1313": {
+    "assessment": "Same switch point as the line above, reached through the constant.",
+    "suggestion": "formatC3(1.0005e-4): assert the plain (non-exponential) form."
+  },
+  "src/v2/porkchop/format-c3.ts#1314": {
+    "assessment": "Boundary not tested: |C3| exactly 1e5.",
+    "suggestion": "formatC3(1e5): assert '1.00e+5' (the mutant returns '100000')."
+  },
+  "src/v2/porkchop/format-c3.ts#1315": {
+    "assessment": "Same switch point as the line above, reached through the constant.",
+    "suggestion": "formatC3(100_050): assert the exponential form."
+  },
+  "src/v2/porkchop/format-c3.ts#1316": {
+    "assessment": "EQUIVALENT MUTANT. toExponential truncates its argument to an integer.",
+    "suggestion": "None needed."
+  },
+  "src/v2/porkchop/format-c3.ts#1317": {
+    "assessment": "EQUIVALENT MUTANT. toPrecision truncates its argument to an integer.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/invariants/assertions.ts#236": {
+    "assessment": "REAL GAP (the interpolation error-bar invariant). With a minus sign in the norm, an error that is mostly along z gives a negative radicand, the square root is NaN, NaN > bar is false, and the invariant stays silent. The tests never present a failing case with error on more than one axis.",
+    "suggestion": "assertInterpolationError with the estimate displaced by bar x 0.6 on each of x, y and z (norm about 1.04 x bar): assert the invariant fires. Repeat with the displacement on z only."
+  },
+  "src/v2/core/invariants/assertions.ts#237": {
+    "assessment": "Same gap as the previous mutant, on the y term.",
+    "suggestion": "Same test: an error just over the bar spread across all three axes must fire the invariant; add a y-only case."
+  },
+  "src/v2/core/invariants/assertions.ts#241": {
+    "assessment": "Boundary not tested: an error exactly equal to the bar (the code allows it; the mutant refuses it).",
+    "suggestion": "assertInterpolationError with a single-axis displacement of exactly the bar: assert it does NOT fire."
+  },
+  "src/v2/core/invariants/assertions.ts#251": {
+    "assessment": "REAL GAP (INV-012, the Keplerian error bar). Same mechanism as the interpolation assertion: a z-dominated error makes the radicand negative and the assertion can no longer fire.",
+    "suggestion": "assertKeplerianError with the estimate displaced by bar x 0.6 on each axis, and with a z-only displacement just over the bar: assert INV-012 fires."
+  },
+  "src/v2/core/invariants/assertions.ts#252": {
+    "assessment": "Same gap as the previous mutant, on the y term.",
+    "suggestion": "Same test, plus a y-only displacement just over the bar."
+  },
+  "src/v2/core/invariants/assertions.ts#256": {
+    "assessment": "Boundary not tested: an error exactly equal to the 100,000 km bar.",
+    "suggestion": "assertKeplerianError with a single-axis displacement of exactly ASTEROID_KEPLERIAN_ERROR_BAR_M: assert it does NOT fire."
+  },
+  "src/v2/core/invariants/assertions.ts#259": {
+    "assessment": "The failure's reported context is not asserted: tests check that INV-012 fires, not the measuredErrorKm it reports. Under the mutant the reported error is a million times too large.",
+    "suggestion": "On a failing assertKeplerianError call, assert context.measuredErrorKm equals the displacement in km."
+  },
+  "src/v2/core/invariants/assertions.ts#260": {
+    "assessment": "Same unasserted context value as the previous mutant.",
+    "suggestion": "Same assertion, to better than 0.1%."
+  },
+  "src/v2/core/invariants/assertions.ts#261": {
+    "assessment": "The failure's reported bar (barKm) is not asserted.",
+    "suggestion": "On a failing assertKeplerianError call, assert context.barKm === 100000."
+  },
+  "src/v2/core/invariants/assertions.ts#262": {
+    "assessment": "Same unasserted context value as the previous mutant.",
+    "suggestion": "Same assertion, exact."
+  },
+  "src/v2/core/invariants/round-trip.ts#278": {
+    "assessment": "EQUIVALENT MUTANT. sixAxisDiffNorm is a hypot of differences, so swapping its arguments cannot change the value.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/invariants/round-trip.ts#279": {
+    "assessment": "EQUIVALENT MUTANT. Math.max is commutative.",
+    "suggestion": "None needed."
+  },
+  "src/v2/core/invariants/round-trip.ts#280": {
+    "assessment": "Equivalent in practice: the floor of 1 only matters for a state whose six-axis norm is between 1 and 1.001 (metres and metres per second); real states are ~1e11.",
+    "suggestion": "None needed unless near-zero states become a supported input."
+  },
+  "src/v2/core/invariants/round-trip.ts#283": {
+    "assessment": "Boundary not tested: a round-trip error exactly equal to 10 x Number.EPSILON.",
+    "suggestion": "Hard to construct with real transforms; a unit test of the comparison with an injected error value would pin it. Low priority."
+  }
+}

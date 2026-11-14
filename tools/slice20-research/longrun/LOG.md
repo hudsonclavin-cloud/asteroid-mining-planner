@@ -56,3 +56,8 @@ git-bundle delivery (no push). Zero sub-agents, zero workflows.
 - Refusals: primary 792,784,488 of 2,996,401,200 return cells refused (26.5%); 19,234 bodies lose at least one cell; 1,451 lose all.
 - Noticed in the extremes table: the largest undercharges are all windows with ~72,2xx of 72,300 cells refused. Added a split by refusal share to summarize.mjs. Complete windows only: primary n 22,210, median 9.453, overcharge 99.7%; secondary n 20,019, median 0.612, p99 3.920, overcharge 40.3%.
 - Support (primary, 9,875 L1 measured): chosen return departs at/after the support date for 8,389; 7,796 L1 bodies have no supported converged return cell.
+- 02:08Z worker 0 first results; hand-checked one compile-kill in spare copy w1 (argument swap of ('INV-001', message) rejected by tsc with TS2345): classification correct.
+- 02:39-02:41Z workers 1-3 started as the LR2 shards finished. Throughput 13-19 mutants/min on 4 workers.
+- 02:56Z honesty tier (120) complete: 80 killed (44 by compile), 39 survived in executed functions, 1 in a function no test executes (boundaryTofDaysAtDeparture). Read all 40 by hand; notes in survivor-notes.json. JavaScript facts used in the notes (toFixed/toPrecision/toExponential truncation, String(null), the 1e-4 and 1e5 switch points, sqrt of a negative radicand) verified in node before writing them down.
+- ~03:14Z kernel OOM kill (dmesg): one node test process, 13.0 GB anonymous RSS, memory cgroup limit. One process only; the four workers kept running. A 13 GB process is a mutant making the code run away, so its test failing is a kill by the mutant, not an infrastructure false kill. Recorded as killed.
+- 03:19:13Z partial checkpoint commit: 779 of 2,364 mutants run.
