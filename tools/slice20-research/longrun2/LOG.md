@@ -68,3 +68,7 @@ One agent, zero sub-agents, zero workflows. Host pre-waived by the dispatch (lap
 - Kernel minimum C3 vs the shipped izzo value, every body: max relative 1.2e-8, same argmin cell for all, none straddle 25.
 - Return census, 400 seeded bodies: 933,560 of 56,805,834 converged branches flagged (1.643%; LR1 1.551%). M=0 0.312%, M=1 left 2.576%, M=1 right 2.881%. Every M=1 branch with perihelion inside the Sun passes it. Smallest flagged asteroid-departure v-inf 3.974 km/s.
 - 08:42:13Z CORRECTION to the 07:5x XR1 entry above ("So the machine, not the source, moved the last digits"): that was stronger than the evidence. What is shown is that the COMMITTED source changes since 8471659 do not move the values (old solver == current solver bit for bit on this host). The computation uses Math.sin, cos, pow, exp, log, acos and asinh, which ECMAScript leaves implementation-approximated, so a different V8 build or CPU is a plausible cause [Likely]. Not excluded: a solver edit present but uncommitted at build time and never committed. XR1 REPORT.md and the final report now say this.
+
+## XR3 (logged 09:32:32Z)
+- XR3 shards started by the autostart at 08:29:01Z, 08:34:51Z, 08:36:11Z and 08:39:12Z (as census shards finished); --max-seconds 10800 each. 0.62-0.77 s per body per shard.
+- Interim commit at PARTIAL: 20506 of 41906: M=0 values equal LR2's committed rows for every body so far.

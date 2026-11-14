@@ -1,0 +1,1329 @@
+{
+  "schema": "aster-s20-longrun2-xr3-summary/1",
+  "label": "LEADS-grade research evidence. Not validated. Nothing here enters a DEC, a test, a fixture or the site.",
+  "generatedAtUtc": "2026-11-14T09:32:32.395Z",
+  "state": "PARTIAL: 20506 of 41906",
+  "bodiesDone": 20506,
+  "catalogBodies": 41906,
+  "shardTotal": 41906,
+  "shards": [
+    {
+      "shard": 0,
+      "of": 4,
+      "state": "running",
+      "done": 5715,
+      "total": 10477,
+      "secondsPerBody": 0.6656278863232682
+    },
+    {
+      "shard": 1,
+      "of": 4,
+      "state": "running",
+      "done": 5086,
+      "total": 10477,
+      "secondsPerBody": 0.6796301342812007
+    },
+    {
+      "shard": 2,
+      "of": 4,
+      "state": "running",
+      "done": 5048,
+      "total": 10476,
+      "secondsPerBody": 0.6687523157470802
+    },
+    {
+      "shard": 3,
+      "of": 4,
+      "state": "running",
+      "done": 4657,
+      "total": 10476,
+      "secondsPerBody": 0.685419502617801
+    }
+  ],
+  "seed": 2026111302,
+  "node": "v22.23.4",
+  "baseCommit": "75606da39d4a6a0bb7022b3457e0e06ed7f6a8dd",
+  "returnGrid": {
+    "stayMinDays": 8,
+    "stayMaxDays": 730.5,
+    "nDep": 723,
+    "nTof": 100,
+    "tofMinDays": 182.5,
+    "tofMaxDays": 1826.25,
+    "M": [
+      0,
+      1
+    ]
+  },
+  "statusCounts": {
+    "all-return-cells-refused": 697,
+    "ok": 19592,
+    "no-practical-window": 217
+  },
+  "lr2M0Check": {
+    "compared": 20506,
+    "primaryErrorEqual": 20506,
+    "primaryComputedEqual": 20506,
+    "secondaryErrorEqual": 20506,
+    "statusEqual": 20506,
+    "mismatches": []
+  },
+  "primary": {
+    "label": "PRIMARY - compare path best practical window",
+    "all": {
+      "bodies": 19592,
+      "m0": {
+        "n": 19592,
+        "medianAbs": 8.998483443791729,
+        "p10Abs": 3.3821466762039316,
+        "p90Abs": 17.950216511444754,
+        "p99Abs": 27.991482428715543,
+        "maxAbs": 65.42373845353592,
+        "p50Signed": 8.96923333602113,
+        "overchargeShare": 0.9725398121682319,
+        "underchargeShare": 0.027460187831768068,
+        "withinInterimRange": 0.1889036341363822,
+        "belowInterimRange": 0.0014801959983666802,
+        "aboveInterimRange": 0.8096161698652511
+      },
+      "m0PlusM1": {
+        "n": 19592,
+        "medianAbs": 9.280219634252223,
+        "p10Abs": 3.7969131243429914,
+        "p90Abs": 18.18154361824181,
+        "p99Abs": 28.24757219380054,
+        "maxAbs": 65.42373845353592,
+        "p50Signed": 9.251069051971102,
+        "overchargeShare": 0.9737648019599837,
+        "underchargeShare": 0.026235198040016332,
+        "withinInterimRange": 0.16358717844017967,
+        "belowInterimRange": 0.0013270722743977134,
+        "aboveInterimRange": 0.8350857492854227
+      },
+      "m1IsTheMinimum": {
+        "bodies": 9939,
+        "share": 0.5072988975091874,
+        "leftBranch": 9323,
+        "rightBranch": 616
+      },
+      "gainWhenM1WinsKmS": {
+        "n": 9939,
+        "median": 0.39522207847356006,
+        "p90": 1.3599924597531532,
+        "p99": 3.0226894251275747,
+        "max": 15.072575353392338,
+        "medianRelative": 0.30083381527678277
+      },
+      "errorSignChanges": {
+        "bodies": 24,
+        "underchargeToOvercharge": 24
+      },
+      "medianComputedM0": 1.3964361842039423,
+      "medianComputedBest": 1.0649574848568388,
+      "flaggedMinima": {
+        "m0MinimumFlagged": 1,
+        "m1MinimumFlagged": 8,
+        "overallMinimumFlagged": 1,
+        "overallMinimumFlaggedAndM1": 0,
+        "m1WinsOnlyBecauseOfAFlaggedArc": 0
+      },
+      "m0PlusM1Unflagged": {
+        "n": 19592,
+        "medianAbs": 9.280219634252223,
+        "p10Abs": 3.7969131243429914,
+        "p90Abs": 18.18154361824181,
+        "p99Abs": 28.24757219380054,
+        "maxAbs": 65.42373845353592,
+        "p50Signed": 9.251069051971102,
+        "overchargeShare": 0.9737648019599837,
+        "underchargeShare": 0.026235198040016332,
+        "withinInterimRange": 0.16358717844017967,
+        "belowInterimRange": 0.0013270722743977134,
+        "aboveInterimRange": 0.8350857492854227
+      },
+      "m1IsTheMinimumUnflagged": {
+        "bodies": 9939,
+        "share": 0.5072988975091874
+      },
+      "minimumChangedByExcludingFlagged": {
+        "bodies": 1,
+        "medianIncreaseKmS": 2.597984615815852,
+        "maxIncreaseKmS": 2.597984615815852
+      },
+      "noUnflaggedCell": 0
+    },
+    "completeWindows": {
+      "bodies": 10886,
+      "m0": {
+        "n": 10886,
+        "medianAbs": 9.491856703866075,
+        "p10Abs": 4.405217708161901,
+        "p90Abs": 18.302753451223214,
+        "p99Abs": 28.36604637172244,
+        "maxAbs": 46.71434973903792,
+        "p50Signed": 9.488607662858188,
+        "overchargeShare": 0.9972441668197685,
+        "underchargeShare": 0.00275583318023149,
+        "withinInterimRange": 0.13769979790556677,
+        "belowInterimRange": 0.0004593055300385817,
+        "aboveInterimRange": 0.8618408965643947
+      },
+      "m0PlusM1": {
+        "n": 10886,
+        "medianAbs": 9.869570390330715,
+        "p10Abs": 5.000335510655722,
+        "p90Abs": 18.58447252917358,
+        "p99Abs": 28.676745970091584,
+        "maxAbs": 46.71434973903792,
+        "p50Signed": 9.866112058643147,
+        "overchargeShare": 0.9988058056218997,
+        "underchargeShare": 0.0011941943781003123,
+        "withinInterimRange": 0.10582399412088922,
+        "belowInterimRange": 0.00018372221201543268,
+        "aboveInterimRange": 0.8939922836670954
+      },
+      "m1IsTheMinimum": {
+        "bodies": 7134,
+        "share": 0.6553371302590483,
+        "leftBranch": 6806,
+        "rightBranch": 328
+      },
+      "gainWhenM1WinsKmS": {
+        "n": 7134,
+        "median": 0.3881146067057023,
+        "p90": 1.347844565852246,
+        "p99": 2.92172287563279,
+        "max": 8.19331999404747,
+        "medianRelative": 0.3149165743921585
+      },
+      "errorSignChanges": {
+        "bodies": 17,
+        "underchargeToOvercharge": 17
+      },
+      "medianComputedM0": 1.1472183789827035,
+      "medianComputedBest": 0.8099615732539281,
+      "flaggedMinima": {
+        "m0MinimumFlagged": 0,
+        "m1MinimumFlagged": 0,
+        "overallMinimumFlagged": 0,
+        "overallMinimumFlaggedAndM1": 0,
+        "m1WinsOnlyBecauseOfAFlaggedArc": 0
+      },
+      "m0PlusM1Unflagged": {
+        "n": 10886,
+        "medianAbs": 9.869570390330715,
+        "p10Abs": 5.000335510655722,
+        "p90Abs": 18.58447252917358,
+        "p99Abs": 28.676745970091584,
+        "maxAbs": 46.71434973903792,
+        "p50Signed": 9.866112058643147,
+        "overchargeShare": 0.9988058056218997,
+        "underchargeShare": 0.0011941943781003123,
+        "withinInterimRange": 0.10582399412088922,
+        "belowInterimRange": 0.00018372221201543268,
+        "aboveInterimRange": 0.8939922836670954
+      },
+      "m1IsTheMinimumUnflagged": {
+        "bodies": 7134,
+        "share": 0.6553371302590483
+      },
+      "minimumChangedByExcludingFlagged": {
+        "bodies": 0
+      },
+      "noUnflaggedCell": 0
+    },
+    "truncatedWindows": {
+      "bodies": 8706,
+      "m0": {
+        "n": 8706,
+        "medianAbs": 8.23837877546016,
+        "p10Abs": 2.281760808279673,
+        "p90Abs": 17.424249154763288,
+        "p99Abs": 27.52084066751086,
+        "maxAbs": 65.42373845353592,
+        "p50Signed": 8.14717767800445,
+        "overchargeShare": 0.941649437169768,
+        "underchargeShare": 0.058350562830232024,
+        "withinInterimRange": 0.2529290144727774,
+        "belowInterimRange": 0.0027567195037904893,
+        "aboveInterimRange": 0.7443142660234321
+      },
+      "m0PlusM1": {
+        "n": 8706,
+        "medianAbs": 8.436794034937094,
+        "p10Abs": 2.4620816016189373,
+        "p90Abs": 17.578406387958445,
+        "p99Abs": 27.717128351813624,
+        "maxAbs": 65.42373845353592,
+        "p50Signed": 8.355189351031877,
+        "overchargeShare": 0.9424534803583735,
+        "underchargeShare": 0.057546519641626465,
+        "withinInterimRange": 0.23581438088674478,
+        "belowInterimRange": 0.0027567195037904893,
+        "aboveInterimRange": 0.7614288996094647
+      },
+      "m1IsTheMinimum": {
+        "bodies": 2805,
+        "share": 0.32219159200551345,
+        "leftBranch": 2517,
+        "rightBranch": 288
+      },
+      "gainWhenM1WinsKmS": {
+        "n": 2805,
+        "median": 0.41261815069263585,
+        "p90": 1.3977258821693723,
+        "p99": 3.207041112324692,
+        "max": 15.072575353392338,
+        "medianRelative": 0.2613771104354386
+      },
+      "errorSignChanges": {
+        "bodies": 7,
+        "underchargeToOvercharge": 7
+      },
+      "medianComputedM0": 1.8991977268853457,
+      "medianComputedBest": 1.6082040694386968,
+      "flaggedMinima": {
+        "m0MinimumFlagged": 1,
+        "m1MinimumFlagged": 8,
+        "overallMinimumFlagged": 1,
+        "overallMinimumFlaggedAndM1": 0,
+        "m1WinsOnlyBecauseOfAFlaggedArc": 0
+      },
+      "m0PlusM1Unflagged": {
+        "n": 8706,
+        "medianAbs": 8.436794034937094,
+        "p10Abs": 2.4620816016189373,
+        "p90Abs": 17.578406387958445,
+        "p99Abs": 27.717128351813624,
+        "maxAbs": 65.42373845353592,
+        "p50Signed": 8.355189351031877,
+        "overchargeShare": 0.9424534803583735,
+        "underchargeShare": 0.057546519641626465,
+        "withinInterimRange": 0.23581438088674478,
+        "belowInterimRange": 0.0027567195037904893,
+        "aboveInterimRange": 0.7614288996094647
+      },
+      "m1IsTheMinimumUnflagged": {
+        "bodies": 2805,
+        "share": 0.32219159200551345
+      },
+      "minimumChangedByExcludingFlagged": {
+        "bodies": 1,
+        "medianIncreaseKmS": 2.597984615815852,
+        "maxIncreaseKmS": 2.597984615815852
+      },
+      "noUnflaggedCell": 0
+    },
+    "byTier": {
+      "L0": {
+        "bodies": 2,
+        "m0": {
+          "n": 2,
+          "medianAbs": 16.418701147025438,
+          "p10Abs": 13.723670145180284,
+          "p90Abs": 19.113732148870596,
+          "p99Abs": 19.720114124285757,
+          "maxAbs": 19.787489899331884,
+          "p50Signed": 16.418701147025438,
+          "overchargeShare": 1,
+          "underchargeShare": 0,
+          "withinInterimRange": 0,
+          "belowInterimRange": 0,
+          "aboveInterimRange": 1
+        },
+        "m0PlusM1": {
+          "n": 2,
+          "medianAbs": 16.418701147025438,
+          "p10Abs": 13.723670145180284,
+          "p90Abs": 19.113732148870596,
+          "p99Abs": 19.720114124285757,
+          "maxAbs": 19.787489899331884,
+          "p50Signed": 16.418701147025438,
+          "overchargeShare": 1,
+          "underchargeShare": 0,
+          "withinInterimRange": 0,
+          "belowInterimRange": 0,
+          "aboveInterimRange": 1
+        },
+        "m1IsTheMinimum": {
+          "bodies": 0,
+          "share": 0,
+          "leftBranch": 0,
+          "rightBranch": 0
+        },
+        "gainWhenM1WinsKmS": {
+          "n": 0
+        },
+        "errorSignChanges": {
+          "bodies": 0,
+          "underchargeToOvercharge": 0
+        },
+        "medianComputedM0": 2.0202063026616677,
+        "medianComputedBest": 2.0202063026616677,
+        "flaggedMinima": {
+          "m0MinimumFlagged": 0,
+          "m1MinimumFlagged": 0,
+          "overallMinimumFlagged": 0,
+          "overallMinimumFlaggedAndM1": 0,
+          "m1WinsOnlyBecauseOfAFlaggedArc": 0
+        },
+        "m0PlusM1Unflagged": {
+          "n": 2,
+          "medianAbs": 16.418701147025438,
+          "p10Abs": 13.723670145180284,
+          "p90Abs": 19.113732148870596,
+          "p99Abs": 19.720114124285757,
+          "maxAbs": 19.787489899331884,
+          "p50Signed": 16.418701147025438,
+          "overchargeShare": 1,
+          "underchargeShare": 0,
+          "withinInterimRange": 0,
+          "belowInterimRange": 0,
+          "aboveInterimRange": 1
+        },
+        "m1IsTheMinimumUnflagged": {
+          "bodies": 0,
+          "share": 0
+        },
+        "minimumChangedByExcludingFlagged": {
+          "bodies": 0
+        },
+        "noUnflaggedCell": 0
+      },
+      "L1": {
+        "bodies": 4792,
+        "m0": {
+          "n": 4792,
+          "medianAbs": 7.340482291961065,
+          "p10Abs": 2.179637980603434,
+          "p90Abs": 14.909260908207278,
+          "p99Abs": 23.899905558008886,
+          "maxAbs": 32.19658269509381,
+          "p50Signed": 7.318276579084245,
+          "overchargeShare": 0.9753756260434057,
+          "underchargeShare": 0.024624373956594323,
+          "withinInterimRange": 0.30696994991652754,
+          "belowInterimRange": 0.002712854757929883,
+          "aboveInterimRange": 0.6903171953255426
+        },
+        "m0PlusM1": {
+          "n": 4792,
+          "medianAbs": 7.749668121557635,
+          "p10Abs": 2.563220887327069,
+          "p90Abs": 15.273560859126048,
+          "p99Abs": 24.344169099169683,
+          "maxAbs": 32.27692041785663,
+          "p50Signed": 7.735922964428067,
+          "overchargeShare": 0.9793405676126878,
+          "underchargeShare": 0.020659432387312188,
+          "withinInterimRange": 0.2671118530884808,
+          "belowInterimRange": 0.0025041736227045075,
+          "aboveInterimRange": 0.7303839732888147
+        },
+        "m1IsTheMinimum": {
+          "bodies": 3020,
+          "share": 0.6302170283806344,
+          "leftBranch": 2741,
+          "rightBranch": 279
+        },
+        "gainWhenM1WinsKmS": {
+          "n": 3020,
+          "median": 0.3957426008588304,
+          "p90": 1.6031627719670811,
+          "p99": 3.464992868255734,
+          "max": 8.19331999404747,
+          "medianRelative": 0.30436509274675805
+        },
+        "errorSignChanges": {
+          "bodies": 19,
+          "underchargeToOvercharge": 19
+        },
+        "medianComputedM0": 1.4882251877382051,
+        "medianComputedBest": 1.0635828419671882,
+        "flaggedMinima": {
+          "m0MinimumFlagged": 1,
+          "m1MinimumFlagged": 0,
+          "overallMinimumFlagged": 1,
+          "overallMinimumFlaggedAndM1": 0,
+          "m1WinsOnlyBecauseOfAFlaggedArc": 0
+        },
+        "m0PlusM1Unflagged": {
+          "n": 4792,
+          "medianAbs": 7.749668121557635,
+          "p10Abs": 2.563220887327069,
+          "p90Abs": 15.273560859126048,
+          "p99Abs": 24.344169099169683,
+          "maxAbs": 32.27692041785663,
+          "p50Signed": 7.735922964428067,
+          "overchargeShare": 0.9793405676126878,
+          "underchargeShare": 0.020659432387312188,
+          "withinInterimRange": 0.2671118530884808,
+          "belowInterimRange": 0.0025041736227045075,
+          "aboveInterimRange": 0.7303839732888147
+        },
+        "m1IsTheMinimumUnflagged": {
+          "bodies": 3020,
+          "share": 0.6302170283806344
+        },
+        "minimumChangedByExcludingFlagged": {
+          "bodies": 1,
+          "medianIncreaseKmS": 2.597984615815852,
+          "maxIncreaseKmS": 2.597984615815852
+        },
+        "noUnflaggedCell": 0
+      },
+      "L2": {
+        "bodies": 14798,
+        "m0": {
+          "n": 14798,
+          "medianAbs": 9.47387789048598,
+          "p10Abs": 4.100434742371157,
+          "p90Abs": 18.63934415247765,
+          "p99Abs": 28.95605259411651,
+          "maxAbs": 65.42373845353592,
+          "p50Signed": 9.448703004327601,
+          "overchargeShare": 0.9716177861873226,
+          "underchargeShare": 0.02838221381267739,
+          "withinInterimRange": 0.15069604000540612,
+          "belowInterimRange": 0.0010812271928639006,
+          "aboveInterimRange": 0.84822273280173
+        },
+        "m0PlusM1": {
+          "n": 14798,
+          "medianAbs": 9.757735959581467,
+          "p10Abs": 4.468695170663952,
+          "p90Abs": 18.834080959034356,
+          "p99Abs": 29.057413797576856,
+          "maxAbs": 65.42373845353592,
+          "p50Signed": 9.72085480820559,
+          "overchargeShare": 0.9719556696850926,
+          "underchargeShare": 0.02804433031490742,
+          "withinInterimRange": 0.13008514664143803,
+          "belowInterimRange": 0.000946073793755913,
+          "aboveInterimRange": 0.868968779564806
+        },
+        "m1IsTheMinimum": {
+          "bodies": 6919,
+          "share": 0.467563184214083,
+          "leftBranch": 6582,
+          "rightBranch": 337
+        },
+        "gainWhenM1WinsKmS": {
+          "n": 6919,
+          "median": 0.3935176112840024,
+          "p90": 1.2643028326793322,
+          "p99": 2.461759491843532,
+          "max": 15.072575353392338,
+          "medianRelative": 0.299184072985185
+        },
+        "errorSignChanges": {
+          "bodies": 5,
+          "underchargeToOvercharge": 5
+        },
+        "medianComputedM0": 1.3668213165300096,
+        "medianComputedBest": 1.0656422244095949,
+        "flaggedMinima": {
+          "m0MinimumFlagged": 0,
+          "m1MinimumFlagged": 8,
+          "overallMinimumFlagged": 0,
+          "overallMinimumFlaggedAndM1": 0,
+          "m1WinsOnlyBecauseOfAFlaggedArc": 0
+        },
+        "m0PlusM1Unflagged": {
+          "n": 14798,
+          "medianAbs": 9.757735959581467,
+          "p10Abs": 4.468695170663952,
+          "p90Abs": 18.834080959034356,
+          "p99Abs": 29.057413797576856,
+          "maxAbs": 65.42373845353592,
+          "p50Signed": 9.72085480820559,
+          "overchargeShare": 0.9719556696850926,
+          "underchargeShare": 0.02804433031490742,
+          "withinInterimRange": 0.13008514664143803,
+          "belowInterimRange": 0.000946073793755913,
+          "aboveInterimRange": 0.868968779564806
+        },
+        "m1IsTheMinimumUnflagged": {
+          "bodies": 6919,
+          "share": 0.467563184214083
+        },
+        "minimumChangedByExcludingFlagged": {
+          "bodies": 0
+        },
+        "noUnflaggedCell": 0
+      }
+    },
+    "m1OnlyBodies": [],
+    "returnCells": {
+      "m0Converged": 1079198774,
+      "m1CellsWithAConvergedBranch": 634022097,
+      "m1CellsWithout": 445176677,
+      "refused": 387695926
+    },
+    "largestGains": [
+      {
+        "des": "2010 UB",
+        "tier": "L2",
+        "cls": "APO",
+        "computedM0": 35.38731,
+        "best": 20.314735,
+        "branch": "right",
+        "gain": 15.072575,
+        "errorM0": -31.383974,
+        "errorBest": -16.311398,
+        "refused": 72200
+      },
+      {
+        "des": "2024 XY6",
+        "tier": "L2",
+        "cls": "AMO",
+        "computedM0": 42.665857,
+        "best": 30.573577,
+        "branch": "right",
+        "gain": 12.09228,
+        "errorM0": -36.085269,
+        "errorBest": -23.992989,
+        "refused": 72284
+      },
+      {
+        "des": "2025 GN1",
+        "tier": "L1",
+        "cls": "IEO",
+        "computedM0": 11.234981,
+        "best": 3.041661,
+        "branch": "right",
+        "gain": 8.19332,
+        "errorM0": 10.539306,
+        "errorBest": 18.732626,
+        "refused": 0
+      },
+      {
+        "des": "2023 WK3",
+        "tier": "L1",
+        "cls": "IEO",
+        "computedM0": 8.541756,
+        "best": 1.789474,
+        "branch": "left",
+        "gain": 6.752282,
+        "errorM0": 6.272421,
+        "errorBest": 13.024703,
+        "refused": 61222
+      },
+      {
+        "des": "138127",
+        "tier": "L1",
+        "cls": "ATE",
+        "computedM0": 8.606459,
+        "best": 2.036057,
+        "branch": "left",
+        "gain": 6.570402,
+        "errorM0": 7.253566,
+        "errorBest": 13.823968,
+        "refused": 0
+      },
+      {
+        "des": "2011 KY15",
+        "tier": "L2",
+        "cls": "ATE",
+        "computedM0": 8.565271,
+        "best": 1.995178,
+        "branch": "left",
+        "gain": 6.570093,
+        "errorM0": 4.671019,
+        "errorBest": 11.241112,
+        "refused": 8488
+      },
+      {
+        "des": "2025 AX",
+        "tier": "L1",
+        "cls": "ATE",
+        "computedM0": 8.318066,
+        "best": 2.295997,
+        "branch": "right",
+        "gain": 6.022069,
+        "errorM0": 13.77453,
+        "errorBest": 19.796599,
+        "refused": 47263
+      },
+      {
+        "des": "2025 XN3",
+        "tier": "L1",
+        "cls": "ATE",
+        "computedM0": 8.263618,
+        "best": 2.428277,
+        "branch": "left",
+        "gain": 5.835341,
+        "errorM0": 4.309285,
+        "errorBest": 10.144627,
+        "refused": 16524
+      },
+      {
+        "des": "2005 WS3",
+        "tier": "L1",
+        "cls": "ATE",
+        "computedM0": 8.184995,
+        "best": 2.446807,
+        "branch": "left",
+        "gain": 5.738187,
+        "errorM0": 5.459869,
+        "errorBest": 11.198057,
+        "refused": 0
+      },
+      {
+        "des": "2019 TL6",
+        "tier": "L2",
+        "cls": "ATE",
+        "computedM0": 7.293862,
+        "best": 1.633756,
+        "branch": "left",
+        "gain": 5.660106,
+        "errorM0": 5.998385,
+        "errorBest": 11.658491,
+        "refused": 14246
+      }
+    ]
+  },
+  "secondary": {
+    "label": "SECONDARY - best sample-return stack cell (beyond the original LR2 dispatch)",
+    "all": {
+      "bodies": 18529,
+      "m0": {
+        "n": 18529,
+        "medianAbs": 0.7712461627944669,
+        "p10Abs": 0.11780149847553088,
+        "p90Abs": 3.1375537286553548,
+        "p99Abs": 13.540994009507777,
+        "maxAbs": 62.877863323015156,
+        "p50Signed": -0.38278989144024245,
+        "overchargeShare": 0.33622969399319985,
+        "underchargeShare": 0.6637703060068002,
+        "withinInterimRange": 0.8779750661125802,
+        "belowInterimRange": 0.06724593879863996,
+        "aboveInterimRange": 0.05477899508877975
+      },
+      "m0PlusM1": {
+        "n": 18529,
+        "medianAbs": 0.5236676125468714,
+        "p10Abs": 0.08011190825256653,
+        "p90Abs": 3.0209701108191065,
+        "p99Abs": 13.510828177804443,
+        "maxAbs": 62.877863323015156,
+        "p50Signed": -0.04551958029481462,
+        "overchargeShare": 0.4711533272167953,
+        "underchargeShare": 0.5288466727832047,
+        "withinInterimRange": 0.8455394246856279,
+        "belowInterimRange": 0.0997895191321712,
+        "aboveInterimRange": 0.054671056182200875
+      },
+      "m1IsTheMinimum": {
+        "bodies": 11109,
+        "share": 0.5995466565923687,
+        "leftBranch": 8147,
+        "rightBranch": 2962
+      },
+      "gainWhenM1WinsKmS": {
+        "n": 11109,
+        "median": 0.38854493935784684,
+        "p90": 1.5057295698013666,
+        "p99": 2.79139269776816,
+        "max": 14.711951379634215,
+        "medianRelative": 0.2852861946538284
+      },
+      "errorSignChanges": {
+        "bodies": 2500,
+        "underchargeToOvercharge": 2500
+      },
+      "medianComputedM0": 1.4926251883499004,
+      "medianComputedBest": 1.0789982503167215,
+      "flaggedMinima": {
+        "m0MinimumFlagged": 3,
+        "m1MinimumFlagged": 2,
+        "overallMinimumFlagged": 3,
+        "overallMinimumFlaggedAndM1": 0,
+        "m1WinsOnlyBecauseOfAFlaggedArc": 0
+      },
+      "m0PlusM1Unflagged": {
+        "n": 18529,
+        "medianAbs": 0.5236676125468714,
+        "p10Abs": 0.08011190825256653,
+        "p90Abs": 3.0209701108191065,
+        "p99Abs": 13.510828177804443,
+        "maxAbs": 62.877863323015156,
+        "p50Signed": -0.04551958029481462,
+        "overchargeShare": 0.4711533272167953,
+        "underchargeShare": 0.5288466727832047,
+        "withinInterimRange": 0.8455394246856279,
+        "belowInterimRange": 0.0997895191321712,
+        "aboveInterimRange": 0.054671056182200875
+      },
+      "m1IsTheMinimumUnflagged": {
+        "bodies": 11109,
+        "share": 0.5995466565923687
+      },
+      "minimumChangedByExcludingFlagged": {
+        "bodies": 3,
+        "medianIncreaseKmS": 0.3357343341139867,
+        "maxIncreaseKmS": 1.1676345735744373
+      },
+      "noUnflaggedCell": 0
+    },
+    "completeWindows": {
+      "bodies": 9787,
+      "m0": {
+        "n": 9787,
+        "medianAbs": 0.6185500460257956,
+        "p10Abs": 0.1018580151545792,
+        "p90Abs": 2.0228997293221074,
+        "p99Abs": 4.0556996634157345,
+        "maxAbs": 16.820328179016688,
+        "p50Signed": -0.19531610315703302,
+        "overchargeShare": 0.4022683151118831,
+        "underchargeShare": 0.5977316848881169,
+        "withinInterimRange": 0.9178502094615306,
+        "belowInterimRange": 0.07785838357004189,
+        "aboveInterimRange": 0.004291406968427506
+      },
+      "m0PlusM1": {
+        "n": 9787,
+        "medianAbs": 0.4017295335917115,
+        "p10Abs": 0.06445590372812822,
+        "p90Abs": 1.5734815483131779,
+        "p99Abs": 4.310028460748666,
+        "maxAbs": 16.820328179016688,
+        "p50Signed": 0.1076259793758152,
+        "overchargeShare": 0.584550934913661,
+        "underchargeShare": 0.415449065086339,
+        "withinInterimRange": 0.8718708490855216,
+        "belowInterimRange": 0.12291815673853071,
+        "aboveInterimRange": 0.005210994175947685
+      },
+      "m1IsTheMinimum": {
+        "bodies": 7266,
+        "share": 0.7424134055379585,
+        "leftBranch": 5763,
+        "rightBranch": 1503
+      },
+      "gainWhenM1WinsKmS": {
+        "n": 7266,
+        "median": 0.4076312796049952,
+        "p90": 1.5206244653123124,
+        "p99": 2.727619452222368,
+        "max": 8.192705879477113,
+        "medianRelative": 0.32078813623487806
+      },
+      "errorSignChanges": {
+        "bodies": 1784,
+        "underchargeToOvercharge": 1784
+      },
+      "medianComputedM0": 1.2342637844872124,
+      "medianComputedBest": 0.8300613837068301,
+      "flaggedMinima": {
+        "m0MinimumFlagged": 0,
+        "m1MinimumFlagged": 0,
+        "overallMinimumFlagged": 0,
+        "overallMinimumFlaggedAndM1": 0,
+        "m1WinsOnlyBecauseOfAFlaggedArc": 0
+      },
+      "m0PlusM1Unflagged": {
+        "n": 9787,
+        "medianAbs": 0.4017295335917115,
+        "p10Abs": 0.06445590372812822,
+        "p90Abs": 1.5734815483131779,
+        "p99Abs": 4.310028460748666,
+        "maxAbs": 16.820328179016688,
+        "p50Signed": 0.1076259793758152,
+        "overchargeShare": 0.584550934913661,
+        "underchargeShare": 0.415449065086339,
+        "withinInterimRange": 0.8718708490855216,
+        "belowInterimRange": 0.12291815673853071,
+        "aboveInterimRange": 0.005210994175947685
+      },
+      "m1IsTheMinimumUnflagged": {
+        "bodies": 7266,
+        "share": 0.7424134055379585
+      },
+      "minimumChangedByExcludingFlagged": {
+        "bodies": 0
+      },
+      "noUnflaggedCell": 0
+    },
+    "truncatedWindows": {
+      "bodies": 8742,
+      "m0": {
+        "n": 8742,
+        "medianAbs": 1.049907362913672,
+        "p10Abs": 0.14540399901091272,
+        "p90Abs": 5.509974463001024,
+        "p99Abs": 18.790531594932897,
+        "maxAbs": 62.877863323015156,
+        "p50Signed": -0.7204247541094927,
+        "overchargeShare": 0.2622969572180279,
+        "underchargeShare": 0.7377030427819721,
+        "withinInterimRange": 0.8333333333333334,
+        "belowInterimRange": 0.055364905056051246,
+        "aboveInterimRange": 0.11130176161061542
+      },
+      "m0PlusM1": {
+        "n": 8742,
+        "medianAbs": 0.7986617967886798,
+        "p10Abs": 0.10801030540267129,
+        "p90Abs": 5.434986462014248,
+        "p99Abs": 18.506449145704863,
+        "maxAbs": 62.877863323015156,
+        "p50Signed": -0.36256227102621125,
+        "overchargeShare": 0.34420041180507893,
+        "underchargeShare": 0.6557995881949211,
+        "withinInterimRange": 0.8160603980782429,
+        "belowInterimRange": 0.07389613360787005,
+        "aboveInterimRange": 0.11004346831388698
+      },
+      "m1IsTheMinimum": {
+        "bodies": 3843,
+        "share": 0.439601921757035,
+        "leftBranch": 2384,
+        "rightBranch": 1459
+      },
+      "gainWhenM1WinsKmS": {
+        "n": 3843,
+        "median": 0.3540630940628646,
+        "p90": 1.462832941745246,
+        "p99": 2.999858463503475,
+        "max": 14.711951379634215,
+        "medianRelative": 0.22540079406883384
+      },
+      "errorSignChanges": {
+        "bodies": 716,
+        "underchargeToOvercharge": 716
+      },
+      "medianComputedM0": 1.931671252047662,
+      "medianComputedBest": 1.5415268828243724,
+      "flaggedMinima": {
+        "m0MinimumFlagged": 3,
+        "m1MinimumFlagged": 2,
+        "overallMinimumFlagged": 3,
+        "overallMinimumFlaggedAndM1": 0,
+        "m1WinsOnlyBecauseOfAFlaggedArc": 0
+      },
+      "m0PlusM1Unflagged": {
+        "n": 8742,
+        "medianAbs": 0.7986617967886798,
+        "p10Abs": 0.10801030540267129,
+        "p90Abs": 5.434986462014248,
+        "p99Abs": 18.506449145704863,
+        "maxAbs": 62.877863323015156,
+        "p50Signed": -0.36256227102621125,
+        "overchargeShare": 0.34420041180507893,
+        "underchargeShare": 0.6557995881949211,
+        "withinInterimRange": 0.8160603980782429,
+        "belowInterimRange": 0.07389613360787005,
+        "aboveInterimRange": 0.11004346831388698
+      },
+      "m1IsTheMinimumUnflagged": {
+        "bodies": 3843,
+        "share": 0.439601921757035
+      },
+      "minimumChangedByExcludingFlagged": {
+        "bodies": 3,
+        "medianIncreaseKmS": 0.3357343341139867,
+        "maxIncreaseKmS": 1.1676345735744373
+      },
+      "noUnflaggedCell": 0
+    },
+    "byTier": {
+      "L0": {
+        "bodies": 1,
+        "m0": {
+          "n": 1,
+          "medianAbs": 1.842859683467077,
+          "p10Abs": 1.842859683467077,
+          "p90Abs": 1.842859683467077,
+          "p99Abs": 1.842859683467077,
+          "maxAbs": 1.842859683467077,
+          "p50Signed": 1.842859683467077,
+          "overchargeShare": 1,
+          "underchargeShare": 0,
+          "withinInterimRange": 1,
+          "belowInterimRange": 0,
+          "aboveInterimRange": 0
+        },
+        "m0PlusM1": {
+          "n": 1,
+          "medianAbs": 1.842859683467077,
+          "p10Abs": 1.842859683467077,
+          "p90Abs": 1.842859683467077,
+          "p99Abs": 1.842859683467077,
+          "maxAbs": 1.842859683467077,
+          "p50Signed": 1.842859683467077,
+          "overchargeShare": 1,
+          "underchargeShare": 0,
+          "withinInterimRange": 1,
+          "belowInterimRange": 0,
+          "aboveInterimRange": 0
+        },
+        "m1IsTheMinimum": {
+          "bodies": 0,
+          "share": 0,
+          "leftBranch": 0,
+          "rightBranch": 0
+        },
+        "gainWhenM1WinsKmS": {
+          "n": 0
+        },
+        "errorSignChanges": {
+          "bodies": 0,
+          "underchargeToOvercharge": 0
+        },
+        "medianComputedM0": 0.19067971703078657,
+        "medianComputedBest": 0.19067971703078657,
+        "flaggedMinima": {
+          "m0MinimumFlagged": 0,
+          "m1MinimumFlagged": 0,
+          "overallMinimumFlagged": 0,
+          "overallMinimumFlaggedAndM1": 0,
+          "m1WinsOnlyBecauseOfAFlaggedArc": 0
+        },
+        "m0PlusM1Unflagged": {
+          "n": 1,
+          "medianAbs": 1.842859683467077,
+          "p10Abs": 1.842859683467077,
+          "p90Abs": 1.842859683467077,
+          "p99Abs": 1.842859683467077,
+          "maxAbs": 1.842859683467077,
+          "p50Signed": 1.842859683467077,
+          "overchargeShare": 1,
+          "underchargeShare": 0,
+          "withinInterimRange": 1,
+          "belowInterimRange": 0,
+          "aboveInterimRange": 0
+        },
+        "m1IsTheMinimumUnflagged": {
+          "bodies": 0,
+          "share": 0
+        },
+        "minimumChangedByExcludingFlagged": {
+          "bodies": 0
+        },
+        "noUnflaggedCell": 0
+      },
+      "L1": {
+        "bodies": 4731,
+        "m0": {
+          "n": 4731,
+          "medianAbs": 0.9242614214860878,
+          "p10Abs": 0.1423934345058938,
+          "p90Abs": 2.6382630789450077,
+          "p99Abs": 10.51563841886183,
+          "maxAbs": 37.04819443221021,
+          "p50Signed": -0.7160205150228005,
+          "overchargeShare": 0.23673641936165715,
+          "underchargeShare": 0.7632635806383429,
+          "withinInterimRange": 0.9099556119213696,
+          "belowInterimRange": 0.05770450221940393,
+          "aboveInterimRange": 0.032339885859226376
+        },
+        "m0PlusM1": {
+          "n": 4731,
+          "medianAbs": 0.5468378117715147,
+          "p10Abs": 0.08551565514755732,
+          "p90Abs": 2.117676999437265,
+          "p99Abs": 10.420023603813984,
+          "maxAbs": 37.04819443221021,
+          "p50Signed": -0.21231692531918,
+          "overchargeShare": 0.3792010145846544,
+          "underchargeShare": 0.6207989854153456,
+          "withinInterimRange": 0.8729655463961108,
+          "belowInterimRange": 0.09511731135066583,
+          "aboveInterimRange": 0.03191714225322342
+        },
+        "m1IsTheMinimum": {
+          "bodies": 3430,
+          "share": 0.725005284295075,
+          "leftBranch": 2958,
+          "rightBranch": 472
+        },
+        "gainWhenM1WinsKmS": {
+          "n": 3430,
+          "median": 0.46400840654461856,
+          "p90": 1.5796768490823612,
+          "p99": 2.864013678834721,
+          "max": 8.192705879477113,
+          "medianRelative": 0.30924680876377036
+        },
+        "errorSignChanges": {
+          "bodies": 674,
+          "underchargeToOvercharge": 674
+        },
+        "medianComputedM0": 1.615749144394158,
+        "medianComputedBest": 1.0779555299549797,
+        "flaggedMinima": {
+          "m0MinimumFlagged": 1,
+          "m1MinimumFlagged": 0,
+          "overallMinimumFlagged": 1,
+          "overallMinimumFlaggedAndM1": 0,
+          "m1WinsOnlyBecauseOfAFlaggedArc": 0
+        },
+        "m0PlusM1Unflagged": {
+          "n": 4731,
+          "medianAbs": 0.5468378117715147,
+          "p10Abs": 0.08551565514755732,
+          "p90Abs": 2.117676999437265,
+          "p99Abs": 10.420023603813984,
+          "maxAbs": 37.04819443221021,
+          "p50Signed": -0.21231692531918,
+          "overchargeShare": 0.3792010145846544,
+          "underchargeShare": 0.6207989854153456,
+          "withinInterimRange": 0.8729655463961108,
+          "belowInterimRange": 0.09511731135066583,
+          "aboveInterimRange": 0.03191714225322342
+        },
+        "m1IsTheMinimumUnflagged": {
+          "bodies": 3430,
+          "share": 0.725005284295075
+        },
+        "minimumChangedByExcludingFlagged": {
+          "bodies": 1,
+          "medianIncreaseKmS": 1.1676345735744373,
+          "maxIncreaseKmS": 1.1676345735744373
+        },
+        "noUnflaggedCell": 0
+      },
+      "L2": {
+        "bodies": 13797,
+        "m0": {
+          "n": 13797,
+          "medianAbs": 0.721963540583636,
+          "p10Abs": 0.11193532072373127,
+          "p90Abs": 3.490669636541443,
+          "p99Abs": 14.332664618943413,
+          "maxAbs": 62.877863323015156,
+          "p50Signed": -0.2880638905694092,
+          "overchargeShare": 0.37029789084583603,
+          "underchargeShare": 0.6297021091541639,
+          "withinInterimRange": 0.8670000724795245,
+          "belowInterimRange": 0.07052257737189244,
+          "aboveInterimRange": 0.06247735014858302
+        },
+        "m0PlusM1": {
+          "n": 13797,
+          "medianAbs": 0.5183388826308778,
+          "p10Abs": 0.07894952157417708,
+          "p90Abs": 3.4165873063446943,
+          "p99Abs": 14.332664618943413,
+          "maxAbs": 62.877863323015156,
+          "p50Signed": 0.004545698639634721,
+          "overchargeShare": 0.5026455026455027,
+          "underchargeShare": 0.4973544973544973,
+          "withinInterimRange": 0.8361237950279046,
+          "belowInterimRange": 0.10139885482351235,
+          "aboveInterimRange": 0.06247735014858302
+        },
+        "m1IsTheMinimum": {
+          "bodies": 7679,
+          "share": 0.556570268899036,
+          "leftBranch": 5189,
+          "rightBranch": 2490
+        },
+        "gainWhenM1WinsKmS": {
+          "n": 7679,
+          "median": 0.357276637752166,
+          "p90": 1.4575495271874936,
+          "p99": 2.7223154812766035,
+          "max": 14.711951379634215,
+          "medianRelative": 0.2734289883076225
+        },
+        "errorSignChanges": {
+          "bodies": 1826,
+          "underchargeToOvercharge": 1826
+        },
+        "medianComputedM0": 1.4479292632621494,
+        "medianComputedBest": 1.0793366934855728,
+        "flaggedMinima": {
+          "m0MinimumFlagged": 2,
+          "m1MinimumFlagged": 2,
+          "overallMinimumFlagged": 2,
+          "overallMinimumFlaggedAndM1": 0,
+          "m1WinsOnlyBecauseOfAFlaggedArc": 0
+        },
+        "m0PlusM1Unflagged": {
+          "n": 13797,
+          "medianAbs": 0.5183388826308778,
+          "p10Abs": 0.07894952157417708,
+          "p90Abs": 3.4165873063446943,
+          "p99Abs": 14.332664618943413,
+          "maxAbs": 62.877863323015156,
+          "p50Signed": 0.004545698639634721,
+          "overchargeShare": 0.5026455026455027,
+          "underchargeShare": 0.4973544973544973,
+          "withinInterimRange": 0.8361237950279046,
+          "belowInterimRange": 0.10139885482351235,
+          "aboveInterimRange": 0.06247735014858302
+        },
+        "m1IsTheMinimumUnflagged": {
+          "bodies": 7679,
+          "share": 0.556570268899036
+        },
+        "minimumChangedByExcludingFlagged": {
+          "bodies": 2,
+          "medianIncreaseKmS": 0.2065219758242307,
+          "maxIncreaseKmS": 0.3357343341139867
+        },
+        "noUnflaggedCell": 0
+      }
+    },
+    "m1OnlyBodies": [],
+    "returnCells": {
+      "m0Converged": 1008529577,
+      "m1CellsWithAConvergedBranch": 645834415,
+      "m1CellsWithout": 362695162,
+      "refused": 474054223
+    },
+    "largestGains": [
+      {
+        "des": "2025 BM",
+        "tier": "L2",
+        "cls": "APO",
+        "computedM0": 31.917193,
+        "best": 17.205241,
+        "branch": "right",
+        "gain": 14.711951,
+        "errorM0": -31.645867,
+        "errorBest": -16.933916,
+        "refused": 72112
+      },
+      {
+        "des": "2006 WZ184",
+        "tier": "L2",
+        "cls": "APO",
+        "computedM0": 27.884182,
+        "best": 16.418474,
+        "branch": "right",
+        "gain": 11.465709,
+        "errorM0": -27.585703,
+        "errorBest": -16.119994,
+        "refused": 72085
+      },
+      {
+        "des": "2022 BR5",
+        "tier": "L2",
+        "cls": "APO",
+        "computedM0": 28.685032,
+        "best": 18.119198,
+        "branch": "right",
+        "gain": 10.565834,
+        "errorM0": -27.668299,
+        "errorBest": -17.102465,
+        "refused": 72081
+      },
+      {
+        "des": "2025 GN1",
+        "tier": "L1",
+        "cls": "IEO",
+        "computedM0": 11.234703,
+        "best": 3.041997,
+        "branch": "right",
+        "gain": 8.192706,
+        "errorM0": -5.402431,
+        "errorBest": 2.790275,
+        "refused": 0
+      },
+      {
+        "des": "2020 YK",
+        "tier": "L2",
+        "cls": "APO",
+        "computedM0": 10.380774,
+        "best": 2.860987,
+        "branch": "left",
+        "gain": 7.519787,
+        "errorM0": -6.338334,
+        "errorBest": 1.181453,
+        "refused": 64726
+      },
+      {
+        "des": "99907",
+        "tier": "L2",
+        "cls": "ATE",
+        "computedM0": 9.164406,
+        "best": 2.691896,
+        "branch": "left",
+        "gain": 6.472509,
+        "errorM0": -0.563994,
+        "errorBest": 5.908515,
+        "refused": 23361
+      },
+      {
+        "des": "2025 FV11",
+        "tier": "L1",
+        "cls": "APO",
+        "computedM0": 12.23396,
+        "best": 6.21358,
+        "branch": "left",
+        "gain": 6.02038,
+        "errorM0": -10.440012,
+        "errorBest": -4.419632,
+        "refused": 68962
+      },
+      {
+        "des": "2016 QE84",
+        "tier": "L2",
+        "cls": "APO",
+        "computedM0": 9.129994,
+        "best": 3.913173,
+        "branch": "left",
+        "gain": 5.216821,
+        "errorM0": -5.665696,
+        "errorBest": -0.448876,
+        "refused": 64127
+      },
+      {
+        "des": "2019 TL6",
+        "tier": "L2",
+        "cls": "ATE",
+        "computedM0": 6.325354,
+        "best": 1.558649,
+        "branch": "left",
+        "gain": 4.766705,
+        "errorM0": -2.539923,
+        "errorBest": 2.226781,
+        "refused": 0
+      },
+      {
+        "des": "2011 KY15",
+        "tier": "L2",
+        "cls": "ATE",
+        "computedM0": 8.158265,
+        "best": 3.438808,
+        "branch": "left",
+        "gain": 4.719457,
+        "errorM0": -5.228353,
+        "errorBest": -0.508895,
+        "refused": 14833
+      }
+    ]
+  },
+  "files": [
+    {
+      "file": "xr3-m1-0of4.json",
+      "bytes": 1556092,
+      "rows": 5715,
+      "sha256": "9b0a62af12907178ba04ab47d9d6c4fc397d5684f329b44a509645e8938675e2"
+    },
+    {
+      "file": "xr3-m1-1of4.json",
+      "bytes": 1385263,
+      "rows": 5086,
+      "sha256": "40280360c55427f4ab7b8e1aa49e22a0447a873d273268f2aa721206c1334d67"
+    },
+    {
+      "file": "xr3-m1-2of4.json",
+      "bytes": 1375512,
+      "rows": 5048,
+      "sha256": "49acf8bee38ba22de3fa2c9f4c4ad7dad738c1a66a79919a455d0ceced9fc754"
+    },
+    {
+      "file": "xr3-m1-3of4.json",
+      "bytes": 1267092,
+      "rows": 4657,
+      "sha256": "c5f198c08fc77de5a1f97067eabeff7985973963dfcb8e0299795c06da409f70"
+    }
+  ]
+}
