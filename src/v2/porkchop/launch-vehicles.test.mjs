@@ -258,6 +258,21 @@ test('deliveredMassKg excludes injection by construction and applies mode depart
   assert.equal(deliveredMassKg(newGlenn, 35, budget), BEYOND_CURVE);
 });
 
+test('spacecraft budget total is mode-owned and preserves every supplied term', async () => {
+  const { spacecraftDvTotalMps } = await loadModule();
+  const budgets = [
+    { rendezvousMps: 1_200, stationkeepingMps: 150, marginMps: 60, departureMps: 1_200 },
+    { rendezvousMps: 4_321.25, stationkeepingMps: 150, marginMps: 216.0625, departureMps: 987.654 },
+    { rendezvousMps: 0, stationkeepingMps: 150, marginMps: 0, departureMps: 600 },
+  ];
+  for (const budget of budgets) {
+    const oneWay = spacecraftDvTotalMps(budget, 'one-way');
+    const sampleReturn = spacecraftDvTotalMps(budget, 'sample-return');
+    assert.equal(oneWay, budget.rendezvousMps + budget.stationkeepingMps + budget.marginMps);
+    assert.equal(sampleReturn, oneWay + (budget.departureMps ?? 0));
+  }
+});
+
 test('deliveredMassKg rejects corrupted budgets and invalid modes with INVALID_INPUT, never BEYOND_CURVE or a number', async () => {
   const {
     BEYOND_CURVE,
