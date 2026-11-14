@@ -5,7 +5,7 @@
 //   node report.mjs
 //
 // Reads from <scratch>/lr3: mutants.json, baseline.json, order.json, results-*.ndjson, and, when
-// present, pruning-check.ndjson (a sample of survivors re-run against ALL importing tests).
+// present, pruning-check*.ndjson (a sample of survivors re-run against ALL importing tests).
 // Reads survivor-notes.json next to this script when present (hand-written, per-mutant notes).
 // Nothing is typed by hand into the generated files except what survivor-notes.json carries.
 import fs from 'node:fs';
@@ -29,7 +29,7 @@ const results = new Map();
 for (const name of fs.readdirSync(dir).filter((f) => /^results-.*\.ndjson$/.test(f)).sort()) {
   for (const r of readNdjson(path.join(dir, name))) results.set(r.id, r);
 }
-const pruningCheck = fs.existsSync(path.join(dir, 'pruning-check.ndjson')) ? readNdjson(path.join(dir, 'pruning-check.ndjson')) : [];
+const pruningCheck = fs.readdirSync(dir).filter((f) => /^pruning-check.*\.ndjson$/.test(f)).sort().flatMap((f) => readNdjson(path.join(dir, f)));
 
 const TIER_NAMES = {
   1: 'honesty layer, exported functions', 2: 'math layer, exported functions', 3: 'plumbing, exported functions',
@@ -212,7 +212,7 @@ const block = (r, n) => {
   } else {
     out.push(`Layer ${r.layer}. No discovered test file imports this module.`);
   }
-  const note = notes[r.id];
+  const note = notes[r.id] ?? notes[`fn:${r.file}::${r.function}`] ?? notes[`file:${r.file}`];
   out.push(`Suggested test: ${note?.suggestion ?? SUGGESTION[r.operator]}`);
   if (note?.assessment) out.push(`Assessment: ${note.assessment}`);
   out.push('');
