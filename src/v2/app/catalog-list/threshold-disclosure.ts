@@ -18,7 +18,7 @@ export function lowC3ThresholdText(feasibleC3MaxKm2S2: number): string {
     refusal: '—',
     includeGrid: false,
   });
-  return `LOW C3: below ${formattedThreshold} (the screening threshold)`;
+  return `LOW C3: at or below ${formattedThreshold} (the screening threshold)`;
 }
 
 export function renderLowC3ThresholdLegend(feasibleC3MaxKm2S2: number | null): VNode | null {
