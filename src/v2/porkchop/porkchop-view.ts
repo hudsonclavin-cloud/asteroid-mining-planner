@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../core/units.js';
 import { formatJdC3GridLabel } from '../boundary/c3-grid.js';
 import {
@@ -658,6 +658,13 @@ export function PorkchopView(props: PorkchopViewProps) {
   const [familyGrids, setFamilyGrids] = useState<DualFamilyGrids | null>(null);
   const familyToggleEnabled = props.showFamilyToggle === true;
   const launchSite = props.launchSite ?? CAPE_CANAVERAL;
+  const pinCell = useCallback(
+    (cell: PorkchopWorkerCell | null) => {
+      props.onPinnedCellChange?.(cell === null ? null : buildPinnedReadout(cell, launchSite));
+      setPinnedCell(cell);
+    },
+    [launchSite, props.onPinnedCellChange],
+  );
   const nearZeroC3HiddenCount = useMemo(
     () =>
       cells === null
@@ -1008,7 +1015,7 @@ export function PorkchopView(props: PorkchopViewProps) {
     const handleClick = (event: MouseEvent) => {
       const cell = getCellAtCoordinates(event, canvas, cells, props.gridParams);
       if (cell !== null) {
-        setPinnedCell(cell);
+        pinCell(cell);
       }
     };
 
@@ -1016,7 +1023,7 @@ export function PorkchopView(props: PorkchopViewProps) {
     return () => {
       canvas.removeEventListener('click', handleClick);
     };
-  }, [cells, props.gridParams]);
+  }, [cells, pinCell, props.gridParams]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1058,9 +1065,9 @@ export function PorkchopView(props: PorkchopViewProps) {
       props.gridParams,
     );
     if (cell !== null) {
-      setPinnedCell(cell);
+      pinCell(cell);
     }
-  }, [cells, props.gridParams, props.validatedTarget]);
+  }, [cells, pinCell, props.gridParams, props.validatedTarget]);
 
   const pinnedReadout = useMemo(
     () => (pinnedCell === null ? null : buildPinnedReadout(pinnedCell, launchSite)),
@@ -1136,8 +1143,8 @@ export function PorkchopView(props: PorkchopViewProps) {
     ) {
       return;
     }
-    setPinnedCell(globalMinimumCell);
-  }, [globalMinimumCell, props.pinGlobalMinimumRequestId]);
+    pinCell(globalMinimumCell);
+  }, [globalMinimumCell, pinCell, props.pinGlobalMinimumRequestId]);
 
   return h(
     'div',
@@ -1177,6 +1184,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                 { style: 'display:flex;align-items:center;gap:8px;cursor:pointer;opacity:0.95;' },
                 h('input', {
                   type: 'radio',
+                  id: `porkchop-family-${value}`,
                   name: 'porkchop-family-mode',
                   value,
                   checked: familyMode === value,
@@ -1201,6 +1209,8 @@ export function PorkchopView(props: PorkchopViewProps) {
         },
         h('input', {
           type: 'checkbox',
+          id: 'porkchop-show-contours',
+          name: 'porkchop-show-contours',
           checked: showContours,
           onInput: () => setShowContours((current) => !current),
         }),
@@ -1213,6 +1223,8 @@ export function PorkchopView(props: PorkchopViewProps) {
         },
         h('input', {
           type: 'checkbox',
+          id: 'porkchop-hide-near-zero-c3',
+          name: 'porkchop-hide-near-zero-c3',
           checked: hideNearZeroC3,
           onInput: () => {
             const next = !hideNearZeroC3;
@@ -1231,6 +1243,8 @@ export function PorkchopView(props: PorkchopViewProps) {
             },
             h('input', {
               type: 'checkbox',
+              id: 'porkchop-show-m1-contours',
+              name: 'porkchop-show-m1-contours',
               checked: showM1Contours,
               disabled: m1Cells === null,
               onInput: () => setShowM1Contours((current) => !current),
@@ -1255,7 +1269,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                   props.gridParams,
                 );
                 if (cell !== null) {
-                  setPinnedCell(cell);
+                  pinCell(cell);
                 }
               },
             },
@@ -1368,7 +1382,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                             'span',
                             null,
                             launchSite.dlaCeilingDeg >= 90
-                              ? `max direct declination (ceiling): none from ${launchSite.name}; no dogleg band, corridor covers all declinations from ${launchSite.name}`
+                              ? `max direct declination (ceiling): none - direct launches from ${launchSite.name} reach every declination (minimum inclination ${formatNumber(launchSite.iMinDeg, 1)}°)`
                               : `max direct declination (ceiling): ${formatNumber(launchSite.dlaCeilingDeg, 1)}° from ${launchSite.name}`,
                           ),
                         ),
@@ -1404,7 +1418,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                       {
                         type: 'button',
                         style: 'display:block;width:100%;text-align:left;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:#111827;color:#eef2ff;font:inherit;font-size:13px;line-height:1.5;cursor:pointer;',
-                        onClick: () => setPinnedCell(entry.cell),
+                        onClick: () => pinCell(entry.cell),
                       },
                       h('div', { style: 'font-weight:600;margin-bottom:2px;' }, label),
                       h(

@@ -35,6 +35,7 @@ import {
   type CameraOrbitTween,
 } from '../../render/index.js';
 import { loadStarCatalog } from '../../boundary/star-catalog-tycho2.js';
+import { loadTierAssignments, type FidelityTier } from '../../boundary/tier-assignments.js';
 import {
   createLambertScreenIndex,
   loadLambertScreenCacheAsync,
@@ -70,6 +71,7 @@ import {
   isSlice9RuntimeEllipticBody,
   normalizeSlice9BodyForRuntime,
 } from './slice9-runtime-asteroids.js';
+import { buildLightTimeReadout, type LightTimeReadout } from './light-time.js';
 
 const AU_M = 149_597_870_700;
 const OVERVIEW_ORBIT_RADIUS_M = 7 * AU_M;
@@ -831,10 +833,11 @@ function getMinOrbitRadiusForFocus(
 }
 
 export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> {
-  const [allStates, asteroidCatalog, starCatalog] = await Promise.all([
+  const [allStates, asteroidCatalog, starCatalog, tierAssignments] = await Promise.all([
     loadSolarSystemStatesBrowser(),
     loadSlice9NeaCatalogFixture(),
     loadStarCatalog(),
+    loadTierAssignments(),
   ]);
   const stateSeries = new Map<BodyId, CanonicalState[]>();
   const asteroidBodies = Object.values(asteroidCatalog.asteroids).map(normalizeSlice9BodyForRuntime);
@@ -975,6 +978,10 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
   const focusReadoutLine = document.createElement('div');
   focusReadoutLine.setAttribute('data-testid', 'focus-readout-line');
   timeStatusHud.appendChild(focusReadoutLine);
+
+  const lightTimeReadoutLine = document.createElement('div');
+  lightTimeReadoutLine.setAttribute('data-testid', 'light-time-readout-line');
+  timeStatusHud.appendChild(lightTimeReadoutLine);
 
   const frameReadoutLine = document.createElement('div');
   frameReadoutLine.setAttribute('data-testid', 'frame-readout-line');
@@ -1707,6 +1714,36 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     updateVisibleState(nowMs);
   }
 
+  function lightTimeReadoutForFocus(target: FocusTarget, tdbSeconds: number): LightTimeReadout {
+    if (target === OUTER_SYSTEM_OVERVIEW) {
+      return buildLightTimeReadout(null, null, 'no-selection');
+    }
+
+    let tier: FidelityTier | null = null;
+    let targetPosition: Position3;
+    if (isAsteroidFocusTarget(target)) {
+      const asteroid = getAsteroidBody(target);
+      tier = tierAssignments.get(asteroid.designation)?.tier ?? null;
+      if (tier === 'L0') {
+        return buildLightTimeReadout(null, tier, 'ok');
+      }
+      if (!isSlice9RuntimeEllipticBody(asteroid)) {
+        return buildLightTimeReadout(null, tier, 'prop-fail');
+      }
+      targetPosition = getAnchorPosition(target, tdbSeconds);
+    } else {
+      targetPosition = getHeliocentricState(target, tdbSeconds).positionM;
+    }
+
+    const earthPosition = getHeliocentricState('earth', tdbSeconds).positionM;
+    const distanceM = Math.hypot(
+      targetPosition.x - earthPosition.x,
+      targetPosition.y - earthPosition.y,
+      targetPosition.z - earthPosition.z,
+    );
+    return buildLightTimeReadout(distanceM, tier, 'ok');
+  }
+
   function updateVisibleState(nowMs = performance.now()): void {
     requestAsteroidPropagation(currentTdbSeconds);
     const anchorPosM = getCurrentOrbitCenter(nowMs);
@@ -1842,6 +1879,7 @@ export async function mountSolarSystem(mount: HTMLElement): Promise<() => void> 
     outOfCoverageWarning.textContent = ephemerisStatus.warningText ?? '';
     outOfCoverageWarning.style.display = ephemerisStatus.warningText === null ? 'none' : 'block';
     trackingStatus.textContent = ephemerisStatus.trackingText;
+    lightTimeReadoutLine.textContent = lightTimeReadoutForFocus(activeFocusBody, currentTdbSeconds).text;
     // B2 T2-3: target + camera distance. orbitRadius is the camera's distance
     // to the focus anchor in meters (scene units are meters — B2-1 recon).
     focusReadoutLine.textContent =

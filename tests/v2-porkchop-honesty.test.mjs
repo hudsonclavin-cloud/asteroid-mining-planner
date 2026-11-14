@@ -424,3 +424,55 @@ test('T3 Porkchop extremes and pinned readout flag, hide, and restore the same C
     await flushEffects();
   });
 });
+
+test('K7 pin callback publishes the newly pinned cell while replacement computation is pending', async () => {
+  const { PorkchopView } = await loadPorkchopView();
+  await withFakeDom(async (document) => {
+    const cellsA = [
+      makeCell(gridParams.depStartJD, gridParams.tofMinDays, 1.1),
+      makeCell(gridParams.depStartJD, gridParams.tofMaxDays, 1.2),
+      makeCell(gridParams.depEndJD, gridParams.tofMinDays, 1.3),
+      makeCell(gridParams.depEndJD, gridParams.tofMaxDays, 1.4),
+    ];
+    const cellsB = cellsA.map((cell) => ({
+      ...cell,
+      branches: [{ ...cell.branches[0], c3: cell.branches[0].c3 + 10 }],
+    }));
+    let resolveReplacement;
+    const replacement = new Promise((resolve) => {
+      resolveReplacement = resolve;
+    });
+    const events = [];
+    const props = {
+      client: { computeGrid: async () => ({ cells: cellsA, compute_ms: 1 }) },
+      bodyId: 'asteroid-99942',
+      bodyLabel: 'Apophis',
+      bodyElements,
+      gridParams,
+      M: 0,
+      onPinnedCellChange: (readout) => events.push(readout),
+    };
+    const mount = document.createElement('div');
+    render(h(PorkchopView, props), mount);
+    await flushEffects();
+    const canvas = findElements(mount, 'canvas')[0];
+    assert.ok(canvas);
+
+    canvas.dispatchEvent({ type: 'click', clientX: 1, clientY: 1 });
+    await flushEffects();
+    assert.equal(events.at(-1)?.c3, 1.2);
+
+    render(h(PorkchopView, {
+      ...props,
+      client: { computeGrid: async () => replacement },
+    }), mount);
+    await Promise.resolve();
+    canvas.dispatchEvent({ type: 'click', clientX: 1, clientY: 419 });
+    assert.equal(events.at(-1)?.c3, 1.1);
+
+    resolveReplacement({ cells: cellsB, compute_ms: 2 });
+    await flushEffects();
+    render(null, mount);
+    await flushEffects();
+  });
+});

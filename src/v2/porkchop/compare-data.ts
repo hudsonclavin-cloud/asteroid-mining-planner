@@ -33,7 +33,7 @@ import type {
   SegmentGridCell,
   SegmentWindowsResult,
 } from './segment-windows.js';
-import { deliveredMassKg, payloadAtC3 } from './launch-vehicles.js';
+import { deliveredMassKg, payloadAtC3, spacecraftDvTotalMps } from './launch-vehicles.js';
 import type {
   DeliveredMassResult,
   LaunchVehicle,
@@ -358,11 +358,7 @@ export function computeCompareData(
     const bestC3 = segmentation.bestPractical?.c3 ?? null;
     const payloadAtBestC3: PayloadAtC3Result | null =
       bestC3 === null ? null : payloadAtC3(params.vehicle, bestC3);
-    const dvBudgetMps =
-      params.dvBudget.rendezvousMps +
-      params.dvBudget.stationkeepingMps +
-      params.dvBudget.marginMps +
-      (params.missionMode === 'sample-return' ? params.dvBudget.departureMps ?? 0 : 0);
+    const dvBudgetMps = spacecraftDvTotalMps(params.dvBudget, params.missionMode ?? 'one-way');
     const deliveredMass: DeliveredMassResult | null =
       bestC3 === null
         ? null

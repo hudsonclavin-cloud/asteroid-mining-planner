@@ -5,6 +5,8 @@ import {
 } from '../core/constants/near-zero-c3.js';
 
 export const NEAR_ZERO_C3_BADGE_TEXT = 'near-zero C3';
+export const NEAR_ZERO_C3_MASS_CAVEAT =
+  'C3 is near zero here: the payload and delivered mass are mathematically valid but operationally meaningless.';
 
 export function nearZeroC3HiddenNotice(count: number): string {
   return `near-zero-C3 window hidden (${count})`;

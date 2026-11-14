@@ -207,6 +207,40 @@ export function deterministicMarginMps(...deterministicManeuversMps: readonly nu
   );
 }
 
+export interface DeterministicMarginPolicy {
+  readonly marginMps: number;
+  readonly baseText: string;
+}
+
+/** One mode switch owns both the deterministic margin base and its copy. */
+export function deterministicMarginPolicy(
+  rendezvousMps: number,
+  departureMps: number,
+  mode: MissionMode,
+): DeterministicMarginPolicy {
+  switch (mode) {
+    case 'sample-return':
+      return {
+        marginMps: deterministicMarginMps(rendezvousMps, departureMps),
+        baseText: 'rendezvous and departure ΔV',
+      };
+    case 'one-way':
+      return {
+        marginMps: deterministicMarginMps(rendezvousMps),
+        baseText: 'rendezvous ΔV',
+      };
+  }
+}
+
+/** Full spacecraft budget used by delivered-mass and compare provenance. */
+export function spacecraftDvTotalMps(
+  budget: SpacecraftDvBudget,
+  mode: MissionMode,
+): number {
+  const departureMps = mode === 'sample-return' ? (budget.departureMps ?? 0) : 0;
+  return budget.rendezvousMps + budget.stationkeepingMps + budget.marginMps + departureMps;
+}
+
 export function payloadAtC3(vehicle: LaunchVehicle, c3: number): PayloadAtC3Result {
   if (!Number.isFinite(c3)) {
     return NON_FINITE_C3;
@@ -277,9 +311,7 @@ export function deliveredMassKg(
     return INVALID_INPUT;
   }
 
-  const departureMps = mode === 'sample-return' ? (budget.departureMps ?? 0) : 0;
-  const dvSpacecraftMps =
-    budget.rendezvousMps + budget.stationkeepingMps + budget.marginMps + departureMps;
+  const dvSpacecraftMps = spacecraftDvTotalMps(budget, mode);
 
   if (!Number.isFinite(dvSpacecraftMps)) {
     return INVALID_INPUT;

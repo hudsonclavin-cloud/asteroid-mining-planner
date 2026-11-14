@@ -122,3 +122,18 @@ test('C3 grid label sites use derived formatters and contain no literal dimensio
     `literal grid labels (file:line: literal):\n${literalFailures.join('\n')}`,
   );
 });
+
+test('INV-026 departure-end date is owned by grid-span.ts', () => {
+  const offenders = [];
+  for (const filePath of listSourceFiles(v2Root)) {
+    const relative = path.relative(repoRoot, filePath).replaceAll(path.sep, '/');
+    if (relative === 'src/v2/porkchop/grid-span.ts' || /\.test\.[^.]+$/.test(relative)) {
+      continue;
+    }
+    const source = fs.readFileSync(filePath, 'utf8');
+    if (source.includes('2040-01-01')) {
+      offenders.push(relative);
+    }
+  }
+  assert.deepEqual(offenders, [], `literal 2040-01-01 outside grid-span.ts/tests: ${offenders.join(', ')}`);
+});

@@ -303,3 +303,14 @@ test('catalog C3 grid label is derived from cache metadata and its tooltip carri
   assert.ok(!changedTexts.some((text) => text.includes('(cached screen: 7 d \u00D7 30 d steps)')));
   assert.equal(changedGrid.screen.minC3, data.screen.minC3, 'label change does not change C3');
 });
+
+test('CK-12 catalog C3 uses the shared three-significant-figure rule across its display range', async () => {
+  const modules = await loadModules();
+  const base = committedRow(modules, '433', 'AMO');
+  for (const value of [55.5, 2.234, 19.2, 0.106, 0.00001, 100000]) {
+    const data = { ...base, screen: { ...base.screen, minC3: value } };
+    const texts = collectTexts(modules.renderRow(data, 0));
+    const expected = `C3 ${modules.formatC3(value)} km²/s² (cached screen: 7 d \u00D7 30 d steps)`;
+    assert.ok(texts.includes(expected), `${value} must render as ${modules.formatC3(value)}: ${JSON.stringify(texts)}`);
+  }
+});

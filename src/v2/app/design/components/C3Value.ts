@@ -17,6 +17,8 @@ export interface C3ValueProps {
   readonly grid: GridDescriptor;
   readonly refusal: string;
   readonly prefix?: string;
+  /** Some surrounding prose already names the source cell; keep the typed grid path without repeating it. */
+  readonly includeGrid?: boolean;
 }
 
 export function formatC3ValueText(value: number | null, unit: string): string {
@@ -35,11 +37,11 @@ function formatGridDescriptor(grid: GridDescriptor): string {
 }
 
 export function C3Value(props: C3ValueProps): string {
-  const gridText = formatGridDescriptor(props.grid);
+  const suffix = props.includeGrid === false ? '' : ` (${formatGridDescriptor(props.grid)})`;
   if (props.value === null) {
     const prefix = props.prefix ? `${props.prefix} ` : '';
-    return `${prefix}${props.refusal} ${props.unit} (${gridText})`;
+    return `${prefix}${props.refusal}${props.unit ? ` ${props.unit}` : ''}${suffix}`;
   }
   const prefix = props.prefix ? `${props.prefix} ` : '';
-  return `${prefix}${formatC3ValueText(props.value, props.unit)} (${gridText})`;
+  return `${prefix}${formatC3ValueText(props.value, props.unit)}${suffix}`;
 }

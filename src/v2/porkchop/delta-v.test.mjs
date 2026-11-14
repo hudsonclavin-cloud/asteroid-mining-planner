@@ -72,5 +72,5 @@ test('D10 labels name margin bases and preserve the displayed value expressions'
   assert.ok(source.includes('Margin (\${(DV_MARGIN_FRACTION * 100).toFixed(0)}% of full \\u0394V stack)'));
   assert.ok(source.includes('departure = arrival v\u221e under the symmetric-return assumption'));
   assert.ok(source.includes('stackState.breakdown.marginKmps.toFixed(3)'));
-  assert.ok(source.includes('costCardState.marginMps.toFixed(0)'));
+  assert.ok(source.includes('formatMps(costCardState.marginMps)'));
 });

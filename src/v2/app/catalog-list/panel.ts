@@ -39,6 +39,7 @@ import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-as
 import { TIER_LEGEND } from '../../porkchop/tier-disclosure.js';
 import { A11Y_OVERRIDES } from '../design/a11y-overrides.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
+import { renderLowC3ThresholdLegend } from './threshold-disclosure.js';
 
 export interface RenderPanelOptions {
   readonly onOpenPorkchop?: ((bodyId: string) => void) | undefined;
@@ -61,6 +62,7 @@ const hideNearZeroC3Signal = signal(false);
 const screeningIndexSignal = signal<ReturnType<typeof createLambertScreenIndex> | null>(null);
 const screeningGridSignal = signal<CachedC3Grid | null>(null);
 const screeningWindowSignal = signal<ScreeningWindow | null>(null);
+const screeningThresholdSignal = signal<number | null>(null);
 const tierAssignmentsSignal = signal<ReadonlyMap<string, TierAssignment> | null>(null);
 const tierLoadStateSignal = signal<'loading' | 'loaded' | 'failed'>('loading');
 const ABOUT_ROUTE = '../about/';
@@ -77,6 +79,7 @@ loadLambertScreenCacheAsync()
     screeningIndexSignal.value = createLambertScreenIndex(cache);
     screeningGridSignal.value = cachedC3GridFromMetadata(cache.metadata);
     screeningWindowSignal.value = cache.metadata.screeningWindow;
+    screeningThresholdSignal.value = cache.metadata.feasibleC3MaxKm2S2;
   })
   .catch((error) => {
     console.error('Failed to load Lambert screen cache:', error);
@@ -240,6 +243,7 @@ export function disposePanel(): void {
 export function trackPanelSignals(): void {
   filteredRowsSignal.value;
   screeningWindowSignal.value;
+  screeningThresholdSignal.value;
   tierAssignmentsSignal.value;
   tierLoadStateSignal.value;
   layoutModeSignal.value;
@@ -288,6 +292,7 @@ export function renderTierLegend(): VNode {
         h('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, entry.line),
       ),
     ),
+    renderLowC3ThresholdLegend(screeningThresholdSignal.value),
   );
 }
 
@@ -757,6 +762,8 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
             },
             h('input', {
               type: 'checkbox',
+              id: 'catalog-hide-near-zero-c3',
+              name: 'catalog-hide-near-zero-c3',
               checked: hideNearZeroC3,
               onInput: () => {
                 hideNearZeroC3Signal.value = !hideNearZeroC3Signal.value;
@@ -780,6 +787,8 @@ export function renderPanel(options: RenderPanelOptions = {}): VNode {
             h('span', { style: { color: '#888', fontVariantNumeric: 'tabular-nums' } }, `${Math.round(starfieldBrightness * 100)}%`),
             h('input', {
               type: 'range',
+              id: 'catalog-starfield-brightness',
+              name: 'catalog-starfield-brightness',
               min: '0',
               max: '1',
               step: '0.05',

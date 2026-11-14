@@ -1,7 +1,7 @@
 # STATUS.md — Aster Project Current State
 
 > Updated at the end of each session. Keep it short; agents read this before acting.
-> **Refreshed 2026-11-02 from command output on branch `s19-5-record`; this record commits STATUS one commit after `fa821cb`.**
+> **Refreshed 2026-11-13 from command output on branch `s20-text-sweep`; this record commits STATUS one commit after `1691d96`.**
 > **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`); truth-refreshed 2026-08-07 (`S-HYGIENE-2026-08-07-A`); truth-refreshed 2026-08-10 after Front A close; truth-refreshed 2026-08-12 after the Front B batch run (`S-S17-FRONTB-BATCH-2026-08-11-A`); truth-refreshed 2026-08-13 after Batch 2 ship (`S-S17-BATCH2-2026-08-12-A`).** If HEAD does not match the table below,
 > update this file before believing it. A stale STATUS forced a session-start stop-gate once
 > already (audit L3-1) — that is why this section exists.
@@ -24,25 +24,23 @@ the STATUS commit itself):
 ```text
 git rev-parse HEAD
 git rev-parse origin/main
-git ls-files -s .githooks
-git rev-list --count fa821cb..HEAD
+git rev-list --count origin/main..HEAD
 Get-ChildItem -Path docs/v2 -Directory | ForEach-Object { rg -o "(?:solarSystemV2|porkchopV2|compareV2|aboutV2)-[A-Za-z0-9_-]+\.js" (Join-Path $_.FullName 'index.html') } | Sort-Object -Unique
 rg -n "legacy|noindex|V2|v2" docs/index.html docs/legacy/index.html
-npm run verify
 ```
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `fa821cb` | Read from `git rev-parse origin/main`; no push was performed by this run |
-| Local HEAD before this STATUS commit (branch `s19-5-record`) | `fa821cb` | Slice 19.5 close record; this STATUS commit intentionally lands one commit after it |
+| origin/main | `0d31cda` | Read from `git rev-parse origin/main`; no push was performed by this run |
+| Local HEAD before this STATUS commit (branch `s20-text-sweep`) | `1691d96` | Slice 20 W1-W9 sweep commits are landed; this STATUS commit intentionally pins the previous tip |
 
-**Measured pin lag (2026-11-02):** `git rev-list --count fa821cb..HEAD` was 0 before this edit; this STATUS commit intentionally makes the branch one commit ahead. STATUS commits LAST in any sequence.
-**Push state:** origin/main is at `fa821cb`. Branch `s19-5-record` is local-only and NOT merged. No push was performed by this run. Hudson's handoff is to merge this branch fast-forward-only after the protected founding-doc record is committed.
+**Measured pin lag (2026-11-13):** `git rev-list --count 0d31cda..1691d96` was 14 before this edit; this STATUS commit intentionally makes the branch 15 commits ahead. STATUS commits LAST in any sequence.
+**Push state:** origin/main is at `0d31cda`. Branch `s20-text-sweep` is local-only and NOT merged. No push was performed by this run. Hudson's handoff is to commit the protected edits, complete W11/W12, then merge and push only after the handoff gate is satisfied.
 **Rollback for this run:** no rollback ref was created and no existing refs were changed by this record run.
-**Deploy boundary:** the checked-in `docs/` tree on main is the deploy payload. The command output lists entry bundles `aboutV2-ca_cBGJA.js`, `compareV2-CGn7MKlJ.js`, `porkchopV2-4fKCXVgU.js`, and `solarSystemV2-GybKye0-.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes. CI state: **confirm in Actions**.
+**Deploy boundary:** the checked-in `docs/` tree is the deploy payload. The command output lists entry bundles `aboutV2-DL_Fcx9X.js`, `compareV2-F3OpNprt.js`, `porkchopV2-V_mxVt_g.js`, and `solarSystemV2-C6dR6zLr.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes. CI state: local W11 verification is pending; GitHub Actions has not run for this branch.
 Solar-system ephemeris window 2026-11-01..2027-03-31 TDB; refresh due before 2027-03-31 (S20_00)
 **Root/legacy boundary:** `docs/index.html` redirects to `/v2/solar-system/`; `docs/legacy/index.html` has `noindex, nofollow` and the Slice 19.5 legacy banner linking to the current v2 tool.
-**Baseline verification (2026-11-02):** `npm run verify` passed 107/107 files and 355/355 tests, with 0 failures and 0 load-timeouts.
+**Baseline verification (2026-11-13, before the S20 text sweep):** `npm run verify` passed 109/109 files and 363/363 tests, with 0 failures and 0 load-timeouts.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -53,6 +51,7 @@ Solar-system ephemeris window 2026-11-01..2027-03-31 TDB; refresh due before 202
 | Track | Slice | State |
 |---|---|---|
 | Mission planning | **19.5** (Honest Front Door) | **CLOSED 2026-11-02**. F2 remains PARTIAL. The open ephemeris item is separate: common coverage ends 2026-10-16 TDB and the root reports NOT LIVE after that date. |
+| Mission planning | **20** (Front A text sweep) | **IN PROGRESS** on `s20-text-sweep`; W1-W9 landed through `1691d96`; W6 core constant and W9 protected annotations remain unstaged. W10 is this record; W11 verification/build and W12 evidence remain. |
 | Mission planning | 9 (catalog) · 10 (Lambert, C3) | COMPLETE |
 | Mission planning | 11 (porkchop + ΔV) · 12 (DLA overlay) | COMPLETE + DEPLOYED |
 | Mission planning | 13 (mission cost card) | COMPLETE + DEPLOYED (showcase figures labelled unreproducible-pending-regeneration, L3-6) |
@@ -310,7 +309,7 @@ The ui-overlay porkchop **also** passes `M: 1` (`app/ui-overlay/overlay.ts:339`)
 
 **F1 (LOW) — izzo `lambert()` accepts negative time-of-flight and returns `ok:true` with garbage.** `tof = −100 d` yields x = −1.743, |v1| = 62.4 km/s. Two gaps compound: no `tof > 0` guard (`lambertMultiRev` has one), and `tof.ts` `compute_psi` silently returns 0 for x < −1, outside the solver's domain, letting the iteration "converge" on a meaningless root. **Reachability: unreachable from every shipped path** — the grid's TOF axis starts at 182.5 d, the cache at 182 d, both linspace-positive, and the porkchop calls `lambertMultiRev`, which guards. No committed measurement used a non-positive TOF. **F2 (LOW) — izzo mislabels invalid input** (NaN, zero, ∞ TOF) as `no_convergence` rather than an invalid-input reason; never returns `ok:true`, so it is a taxonomy defect, not a correctness one. **Neither is fixed** — math-layer changes need a ruling and a multi-agent audit, and repairing mid-audit would destroy the evidence of what shipped.
 
-**Latent hazards recorded, not defects:** classical-element ill-conditioning at i≈0 ∧ ν≈180° (round-trip up to 7.2 km, unacknowledged in code, eight orders below the drift floor and guarded by every measurement's per-body sanity gate); the `GM_SUN` comment says "IAU 2015 nominal" but carries the DE430 value — the DE441 mismatch behind the Horizons truth is 1.7e-10 relative, ≈15 km over 19 years, negligible, but the label is wrong; `cartesianToElements` passes NaN through silently; the colormap paints an `ok` cell with null C3 as bright-MAX; `console.debug` fires per no-solution cell.
+**Latent hazards recorded, not defects:** classical-element ill-conditioning at i≈0 ∧ ν≈180° (round-trip up to 7.2 km, unacknowledged in code, eight orders below the drift floor and guarded by every measurement's per-body sanity gate); the `GM_SUN` comment says "IAU 2015 nominal" but carries the DE405-era value — the DE441 mismatch behind the Horizons truth is 1.7e-10 relative, ≈15 km over 19 years, negligible, but the label is wrong; `cartesianToElements` passes NaN through silently; the colormap paints an `ok` cell with null C3 as bright-MAX; `console.debug` fires per no-solution cell.
 
 **FRONT C SCOPE — the denominator inverts when computed with δv instead of distance.** The prior probe reported 2,644 bodies (6.3%) within 5M km and read as "a minority annotation." Recomputed on a wider CAD pull (dist-max 0.3 AU, `body=ALL`, 49,629 records) with the physical criterion — δv = 2·v·sin(atan(μ/(d·v²))), material when δv × (time remaining to 2046-01-01) reaches the regime where argmins were measured to move — **10,173 catalog bodies (24.3%) reach the ≥10⁶ km regime and 15,459 (36.9%) exceed the 10⁵ km planet floor.** Front C is not a minority annotation.
 
@@ -555,7 +554,7 @@ separate audit remain the merge gate.
 | C10 | Propagate baked `dirty` into MCP SourceRefs — protected-path dispatch, next package release (= DD-7, founding §26.7). |
 | C11 | `.claude/agents` legacy routing (audit L1-1) — see remediation report Phase 6 disposition. |
 | C13 | OQ-18-4: izzo `lambert()` negative/invalid-TOF hardening (F1/F2, LOW, unreachable on every shipped path) — bundle with the next math-layer change; protected path. |
-| C14 | OQ-18-5: the `GM_SUN` comment says "IAU 2015 nominal" on a DE430 value — one-line docs fix under `src/v2/core/`, needs `ASTER_PROTECTED_OK` + a Hudson dispatch. |
+| C14 | OQ-18-5: the `GM_SUN` comment says "IAU 2015 nominal" on a DE405-era value — one-line docs fix under `src/v2/core/`, needs `ASTER_PROTECTED_OK` + a Hudson dispatch. |
 | C15 | `tools/run-tests.mjs` `parseCounts` takes the FIRST `pass N` / `fail N` match in a child's interleaved stdout+stderr; one 2026-09-21 run's headline read 302 while the per-file `ℹ pass` summaries summed to 303 (re-run: 303). Anchor the regex to the `ℹ pass` summary line, or take the last match. Headline only — the per-file exit codes and accounting were correct. |
 | C16 | **Label collision: three different findings are named "F2".** (1) `SLICE_17_FOUNDING.md:716-719` — cache and view screen different spans, both labelled "2026-2040" (cache to 2040-12-31, view to 2040-01-01); still unfixed. (2) `STATUS.md` math-layer audit paragraph — "F2 (LOW) — izzo mislabels invalid input (NaN, zero, infinity TOF) as `no_convergence`"; carried as OQ-18-4 / C13. (3) `STATUS.md` Cleanup `C7` — the Slice 16 "F2 negative-control transcript". Cite them as **S17-F2 (span mismatch)**, **audit-F2 (izzo taxonomy)** and **S16-F2 (negative control)**; a bare "F2" is ambiguous across these three. |
 

@@ -12,7 +12,7 @@ import {
 import {
   deliveredMassKg,
   DETERMINISTIC_MARGIN_FRACTION,
-  deterministicMarginMps,
+  deterministicMarginPolicy,
   isBeyondCurve,
   isInvalidInput,
   isNonFiniteC3,
@@ -26,11 +26,12 @@ import {
   type SpacecraftDvBudget,
 } from '../../porkchop/launch-vehicles.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
-import { formatC3ValueText } from '../design/components/C3Value.js';
+import { C3Value, type GridDescriptor } from '../design/components/C3Value.js';
 import { FeasibilityBadge } from '../design/components/FeasibilityBadge.js';
 import { NearZeroC3Badge } from '../design/components/NearZeroC3Badge.js';
 import {
   isNearZeroC3Degenerate,
+  NEAR_ZERO_C3_MASS_CAVEAT,
   nearZeroC3HiddenNotice,
 } from '../../porkchop/near-zero-c3.js';
 import { createPorkchopClient, type PorkchopClient } from '../../porkchop/porkchop-client.js';
@@ -50,6 +51,7 @@ import {
 } from '../../porkchop/porkchop-view.js';
 import { loadSlice9NeaCatalogFixture } from '../solar-system/loader.js';
 import { resolveSlice9CatalogBody } from '../../boundary/resolve-catalog-body.js';
+import { displayBodyLabel } from '../../boundary/display-body-label.js';
 import { loadTierAssignments, type TierAssignment } from '../../boundary/tier-assignments.js';
 import { fullTierDisclosure, L1_CRITERION, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { supportBoundaryFor } from '../../porkchop/support-boundary.js';
@@ -147,6 +149,7 @@ interface CostCardState {
   readonly stationkeepingMps: number;
   readonly departureMps: number; // 0 in one-way mode
   readonly marginMps: number; // DEC-13-6: 5% of deterministic maneuver lines only
+  readonly marginBaseText: string;
   readonly deliveredKg: number | null; // null = beyond published curve OR invalid input
   /** True when deliveredMassKg rejected the inputs (INVALID_INPUT) — renders an
    *  em-dash + "invalid cell data", never the beyond-curve copy (audit MED-2). */
@@ -187,6 +190,10 @@ function formatKg(valueKg: number): string {
   return `${Math.round(valueKg).toLocaleString('en-US')} kg`;
 }
 
+function formatMps(valueMps: number): string {
+  return `${Math.round(valueMps).toLocaleString('en-US')} m/s`;
+}
+
 function utcMidnightToJdTdb(utcDate: string): number {
   const utcMillis = Date.parse(`${utcDate}T00:00:00Z`);
   if (!Number.isFinite(utcMillis)) {
@@ -208,6 +215,14 @@ export const GRID_PARAMS = {
   nTof: 100,
 } as const;
 const PORKCHOP_GRID_LABEL = formatJdC3GridLabel(GRID_PARAMS);
+const PORKCHOP_C3_GRID_DESCRIPTOR: GridDescriptor = {
+  spanStartUtc: PORKCHOP_DEPARTURE_START_UTC,
+  spanEndUtc: PORKCHOP_DEPARTURE_END_UTC,
+  nDep: GRID_PARAMS.nDep,
+  nTof: GRID_PARAMS.nTof,
+  departureStepLabel: `${(GRID_PARAMS.depEndJD - GRID_PARAMS.depStartJD) / (GRID_PARAMS.nDep - 1)} d`,
+  tofStepLabel: `${(GRID_PARAMS.tofMaxDays - GRID_PARAMS.tofMinDays) / (GRID_PARAMS.nTof - 1)} d`,
+};
 export const PORKCHOP_DEPARTURE_SPAN_LABEL = `${jdTdbToUtcDateString(GRID_PARAMS.depStartJD)}–${jdTdbToUtcDateString(GRID_PARAMS.depEndJD)}`;
 
 /**
@@ -386,7 +401,7 @@ function PorkchopDedicatedPage() {
 
       setPageState({
         bodyId: body.bodyId,
-        bodyLabel: body.name || body.designation,
+        bodyLabel: displayBodyLabel(body.name, body.designation),
         bodyElements: body.elements,
         client,
         tier: tierAssignments.get(body.designation) ?? null,
@@ -460,10 +475,8 @@ function PorkchopDedicatedPage() {
     const stationkeepingMps = SPACECRAFT_STATIONKEEPING_MPS;
     // DEC-13-6: margin on deterministic maneuver lines only; stationkeeping is
     // the generic allocation and is not margined.
-    const marginMps =
-      selectedMode === 'sample-return'
-        ? deterministicMarginMps(rendezvousMps, departureMps)
-        : deterministicMarginMps(rendezvousMps);
+    const marginPolicy = deterministicMarginPolicy(rendezvousMps, departureMps, selectedMode);
+    const marginMps = marginPolicy.marginMps;
     const budget: SpacecraftDvBudget =
       selectedMode === 'sample-return'
         ? { rendezvousMps, stationkeepingMps, marginMps, departureMps }
@@ -481,6 +494,7 @@ function PorkchopDedicatedPage() {
       stationkeepingMps,
       departureMps,
       marginMps,
+      marginBaseText: marginPolicy.baseText,
       deliveredKg: isBeyondCurve(delivered) || isInvalidInput(delivered) || isNonFiniteC3(delivered) ? null : delivered,
       invalidInput: isInvalidInput(delivered),
     };
@@ -682,6 +696,8 @@ function PorkchopDedicatedPage() {
           },
           h('input', {
             type: 'checkbox',
+            id: 'porkchop-dla-contours',
+            name: 'porkchop-dla-contours',
             checked: showDlaContours,
             onInput: () => setShowDlaContours((current) => !current),
           }),
@@ -707,6 +723,8 @@ function PorkchopDedicatedPage() {
                 h(
                   'select',
                   {
+                    id: 'porkchop-launch-site',
+                    name: 'porkchop-launch-site',
                     value: selectedLaunchSite.name,
                     style: 'width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,0.18);border-radius:6px;background:#0b1220;color:#eef2ff;padding:7px 8px;font:inherit;',
                     onInput: (event: Event) => {
@@ -746,6 +764,8 @@ function PorkchopDedicatedPage() {
           h(
             'select',
             {
+              id: 'porkchop-launch-vehicle',
+              name: 'porkchop-launch-vehicle',
               value: vehicleKey(selectedVehicle),
               style: CARD_PICKER_SELECT_STYLE,
               onInput: (event: Event) => {
@@ -768,6 +788,8 @@ function PorkchopDedicatedPage() {
           h(
             'select',
             {
+              id: 'porkchop-mission-mode',
+              name: 'porkchop-mission-mode',
               value: selectedMode,
               style: CARD_PICKER_SELECT_STYLE,
               onInput: (event: Event) => {
@@ -818,7 +840,7 @@ function PorkchopDedicatedPage() {
                       costCardState.invalidInput
                         ? '—'
                         : costCardState.deliveredKg === null
-                          ? 'No published payload data past this C3 — not extrapolating.'
+                          ? '— (see payload row)'
                           : formatKg(costCardState.deliveredKg),
                     ),
                     h(
@@ -865,7 +887,7 @@ function PorkchopDedicatedPage() {
                   null,
                   isNearZeroC3Degenerate(costCardState.c3) && hideNearZeroC3
                     ? nearZeroC3HiddenNotice(1)
-                    : `C3 used for payload lookup: ${formatC3ValueText(costCardState.c3, 'km²/s²')} (pinned cell)`,
+                    : `C3 used for payload lookup: ${C3Value({ value: costCardState.c3, unit: 'km²/s²', grid: PORKCHOP_C3_GRID_DESCRIPTOR, refusal: 'not computed', includeGrid: false })} (pinned cell, shown to 3 significant figures)`,
                   NearZeroC3Badge({ flagged: isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3 }),
                 ),
                 h(
@@ -884,16 +906,24 @@ function PorkchopDedicatedPage() {
                       )
                     : null,
                 ),
+                isNearZeroC3Degenerate(costCardState.c3) && !hideNearZeroC3
+                  ? h(
+                      'span',
+                      { style: 'grid-column:1 / -1;color:#fbbf24;font-size:11px;line-height:1.45;' },
+                      NEAR_ZERO_C3_MASS_CAVEAT,
+                      NearZeroC3Badge({ flagged: true }),
+                    )
+                  : null,
                 h('span', null, 'Rendezvous burn'),
-                h('span', null, `${costCardState.rendezvousMps.toFixed(0)} m/s`),
+                h('span', null, formatMps(costCardState.rendezvousMps)),
                 selectedMode === 'sample-return'
                   ? [
                       h('span', { key: 'dep-label' }, 'Departure burn (sample return)'),
-                      h('span', { key: 'dep-value' }, `${costCardState.departureMps.toFixed(0)} m/s`),
+                      h('span', { key: 'dep-value' }, formatMps(costCardState.departureMps)),
                     ]
                   : null,
                 h('span', null, 'Stationkeeping'),
-                h('span', null, `${costCardState.stationkeepingMps.toFixed(0)} m/s`),
+                h('span', null, formatMps(costCardState.stationkeepingMps)),
                 h('span', null, 'Dogleg penalty'),
                 h(
                   'span',
@@ -907,7 +937,7 @@ function PorkchopDedicatedPage() {
                         : '— (no DLA for this cell)',
                 ),
                 h('span', null, `Margin (${DETERMINISTIC_MARGIN_PERCENT}% of deterministic maneuver \u0394V; stationkeeping not margined)`),
-                h('span', null, `${costCardState.marginMps.toFixed(0)} m/s (deterministic lines)`),
+                h('span', null, `${formatMps(costCardState.marginMps)} (deterministic lines)`),
                 h('span', { style: 'font-weight:700;color:#fff;' }, 'Delivered mass'),
                 h(
                   'span',
@@ -918,12 +948,12 @@ function PorkchopDedicatedPage() {
               h(
                 'div',
                 { key: 'card-injection-split', style: 'font-size:10px;color:#93a4bf;font-style:italic;margin-top:8px;line-height:1.4;' },
-                `Launch vehicle provides injection to C3 = ${formatC3ValueText(costCardState.c3, 'km²/s²')} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
+                `Launch vehicle provides injection to C3 = ${C3Value({ value: costCardState.c3, unit: 'km²/s²', grid: PORKCHOP_C3_GRID_DESCRIPTOR, refusal: 'not computed', includeGrid: false })} — embodied in payload-at-C3, not a spacecraft ΔV line.`,
               ),
               h(
                 'div',
                 { key: 'cost-margin-explainer', style: 'font-size:11px;color:#93a4bf;line-height:1.5;margin-top:8px;' },
-                `Margin here is ${DETERMINISTIC_MARGIN_PERCENT}% of rendezvous and departure \u0394V; the \u0394V stack below applies ${STACK_MARGIN_PERCENT}% to the full stack.`,
+                `Margin here is ${DETERMINISTIC_MARGIN_PERCENT}% of ${costCardState.marginBaseText}; the \u0394V stack below applies ${STACK_MARGIN_PERCENT}% to the full stack.`,
               ),
               h(
                 'details',
@@ -984,6 +1014,11 @@ function PorkchopDedicatedPage() {
                 ),
                 h(
                   'div',
+                  { key: 'stack-injection-explainer', style: 'font-size:11px;color:#9fb0c8;line-height:1.5;margin-bottom:10px;' },
+                  'This stack counts launch injection as ΔV (a vehicle-agnostic total); the cost card above does not, because the launch-vehicle payload at this C3 already pays for injection.',
+                ),
+                h(
+                  'div',
                   {
                     key: 'stack-lines',
                     style: 'display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;font-size:12px;line-height:1.6;color:#d8e1f1;',
@@ -1027,7 +1062,7 @@ function PorkchopDedicatedPage() {
                 h(
                   'div',
                   { key: 'stack-margin-explainer', style: 'margin-top:8px;color:#9fb0c8;' },
-                  `Margin here is ${STACK_MARGIN_PERCENT}% of the full stack; the cost card applies ${DETERMINISTIC_MARGIN_PERCENT}% to rendezvous and departure \u0394V only.`,
+                  `Margin here is ${STACK_MARGIN_PERCENT}% of the full stack; the cost card applies ${DETERMINISTIC_MARGIN_PERCENT}% to ${costCardState?.marginBaseText ?? deterministicMarginPolicy(0, 0, selectedMode).baseText} only.`,
                 ),
               ],
       ),

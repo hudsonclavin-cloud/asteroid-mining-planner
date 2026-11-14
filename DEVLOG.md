@@ -679,3 +679,7 @@ This uses the same `MAT_COMP[spec]` table as the MATERIALS tab. Revenue is in Ea
 4 pre-filled burns: departure, arrival, return departure, return arrival. Each burn shows date + editable ΔV input. Total ΔV and propellant mass recalculate on each change. Mid-course corrections (MCCs) can be added. "Reset to Optimal" reverts to auto-optimizer result.
 
 *Last updated: Phase 7D complete, 2026-04-01*
+
+## Correction — Moon accuracy claim (2026-11-13; audit A5-F01/A5-F02)
+
+The Phase 12 Moon block above says the simplified circular propagator is accurate to ~1–2 degrees and describes a main-thread implementation with a documented epoch phase. The audit's production comparison does not support that accuracy claim: the legacy `physics.worker.js` implementation does not implement the documented epoch phase, and the measured phase error is approximately 93 degrees. The original history is retained; this additive correction supersedes its accuracy and implementation claims.

@@ -21,3 +21,5 @@ INGESTED but NOT YET TRANSLATED INTO DECs or founding docs. Next step: per-slice
 ## Honesty notes
 
 Each Deep Research artifact contains its own self-acknowledged gaps and uncertainty disclosures. Preserved verbatim in the PDFs and to be carried forward into founding docs rather than smoothed over. The OQ-6 discipline of "accept-and-document residuals" applies to research uncertainty as well as to measurement uncertainty.
+
+Folder names under this library are historical slice labels retained for citation stability. Do not rename them when a roadmap or slice boundary changes; cite the existing folder and explain the historical label instead.

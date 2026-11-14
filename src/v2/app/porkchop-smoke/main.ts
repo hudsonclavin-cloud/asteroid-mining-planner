@@ -4,6 +4,7 @@ import { ingestSlice2Fixture, type HorizonsFixture } from '../../boundary/horizo
 import { createPorkchopClient } from '../../porkchop/porkchop-client.js';
 import { PorkchopView } from '../../porkchop/porkchop-view.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../../core/units.js';
+import { PORKCHOP_DEPARTURE_END_UTC } from '../../porkchop/grid-span.js';
 
 const mount = document.getElementById('app');
 
@@ -63,7 +64,7 @@ async function mountPorkchopSmoke(): Promise<void> {
 
   const gridParams = {
     depStartJD: utcMidnightToJdTdb('2026-01-01'),
-    depEndJD: utcMidnightToJdTdb('2040-01-01'),
+    depEndJD: utcMidnightToJdTdb(PORKCHOP_DEPARTURE_END_UTC),
     tofMinDays: 182.5,
     tofMaxDays: 1826.25,
     nDep: 200,

@@ -10,6 +10,7 @@ import {
 import { fullTierDisclosure, legendLineFor } from '../../porkchop/tier-disclosure.js';
 import { requestFocus, selectBody, selectedBodySignal } from '../ui-store/index.js';
 import { CATALOG_LIST_ROW_HEIGHT_PX, type CatalogListRowData } from './types.js';
+import { displayBodyLabel } from '../../boundary/display-body-label.js';
 
 export interface CatalogRowRenderOptions {
   readonly onOpenPorkchop?: ((bodyId: string) => void) | undefined;
@@ -136,7 +137,7 @@ export function renderRow(
               flex: 1,
             },
           },
-          data.name || data.designation,
+          displayBodyLabel(data.name, data.designation),
         ),
         isSuppressedQualityBadge(data)
           ? null

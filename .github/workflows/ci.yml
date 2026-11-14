@@ -1,10 +1,11 @@
 name: CI
 
 # First committed workflow in this repo (Slice 14 Phase A / DEC-14-5).
-# Two gates: `typecheck` (tsc --noEmit type-regression) and `golden-numbers`
-# (pins payloadAtC3 / deliveredMassKg — the df3225f data-literal guard).
-# It is deliberately SEPARATE from the GitHub Pages deploy: it never builds
-# docs/, never deploys, never writes to the repo. Pages continues to serve from
+# Four gates: `typecheck`, `build`, `golden-numbers`, and `full-tests`.
+# `typecheck` runs tsc, `build` rebuilds the committed Pages bundle, and
+# `golden-numbers` pins payloadAtC3 / deliveredMassKg (the df3225f data-literal
+# guard). It is deliberately SEPARATE from the GitHub Pages deploy: it never
+# deploys or writes to the repo. Pages continues to serve from
 # the committed docs/ folder via built-in branch-deploy, untouched by this workflow.
 
 on:
