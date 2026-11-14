@@ -34,6 +34,7 @@ function isSuppressedQualityBadge(data: CatalogListRowData): boolean {
 
 /** Visible context for an L0 row's numeric C3 (S18 Item 3). */
 export const L0_C3_CONTEXT = 'computed from the last known orbit';
+const C3_FAMILY_CONTEXT = 'single-revolution (M=0)';
 const L0_C3_TITLE =
   'Computed from the last known orbit. This object is tier L0, so the value is not a screening-quality signal.';
 
@@ -193,8 +194,11 @@ export function renderRow(
               },
               hideNearZeroC3
                 ? hiddenNotice
-                : h('span', { title: c3GridDetails },
+                : h(
+                    'span',
+                    { title: c3GridDetails },
                     `${C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridDescriptor, refusal: '—', prefix: 'C3' })} · ${L0_C3_CONTEXT}`,
+                    ` · ${C3_FAMILY_CONTEXT}`,
                   ),
             ),
           )
@@ -215,7 +219,10 @@ export function renderRow(
               { title: c3GridDetails },
               hideNearZeroC3
                 ? hiddenNotice
-                : C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridDescriptor, refusal: '—', prefix: 'C3' }),
+                : [
+                    C3Value({ value: data.screen.minC3, unit: 'km²/s²', grid: c3GridDescriptor, refusal: '—', prefix: 'C3' }),
+                    ` · ${C3_FAMILY_CONTEXT}`,
+                  ],
             ),
           ),
     ),

@@ -1094,6 +1094,15 @@ export function PorkchopView(props: PorkchopViewProps) {
   const familyLabel = familyToggleEnabled
     ? (familyMode === 'both' ? 'M=0 + M=1' : familyMode === 'm0' ? 'M=0' : 'M=1')
     : `M=${props.M}`;
+  const c3FamilyLabel = familyToggleEnabled
+    ? (familyMode === 'both'
+      ? 'families M=0 + M=1'
+      : familyMode === 'm0'
+        ? 'single-revolution (M=0)'
+        : 'multi-revolution (M=1)')
+    : props.M === 0
+      ? 'single-revolution (M=0)'
+      : 'multi-revolution (M=1)';
   const legendGradient = useMemo(() => buildLegendGradient(), []);
 
   useEffect(() => {
@@ -1426,7 +1435,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                         { style: 'opacity:0.92;' },
                         isNearZeroC3Degenerate(entry.c3) && hideNearZeroC3
                           ? nearZeroC3HiddenNotice(nearZeroC3HiddenCount)
-                          : `${formatNumber(entry.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)}) · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}` +
+                          : `${formatNumber(entry.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)}) · ${c3FamilyLabel} · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d` +
                             (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
                               ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
                               : ''),

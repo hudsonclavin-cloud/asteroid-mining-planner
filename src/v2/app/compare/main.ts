@@ -833,7 +833,7 @@ function renderOkRow(
             : h(
                 'span',
                 { style: 'color:#eef2ff;font-weight:600;' },
-                `${formatC3WithUnits(best.c3)} (${compareGridLabel})`,
+                `${formatC3WithUnits(best.c3)} (${compareGridLabel}) · single-revolution (M=0)`,
                 NearZeroC3Badge({ flagged: echo.bestPracticalNearZeroC3Degenerate }),
               ),
           h('span', { style: NOTE_STYLE }, `departs ${best.argmin.dateIso} · ${formatDays(best.argmin.tofDays)} d transfer`),
