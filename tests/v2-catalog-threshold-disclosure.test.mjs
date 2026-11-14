@@ -3,9 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { runTsc } from '../../../../tests/helpers/run-tsc.mjs';
+import { runTsc } from './helpers/run-tsc.mjs';
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = path.join(repoRoot, '.tmp-tests', 'v2-catalog-threshold-disclosure');
 
 test('CK-13 renders the cache-derived LOW C3 screening threshold in the catalog legend', async () => {
