@@ -7,10 +7,12 @@ Results: `REPORT.md`, with numeric tables in `report-tables.md`, which `report-t
 per-workstream JSON. Per-workstream JSON sits in each workstream folder. `SCOPES.md` holds the exact `.dispatch-scope`
 contents of every commit.
 
-Run status: N0 REPRODUCED (bit-identical to the pilot). N1 100 of 100 bodies. N2 PARTIAL, 77 of 200 trajectories:
-Horizons' Earth batch returned HTTP 502 through the full back-off, and the 77 use the Earth fixture's nodes, which are
-bit-identical to Horizons at every node checked. N3 positions complete (400 epochs); cost PARTIAL, 77 of 200. N4 77 of
-77. N5 complete.
+Run status: N0 REPRODUCED (bit-identical to the pilot). N1 100 of 100 bodies. N2 200 of 200 trajectories.
+- N2's first Earth request carried 100 epochs. It returned HTTP 502 through the full back-off and was halted.
+- N2b (`n2-agreement/fetch-earth-12.mjs`, authorised by Hudson) then fetched the missing 402 Earth epochs in 34 batches of up to 12. All returned 200.
+- 76 trajectories use the Earth fixture's nodes, which are bit-identical to Horizons at every node checked.
+
+N3 covers 400 epochs; its cost covers 200 of 200. N4 covers 200 of 200. N5 is complete.
 
 ## Layout
 
@@ -39,6 +41,7 @@ node tools/slice20-research/nhats/lib/build.mjs
 node tools/slice20-research/nhats/n0-gate/gate.mjs
 node tools/slice20-research/nhats/n1-sample/sample.mjs
 node tools/slice20-research/nhats/n2-agreement/fetch-states.mjs
+node tools/slice20-research/nhats/n2-agreement/fetch-earth-12.mjs
 node tools/slice20-research/nhats/n2-agreement/agreement.mjs
 node tools/slice20-research/nhats/n3-position-error/position-error.mjs
 node tools/slice20-research/nhats/n4-entry-convention/fetch-caveats.mjs
@@ -47,8 +50,7 @@ node tools/slice20-research/nhats/n5-earth-2046/earth-2046.mjs
 node tools/slice20-research/nhats/report-tables.mjs
 ```
 
-`fetch-states.mjs` stops with an error at the Earth batch: that batch was halted, and it would request it again.
-`agreement.mjs` uses the labelled fixture-node Earth wherever no Horizons Earth state exists.
+`fetch-states.mjs` stops with an error at its 100-epoch Earth batch, which Horizons rejects. That is expected: `fetch-earth-12.mjs` fetches the Earth states the 123 out-of-span trajectories need, in batches of 12. `agreement.mjs` uses the labelled fixture-node Earth wherever no Horizons Earth state exists, which applies only to trajectories that lie entirely inside 2026–2040.
 
 To rerun from this folder's raw copies alone, gunzip `raw/*.gz` into `$NHATS_STORE/raw/` (dropping the
 `.gz` suffix) and copy `manifest.ndjson` to `$NHATS_STORE/`. Every request is then served from those

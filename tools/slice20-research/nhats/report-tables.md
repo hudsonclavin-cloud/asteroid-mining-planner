@@ -2,24 +2,24 @@
 
 ## N2 agreement on identical inputs
 
-Trajectories compared: 77 of 200 (PARTIAL; 123 skipped because the Horizons Earth batch was halted and an epoch is outside the fixture span). Entry-controlled by NHATS: 37; uncontrolled: 40. Earth source: {"fixture-node":77}. NHATS orbit_id equal to Horizons' JPL# solution: 77 of 77. Branches: outbound and return all M = 0 single (0 / 0 not M = 0).
+Trajectories compared: 200 of 200. Entry-controlled by NHATS: 92; uncontrolled: 108. Earth source: {"fixture-node":76,"horizons":123,"fixture-node+horizons":1}. NHATS orbit_id equal to Horizons' JPL# solution: 200 of 200. Branches: outbound and return all M = 0 single (0 / 0 not M = 0).
 
 | Quantity (NHATS field) | subset | n | NHATS publishes | median rel. diff | max rel. diff | max abs. diff | n rel. > 1e-3 | n beyond NHATS rounding (TDB 0h) | n beyond rounding if dates read as UTC 0h |
 |---|---|---|---|---|---|---|---|---|---|
-| C3 (c3) | all | 77 | 3 decimals, 4–5 s.f. | 1.35e-5 | 3.21e-4 | 4.98e-4 | 0 | 0 | 35 |
-| Earth-departure v-inf (v_dep_earth) | all | 77 | 3 decimals, 4–4 s.f. | 7.10e-5 | 3.28e-4 | 5.00e-4 | 0 | 0 | 4 |
-| asteroid-arrival v-inf (vrel_arr_neo) | all | 77 | 3 decimals, 3–4 s.f. | 8.36e-5 | 1.08e-3 | 4.97e-4 | 1 | 0 | 5 |
-| asteroid-departure v-inf (vrel_dep_neo) | all | 77 | 3 decimals, 3–4 s.f. | 9.54e-5 | 7.69e-4 | 4.99e-4 | 0 | 0 | 3 |
-| Earth-return v-inf (derived from v_arr_earth, DEC-20-8) | uncontrolled | 40 | not published (inverted from entry speed) | 1.93e-4 | 2.34e-3 | 3.08e-3 | 1 | 0 | — |
-| entry speed (v_arr_earth) vs DEC-20-8 | uncontrolled | 40 | 3 decimals, 5–5 s.f. | 2.34e-5 | 4.22e-5 | 4.99e-4 | 0 | 0 | 1 |
-| entry speed (v_arr_earth) vs DEC-20-8, natural (before control) | controlled | 37 | 3 decimals, 5–5 s.f. | 6.29e-3 | 0.0665 | 0.798 | 36 | 37 | 37 |
-| Earth-departure dV at 400 km (dv_dep_park) | all | 77 | 3 decimals, 4–4 s.f. | 5.34e-5 | 1.31e-4 | 4.83e-4 | 0 | 0 | 2 |
-| entry-control dV (vrel_arr_earth), model A | controlled | 37 | 3 decimals, 2–4 s.f. | 0.607 | 0.622 | 0.994 | 37 | 37 | 37 |
-| entry-control dV (vrel_arr_earth), model B | controlled | 37 | 3 decimals, 2–4 s.f. | 5.46e-4 | 0.0208 | 5.00e-4 | 12 | 0 | 3 |
-| total dV at 400 km (dv_total), model A | all | 77 | 3 decimals, 4–5 s.f. | 7.13e-5 | 0.0848 | 0.993 | 37 | 37 | 40 |
-| total dV at 400 km (dv_total), model B | all | 77 | 3 decimals, 4–5 s.f. | 2.84e-5 | 8.00e-5 | 5.00e-4 | 0 | 0 | 3 |
+| C3 (c3) | all | 200 | 3 decimals, 3–5 s.f. | 1.03e-5 | 4.78e-4 | 8.96e-4 | 0 | 1 | 112 |
+| Earth-departure v-inf (v_dep_earth) | all | 200 | 3 decimals, 3–4 s.f. | 6.18e-5 | 4.30e-4 | 5.00e-4 | 0 | 0 | 15 |
+| asteroid-arrival v-inf (vrel_arr_neo) | all | 200 | 3 decimals, 3–4 s.f. | 8.56e-5 | 1.20e-3 | 4.97e-4 | 2 | 0 | 13 |
+| asteroid-departure v-inf (vrel_dep_neo) | all | 200 | 3 decimals, 3–4 s.f. | 8.88e-5 | 2.09e-3 | 4.99e-4 | 1 | 0 | 8 |
+| Earth-return v-inf (derived from v_arr_earth, DEC-20-8) | uncontrolled | 108 | not published (inverted from entry speed) | 1.82e-4 | 2.34e-3 | 3.10e-3 | 4 | 0 | — |
+| entry speed (v_arr_earth) vs DEC-20-8 | uncontrolled | 108 | 3 decimals, 5–5 s.f. | 2.10e-5 | 4.28e-5 | 4.99e-4 | 0 | 0 | 1 |
+| entry speed (v_arr_earth) vs DEC-20-8, natural (before control) | controlled | 92 | 3 decimals, 5–5 s.f. | 0.0124 | 0.179 | 2.15 | 89 | 92 | 92 |
+| Earth-departure dV at 400 km (dv_dep_park) | all | 200 | 3 decimals, 4–4 s.f. | 5.63e-5 | 1.47e-4 | 4.99e-4 | 0 | 0 | 5 |
+| entry-control dV (vrel_arr_earth), model A | controlled | 92 | 3 decimals, 1–4 s.f. | 0.602 | 0.623 | 2.03 | 92 | 92 | 92 |
+| entry-control dV (vrel_arr_earth), model B | controlled | 92 | 3 decimals, 1–4 s.f. | 5.22e-4 | 0.0230 | 5.00e-4 | 28 | 0 | 8 |
+| total dV at 400 km (dv_total), model A | all | 200 | 3 decimals, 4–5 s.f. | 5.97e-5 | 0.170 | 2.03 | 91 | 92 | 97 |
+| total dV at 400 km (dv_total), model B | all | 200 | 3 decimals, 4–5 s.f. | 2.51e-5 | 8.00e-5 | 5.00e-4 | 0 | 0 | 11 |
 
-Aster's 200 km parking orbit instead of 400 km (reported separately, not an agreement figure): total dV minus NHATS, median 0.02671, max 0.04665 km/s (model A bookkeeping; the 200-vs-400 term alone is the dv_dep_park difference).
+Aster's 200 km parking orbit instead of 400 km (reported separately, not an agreement figure): total dV minus NHATS, median 0.02376, max 0.04748 km/s (model A bookkeeping; the 200-vs-400 term alone is the dv_dep_park difference).
 
 ### Every trajectory worse than 1e-3 relative (both values)
 
@@ -32,14 +32,22 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 | body | trajectory | NHATS | Aster (Horizons in) | rel. diff | abs. diff | beyond NHATS rounding |
 |---|---|---|---|---|---|---|
 | 99942 | min_dv | 0.309 | 0.3093 | 1.08e-3 | 3.33e-4 | no |
+| 2020 UO4 | min_dv | 0.150 | 0.1502 | 1.20e-3 | 1.80e-4 | no |
 
-**vrel_dep_neo (all)**: none
+**vrel_dep_neo (all)**: 
+
+| body | trajectory | NHATS | Aster (Horizons in) | rel. diff | abs. diff | beyond NHATS rounding |
+|---|---|---|---|---|---|---|
+| 2025 BT4 | min_dv | 0.167 | 0.1667 | 2.09e-3 | 3.48e-4 | no |
 
 **vinf_ret_earth_derived (uncontrolled)**: 
 
 | body | trajectory | NHATS | Aster (Horizons in) | rel. diff | abs. diff | beyond NHATS rounding |
 |---|---|---|---|---|---|---|
 | 2000 SG344 | min_dv | 1.3173 | 1.3204 | 2.34e-3 | 3.08e-3 | no |
+| 2008 HU4 | min_dv | 1.4465 | 1.4496 | 2.14e-3 | 3.10e-3 | no |
+| 2022 CX6 | min_dv | 2.1671 | 2.1696 | 1.16e-3 | 2.51e-3 | no |
+| 2004 BV18 | min_dur | 1.6420 | 1.6446 | 1.62e-3 | 2.66e-3 | no |
 
 **v_arr_earth (uncontrolled)**: none
 
@@ -47,31 +55,66 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 
 | body | trajectory | NHATS | Aster (Horizons in) | rel. diff | abs. diff | beyond NHATS rounding |
 |---|---|---|---|---|---|---|
+| 2024 VJ3 | min_dur | 12.000 | 13.3672 | 0.114 | 1.37 | yes |
 | 420210 | min_dv | 12.000 | 12.0741 | 6.18e-3 | 0.0741 | yes |
 | 420210 | min_dur | 12.000 | 12.0741 | 6.18e-3 | 0.0741 | yes |
 | 2023 VF3 | min_dur | 12.000 | 12.1311 | 0.0109 | 0.131 | yes |
+| 2016 TA20 | min_dv | 12.000 | 12.2510 | 0.0209 | 0.251 | yes |
+| 2016 TA20 | min_dur | 12.000 | 12.0352 | 2.93e-3 | 0.0352 | yes |
 | 251732 | min_dur | 12.000 | 12.0544 | 4.53e-3 | 0.0544 | yes |
+| 2024 LH3 | min_dv | 12.000 | 12.2122 | 0.0177 | 0.212 | yes |
+| 2025 DV4 | min_dv | 12.000 | 12.1281 | 0.0107 | 0.128 | yes |
+| 2025 DV4 | min_dur | 12.000 | 12.2640 | 0.0220 | 0.264 | yes |
+| 2022 XQ1 | min_dv | 12.000 | 12.0550 | 4.59e-3 | 0.0550 | yes |
+| 2022 XQ1 | min_dur | 12.000 | 12.2993 | 0.0249 | 0.299 | yes |
+| 2025 XS3 | min_dv | 12.000 | 12.1433 | 0.0119 | 0.143 | yes |
+| 2025 XS3 | min_dur | 12.000 | 12.7437 | 0.0620 | 0.744 | yes |
 | 2026 DP15 | min_dv | 12.000 | 12.3026 | 0.0252 | 0.303 | yes |
 | 2026 DP15 | min_dur | 12.000 | 12.2986 | 0.0249 | 0.299 | yes |
+| 2024 BM1 | min_dv | 12.000 | 12.0584 | 4.87e-3 | 0.0584 | yes |
+| 2024 BM1 | min_dur | 12.000 | 12.2163 | 0.0180 | 0.216 | yes |
 | 2006 SP19 | min_dv | 12.000 | 12.0578 | 4.82e-3 | 0.0578 | yes |
+| 2006 SP19 | min_dur | 12.000 | 12.1581 | 0.0132 | 0.158 | yes |
+| 2022 LW | min_dur | 12.000 | 12.0631 | 5.26e-3 | 0.0631 | yes |
 | 452807 | min_dv | 12.000 | 12.0914 | 7.62e-3 | 0.0914 | yes |
 | 452807 | min_dur | 12.000 | 12.7981 | 0.0665 | 0.798 | yes |
 | 2002 JR100 | min_dv | 12.000 | 12.0488 | 4.07e-3 | 0.0488 | yes |
 | 2002 JR100 | min_dur | 12.000 | 12.3787 | 0.0316 | 0.379 | yes |
+| 2021 WN2 | min_dur | 12.000 | 12.0860 | 7.16e-3 | 0.0860 | yes |
+| 2014 DV110 | min_dur | 12.000 | 12.4616 | 0.0385 | 0.462 | yes |
+| 2021 ES3 | min_dv | 12.000 | 12.7381 | 0.0615 | 0.738 | yes |
+| 2021 ES3 | min_dur | 12.000 | 12.4784 | 0.0399 | 0.478 | yes |
 | 2019 JU5 | min_dv | 12.000 | 12.0311 | 2.59e-3 | 0.0311 | yes |
 | 2011 MJ | min_dv | 12.000 | 12.2810 | 0.0234 | 0.281 | yes |
 | 2011 MJ | min_dur | 12.000 | 12.1728 | 0.0144 | 0.173 | yes |
+| 2016 DB1 | min_dv | 12.000 | 12.2020 | 0.0168 | 0.202 | yes |
 | 2016 DB1 | min_dur | 12.000 | 12.3758 | 0.0313 | 0.376 | yes |
+| 2012 WS3 | min_dur | 12.000 | 12.7588 | 0.0632 | 0.759 | yes |
+| 2023 EN2 | min_dv | 12.000 | 12.0164 | 1.37e-3 | 0.0164 | yes |
+| 2023 EN2 | min_dur | 12.000 | 12.4138 | 0.0345 | 0.414 | yes |
 | 2008 FX6 | min_dv | 12.000 | 12.0543 | 4.52e-3 | 0.0543 | yes |
+| 2022 QJ50 | min_dv | 12.000 | 12.0164 | 1.36e-3 | 0.0164 | yes |
 | 2022 KH3 | min_dv | 12.000 | 12.1531 | 0.0128 | 0.153 | yes |
+| 2022 KH3 | min_dur | 12.000 | 12.0890 | 7.42e-3 | 0.0890 | yes |
+| 2021 SV1 | min_dur | 12.000 | 14.1461 | 0.179 | 2.15 | yes |
 | 2026 FE7 | min_dur | 12.000 | 12.0941 | 7.84e-3 | 0.0941 | yes |
+| 2019 WD3 | min_dur | 12.000 | 12.1976 | 0.0165 | 0.198 | yes |
 | 2021 XF6 | min_dv | 12.000 | 12.0494 | 4.12e-3 | 0.0494 | yes |
 | 2021 XF6 | min_dur | 12.000 | 12.0494 | 4.12e-3 | 0.0494 | yes |
+| 2017 YW3 | min_dur | 12.000 | 12.1759 | 0.0147 | 0.176 | yes |
+| 2016 XE18 | min_dv | 12.000 | 12.0124 | 1.03e-3 | 0.0124 | yes |
+| 2022 GB | min_dv | 12.000 | 12.0741 | 6.17e-3 | 0.0741 | yes |
+| 2022 GB | min_dur | 12.000 | 13.4715 | 0.123 | 1.47 | yes |
+| 2020 RU7 | min_dv | 12.000 | 12.4621 | 0.0385 | 0.462 | yes |
+| 2016 GV221 | min_dur | 12.000 | 12.0372 | 3.10e-3 | 0.0372 | yes |
 | 2026 CA2 | min_dv | 12.000 | 12.7121 | 0.0593 | 0.712 | yes |
 | 2026 CA2 | min_dur | 12.000 | 12.0512 | 4.26e-3 | 0.0512 | yes |
 | 2011 GR59 | min_dv | 12.000 | 12.0223 | 1.86e-3 | 0.0223 | yes |
 | 2011 GR59 | min_dur | 12.000 | 12.5869 | 0.0489 | 0.587 | yes |
+| 2013 US4 | min_dur | 12.000 | 12.4661 | 0.0388 | 0.466 | yes |
 | 2016 AT131 | min_dur | 12.000 | 12.0409 | 3.41e-3 | 0.0409 | yes |
+| 2017 DH16 | min_dv | 12.000 | 12.0137 | 1.14e-3 | 0.0137 | yes |
+| 2017 DH16 | min_dur | 12.000 | 12.3674 | 0.0306 | 0.367 | yes |
 | 2011 OK45 | min_dv | 12.000 | 12.0166 | 1.39e-3 | 0.0166 | yes |
 | 2011 OK45 | min_dur | 12.000 | 12.0150 | 1.25e-3 | 0.0150 | yes |
 | 2020 BZ6 | min_dur | 12.000 | 12.0603 | 5.02e-3 | 0.0603 | yes |
@@ -80,9 +123,27 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 | 2008 FC | min_dur | 12.000 | 12.0675 | 5.63e-3 | 0.0675 | yes |
 | 2014 KO2 | min_dur | 12.000 | 12.0755 | 6.29e-3 | 0.0755 | yes |
 | 2024 BH | min_dv | 12.000 | 12.6019 | 0.0502 | 0.602 | yes |
+| 2024 BH | min_dur | 12.000 | 12.6713 | 0.0559 | 0.671 | yes |
 | 2013 BS15 | min_dv | 12.000 | 12.4481 | 0.0373 | 0.448 | yes |
 | 2013 BS15 | min_dur | 12.000 | 12.4029 | 0.0336 | 0.403 | yes |
+| 2020 HB6 | min_dv | 12.000 | 12.0339 | 2.83e-3 | 0.0339 | yes |
+| 2020 SM4 | min_dv | 12.000 | 13.2052 | 0.100 | 1.21 | yes |
+| 2020 SM4 | min_dur | 12.000 | 13.4612 | 0.122 | 1.46 | yes |
+| 2017 RN16 | min_dv | 12.000 | 12.0199 | 1.66e-3 | 0.0199 | yes |
+| 2017 RN16 | min_dur | 12.000 | 12.8024 | 0.0669 | 0.802 | yes |
+| 2025 BT4 | min_dv | 12.000 | 12.6191 | 0.0516 | 0.619 | yes |
+| 2025 BT4 | min_dur | 12.000 | 12.6788 | 0.0566 | 0.679 | yes |
+| 2014 SF304 | min_dur | 12.000 | 12.2805 | 0.0234 | 0.281 | yes |
 | 2014 HP2 | min_dur | 12.000 | 12.2352 | 0.0196 | 0.235 | yes |
+| 2025 RY1 | min_dur | 12.000 | 12.2122 | 0.0177 | 0.212 | yes |
+| 2025 MX | min_dv | 12.000 | 12.0362 | 3.02e-3 | 0.0362 | yes |
+| 2025 MX | min_dur | 12.000 | 12.0845 | 7.05e-3 | 0.0845 | yes |
+| 2025 QV21 | min_dur | 12.000 | 12.5326 | 0.0444 | 0.533 | yes |
+| 2023 TA9 | min_dv | 12.000 | 12.2338 | 0.0195 | 0.234 | yes |
+| 2023 TA9 | min_dur | 12.000 | 12.0843 | 7.02e-3 | 0.0843 | yes |
+| 2024 XZ5 | min_dv | 12.000 | 12.0771 | 6.43e-3 | 0.0771 | yes |
+| 2024 XZ5 | min_dur | 12.000 | 12.9863 | 0.0822 | 0.986 | yes |
+| 2024 XH9 | min_dur | 12.000 | 12.0843 | 7.03e-3 | 0.0843 | yes |
 
 **dv_dep_park (all)**: none
 
@@ -90,11 +151,21 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 
 | body | trajectory | NHATS | Aster (Horizons in) | rel. diff | abs. diff | beyond NHATS rounding |
 |---|---|---|---|---|---|---|
+| 101955 | min_dur | 0.003 | 0.0029 | 0.0230 | 6.89e-5 | no |
+| 2016 TA20 | min_dur | 0.090 | 0.0904 | 4.82e-3 | 4.34e-4 | no |
 | 251732 | min_dur | 0.139 | 0.1392 | 1.22e-3 | 1.70e-4 | no |
+| 2024 BM1 | min_dv | 0.149 | 0.1495 | 3.12e-3 | 4.65e-4 | no |
+| 2022 LW | min_dur | 0.161 | 0.1613 | 1.57e-3 | 2.52e-4 | no |
 | 2015 VO105 | min_dv | 0.014 | 0.0137 | 0.0208 | 2.91e-4 | no |
+| 2021 WN2 | min_dur | 0.219 | 0.2186 | 1.99e-3 | 4.36e-4 | no |
+| 2020 MO3 | min_dv | 0.010 | 0.0102 | 0.0177 | 1.77e-4 | no |
+| 2023 EN2 | min_dv | 0.042 | 0.0425 | 0.0111 | 4.68e-4 | no |
+| 2022 QJ50 | min_dv | 0.042 | 0.0423 | 6.80e-3 | 2.86e-4 | no |
 | 2021 XF6 | min_dv | 0.127 | 0.1268 | 1.95e-3 | 2.48e-4 | no |
 | 2021 XF6 | min_dur | 0.127 | 0.1268 | 1.95e-3 | 2.48e-4 | no |
+| 2016 GV221 | min_dur | 0.096 | 0.0957 | 2.98e-3 | 2.86e-4 | no |
 | 2011 GR59 | min_dv | 0.058 | 0.0575 | 8.62e-3 | 5.00e-4 | no |
+| 2017 DH16 | min_dv | 0.035 | 0.0353 | 8.49e-3 | 2.97e-4 | no |
 | 2011 OK45 | min_dv | 0.043 | 0.0429 | 1.45e-3 | 6.24e-5 | no |
 | 2011 OK45 | min_dur | 0.039 | 0.0388 | 3.90e-3 | 1.52e-4 | no |
 | 2020 BZ6 | min_dur | 0.154 | 0.1542 | 1.04e-3 | 1.60e-4 | no |
@@ -102,6 +173,12 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 | 2008 FC | min_dv | 0.172 | 0.1723 | 1.91e-3 | 3.28e-4 | no |
 | 2008 FC | min_dur | 0.172 | 0.1723 | 1.91e-3 | 3.28e-4 | no |
 | 2014 KO2 | min_dur | 0.192 | 0.1925 | 2.40e-3 | 4.61e-4 | no |
+| 2020 HB6 | min_dv | 0.087 | 0.0873 | 2.93e-3 | 2.55e-4 | no |
+| 2017 RN16 | min_dv | 0.051 | 0.0514 | 8.48e-3 | 4.32e-4 | no |
+| 2025 MX | min_dv | 0.093 | 0.0931 | 1.33e-3 | 1.23e-4 | no |
+| 2023 TA9 | min_dur | 0.214 | 0.2143 | 1.44e-3 | 3.07e-4 | no |
+| 2024 XZ5 | min_dv | 0.196 | 0.1965 | 2.52e-3 | 4.93e-4 | no |
+| 2024 XH9 | min_dur | 0.214 | 0.2144 | 2.03e-3 | 4.35e-4 | no |
 
 **dv_total_modelB (all)**: none
 
@@ -109,32 +186,69 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 
 | body | trajectory | NHATS | Aster (Horizons in) | rel. diff | abs. diff | beyond NHATS rounding |
 |---|---|---|---|---|---|---|
+| 101955 | min_dur | 0.003 | 0.0011 | 0.623 | 1.87e-3 | yes |
+| 2024 VJ3 | min_dur | 2.862 | 1.3672 | 0.522 | 1.49 | yes |
 | 420210 | min_dv | 0.189 | 0.0741 | 0.608 | 0.115 | yes |
 | 420210 | min_dur | 0.189 | 0.0741 | 0.608 | 0.115 | yes |
 | 2023 VF3 | min_dur | 0.330 | 0.1311 | 0.603 | 0.199 | yes |
+| 2016 TA20 | min_dv | 0.617 | 0.2510 | 0.593 | 0.366 | yes |
+| 2016 TA20 | min_dur | 0.090 | 0.0352 | 0.609 | 0.0548 | yes |
 | 251732 | min_dur | 0.139 | 0.0544 | 0.609 | 0.0846 | yes |
+| 2024 LH3 | min_dv | 0.525 | 0.2122 | 0.596 | 0.313 | yes |
+| 2025 DV4 | min_dv | 0.323 | 0.1281 | 0.603 | 0.195 | yes |
+| 2025 DV4 | min_dur | 0.647 | 0.2640 | 0.592 | 0.383 | yes |
+| 2022 XQ1 | min_dv | 0.141 | 0.0550 | 0.610 | 0.0860 | yes |
+| 2022 XQ1 | min_dur | 0.728 | 0.2993 | 0.589 | 0.429 | yes |
+| 2025 XS3 | min_dv | 0.360 | 0.1433 | 0.602 | 0.217 | yes |
+| 2025 XS3 | min_dur | 1.682 | 0.7437 | 0.558 | 0.938 | yes |
 | 2026 DP15 | min_dv | 0.736 | 0.3026 | 0.589 | 0.433 | yes |
 | 2026 DP15 | min_dur | 0.727 | 0.2986 | 0.589 | 0.428 | yes |
+| 2024 BM1 | min_dv | 0.149 | 0.0584 | 0.608 | 0.0906 | yes |
+| 2024 BM1 | min_dur | 0.535 | 0.2163 | 0.596 | 0.319 | yes |
 | 2006 SP19 | min_dv | 0.148 | 0.0578 | 0.609 | 0.0902 | yes |
+| 2006 SP19 | min_dur | 0.396 | 0.1581 | 0.601 | 0.238 | yes |
+| 2022 LW | min_dur | 0.161 | 0.0631 | 0.608 | 0.0979 | yes |
 | 2015 VO105 | min_dv | 0.014 | 0.0053 | 0.622 | 8.71e-3 | yes |
 | 452807 | min_dv | 0.232 | 0.0914 | 0.606 | 0.141 | yes |
 | 452807 | min_dur | 1.792 | 0.7981 | 0.555 | 0.994 | yes |
 | 2002 JR100 | min_dv | 0.125 | 0.0488 | 0.610 | 0.0762 | yes |
 | 2002 JR100 | min_dur | 0.909 | 0.3787 | 0.583 | 0.530 | yes |
+| 2021 WN2 | min_dur | 0.219 | 0.0860 | 0.607 | 0.133 | yes |
+| 2014 DV110 | min_dur | 1.091 | 0.4616 | 0.577 | 0.629 | yes |
+| 2021 ES3 | min_dv | 1.671 | 0.7381 | 0.558 | 0.933 | yes |
+| 2021 ES3 | min_dur | 1.128 | 0.4784 | 0.576 | 0.650 | yes |
 | 2019 JU5 | min_dv | 0.080 | 0.0311 | 0.612 | 0.0489 | yes |
 | 2011 MJ | min_dv | 0.686 | 0.2810 | 0.590 | 0.405 | yes |
 | 2011 MJ | min_dur | 0.431 | 0.1728 | 0.599 | 0.258 | yes |
+| 2020 MO3 | min_dv | 0.010 | 0.0039 | 0.607 | 6.07e-3 | yes |
+| 2016 DB1 | min_dv | 0.501 | 0.2020 | 0.597 | 0.299 | yes |
 | 2016 DB1 | min_dur | 0.902 | 0.3758 | 0.583 | 0.526 | yes |
+| 2012 WS3 | min_dur | 1.713 | 0.7588 | 0.557 | 0.954 | yes |
+| 2023 EN2 | min_dv | 0.042 | 0.0164 | 0.609 | 0.0256 | yes |
+| 2023 EN2 | min_dur | 0.987 | 0.4138 | 0.581 | 0.573 | yes |
 | 2008 FX6 | min_dv | 0.139 | 0.0543 | 0.610 | 0.0847 | yes |
+| 2022 QJ50 | min_dv | 0.042 | 0.0164 | 0.610 | 0.0256 | yes |
 | 2022 KH3 | min_dv | 0.384 | 0.1531 | 0.601 | 0.231 | yes |
+| 2022 KH3 | min_dur | 0.226 | 0.0890 | 0.606 | 0.137 | yes |
+| 2021 SV1 | min_dur | 4.177 | 2.1461 | 0.486 | 2.03 | yes |
 | 2026 FE7 | min_dur | 0.239 | 0.0941 | 0.606 | 0.145 | yes |
+| 2019 WD3 | min_dur | 0.491 | 0.1976 | 0.598 | 0.293 | yes |
 | 2021 XF6 | min_dv | 0.127 | 0.0494 | 0.611 | 0.0776 | yes |
 | 2021 XF6 | min_dur | 0.127 | 0.0494 | 0.611 | 0.0776 | yes |
+| 2017 YW3 | min_dur | 0.439 | 0.1759 | 0.599 | 0.263 | yes |
+| 2016 XE18 | min_dv | 0.032 | 0.0124 | 0.613 | 0.0196 | yes |
+| 2022 GB | min_dv | 0.189 | 0.0741 | 0.608 | 0.115 | yes |
+| 2022 GB | min_dur | 3.047 | 1.4715 | 0.517 | 1.58 | yes |
+| 2020 RU7 | min_dv | 1.092 | 0.4621 | 0.577 | 0.630 | yes |
+| 2016 GV221 | min_dur | 0.096 | 0.0372 | 0.612 | 0.0588 | yes |
 | 2026 CA2 | min_dv | 1.618 | 0.7121 | 0.560 | 0.906 | yes |
 | 2026 CA2 | min_dur | 0.131 | 0.0512 | 0.610 | 0.0798 | yes |
 | 2011 GR59 | min_dv | 0.058 | 0.0223 | 0.616 | 0.0357 | yes |
 | 2011 GR59 | min_dur | 1.360 | 0.5869 | 0.568 | 0.773 | yes |
+| 2013 US4 | min_dur | 1.101 | 0.4661 | 0.577 | 0.635 | yes |
 | 2016 AT131 | min_dur | 0.105 | 0.0409 | 0.611 | 0.0641 | yes |
+| 2017 DH16 | min_dv | 0.035 | 0.0137 | 0.610 | 0.0213 | yes |
+| 2017 DH16 | min_dur | 0.883 | 0.3674 | 0.584 | 0.516 | yes |
 | 2011 OK45 | min_dv | 0.043 | 0.0166 | 0.613 | 0.0264 | yes |
 | 2011 OK45 | min_dur | 0.039 | 0.0150 | 0.615 | 0.0240 | yes |
 | 2020 BZ6 | min_dur | 0.154 | 0.0603 | 0.609 | 0.0937 | yes |
@@ -143,40 +257,94 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 | 2008 FC | min_dur | 0.172 | 0.0675 | 0.608 | 0.104 | yes |
 | 2014 KO2 | min_dur | 0.192 | 0.0755 | 0.607 | 0.116 | yes |
 | 2024 BH | min_dv | 1.391 | 0.6019 | 0.567 | 0.789 | yes |
+| 2024 BH | min_dur | 1.535 | 0.6713 | 0.563 | 0.864 | yes |
 | 2013 BS15 | min_dv | 1.062 | 0.4481 | 0.578 | 0.614 | yes |
 | 2013 BS15 | min_dur | 0.962 | 0.4029 | 0.581 | 0.559 | yes |
+| 2020 HB6 | min_dv | 0.087 | 0.0339 | 0.610 | 0.0531 | yes |
+| 2020 SM4 | min_dv | 2.569 | 1.2052 | 0.531 | 1.36 | yes |
+| 2020 SM4 | min_dur | 3.029 | 1.4612 | 0.518 | 1.57 | yes |
+| 2017 RN16 | min_dv | 0.051 | 0.0199 | 0.609 | 0.0311 | yes |
+| 2017 RN16 | min_dur | 1.800 | 0.8024 | 0.554 | 0.998 | yes |
+| 2025 BT4 | min_dv | 1.427 | 0.6191 | 0.566 | 0.808 | yes |
+| 2025 BT4 | min_dur | 1.550 | 0.6788 | 0.562 | 0.871 | yes |
+| 2014 SF304 | min_dur | 0.685 | 0.2805 | 0.590 | 0.404 | yes |
 | 2014 HP2 | min_dur | 0.580 | 0.2352 | 0.594 | 0.345 | yes |
+| 2025 RY1 | min_dur | 0.525 | 0.2122 | 0.596 | 0.313 | yes |
+| 2025 MX | min_dv | 0.093 | 0.0362 | 0.611 | 0.0568 | yes |
+| 2025 MX | min_dur | 0.215 | 0.0845 | 0.607 | 0.130 | yes |
+| 2025 QV21 | min_dur | 1.244 | 0.5326 | 0.572 | 0.711 | yes |
+| 2023 TA9 | min_dv | 0.576 | 0.2338 | 0.594 | 0.342 | yes |
+| 2023 TA9 | min_dur | 0.214 | 0.0843 | 0.606 | 0.130 | yes |
+| 2024 XZ5 | min_dv | 0.196 | 0.0771 | 0.606 | 0.119 | yes |
+| 2024 XZ5 | min_dur | 2.159 | 0.9863 | 0.543 | 1.17 | yes |
+| 2024 XH9 | min_dur | 0.214 | 0.0843 | 0.606 | 0.130 | yes |
 
 **dv_total (all (model A))**: 
 
 | body | trajectory | NHATS | Aster (Horizons in) | rel. diff | abs. diff | beyond NHATS rounding |
 |---|---|---|---|---|---|---|
+| 2024 VJ3 | min_dur | 11.991 | 10.4962 | 0.125 | 1.49 | yes |
 | 420210 | min_dv | 11.943 | 11.8285 | 9.59e-3 | 0.114 | yes |
 | 420210 | min_dur | 11.943 | 11.8285 | 9.59e-3 | 0.114 | yes |
 | 2023 VF3 | min_dur | 11.982 | 11.7830 | 0.0166 | 0.199 | yes |
+| 2016 TA20 | min_dv | 11.606 | 11.2405 | 0.0315 | 0.365 | yes |
+| 2016 TA20 | min_dur | 11.698 | 11.6423 | 4.76e-3 | 0.0557 | yes |
 | 251732 | min_dur | 11.949 | 11.8642 | 7.10e-3 | 0.0848 | yes |
+| 2024 LH3 | min_dv | 7.617 | 7.3042 | 0.0411 | 0.313 | yes |
+| 2025 DV4 | min_dv | 8.649 | 8.4540 | 0.0225 | 0.195 | yes |
+| 2025 DV4 | min_dur | 11.970 | 11.5869 | 0.0320 | 0.383 | yes |
+| 2022 XQ1 | min_dv | 10.728 | 10.6420 | 8.01e-3 | 0.0860 | yes |
+| 2022 XQ1 | min_dur | 11.947 | 11.5177 | 0.0359 | 0.429 | yes |
+| 2025 XS3 | min_dv | 11.819 | 11.6023 | 0.0183 | 0.217 | yes |
+| 2025 XS3 | min_dur | 11.996 | 11.0575 | 0.0782 | 0.938 | yes |
 | 2026 DP15 | min_dv | 8.708 | 8.2749 | 0.0497 | 0.433 | yes |
 | 2026 DP15 | min_dur | 11.884 | 11.4553 | 0.0361 | 0.429 | yes |
+| 2024 BM1 | min_dv | 8.950 | 8.8590 | 0.0102 | 0.0910 | yes |
+| 2024 BM1 | min_dur | 11.913 | 11.5940 | 0.0268 | 0.319 | yes |
 | 2006 SP19 | min_dv | 9.794 | 9.7042 | 9.16e-3 | 0.0898 | yes |
+| 2006 SP19 | min_dur | 11.948 | 11.7107 | 0.0199 | 0.237 | yes |
+| 2022 LW | min_dur | 11.701 | 11.6033 | 8.35e-3 | 0.0977 | yes |
 | 2015 VO105 | min_dv | 5.642 | 5.6336 | 1.49e-3 | 8.39e-3 | yes |
 | 452807 | min_dv | 8.094 | 7.9530 | 0.0174 | 0.141 | yes |
 | 452807 | min_dur | 11.881 | 10.8878 | 0.0836 | 0.993 | yes |
 | 2002 JR100 | min_dv | 8.629 | 8.5525 | 8.87e-3 | 0.0765 | yes |
 | 2002 JR100 | min_dur | 11.976 | 11.4463 | 0.0442 | 0.530 | yes |
+| 2021 WN2 | min_dur | 11.955 | 11.8224 | 0.0111 | 0.133 | yes |
+| 2014 DV110 | min_dur | 11.932 | 11.3019 | 0.0528 | 0.630 | yes |
+| 2021 ES3 | min_dv | 8.119 | 7.1861 | 0.115 | 0.933 | yes |
+| 2021 ES3 | min_dur | 11.719 | 11.0699 | 0.0554 | 0.649 | yes |
 | 2019 JU5 | min_dv | 6.663 | 6.6138 | 7.38e-3 | 0.0492 | yes |
 | 2011 MJ | min_dv | 10.942 | 10.5365 | 0.0371 | 0.406 | yes |
 | 2011 MJ | min_dur | 11.969 | 11.7102 | 0.0216 | 0.259 | yes |
+| 2020 MO3 | min_dv | 5.898 | 5.8914 | 1.11e-3 | 6.55e-3 | yes |
+| 2016 DB1 | min_dv | 10.658 | 10.3590 | 0.0281 | 0.299 | yes |
 | 2016 DB1 | min_dur | 11.985 | 11.4585 | 0.0439 | 0.526 | yes |
+| 2012 WS3 | min_dur | 11.999 | 11.0451 | 0.0795 | 0.954 | yes |
+| 2023 EN2 | min_dv | 11.422 | 11.3955 | 2.32e-3 | 0.0265 | yes |
+| 2023 EN2 | min_dur | 11.819 | 11.2464 | 0.0485 | 0.573 | yes |
 | 2008 FX6 | min_dv | 8.368 | 8.2837 | 0.0101 | 0.0843 | yes |
+| 2022 QJ50 | min_dv | 11.915 | 11.8896 | 2.13e-3 | 0.0254 | yes |
 | 2022 KH3 | min_dv | 11.679 | 11.4488 | 0.0197 | 0.230 | yes |
+| 2022 KH3 | min_dur | 11.952 | 11.8147 | 0.0115 | 0.137 | yes |
+| 2021 SV1 | min_dur | 11.950 | 9.9183 | 0.170 | 2.03 | yes |
 | 2026 FE7 | min_dur | 11.977 | 11.8323 | 0.0121 | 0.145 | yes |
+| 2019 WD3 | min_dur | 11.974 | 11.6809 | 0.0245 | 0.293 | yes |
 | 2021 XF6 | min_dv | 11.960 | 11.8823 | 6.50e-3 | 0.0777 | yes |
 | 2021 XF6 | min_dur | 11.960 | 11.8823 | 6.50e-3 | 0.0777 | yes |
+| 2017 YW3 | min_dur | 11.998 | 11.7356 | 0.0219 | 0.262 | yes |
+| 2016 XE18 | min_dv | 11.230 | 11.2100 | 1.79e-3 | 0.0200 | yes |
+| 2022 GB | min_dv | 9.192 | 9.0770 | 0.0125 | 0.115 | yes |
+| 2022 GB | min_dur | 11.979 | 10.4037 | 0.132 | 1.58 | yes |
+| 2020 RU7 | min_dv | 8.100 | 7.4698 | 0.0778 | 0.630 | yes |
+| 2016 GV221 | min_dur | 11.833 | 11.7740 | 4.98e-3 | 0.0590 | yes |
 | 2026 CA2 | min_dv | 10.686 | 9.7801 | 0.0848 | 0.906 | yes |
 | 2026 CA2 | min_dur | 11.807 | 11.7270 | 6.78e-3 | 0.0800 | yes |
 | 2011 GR59 | min_dv | 7.574 | 7.5391 | 4.60e-3 | 0.0349 | yes |
 | 2011 GR59 | min_dur | 11.976 | 11.2036 | 0.0645 | 0.772 | yes |
+| 2013 US4 | min_dur | 11.960 | 11.3251 | 0.0531 | 0.635 | yes |
 | 2016 AT131 | min_dur | 11.804 | 11.7400 | 5.42e-3 | 0.0640 | yes |
+| 2017 DH16 | min_dv | 9.941 | 9.9194 | 2.18e-3 | 0.0216 | yes |
+| 2017 DH16 | min_dur | 11.849 | 11.3331 | 0.0435 | 0.516 | yes |
 | 2011 OK45 | min_dv | 8.306 | 8.2797 | 3.16e-3 | 0.0263 | yes |
 | 2011 OK45 | min_dur | 11.902 | 11.8784 | 1.98e-3 | 0.0236 | yes |
 | 2020 BZ6 | min_dur | 11.782 | 11.6886 | 7.93e-3 | 0.0934 | yes |
@@ -185,9 +353,27 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 | 2008 FC | min_dur | 11.924 | 11.8193 | 8.78e-3 | 0.105 | yes |
 | 2014 KO2 | min_dur | 11.818 | 11.7014 | 9.86e-3 | 0.117 | yes |
 | 2024 BH | min_dv | 10.871 | 10.0822 | 0.0726 | 0.789 | yes |
+| 2024 BH | min_dur | 11.992 | 11.1284 | 0.0720 | 0.864 | yes |
 | 2013 BS15 | min_dv | 10.187 | 9.5729 | 0.0603 | 0.614 | yes |
 | 2013 BS15 | min_dur | 11.844 | 11.2850 | 0.0472 | 0.559 | yes |
+| 2020 HB6 | min_dv | 11.369 | 11.3156 | 4.70e-3 | 0.0534 | yes |
+| 2020 SM4 | min_dv | 8.907 | 7.5431 | 0.153 | 1.36 | yes |
+| 2020 SM4 | min_dur | 11.969 | 10.4017 | 0.131 | 1.57 | yes |
+| 2017 RN16 | min_dv | 8.440 | 8.4083 | 3.76e-3 | 0.0317 | yes |
+| 2017 RN16 | min_dur | 11.990 | 10.9923 | 0.0832 | 0.998 | yes |
+| 2025 BT4 | min_dv | 10.091 | 9.2835 | 0.0800 | 0.807 | yes |
+| 2025 BT4 | min_dur | 11.823 | 10.9516 | 0.0737 | 0.871 | yes |
+| 2014 SF304 | min_dur | 11.930 | 11.5254 | 0.0339 | 0.405 | yes |
 | 2014 HP2 | min_dur | 11.853 | 11.5088 | 0.0290 | 0.344 | yes |
+| 2025 RY1 | min_dur | 11.840 | 11.5265 | 0.0265 | 0.314 | yes |
+| 2025 MX | min_dv | 10.807 | 10.7496 | 5.31e-3 | 0.0574 | yes |
+| 2025 MX | min_dur | 11.798 | 11.6674 | 0.0111 | 0.131 | yes |
+| 2025 QV21 | min_dur | 11.977 | 11.2656 | 0.0594 | 0.711 | yes |
+| 2023 TA9 | min_dv | 9.644 | 9.3010 | 0.0356 | 0.343 | yes |
+| 2023 TA9 | min_dur | 11.882 | 11.7524 | 0.0109 | 0.130 | yes |
+| 2024 XZ5 | min_dv | 10.033 | 9.9140 | 0.0119 | 0.119 | yes |
+| 2024 XZ5 | min_dur | 11.899 | 10.7258 | 0.0986 | 1.17 | yes |
+| 2024 XH9 | min_dur | 11.755 | 11.6253 | 0.0110 | 0.130 | yes |
 
 ## N3 asteroid position error (Aster production path vs Horizons), km: median / p90 / max
 
@@ -254,54 +440,56 @@ Aster's 200 km parking orbit instead of 400 km (reported separately, not an agre
 
 ## N3 cost: N2 quantities with Aster's own asteroid positions, error against NHATS (km/s): median / p90 / max
 
-Trajectories: 77 of 200 (PARTIAL; the cost needs N2's Earth states). Classification by the asteroid-departure epoch (DEC-20-5). Total dV uses model B. Earth-return v-inf against NHATS only where NHATS did not entry-control (its value is inverted from the published entry speed). Full production (fixture Earth) equals asteroid-only here because every N2 Earth state already came from the fixture's nodes.
+Trajectories: 200 of 200. Classification by the asteroid-departure epoch (DEC-20-5). Total dV uses model B. Earth-return v-inf against NHATS only where NHATS did not entry-control (its value is inverted from the published entry speed). "Asteroid-only" = Aster's asteroid + the N2 Earth (Horizons, or the fixture node inside 2026-2040), every trajectory. "Full production" = Aster's asteroid + the fixture Earth, only trajectories whose launch and return lie inside the fixture span (2026-01-01 .. 2040-12-31) - what the porkchop page could actually show.
 
-| tier / return support | trajectories | asteroid-departure v-inf | Earth-return v-inf (n) | total dV at 400 km |
-|---|---|---|---|---|
-| L1/after | 37 | 0.0169 / 1.15 / 2.54 | 0.0671 / 2.25 / 2.57 (20) | 0.0529 / 3.35 / 4.49 |
-| L1/before | 11 | 3.27e-3 / 0.0639 / 0.483 | 0.0234 / 0.524 / 1.16 (7) | 5.79e-3 / 0.0467 / 0.431 |
-| L2/no-boundary | 29 | 0.0169 / 0.502 / 0.985 | 0.0248 / 0.442 / 0.480 (13) | 0.0317 / 0.496 / 0.805 |
+| tier / return support | trajectories | asteroid-departure v-inf | Earth-return v-inf (n) | total dV at 400 km | full production: trajectories | full production: total dV |
+|---|---|---|---|---|---|---|
+| L1/after | 53 | 0.0356 / 1.04 / 2.54 | 0.0805 / 1.75 / 2.57 (26) | 0.0976 / 2.30 / 4.49 | 37 | 0.0529 / 3.35 / 4.49 |
+| L1/before | 65 | 6.15e-3 / 0.140 / 0.629 | 0.0107 / 0.215 / 1.16 (37) | 0.0122 / 0.244 / 1.15 | 11 | 5.79e-3 / 0.0467 / 0.431 |
+| L2/no-boundary | 82 | 8.80e-3 / 0.285 / 0.985 | 0.0156 / 0.480 / 0.731 (45) | 0.0277 / 0.363 / 1.89 | 29 | 0.0317 / 0.496 / 0.805 |
 
 Same, against the Horizons-fed value (isolates the position error from N2's residual):
 
 | tier / return support | asteroid-departure v-inf | Earth-return v-inf | total dV |
 |---|---|---|---|
-| L1/after | 0.0164 / 1.15 / 2.54 | 0.0289 / 1.18 / 2.57 | 0.0529 / 3.35 / 4.49 |
-| L1/before | 3.01e-3 / 0.0639 / 0.484 | 0.0113 / 0.102 / 1.16 | 5.41e-3 / 0.0472 / 0.432 |
-| L2/no-boundary | 0.0165 / 0.502 / 0.985 | 0.0246 / 0.479 / 0.596 | 0.0314 / 0.496 / 0.805 |
+| L1/after | 0.0355 / 1.04 / 2.54 | 0.0714 / 1.26 / 2.57 | 0.0974 / 2.30 / 4.49 |
+| L1/before | 6.22e-3 / 0.139 / 0.629 | 0.0104 / 0.161 / 1.16 | 0.0127 / 0.244 / 1.15 |
+| L2/no-boundary | 8.67e-3 / 0.285 / 0.985 | 0.0168 / 0.420 / 0.731 | 0.0281 / 0.363 / 1.89 |
+
+Earth (fixture vs Horizons) at N2 epochs inside the fixture span with a fresh Horizons Earth state (N2b): 15 epochs, max |dr| 7.45e-9 km, max |dv| 0 km/s.
 
 Earth (fixture vs Horizons): N0, 12 epochs: 2462237.5: 0 km; 2462237.500800741: 5.26e-7 km; 2462238: 0.0543 km; 2462421.5: 0 km; 2462421.500800741: 6.30e-7 km; 2462422: 0.0572 km; 2462591.5: 0 km; 2462591.500800741: 5.70e-7 km; 2462592: 0.0629 km; 2462791.5: 0 km; 2462791.500800741: 3.17e-7 km; 2462792: 0.0336 km. N5: 366 days of 2040, max |dr| 0 km, max |dv| 0 km/s (366 bit-identical).
 
-## N4 entry-speed convention (uncontrolled trajectories, n = 40)
+## N4 entry-speed convention (uncontrolled trajectories, n = 108)
 
 | convention | median abs residual km/s | max abs residual | mean signed (NHATS − candidate) | within NHATS rounding |
 |---|---|---|---|---|
-| inertial, 125 km, R_E 6378.137 km (WGS-84) | 2.76e-4 | 4.99e-4 | 2.20e-5 | 40/40 |
-| inertial, 125 km, R_E 6378.1366 km (DEC-20-8) | 2.76e-4 | 4.99e-4 | 2.17e-5 | 40/40 |
-| inertial, 121.92 km, R_E 6378.137 km | 2.44e-3 | 2.97e-3 | -2.46e-3 | 0/40 |
-| inertial, 121.92 km, R_E 6378.1366 km (400,000 ft) | 2.44e-3 | 2.97e-3 | -2.46e-3 | 0/40 |
-| inertial, 120 km, R_E 6378.1366 km | 4.00e-3 | 4.59e-3 | -4.01e-3 | 0/40 |
-| inertial, 130 km, R_E 6378.1366 km | 4.04e-3 | 4.50e-3 | 4.04e-3 | 0/40 |
-| inertial, 125 km, R_E 6371.0 km (mean) | 5.73e-3 | 6.40e-3 | -5.73e-3 | 0/40 |
-| atmosphere-relative, 125 km, polar (equator crossing) | 9.62e-3 | 0.0104 | -9.58e-3 | 0/40 |
-| inertial, 150 km, R_E 6378.1366 km | 0.0201 | 0.0211 | 0.0201 | 0/40 |
-| inertial, 100 km, R_E 6378.1366 km | 0.0201 | 0.0216 | -0.0202 | 0/40 |
-| inertial, 80 km, R_E 6378.1366 km | 0.0363 | 0.0386 | -0.0364 | 0/40 |
-| inertial, 200 km, R_E 6378.1366 km | 0.0596 | 0.0625 | 0.0599 | 0/40 |
-| inertial, 0 km, R_E 6378.1366 km | 0.102 | 0.108 | -0.102 | 0/40 |
-| atmosphere-relative, 125 km, equatorial eastward, gamma -6 deg | 0.472 | 0.472 | 0.472 | 0/40 |
-| atmosphere-relative, 125 km, equatorial westward, gamma -6 deg | 0.472 | 0.472 | -0.472 | 0/40 |
-| hyperbolic excess speed alone (no gravity term) - sanity, not a candidate | 7.74 | 9.83 | 7.99 | 0/40 |
+| inertial, 125 km, R_E 6378.137 km (WGS-84) | 2.51e-4 | 4.99e-4 | -4.32e-5 | 108/108 |
+| inertial, 125 km, R_E 6378.1366 km (DEC-20-8) | 2.51e-4 | 4.99e-4 | -4.35e-5 | 108/108 |
+| inertial, 121.92 km, R_E 6378.137 km | 2.58e-3 | 3.06e-3 | -2.52e-3 | 0/108 |
+| inertial, 121.92 km, R_E 6378.1366 km (400,000 ft) | 2.58e-3 | 3.06e-3 | -2.52e-3 | 0/108 |
+| inertial, 130 km, R_E 6378.1366 km | 3.97e-3 | 4.52e-3 | 3.98e-3 | 0/108 |
+| inertial, 120 km, R_E 6378.1366 km | 4.12e-3 | 4.66e-3 | -4.07e-3 | 0/108 |
+| inertial, 125 km, R_E 6371.0 km (mean) | 5.84e-3 | 6.45e-3 | -5.80e-3 | 0/108 |
+| atmosphere-relative, 125 km, polar (equator crossing) | 9.69e-3 | 0.0105 | -9.65e-3 | 0/108 |
+| inertial, 150 km, R_E 6378.1366 km | 0.0200 | 0.0211 | 0.0200 | 0/108 |
+| inertial, 100 km, R_E 6378.1366 km | 0.0202 | 0.0216 | -0.0202 | 0/108 |
+| inertial, 80 km, R_E 6378.1366 km | 0.0363 | 0.0386 | -0.0365 | 0/108 |
+| inertial, 200 km, R_E 6378.1366 km | 0.0595 | 0.0627 | 0.0598 | 0/108 |
+| inertial, 0 km, R_E 6378.1366 km | 0.102 | 0.108 | -0.102 | 0/108 |
+| atmosphere-relative, 125 km, equatorial eastward, gamma -6 deg | 0.471 | 0.472 | 0.471 | 0/108 |
+| atmosphere-relative, 125 km, equatorial westward, gamma -6 deg | 0.472 | 0.472 | -0.472 | 0/108 |
+| hyperbolic excess speed alone (no gravity term) - sanity, not a candidate | 7.79 | 9.83 | 7.99 | 0/108 |
 
-Fitted inertial interface altitude above R_E = 6378.1366 km. Uncontrolled (n 40): point estimates 124.379–125.626 km, median 124.992; intersection of the rounding intervals [124.999, 125.012] km; widened by N2's residual scale (4.64e-4 km/s) [124.794, 125.232] km.
-Controlled (n 37, model B): point estimates 124.755–125.227 km, median 124.983; intersection [124.981, 125.000] km; widened [124.753, 125.228] km.
+Fitted inertial interface altitude above R_E = 6378.1366 km. Uncontrolled (n 108): point estimates 124.379–125.626 km, median 125.101; intersection of the rounding intervals [124.999, 125.003] km; widened by N2's residual scale (4.57e-4 km/s) [124.874, 125.186] km.
+Controlled (n 92, model B): point estimates 124.755–125.242 km, median 125.013; intersection [124.997, 125.000] km; widened [124.772, 125.224] km.
 
 | controlled-trajectory test (model B) | v-inf at which entry = 12 km/s | median abs residual on control dV | max | within rounding |
 |---|---|---|---|---|
-| inertial, 125 km (DEC-20-8), model B | 4.6274 | 1.70e-4 | 5.00e-4 | 37/37 |
-| atmosphere-relative, 125 km, equatorial eastward, gamma -6 deg, model B | 5.7403 | 0.192 | 1.11 | 0/37 |
-| atmosphere-relative, 125 km, equatorial westward, gamma -6 deg, model B | 3.2116 | 1.42 | 1.42 | 0/37 |
-| atmosphere-relative, 125 km, polar, model B | 4.6030 | 0.0243 | 0.0248 | 0/37 |
+| inertial, 125 km (DEC-20-8), model B | 4.6274 | 2.48e-4 | 5.00e-4 | 92/92 |
+| atmosphere-relative, 125 km, equatorial eastward, gamma -6 deg, model B | 5.7403 | 0.372 | 1.11 | 0/92 |
+| atmosphere-relative, 125 km, equatorial westward, gamma -6 deg, model B | 3.2116 | 1.42 | 1.42 | 0/92 |
+| atmosphere-relative, 125 km, polar, model B | 4.6030 | 0.0244 | 0.0249 | 0/92 |
 
 ## N1 sample
 
