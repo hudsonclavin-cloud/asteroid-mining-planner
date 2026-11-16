@@ -44,7 +44,7 @@ test('catalog row is keyboard-focusable and Enter activates the same handler as 
   const { selectedBodySignal } = await import(pathToFileURL(path.join(rowOutDir, 'app', 'ui-store', 'store.js')).href);
   const row = renderRow({
     bodyId: 'asteroid-keyboard', spkId: 1, designation: 'keyboard', name: 'Keyboard', orbitClass: 'NEA', H: null,
-    screen: { status: 'low_departure_c3', minC3: 1.2, minC3Date: '2026-01-01', minC3TofDays: 200, bestWindows: [], isCoOrbital: false, isNearZeroC3Degenerate: false },
+    screen: { status: 'low_departure_c3', minC3: 1.2, minC3Date: '2026-01-01', minC3TofDays: 200, isCoOrbital: false, isNearZeroC3Degenerate: false },
     screeningGrid: { kind: 'screen-cache', departureStepDays: 10, tofStepDays: 20, tofMinDays: 10, tofMaxDays: 100, departureSpan: { startUtc: '2026-01-01', endUtc: '2026-02-01' } },
     tier: { des: 'keyboard', tier: 'L2', subReason: 'test', classification: 'test' },
   }, 0);
