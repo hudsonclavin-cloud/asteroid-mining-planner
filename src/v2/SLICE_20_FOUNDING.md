@@ -369,3 +369,77 @@ Deploy points: (1) Front A; (2) Fronts B+C+D together after the audit; (3) Front
   passes; a mismatch is a finding, not a gate.
 - STATUS: this founding document is LOCKED as of 2026-11-04. This line supersedes the DRAFT header, which stays
   unedited under the additive rule.
+
+### §9.2 Front A record — 2026-11-16 (Hudson)
+- Deploy point 1 shipped:
+  - PR #12 (`s20-a-salvage`, merged at `0d31cda`).
+  - PR #15 (`s20-text-sweep`, merged at `f066cc1`): the text sweep, the CK-13 fix and six protected hand-commits (`b00b7c0` physical.ts, `7b495e6` keplerian.ts, `86806f8` INVARIANTS.md, `a3b2b57` SLICE_17, `287add6` SLICE_13, `bbff552` SLICE_18), every one additive.
+  - The tail, merged at `ebc045a`: B1 `e4e007f` (compare's live-computation claim narrowed), B3 `46c715b`, B4 `9e86384` (rounded-lines disclosure), B6 `ed5727b` ("Solver status"), B7 `f2fb69a` (transfer family beside every best-C3 value), docs `1bb7f21`. B5 needed no change.
+- CK-13 string amended by Hudson's ruling (tail dispatch, 2026-11-14): "below" → "at or below". The screening predicate is `minC3 <= FEASIBLE_C3_MAX` (`tools/build/precompute-lambert-screen.mjs:300`), so the boundary is inclusive. The CK-13 test pins the new word; nothing else in it changed.
+- B2 (a refusal state for a bare `/v2/porkchop/`) was reverted at `8b3f7e5`. A bare address is a designed entry point: `resolveRequestedBodyId()` returns `params.get('body') || DEFAULT_BODY_ID` (2020 FK3, `src/v2/app/porkchop/main.ts:261-262`). `tests/v2-dla-render.test.mjs` encodes that design (`location.search = ''`) and caught the change.
+- Front-door render question CLOSED. A laptop recon reported both front-door pages failing 70 of 70 loads; Hudson confirmed on 2026-11-16 that both render in an ordinary browser. The recon had no positive control and measured its own harness. Its commit (`59151d9`) stays local and is not evidence.
+- Front A's close line is appended after the live bundle-hash check and the Clome re-gate of the tail.
+
+### §9.3 Nova reversals (Slice 20, to 2026-11-16)
+Recorded per the DEC-19.5-8 model. Each was caught before it shipped.
+1. Tail B2 asserted that a bare `/v2/porkchop/` had no refusal branch, from a grep of the loading string, without reading the resolver. Caught by the executor's verify tripwire; reverted (§9.2).
+2. Front A Clome check A3 graded the porkchop readout's six-decimal C3 as an inconsistency. Readout surfaces keep six decimals by Hudson's ruling S-S17-B0A (`src/v2/porkchop/format-c3.ts` header). Withdrawn before any fix.
+3. Front A Clome check A2 graded the CK-13 string against a provenance requirement nobody had set. Withdrawn.
+4. The front-door recon's rev 2 sent it to a cloud host; cloud egress refuses `*.github.io` (403 to CONNECT, verified 2026-11-15). Withdrawn in rev 3.
+5. S20_NHATS_CROSSCHECK's N0 gate quoted 1.5065 as a four-significant-figure pass value; it is an exact tie at four figures. The run reproduced the pilot bit for bit instead (§9.5).
+
+### §9.4 Long-run rulings — Hudson, 2026-11-16, "all as recommended"
+Evidence: `tools/slice20-research/longrun/` (LR1–LR4, PR #13) and `tools/slice20-research/longrun2/` (XR0–XR3, PR #14). Leads-grade except where a ruling below validates it.
+1. **Validation status.** LR2's primary column (the compare-path best window) is VALIDATED for the 540 bodies XR0 re-derived by an independent code path, bit-identical. The rest of LR2, and its secondary (best sample-return stack) column, remain leads and are not cited by any DEC or UI string until re-derived the same way.
+2. **DEC-20-9(c) closure tolerance.** 1e-3 km where the transfer perihelion is at least 0.1 AU (LR1 measured a maximum of 1.055e-4 km there). Below 0.1 AU, closure is checked by energy and angular-momentum consistency between Aster's endpoint states, because the two reference propagators disagree with each other by up to 32.4 km there.
+3. **DEC-20-9(b) vallado setting.** numiter 200, rtol 1e-12. Cells where vallado does not converge are excluded and counted.
+4. **DEC-20-9 evidence.** LR1 ran in a cloud container on Node 22 and is a lead. Front B re-runs the oracle on its own code, including M = 2, on the laptop or in CI.
+5. **M = 1 returns.** DEC-20-2 stands as written: M = 0 and M = 1 on the porkchop page, M = 0 only where compare is involved. Every surface that searches M = 0 only states it, with the measured size: an M = 1 return is cheaper for 51.1% of bodies at compare's window, by a median 0.402 km/s (XR3), so the shown return burn is an upper bound there. DEC-20-14 applies to M = 1 branches first (XR2: every M = 1 branch with a perihelion inside the Sun flies through it).
+6. **Truncated pairing windows.** DEC-20-3's refused-cell count is confirmed as the disclosure. LR2 measured 26.5% of paired-return cells refused by the 2040-12-31 fixture end; that is Slice 21 H0 evidence.
+7. **No supported return cell.** 7,796 of 9,875 measured L1 bodies have no supported converged return cell at compare's window (LR2). Fronts C and D render DEC-20-6's no-supported-window refusal for the return leg as well. DEC-20-6 stands.
+8. **The interim symmetric-return sentence** (live, quoted by Clome 2026-11-14: "An exploratory check of six windows … found this assumption off by 0.08-5.1 km/s …") is superseded by evidence. It is rewritten [C] by mechanism, citing only the validated column, in the Front D/E copy pass; if Front E ships, the sentence retires with the assumption. The data file behind it is regenerated from a run on `main`, never edited by hand.
+9. **Mutation survivors (LR3).** Front A-mut: one tests-only dispatch of about 15 tests for the honesty and math gaps listed in `tools/slice20-research/longrun/lr3-mutation/REPORT.md`. Each new test must kill its named mutant. Kills by the compile step count as killed and are reported separately. The 560 `porkchop/porkchop-view.ts` survivors go to Slice 22. A test that fails against production is a finding: STOP and rule.
+10. **Build reproducibility (LR4).** 55 of 55 committed `docs/` files rebuild byte-identical from a fresh clone. Recorded: four `vite.config.ts` plugins write into `docs/` regardless of `--outDir`.
+11. **Cut order, amended.** K4 shipped in Front A (`74813a0`). If hours run out, cut in this order and record each cut here: R14 → A-mut → A-cache (DEC-20-15) → Front E → Front D polish. Front A, Front B, Front C and the Front D minimal panel stay uncuttable.
+
+### DEC-20-14 — Arcs through the Sun. RULED (Hudson, 2026-11-16).
+- A converged branch whose transfer perihelion is below one solar radius (695,700 km) and whose flown arc passes perihelion is physically impossible. It is refused, on both legs.
+- **Mechanism:** the grid output carries a per-branch flag, so the kernel's output stays truthful. Selection and display refuse flagged branches: a flagged branch is never selected, never pinned as a valid transfer, and shows its refusal reason. A flag that requires a change under `src/v2/core/` is a [P] edit.
+- **Measured impact (XR2):** 0 shown windows are affected (the cache's minC3 cells, its best windows, and every cell of compare's best practical windows). 0.31% of converged outbound screening cells and 1.64% of converged return branches (2.7% at M = 1) are flagged.
+- A thermal limit (17% of converged cells have a transfer perihelion below 0.1 AU) is a separate question, with its own DEC in Slice 21 or 22. "Impossible" and "hard" do not share a threshold.
+- Lands in Front B, inside its oracle and audit.
+
+### DEC-20-15 — Screening cache: reproducibility, provenance and payload. RULED (Hudson, 2026-11-16).
+- **Definition.** "The cache reproduces" means: status, isCoOrbital, the displayed C3 text and the screening colour are identical for every body, and minC3 agrees within 1e-12 relative. Byte identity is not required: ECMAScript leaves `Math.sin`, `cos`, `pow`, `exp`, `log`, `acos` and `asinh` implementation-approximated, and XR1 measured 1,787 bodies that differ only in stored digits (maximum 2.117e-13 relative, zero displayed changes).
+- **Regenerate once,** dropping `bestWindows`. No non-test module reads it, and it is most of the payload every front-door page fetches: 32.9 → 7.7 MB raw, 7.87 → 1.01 MB gzipped (measured by Nova, 2026-11-14). The regeneration runs from a clean, committed tree and records commit, host, OS and Node version in the metadata. The schema version is bumped; MCP consumers are checked first (`mcp/src/tools/catalog-shared.ts` returns `minC3Date` and `minC3TofDays`, not `bestWindows`).
+- **Provenance test.** A test recomputes the three recorded hashes (precompute script, catalog fixture, Horizons fixture) and compares them with the metadata, without reading git history. The script hash had been stale since 2026-08-05 (XR1).
+- **Placement:** Front A-cache, deploy point 1b, before Front B. Cuttable per §9.4 item 11.
+
+### §9.5 NHATS cross-check rulings — Hudson, 2026-11-16, "all as recommended"
+Evidence: `tools/slice20-research/nhats/` (PR #17, merged at `c1d88a7`). 200 trajectories, 100 bodies, 252 JPL requests with raw responses and hashes. Leads-grade except as ruled here.
+1. **N0 gate.** Bit-identity with the pilot is accepted in place of the four-significant-figure test. It is the stricter criterion, so choosing it after seeing the result cannot overfit.
+2. **DEC-20-8 convention, confirmed as a lead.** "≤ 12 km/s at an altitude of 125 km" is documented (cneos.jpl.nasa.gov/nhats/caveats.html). "Inertial" is inferred, not documented: 108 of 108 uncontrolled and 92 of 92 controlled trajectories fit within rounding, the fitted altitude is 124.999–125.000 km, and every atmosphere-relative variant tested fails.
+3. **DEC-20-8 display, amended.** K1 always shows the natural inertial entry speed. When it exceeds 12 km/s, K1 shows a flag against the NHATS profile and the control Δv as a separately labelled line. A controlled 12.000 is never shown as the trajectory's speed.
+4. **DEC-20-8 control Δv, model B.** Δv_ctrl = v∞ − v∞*, where v∞* = sqrt(12² − 2·μ_E / r_EI), about 4.627 km/s at r_EI = R_E + 125 km. Reason: reducing v∞ on approach is a burn that can be flown. Model A (v_EI − 12) books the burn at the entry interface, where no burn is possible, and is cheaper only through the Oberth effect. Disclosed: model B was identified after the first 77 results and then passed 55 of 55 out of sample.
+5. **DEC-20-9, amended to four legs:**
+   - (a) poliastro `izzo.lambert` on identical inputs, vectors, M = 0, 1 and 2;
+   - (b) `vallado.lambert` at M = 0 with the §9.4 item 3 setting;
+   - (c) endpoint closure with the §9.4 item 2 tolerances;
+   - (d) NHATS end-to-end at M = 0, with model-B control Δv, NHATS calendar dates read as 0h TDB, and Earth-return v∞ derived by inverting DEC-20-8 for uncontrolled trajectories only; agreement at NHATS's printed precision.
+   NHATS checks implementation and pipeline, not physics: both sides are two-body patched conics. No run has tested M = 2; Front B's oracle must.
+6. **The Bennu C3 outlier** (101955 min_dur, launch 2042-06-26, 1.8 times the rounding half-unit, 1 value of 2,000) is logged and not chased. It is outside the 2026–2040 window.
+7. **Support (DEC-20-5, DEC-20-6): no new refusal in Slice 20.** Evidence:
+   - error grows with time since the orbit epoch (median 8–60 thousand km within a year; millions of km after 5.5 years);
+   - L2 bodies have no support boundary in production (`supportBoundaryFor` returns undefined for every tier but L1) and reach 0.81 km/s of total-Δv error within 2026–2040;
+   - 2026 AM4 is 8.1 million km off 39 days inside its L1 support date.
+   An epoch-age cutoff at that growth rate would refuse most of the 2026–2040 grid for every body, outbound included. The fix is better positions, not more refusals.
+8. **Epoch-age line (Front D, both legs).** The pinned-cell panel states a derived fact on outbound and return cells: the asteroid position's propagation time from its orbit epoch, in years, with the epoch date. No external number. Exact copy is approved [C] in the Front D dispatch.
+9. **The measured error-versus-age band** is not shown on the site until a second, independent derivation agrees; it then gets its own DEC.
+10. **Slice 21 charter.**
+    - "Position fidelity beyond the orbit epoch" is a headline item, with this run as its evidence.
+    - The Earth extension past 2040 is cheap: N5's 366-day overlap is bit-identical to Horizons.
+    - The next catalog regeneration records per-body orbit-solution IDs.
+11. **OQ-20-11** is partly answered: N2 compared NHATS's best 2000 SG344 trajectories within rounding. The slide-16 trajectory check stays optional.
+
+### §9.6 Process record — 2026-11-16
+- One actor per working tree. A terminal merge ran in the canonical tree while an agent was verifying there; the agent saw the tree switch to `main` mid-run. No harm: `ebc045a` is identical to a clean merge of `35e63d6` and `1bb7f21`. Going forward, while an agent works in the canonical tree, no other git command runs there; otherwise the agent works in its own worktree.
