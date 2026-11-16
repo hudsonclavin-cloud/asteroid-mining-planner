@@ -1,0 +1,2367 @@
+{
+  "schema": "aster-s20-nhats-n4-entry-convention/1",
+  "generatedAtUtc": "2026-11-16T06:53:19.022Z",
+  "documented": {
+    "statedConvention": null,
+    "quotes": [
+      {
+        "url": "https://ssd-api.jpl.nasa.gov/doc/nhats.html",
+        "text": "nhats_traj.v_arr_earth — Entry Speed (km/s)"
+      },
+      {
+        "url": "https://ssd-api.jpl.nasa.gov/doc/nhats.html",
+        "text": "nhats_traj.vrel_arr_earth — Earth return dV (km/s)"
+      },
+      {
+        "url": "https://cneos.jpl.nasa.gov/nhats/",
+        "text": "This total delta-V includes the maneuver required to depart a notional 400 km altitude circular Earth parking orbit, the delta-V required to match the NEA's velocity at arrival, the delta-V required to depart the NEA, and the delta-V (if any) required to control atmospheric entry speed at Earth return."
+      },
+      {
+        "url": "https://cneos.jpl.nasa.gov/nhats/intro.html",
+        "text": "This software uses the method of patched conics for the spacecraft, with full precision JPL ephemerides for the Earth and NEAs"
+      }
+    ],
+    "caveatsPage": {
+      "url": "https://cneos.jpl.nasa.gov/nhats/caveats.html",
+      "quote": "Earth atmospheric entry speed less than or equal to 12 km/s at an altitude of 125 km",
+      "alsoQuoted": "The total delta-V includes the Earth departure maneuver from a 400 km altitude circular parking orbit, the maneuver to match the NEA's velocity at arrival, the maneuver to depart the NEA and, if necessary, a maneuver to control the atmospheric re-entry speed during Earth return.",
+      "savedAs": "caveats.json (and raw/00217-n4-doc-cneos-nhats-caveats.txt.gz)"
+    },
+    "note": "The CNEOS caveats page states the ALTITUDE (125 km) and the limit (12 km/s). No page fetched states whether the speed is inertial or atmosphere-relative, the Earth radius used, or how the control maneuver is booked. Those are inferred below, not quoted."
+  },
+  "counts": {
+    "trajectories": 77,
+    "uncontrolled": 40,
+    "controlled": 37
+  },
+  "candidates": [
+    {
+      "convention": "inertial, 125 km, R_E 6378.137 km (WGS-84)",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.00027554286010023077,
+        "maxAbs": 0.0004985723498212025,
+        "meanSigned": 0.00002203582863522513
+      },
+      "nWithinRounding": 40,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 125 km, R_E 6378.1366 km (DEC-20-8)",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.0002758627612005071,
+        "maxAbs": 0.0004988912141801194,
+        "meanSigned": 0.00002171382960582946
+      },
+      "nWithinRounding": 40,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 121.92 km, R_E 6378.137 km",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.002438578793599433,
+        "maxAbs": 0.0029684910138012555,
+        "meanSigned": -0.002458268310389489
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 121.92 km, R_E 6378.1366 km (400,000 ft)",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.0024389046392645497,
+        "maxAbs": 0.0029688293691005896,
+        "meanSigned": -0.0024585905462792823
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 120 km, R_E 6378.1366 km",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.003997815504124702,
+        "maxAbs": 0.00459329644639439,
+        "meanSigned": -0.004005677560811405
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 130 km, R_E 6378.1366 km",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.004041152460144026,
+        "maxAbs": 0.004503920445394272,
+        "meanSigned": 0.004044301659219674
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 125 km, R_E 6371.0 km (mean)",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.005730699235013681,
+        "maxAbs": 0.0064018742663094486,
+        "meanSigned": -0.0057281296507070145
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "atmosphere-relative, 125 km, polar (equator crossing)",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.009620186828923849,
+        "maxAbs": 0.010443887953163866,
+        "meanSigned": -0.009577752287648744
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 150 km, R_E 6378.1366 km",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.020098847981590673,
+        "maxAbs": 0.021113222774353346,
+        "meanSigned": 0.020086803096098338
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 100 km, R_E 6378.1366 km",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.02011121410960026,
+        "maxAbs": 0.021557948886325562,
+        "meanSigned": -0.020163465715403416
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 80 km, R_E 6378.1366 km",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.036259828874886324,
+        "maxAbs": 0.03860171392555323,
+        "meanSigned": -0.03639886183214429
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 200 km, R_E 6378.1366 km",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.05955978653332128,
+        "maxAbs": 0.0624862484545492,
+        "meanSigned": 0.05986132297770923
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "inertial, 0 km, R_E 6378.1366 km",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.101609679190096,
+        "maxAbs": 0.10758029162934335,
+        "meanSigned": -0.1021287813275947
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "atmosphere-relative, 125 km, equatorial eastward, gamma -6 deg",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.47151750576050855,
+        "maxAbs": 0.4720017271265071,
+        "meanSigned": 0.4715307727980126
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "atmosphere-relative, 125 km, equatorial westward, gamma -6 deg",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 0.4717112040958664,
+        "maxAbs": 0.4722172058942462,
+        "meanSigned": -0.47169754323897256
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    },
+    {
+      "convention": "hyperbolic excess speed alone (no gravity term) - sanity, not a candidate",
+      "residual_nhats_minus_candidate": {
+        "medianAbs": 7.737534947945655,
+        "maxAbs": 9.829586473441719,
+        "meanSigned": 7.9889275571854395
+      },
+      "nWithinRounding": 0,
+      "n": 40
+    }
+  ],
+  "fittedInertialAltitude": {
+    "R_E_km": 6378.1366,
+    "mu": 398600.4418,
+    "pointEstimatesKm": {
+      "n": 40,
+      "median": 124.99221734398861,
+      "p90": 125.44356611685353,
+      "max": 125.62588202842471,
+      "min": 124.37882862771858
+    },
+    "intersectionFromRoundingOnlyKm": [
+      124.99860908182018,
+      125.01205614818082
+    ],
+    "n2VinfResidualScaleUsed": 0.0004641096620189078,
+    "intersectionWidenedKm": [
+      124.79436214462294,
+      125.23183171178698
+    ]
+  },
+  "controlled": [
+    {
+      "des": "420210",
+      "kind": "min_dv_traj",
+      "vinf": 4.816413253731329,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.189",
+      "naturalEntry125": 12.074144753228008,
+      "modelA_entrySpeedExcess": 0.0741447532280084,
+      "modelB_vinfReduction": 0.18900954227332178
+    },
+    {
+      "des": "420210",
+      "kind": "min_dur_traj",
+      "vinf": 4.816413253731329,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.189",
+      "naturalEntry125": 12.074144753228008,
+      "modelA_entrySpeedExcess": 0.0741447532280084,
+      "modelB_vinfReduction": 0.18900954227332178
+    },
+    {
+      "des": "2023 VF3",
+      "kind": "min_dur_traj",
+      "vinf": 4.957520368976878,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.330",
+      "naturalEntry125": 12.131122911750804,
+      "modelA_entrySpeedExcess": 0.13112291175080415,
+      "modelB_vinfReduction": 0.33011665751887076
+    },
+    {
+      "des": "251732",
+      "kind": "min_dur_traj",
+      "vinf": 4.766573825596448,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.139",
+      "naturalEntry125": 12.054350290498688,
+      "modelA_entrySpeedExcess": 0.05435029049868767,
+      "modelB_vinfReduction": 0.13917011413844094
+    },
+    {
+      "des": "2026 DP15",
+      "kind": "min_dv_traj",
+      "vinf": 5.363425316152171,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.736",
+      "naturalEntry125": 12.302579648721103,
+      "modelA_entrySpeedExcess": 0.3025796487211032,
+      "modelB_vinfReduction": 0.7360216046941641
+    },
+    {
+      "des": "2026 DP15",
+      "kind": "min_dur_traj",
+      "vinf": 5.354341324545801,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.727",
+      "naturalEntry125": 12.298622114323358,
+      "modelA_entrySpeedExcess": 0.29862211432335783,
+      "modelB_vinfReduction": 0.7269376130877934
+    },
+    {
+      "des": "2006 SP19",
+      "kind": "min_dv_traj",
+      "vinf": 4.775379338803878,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.148",
+      "naturalEntry125": 12.057834910159437,
+      "modelA_entrySpeedExcess": 0.057834910159437314,
+      "modelB_vinfReduction": 0.147975627345871
+    },
+    {
+      "des": "2015 VO105",
+      "kind": "min_dv_traj",
+      "vinf": 4.641112437187672,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.014",
+      "naturalEntry125": 12.005292980423375,
+      "modelA_entrySpeedExcess": 0.0052929804233752265,
+      "modelB_vinfReduction": 0.013708725729665083
+    },
+    {
+      "des": "452807",
+      "kind": "min_dv_traj",
+      "vinf": 4.859517607295293,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.232",
+      "naturalEntry125": 12.091403817042817,
+      "modelA_entrySpeedExcess": 0.09140381704281708,
+      "modelB_vinfReduction": 0.23211389583728526
+    },
+    {
+      "des": "452807",
+      "kind": "min_dur_traj",
+      "vinf": 6.419084100322959,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "1.792",
+      "naturalEntry125": 12.798116094886922,
+      "modelA_entrySpeedExcess": 0.7981160948869217,
+      "modelB_vinfReduction": 1.7916803888649513
+    },
+    {
+      "des": "2002 JR100",
+      "kind": "min_dv_traj",
+      "vinf": 4.752517458466519,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.125",
+      "naturalEntry125": 12.048798989285766,
+      "modelA_entrySpeedExcess": 0.04879898928576587,
+      "modelB_vinfReduction": 0.12511374700851174
+    },
+    {
+      "des": "2002 JR100",
+      "kind": "min_dur_traj",
+      "vinf": 5.535907379835238,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.909",
+      "naturalEntry125": 12.378748135788971,
+      "modelA_entrySpeedExcess": 0.37874813578897104,
+      "modelB_vinfReduction": 0.9085036683772305
+    },
+    {
+      "des": "2019 JU5",
+      "kind": "min_dv_traj",
+      "vinf": 4.707347949665274,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.080",
+      "naturalEntry125": 12.031053969224912,
+      "modelA_entrySpeedExcess": 0.03105396922491188,
+      "modelB_vinfReduction": 0.0799442382072666
+    },
+    {
+      "des": "2011 MJ",
+      "kind": "min_dv_traj",
+      "vinf": 5.313654283501934,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.686",
+      "naturalEntry125": 12.280963184366408,
+      "modelA_entrySpeedExcess": 0.2809631843664082,
+      "modelB_vinfReduction": 0.6862505720439263
+    },
+    {
+      "des": "2011 MJ",
+      "kind": "min_dur_traj",
+      "vinf": 5.058762111026321,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.431",
+      "naturalEntry125": 12.17284720133873,
+      "modelA_entrySpeedExcess": 0.17284720133872966,
+      "modelB_vinfReduction": 0.4313583995683139
+    },
+    {
+      "des": "2016 DB1",
+      "kind": "min_dur_traj",
+      "vinf": 5.529242135118286,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.902",
+      "naturalEntry125": 12.375768803591642,
+      "modelA_entrySpeedExcess": 0.375768803591642,
+      "modelB_vinfReduction": 0.901838423660279
+    },
+    {
+      "des": "2008 FX6",
+      "kind": "min_dv_traj",
+      "vinf": 4.766369512477384,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.139",
+      "naturalEntry125": 12.054269501743295,
+      "modelA_entrySpeedExcess": 0.05426950174329548,
+      "modelB_vinfReduction": 0.13896580101937683
+    },
+    {
+      "des": "2022 KH3",
+      "kind": "min_dv_traj",
+      "vinf": 5.011124793934765,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.384",
+      "naturalEntry125": 12.153127440768998,
+      "modelA_entrySpeedExcess": 0.15312744076899776,
+      "modelB_vinfReduction": 0.3837210824767574
+    },
+    {
+      "des": "2026 FE7",
+      "kind": "min_dur_traj",
+      "vinf": 4.866226724503555,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.239",
+      "naturalEntry125": 12.094101761828254,
+      "modelA_entrySpeedExcess": 0.09410176182825403,
+      "modelB_vinfReduction": 0.23882301304554776
+    },
+    {
+      "des": "2021 XF6",
+      "kind": "min_dv_traj",
+      "vinf": 4.754155713906817,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.127",
+      "naturalEntry125": 12.049445275333529,
+      "modelA_entrySpeedExcess": 0.049445275333528826,
+      "modelB_vinfReduction": 0.1267520024488098
+    },
+    {
+      "des": "2021 XF6",
+      "kind": "min_dur_traj",
+      "vinf": 4.754155713906817,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.127",
+      "naturalEntry125": 12.049445275333529,
+      "modelA_entrySpeedExcess": 0.049445275333528826,
+      "modelB_vinfReduction": 0.1267520024488098
+    },
+    {
+      "des": "2026 CA2",
+      "kind": "min_dv_traj",
+      "vinf": 6.245843309982805,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "1.618",
+      "naturalEntry125": 12.7121081471187,
+      "modelA_entrySpeedExcess": 0.7121081471187001,
+      "modelB_vinfReduction": 1.6184395985247972
+    },
+    {
+      "des": "2026 CA2",
+      "kind": "min_dur_traj",
+      "vinf": 4.758487747890379,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.131",
+      "naturalEntry125": 12.05115515367749,
+      "modelA_entrySpeedExcess": 0.051155153677489906,
+      "modelB_vinfReduction": 0.13108403643237132
+    },
+    {
+      "des": "2011 GR59",
+      "kind": "min_dv_traj",
+      "vinf": 4.6849039339394745,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.058",
+      "naturalEntry125": 12.022290121329888,
+      "modelA_entrySpeedExcess": 0.02229012132988828,
+      "modelB_vinfReduction": 0.057500222481467134
+    },
+    {
+      "des": "2011 GR59",
+      "kind": "min_dur_traj",
+      "vinf": 5.986956202880566,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "1.360",
+      "naturalEntry125": 12.586928913217662,
+      "modelA_entrySpeedExcess": 0.5869289132176618,
+      "modelB_vinfReduction": 1.3595524914225585
+    },
+    {
+      "des": "2016 AT131",
+      "kind": "min_dur_traj",
+      "vinf": 4.732431497920999,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.105",
+      "naturalEntry125": 12.040890447707739,
+      "modelA_entrySpeedExcess": 0.04089044770773853,
+      "modelB_vinfReduction": 0.10502778646299138
+    },
+    {
+      "des": "2011 OK45",
+      "kind": "min_dv_traj",
+      "vinf": 4.670341303927161,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.043",
+      "naturalEntry125": 12.016622769578511,
+      "modelA_entrySpeedExcess": 0.016622769578511054,
+      "modelB_vinfReduction": 0.04293759246915396
+    },
+    {
+      "des": "2011 OK45",
+      "kind": "min_dur_traj",
+      "vinf": 4.666251655850471,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.039",
+      "naturalEntry125": 12.015033891209459,
+      "modelA_entrySpeedExcess": 0.015033891209458972,
+      "modelB_vinfReduction": 0.03884794439246342
+    },
+    {
+      "des": "2020 BZ6",
+      "kind": "min_dur_traj",
+      "vinf": 4.78156357835035,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.154",
+      "naturalEntry125": 12.06028545039425,
+      "modelA_entrySpeedExcess": 0.06028545039425026,
+      "modelB_vinfReduction": 0.15415986689234273
+    },
+    {
+      "des": "2015 HW182",
+      "kind": "min_dur_traj",
+      "vinf": 4.9800341426641985,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.353",
+      "naturalEntry125": 12.14034080877822,
+      "modelA_entrySpeedExcess": 0.14034080877821964,
+      "modelB_vinfReduction": 0.3526304312061912
+    },
+    {
+      "des": "2008 FC",
+      "kind": "min_dv_traj",
+      "vinf": 4.799731851414451,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.172",
+      "naturalEntry125": 12.067500185898778,
+      "modelA_entrySpeedExcess": 0.06750018589877804,
+      "modelB_vinfReduction": 0.17232813995644403
+    },
+    {
+      "des": "2008 FC",
+      "kind": "min_dur_traj",
+      "vinf": 4.799731851414451,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.172",
+      "naturalEntry125": 12.067500185898778,
+      "modelA_entrySpeedExcess": 0.06750018589877804,
+      "modelB_vinfReduction": 0.17232813995644403
+    },
+    {
+      "des": "2014 KO2",
+      "kind": "min_dur_traj",
+      "vinf": 4.819865173773405,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.192",
+      "naturalEntry125": 12.075522149561003,
+      "modelA_entrySpeedExcess": 0.075522149561003,
+      "modelB_vinfReduction": 0.1924614623153973
+    },
+    {
+      "des": "2024 BH",
+      "kind": "min_dv_traj",
+      "vinf": 6.018334952986512,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "1.391",
+      "naturalEntry125": 12.601884402640893,
+      "modelA_entrySpeedExcess": 0.6018844026408932,
+      "modelB_vinfReduction": 1.390931241528505
+    },
+    {
+      "des": "2013 BS15",
+      "kind": "min_dv_traj",
+      "vinf": 5.689355460900042,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "1.062",
+      "naturalEntry125": 12.448128391515642,
+      "modelA_entrySpeedExcess": 0.44812839151564177,
+      "modelB_vinfReduction": 1.0619517494420343
+    },
+    {
+      "des": "2013 BS15",
+      "kind": "min_dur_traj",
+      "vinf": 5.589688976743903,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.962",
+      "naturalEntry125": 12.402893120071502,
+      "modelA_entrySpeedExcess": 0.4028931200715018,
+      "modelB_vinfReduction": 0.962285265285896
+    },
+    {
+      "des": "2014 HP2",
+      "kind": "min_dur_traj",
+      "vinf": 5.20711828279451,
+      "nhatsEntry": "12.000",
+      "nhatsCtrlDv": "0.580",
+      "naturalEntry125": 12.235244815785155,
+      "modelA_entrySpeedExcess": 0.23524481578515477,
+      "modelB_vinfReduction": 0.5797145713365026
+    }
+  ],
+  "controlledAltitudeFit_modelB": {
+    "pointEstimatesKm": {
+      "n": 37,
+      "median": 124.9832098025654,
+      "p90": 125.1611130211868,
+      "max": 125.2265783418352,
+      "min": 124.75465215609893
+    },
+    "intersectionFromRoundingOnlyKm": [
+      124.9810797045393,
+      125.0001092293187
+    ],
+    "intersectionWidenedKm": [
+      124.75324344692581,
+      125.22798754966698
+    ]
+  },
+  "controlledConventionTest_modelB": [
+    {
+      "convention": "inertial, 125 km (DEC-20-8), model B",
+      "vinfAtEntry12": 4.627403711458008,
+      "medianAbsResidual": 0.0001701141384400362,
+      "maxAbsResidual": 0.0004997775185337575,
+      "nWithinRounding": 37,
+      "n": 37
+    },
+    {
+      "convention": "atmosphere-relative, 125 km, equatorial eastward, gamma -6 deg, model B",
+      "vinfAtEntry12": 5.740346400668306,
+      "medianAbsResidual": 0.192,
+      "maxAbsResidual": 1.1133901977877405,
+      "nWithinRounding": 0,
+      "n": 37
+    },
+    {
+      "convention": "atmosphere-relative, 125 km, equatorial westward, gamma -6 deg, model B",
+      "vinfAtEntry12": 3.2115552379952854,
+      "medianAbsResidual": 1.4158142744820987,
+      "maxAbsResidual": 1.4163099357781193,
+      "nWithinRounding": 0,
+      "n": 37
+    },
+    {
+      "convention": "atmosphere-relative, 125 km, polar, model B",
+      "vinfAtEntry12": 4.6030407455253926,
+      "medianAbsResidual": 0.0243287669519916,
+      "maxAbsResidual": 0.024824428248012065,
+      "nWithinRounding": 0,
+      "n": 37
+    }
+  ],
+  "perTrajectory": {
+    "fitControlled": [
+      {
+        "des": "420210",
+        "kind": "min_dv_traj",
+        "vinf": 4.816413253731329,
+        "ctrl": "0.189",
+        "fittedAltitudeKm": 125.00468487470789,
+        "intervalKm": [
+          124.75922696171438,
+          125.25018784506847
+        ],
+        "widenedIntervalKm": [
+          124.53142849862888,
+          125.47810877541997
+        ]
+      },
+      {
+        "des": "420210",
+        "kind": "min_dur_traj",
+        "vinf": 4.816413253731329,
+        "ctrl": "0.189",
+        "fittedAltitudeKm": 125.00468487470789,
+        "intervalKm": [
+          124.75922696171438,
+          125.25018784506847
+        ],
+        "widenedIntervalKm": [
+          124.53142849862888,
+          125.47810877541997
+        ]
+      },
+      {
+        "des": "2023 VF3",
+        "kind": "min_dur_traj",
+        "vinf": 4.957520368976878,
+        "ctrl": "0.330",
+        "fittedAltitudeKm": 125.05727530395416,
+        "intervalKm": [
+          124.81180773898177,
+          125.30278792803165
+        ],
+        "widenedIntervalKm": [
+          124.5840003182957,
+          125.53071782070401
+        ]
+      },
+      {
+        "des": "251732",
+        "kind": "min_dur_traj",
+        "vinf": 4.766573825596448,
+        "ctrl": "0.139",
+        "fittedAltitudeKm": 125.08352170251692,
+        "intervalKm": [
+          124.83804932051589,
+          125.32903914448889
+        ],
+        "widenedIntervalKm": [
+          124.61023742934776,
+          125.5569735099989
+        ]
+      },
+      {
+        "des": "2026 DP15",
+        "kind": "min_dv_traj",
+        "vinf": 5.363425316152171,
+        "ctrl": "0.736",
+        "fittedAltitudeKm": 125.01060706457974,
+        "intervalKm": [
+          124.76514806467912,
+          125.25611112204206
+        ],
+        "widenedIntervalKm": [
+          124.53734859288215,
+          125.484033061638
+        ]
+      },
+      {
+        "des": "2026 DP15",
+        "kind": "min_dur_traj",
+        "vinf": 5.354341324545801,
+        "ctrl": "0.727",
+        "fittedAltitudeKm": 124.96937092466851,
+        "intervalKm": [
+          124.72391949288794,
+          125.21486741265107
+        ],
+        "widenedIntervalKm": [
+          124.49612704474566,
+          125.44278232488978
+        ]
+      },
+      {
+        "des": "2006 SP19",
+        "kind": "min_dv_traj",
+        "vinf": 4.775379338803878,
+        "ctrl": "0.148",
+        "fittedAltitudeKm": 124.98803407571177,
+        "intervalKm": [
+          124.74257921865865,
+          125.23353398958079
+        ],
+        "widenedIntervalKm": [
+          124.51478359166504,
+          125.46145208234702
+        ]
+      },
+      {
+        "des": "2015 VO105",
+        "kind": "min_dv_traj",
+        "vinf": 4.641112437187672,
+        "ctrl": "0.014",
+        "fittedAltitudeKm": 124.85700387376073,
+        "intervalKm": [
+          124.6115730648653,
+          125.10247973514743
+        ],
+        "widenedIntervalKm": [
+          124.38379975596399,
+          125.33037549806068
+        ]
+      },
+      {
+        "des": "452807",
+        "kind": "min_dv_traj",
+        "vinf": 4.859517607295293,
+        "ctrl": "0.232",
+        "fittedAltitudeKm": 125.05591937370264,
+        "intervalKm": [
+          124.81045205758528,
+          125.30143174887871
+        ],
+        "widenedIntervalKm": [
+          124.58264486785083,
+          125.52936141047758
+        ]
+      },
+      {
+        "des": "452807",
+        "kind": "min_dur_traj",
+        "vinf": 6.419084100322959,
+        "ctrl": "1.792",
+        "fittedAltitudeKm": 124.84309319028671,
+        "intervalKm": [
+          124.59766493444113,
+          125.08856649816335
+        ],
+        "widenedIntervalKm": [
+          124.36989399491904,
+          125.31645989044864
+        ]
+      },
+      {
+        "des": "2002 JR100",
+        "kind": "min_dv_traj",
+        "vinf": 4.752517458466519,
+        "ctrl": "0.125",
+        "fittedAltitudeKm": 125.05584630179965,
+        "intervalKm": [
+          124.81037899909279,
+          125.3013586635625
+        ],
+        "widenedIntervalKm": [
+          124.58257182180478,
+          125.52928831270856
+        ]
+      },
+      {
+        "des": "2002 JR100",
+        "kind": "min_dur_traj",
+        "vinf": 5.535907379835238,
+        "ctrl": "0.909",
+        "fittedAltitudeKm": 124.75634364090183,
+        "intervalKm": [
+          124.51093130635127,
+          125.00180102461945
+        ],
+        "widenedIntervalKm": [
+          124.28317514272203,
+          125.22967963322753
+        ]
+      },
+      {
+        "des": "2019 JU5",
+        "kind": "min_dv_traj",
+        "vinf": 4.707347949665274,
+        "ctrl": "0.080",
+        "fittedAltitudeKm": 124.9726235172302,
+        "intervalKm": [
+          124.72717148849642,
+          125.21812060227057
+        ],
+        "widenedIntervalKm": [
+          124.49937848634727,
+          125.44603606880901
+        ]
+      },
+      {
+        "des": "2011 MJ",
+        "kind": "min_dv_traj",
+        "vinf": 5.313654283501934,
+        "ctrl": "0.686",
+        "fittedAltitudeKm": 125.12302629854639,
+        "intervalKm": [
+          124.87754666623005,
+          125.36855099213608
+        ],
+        "widenedIntervalKm": [
+          124.64972804634817,
+          125.59649208990777
+        ]
+      },
+      {
+        "des": "2011 MJ",
+        "kind": "min_dur_traj",
+        "vinf": 5.058762111026321,
+        "ctrl": "0.431",
+        "fittedAltitudeKm": 125.17597112702788,
+        "intervalKm": [
+          124.93048177770743,
+          125.42150553937245
+        ],
+        "widenedIntervalKm": [
+          124.70265413987636,
+          125.64945565984544
+        ]
+      },
+      {
+        "des": "2016 DB1",
+        "kind": "min_dur_traj",
+        "vinf": 5.529242135118286,
+        "ctrl": "0.902",
+        "fittedAltitudeKm": 124.92067496840082,
+        "intervalKm": [
+          124.67523247385361,
+          125.16616251754022
+        ],
+        "widenedIntervalKm": [
+          124.4474483199856,
+          125.39406913113362
+        ]
+      },
+      {
+        "des": "2008 FX6",
+        "kind": "min_dv_traj",
+        "vinf": 4.766369512477384,
+        "ctrl": "0.139",
+        "fittedAltitudeKm": 124.9832098025654,
+        "intervalKm": [
+          124.7377558309181,
+          125.22870883087126
+        ],
+        "widenedIntervalKm": [
+          124.50996102563204,
+          125.45662610149702
+        ]
+      },
+      {
+        "des": "2022 KH3",
+        "kind": "min_dv_traj",
+        "vinf": 5.011124793934765,
+        "ctrl": "0.384",
+        "fittedAltitudeKm": 124.86306989705645,
+        "intervalKm": [
+          124.617637974854,
+          125.10854687195024
+        ],
+        "widenedIntervalKm": [
+          124.38986363273943,
+          125.33644366862063
+        ]
+      },
+      {
+        "des": "2026 FE7",
+        "kind": "min_dur_traj",
+        "vinf": 4.866226724503555,
+        "ctrl": "0.239",
+        "fittedAltitudeKm": 124.91310945607893,
+        "intervalKm": [
+          124.66766835004091,
+          125.15859561645902
+        ],
+        "widenedIntervalKm": [
+          124.43988548479138,
+          125.38650094075638
+        ]
+      },
+      {
+        "des": "2021 XF6",
+        "kind": "min_dv_traj",
+        "vinf": 4.754155713906817,
+        "ctrl": "0.127",
+        "fittedAltitudeKm": 124.87824887249644,
+        "intervalKm": [
+          124.63281416447353,
+          125.12372863371183
+        ],
+        "widenedIntervalKm": [
+          124.40503723695383,
+          125.35162801714978
+        ]
+      },
+      {
+        "des": "2021 XF6",
+        "kind": "min_dur_traj",
+        "vinf": 4.754155713906817,
+        "ctrl": "0.127",
+        "fittedAltitudeKm": 124.87824887249644,
+        "intervalKm": [
+          124.63281416447353,
+          125.12372863371183
+        ],
+        "widenedIntervalKm": [
+          124.40503723695383,
+          125.35162801714978
+        ]
+      },
+      {
+        "des": "2026 CA2",
+        "kind": "min_dv_traj",
+        "vinf": 6.245843309982805,
+        "ctrl": "1.618",
+        "fittedAltitudeKm": 125.21584233809608,
+        "intervalKm": [
+          124.9703456711859,
+          125.46138406934642
+        ],
+        "widenedIntervalKm": [
+          124.74251124220427,
+          125.68934098454883
+        ]
+      },
+      {
+        "des": "2026 CA2",
+        "kind": "min_dur_traj",
+        "vinf": 4.758487747890379,
+        "ctrl": "0.131",
+        "fittedAltitudeKm": 125.04125909272352,
+        "intervalKm": [
+          124.79579446722255,
+          125.28676877679936
+        ],
+        "widenedIntervalKm": [
+          124.56798977453855,
+          125.51469594003265
+        ]
+      },
+      {
+        "des": "2011 GR59",
+        "kind": "min_dv_traj",
+        "vinf": 4.6849039339394745,
+        "ctrl": "0.058",
+        "fittedAltitudeKm": 124.75465215609893,
+        "intervalKm": [
+          124.50924013198983,
+          125.0001092293187
+        ],
+        "widenedIntervalKm": [
+          124.28148425646759,
+          125.22798754966698
+        ]
+      },
+      {
+        "des": "2011 GR59",
+        "kind": "min_dur_traj",
+        "vinf": 5.986956202880566,
+        "ctrl": "1.360",
+        "fittedAltitudeKm": 124.78030961004333,
+        "intervalKm": [
+          124.53489287697448,
+          125.02577139306959
+        ],
+        "widenedIntervalKm": [
+          124.30713263126381,
+          125.25365408591006
+        ]
+      },
+      {
+        "des": "2016 AT131",
+        "kind": "min_dur_traj",
+        "vinf": 4.732431497920999,
+        "ctrl": "0.105",
+        "fittedAltitudeKm": 125.01364208812902,
+        "intervalKm": [
+          124.76818253120837,
+          125.25914670271413
+        ],
+        "widenedIntervalKm": [
+          124.54038254246188,
+          125.48706915953062
+        ]
+      },
+      {
+        "des": "2011 OK45",
+        "kind": "min_dv_traj",
+        "vinf": 4.670341303927161,
+        "ctrl": "0.043",
+        "fittedAltitudeKm": 124.96936080199066,
+        "intervalKm": [
+          124.72390937206819,
+          125.21485728811422
+        ],
+        "widenedIntervalKm": [
+          124.4961169256494,
+          125.44277219862852
+        ]
+      },
+      {
+        "des": "2011 OK45",
+        "kind": "min_dur_traj",
+        "vinf": 4.666251655850471,
+        "ctrl": "0.039",
+        "fittedAltitudeKm": 124.9253489900102,
+        "intervalKm": [
+          124.67990563763306,
+          125.17083739713325
+        ],
+        "widenedIntervalKm": [
+          124.45212068764977,
+          125.39874480726303
+        ]
+      },
+      {
+        "des": "2020 BZ6",
+        "kind": "min_dur_traj",
+        "vinf": 4.78156357835035,
+        "ctrl": "0.154",
+        "fittedAltitudeKm": 125.0784904184502,
+        "intervalKm": [
+          124.8330189598455,
+          125.3240069368585
+        ],
+        "widenedIntervalKm": [
+          124.6052079256433,
+          125.55194044495147
+        ]
+      },
+      {
+        "des": "2015 HW182",
+        "kind": "min_dur_traj",
+        "vinf": 4.9800341426641985,
+        "ctrl": "0.353",
+        "fittedAltitudeKm": 124.81856912249441,
+        "intervalKm": [
+          124.57314536759077,
+          125.06403792861875
+        ],
+        "widenedIntervalKm": [
+          124.34537860520686,
+          125.29192714156488
+        ]
+      },
+      {
+        "des": "2008 FC",
+        "kind": "min_dv_traj",
+        "vinf": 4.799731851414451,
+        "ctrl": "0.172",
+        "fittedAltitudeKm": 125.1611130211868,
+        "intervalKm": [
+          124.9156263987843,
+          125.40664470612137
+        ],
+        "widenedIntervalKm": [
+          124.68780129169318,
+          125.63459229452019
+        ]
+      },
+      {
+        "des": "2008 FC",
+        "kind": "min_dur_traj",
+        "vinf": 4.799731851414451,
+        "ctrl": "0.172",
+        "fittedAltitudeKm": 125.1611130211868,
+        "intervalKm": [
+          124.9156263987843,
+          125.40664470612137
+        ],
+        "widenedIntervalKm": [
+          124.68780129169318,
+          125.63459229452019
+        ]
+      },
+      {
+        "des": "2014 KO2",
+        "kind": "min_dur_traj",
+        "vinf": 4.819865173773405,
+        "ctrl": "0.192",
+        "fittedAltitudeKm": 125.2265783418352,
+        "intervalKm": [
+          124.9810797045393,
+          125.47212204382504
+        ],
+        "widenedIntervalKm": [
+          124.75324344692581,
+          125.70008078862247
+        ]
+      },
+      {
+        "des": "2024 BH",
+        "kind": "min_dv_traj",
+        "vinf": 6.018334952986512,
+        "ctrl": "1.391",
+        "fittedAltitudeKm": 124.9662428245656,
+        "intervalKm": [
+          124.72079196688901,
+          125.21173873833959
+        ],
+        "widenedIntervalKm": [
+          124.49300005154964,
+          125.43965311749616
+        ]
+      },
+      {
+        "des": "2013 BS15",
+        "kind": "min_dv_traj",
+        "vinf": 5.689355460900042,
+        "ctrl": "1.062",
+        "fittedAltitudeKm": 124.97631115634613,
+        "intervalKm": [
+          124.7308584508155,
+          125.22180891830703
+        ],
+        "widenedIntervalKm": [
+          124.50306482056021,
+          125.44972501328175
+        ]
+      },
+      {
+        "des": "2013 BS15",
+        "kind": "min_dur_traj",
+        "vinf": 5.589688976743903,
+        "ctrl": "0.962",
+        "fittedAltitudeKm": 125.1400609388129,
+        "intervalKm": [
+          124.89457818011579,
+          125.38558875934723
+        ],
+        "widenedIntervalKm": [
+          124.66675665876846,
+          125.61353276011232
+        ]
+      },
+      {
+        "des": "2014 HP2",
+        "kind": "min_dur_traj",
+        "vinf": 5.20711828279451,
+        "ctrl": "0.580",
+        "fittedAltitudeKm": 124.85987352421307,
+        "intervalKm": [
+          124.61444218864563,
+          125.10534991236455
+        ],
+        "widenedIntervalKm": [
+          124.38666839096277,
+          125.33324616431764
+        ]
+      }
+    ],
+    "fit": [
+      {
+        "des": "99942",
+        "kind": "min_dv_traj",
+        "vinf": 3.915771209296251,
+        "nhats": "11.744",
+        "fittedAltitudeKm": 124.93968664184376,
+        "intervalKm": [
+          124.31673604104253,
+          125.56273008526387
+        ],
+        "widenedIntervalKm": [
+          124.12397643978693,
+          125.7555978595883
+        ]
+      },
+      {
+        "des": "2000 SG344",
+        "kind": "min_dv_traj",
+        "vinf": 1.3204135265582815,
+        "nhats": "11.150",
+        "fittedAltitudeKm": 125.4311465006349,
+        "intervalKm": [
+          124.83961119934793,
+          126.02276289539441
+        ],
+        "widenedIntervalKm": [
+          124.77460774190331,
+          126.08781416957481
+        ]
+      },
+      {
+        "des": "2000 SG344",
+        "kind": "min_dur_traj",
+        "vinf": 3.8765845304479813,
+        "nhats": "11.731",
+        "fittedAltitudeKm": 124.93005620411896,
+        "intervalKm": [
+          124.30779693964905,
+          125.55240804663481
+        ],
+        "widenedIntervalKm": [
+          124.11696694271814,
+          125.7433451681145
+        ]
+      },
+      {
+        "des": "101955",
+        "kind": "min_dv_traj",
+        "vinf": 4.173228138843153,
+        "nhats": "11.832",
+        "fittedAltitudeKm": 125.35778225201193,
+        "intervalKm": [
+          124.73008361480152,
+          125.98557554737272
+        ],
+        "widenedIntervalKm": [
+          124.52462384816226,
+          126.19115050874552
+        ]
+      },
+      {
+        "des": "2008 HU4",
+        "kind": "min_dur_traj",
+        "vinf": 4.424658172864214,
+        "nhats": "11.923",
+        "fittedAltitudeKm": 125.36106358781035,
+        "intervalKm": [
+          124.72853724898687,
+          125.99368645619143
+        ],
+        "widenedIntervalKm": [
+          124.510698704069,
+          126.21164723605125
+        ]
+      },
+      {
+        "des": "2009 DC1",
+        "kind": "min_dv_traj",
+        "vinf": 4.6137833810137,
+        "nhats": "11.995",
+        "fittedAltitudeKm": 124.68739554739659,
+        "intervalKm": [
+          124.0511818138948,
+          125.32370726796125
+        ],
+        "widenedIntervalKm": [
+          123.82407925009284,
+          125.55093746183775
+        ]
+      },
+      {
+        "des": "2007 EE26",
+        "kind": "min_dv_traj",
+        "vinf": 4.462846470848782,
+        "nhats": "11.938",
+        "fittedAltitudeKm": 124.37882862771858,
+        "intervalKm": [
+          123.74569789876386,
+          125.01205614818082
+        ],
+        "widenedIntervalKm": [
+          123.52604561008684,
+          125.23183171178698
+        ]
+      },
+      {
+        "des": "2007 EE26",
+        "kind": "min_dur_traj",
+        "vinf": 2.1197338011013973,
+        "nhats": "11.273",
+        "fittedAltitudeKm": 124.99348975345129,
+        "intervalKm": [
+          124.39551022817886,
+          125.59155274108889
+        ],
+        "widenedIntervalKm": [
+          124.29116450469155,
+          125.69596306245603
+        ]
+      },
+      {
+        "des": "2024 VJ3",
+        "kind": "min_dv_traj",
+        "vinf": 4.570037383392629,
+        "nhats": "11.978",
+        "fittedAltitudeKm": 124.99430130093424,
+        "intervalKm": [
+          124.35892917246474,
+          125.62977107886854
+        ],
+        "widenedIntervalKm": [
+          124.13395864188715,
+          125.85486798899274
+        ]
+      },
+      {
+        "des": "251732",
+        "kind": "min_dv_traj",
+        "vinf": 2.879176394605448,
+        "nhats": "11.440",
+        "fittedAltitudeKm": 125.16931603005833,
+        "intervalKm": [
+          124.5624461516145,
+          125.77627266148102
+        ],
+        "widenedIntervalKm": [
+          124.42070565646736,
+          125.91809511956035
+        ]
+      },
+      {
+        "des": "2026 AM4",
+        "kind": "min_dv_traj",
+        "vinf": 2.306791411627038,
+        "nhats": "11.310",
+        "fittedAltitudeKm": 124.59268845586303,
+        "intervalKm": [
+          123.99282042517007,
+          125.19264065489915
+        ],
+        "widenedIntervalKm": [
+          123.87927984613725,
+          125.30624996320421
+        ]
+      },
+      {
+        "des": "2026 AM4",
+        "kind": "min_dur_traj",
+        "vinf": 3.667950691203248,
+        "nhats": "11.664",
+        "fittedAltitudeKm": 124.58100090936205,
+        "intervalKm": [
+          123.96236159333694,
+          125.19973143073639
+        ],
+        "widenedIntervalKm": [
+          123.78182138577085,
+          125.38037324681409
+        ]
+      },
+      {
+        "des": "2016 AB9",
+        "kind": "min_dv_traj",
+        "vinf": 3.6589933712341707,
+        "nhats": "11.661",
+        "fittedAltitudeKm": 124.81148924051467,
+        "intervalKm": [
+          124.19296517833573,
+          125.43010445812433
+        ],
+        "widenedIntervalKm": [
+          124.01285309985269,
+          125.61031792068843
+        ]
+      },
+      {
+        "des": "2016 AB9",
+        "kind": "min_dur_traj",
+        "vinf": 2.21746609539088,
+        "nhats": "11.292",
+        "fittedAltitudeKm": 124.73618563657419,
+        "intervalKm": [
+          124.13724576219374,
+          125.33520933338423
+        ],
+        "widenedIntervalKm": [
+          124.02809730697572,
+          125.4444245334389
+        ]
+      },
+      {
+        "des": "2022 LW",
+        "kind": "min_dv_traj",
+        "vinf": 4.006702855144326,
+        "nhats": "11.775",
+        "fittedAltitudeKm": 124.4789755288266,
+        "intervalKm": [
+          123.85446924361622,
+          125.1035752659136
+        ],
+        "widenedIntervalKm": [
+          123.65726131079191,
+          125.30089380245408
+        ]
+      },
+      {
+        "des": "2015 VO105",
+        "kind": "min_dur_traj",
+        "vinf": 3.664874562342982,
+        "nhats": "11.663",
+        "fittedAltitudeKm": 124.62185880231846,
+        "intervalKm": [
+          124.0032647454018,
+          125.24054404628714
+        ],
+        "widenedIntervalKm": [
+          123.82287368381822,
+          125.42103663781018
+        ]
+      },
+      {
+        "des": "2020 XL6",
+        "kind": "min_dv_traj",
+        "vinf": 4.617002319297917,
+        "nhats": "11.996",
+        "fittedAltitudeKm": 124.99094493452594,
+        "intervalKm": [
+          124.35461876753925,
+          125.62736912430046
+        ],
+        "widenedIntervalKm": [
+          124.1273365454299,
+          125.85477908490248
+        ]
+      },
+      {
+        "des": "2019 XZ2",
+        "kind": "min_dv_traj",
+        "vinf": 4.542496705245814,
+        "nhats": "11.968",
+        "fittedAltitudeKm": 124.38401026266274,
+        "intervalKm": [
+          123.74928766356607,
+          125.0188302740562
+        ],
+        "widenedIntervalKm": [
+          123.52571483532665,
+          125.24252865846938
+        ]
+      },
+      {
+        "des": "2019 JU5",
+        "kind": "min_dur_traj",
+        "vinf": 4.4348606834196165,
+        "nhats": "11.927",
+        "fittedAltitudeKm": 125.09523367298698,
+        "intervalKm": [
+          124.46254687819783,
+          125.72801706698556
+        ],
+        "widenedIntervalKm": [
+          124.24422388627409,
+          125.9464625711671
+        ]
+      },
+      {
+        "des": "2023 XU7",
+        "kind": "min_dv_traj",
+        "vinf": 3.4510286861378714,
+        "nhats": "11.597",
+        "fittedAltitudeKm": 125.33554667227418,
+        "intervalKm": [
+          124.72031776829681,
+          125.9508654673673
+        ],
+        "widenedIntervalKm": [
+          124.55041547180099,
+          126.12086381584868
+        ]
+      },
+      {
+        "des": "2023 XU7",
+        "kind": "min_dur_traj",
+        "vinf": 4.425411857996196,
+        "nhats": "11.924",
+        "fittedAltitudeKm": 124.4498745902647,
+        "intervalKm": [
+          123.81747244401049,
+          125.08237324242964
+        ],
+        "widenedIntervalKm": [
+          123.59965783667667,
+          125.30031006305126
+        ]
+      },
+      {
+        "des": "2008 FX6",
+        "kind": "min_dur_traj",
+        "vinf": 4.179456639583013,
+        "nhats": "11.834",
+        "fittedAltitudeKm": 125.6067628423134,
+        "intervalKm": [
+          124.9789100472126,
+          126.23471034843078
+        ],
+        "widenedIntervalKm": [
+          124.77312787961182,
+          126.44060789380364
+        ]
+      },
+      {
+        "des": "2019 TB7",
+        "kind": "min_dv_traj",
+        "vinf": 4.3982852055073405,
+        "nhats": "11.914",
+        "fittedAltitudeKm": 124.39803550413217,
+        "intervalKm": [
+          123.76617373008958,
+          125.02999357530734
+        ],
+        "widenedIntervalKm": [
+          123.5496977124867,
+          125.2465910348028
+        ]
+      },
+      {
+        "des": "2019 TB7",
+        "kind": "min_dur_traj",
+        "vinf": 4.257462818059418,
+        "nhats": "11.862",
+        "fittedAltitudeKm": 125.32258305865798,
+        "intervalKm": [
+          124.69329989261496,
+          125.95196149647381
+        ],
+        "widenedIntervalKm": [
+          124.48369528996409,
+          126.16168362861481
+        ]
+      },
+      {
+        "des": "2021 SV1",
+        "kind": "min_dv_traj",
+        "vinf": 4.573400406806176,
+        "nhats": "11.979",
+        "fittedAltitudeKm": 125.35466167604955,
+        "intervalKm": [
+          124.71916608833817,
+          125.99025495166825
+        ],
+        "widenedIntervalKm": [
+          124.49400505733047,
+          126.21554247698259
+        ]
+      },
+      {
+        "des": "2023 HG1",
+        "kind": "min_dv_traj",
+        "vinf": 2.410212016279487,
+        "nhats": "11.331",
+        "fittedAltitudeKm": 125.24912038114962,
+        "intervalKm": [
+          124.64801732940487,
+          125.85030804096095
+        ],
+        "widenedIntervalKm": [
+          124.52936204613616,
+          125.9690343967568
+        ]
+      },
+      {
+        "des": "2026 FE7",
+        "kind": "min_dv_traj",
+        "vinf": 4.100227248964364,
+        "nhats": "11.807",
+        "fittedAltitudeKm": 124.66842740056018,
+        "intervalKm": [
+          124.04218765546011,
+          125.29476125949623
+        ],
+        "widenedIntervalKm": [
+          123.8403647215564,
+          125.49669735134557
+        ]
+      },
+      {
+        "des": "2016 AT131",
+        "kind": "min_dv_traj",
+        "vinf": 3.8343345842415313,
+        "nhats": "11.717",
+        "fittedAltitudeKm": 125.06194045342909,
+        "intervalKm": [
+          124.44039851011894,
+          125.68357469683178
+        ],
+        "widenedIntervalKm": [
+          124.25164068859158,
+          125.87243852338906
+        ]
+      },
+      {
+        "des": "2020 BZ6",
+        "kind": "min_dv_traj",
+        "vinf": 2.8026139309215643,
+        "nhats": "11.421",
+        "fittedAltitudeKm": 125.13468048916639,
+        "intervalKm": [
+          124.52882486118597,
+          125.7406224926417
+        ],
+        "widenedIntervalKm": [
+          124.39085515052648,
+          125.87867234769146
+        ]
+      },
+      {
+        "des": "2015 HW182",
+        "kind": "min_dv_traj",
+        "vinf": 4.485292393225278,
+        "nhats": "11.946",
+        "fittedAltitudeKm": 124.8974441307746,
+        "intervalKm": [
+          124.26378811388531,
+          125.53119712981425
+        ],
+        "widenedIntervalKm": [
+          124.04299588029062,
+          125.75211330394905
+        ]
+      },
+      {
+        "des": "2014 KO2",
+        "kind": "min_dv_traj",
+        "vinf": 4.148251576189454,
+        "nhats": "11.823",
+        "fittedAltitudeKm": 125.62588202842471,
+        "intervalKm": [
+          124.99860908182018,
+          126.25324946167075
+        ],
+        "widenedIntervalKm": [
+          124.79436214462294,
+          126.45761091690565
+        ]
+      },
+      {
+        "des": "2005 AJ3",
+        "kind": "min_dv_traj",
+        "vinf": 4.26105614755039,
+        "nhats": "11.864",
+        "fittedAltitudeKm": 124.42915610765976,
+        "intervalKm": [
+          123.79993976064725,
+          125.05846772460154
+        ],
+        "widenedIntervalKm": [
+          123.59021588102405,
+          125.26830919339955
+        ]
+      },
+      {
+        "des": "2009 RH",
+        "kind": "min_dv_traj",
+        "vinf": 4.595309978918573,
+        "nhats": "11.988",
+        "fittedAltitudeKm": 124.5684579906665,
+        "intervalKm": [
+          123.93263875044795,
+          125.20437506681719
+        ],
+        "widenedIntervalKm": [
+          123.70645375758522,
+          125.43068714869423
+        ]
+      },
+      {
+        "des": "2009 RH",
+        "kind": "min_dur_traj",
+        "vinf": 4.595309978918573,
+        "nhats": "11.988",
+        "fittedAltitudeKm": 124.5684579906665,
+        "intervalKm": [
+          123.93263875044795,
+          125.20437506681719
+        ],
+        "widenedIntervalKm": [
+          123.70645375758522,
+          125.43068714869423
+        ]
+      },
+      {
+        "des": "2014 HP2",
+        "kind": "min_dv_traj",
+        "vinf": 4.607753973592793,
+        "nhats": "11.992",
+        "fittedAltitudeKm": 125.5553426628212,
+        "intervalKm": [
+          124.91911823575174,
+          126.19166505743942
+        ],
+        "widenedIntervalKm": [
+          124.69225190707402,
+          126.41865888433131
+        ]
+      },
+      {
+        "des": "2023 BP5",
+        "kind": "min_dur_traj",
+        "vinf": 3.5478705297597823,
+        "nhats": "11.626",
+        "fittedAltitudeKm": 125.56471353076631,
+        "intervalKm": [
+          124.94790287019623,
+          126.18161467592017
+        ],
+        "widenedIntervalKm": [
+          124.77322040220588,
+          126.35639568110946
+        ]
+      },
+      {
+        "des": "2010 XD",
+        "kind": "min_dv_traj",
+        "vinf": 3.8954015619588147,
+        "nhats": "11.737",
+        "fittedAltitudeKm": 125.21852824244797,
+        "intervalKm": [
+          124.59589551828776,
+          125.84125368003333
+        ],
+        "widenedIntervalKm": [
+          124.40412220786584,
+          126.03313462958067
+        ]
+      },
+      {
+        "des": "2010 XD",
+        "kind": "min_dur_traj",
+        "vinf": 2.3037771129976217,
+        "nhats": "11.309",
+        "fittedAltitudeKm": 125.05532418151688,
+        "intervalKm": [
+          124.45542383688826,
+          125.65530869476243
+        ],
+        "widenedIntervalKm": [
+          124.34201549903446,
+          125.76878570609006
+        ]
+      },
+      {
+        "des": "2019 LH27",
+        "kind": "min_dv_traj",
+        "vinf": 2.789540183250554,
+        "nhats": "11.418",
+        "fittedAltitudeKm": 124.8910031852065,
+        "intervalKm": [
+          124.28535206933702,
+          125.49674060657071
+        ],
+        "widenedIntervalKm": [
+          124.14803628833215,
+          125.63413621595464
+        ]
+      },
+      {
+        "des": "2019 LH27",
+        "kind": "min_dur_traj",
+        "vinf": 1.8735291778457392,
+        "nhats": "11.229",
+        "fittedAltitudeKm": 125.36104414555848,
+        "intervalKm": [
+          124.76533101723999,
+          125.95683989483587
+        ],
+        "widenedIntervalKm": [
+          124.67309559306068,
+          126.04913460064745
+        ]
+      }
+    ],
+    "best": [
+      {
+        "des": "99942",
+        "kind": "min_dv_traj",
+        "nhats": "11.744",
+        "candidate": 11.743951273508989,
+        "residual": 0.000048726491010953055
+      },
+      {
+        "des": "2000 SG344",
+        "kind": "min_dv_traj",
+        "nhats": "11.150",
+        "candidate": 11.150364085182064,
+        "residual": -0.0003640851820634339
+      },
+      {
+        "des": "2000 SG344",
+        "kind": "min_dur_traj",
+        "nhats": "11.731",
+        "candidate": 11.730943481779654,
+        "residual": 0.000056518220345580517
+      },
+      {
+        "des": "101955",
+        "kind": "min_dv_traj",
+        "nhats": "11.832",
+        "candidate": 11.832284667376468,
+        "residual": -0.00028466737646759555
+      },
+      {
+        "des": "2008 HU4",
+        "kind": "min_dur_traj",
+        "nhats": "11.923",
+        "candidate": 11.923285088334257,
+        "residual": -0.0002850883342571109
+      },
+      {
+        "des": "2009 DC1",
+        "kind": "min_dv_traj",
+        "nhats": "11.995",
+        "candidate": 11.99475403824181,
+        "residual": 0.00024596175818913935
+      },
+      {
+        "des": "2007 EE26",
+        "kind": "min_dv_traj",
+        "nhats": "11.938",
+        "candidate": 11.937509203069434,
+        "residual": 0.0004907969305669724
+      },
+      {
+        "des": "2007 EE26",
+        "kind": "min_dur_traj",
+        "nhats": "11.273",
+        "candidate": 11.272994222411885,
+        "residual": 0.000005777588114597165
+      },
+      {
+        "des": "2024 VJ3",
+        "kind": "min_dv_traj",
+        "nhats": "11.978",
+        "candidate": 11.97799520105957,
+        "residual": 0.000004798940429040499
+      },
+      {
+        "des": "251732",
+        "kind": "min_dv_traj",
+        "nhats": "11.440",
+        "candidate": 11.44013916271359,
+        "residual": -0.00013916271359093457
+      },
+      {
+        "des": "2026 AM4",
+        "kind": "min_dv_traj",
+        "nhats": "11.310",
+        "candidate": 11.309660205671797,
+        "residual": 0.0003397943282035243
+      },
+      {
+        "des": "2026 AM4",
+        "kind": "min_dur_traj",
+        "nhats": "11.664",
+        "candidate": 11.66366107292639,
+        "residual": 0.00033892707361005137
+      },
+      {
+        "des": "2016 AB9",
+        "kind": "min_dv_traj",
+        "nhats": "11.661",
+        "candidate": 11.66084730376552,
+        "residual": 0.00015269623447977665
+      },
+      {
+        "des": "2016 AB9",
+        "kind": "min_dur_traj",
+        "nhats": "11.292",
+        "candidate": 11.291779453886267,
+        "residual": 0.00022054611373256705
+      },
+      {
+        "des": "2022 LW",
+        "kind": "min_dv_traj",
+        "nhats": "11.775",
+        "candidate": 11.77458258794857,
+        "residual": 0.0004174120514299773
+      },
+      {
+        "des": "2015 VO105",
+        "kind": "min_dur_traj",
+        "nhats": "11.663",
+        "candidate": 11.66269406735462,
+        "residual": 0.00030593264538048004
+      },
+      {
+        "des": "2020 XL6",
+        "kind": "min_dv_traj",
+        "nhats": "11.996",
+        "candidate": 11.995992571163185,
+        "residual": 0.000007428836815037698
+      },
+      {
+        "des": "2019 XZ2",
+        "kind": "min_dv_traj",
+        "nhats": "11.968",
+        "candidate": 11.967514515059886,
+        "residual": 0.0004854849401141337
+      },
+      {
+        "des": "2019 JU5",
+        "kind": "min_dur_traj",
+        "nhats": "11.927",
+        "candidate": 11.927074940333908,
+        "residual": -0.0000749403339082022
+      },
+      {
+        "des": "2023 XU7",
+        "kind": "min_dv_traj",
+        "nhats": "11.597",
+        "candidate": 11.59727236653285,
+        "residual": -0.0002723665328510094
+      },
+      {
+        "des": "2023 XU7",
+        "kind": "min_dur_traj",
+        "nhats": "11.924",
+        "candidate": 11.923564796816988,
+        "residual": 0.0004352031830112679
+      },
+      {
+        "des": "2008 FX6",
+        "kind": "min_dur_traj",
+        "nhats": "11.834",
+        "candidate": 11.834482884906908,
+        "residual": -0.0004828849069085095
+      },
+      {
+        "des": "2019 TB7",
+        "kind": "min_dv_traj",
+        "nhats": "11.914",
+        "candidate": 11.913523412491568,
+        "residual": 0.000476587508432047
+      },
+      {
+        "des": "2019 TB7",
+        "kind": "min_dur_traj",
+        "nhats": "11.862",
+        "candidate": 11.86225598266023,
+        "residual": -0.0002559826602297477
+      },
+      {
+        "des": "2021 SV1",
+        "kind": "min_dv_traj",
+        "nhats": "11.979",
+        "candidate": 11.979278719187349,
+        "residual": -0.0002787191873494521
+      },
+      {
+        "des": "2023 HG1",
+        "kind": "min_dv_traj",
+        "nhats": "11.331",
+        "candidate": 11.331206878105174,
+        "residual": -0.00020687810517472371
+      },
+      {
+        "des": "2026 FE7",
+        "kind": "min_dv_traj",
+        "nhats": "11.807",
+        "candidate": 11.806734978144883,
+        "residual": 0.00026502185511745324
+      },
+      {
+        "des": "2016 AT131",
+        "kind": "min_dv_traj",
+        "nhats": "11.717",
+        "candidate": 11.717049502964075,
+        "residual": -0.000049502964074576994
+      },
+      {
+        "des": "2020 BZ6",
+        "kind": "min_dv_traj",
+        "nhats": "11.421",
+        "candidate": 11.421110812736018,
+        "residual": -0.00011081273601831754
+      },
+      {
+        "des": "2015 HW182",
+        "kind": "min_dv_traj",
+        "nhats": "11.946",
+        "candidate": 11.945918767668083,
+        "residual": 0.00008123233191703605
+      },
+      {
+        "des": "2014 KO2",
+        "kind": "min_dv_traj",
+        "nhats": "11.823",
+        "candidate": 11.823498572349822,
+        "residual": -0.0004985723498212025
+      },
+      {
+        "des": "2005 AJ3",
+        "kind": "min_dv_traj",
+        "nhats": "11.864",
+        "candidate": 11.863546132736912,
+        "residual": 0.0004538672630882701
+      },
+      {
+        "des": "2009 RH",
+        "kind": "min_dv_traj",
+        "nhats": "11.988",
+        "candidate": 11.987660370286964,
+        "residual": 0.000339629713035805
+      },
+      {
+        "des": "2009 RH",
+        "kind": "min_dur_traj",
+        "nhats": "11.988",
+        "candidate": 11.987660370286964,
+        "residual": 0.000339629713035805
+      },
+      {
+        "des": "2014 HP2",
+        "kind": "min_dv_traj",
+        "nhats": "11.992",
+        "candidate": 11.9924361174934,
+        "residual": -0.0004361174933986689
+      },
+      {
+        "des": "2023 BP5",
+        "kind": "min_dur_traj",
+        "nhats": "11.626",
+        "candidate": 11.626457441840913,
+        "residual": -0.0004574418409131198
+      },
+      {
+        "des": "2010 XD",
+        "kind": "min_dv_traj",
+        "nhats": "11.737",
+        "candidate": 11.737175157588437,
+        "residual": -0.0001751575884370027
+      },
+      {
+        "des": "2010 XD",
+        "kind": "min_dur_traj",
+        "nhats": "11.309",
+        "candidate": 11.309045774837577,
+        "residual": -0.000045774837577283733
+      },
+      {
+        "des": "2019 LH27",
+        "kind": "min_dv_traj",
+        "nhats": "11.418",
+        "candidate": 11.417909694202766,
+        "residual": 0.00009030579723301457
+      },
+      {
+        "des": "2019 LH27",
+        "kind": "min_dur_traj",
+        "nhats": "11.229",
+        "candidate": 11.229302691228842,
+        "residual": -0.0003026912288426331
+      }
+    ],
+    "dec20_8": [
+      {
+        "des": "99942",
+        "kind": "min_dv_traj",
+        "nhats": "11.744",
+        "candidate": 11.743951594533165,
+        "residual": 0.000048405466834822164
+      },
+      {
+        "des": "2000 SG344",
+        "kind": "min_dv_traj",
+        "nhats": "11.150",
+        "candidate": 11.150364423295892,
+        "residual": -0.0003644232958919247
+      },
+      {
+        "des": "2000 SG344",
+        "kind": "min_dur_traj",
+        "nhats": "11.731",
+        "candidate": 11.730943803159798,
+        "residual": 0.000056196840201749865
+      },
+      {
+        "des": "101955",
+        "kind": "min_dv_traj",
+        "nhats": "11.832",
+        "candidate": 11.832284986004053,
+        "residual": -0.00028498600405235663
+      },
+      {
+        "des": "2008 HU4",
+        "kind": "min_dur_traj",
+        "nhats": "11.923",
+        "candidate": 11.923285404530025,
+        "residual": -0.00028540453002534605
+      },
+      {
+        "des": "2009 DC1",
+        "kind": "min_dv_traj",
+        "nhats": "11.995",
+        "candidate": 11.994754352553572,
+        "residual": 0.0002456474464267444
+      },
+      {
+        "des": "2007 EE26",
+        "kind": "min_dv_traj",
+        "nhats": "11.938",
+        "candidate": 11.937509518888438,
+        "residual": 0.0004904811115622465
+      },
+      {
+        "des": "2007 EE26",
+        "kind": "min_dur_traj",
+        "nhats": "11.273",
+        "candidate": 11.272994556847637,
+        "residual": 0.000005443152362616388
+      },
+      {
+        "des": "2024 VJ3",
+        "kind": "min_dv_traj",
+        "nhats": "11.978",
+        "candidate": 11.977995515811099,
+        "residual": 0.00000448418890108826
+      },
+      {
+        "des": "251732",
+        "kind": "min_dv_traj",
+        "nhats": "11.440",
+        "candidate": 11.440139492263103,
+        "residual": -0.00013949226310394636
+      },
+      {
+        "des": "2026 AM4",
+        "kind": "min_dv_traj",
+        "nhats": "11.310",
+        "candidate": 11.309660539023305,
+        "residual": 0.00033946097669534936
+      },
+      {
+        "des": "2026 AM4",
+        "kind": "min_dur_traj",
+        "nhats": "11.664",
+        "candidate": 11.66366139616043,
+        "residual": 0.0003386038395696289
+      },
+      {
+        "des": "2016 AB9",
+        "kind": "min_dv_traj",
+        "nhats": "11.661",
+        "candidate": 11.660847627077555,
+        "residual": 0.00015237292244485445
+      },
+      {
+        "des": "2016 AB9",
+        "kind": "min_dur_traj",
+        "nhats": "11.292",
+        "candidate": 11.291779787765645,
+        "residual": 0.0002202122343550883
+      },
+      {
+        "des": "2022 LW",
+        "kind": "min_dv_traj",
+        "nhats": "11.775",
+        "candidate": 11.774582908137612,
+        "residual": 0.0004170918623884745
+      },
+      {
+        "des": "2015 VO105",
+        "kind": "min_dur_traj",
+        "nhats": "11.663",
+        "candidate": 11.66269439061546,
+        "residual": 0.00030560938454016195
+      },
+      {
+        "des": "2020 XL6",
+        "kind": "min_dv_traj",
+        "nhats": "11.996",
+        "candidate": 11.995992885442497,
+        "residual": 0.000007114557503129504
+      },
+      {
+        "des": "2019 XZ2",
+        "kind": "min_dv_traj",
+        "nhats": "11.968",
+        "candidate": 11.967514830087062,
+        "residual": 0.00048516991293823253
+      },
+      {
+        "des": "2019 JU5",
+        "kind": "min_dur_traj",
+        "nhats": "11.927",
+        "candidate": 11.927075256429204,
+        "residual": -0.00007525642920391817
+      },
+      {
+        "des": "2023 XU7",
+        "kind": "min_dv_traj",
+        "nhats": "11.597",
+        "candidate": 11.597272691617247,
+        "residual": -0.0002726916172477445
+      },
+      {
+        "des": "2023 XU7",
+        "kind": "min_dur_traj",
+        "nhats": "11.924",
+        "candidate": 11.923565113005338,
+        "residual": 0.0004348869946610989
+      },
+      {
+        "des": "2008 FX6",
+        "kind": "min_dur_traj",
+        "nhats": "11.834",
+        "candidate": 11.834483203475308,
+        "residual": -0.0004832034753086134
+      },
+      {
+        "des": "2019 TB7",
+        "kind": "min_dv_traj",
+        "nhats": "11.914",
+        "candidate": 11.91352372894642,
+        "residual": 0.00047627105358039046
+      },
+      {
+        "des": "2019 TB7",
+        "kind": "min_dur_traj",
+        "nhats": "11.862",
+        "candidate": 11.862256300482766,
+        "residual": -0.00025630048276603645
+      },
+      {
+        "des": "2021 SV1",
+        "kind": "min_dv_traj",
+        "nhats": "11.979",
+        "candidate": 11.979279033905152,
+        "residual": -0.00027903390515326976
+      },
+      {
+        "des": "2023 HG1",
+        "kind": "min_dv_traj",
+        "nhats": "11.331",
+        "candidate": 11.331207210822804,
+        "residual": -0.00020721082280417136
+      },
+      {
+        "des": "2026 FE7",
+        "kind": "min_dv_traj",
+        "nhats": "11.807",
+        "candidate": 11.806735297461977,
+        "residual": 0.00026470253802379773
+      },
+      {
+        "des": "2016 AT131",
+        "kind": "min_dv_traj",
+        "nhats": "11.717",
+        "candidate": 11.717049824725306,
+        "residual": -0.00004982472530556947
+      },
+      {
+        "des": "2020 BZ6",
+        "kind": "min_dv_traj",
+        "nhats": "11.421",
+        "candidate": 11.421111142834583,
+        "residual": -0.00011114283458368845
+      },
+      {
+        "des": "2015 HW182",
+        "kind": "min_dv_traj",
+        "nhats": "11.946",
+        "candidate": 11.945919083264762,
+        "residual": 0.00008091673523757947
+      },
+      {
+        "des": "2014 KO2",
+        "kind": "min_dv_traj",
+        "nhats": "11.823",
+        "candidate": 11.82349889121418,
+        "residual": -0.0004988912141801194
+      },
+      {
+        "des": "2005 AJ3",
+        "kind": "min_dv_traj",
+        "nhats": "11.864",
+        "candidate": 11.863546450524886,
+        "residual": 0.00045354947511455634
+      },
+      {
+        "des": "2009 RH",
+        "kind": "min_dv_traj",
+        "nhats": "11.988",
+        "candidate": 11.98766068478472,
+        "residual": 0.0003393152152799672
+      },
+      {
+        "des": "2009 RH",
+        "kind": "min_dur_traj",
+        "nhats": "11.988",
+        "candidate": 11.98766068478472,
+        "residual": 0.0003393152152799672
+      },
+      {
+        "des": "2014 HP2",
+        "kind": "min_dv_traj",
+        "nhats": "11.992",
+        "candidate": 11.992436431865913,
+        "residual": -0.00043643186591246774
+      },
+      {
+        "des": "2023 BP5",
+        "kind": "min_dur_traj",
+        "nhats": "11.626",
+        "candidate": 11.626457766109272,
+        "residual": -0.0004577661092728391
+      },
+      {
+        "des": "2010 XD",
+        "kind": "min_dv_traj",
+        "nhats": "11.737",
+        "candidate": 11.737175478797948,
+        "residual": -0.00017547879794754806
+      },
+      {
+        "des": "2010 XD",
+        "kind": "min_dur_traj",
+        "nhats": "11.309",
+        "candidate": 11.309046108207196,
+        "residual": -0.000046108207197192996
+      },
+      {
+        "des": "2019 LH27",
+        "kind": "min_dv_traj",
+        "nhats": "11.418",
+        "candidate": 11.417910024393878,
+        "residual": 0.00008997560612122868
+      },
+      {
+        "des": "2019 LH27",
+        "kind": "min_dur_traj",
+        "nhats": "11.229",
+        "candidate": 11.229303026965832,
+        "residual": -0.00030302696583284217
+      }
+    ]
+  }
+}
