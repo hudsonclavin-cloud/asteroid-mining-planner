@@ -1094,6 +1094,15 @@ export function PorkchopView(props: PorkchopViewProps) {
   const familyLabel = familyToggleEnabled
     ? (familyMode === 'both' ? 'M=0 + M=1' : familyMode === 'm0' ? 'M=0' : 'M=1')
     : `M=${props.M}`;
+  const c3FamilyLabel = familyToggleEnabled
+    ? (familyMode === 'both'
+      ? 'families M=0 + M=1'
+      : familyMode === 'm0'
+        ? 'single-revolution (M=0)'
+        : 'multi-revolution (M=1)')
+    : props.M === 0
+      ? 'single-revolution (M=0)'
+      : 'multi-revolution (M=1)';
   const legendGradient = useMemo(() => buildLegendGradient(), []);
 
   useEffect(() => {
@@ -1314,7 +1323,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                         style: `${TOOLTIP_STYLE};left:${formatNumber(hoverTooltipPosition.x, 0)}px;top:${formatNumber(hoverTooltipPosition.y, 0)}px;`,
                       },
                       h('div', { style: 'font-weight:600;margin-bottom:6px;' }, 'Hover cell'),
-                      h('div', null, `Status: ${hoverReadout.status}`),
+                      h('div', null, `Solver status: ${hoverReadout.status}`),
                       familyToggleEnabled
                         ? h('div', null, `Family: M=${hoverReadout.M}`)
                         : null,
@@ -1426,7 +1435,7 @@ export function PorkchopView(props: PorkchopViewProps) {
                         { style: 'opacity:0.92;' },
                         isNearZeroC3Degenerate(entry.c3) && hideNearZeroC3
                           ? nearZeroC3HiddenNotice(nearZeroC3HiddenCount)
-                          : `${formatNumber(entry.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)}) · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d · Family M=${entry.cell.M}` +
+                          : `${formatNumber(entry.c3, 6)} km²/s² (${formatJdC3GridLabel(props.gridParams)}) · ${c3FamilyLabel} · Departure ${formatJdTdb(entry.cell.depJD)} · TOF ${formatNumber(entry.cell.tofDays, 3)} d` +
                             (props.supportBoundary !== undefined && isArrivalAfterEncounter(entry.cell, props.supportBoundary)
                               ? ` · arrives after the ${props.supportBoundary.encounterDateLabel} encounter (unsupported region)`
                               : ''),
@@ -1446,7 +1455,7 @@ export function PorkchopView(props: PorkchopViewProps) {
         : h(
             'div',
             { style: 'display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;font-size:13px;line-height:1.5;' },
-            h('span', null, 'Status'),
+            h('span', null, 'Solver status'),
             h('span', null, pinnedReadout.status),
             h('span', null, 'Departure'),
             h('span', null, formatJdTdb(pinnedReadout.depJD)),

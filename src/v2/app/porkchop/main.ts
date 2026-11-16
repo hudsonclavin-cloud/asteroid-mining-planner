@@ -1064,6 +1064,11 @@ function PorkchopDedicatedPage() {
                   { key: 'stack-margin-explainer', style: 'margin-top:8px;color:#9fb0c8;' },
                   `Margin here is ${STACK_MARGIN_PERCENT}% of the full stack; the cost card applies ${DETERMINISTIC_MARGIN_PERCENT}% to ${costCardState?.marginBaseText ?? deterministicMarginPolicy(0, 0, selectedMode).baseText} only.`,
                 ),
+                h(
+                  'div',
+                  { key: 'stack-rounding-disclosure', style: 'margin-top:8px;color:#9fb0c8;' },
+                  'Lines are rounded for display; the total is computed at full precision, so the rounded lines may not add to it exactly.',
+                ),
               ],
       ),
       h(ValidationCard, null),

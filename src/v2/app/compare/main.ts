@@ -833,7 +833,7 @@ function renderOkRow(
             : h(
                 'span',
                 { style: 'color:#eef2ff;font-weight:600;' },
-                `${formatC3WithUnits(best.c3)} (${compareGridLabel})`,
+                `${formatC3WithUnits(best.c3)} (${compareGridLabel}) · single-revolution (M=0)`,
                 NearZeroC3Badge({ flagged: echo.bestPracticalNearZeroC3Degenerate }),
               ),
           h('span', { style: NOTE_STYLE }, `departs ${best.argmin.dateIso} · ${formatDays(best.argmin.tofDays)} d transfer`),
@@ -1250,7 +1250,7 @@ function ComparePage() {
   return h('div', { style: pageStyle }, [
     h('h1', { style: 'font-size:22px;margin:0 0 6px;' }, 'Compare departure targets'),
     h('p', { style: 'color:#94a3b8;font-size:13px;line-height:1.7;margin:0 0 18px;max-width:70ch;' },
-      'Every figure below is computed from the grids shown — nothing is quoted from a stored table. A target with no practical window is a real answer, not a missing one.'),
+      'Every \u0394V and C3 figure below is computed live from the grids shown. Two inputs are published constants, labelled where they appear: the screening threshold and the launch-vehicle performance curve. A target with no practical window is a real answer, not a missing one.'),
 
     h('div', { style: 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;' }, [
       h('span', { style: 'font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#94a3b8;font-weight:600;' }, 'Window threshold'),

@@ -24,7 +24,7 @@ test('CK-13 renders the cache-derived LOW C3 screening threshold in the catalog 
   const threshold = cache.metadata.feasibleC3MaxKm2S2;
   const legend = renderLowC3ThresholdLegend(threshold);
   assert.equal(legend.type, 'div');
-  assert.equal(legend.props.children, 'LOW C3: below 25.0 km²/s² (the screening threshold)');
+  assert.equal(legend.props.children, 'LOW C3: at or below 25.0 km²/s² (the screening threshold)');
   assert.equal(legend.props.title, legend.props.children);
   assert.match(legend.props.children, new RegExp(String(threshold)));
 });
