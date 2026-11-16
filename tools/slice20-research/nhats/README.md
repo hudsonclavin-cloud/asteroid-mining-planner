@@ -3,7 +3,14 @@
 Dispatch: S20_NHATS_CROSSCHECK (Nova, 2026-11-15; reviewed by Nova 2026-11-15). Everything here is
 LEADS-grade. Nothing in this folder enters a DEC, a test, a fixture or the site.
 
-Results: `REPORT.md` (written last). Per-workstream JSON sits in each workstream folder.
+Results: `REPORT.md`, with numeric tables in `report-tables.md`, which `report-tables.mjs` generates from the
+per-workstream JSON. Per-workstream JSON sits in each workstream folder. `SCOPES.md` holds the exact `.dispatch-scope`
+contents of every commit.
+
+Run status: N0 REPRODUCED (bit-identical to the pilot). N1 100 of 100 bodies. N2 PARTIAL, 77 of 200 trajectories:
+Horizons' Earth batch returned HTTP 502 through the full back-off, and the 77 use the Earth fixture's nodes, which are
+bit-identical to Horizons at every node checked. N3 positions complete (400 epochs); cost PARTIAL, 77 of 200. N4 77 of
+77. N5 complete.
 
 ## Layout
 
@@ -16,7 +23,8 @@ Results: `REPORT.md` (written last). Per-workstream JSON sits in each workstream
 | `lib/export-raw.mjs` | Copies the saved raw responses here as `raw/*.gz` and writes `manifest.ndjson`, verifying each sha256 round trip. |
 | `phase0/` | Repository and network proofs, host facts, verify baseline. |
 | `n0-gate/` | N0: reproduction of the pilot. |
-| `n1-sample/`, `n2-agreement/`, `n3-position-error/`, `n4-entry-convention/`, `n5-earth-2046/` | One folder per workstream. |
+| `n1-sample/`, `n2-agreement/`, `n3-position-error/`, `n4-entry-convention/`, `n5-earth-2046/` | One folder per workstream. Each has its script(s) and JSON output. `n2-agreement/horizons-states.json` holds the parsed Horizons states that N2 and N3 share. |
+| `phase0/verify-final-summary.txt` | `npm run verify` at the end of the run, for comparison with the Phase 0 baseline. |
 | `manifest.ndjson` | One line per HTTP request: seq, url, label, retrievedAtUtc, status, bytes, sha256 (of the uncompressed body), file, attempt. |
 | `raw/` | Every raw response, gzipped. Includes the failed attempts: a 503 and a "No matches found" answer. |
 
@@ -29,7 +37,18 @@ missing.
 export NHATS_STORE=/path/to/scratch/store
 node tools/slice20-research/nhats/lib/build.mjs
 node tools/slice20-research/nhats/n0-gate/gate.mjs
+node tools/slice20-research/nhats/n1-sample/sample.mjs
+node tools/slice20-research/nhats/n2-agreement/fetch-states.mjs
+node tools/slice20-research/nhats/n2-agreement/agreement.mjs
+node tools/slice20-research/nhats/n3-position-error/position-error.mjs
+node tools/slice20-research/nhats/n4-entry-convention/fetch-caveats.mjs
+node tools/slice20-research/nhats/n4-entry-convention/convention.mjs
+node tools/slice20-research/nhats/n5-earth-2046/earth-2046.mjs
+node tools/slice20-research/nhats/report-tables.mjs
 ```
+
+`fetch-states.mjs` stops with an error at the Earth batch: that batch was halted, and it would request it again.
+`agreement.mjs` uses the labelled fixture-node Earth wherever no Horizons Earth state exists.
 
 To rerun from this folder's raw copies alone, gunzip `raw/*.gz` into `$NHATS_STORE/raw/` (dropping the
 `.gz` suffix) and copy `manifest.ndjson` to `$NHATS_STORE/`. Every request is then served from those

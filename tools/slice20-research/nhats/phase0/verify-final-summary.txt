@@ -1,0 +1,10 @@
+================ FINAL SUMMARY ================
+files discovered:    111
+files passed:        111
+files failed:        0
+files LOAD-TIMEOUT:  0
+tests passed:        370
+tests failed:        0
+wall clock:          350.3s
+accounting:          111 == 111 + 0 + 0 OK
+VERIFY_EXIT 0
