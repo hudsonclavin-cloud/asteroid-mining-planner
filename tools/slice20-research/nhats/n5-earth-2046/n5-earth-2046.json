@@ -1,0 +1,65 @@
+{
+  "schema": "aster-s20-nhats-n5-earth-2046/1",
+  "generatedAtUtc": "2026-11-16T06:53:57.182Z",
+  "request": {
+    "url": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27399%27&OBJ_DATA=%27NO%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27VECTORS%27&CENTER=%27500%4010%27&REF_SYSTEM=%27ICRF%27&REF_PLANE=%27FRAME%27&VEC_TABLE=%272%27&VEC_CORR=%27NONE%27&OUT_UNITS=%27KM-S%27&TIME_TYPE=%27TDB%27&CSV_FORMAT=%27YES%27&START_TIME=%272040-01-01%27&STOP_TIME=%272046-01-01%27&STEP_SIZE=%271+d%27",
+    "file": "00218-n5-horizons-earth-2040-2046.txt",
+    "sha256": "7fa3e70b9d0ce50b3f8802a5ec58d0971d0dc4c6818c0e8d6919931b94650846",
+    "bytes": 434664
+  },
+  "horizonsHeader": {
+    "lines": [
+      "Target body name: Earth (399)  {source: DE441}",
+      "Center body name: Sun (10)  {source: DE441}",
+      "Center-site name: BODY CENTER",
+      "Start time  : A.D. 2040-Jan-01 00:00:00.0000 TDB",
+      "Stop  time  : A.D. 2046-Jan-01 00:00:00.0000 TDB",
+      "Output units  : KM-S",
+      "Output type  : GEOMETRIC cartesian states",
+      "Output format  : 2 (position and velocity)",
+      "Reference frame : ICRF"
+    ]
+  },
+  "fixture": {
+    "path": "src/v2/data/horizons-inner-solar-system-2026-2040.json",
+    "frame": "ICRF/J2000",
+    "timeScale": "TDB",
+    "units": {
+      "position": "km",
+      "velocity": "km/s",
+      "time": "TDB Julian Date"
+    },
+    "earthTargetId": "399",
+    "earthCenter": "@sun",
+    "earthOrigin": "heliocentric",
+    "records": 5479,
+    "firstJd": 2461041.5,
+    "lastJd": 2466519.5,
+    "sha256Before": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+    "sha256After": "b278dd5567f30266593c49bf4fef203e7570d3613187fd112dc7015109a39c15",
+    "unchanged": true
+  },
+  "horizonsSeries": {
+    "rows": 2193,
+    "firstJd": 2466154.5,
+    "firstCalendar": "A.D. 2040-Jan-01 00:00:00.0000",
+    "lastJd": 2468346.5,
+    "lastCalendar": "A.D. 2046-Jan-01 00:00:00.0000",
+    "stepDays": {
+      "min": 1,
+      "max": 1
+    },
+    "rowsPastFixtureEnd": 1827
+  },
+  "overlap2040": {
+    "days": 366,
+    "firstJd": 2466154.5,
+    "lastJd": 2466519.5,
+    "maxAbsPositionDiffKm": 0,
+    "maxAbsVelocityDiffKmS": 0,
+    "maxAbsPositionComponentDiffKm": 0,
+    "maxAbsVelocityComponentDiffKmS": 0,
+    "bitIdenticalDays": 366
+  },
+  "note": "The raw Horizons response is saved (gzipped) under raw/ with its sha256 in manifest.ndjson. No fixture was created, extended or edited."
+}
