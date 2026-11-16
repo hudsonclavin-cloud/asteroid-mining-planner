@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "tooluniverse": {
-      "command": "uvx",
-      "args": ["tooluniverse@1.5.10"]
-    },
     "aerospace": {
       "command": "uvx",
       "args": ["aerospace-mcp@0.1.0"]
