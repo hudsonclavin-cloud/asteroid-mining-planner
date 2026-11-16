@@ -1,0 +1,6573 @@
+{
+  "schema": "aster-s20-nhats-n1-sample/1",
+  "generatedAtUtc": "2026-11-16T06:35:30.190Z",
+  "seed": 20261115,
+  "method": "NHATS mode S at default constraints; intersect with tests/fixtures/v2/nea-catalog-slice9.json designations; tier from docs/tier-sizing-per-body.json; all L0 in the intersection, then L1 and L2 in proportion to their intersection counts (forced bodies count toward their tier quota); within a tier a mulberry32 shuffle of the sorted designations seeded SEED + {L0:0, L1:1, L2:2}.",
+  "summaryRequest": {
+    "url": "https://ssd-api.jpl.nasa.gov/nhats.api",
+    "file": "00013-n1-nhats-summary.txt",
+    "sha256": "54d2e985d7c0eed2f679174d46000e199561a15892279cbf07b51664e8b75061",
+    "apiVersion": "1.3",
+    "count": 7215
+  },
+  "population": {
+    "nhats": 7215,
+    "aster": 41906,
+    "both": 6921,
+    "nhatsNotInAster": 294,
+    "bothByTier": {
+      "L0": 0,
+      "L1": 4058,
+      "L2": 2863,
+      "none": 0
+    }
+  },
+  "quota": {
+    "L0": 0,
+    "L1": 59,
+    "L2": 41
+  },
+  "forcedRequested": [
+    "99942",
+    "2000 SG344",
+    "101955",
+    "2008 HU4",
+    "1998 KY26"
+  ],
+  "forcedIncluded": [
+    "99942",
+    "2000 SG344",
+    "101955",
+    "2008 HU4",
+    "1998 KY26"
+  ],
+  "requestedBodiesNhatsLacks": [],
+  "nhatsNotInAsterExamples": [
+    "2026 LQ1",
+    "2026 LB1",
+    "2026 VE3",
+    "2026 RC",
+    "887773",
+    "2026 OK",
+    "2026 NL1",
+    "2026 MC2",
+    "2026 QV1",
+    "2026 VF1",
+    "2026 QX1",
+    "2026 LN",
+    "2026 LL",
+    "2026 QS1",
+    "2026 TD103",
+    "2010 BH74",
+    "2026 TF59",
+    "895841",
+    "2026 PA9",
+    "892304"
+  ],
+  "trajectories": {
+    "min_dv": 100,
+    "min_dur": 100
+  },
+  "bodies": [
+    {
+      "des": "99942",
+      "tier": "L1",
+      "forced": true,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2462026.674559462,
+      "supportDateLabel": "2028-Sep-12 04:11",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": " 99942 Apophis (2004 MN4)",
+        "orbit_id": "220",
+        "computed": "2024-10-17",
+        "h": "19.1",
+        "occ": "0",
+        "n_via_traj": 272327,
+        "min_dv": {
+          "dv": "6.049",
+          "dur": 354
+        },
+        "min_dur": {
+          "dv": "11.988",
+          "dur": 146
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "0.309",
+          "dur_at": 8,
+          "launch": "2029-04-11",
+          "dec_arr": "19.317",
+          "dur_total": 354,
+          "dv_total": "6.049",
+          "v_dep_earth": "5.419",
+          "vrel_arr_earth": "0.000",
+          "dv_dep_park": "4.455",
+          "dec_dep": "16.671",
+          "c3": "29.361",
+          "tid": 158703,
+          "dur_out": 49,
+          "dur_ret": 297,
+          "v_arr_earth": "11.744",
+          "vrel_dep_neo": "1.285"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "3.221",
+          "dec_arr": "-16.901",
+          "dur_total": 146,
+          "dv_total": "11.988",
+          "dur_at": 8,
+          "launch": "2021-01-31",
+          "dv_dep_park": "3.781",
+          "dec_dep": "18.734",
+          "v_dep_earth": "3.673",
+          "vrel_arr_earth": "0.000",
+          "c3": "13.488",
+          "dur_out": 73,
+          "tid": 43321,
+          "v_arr_earth": "11.999",
+          "dur_ret": 65,
+          "vrel_dep_neo": "4.986"
+        }
+      },
+      "request": {
+        "file": "00001-phase0-nhats-99942.txt",
+        "sha256": "59c95fbb81333d173b78998c4af57821d1f2e30599815b7691bd6f43e6a67eb9"
+      }
+    },
+    {
+      "des": "2000 SG344",
+      "tier": "L1",
+      "forced": true,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2461541.6470806,
+      "supportDateLabel": "2027-May-16 03:32",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2000 SG344)",
+        "orbit_id": "17",
+        "computed": "2021-04-19",
+        "h": "24.7",
+        "occ": "3",
+        "n_via_traj": 3302685,
+        "min_dv": {
+          "dv": "3.549",
+          "dur": 370
+        },
+        "min_dur": {
+          "dv": "11.402",
+          "dur": 34
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_total": 370,
+          "dec_dep": "-11.923",
+          "vrel_dep_neo": "0.166",
+          "dv_total": "3.549",
+          "vrel_arr_neo": "0.137",
+          "dec_arr": "-13.060",
+          "v_arr_earth": "11.150",
+          "tid": 2280521,
+          "c3": "1.507",
+          "launch": "2029-10-12",
+          "dv_dep_park": "3.246",
+          "dur_ret": 161,
+          "v_dep_earth": "1.227",
+          "dur_out": 201
+        },
+        "min_dur_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_dep": "25.090",
+          "dur_total": 34,
+          "vrel_arr_neo": "4.017",
+          "vrel_dep_neo": "3.939",
+          "dv_total": "11.402",
+          "v_arr_earth": "11.731",
+          "dec_arr": "-23.684",
+          "tid": 834804,
+          "c3": "5.926",
+          "launch": "2028-04-08",
+          "dv_dep_park": "3.446",
+          "dur_ret": 9,
+          "dur_out": 17,
+          "v_dep_earth": "2.434"
+        }
+      },
+      "request": {
+        "file": "00008-nhats-2000_SG344.txt",
+        "sha256": "bf769a2afce9ebe68f6550d5b49b450314475e0491c3b612607a9db6ddf2497e"
+      }
+    },
+    {
+      "des": "101955",
+      "tier": "L1",
+      "forced": true,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2465101.061374439,
+      "supportDateLabel": "2037-Feb-11 13:28",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "101955 Bennu (1999 RQ36)",
+        "orbit_id": "118",
+        "computed": "2021-08-14",
+        "h": "20.2",
+        "occ": "0",
+        "n_via_traj": 47757,
+        "min_dv": {
+          "dur": 362,
+          "dv": "6.995"
+        },
+        "min_dur": {
+          "dv": "11.893",
+          "dur": 210
+        },
+        "min_dv_traj": {
+          "launch": "2036-03-21",
+          "c3": "17.629",
+          "tid": 15848,
+          "dur_out": 249,
+          "v_dep_earth": "4.199",
+          "dur_ret": 105,
+          "dv_dep_park": "3.961",
+          "dur_total": 362,
+          "dec_dep": "-39.357",
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "v_arr_earth": "11.832",
+          "dec_arr": "-37.492",
+          "vrel_arr_neo": "1.501",
+          "vrel_dep_neo": "1.533",
+          "dv_total": "6.995"
+        },
+        "min_dur_traj": {
+          "dv_dep_park": "4.144",
+          "dur_ret": 89,
+          "dur_out": 113,
+          "v_dep_earth": "4.682",
+          "tid": 46522,
+          "launch": "2042-06-26",
+          "c3": "21.925",
+          "vrel_arr_neo": "4.602",
+          "dv_total": "11.893",
+          "vrel_dep_neo": "3.144",
+          "v_arr_earth": "12.000",
+          "dec_arr": "5.581",
+          "vrel_arr_earth": "0.003",
+          "dur_at": 8,
+          "dec_dep": "-18.011",
+          "dur_total": 210
+        }
+      },
+      "request": {
+        "file": "00014-nhats-101955.txt",
+        "sha256": "cd063cd50adfc06360803a79001885dc4e9fd8d3b48afc3c8d997e11efd0150b"
+      }
+    },
+    {
+      "des": "2008 HU4",
+      "tier": "L1",
+      "forced": true,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2461283.568138436,
+      "supportDateLabel": "2026-Aug-31 01:38",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2008 HU4)",
+        "orbit_id": "26",
+        "computed": "2021-04-19",
+        "h": "28.3",
+        "occ": "0",
+        "n_via_traj": 745243,
+        "min_dv": {
+          "dur": 378,
+          "dv": "5.307"
+        },
+        "min_dur": {
+          "dur": 122,
+          "dv": "11.989"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "1.198",
+          "c3": "1.435",
+          "tid": 142154,
+          "dv_total": "5.307",
+          "dur_total": 378,
+          "dur_out": 209,
+          "dec_dep": "-44.694",
+          "dv_dep_park": "3.242",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 161,
+          "vrel_arr_neo": "1.045",
+          "launch": "2025-10-25",
+          "dec_arr": "-53.052",
+          "dur_at": 8,
+          "vrel_dep_neo": "1.019",
+          "v_arr_earth": "11.166"
+        },
+        "min_dur_traj": {
+          "dur_out": 57,
+          "dv_total": "11.989",
+          "dur_total": 122,
+          "tid": 300841,
+          "c3": "24.147",
+          "v_dep_earth": "4.914",
+          "vrel_dep_neo": "3.530",
+          "v_arr_earth": "11.923",
+          "dec_arr": "-10.422",
+          "dur_at": 8,
+          "launch": "2026-04-19",
+          "vrel_arr_neo": "4.221",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 57,
+          "dv_dep_park": "4.238",
+          "dec_dep": "0.417"
+        }
+      },
+      "request": {
+        "file": "00015-nhats-2008_HU4.txt",
+        "sha256": "f8fe37ef3fb4905218b178b255af8f5836692154f2f9fa3596cd4a5247b1a19b"
+      }
+    },
+    {
+      "des": "1998 KY26",
+      "tier": "L1",
+      "forced": true,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2465932.919241772,
+      "supportDateLabel": "2039-May-24 10:04",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (1998 KY26)",
+        "orbit_id": "36",
+        "computed": "2024-05-25",
+        "h": "25.9",
+        "occ": "2",
+        "n_via_traj": 99449,
+        "min_dv": {
+          "dv": "7.845",
+          "dur": 442
+        },
+        "min_dur": {
+          "dv": "11.817",
+          "dur": 122
+        },
+        "min_dv_traj": {
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "4.794",
+          "dur_total": 442,
+          "vrel_dep_neo": "3.256",
+          "dv_total": "7.845",
+          "vrel_arr_neo": "0.425",
+          "dec_arr": "-34.951",
+          "v_arr_earth": "11.702",
+          "tid": 46760,
+          "c3": "22.384",
+          "launch": "2024-05-31",
+          "dv_dep_park": "4.163",
+          "dur_ret": 345,
+          "v_dep_earth": "4.731",
+          "dur_out": 89
+        },
+        "min_dur_traj": {
+          "dur_out": 33,
+          "v_dep_earth": "3.928",
+          "dur_ret": 81,
+          "dv_dep_park": "3.866",
+          "launch": "2024-05-23",
+          "c3": "15.427",
+          "tid": 41392,
+          "dec_arr": "-9.876",
+          "v_arr_earth": "11.364",
+          "vrel_dep_neo": "5.886",
+          "dv_total": "11.817",
+          "vrel_arr_neo": "2.066",
+          "dur_total": 122,
+          "dec_dep": "4.064",
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000"
+        }
+      },
+      "request": {
+        "file": "00016-nhats-1998_KY26.txt",
+        "sha256": "365aad980cf8f89e459d6ece4d4868efbb08423d65dab71efbeed9291c9d8fb8"
+      }
+    },
+    {
+      "des": "2009 DC1",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2461372.17859541,
+      "supportDateLabel": "2026-Nov-27 16:17",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2009 DC1)",
+        "orbit_id": "13",
+        "computed": "2021-04-19",
+        "h": "24.0",
+        "occ": "6",
+        "n_via_traj": 1871,
+        "min_dv": {
+          "dur": 394,
+          "dv": "11.214"
+        },
+        "min_dur": {
+          "dv": "11.951",
+          "dur": 330
+        },
+        "min_dv_traj": {
+          "dv_dep_park": "3.983",
+          "dec_dep": "51.796",
+          "v_dep_earth": "4.260",
+          "vrel_arr_earth": "0.000",
+          "c3": "18.146",
+          "dur_out": 217,
+          "tid": 763,
+          "v_arr_earth": "11.995",
+          "dur_ret": 161,
+          "vrel_dep_neo": "3.502",
+          "vrel_arr_neo": "3.729",
+          "dec_arr": "73.449",
+          "dur_total": 394,
+          "dv_total": "11.214",
+          "dur_at": 16,
+          "launch": "2035-07-25"
+        },
+        "min_dur_traj": {
+          "c3": "20.765",
+          "dur_out": 209,
+          "tid": 1578,
+          "v_arr_earth": "11.960",
+          "dur_ret": 113,
+          "vrel_dep_neo": "4.105",
+          "v_dep_earth": "4.557",
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "47.454",
+          "dv_dep_park": "4.095",
+          "dur_at": 8,
+          "launch": "2044-07-25",
+          "dec_arr": "50.244",
+          "dv_total": "11.951",
+          "dur_total": 330,
+          "vrel_arr_neo": "3.750"
+        }
+      },
+      "request": {
+        "file": "00017-nhats-2009_DC1.txt",
+        "sha256": "7a22c9cb96f0471f41f51ebdda865ecae61035f271dbe79883720782ef845981"
+      }
+    },
+    {
+      "des": "2024 VH1",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462056.779160657,
+      "supportDateLabel": "2028-Oct-12 06:42",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 VH1)",
+        "orbit_id": "12",
+        "computed": "2025-02-12",
+        "h": "26.6",
+        "occ": "3",
+        "n_via_traj": 10,
+        "min_dv": {
+          "dv": "11.913",
+          "dur": 346
+        },
+        "min_dur": {
+          "dur": 322,
+          "dv": "11.975"
+        },
+        "min_dv_traj": {
+          "dur_out": 25,
+          "v_dep_earth": "7.677",
+          "dv_dep_park": "5.619",
+          "dur_ret": 305,
+          "launch": "2024-11-07",
+          "c3": "58.936",
+          "tid": 7,
+          "dec_arr": "-15.238",
+          "v_arr_earth": "11.796",
+          "vrel_dep_neo": "4.246",
+          "dv_total": "11.913",
+          "vrel_arr_neo": "2.048",
+          "dur_total": 346,
+          "dec_dep": "-12.716",
+          "dur_at": 16,
+          "vrel_arr_earth": "0.000"
+        },
+        "min_dur_traj": {
+          "vrel_dep_neo": "4.376",
+          "dv_total": "11.975",
+          "vrel_arr_neo": "2.508",
+          "dec_arr": "-5.569",
+          "v_arr_earth": "11.655",
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dur_total": 322,
+          "dec_dep": "-12.682",
+          "dur_ret": 265,
+          "dv_dep_park": "5.091",
+          "dur_out": 49,
+          "v_dep_earth": "6.723",
+          "tid": 1,
+          "launch": "2024-10-30",
+          "c3": "45.198"
+        }
+      },
+      "request": {
+        "file": "00018-nhats-2024_VH1.txt",
+        "sha256": "16fd09f4d07c6325d9df796c1017fbfc7cbc1437e63862e9940d349b2ca0b3f8"
+      }
+    },
+    {
+      "des": "2007 EE26",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2463295.234202204,
+      "supportDateLabel": "2032-Mar-03 17:37",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2007 EE26)",
+        "orbit_id": "8",
+        "computed": "2021-04-19",
+        "h": "26.1",
+        "occ": "8",
+        "n_via_traj": 88044,
+        "min_dv": {
+          "dur": 442,
+          "dv": "7.285"
+        },
+        "min_dur": {
+          "dv": "11.993",
+          "dur": 82
+        },
+        "min_dv_traj": {
+          "dur_ret": 361,
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "-12.019",
+          "dv_dep_park": "3.993",
+          "v_arr_earth": "11.938",
+          "vrel_dep_neo": "2.655",
+          "dec_arr": "12.434",
+          "dur_at": 8,
+          "launch": "2038-11-30",
+          "vrel_arr_neo": "0.636",
+          "c3": "18.389",
+          "v_dep_earth": "4.288",
+          "dur_out": 73,
+          "dv_total": "7.285",
+          "dur_total": 442,
+          "tid": 74223
+        },
+        "min_dur_traj": {
+          "dv_total": "11.993",
+          "dur_total": 82,
+          "tid": 71933,
+          "dur_out": 17,
+          "v_dep_earth": "4.080",
+          "c3": "16.644",
+          "vrel_arr_neo": "2.088",
+          "launch": "2038-11-30",
+          "v_arr_earth": "11.273",
+          "vrel_dep_neo": "5.986",
+          "dec_arr": "0.156",
+          "dur_at": 8,
+          "dv_dep_park": "3.918",
+          "dec_dep": "7.772",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 57
+        }
+      },
+      "request": {
+        "file": "00019-nhats-2007_EE26.txt",
+        "sha256": "665c4293411f2c663ec32cbd72a2e90d9ecdb8a3b4f2e5246758c7be258d1106"
+      }
+    },
+    {
+      "des": "2024 VJ3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2461714.803606781,
+      "supportDateLabel": "2027-Nov-05 07:17",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 VJ3)",
+        "orbit_id": "4",
+        "computed": "2024-11-21",
+        "h": "26.9",
+        "occ": "6",
+        "n_via_traj": 27132,
+        "min_dv": {
+          "dv": "9.305",
+          "dur": 394
+        },
+        "min_dur": {
+          "dv": "11.991",
+          "dur": 338
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "1.774",
+          "launch": "2038-11-14",
+          "dur_at": 80,
+          "dec_arr": "26.101",
+          "dv_total": "9.305",
+          "dur_total": 394,
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "7.474",
+          "dv_dep_park": "5.502",
+          "dec_dep": "16.795",
+          "dur_ret": 97,
+          "v_arr_earth": "11.978",
+          "vrel_dep_neo": "2.029",
+          "c3": "55.861",
+          "tid": 26185,
+          "dur_out": 217
+        },
+        "min_dur_traj": {
+          "vrel_dep_neo": "1.577",
+          "dur_ret": 217,
+          "v_arr_earth": "12.000",
+          "tid": 4693,
+          "dur_out": 113,
+          "c3": "58.967",
+          "vrel_arr_earth": "2.862",
+          "v_dep_earth": "7.679",
+          "dec_dep": "14.117",
+          "dv_dep_park": "5.620",
+          "launch": "2022-05-02",
+          "dur_at": 8,
+          "dur_total": 338,
+          "dv_total": "11.991",
+          "dec_arr": "9.501",
+          "vrel_arr_neo": "1.932"
+        }
+      },
+      "request": {
+        "file": "00020-nhats-2024_VJ3.txt",
+        "sha256": "678c8c9c49476b5715c6c19b13b63356944d4feb7a432a8849c661e7d0f21202"
+      }
+    },
+    {
+      "des": "420210",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462803.674769639,
+      "supportDateLabel": "2030-Oct-29 04:12",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "420210 (2011 HF)",
+        "orbit_id": "77",
+        "computed": "2024-06-24",
+        "h": "20.4",
+        "occ": "0",
+        "n_via_traj": 1,
+        "min_dv": {
+          "dur": 362,
+          "dv": "11.943"
+        },
+        "min_dur": {
+          "dv": "11.943",
+          "dur": 362
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "12.000",
+          "dec_arr": "62.795",
+          "vrel_arr_neo": "3.831",
+          "vrel_dep_neo": "3.318",
+          "dv_total": "11.943",
+          "dur_total": 362,
+          "dec_dep": "53.482",
+          "vrel_arr_earth": "0.189",
+          "dur_at": 8,
+          "v_dep_earth": "5.747",
+          "dur_out": 137,
+          "dur_ret": 217,
+          "dv_dep_park": "4.605",
+          "launch": "2033-04-22",
+          "c3": "33.026",
+          "tid": 1
+        },
+        "min_dur_traj": {
+          "v_arr_earth": "12.000",
+          "dec_arr": "62.795",
+          "vrel_arr_neo": "3.831",
+          "vrel_dep_neo": "3.318",
+          "dv_total": "11.943",
+          "dur_total": 362,
+          "dec_dep": "53.482",
+          "vrel_arr_earth": "0.189",
+          "dur_at": 8,
+          "v_dep_earth": "5.747",
+          "dur_out": 137,
+          "dur_ret": 217,
+          "dv_dep_park": "4.605",
+          "launch": "2033-04-22",
+          "c3": "33.026",
+          "tid": 1
+        }
+      },
+      "request": {
+        "file": "00021-nhats-420210.txt",
+        "sha256": "2671e0b09eaaade623bb60ca71ef524827a52cccefda349fea01bfa8e686b516"
+      }
+    },
+    {
+      "des": "2023 VF3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2461355.864357962,
+      "supportDateLabel": "2026-Nov-11 08:45",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2023 VF3)",
+        "orbit_id": "2",
+        "computed": "2023-11-09",
+        "h": "26.4",
+        "occ": "7",
+        "n_via_traj": 207,
+        "min_dv": {
+          "dv": "11.647",
+          "dur": 362
+        },
+        "min_dur": {
+          "dv": "11.982",
+          "dur": 330
+        },
+        "min_dv_traj": {
+          "tid": 49,
+          "dv_total": "11.647",
+          "dur_total": 362,
+          "dur_out": 289,
+          "v_dep_earth": "3.804",
+          "c3": "14.467",
+          "launch": "2025-12-12",
+          "vrel_arr_neo": "4.127",
+          "dec_arr": "-35.217",
+          "dur_at": 8,
+          "vrel_dep_neo": "3.696",
+          "v_arr_earth": "11.977",
+          "dv_dep_park": "3.824",
+          "dec_dep": "-41.254",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 65
+        },
+        "min_dur_traj": {
+          "tid": 82,
+          "dv_total": "11.982",
+          "dur_total": 330,
+          "dur_out": 249,
+          "v_dep_earth": "3.509",
+          "c3": "12.315",
+          "launch": "2026-01-13",
+          "vrel_arr_neo": "4.546",
+          "dec_arr": "-37.033",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "3.376",
+          "dec_dep": "-43.447",
+          "dv_dep_park": "3.730",
+          "vrel_arr_earth": "0.330",
+          "dur_ret": 73
+        }
+      },
+      "request": {
+        "file": "00022-nhats-2023_VF3.txt",
+        "sha256": "2f7b5b96e78145e170677241a6628acd12b12eb0617d5b360d62f773c50ef2f8"
+      }
+    },
+    {
+      "des": "2016 TA20",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": 2463150.203976607,
+      "supportDateLabel": "2031-Oct-10 16:54",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2016 TA20)",
+        "orbit_id": "11",
+        "computed": "2021-04-19",
+        "h": "24.3",
+        "occ": "7",
+        "n_via_traj": 19,
+        "min_dv": {
+          "dv": "11.606",
+          "dur": 362
+        },
+        "min_dur": {
+          "dur": 354,
+          "dv": "11.698"
+        },
+        "min_dv_traj": {
+          "dec_arr": "66.424",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "3.113",
+          "dv_total": "11.606",
+          "vrel_arr_neo": "3.421",
+          "dur_total": 362,
+          "dec_dep": "64.300",
+          "vrel_arr_earth": "0.617",
+          "dur_at": 8,
+          "dur_out": 209,
+          "v_dep_earth": "5.420",
+          "dv_dep_park": "4.455",
+          "dur_ret": 145,
+          "launch": "2042-03-30",
+          "c3": "29.373",
+          "tid": 10
+        },
+        "min_dur_traj": {
+          "launch": "2042-03-30",
+          "c3": "29.373",
+          "tid": 9,
+          "v_dep_earth": "5.420",
+          "dur_out": 209,
+          "dv_dep_park": "4.455",
+          "dur_ret": 137,
+          "dur_total": 354,
+          "dec_dep": "64.300",
+          "vrel_arr_earth": "0.090",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "dec_arr": "62.423",
+          "vrel_arr_neo": "3.421",
+          "dv_total": "11.698",
+          "vrel_dep_neo": "3.731"
+        }
+      },
+      "request": {
+        "file": "00023-nhats-2016_TA20.txt",
+        "sha256": "ee151ce3892c698d2d86702ebf821af9dca984469766677166c3edbb6e4cb241"
+      }
+    },
+    {
+      "des": "251732",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": 2461547.527153454,
+      "supportDateLabel": "2027-May-22 00:39",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "251732 (1998 HG49)",
+        "orbit_id": "53",
+        "computed": "2023-05-13",
+        "h": "21.8",
+        "occ": "0",
+        "n_via_traj": 73005,
+        "min_dv": {
+          "dv": "8.278",
+          "dur": 370
+        },
+        "min_dur": {
+          "dur": 162,
+          "dv": "11.949"
+        },
+        "min_dv_traj": {
+          "dur_ret": 225,
+          "dv_dep_park": "3.448",
+          "dur_out": 137,
+          "v_dep_earth": "2.440",
+          "tid": 23049,
+          "launch": "2031-05-03",
+          "c3": "5.955",
+          "dv_total": "8.278",
+          "vrel_dep_neo": "2.511",
+          "vrel_arr_neo": "2.319",
+          "dec_arr": "-60.121",
+          "v_arr_earth": "11.440",
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "-78.382",
+          "dur_total": 370
+        },
+        "min_dur_traj": {
+          "tid": 30152,
+          "c3": "13.141",
+          "launch": "2031-06-12",
+          "dv_dep_park": "3.766",
+          "dur_ret": 81,
+          "v_dep_earth": "3.625",
+          "dur_out": 73,
+          "dur_at": 8,
+          "vrel_arr_earth": "0.139",
+          "dec_dep": "-62.914",
+          "dur_total": 162,
+          "vrel_arr_neo": "4.060",
+          "dv_total": "11.949",
+          "vrel_dep_neo": "3.984",
+          "v_arr_earth": "12.000",
+          "dec_arr": "52.011"
+        }
+      },
+      "request": {
+        "file": "00024-nhats-251732.txt",
+        "sha256": "61b403b9c0083c8ba01cd32d250115172e0b99ff6e59bed448851e0811ba2f7a"
+      }
+    },
+    {
+      "des": "2024 LH3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2465959.879779708,
+      "supportDateLabel": "2039-Jun-20 09:07",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 LH3)",
+        "orbit_id": "12",
+        "computed": "2024-06-27",
+        "h": "24.3",
+        "occ": "6",
+        "n_via_traj": 22562,
+        "min_dv": {
+          "dv": "7.617",
+          "dur": 362
+        },
+        "min_dur": {
+          "dv": "11.808",
+          "dur": 170
+        },
+        "min_dv_traj": {
+          "dur_out": 57,
+          "tid": 8044,
+          "dv_total": "7.617",
+          "dur_total": 362,
+          "c3": "26.822",
+          "v_dep_earth": "5.179",
+          "dec_arr": "84.190",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "1.337",
+          "vrel_arr_neo": "1.405",
+          "launch": "2024-06-08",
+          "dur_ret": 297,
+          "vrel_arr_earth": "0.525",
+          "dec_dep": "85.303",
+          "dv_dep_park": "4.350"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "2.325",
+          "launch": "2024-06-08",
+          "dur_at": 8,
+          "dec_arr": "-82.707",
+          "v_arr_earth": "11.726",
+          "vrel_dep_neo": "5.299",
+          "dv_dep_park": "4.184",
+          "dec_dep": "80.792",
+          "dur_ret": 129,
+          "vrel_arr_earth": "0.000",
+          "tid": 7536,
+          "dur_total": 170,
+          "dv_total": "11.808",
+          "dur_out": 33,
+          "v_dep_earth": "4.783",
+          "c3": "22.881"
+        }
+      },
+      "request": {
+        "file": "00025-nhats-2024_LH3.txt",
+        "sha256": "d729b4f8ae57806705dfcf2e8944342fbbc08c635017cfbbf13e1d29b00ac640"
+      }
+    },
+    {
+      "des": "2025 DV4",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2464030.534146431,
+      "supportDateLabel": "2034-Mar-09 00:49",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2025 DV4)",
+        "orbit_id": "6",
+        "computed": "2025-03-24",
+        "h": "25.5",
+        "occ": "7",
+        "n_via_traj": 4376,
+        "min_dv": {
+          "dv": "8.649",
+          "dur": 362
+        },
+        "min_dur": {
+          "dur": 242,
+          "dv": "11.970"
+        },
+        "min_dv_traj": {
+          "dv_dep_park": "4.342",
+          "dec_dep": "-56.130",
+          "vrel_arr_earth": "0.323",
+          "v_dep_earth": "5.162",
+          "v_arr_earth": "12.000",
+          "dur_ret": 289,
+          "vrel_dep_neo": "2.111",
+          "c3": "26.649",
+          "tid": 2174,
+          "dur_out": 65,
+          "vrel_arr_neo": "1.872",
+          "dec_arr": "-57.897",
+          "dur_total": 362,
+          "dv_total": "8.649",
+          "launch": "2025-02-27",
+          "dur_at": 8
+        },
+        "min_dur_traj": {
+          "dur_total": 242,
+          "dv_total": "11.970",
+          "dec_arr": "7.854",
+          "launch": "2025-03-07",
+          "dur_at": 56,
+          "vrel_arr_neo": "1.454",
+          "vrel_dep_neo": "5.235",
+          "dur_ret": 121,
+          "v_arr_earth": "12.000",
+          "tid": 2962,
+          "dur_out": 65,
+          "c3": "33.747",
+          "dv_dep_park": "4.634",
+          "dec_dep": "-52.203",
+          "vrel_arr_earth": "0.647",
+          "v_dep_earth": "5.809"
+        }
+      },
+      "request": {
+        "file": "00026-nhats-2025_DV4.txt",
+        "sha256": "7f684e3991c3bc64575c34de92a016e872744daa95194a96ae5618c0441060c3"
+      }
+    },
+    {
+      "des": "2022 XQ1",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": 2463778.503914489,
+      "supportDateLabel": "2033-Jun-30 00:06",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2022 XQ1)",
+        "orbit_id": "6",
+        "computed": "2023-01-20",
+        "h": "24.5",
+        "occ": "6",
+        "n_via_traj": 80,
+        "min_dv": {
+          "dur": 370,
+          "dv": "10.728"
+        },
+        "min_dur": {
+          "dur": 354,
+          "dv": "11.947"
+        },
+        "min_dv_traj": {
+          "dec_dep": "84.014",
+          "dur_total": 370,
+          "vrel_arr_earth": "0.141",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "dec_arr": "51.975",
+          "vrel_arr_neo": "2.265",
+          "dv_total": "10.728",
+          "vrel_dep_neo": "3.402",
+          "launch": "2022-06-27",
+          "c3": "40.861",
+          "tid": 15,
+          "dur_out": 153,
+          "v_dep_earth": "6.392",
+          "dur_ret": 209,
+          "dv_dep_park": "4.920"
+        },
+        "min_dur_traj": {
+          "launch": "2022-07-13",
+          "c3": "27.728",
+          "tid": 32,
+          "v_dep_earth": "5.266",
+          "dur_out": 129,
+          "dv_dep_park": "4.387",
+          "dur_ret": 217,
+          "dec_dep": "88.419",
+          "dur_total": 354,
+          "vrel_arr_earth": "0.728",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "dec_arr": "54.493",
+          "vrel_arr_neo": "4.020",
+          "dv_total": "11.947",
+          "vrel_dep_neo": "2.811"
+        }
+      },
+      "request": {
+        "file": "00027-nhats-2022_XQ1.txt",
+        "sha256": "1e685f2142a74ffe15f3338e34471d74d0afb0e1fb9f39cfe999be63b8ce3e5a"
+      }
+    },
+    {
+      "des": "2022 CX6",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": 2461177.827352716,
+      "supportDateLabel": "2026-May-17 07:51",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2022 CX6)",
+        "orbit_id": "19",
+        "computed": "2022-04-15",
+        "h": "25.3",
+        "occ": "5",
+        "n_via_traj": 138427,
+        "min_dv": {
+          "dv": "7.645",
+          "dur": 370
+        },
+        "min_dur": {
+          "dv": "11.830",
+          "dur": 74
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "2.551",
+          "launch": "2021-03-04",
+          "vrel_dep_neo": "1.591",
+          "v_arr_earth": "11.282",
+          "dec_arr": "36.263",
+          "dur_at": 8,
+          "dv_dep_park": "3.504",
+          "dec_dep": "33.946",
+          "dur_ret": 65,
+          "vrel_arr_earth": "0.000",
+          "dv_total": "7.645",
+          "dur_total": 370,
+          "tid": 15165,
+          "dur_out": 297,
+          "v_dep_earth": "2.686",
+          "c3": "7.214"
+        },
+        "min_dur_traj": {
+          "c3": "7.720",
+          "v_dep_earth": "2.778",
+          "dur_out": 41,
+          "dv_total": "11.830",
+          "dur_total": 74,
+          "tid": 61539,
+          "dur_ret": 25,
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "-30.199",
+          "dv_dep_park": "3.527",
+          "vrel_dep_neo": "3.796",
+          "v_arr_earth": "11.794",
+          "dec_arr": "24.491",
+          "dur_at": 8,
+          "launch": "2021-12-09",
+          "vrel_arr_neo": "4.507"
+        }
+      },
+      "request": {
+        "file": "00028-nhats-2022_CX6.txt",
+        "sha256": "4534d53635857eb39bcbd9e3d6ee92af0be43b6a6f5f8f2843cf1bef47f578a6"
+      }
+    },
+    {
+      "des": "2025 PR1",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2465278.740041121,
+      "supportDateLabel": "2037-Aug-08 05:46",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2025 PR1)",
+        "orbit_id": "6",
+        "computed": "2025-08-19",
+        "h": "27.1",
+        "occ": "6",
+        "n_via_traj": 385,
+        "min_dv": {
+          "dv": "10.298",
+          "dur": 354
+        },
+        "min_dur": {
+          "dur": 170,
+          "dv": "11.995"
+        },
+        "min_dv_traj": {
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dur_total": 354,
+          "dec_dep": "-7.405",
+          "vrel_dep_neo": "4.120",
+          "dv_total": "10.298",
+          "vrel_arr_neo": "0.994",
+          "dec_arr": "-27.583",
+          "v_arr_earth": "11.616",
+          "tid": 202,
+          "c3": "47.588",
+          "launch": "2025-08-14",
+          "dur_ret": 321,
+          "dv_dep_park": "5.184",
+          "dur_out": 25,
+          "v_dep_earth": "6.898"
+        },
+        "min_dur_traj": {
+          "vrel_dep_neo": "6.049",
+          "dv_total": "11.995",
+          "vrel_arr_neo": "0.581",
+          "dec_arr": "26.784",
+          "v_arr_earth": "11.981",
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dur_total": 170,
+          "dec_dep": "-6.789",
+          "dv_dep_park": "5.365",
+          "dur_ret": 121,
+          "dur_out": 41,
+          "v_dep_earth": "7.228",
+          "tid": 302,
+          "launch": "2025-08-14",
+          "c3": "52.251"
+        }
+      },
+      "request": {
+        "file": "00029-nhats-2025_PR1.txt",
+        "sha256": "f22b09fa6f520294dcafca3c52ef2e7a20a08d58b1cca7ccbf9ee7645c6e93eb"
+      }
+    },
+    {
+      "des": "2025 XS3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2461467.115609504,
+      "supportDateLabel": "2027-Mar-02 14:46",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2025 XS3)",
+        "orbit_id": "4",
+        "computed": "2025-12-19",
+        "h": "30.1",
+        "occ": "5",
+        "n_via_traj": 4,
+        "min_dv": {
+          "dv": "11.819",
+          "dur": 370
+        },
+        "min_dur": {
+          "dur": 362,
+          "dv": "11.996"
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.360",
+          "dur_at": 8,
+          "dec_dep": "32.345",
+          "dur_total": 370,
+          "vrel_dep_neo": "4.148",
+          "dv_total": "11.819",
+          "vrel_arr_neo": "1.685",
+          "dec_arr": "28.339",
+          "v_arr_earth": "12.000",
+          "tid": 1,
+          "launch": "2024-12-17",
+          "c3": "59.138",
+          "dv_dep_park": "5.626",
+          "dur_ret": 17,
+          "dur_out": 345,
+          "v_dep_earth": "7.690"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "2.015",
+          "dv_total": "11.996",
+          "vrel_dep_neo": "2.841",
+          "v_arr_earth": "12.000",
+          "dec_arr": "30.589",
+          "vrel_arr_earth": "1.682",
+          "dur_at": 32,
+          "dec_dep": "37.730",
+          "dur_total": 362,
+          "dv_dep_park": "5.457",
+          "dur_ret": 25,
+          "v_dep_earth": "7.394",
+          "dur_out": 305,
+          "tid": 2,
+          "launch": "2024-12-25",
+          "c3": "54.666"
+        }
+      },
+      "request": {
+        "file": "00030-nhats-2025_XS3.txt",
+        "sha256": "ff678284818ca2c2ab176c8c41263069592752662bb48eff582c28c3186e8a3f"
+      }
+    },
+    {
+      "des": "2026 AM4",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2466277.183075449,
+      "supportDateLabel": "2040-May-02 16:24",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2026 AM4)",
+        "orbit_id": "16",
+        "computed": "2026-05-23",
+        "h": "25.1",
+        "occ": "4",
+        "n_via_traj": 240358,
+        "min_dv": {
+          "dur": 338,
+          "dv": "7.146"
+        },
+        "min_dur": {
+          "dur": 66,
+          "dv": "11.976"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "1.419",
+          "c3": "2.013",
+          "tid": 166699,
+          "dv_total": "7.146",
+          "dur_total": 338,
+          "dur_out": 257,
+          "dec_dep": "-72.719",
+          "dv_dep_park": "3.269",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 73,
+          "launch": "2039-07-04",
+          "vrel_arr_neo": "2.173",
+          "dec_arr": "-61.128",
+          "dur_at": 8,
+          "v_arr_earth": "11.310",
+          "vrel_dep_neo": "1.704"
+        },
+        "min_dur_traj": {
+          "v_arr_earth": "11.664",
+          "vrel_dep_neo": "5.225",
+          "dec_arr": "-37.440",
+          "dur_at": 8,
+          "vrel_arr_neo": "3.270",
+          "launch": "2026-01-29",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 25,
+          "dec_dep": "44.883",
+          "dv_dep_park": "3.480",
+          "dur_out": 33,
+          "dv_total": "11.976",
+          "dur_total": 66,
+          "tid": 89982,
+          "c3": "6.678",
+          "v_dep_earth": "2.584"
+        }
+      },
+      "request": {
+        "file": "00031-nhats-2026_AM4.txt",
+        "sha256": "543677861ecdbeef06350dd53eb3ef5222451cc6e5aa935cd9c5593abb10d83a"
+      }
+    },
+    {
+      "des": "2026 DP15",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2463715.681890205,
+      "supportDateLabel": "2033-Apr-28 04:22",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2026 DP15)",
+        "orbit_id": "18",
+        "computed": "2026-06-14",
+        "h": "25.8",
+        "occ": "6",
+        "n_via_traj": 10120,
+        "min_dv": {
+          "dv": "8.708",
+          "dur": 354
+        },
+        "min_dur": {
+          "dur": 250,
+          "dv": "11.884"
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "12.000",
+          "dur_ret": 305,
+          "vrel_dep_neo": "1.844",
+          "c3": "54.119",
+          "dur_out": 41,
+          "tid": 4649,
+          "vrel_arr_earth": "0.736",
+          "v_dep_earth": "7.357",
+          "dec_dep": "-28.088",
+          "dv_dep_park": "5.436",
+          "launch": "2026-03-18",
+          "dur_at": 8,
+          "dec_arr": "-33.978",
+          "dur_total": 354,
+          "dv_total": "8.708",
+          "vrel_arr_neo": "0.693"
+        },
+        "min_dur_traj": {
+          "dur_at": 8,
+          "launch": "2033-04-06",
+          "dec_arr": "-3.625",
+          "dv_total": "11.884",
+          "dur_total": 250,
+          "vrel_arr_neo": "1.770",
+          "c3": "35.095",
+          "tid": 6859,
+          "dur_out": 113,
+          "v_arr_earth": "12.000",
+          "dur_ret": 129,
+          "vrel_dep_neo": "4.697",
+          "v_dep_earth": "5.924",
+          "vrel_arr_earth": "0.727",
+          "dv_dep_park": "4.689",
+          "dec_dep": "-25.166"
+        }
+      },
+      "request": {
+        "file": "00032-nhats-2026_DP15.txt",
+        "sha256": "4de78ae11a8df73af1566b1d618ee4e2bf97f13c7977ce93a4fac12ca1059232"
+      }
+    },
+    {
+      "des": "2016 AB9",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2461354.231594429,
+      "supportDateLabel": "2026-Nov-09 17:33",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2016 AB9)",
+        "orbit_id": "8",
+        "computed": "2021-04-19",
+        "h": "24.7",
+        "occ": "5",
+        "n_via_traj": 237973,
+        "min_dv": {
+          "dur": 370,
+          "dv": "5.616"
+        },
+        "min_dur": {
+          "dv": "11.878",
+          "dur": 98
+        },
+        "min_dv_traj": {
+          "dur_ret": 289,
+          "dv_dep_park": "3.906",
+          "v_dep_earth": "4.044",
+          "dur_out": 73,
+          "tid": 175207,
+          "launch": "2036-06-09",
+          "c3": "16.358",
+          "vrel_arr_neo": "0.690",
+          "dv_total": "5.616",
+          "vrel_dep_neo": "1.020",
+          "v_arr_earth": "11.661",
+          "dec_arr": "-48.513",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_total": 370,
+          "dec_dep": "-36.536"
+        },
+        "min_dur_traj": {
+          "dec_arr": "37.017",
+          "v_arr_earth": "11.292",
+          "vrel_dep_neo": "5.448",
+          "dv_total": "11.878",
+          "vrel_arr_neo": "2.673",
+          "dur_total": 98,
+          "dec_dep": "-41.582",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "v_dep_earth": "3.597",
+          "dur_out": 25,
+          "dv_dep_park": "3.757",
+          "dur_ret": 65,
+          "c3": "12.939",
+          "launch": "2036-06-09",
+          "tid": 172007
+        }
+      },
+      "request": {
+        "file": "00033-nhats-2016_AB9.txt",
+        "sha256": "10e525ff7824c74f598dc418dbd2f48d82b9dda009886aa2c0ec9eabb475c751"
+      }
+    },
+    {
+      "des": "2024 BM1",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2461421.188729595,
+      "supportDateLabel": "2027-Jan-15 16:32",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 BM1)",
+        "orbit_id": "4",
+        "computed": "2025-01-25",
+        "h": "26.0",
+        "occ": "2",
+        "n_via_traj": 49832,
+        "min_dv": {
+          "dv": "8.950",
+          "dur": 378
+        },
+        "min_dur": {
+          "dur": 330,
+          "dv": "11.913"
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.149",
+          "dur_ret": 57,
+          "dec_dep": "50.025",
+          "dv_dep_park": "5.630",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.467",
+          "dur_at": 8,
+          "dec_arr": "59.190",
+          "launch": "2023-01-13",
+          "vrel_arr_neo": "0.704",
+          "c3": "59.246",
+          "v_dep_earth": "7.697",
+          "dur_out": 313,
+          "dur_total": 378,
+          "dv_total": "8.950",
+          "tid": 26766
+        },
+        "min_dur_traj": {
+          "v_dep_earth": "7.016",
+          "c3": "49.220",
+          "dur_total": 330,
+          "dv_total": "11.913",
+          "tid": 969,
+          "dur_out": 153,
+          "dv_dep_park": "5.248",
+          "dec_dep": "44.736",
+          "dur_ret": 113,
+          "vrel_arr_earth": "0.535",
+          "launch": "2020-01-29",
+          "vrel_arr_neo": "2.033",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "4.097",
+          "dur_at": 64,
+          "dec_arr": "44.793"
+        }
+      },
+      "request": {
+        "file": "00034-nhats-2024_BM1.txt",
+        "sha256": "4f83377e9b906fdee08c08eb29ace7941431d351ed4d802f5f6c8afe1c09eb0f"
+      }
+    },
+    {
+      "des": "2024 VP4",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2463197.706260715,
+      "supportDateLabel": "2031-Nov-27 04:57",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 VP4)",
+        "orbit_id": "7",
+        "computed": "2026-09-10",
+        "h": "28.7",
+        "occ": "5",
+        "n_via_traj": 131583,
+        "min_dv": {
+          "dv": "6.863",
+          "dur": 394
+        },
+        "min_dur": {
+          "dv": "11.876",
+          "dur": 34
+        },
+        "min_dv_traj": {
+          "vrel_dep_neo": "0.322",
+          "v_arr_earth": "11.647",
+          "dur_ret": 33,
+          "tid": 3585,
+          "dur_out": 353,
+          "c3": "6.426",
+          "dec_dep": "-12.844",
+          "dv_dep_park": "3.469",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "2.535",
+          "dur_total": 394,
+          "dv_total": "6.863",
+          "dec_arr": "19.267",
+          "launch": "2023-10-12",
+          "dur_at": 8,
+          "vrel_arr_neo": "3.072"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "6.927",
+          "dec_arr": "16.222",
+          "dv_total": "11.876",
+          "dur_total": 34,
+          "dur_at": 8,
+          "launch": "2024-10-06",
+          "dec_dep": "-18.107",
+          "dv_dep_park": "3.861",
+          "v_dep_earth": "3.913",
+          "vrel_arr_earth": "0.000",
+          "c3": "15.309",
+          "dur_out": 17,
+          "tid": 60305,
+          "v_arr_earth": "11.912",
+          "dur_ret": 9,
+          "vrel_dep_neo": "1.088"
+        }
+      },
+      "request": {
+        "file": "00035-nhats-2024_VP4.txt",
+        "sha256": "d5d585aafa8fc498bffb4f20e8335e915c63af46a82f7f3b79d64d40b1ddb5c3"
+      }
+    },
+    {
+      "des": "2006 SP19",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2462799.392800841,
+      "supportDateLabel": "2030-Oct-24 21:26",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2006 SP19)",
+        "orbit_id": "17",
+        "computed": "2026-08-26",
+        "h": "24.2",
+        "occ": "0",
+        "n_via_traj": 31908,
+        "min_dv": {
+          "dv": "9.794",
+          "dur": 354
+        },
+        "min_dur": {
+          "dur": 226,
+          "dv": "11.948"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "3.984",
+          "c3": "15.869",
+          "tid": 14639,
+          "dv_total": "9.794",
+          "dur_total": 354,
+          "dur_out": 265,
+          "dv_dep_park": "3.885",
+          "dec_dep": "-13.195",
+          "vrel_arr_earth": "0.148",
+          "dur_ret": 81,
+          "vrel_arr_neo": "3.090",
+          "launch": "2029-11-29",
+          "dec_arr": "-16.147",
+          "dur_at": 8,
+          "vrel_dep_neo": "2.671",
+          "v_arr_earth": "12.000"
+        },
+        "min_dur_traj": {
+          "c3": "37.698",
+          "v_dep_earth": "6.140",
+          "dur_out": 73,
+          "dv_total": "11.948",
+          "dur_total": 226,
+          "tid": 31907,
+          "dur_ret": 145,
+          "vrel_arr_earth": "0.396",
+          "dec_dep": "-18.408",
+          "dv_dep_park": "4.794",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "3.787",
+          "dec_arr": "-26.003",
+          "dur_at": 8,
+          "vrel_arr_neo": "2.971",
+          "launch": "2044-08-02"
+        }
+      },
+      "request": {
+        "file": "00036-nhats-2006_SP19.txt",
+        "sha256": "5f9b8e5880a91983bb855a913ce74e153dea158468f08c20c8859401265abdfe"
+      }
+    },
+    {
+      "des": "2022 LW",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2462970.432051987,
+      "supportDateLabel": "2031-Apr-13 22:22",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2022 LW)",
+        "orbit_id": "6",
+        "computed": "2022-08-18",
+        "h": "25.6",
+        "occ": "5",
+        "n_via_traj": 505430,
+        "min_dv": {
+          "dv": "6.117",
+          "dur": 362
+        },
+        "min_dur": {
+          "dv": "11.701",
+          "dur": 130
+        },
+        "min_dv_traj": {
+          "dur_total": 362,
+          "dv_total": "6.117",
+          "dec_arr": "-10.792",
+          "launch": "2031-09-16",
+          "dur_at": 8,
+          "vrel_arr_neo": "1.268",
+          "vrel_dep_neo": "1.184",
+          "v_arr_earth": "11.775",
+          "dur_ret": 145,
+          "tid": 280057,
+          "dur_out": 209,
+          "c3": "10.829",
+          "dec_dep": "-12.760",
+          "dv_dep_park": "3.665",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "3.291"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "4.776",
+          "launch": "2022-01-26",
+          "dur_at": 8,
+          "dec_arr": "19.600",
+          "dv_total": "11.701",
+          "dur_total": 130,
+          "vrel_arr_earth": "0.161",
+          "v_dep_earth": "5.117",
+          "dec_dep": "-24.900",
+          "dv_dep_park": "4.323",
+          "dur_ret": 65,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.442",
+          "c3": "26.186",
+          "tid": 115635,
+          "dur_out": 57
+        }
+      },
+      "request": {
+        "file": "00037-nhats-2022_LW.txt",
+        "sha256": "f00e752f2252e88934fa0317ee4b9692e4c2821b467e19c249a91735c0b475ba"
+      }
+    },
+    {
+      "des": "2015 VO105",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462668.809226871,
+      "supportDateLabel": "2030-Jun-16 07:25",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2015 VO105)",
+        "orbit_id": "30",
+        "computed": "2021-04-19",
+        "h": "24.1",
+        "occ": "2",
+        "n_via_traj": 453806,
+        "min_dv": {
+          "dur": 370,
+          "dv": "5.642"
+        },
+        "min_dur": {
+          "dur": 98,
+          "dv": "11.845"
+        },
+        "min_dv_traj": {
+          "tid": 237677,
+          "dur_total": 370,
+          "dv_total": "5.642",
+          "dur_out": 185,
+          "v_dep_earth": "4.009",
+          "c3": "16.068",
+          "vrel_arr_neo": "1.014",
+          "launch": "2030-11-24",
+          "dur_at": 8,
+          "dec_arr": "-2.116",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "0.721",
+          "dec_dep": "-15.412",
+          "dv_dep_park": "3.894",
+          "vrel_arr_earth": "0.014",
+          "dur_ret": 177
+        },
+        "min_dur_traj": {
+          "c3": "9.952",
+          "v_dep_earth": "3.155",
+          "dur_out": 49,
+          "dur_total": 98,
+          "dv_total": "11.845",
+          "tid": 129132,
+          "dur_ret": 41,
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "8.408",
+          "dv_dep_park": "3.626",
+          "v_arr_earth": "11.663",
+          "vrel_dep_neo": "3.990",
+          "dur_at": 8,
+          "dec_arr": "-12.729",
+          "launch": "2030-04-06",
+          "vrel_arr_neo": "4.229"
+        }
+      },
+      "request": {
+        "file": "00038-nhats-2015_VO105.txt",
+        "sha256": "199e2ece64a0d899763d165ccc6184908b1ef4e964aa8e635364f489a5986619"
+      }
+    },
+    {
+      "des": "452807",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2461524.808475439,
+      "supportDateLabel": "2027-Apr-29 07:24",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "452807 (2006 KV89)",
+        "orbit_id": "63",
+        "computed": "2026-11-10",
+        "h": "21.5",
+        "occ": "0",
+        "n_via_traj": 19980,
+        "min_dv": {
+          "dur": 346,
+          "dv": "8.094"
+        },
+        "min_dur": {
+          "dur": 258,
+          "dv": "11.881"
+        },
+        "min_dv_traj": {
+          "dur_at": 8,
+          "vrel_arr_earth": "0.232",
+          "dur_total": 346,
+          "dec_dep": "-3.796",
+          "vrel_arr_neo": "1.484",
+          "dv_total": "8.094",
+          "vrel_dep_neo": "1.735",
+          "v_arr_earth": "12.000",
+          "dec_arr": "0.705",
+          "tid": 15326,
+          "c3": "33.938",
+          "launch": "2031-12-13",
+          "dur_ret": 281,
+          "dv_dep_park": "4.642",
+          "v_dep_earth": "5.826",
+          "dur_out": 57
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "3.798",
+          "vrel_dep_neo": "1.655",
+          "dv_total": "11.881",
+          "v_arr_earth": "12.000",
+          "dec_arr": "-29.286",
+          "dur_at": 8,
+          "vrel_arr_earth": "1.792",
+          "dur_total": 258,
+          "dec_dep": "-10.998",
+          "dv_dep_park": "4.637",
+          "dur_ret": 105,
+          "v_dep_earth": "5.814",
+          "dur_out": 145,
+          "tid": 5665,
+          "launch": "2026-08-25",
+          "c3": "33.804"
+        }
+      },
+      "request": {
+        "file": "00039-nhats-452807.txt",
+        "sha256": "c5819a6d786f9e6163564b16449a4dcdf5b73095e687ff1792d1e744c3699324"
+      }
+    },
+    {
+      "des": "2002 JR100",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2461164.099190522,
+      "supportDateLabel": "2026-May-03 14:23",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2002 JR100)",
+        "orbit_id": "36",
+        "computed": "2026-06-05",
+        "h": "24.4",
+        "occ": "0",
+        "n_via_traj": 46606,
+        "min_dv": {
+          "dv": "8.629",
+          "dur": 386
+        },
+        "min_dur": {
+          "dur": 290,
+          "dv": "11.976"
+        },
+        "min_dv_traj": {
+          "dec_arr": "-27.093",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.182",
+          "vrel_arr_neo": "1.621",
+          "launch": "2026-09-18",
+          "vrel_arr_earth": "0.125",
+          "dur_ret": 129,
+          "dec_dep": "-16.581",
+          "dv_dep_park": "4.701",
+          "dur_out": 249,
+          "tid": 21207,
+          "dv_total": "8.629",
+          "dur_total": 386,
+          "c3": "35.397",
+          "v_dep_earth": "5.950"
+        },
+        "min_dur_traj": {
+          "dv_dep_park": "5.593",
+          "dec_dep": "0.788",
+          "dur_ret": 201,
+          "vrel_arr_earth": "0.909",
+          "launch": "2034-05-19",
+          "vrel_arr_neo": "2.727",
+          "dur_at": 8,
+          "dec_arr": "35.367",
+          "vrel_dep_neo": "2.748",
+          "v_arr_earth": "12.000",
+          "v_dep_earth": "7.632",
+          "c3": "58.255",
+          "tid": 35251,
+          "dur_total": 290,
+          "dv_total": "11.976",
+          "dur_out": 81
+        }
+      },
+      "request": {
+        "file": "00040-nhats-2002_JR100.txt",
+        "sha256": "7425a910534aedb02fc2053a3d14b4fd296b1bdc8f6d592d16e5ca72c2385fb3"
+      }
+    },
+    {
+      "des": "2021 WN2",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2461167.19968472,
+      "supportDateLabel": "2026-May-06 16:48",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 WN2)",
+        "orbit_id": "5",
+        "computed": "2026-07-29",
+        "h": "26.7",
+        "occ": "7",
+        "n_via_traj": 234426,
+        "min_dv": {
+          "dv": "7.395",
+          "dur": 450
+        },
+        "min_dur": {
+          "dur": 242,
+          "dv": "11.955"
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "1.684",
+          "dec_arr": "-21.767",
+          "dur_total": 450,
+          "dv_total": "7.395",
+          "dur_at": 168,
+          "launch": "2020-10-11",
+          "dec_dep": "-16.620",
+          "dv_dep_park": "4.239",
+          "v_dep_earth": "4.916",
+          "vrel_arr_earth": "0.000",
+          "c3": "24.169",
+          "dur_out": 137,
+          "tid": 5800,
+          "dur_ret": 145,
+          "v_arr_earth": "11.966",
+          "vrel_dep_neo": "1.472"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "3.161",
+          "dv_total": "11.955",
+          "dur_total": 242,
+          "dec_arr": "-16.620",
+          "launch": "2023-08-25",
+          "dur_at": 8,
+          "dv_dep_park": "4.548",
+          "dec_dep": "-17.201",
+          "vrel_arr_earth": "0.219",
+          "v_dep_earth": "5.624",
+          "vrel_dep_neo": "4.027",
+          "dur_ret": 113,
+          "v_arr_earth": "12.000",
+          "dur_out": 121,
+          "tid": 99110,
+          "c3": "31.628"
+        }
+      },
+      "request": {
+        "file": "00041-nhats-2021_WN2.txt",
+        "sha256": "c535584aadc963ffed554595c9608da15fc32501e5333cbd7de54d7a1f0f5a75"
+      }
+    },
+    {
+      "des": "2014 DV110",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2461260.875098785,
+      "supportDateLabel": "2026-Aug-08 09:00",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2014 DV110)",
+        "orbit_id": "11",
+        "computed": "2021-04-19",
+        "h": "24.9",
+        "occ": "7",
+        "n_via_traj": 14213,
+        "min_dv": {
+          "dur": 306,
+          "dv": "9.538"
+        },
+        "min_dur": {
+          "dur": 202,
+          "dv": "11.932"
+        },
+        "min_dv_traj": {
+          "dv_dep_park": "3.430",
+          "dur_ret": 65,
+          "dur_out": 233,
+          "v_dep_earth": "2.357",
+          "tid": 10488,
+          "c3": "5.554",
+          "launch": "2041-07-09",
+          "vrel_arr_neo": "3.720",
+          "dv_total": "9.538",
+          "vrel_dep_neo": "2.389",
+          "v_arr_earth": "11.995",
+          "dec_arr": "13.158",
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "7.962",
+          "dur_total": 306
+        },
+        "min_dur_traj": {
+          "dec_dep": "4.896",
+          "dur_total": 202,
+          "vrel_arr_earth": "1.091",
+          "dur_at": 8,
+          "dec_arr": "17.327",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "1.633",
+          "dv_total": "11.932",
+          "vrel_arr_neo": "5.166",
+          "launch": "2041-10-13",
+          "c3": "19.528",
+          "tid": 13492,
+          "dur_out": 121,
+          "v_dep_earth": "4.419",
+          "dv_dep_park": "4.042",
+          "dur_ret": 73
+        }
+      },
+      "request": {
+        "file": "00042-nhats-2014_DV110.txt",
+        "sha256": "0dc62ca9a3b792d50e47865c22e44d0582a1d8dcef944ae1aa9dfbe5d0fc801a"
+      }
+    },
+    {
+      "des": "2014 BA3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2464186.146050155,
+      "supportDateLabel": "2034-Aug-11 15:30",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2014 BA3)",
+        "orbit_id": "18",
+        "computed": "2021-04-19",
+        "h": "28.3",
+        "occ": "5",
+        "n_via_traj": 1115166,
+        "min_dv": {
+          "dv": "5.505",
+          "dur": 362
+        },
+        "min_dur": {
+          "dur": 58,
+          "dv": "11.693"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "1.109",
+          "c3": "1.230",
+          "dv_total": "5.505",
+          "dur_total": 362,
+          "tid": 157510,
+          "dur_out": 161,
+          "dec_dep": "56.675",
+          "dv_dep_park": "3.233",
+          "dur_ret": 169,
+          "vrel_arr_earth": "0.000",
+          "launch": "2023-07-24",
+          "vrel_arr_neo": "1.146",
+          "v_arr_earth": "11.189",
+          "vrel_dep_neo": "1.126",
+          "dec_arr": "21.305",
+          "dur_at": 32
+        },
+        "min_dur_traj": {
+          "launch": "2023-10-12",
+          "vrel_arr_neo": "4.361",
+          "dec_arr": "-46.510",
+          "dur_at": 8,
+          "vrel_dep_neo": "3.757",
+          "v_arr_earth": "11.436",
+          "dec_dep": "41.890",
+          "dv_dep_park": "3.575",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 25,
+          "tid": 236291,
+          "dv_total": "11.693",
+          "dur_total": 58,
+          "dur_out": 25,
+          "v_dep_earth": "2.967",
+          "c3": "8.802"
+        }
+      },
+      "request": {
+        "file": "00043-nhats-2014_BA3.txt",
+        "sha256": "7763442b7f5cc69f02a9c34017e2dd2e380577c57aeb97c0acd150bc29f0a55c"
+      }
+    },
+    {
+      "des": "2021 ES3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2463667.896951603,
+      "supportDateLabel": "2033-Mar-11 09:32",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 ES3)",
+        "orbit_id": "2",
+        "computed": "2021-04-19",
+        "h": "27.6",
+        "occ": "6",
+        "n_via_traj": 24203,
+        "min_dv": {
+          "dur": 362,
+          "dv": "8.119"
+        },
+        "min_dur": {
+          "dur": 162,
+          "dv": "11.719"
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "1.042",
+          "launch": "2020-03-17",
+          "dur_at": 8,
+          "dv_total": "8.119",
+          "dur_total": 362,
+          "dec_arr": "-50.990",
+          "vrel_arr_earth": "1.671",
+          "v_dep_earth": "5.986",
+          "dv_dep_park": "4.719",
+          "dec_dep": "-51.893",
+          "vrel_dep_neo": "0.687",
+          "v_arr_earth": "12.000",
+          "dur_ret": 49,
+          "tid": 5743,
+          "dur_out": 305,
+          "c3": "35.829"
+        },
+        "min_dur_traj": {
+          "dv_total": "11.719",
+          "dur_total": 162,
+          "dec_arr": "-54.451",
+          "launch": "2020-10-03",
+          "dur_at": 8,
+          "vrel_arr_neo": "5.208",
+          "vrel_dep_neo": "1.473",
+          "dur_ret": 25,
+          "v_arr_earth": "12.000",
+          "tid": 8524,
+          "dur_out": 129,
+          "c3": "16.455",
+          "dv_dep_park": "3.910",
+          "dec_dep": "52.905",
+          "vrel_arr_earth": "1.128",
+          "v_dep_earth": "4.056"
+        }
+      },
+      "request": {
+        "file": "00044-nhats-2021_ES3.txt",
+        "sha256": "fc31e88a39a2d02e2181d36be6a02a0fd464d759cc07e9f20285b40dba28b473"
+      }
+    },
+    {
+      "des": "2020 XL6",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462112.377661271,
+      "supportDateLabel": "2028-Dec-06 21:04",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2020 XL6)",
+        "orbit_id": "5",
+        "computed": "2023-06-12",
+        "h": "25.3",
+        "occ": "7",
+        "n_via_traj": 827,
+        "min_dv": {
+          "dv": "10.776",
+          "dur": 378
+        },
+        "min_dur": {
+          "dur": 138,
+          "dv": "11.840"
+        },
+        "min_dv_traj": {
+          "dv_dep_park": "3.712",
+          "dur_ret": 81,
+          "v_dep_earth": "3.449",
+          "dur_out": 289,
+          "tid": 674,
+          "launch": "2028-01-03",
+          "c3": "11.896",
+          "vrel_arr_neo": "3.839",
+          "vrel_dep_neo": "3.225",
+          "dv_total": "10.776",
+          "v_arr_earth": "11.996",
+          "dec_arr": "59.434",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_dep": "75.486",
+          "dur_total": 378
+        },
+        "min_dur_traj": {
+          "c3": "12.806",
+          "launch": "2020-07-23",
+          "tid": 459,
+          "dur_out": 81,
+          "v_dep_earth": "3.579",
+          "dur_ret": 49,
+          "dv_dep_park": "3.752",
+          "dur_total": 138,
+          "dec_dep": "-85.193",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "v_arr_earth": "11.917",
+          "dec_arr": "82.819",
+          "vrel_arr_neo": "4.775",
+          "vrel_dep_neo": "3.313",
+          "dv_total": "11.840"
+        }
+      },
+      "request": {
+        "file": "00045-nhats-2020_XL6.txt",
+        "sha256": "1195e95d847284b1872cf961fc15480711fe39faab1f415df4a4339665cfd590"
+      }
+    },
+    {
+      "des": "2019 XZ2",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462883.614492696,
+      "supportDateLabel": "2031-Jan-17 02:45",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2019 XZ2)",
+        "orbit_id": "19",
+        "computed": "2021-04-19",
+        "h": "24.7",
+        "occ": "5",
+        "n_via_traj": 15,
+        "min_dv": {
+          "dv": "11.734",
+          "dur": 410
+        },
+        "min_dur": {
+          "dur": 386,
+          "dv": "11.920"
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 337,
+          "dv_dep_park": "3.853",
+          "dec_dep": "-21.915",
+          "vrel_dep_neo": "5.259",
+          "v_arr_earth": "11.968",
+          "dec_arr": "10.809",
+          "dur_at": 8,
+          "launch": "2030-12-26",
+          "vrel_arr_neo": "2.622",
+          "c3": "15.135",
+          "v_dep_earth": "3.890",
+          "dur_out": 65,
+          "dv_total": "11.734",
+          "dur_total": 410,
+          "tid": 12
+        },
+        "min_dur_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 329,
+          "dec_dep": "-22.450",
+          "dv_dep_park": "3.830",
+          "dec_arr": "12.200",
+          "dur_at": 8,
+          "vrel_dep_neo": "5.480",
+          "v_arr_earth": "11.749",
+          "launch": "2020-01-13",
+          "vrel_arr_neo": "2.610",
+          "c3": "14.593",
+          "v_dep_earth": "3.820",
+          "dur_out": 49,
+          "tid": 4,
+          "dv_total": "11.920",
+          "dur_total": 386
+        }
+      },
+      "request": {
+        "file": "00046-nhats-2019_XZ2.txt",
+        "sha256": "0d30aff508bd37f95460bb8db40f8d03f03beedb60fb2e8e57833ccfe534c71d"
+      }
+    },
+    {
+      "des": "2019 JU5",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462019.396470943,
+      "supportDateLabel": "2028-Sep-04 21:31",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2019 JU5)",
+        "orbit_id": "13",
+        "computed": "2022-01-06",
+        "h": "24.0",
+        "occ": "0",
+        "n_via_traj": 280732,
+        "min_dv": {
+          "dv": "6.663",
+          "dur": 346
+        },
+        "min_dur": {
+          "dv": "11.585",
+          "dur": 138
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.080",
+          "dur_at": 8,
+          "dur_total": 346,
+          "dec_dep": "-3.329",
+          "vrel_arr_neo": "1.496",
+          "dv_total": "6.663",
+          "vrel_dep_neo": "1.309",
+          "v_arr_earth": "12.000",
+          "dec_arr": "-4.247",
+          "tid": 62369,
+          "launch": "2028-05-18",
+          "c3": "13.406",
+          "dv_dep_park": "3.778",
+          "dur_ret": 57,
+          "v_dep_earth": "3.661",
+          "dur_out": 281
+        },
+        "min_dur_traj": {
+          "dv_dep_park": "4.078",
+          "dur_ret": 73,
+          "dur_out": 57,
+          "v_dep_earth": "4.514",
+          "tid": 253781,
+          "c3": "20.374",
+          "launch": "2039-02-10",
+          "vrel_arr_neo": "3.511",
+          "vrel_dep_neo": "3.996",
+          "dv_total": "11.585",
+          "v_arr_earth": "11.927",
+          "dec_arr": "8.126",
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dur_total": 138,
+          "dec_dep": "-15.783"
+        }
+      },
+      "request": {
+        "file": "00047-nhats-2019_JU5.txt",
+        "sha256": "0d6cb8128d7f3503d72c31bfd4d6e22d480a3e22f7e988ad591f76cf063af856"
+      }
+    },
+    {
+      "des": "2023 XU7",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2464537.843306579,
+      "supportDateLabel": "2035-Jul-29 08:14",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2023 XU7)",
+        "orbit_id": "5",
+        "computed": "2024-01-11",
+        "h": "24.9",
+        "occ": "6",
+        "n_via_traj": 263299,
+        "min_dv": {
+          "dur": 378,
+          "dv": "7.184"
+        },
+        "min_dur": {
+          "dur": 122,
+          "dv": "11.799"
+        },
+        "min_dv_traj": {
+          "dec_dep": "74.885",
+          "dv_dep_park": "3.771",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 209,
+          "launch": "2035-06-23",
+          "vrel_arr_neo": "2.177",
+          "vrel_dep_neo": "1.237",
+          "v_arr_earth": "11.597",
+          "dur_at": 56,
+          "dec_arr": "32.005",
+          "v_dep_earth": "3.639",
+          "c3": "13.240",
+          "dur_total": 378,
+          "dv_total": "7.184",
+          "tid": 195181,
+          "dur_out": 113
+        },
+        "min_dur_traj": {
+          "v_dep_earth": "5.057",
+          "c3": "25.570",
+          "tid": 203225,
+          "dur_total": 122,
+          "dv_total": "11.799",
+          "dur_out": 49,
+          "dv_dep_park": "4.297",
+          "dec_dep": "63.035",
+          "dur_ret": 65,
+          "vrel_arr_earth": "0.000",
+          "vrel_arr_neo": "4.279",
+          "launch": "2035-07-09",
+          "dur_at": 8,
+          "dec_arr": "-65.468",
+          "v_arr_earth": "11.924",
+          "vrel_dep_neo": "3.223"
+        }
+      },
+      "request": {
+        "file": "00048-nhats-2023_XU7.txt",
+        "sha256": "4fd9fb7b4aad8932c6c9982d8b89903cf2fb9e3e489416d01848770e2185a063"
+      }
+    },
+    {
+      "des": "2021 NR3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2462577.343275893,
+      "supportDateLabel": "2030-Mar-16 20:14",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 NR3)",
+        "orbit_id": "2",
+        "computed": "2021-07-17",
+        "h": "25.0",
+        "occ": "7",
+        "n_via_traj": 20,
+        "min_dv": {
+          "dv": "11.525",
+          "dur": 362
+        },
+        "min_dur": {
+          "dur": 170,
+          "dv": "11.977"
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_dep": "-45.551",
+          "dur_total": 362,
+          "vrel_arr_neo": "1.174",
+          "dv_total": "11.525",
+          "vrel_dep_neo": "5.235",
+          "v_arr_earth": "11.828",
+          "dec_arr": "-84.710",
+          "tid": 9,
+          "c3": "45.839",
+          "launch": "2021-07-02",
+          "dv_dep_park": "5.116",
+          "dur_ret": 329,
+          "dur_out": 25,
+          "v_dep_earth": "6.770"
+        },
+        "min_dur_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_total": 170,
+          "dec_dep": "-46.281",
+          "vrel_arr_neo": "0.890",
+          "dv_total": "11.977",
+          "vrel_dep_neo": "5.828",
+          "v_arr_earth": "11.789",
+          "dec_arr": "83.818",
+          "tid": 13,
+          "launch": "2021-07-02",
+          "c3": "49.502",
+          "dur_ret": 129,
+          "dv_dep_park": "5.259",
+          "v_dep_earth": "7.036",
+          "dur_out": 33
+        }
+      },
+      "request": {
+        "file": "00049-nhats-2021_NR3.txt",
+        "sha256": "64826a4661226712f25d340cbeb1425b55e9b702edc1e8c1ad0c87e8c7892672"
+      }
+    },
+    {
+      "des": "2011 MJ",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2465450.098967154,
+      "supportDateLabel": "2038-Jan-26 14:23",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2011 MJ)",
+        "orbit_id": "12",
+        "computed": "2026-07-31",
+        "h": "22.8",
+        "occ": "5",
+        "n_via_traj": 567,
+        "min_dv": {
+          "dur": 370,
+          "dv": "10.942"
+        },
+        "min_dur": {
+          "dur": 194,
+          "dv": "11.969"
+        },
+        "min_dv_traj": {
+          "dur_ret": 265,
+          "vrel_arr_earth": "0.686",
+          "dec_dep": "66.549",
+          "dv_dep_park": "4.447",
+          "vrel_dep_neo": "2.736",
+          "v_arr_earth": "12.000",
+          "dur_at": 8,
+          "dec_arr": "57.722",
+          "launch": "2037-12-29",
+          "vrel_arr_neo": "3.073",
+          "c3": "29.164",
+          "v_dep_earth": "5.400",
+          "dur_out": 97,
+          "dur_total": 370,
+          "dv_total": "10.942",
+          "tid": 383
+        },
+        "min_dur_traj": {
+          "c3": "29.164",
+          "v_dep_earth": "5.400",
+          "dur_out": 97,
+          "dv_total": "11.969",
+          "dur_total": 194,
+          "tid": 380,
+          "dur_ret": 89,
+          "vrel_arr_earth": "0.431",
+          "dv_dep_park": "4.447",
+          "dec_dep": "66.549",
+          "vrel_dep_neo": "4.018",
+          "v_arr_earth": "12.000",
+          "dec_arr": "-57.632",
+          "dur_at": 8,
+          "launch": "2037-12-29",
+          "vrel_arr_neo": "3.073"
+        }
+      },
+      "request": {
+        "file": "00050-nhats-2011_MJ.txt",
+        "sha256": "54722d876410385530551c0407ce9f9fd2f169330e2aeb9203b00bf078255fb9"
+      }
+    },
+    {
+      "des": "2020 MO3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2463347.393074403,
+      "supportDateLabel": "2032-Apr-24 21:26",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2020 MO3)",
+        "orbit_id": "5",
+        "computed": "2021-09-10",
+        "h": "24.6",
+        "occ": "4",
+        "n_via_traj": 541262,
+        "min_dv": {
+          "dur": 370,
+          "dv": "5.898"
+        },
+        "min_dur": {
+          "dur": 130,
+          "dv": "11.703"
+        },
+        "min_dv_traj": {
+          "dur_ret": 153,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "0.913",
+          "c3": "19.808",
+          "tid": 118793,
+          "dur_out": 209,
+          "vrel_arr_earth": "0.010",
+          "v_dep_earth": "4.451",
+          "dv_dep_park": "4.054",
+          "dec_dep": "-8.543",
+          "launch": "2020-11-04",
+          "dur_at": 8,
+          "dec_arr": "-9.354",
+          "dv_total": "5.898",
+          "dur_total": 370,
+          "vrel_arr_neo": "0.920"
+        },
+        "min_dur_traj": {
+          "launch": "2020-03-17",
+          "dur_at": 8,
+          "dv_total": "11.703",
+          "dur_total": 130,
+          "dec_arr": "9.852",
+          "vrel_arr_neo": "4.521",
+          "vrel_dep_neo": "3.280",
+          "dur_ret": 57,
+          "v_arr_earth": "11.965",
+          "dur_out": 65,
+          "tid": 25900,
+          "c3": "16.274",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "4.034",
+          "dec_dep": "-16.527",
+          "dv_dep_park": "3.902"
+        }
+      },
+      "request": {
+        "file": "00051-nhats-2020_MO3.txt",
+        "sha256": "1d085ed2839e0f1ddd8a1a1dd232402613507fde75fa0620100c602c4dfe9797"
+      }
+    },
+    {
+      "des": "2016 DB1",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462068.986619647,
+      "supportDateLabel": "2028-Oct-24 11:41",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2016 DB1)",
+        "orbit_id": "8",
+        "computed": "2021-04-19",
+        "h": "26.5",
+        "occ": "6",
+        "n_via_traj": 227,
+        "min_dv": {
+          "dv": "10.658",
+          "dur": 370
+        },
+        "min_dur": {
+          "dv": "11.985",
+          "dur": 186
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.501",
+          "dur_at": 8,
+          "dur_total": 370,
+          "dec_dep": "62.188",
+          "vrel_arr_neo": "2.305",
+          "dv_total": "10.658",
+          "vrel_dep_neo": "2.930",
+          "v_arr_earth": "12.000",
+          "dec_arr": "62.384",
+          "tid": 185,
+          "c3": "40.916",
+          "launch": "2041-09-03",
+          "dur_ret": 225,
+          "dv_dep_park": "4.922",
+          "v_dep_earth": "6.397",
+          "dur_out": 137
+        },
+        "min_dur_traj": {
+          "dur_ret": 57,
+          "dv_dep_park": "4.791",
+          "dur_out": 121,
+          "v_dep_earth": "6.134",
+          "tid": 78,
+          "launch": "2028-09-07",
+          "c3": "37.628",
+          "vrel_arr_neo": "2.700",
+          "dv_total": "11.985",
+          "vrel_dep_neo": "3.592",
+          "v_arr_earth": "12.000",
+          "dec_arr": "-55.969",
+          "vrel_arr_earth": "0.902",
+          "dur_at": 8,
+          "dec_dep": "57.500",
+          "dur_total": 186
+        }
+      },
+      "request": {
+        "file": "00052-nhats-2016_DB1.txt",
+        "sha256": "7471c3c77e0f2cdfc605215ac9a879bd89a8a5b8dea8a23ea221a2eca8b6cc95"
+      }
+    },
+    {
+      "des": "2023 QS4",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2463128.260099817,
+      "supportDateLabel": "2031-Sep-18 18:15",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2023 QS4)",
+        "orbit_id": "1",
+        "computed": "2023-08-25",
+        "h": "26.6",
+        "occ": "7",
+        "n_via_traj": 248823,
+        "min_dv": {
+          "dur": 370,
+          "dv": "6.260"
+        },
+        "min_dur": {
+          "dv": "11.996",
+          "dur": 98
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "1.487",
+          "launch": "2023-02-14",
+          "dec_arr": "65.833",
+          "dur_at": 8,
+          "v_arr_earth": "11.724",
+          "vrel_dep_neo": "1.071",
+          "dv_dep_park": "3.703",
+          "dec_dep": "62.160",
+          "dur_ret": 121,
+          "vrel_arr_earth": "0.000",
+          "tid": 54373,
+          "dv_total": "6.260",
+          "dur_total": 370,
+          "dur_out": 241,
+          "v_dep_earth": "3.419",
+          "c3": "11.690"
+        },
+        "min_dur_traj": {
+          "v_dep_earth": "4.350",
+          "c3": "18.922",
+          "dv_total": "11.996",
+          "dur_total": 98,
+          "tid": 102523,
+          "dur_out": 33,
+          "dec_dep": "-65.267",
+          "dv_dep_park": "4.016",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 57,
+          "vrel_arr_neo": "3.246",
+          "launch": "2023-08-25",
+          "vrel_dep_neo": "4.734",
+          "v_arr_earth": "11.558",
+          "dec_arr": "67.691",
+          "dur_at": 8
+        }
+      },
+      "request": {
+        "file": "00053-nhats-2023_QS4.txt",
+        "sha256": "b92d80e2a7f9d3ed4512e32631f2d88780a75a73a1d5da0c6482fd78095d7cb8"
+      }
+    },
+    {
+      "des": "2012 WS3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2461738.985892453,
+      "supportDateLabel": "2027-Nov-29 11:40",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2012 WS3)",
+        "orbit_id": "12",
+        "computed": "2021-04-19",
+        "h": "26.0",
+        "occ": "7",
+        "n_via_traj": 5441,
+        "min_dv": {
+          "dur": 410,
+          "dv": "10.202"
+        },
+        "min_dur": {
+          "dur": 330,
+          "dv": "11.999"
+        },
+        "min_dv_traj": {
+          "dv_total": "10.202",
+          "vrel_dep_neo": "3.893",
+          "vrel_arr_neo": "1.466",
+          "dec_arr": "-27.235",
+          "v_arr_earth": "11.587",
+          "dur_at": 32,
+          "vrel_arr_earth": "0.000",
+          "dur_total": 410,
+          "dec_dep": "1.647",
+          "dur_ret": 105,
+          "dv_dep_park": "4.843",
+          "v_dep_earth": "6.239",
+          "dur_out": 273,
+          "tid": 4649,
+          "launch": "2045-12-03",
+          "c3": "38.925"
+        },
+        "min_dur_traj": {
+          "tid": 2066,
+          "launch": "2025-05-18",
+          "c3": "37.383",
+          "dur_ret": 257,
+          "dv_dep_park": "4.781",
+          "v_dep_earth": "6.114",
+          "dur_out": 65,
+          "vrel_arr_earth": "1.713",
+          "dur_at": 8,
+          "dec_dep": "39.282",
+          "dur_total": 330,
+          "dv_total": "11.999",
+          "vrel_dep_neo": "2.917",
+          "vrel_arr_neo": "2.588",
+          "dec_arr": "31.988",
+          "v_arr_earth": "12.000"
+        }
+      },
+      "request": {
+        "file": "00054-nhats-2012_WS3.txt",
+        "sha256": "6d6f199644f91dd83a635c1c8c3c4643b090e8680b145cf9eae51cda81794deb"
+      }
+    },
+    {
+      "des": "2023 EN2",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462226.815229184,
+      "supportDateLabel": "2029-Mar-31 07:34",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2023 EN2)",
+        "orbit_id": "20",
+        "computed": "2024-03-08",
+        "h": "23.1",
+        "occ": "0",
+        "n_via_traj": 20,
+        "min_dv": {
+          "dur": 378,
+          "dv": "11.422"
+        },
+        "min_dur": {
+          "dur": 370,
+          "dv": "11.819"
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "3.893",
+          "dec_arr": "32.508",
+          "dur_at": 16,
+          "launch": "2041-10-13",
+          "vrel_arr_neo": "1.859",
+          "vrel_arr_earth": "0.042",
+          "dur_ret": 73,
+          "dv_dep_park": "5.627",
+          "dec_dep": "31.726",
+          "dur_out": 289,
+          "dv_total": "11.422",
+          "dur_total": 378,
+          "tid": 5,
+          "c3": "59.146",
+          "v_dep_earth": "7.691"
+        },
+        "min_dur_traj": {
+          "vrel_dep_neo": "3.347",
+          "v_arr_earth": "12.000",
+          "dec_arr": "32.823",
+          "dur_at": 8,
+          "launch": "2041-10-13",
+          "vrel_arr_neo": "1.859",
+          "dur_ret": 73,
+          "vrel_arr_earth": "0.987",
+          "dec_dep": "31.726",
+          "dv_dep_park": "5.627",
+          "dur_out": 289,
+          "dv_total": "11.819",
+          "dur_total": 370,
+          "tid": 1,
+          "c3": "59.146",
+          "v_dep_earth": "7.691"
+        }
+      },
+      "request": {
+        "file": "00055-nhats-2023_EN2.txt",
+        "sha256": "18a5e7a23afa2448efb7dc1f41f4cc5d28d6b9791d28c5f198ae190b5fb8980b"
+      }
+    },
+    {
+      "des": "2008 FX6",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2462857.800521788,
+      "supportDateLabel": "2030-Dec-22 07:13",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2008 FX6)",
+        "orbit_id": "9",
+        "computed": "2021-04-19",
+        "h": "25.0",
+        "occ": "6",
+        "n_via_traj": 7274,
+        "min_dv": {
+          "dur": 370,
+          "dv": "8.368"
+        },
+        "min_dur": {
+          "dv": "11.967",
+          "dur": 274
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "1.653",
+          "dv_total": "8.368",
+          "dur_total": 370,
+          "dec_arr": "60.720",
+          "dur_at": 16,
+          "launch": "2038-10-05",
+          "dv_dep_park": "4.550",
+          "dec_dep": "64.439",
+          "v_dep_earth": "5.627",
+          "vrel_arr_earth": "0.139",
+          "dur_out": 153,
+          "tid": 3932,
+          "c3": "31.668",
+          "vrel_dep_neo": "2.027",
+          "dur_ret": 201,
+          "v_arr_earth": "12.000"
+        },
+        "min_dur_traj": {
+          "c3": "15.166",
+          "dur_out": 97,
+          "tid": 7274,
+          "dur_ret": 169,
+          "v_arr_earth": "11.834",
+          "vrel_dep_neo": "2.696",
+          "v_dep_earth": "3.894",
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "28.987",
+          "dv_dep_park": "3.854",
+          "dur_at": 8,
+          "launch": "2039-01-01",
+          "dec_arr": "55.702",
+          "dur_total": 274,
+          "dv_total": "11.967",
+          "vrel_arr_neo": "5.417"
+        }
+      },
+      "request": {
+        "file": "00056-nhats-2008_FX6.txt",
+        "sha256": "f7ad6430a231b7a935b9099a42f122ccbb6afd465af6b414aac06e026a6e1322"
+      }
+    },
+    {
+      "des": "2019 TB7",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2462792.677022836,
+      "supportDateLabel": "2030-Oct-18 04:15",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2019 TB7)",
+        "orbit_id": "6",
+        "computed": "2021-04-19",
+        "h": "26.8",
+        "occ": "6",
+        "n_via_traj": 12876,
+        "min_dv": {
+          "dv": "8.412",
+          "dur": 362
+        },
+        "min_dur": {
+          "dv": "11.954",
+          "dur": 122
+        },
+        "min_dv_traj": {
+          "dv_total": "8.412",
+          "vrel_dep_neo": "2.263",
+          "vrel_arr_neo": "2.115",
+          "dec_arr": "-64.617",
+          "v_arr_earth": "11.914",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 16,
+          "dur_total": 362,
+          "dec_dep": "-61.237",
+          "dur_ret": 145,
+          "dv_dep_park": "4.034",
+          "dur_out": 201,
+          "v_dep_earth": "4.399",
+          "tid": 4386,
+          "launch": "2030-04-06",
+          "c3": "19.347"
+        },
+        "min_dur_traj": {
+          "dv_total": "11.954",
+          "vrel_dep_neo": "5.222",
+          "vrel_arr_neo": "2.251",
+          "dec_arr": "-60.376",
+          "v_arr_earth": "11.862",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_dep": "58.586",
+          "dur_total": 122,
+          "dur_ret": 73,
+          "dv_dep_park": "4.482",
+          "dur_out": 41,
+          "v_dep_earth": "5.478",
+          "tid": 9320,
+          "c3": "30.011",
+          "launch": "2030-10-15"
+        }
+      },
+      "request": {
+        "file": "00057-nhats-2019_TB7.txt",
+        "sha256": "399e306069601704314d2b0881ef6b0a49924f0514d45dd0c1c24df76c06769a"
+      }
+    },
+    {
+      "des": "2022 QJ50",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2462995.768302483,
+      "supportDateLabel": "2031-May-09 06:26",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2022 QJ50)",
+        "orbit_id": "1",
+        "computed": "2022-09-05",
+        "h": "25.1",
+        "occ": "7",
+        "n_via_traj": 2,
+        "min_dv": {
+          "dur": 386,
+          "dv": "11.915"
+        },
+        "min_dur": {
+          "dur": 386,
+          "dv": "11.939"
+        },
+        "min_dv_traj": {
+          "dur_out": 273,
+          "dur_total": 386,
+          "dv_total": "11.915",
+          "tid": 2,
+          "c3": "58.570",
+          "v_dep_earth": "7.653",
+          "vrel_dep_neo": "3.755",
+          "v_arr_earth": "12.000",
+          "dur_at": 8,
+          "dec_arr": "32.374",
+          "vrel_arr_neo": "2.513",
+          "launch": "2021-10-14",
+          "dur_ret": 105,
+          "vrel_arr_earth": "0.042",
+          "dec_dep": "13.550",
+          "dv_dep_park": "5.605"
+        },
+        "min_dur_traj": {
+          "dur_total": 386,
+          "dv_total": "11.939",
+          "tid": 1,
+          "dur_out": 297,
+          "v_dep_earth": "7.704",
+          "c3": "59.353",
+          "launch": "2021-10-06",
+          "vrel_arr_neo": "2.297",
+          "v_arr_earth": "11.998",
+          "vrel_dep_neo": "4.008",
+          "dur_at": 8,
+          "dec_arr": "30.003",
+          "dec_dep": "16.354",
+          "dv_dep_park": "5.634",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 81
+        }
+      },
+      "request": {
+        "file": "00058-nhats-2022_QJ50.txt",
+        "sha256": "e368eeeb07571e6cea17eb0e66efe186db6e7690395f51b0cc05ebf1787c69e2"
+      }
+    },
+    {
+      "des": "2022 KH3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462652.412094399,
+      "supportDateLabel": "2030-May-30 21:53",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2022 KH3)",
+        "orbit_id": "12",
+        "computed": "2023-10-22",
+        "h": "23.9",
+        "occ": "0",
+        "n_via_traj": 24,
+        "min_dv": {
+          "dv": "11.679",
+          "dur": 370
+        },
+        "min_dur": {
+          "dur": 346,
+          "dv": "11.952"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "6.019",
+          "dur_out": 81,
+          "dur_ret": 281,
+          "dv_dep_park": "4.735",
+          "launch": "2030-04-30",
+          "c3": "36.234",
+          "tid": 12,
+          "v_arr_earth": "12.000",
+          "dec_arr": "61.602",
+          "vrel_arr_neo": "3.052",
+          "vrel_dep_neo": "3.509",
+          "dv_total": "11.679",
+          "dur_total": 370,
+          "dec_dep": "49.961",
+          "vrel_arr_earth": "0.384",
+          "dur_at": 8
+        },
+        "min_dur_traj": {
+          "dur_at": 8,
+          "vrel_arr_earth": "0.226",
+          "dec_dep": "69.241",
+          "dur_total": 346,
+          "dv_total": "11.952",
+          "vrel_dep_neo": "3.563",
+          "vrel_arr_neo": "3.814",
+          "dec_arr": "63.322",
+          "v_arr_earth": "12.000",
+          "tid": 6,
+          "launch": "2022-05-18",
+          "c3": "26.788",
+          "dur_ret": 273,
+          "dv_dep_park": "4.348",
+          "dur_out": 65,
+          "v_dep_earth": "5.176"
+        }
+      },
+      "request": {
+        "file": "00059-nhats-2022_KH3.txt",
+        "sha256": "e883dbb286307463194b55ad78743c88f8f04e252840ef170fa4fe4da235cbb0"
+      }
+    },
+    {
+      "des": "2021 SV1",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2464973.832041438,
+      "supportDateLabel": "2036-Oct-07 07:58",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 SV1)",
+        "orbit_id": "2",
+        "computed": "2021-10-02",
+        "h": "26.5",
+        "occ": "7",
+        "n_via_traj": 15461,
+        "min_dv": {
+          "dur": 450,
+          "dv": "10.005"
+        },
+        "min_dur": {
+          "dur": 346,
+          "dv": "11.950"
+        },
+        "min_dv_traj": {
+          "dur_at": 168,
+          "dec_arr": "-18.418",
+          "vrel_dep_neo": "2.669",
+          "v_arr_earth": "11.979",
+          "launch": "2035-08-10",
+          "vrel_arr_neo": "2.400",
+          "dur_ret": 137,
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "7.582",
+          "dv_dep_park": "4.936",
+          "dur_out": 145,
+          "tid": 9335,
+          "dur_total": 450,
+          "dv_total": "10.005",
+          "c3": "41.262",
+          "v_dep_earth": "6.424"
+        },
+        "min_dur_traj": {
+          "c3": "53.664",
+          "v_dep_earth": "7.326",
+          "dur_out": 49,
+          "tid": 6183,
+          "dur_total": 346,
+          "dv_total": "11.950",
+          "vrel_arr_earth": "4.177",
+          "dur_ret": 217,
+          "dec_dep": "-15.899",
+          "dv_dep_park": "5.419",
+          "dur_at": 80,
+          "dec_arr": "-3.096",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "1.116",
+          "launch": "2021-09-28",
+          "vrel_arr_neo": "1.237"
+        }
+      },
+      "request": {
+        "file": "00060-nhats-2021_SV1.txt",
+        "sha256": "fe6b7e0f0067e0a0f44b408e73def9e50d5f47c61294800562c7fd417550a1cd"
+      }
+    },
+    {
+      "des": "2023 HG1",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2464014.512870502,
+      "supportDateLabel": "2034-Feb-21 00:19",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2023 HG1)",
+        "orbit_id": "4",
+        "computed": "2023-05-10",
+        "h": "26.3",
+        "occ": "5",
+        "n_via_traj": 1217840,
+        "min_dv": {
+          "dur": 346,
+          "dv": "4.938"
+        },
+        "min_dur": {
+          "dv": "11.827",
+          "dur": 42
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "1.781",
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "-29.470",
+          "dv_dep_park": "3.322",
+          "c3": "3.172",
+          "tid": 578395,
+          "dur_out": 249,
+          "dur_ret": 89,
+          "v_arr_earth": "11.331",
+          "vrel_dep_neo": "0.666",
+          "vrel_arr_neo": "0.950",
+          "dur_at": 8,
+          "launch": "2033-10-15",
+          "dec_arr": "-19.497",
+          "dur_total": 346,
+          "dv_total": "4.938"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "4.808",
+          "dur_total": 42,
+          "dv_total": "11.827",
+          "dec_arr": "-43.537",
+          "launch": "2023-04-11",
+          "dur_at": 8,
+          "dec_dep": "25.300",
+          "dv_dep_park": "3.630",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "3.168",
+          "vrel_dep_neo": "3.389",
+          "v_arr_earth": "11.445",
+          "dur_ret": 17,
+          "tid": 284488,
+          "dur_out": 17,
+          "c3": "10.039"
+        }
+      },
+      "request": {
+        "file": "00061-nhats-2023_HG1.txt",
+        "sha256": "ed9c46ee3e9749108670b08edb74de514875af328f6d702553a2a8208c93192c"
+      }
+    },
+    {
+      "des": "2026 FE7",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2461141.838718831,
+      "supportDateLabel": "2026-Apr-11 08:08",
+      "asterElementsEpochJdTdb": 2461127.5,
+      "nhats": {
+        "fullname": "       (2026 FE7)",
+        "orbit_id": "6",
+        "computed": "2026-04-09",
+        "h": "25.4",
+        "occ": "8",
+        "n_via_traj": 3338,
+        "min_dv": {
+          "dur": 362,
+          "dv": "9.825"
+        },
+        "min_dur": {
+          "dv": "11.977",
+          "dur": 194
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "11.807",
+          "dec_arr": "-22.855",
+          "vrel_arr_neo": "1.862",
+          "dv_total": "9.825",
+          "vrel_dep_neo": "3.180",
+          "dec_dep": "-18.366",
+          "dur_total": 362,
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_out": 41,
+          "v_dep_earth": "6.116",
+          "dur_ret": 313,
+          "dv_dep_park": "4.782",
+          "c3": "37.405",
+          "launch": "2026-04-03",
+          "tid": 1189
+        },
+        "min_dur_traj": {
+          "dur_total": 194,
+          "dec_dep": "-21.306",
+          "vrel_arr_earth": "0.239",
+          "dur_at": 8,
+          "dec_arr": "15.307",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "4.222",
+          "dv_total": "11.977",
+          "vrel_arr_neo": "2.733",
+          "c3": "37.426",
+          "launch": "2033-04-30",
+          "tid": 1830,
+          "dur_out": 57,
+          "v_dep_earth": "6.118",
+          "dv_dep_park": "4.783",
+          "dur_ret": 129
+        }
+      },
+      "request": {
+        "file": "00062-nhats-2026_FE7.txt",
+        "sha256": "57c72324e20661450a1bf38b26551a6baa28bfd78c47b899cfbbbb07fd7ccfcc"
+      }
+    },
+    {
+      "des": "2019 WD3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462830.92813922,
+      "supportDateLabel": "2030-Nov-25 10:17",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2019 WD3)",
+        "orbit_id": "5",
+        "computed": "2021-04-19",
+        "h": "25.2",
+        "occ": "6",
+        "n_via_traj": 3781,
+        "min_dv": {
+          "dur": 378,
+          "dv": "9.049"
+        },
+        "min_dur": {
+          "dur": 290,
+          "dv": "11.974"
+        },
+        "min_dv_traj": {
+          "launch": "2045-05-17",
+          "vrel_arr_neo": "2.376",
+          "dec_arr": "-53.844",
+          "dur_at": 8,
+          "v_arr_earth": "11.940",
+          "vrel_dep_neo": "2.662",
+          "dv_dep_park": "4.011",
+          "dec_dep": "-49.646",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 97,
+          "tid": 3050,
+          "dv_total": "9.049",
+          "dur_total": 378,
+          "dur_out": 273,
+          "v_dep_earth": "4.335",
+          "c3": "18.788"
+        },
+        "min_dur_traj": {
+          "dur_total": 290,
+          "dv_total": "11.974",
+          "tid": 3780,
+          "dur_out": 153,
+          "v_dep_earth": "5.992",
+          "c3": "35.906",
+          "launch": "2045-08-05",
+          "vrel_arr_neo": "4.619",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.143",
+          "dur_at": 40,
+          "dec_arr": "-48.116",
+          "dec_dep": "-12.273",
+          "dv_dep_park": "4.722",
+          "dur_ret": 97,
+          "vrel_arr_earth": "0.491"
+        }
+      },
+      "request": {
+        "file": "00063-nhats-2019_WD3.txt",
+        "sha256": "d595d6c2604cc0b482a5897d54c980040296ae6bdb96ff4d7528f56f512348b6"
+      }
+    },
+    {
+      "des": "2021 XF6",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2462766.422772706,
+      "supportDateLabel": "2030-Sep-21 22:09",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 XF6)",
+        "orbit_id": "7",
+        "computed": "2022-01-09",
+        "h": "24.3",
+        "occ": "6",
+        "n_via_traj": 1,
+        "min_dv": {
+          "dur": 354,
+          "dv": "11.960"
+        },
+        "min_dur": {
+          "dv": "11.960",
+          "dur": 354
+        },
+        "min_dv_traj": {
+          "vrel_dep_neo": "3.740",
+          "dur_ret": 161,
+          "v_arr_earth": "12.000",
+          "dur_out": 153,
+          "tid": 1,
+          "c3": "21.679",
+          "vrel_arr_earth": "0.127",
+          "v_dep_earth": "4.656",
+          "dec_dep": "74.104",
+          "dv_dep_park": "4.134",
+          "launch": "2030-07-11",
+          "dur_at": 40,
+          "dur_total": 354,
+          "dv_total": "11.960",
+          "dec_arr": "37.700",
+          "vrel_arr_neo": "3.959"
+        },
+        "min_dur_traj": {
+          "vrel_dep_neo": "3.740",
+          "dur_ret": 161,
+          "v_arr_earth": "12.000",
+          "dur_out": 153,
+          "tid": 1,
+          "c3": "21.679",
+          "vrel_arr_earth": "0.127",
+          "v_dep_earth": "4.656",
+          "dec_dep": "74.104",
+          "dv_dep_park": "4.134",
+          "launch": "2030-07-11",
+          "dur_at": 40,
+          "dur_total": 354,
+          "dv_total": "11.960",
+          "dec_arr": "37.700",
+          "vrel_arr_neo": "3.959"
+        }
+      },
+      "request": {
+        "file": "00064-nhats-2021_XF6.txt",
+        "sha256": "89ba4f60575b8f04c8f9cf435adb83f76acd7e0fb3fd0015179dc98aa2bff535"
+      }
+    },
+    {
+      "des": "2017 YW3",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2463745.639687891,
+      "supportDateLabel": "2033-May-28 03:21",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2017 YW3)",
+        "orbit_id": "10",
+        "computed": "2021-04-19",
+        "h": "26.5",
+        "occ": "5",
+        "n_via_traj": 394842,
+        "min_dv": {
+          "dur": 378,
+          "dv": "6.324"
+        },
+        "min_dur": {
+          "dur": 162,
+          "dv": "11.998"
+        },
+        "min_dv_traj": {
+          "dur_total": 378,
+          "dv_total": "6.324",
+          "tid": 331442,
+          "dur_out": 193,
+          "v_dep_earth": "3.529",
+          "c3": "12.457",
+          "vrel_arr_neo": "1.383",
+          "launch": "2040-06-12",
+          "vrel_dep_neo": "1.205",
+          "v_arr_earth": "11.481",
+          "dur_at": 8,
+          "dec_arr": "44.958",
+          "dec_dep": "35.399",
+          "dv_dep_park": "3.736",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 177
+        },
+        "min_dur_traj": {
+          "dur_out": 65,
+          "tid": 151585,
+          "dv_total": "11.998",
+          "dur_total": 162,
+          "c3": "23.752",
+          "v_dep_earth": "4.874",
+          "dec_arr": "13.029",
+          "dur_at": 8,
+          "vrel_dep_neo": "3.437",
+          "v_arr_earth": "12.000",
+          "vrel_arr_neo": "3.901",
+          "launch": "2025-06-11",
+          "vrel_arr_earth": "0.439",
+          "dur_ret": 89,
+          "dec_dep": "-10.199",
+          "dv_dep_park": "4.221"
+        }
+      },
+      "request": {
+        "file": "00065-nhats-2017_YW3.txt",
+        "sha256": "e49742ee2bd98edc0c11282777a13150945877ad4cb0ee73a7da6c33638729f8"
+      }
+    },
+    {
+      "des": "2016 XE18",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": 2461700.996162154,
+      "supportDateLabel": "2027-Oct-22 11:54",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2016 XE18)",
+        "orbit_id": "4",
+        "computed": "2021-04-19",
+        "h": "25.3",
+        "occ": "6",
+        "n_via_traj": 49,
+        "min_dv": {
+          "dur": 370,
+          "dv": "11.230"
+        },
+        "min_dur": {
+          "dur": 354,
+          "dv": "11.968"
+        },
+        "min_dv_traj": {
+          "launch": "2023-06-06",
+          "dur_at": 8,
+          "dec_arr": "60.902",
+          "dur_total": 370,
+          "dv_total": "11.230",
+          "vrel_arr_neo": "3.195",
+          "dur_ret": 209,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.920",
+          "c3": "44.969",
+          "dur_out": 153,
+          "tid": 28,
+          "vrel_arr_earth": "0.032",
+          "v_dep_earth": "6.706",
+          "dec_dep": "82.967",
+          "dv_dep_park": "5.082"
+        },
+        "min_dur_traj": {
+          "v_dep_earth": "7.375",
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "80.815",
+          "dv_dep_park": "5.447",
+          "tid": 15,
+          "dur_out": 129,
+          "c3": "54.394",
+          "vrel_dep_neo": "3.626",
+          "dur_ret": 161,
+          "v_arr_earth": "11.842",
+          "vrel_arr_neo": "2.895",
+          "dur_at": 64,
+          "launch": "2023-06-06",
+          "dur_total": 354,
+          "dv_total": "11.968",
+          "dec_arr": "60.483"
+        }
+      },
+      "request": {
+        "file": "00066-nhats-2016_XE18.txt",
+        "sha256": "84f603bd978f56bcf59486991b7dc9d3e7dded21576e7b7c7c7841126ea88353"
+      }
+    },
+    {
+      "des": "2022 GB",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2463121.614439737,
+      "supportDateLabel": "2031-Sep-12 02:45",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2022 GB)",
+        "orbit_id": "2",
+        "computed": "2022-04-08",
+        "h": "29.4",
+        "occ": "6",
+        "n_via_traj": 4234,
+        "min_dv": {
+          "dv": "9.192",
+          "dur": 378
+        },
+        "min_dur": {
+          "dur": 330,
+          "dv": "11.979"
+        },
+        "min_dv_traj": {
+          "dur_total": 378,
+          "dec_dep": "32.944",
+          "vrel_arr_earth": "0.189",
+          "dur_at": 8,
+          "dec_arr": "35.174",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.820",
+          "dv_total": "9.192",
+          "vrel_arr_neo": "1.094",
+          "c3": "45.130",
+          "launch": "2021-04-05",
+          "tid": 1843,
+          "v_dep_earth": "6.718",
+          "dur_out": 321,
+          "dur_ret": 49,
+          "dv_dep_park": "5.089"
+        },
+        "min_dur_traj": {
+          "tid": 2918,
+          "launch": "2021-05-07",
+          "c3": "23.277",
+          "dv_dep_park": "4.201",
+          "dur_ret": 57,
+          "v_dep_earth": "4.825",
+          "dur_out": 161,
+          "dur_at": 112,
+          "vrel_arr_earth": "3.047",
+          "dur_total": 330,
+          "dec_dep": "6.970",
+          "dv_total": "11.979",
+          "vrel_dep_neo": "0.317",
+          "vrel_arr_neo": "4.414",
+          "dec_arr": "29.988",
+          "v_arr_earth": "12.000"
+        }
+      },
+      "request": {
+        "file": "00067-nhats-2022_GB.txt",
+        "sha256": "703a575f423a36efe75e2085eddb41c0002989f1936b74b7edbee86610073dca"
+      }
+    },
+    {
+      "des": "2020 TS5",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462055.168314384,
+      "supportDateLabel": "2028-Oct-10 16:02",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2020 TS5)",
+        "orbit_id": "8",
+        "computed": "2021-04-19",
+        "h": "26.2",
+        "occ": "6",
+        "n_via_traj": 8893,
+        "min_dv": {
+          "dur": 354,
+          "dv": "8.374"
+        },
+        "min_dur": {
+          "dur": 106,
+          "dv": "11.908"
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "11.944",
+          "vrel_dep_neo": "2.843",
+          "dur_at": 8,
+          "dec_arr": "-67.722",
+          "launch": "2020-10-27",
+          "vrel_arr_neo": "1.006",
+          "dur_ret": 305,
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "-59.230",
+          "dv_dep_park": "4.525",
+          "dur_out": 41,
+          "dur_total": 354,
+          "dv_total": "8.374",
+          "tid": 6056,
+          "c3": "31.065",
+          "v_dep_earth": "5.574"
+        },
+        "min_dur_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 73,
+          "dv_dep_park": "4.552",
+          "dec_dep": "-61.289",
+          "dec_arr": "64.919",
+          "dur_at": 8,
+          "vrel_dep_neo": "5.699",
+          "v_arr_earth": "11.517",
+          "vrel_arr_neo": "1.656",
+          "launch": "2020-10-27",
+          "c3": "31.735",
+          "v_dep_earth": "5.633",
+          "dur_out": 25,
+          "tid": 5764,
+          "dv_total": "11.908",
+          "dur_total": 106
+        }
+      },
+      "request": {
+        "file": "00068-nhats-2020_TS5.txt",
+        "sha256": "681f943c9162c8e9d558bf54088b107235f95b1597d7547d64dac6b4323936fb"
+      }
+    },
+    {
+      "des": "2020 RU7",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2462559.91551447,
+      "supportDateLabel": "2030-Feb-27 09:58",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2020 RU7)",
+        "orbit_id": "10",
+        "computed": "2021-04-19",
+        "h": "25.3",
+        "occ": "7",
+        "n_via_traj": 19017,
+        "min_dv": {
+          "dv": "8.100",
+          "dur": 362
+        },
+        "min_dur": {
+          "dur": 138,
+          "dv": "11.844"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "5.760",
+          "vrel_arr_earth": "1.092",
+          "dec_dep": "57.926",
+          "dv_dep_park": "4.611",
+          "dur_out": 65,
+          "tid": 7599,
+          "c3": "33.174",
+          "vrel_dep_neo": "1.185",
+          "dur_ret": 289,
+          "v_arr_earth": "12.000",
+          "vrel_arr_neo": "1.211",
+          "dur_at": 8,
+          "launch": "2020-09-17",
+          "dur_total": 362,
+          "dv_total": "8.100",
+          "dec_arr": "59.416"
+        },
+        "min_dur_traj": {
+          "dec_arr": "-60.608",
+          "dv_total": "11.844",
+          "dur_total": 138,
+          "dur_at": 8,
+          "launch": "2020-09-17",
+          "vrel_arr_neo": "2.221",
+          "c3": "31.240",
+          "dur_out": 33,
+          "tid": 6844,
+          "dur_ret": 97,
+          "v_arr_earth": "11.691",
+          "vrel_dep_neo": "5.091",
+          "dv_dep_park": "4.532",
+          "dec_dep": "53.394",
+          "v_dep_earth": "5.589",
+          "vrel_arr_earth": "0.000"
+        }
+      },
+      "request": {
+        "file": "00069-nhats-2020_RU7.txt",
+        "sha256": "d34032fc505c84b07b7b6b2d5c849872b1cc680ecec7b345e15467757a22c35b"
+      }
+    },
+    {
+      "des": "2016 GV221",
+      "tier": "L1",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": 2465090.552411517,
+      "supportDateLabel": "2037-Feb-01 01:15",
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2016 GV221)",
+        "orbit_id": "17",
+        "computed": "2024-01-02",
+        "h": "25.0",
+        "occ": "7",
+        "n_via_traj": 1439,
+        "min_dv": {
+          "dv": "10.705",
+          "dur": 410
+        },
+        "min_dur": {
+          "dur": 314,
+          "dv": "11.833"
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "11.715",
+          "dec_arr": "12.057",
+          "vrel_arr_neo": "2.286",
+          "dv_total": "10.705",
+          "vrel_dep_neo": "4.039",
+          "dur_total": 410,
+          "dec_dep": "28.189",
+          "dur_at": 32,
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "5.249",
+          "dur_out": 257,
+          "dv_dep_park": "4.380",
+          "dur_ret": 121,
+          "c3": "27.556",
+          "launch": "2042-11-01",
+          "tid": 884
+        },
+        "min_dur_traj": {
+          "dec_arr": "10.647",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "4.748",
+          "dv_total": "11.833",
+          "vrel_arr_neo": "2.460",
+          "dur_total": 314,
+          "dec_dep": "37.801",
+          "vrel_arr_earth": "0.096",
+          "dur_at": 8,
+          "dur_out": 225,
+          "v_dep_earth": "5.583",
+          "dur_ret": 81,
+          "dv_dep_park": "4.529",
+          "launch": "2042-11-17",
+          "c3": "31.166",
+          "tid": 1252
+        }
+      },
+      "request": {
+        "file": "00070-nhats-2016_GV221.txt",
+        "sha256": "fc42cfd040213ab8a7f178d92a60f4b01884ddda9eb64650b02bcd098d636327"
+      }
+    },
+    {
+      "des": "2026 CA2",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2026 CA2)",
+        "orbit_id": "4",
+        "computed": "2026-02-20",
+        "h": "25.1",
+        "occ": "7",
+        "n_via_traj": 148,
+        "min_dv": {
+          "dur": 362,
+          "dv": "10.686"
+        },
+        "min_dur": {
+          "dv": "11.807",
+          "dur": 338
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "7.669",
+          "c3": "58.806",
+          "tid": 132,
+          "dv_total": "10.686",
+          "dur_total": 362,
+          "dur_out": 49,
+          "dv_dep_park": "5.614",
+          "dec_dep": "29.019",
+          "vrel_arr_earth": "1.618",
+          "dur_ret": 305,
+          "vrel_arr_neo": "1.208",
+          "launch": "2026-02-14",
+          "dec_arr": "43.608",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.247"
+        },
+        "min_dur_traj": {
+          "dur_total": 338,
+          "dv_total": "11.807",
+          "tid": 93,
+          "dur_out": 33,
+          "v_dep_earth": "7.337",
+          "c3": "53.832",
+          "vrel_arr_neo": "1.984",
+          "launch": "2026-02-14",
+          "vrel_dep_neo": "4.267",
+          "v_arr_earth": "12.000",
+          "dur_at": 8,
+          "dec_arr": "37.396",
+          "dv_dep_park": "5.425",
+          "dec_dep": "28.229",
+          "vrel_arr_earth": "0.131",
+          "dur_ret": 297
+        }
+      },
+      "request": {
+        "file": "00071-nhats-2026_CA2.txt",
+        "sha256": "255f1d2d955d3dadee959e73e16c28e0eae76b59ec39815c9c3874480179d25e"
+      }
+    },
+    {
+      "des": "2011 GR59",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2011 GR59)",
+        "orbit_id": "14",
+        "computed": "2021-04-19",
+        "h": "23.7",
+        "occ": "8",
+        "n_via_traj": 35790,
+        "min_dv": {
+          "dv": "7.574",
+          "dur": 338
+        },
+        "min_dur": {
+          "dur": 154,
+          "dv": "11.976"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "2.367",
+          "vrel_arr_earth": "0.058",
+          "dv_dep_park": "3.432",
+          "dec_dep": "-24.122",
+          "dur_out": 289,
+          "tid": 9777,
+          "c3": "5.602",
+          "vrel_dep_neo": "1.268",
+          "dur_ret": 41,
+          "v_arr_earth": "12.000",
+          "vrel_arr_neo": "2.817",
+          "dur_at": 8,
+          "launch": "2027-09-05",
+          "dv_total": "7.574",
+          "dur_total": 338,
+          "dec_arr": "-20.835"
+        },
+        "min_dur_traj": {
+          "c3": "7.214",
+          "dur_out": 121,
+          "tid": 21652,
+          "v_arr_earth": "12.000",
+          "dur_ret": 25,
+          "vrel_dep_neo": "0.503",
+          "dec_dep": "33.140",
+          "dv_dep_park": "3.504",
+          "v_dep_earth": "2.686",
+          "vrel_arr_earth": "1.360",
+          "dec_arr": "-22.128",
+          "dur_total": 154,
+          "dv_total": "11.976",
+          "dur_at": 8,
+          "launch": "2028-02-28",
+          "vrel_arr_neo": "6.610"
+        }
+      },
+      "request": {
+        "file": "00072-nhats-2011_GR59.txt",
+        "sha256": "34fd4915f95d99e76c38884721c04d3d70662727b93369b6c60e88fe87d34306"
+      }
+    },
+    {
+      "des": "2013 US4",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2013 US4)",
+        "orbit_id": "8",
+        "computed": "2022-09-11",
+        "h": "26.2",
+        "occ": "6",
+        "n_via_traj": 38416,
+        "min_dv": {
+          "dur": 370,
+          "dv": "7.763"
+        },
+        "min_dur": {
+          "dv": "11.960",
+          "dur": 194
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "1.384",
+          "dv_total": "7.763",
+          "vrel_dep_neo": "1.679",
+          "v_arr_earth": "11.922",
+          "dec_arr": "-55.218",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_total": 370,
+          "dec_dep": "-41.005",
+          "dv_dep_park": "4.699",
+          "dur_ret": 233,
+          "v_dep_earth": "5.946",
+          "dur_out": 129,
+          "tid": 32097,
+          "launch": "2042-04-23",
+          "c3": "35.354"
+        },
+        "min_dur_traj": {
+          "tid": 20981,
+          "c3": "39.899",
+          "launch": "2023-04-03",
+          "dur_ret": 105,
+          "dv_dep_park": "4.882",
+          "dur_out": 81,
+          "v_dep_earth": "6.317",
+          "vrel_arr_earth": "1.101",
+          "dur_at": 8,
+          "dec_dep": "-25.460",
+          "dur_total": 194,
+          "vrel_dep_neo": "1.410",
+          "dv_total": "11.960",
+          "vrel_arr_neo": "4.567",
+          "dec_arr": "62.402",
+          "v_arr_earth": "12.000"
+        }
+      },
+      "request": {
+        "file": "00073-nhats-2013_US4.txt",
+        "sha256": "7cf8a69c96719bb60e770fdd859b8656b92886bc68b9942a893e75f6339ab444"
+      }
+    },
+    {
+      "des": "2016 AT131",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2016 AT131)",
+        "orbit_id": "10",
+        "computed": "2021-04-19",
+        "h": "27.4",
+        "occ": "7",
+        "n_via_traj": 3816,
+        "min_dv": {
+          "dv": "9.529",
+          "dur": 362
+        },
+        "min_dur": {
+          "dv": "11.804",
+          "dur": 138
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "3.725",
+          "c3": "13.879",
+          "dur_total": 362,
+          "dv_total": "9.529",
+          "tid": 2492,
+          "dur_out": 121,
+          "dec_dep": "54.595",
+          "dv_dep_park": "3.798",
+          "dur_ret": 233,
+          "vrel_arr_earth": "0.000",
+          "vrel_arr_neo": "3.078",
+          "launch": "2034-07-22",
+          "v_arr_earth": "11.717",
+          "vrel_dep_neo": "2.653",
+          "dur_at": 8,
+          "dec_arr": "72.031"
+        },
+        "min_dur_traj": {
+          "c3": "19.476",
+          "v_dep_earth": "4.413",
+          "dur_out": 73,
+          "dv_total": "11.804",
+          "dur_total": 138,
+          "tid": 3300,
+          "vrel_arr_earth": "0.105",
+          "dur_ret": 57,
+          "dec_dep": "44.337",
+          "dv_dep_park": "4.040",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "3.282",
+          "dec_arr": "-51.604",
+          "dur_at": 8,
+          "launch": "2034-08-15",
+          "vrel_arr_neo": "4.377"
+        }
+      },
+      "request": {
+        "file": "00074-nhats-2016_AT131.txt",
+        "sha256": "5d6bb34c6c97b2b0b22b70c2cc9b29f5ba0852e9499544901e6d9d2a2fd91267"
+      }
+    },
+    {
+      "des": "2017 DH16",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2017 DH16)",
+        "orbit_id": "6",
+        "computed": "2021-04-19",
+        "h": "27.1",
+        "occ": "7",
+        "n_via_traj": 3886,
+        "min_dv": {
+          "dur": 338,
+          "dv": "9.941"
+        },
+        "min_dur": {
+          "dv": "11.849",
+          "dur": 290
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "6.639",
+          "vrel_arr_earth": "0.035",
+          "dec_dep": "-5.190",
+          "dv_dep_park": "5.047",
+          "dur_out": 57,
+          "tid": 3266,
+          "c3": "44.078",
+          "vrel_dep_neo": "2.880",
+          "dur_ret": 273,
+          "v_arr_earth": "12.000",
+          "vrel_arr_neo": "1.978",
+          "dur_at": 8,
+          "launch": "2025-09-23",
+          "dur_total": 338,
+          "dv_total": "9.941",
+          "dec_arr": "0.293"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "2.234",
+          "dur_total": 290,
+          "dv_total": "11.849",
+          "dec_arr": "22.350",
+          "dur_at": 48,
+          "launch": "2025-09-23",
+          "dv_dep_park": "4.926",
+          "dec_dep": "-7.097",
+          "v_dep_earth": "6.404",
+          "vrel_arr_earth": "0.883",
+          "dur_out": 49,
+          "tid": 3251,
+          "c3": "41.009",
+          "vrel_dep_neo": "3.806",
+          "dur_ret": 193,
+          "v_arr_earth": "12.000"
+        }
+      },
+      "request": {
+        "file": "00075-nhats-2017_DH16.txt",
+        "sha256": "ba97bab25d358fb40587bfc75a6148836264ed545815fcc8a7ed89d54ff95c75"
+      }
+    },
+    {
+      "des": "2011 OK45",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2011 OK45)",
+        "orbit_id": "6",
+        "computed": "2021-04-19",
+        "h": "27.6",
+        "occ": "8",
+        "n_via_traj": 37414,
+        "min_dv": {
+          "dv": "8.306",
+          "dur": 402
+        },
+        "min_dur": {
+          "dv": "11.902",
+          "dur": 66
+        },
+        "min_dv_traj": {
+          "dec_arr": "-8.106",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "3.265",
+          "dv_total": "8.306",
+          "vrel_arr_neo": "1.411",
+          "dec_dep": "7.777",
+          "dur_total": 402,
+          "vrel_arr_earth": "0.043",
+          "dur_at": 8,
+          "dur_out": 49,
+          "v_dep_earth": "3.013",
+          "dv_dep_park": "3.587",
+          "dur_ret": 345,
+          "launch": "2033-06-09",
+          "c3": "9.080",
+          "tid": 34184
+        },
+        "min_dur_traj": {
+          "tid": 26092,
+          "c3": "6.307",
+          "launch": "2033-04-14",
+          "dv_dep_park": "3.463",
+          "dur_ret": 17,
+          "v_dep_earth": "2.511",
+          "dur_out": 41,
+          "dur_at": 8,
+          "vrel_arr_earth": "0.039",
+          "dur_total": 66,
+          "dec_dep": "-46.205",
+          "vrel_dep_neo": "2.918",
+          "dv_total": "11.902",
+          "vrel_arr_neo": "5.482",
+          "dec_arr": "53.073",
+          "v_arr_earth": "12.000"
+        }
+      },
+      "request": {
+        "file": "00076-nhats-2011_OK45.txt",
+        "sha256": "8582fd6c8c1e54c2ef1a0c5e3c6eddc16def86531c21bad09bd584844597ed1f"
+      }
+    },
+    {
+      "des": "2020 BZ6",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2020 BZ6)",
+        "orbit_id": "5",
+        "computed": "2021-04-19",
+        "h": "25.5",
+        "occ": "7",
+        "n_via_traj": 7921,
+        "min_dv": {
+          "dv": "9.811",
+          "dur": 370
+        },
+        "min_dur": {
+          "dv": "11.782",
+          "dur": 234
+        },
+        "min_dv_traj": {
+          "vrel_dep_neo": "3.128",
+          "dur_ret": 217,
+          "v_arr_earth": "11.421",
+          "dur_out": 145,
+          "tid": 2528,
+          "c3": "28.494",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "5.338",
+          "dec_dep": "63.529",
+          "dv_dep_park": "4.419",
+          "launch": "2028-07-21",
+          "dur_at": 8,
+          "dur_total": 370,
+          "dv_total": "9.811",
+          "dec_arr": "62.966",
+          "vrel_arr_neo": "2.264"
+        },
+        "min_dur_traj": {
+          "v_arr_earth": "12.000",
+          "dur_ret": 89,
+          "vrel_dep_neo": "4.505",
+          "c3": "29.771",
+          "tid": 2456,
+          "dur_out": 137,
+          "vrel_arr_earth": "0.154",
+          "v_dep_earth": "5.456",
+          "dv_dep_park": "4.472",
+          "dec_dep": "63.042",
+          "launch": "2028-07-21",
+          "dur_at": 8,
+          "dec_arr": "-11.834",
+          "dur_total": 234,
+          "dv_total": "11.782",
+          "vrel_arr_neo": "2.652"
+        }
+      },
+      "request": {
+        "file": "00077-nhats-2020_BZ6.txt",
+        "sha256": "d790e6420cfedea3cbc12fde541a962f7c0650fbf3fd8c5504e1756c7f2ac55e"
+      }
+    },
+    {
+      "des": "2015 HW182",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2015 HW182)",
+        "orbit_id": "5",
+        "computed": "2021-04-19",
+        "h": "24.9",
+        "occ": "9",
+        "n_via_traj": 2917,
+        "min_dv": {
+          "dv": "10.264",
+          "dur": 410
+        },
+        "min_dur": {
+          "dv": "11.870",
+          "dur": 186
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "2.369",
+          "c3": "5.611",
+          "dur_total": 410,
+          "dv_total": "10.264",
+          "tid": 864,
+          "dur_out": 297,
+          "dec_dep": "40.634",
+          "dv_dep_park": "3.432",
+          "dur_ret": 105,
+          "vrel_arr_earth": "0.000",
+          "launch": "2028-03-07",
+          "vrel_arr_neo": "4.199",
+          "vrel_dep_neo": "2.634",
+          "v_arr_earth": "11.946",
+          "dur_at": 8,
+          "dec_arr": "10.618"
+        },
+        "min_dur_traj": {
+          "c3": "14.225",
+          "v_dep_earth": "3.772",
+          "dur_out": 89,
+          "tid": 2757,
+          "dv_total": "11.870",
+          "dur_total": 186,
+          "vrel_arr_earth": "0.353",
+          "dur_ret": 89,
+          "dv_dep_park": "3.814",
+          "dec_dep": "-29.525",
+          "dec_arr": "7.809",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.688",
+          "launch": "2028-10-01",
+          "vrel_arr_neo": "5.016"
+        }
+      },
+      "request": {
+        "file": "00078-nhats-2015_HW182.txt",
+        "sha256": "030f229f4e1bdbf7f0726220fa81b4f2c921ab2e624ab443d082641713ccf75b"
+      }
+    },
+    {
+      "des": "2008 FC",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2008 FC)",
+        "orbit_id": "13",
+        "computed": "2021-04-19",
+        "h": "24.8",
+        "occ": "6",
+        "n_via_traj": 266,
+        "min_dv": {
+          "dv": "10.571",
+          "dur": 362
+        },
+        "min_dur": {
+          "dur": 98,
+          "dv": "11.924"
+        },
+        "min_dv_traj": {
+          "dur_total": 362,
+          "dec_dep": "52.542",
+          "vrel_arr_earth": "0.172",
+          "dur_at": 8,
+          "dec_arr": "28.830",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "1.687",
+          "dv_total": "10.571",
+          "vrel_arr_neo": "5.052",
+          "c3": "10.720",
+          "launch": "2035-03-11",
+          "tid": 49,
+          "v_dep_earth": "3.274",
+          "dur_out": 337,
+          "dur_ret": 17,
+          "dv_dep_park": "3.660"
+        },
+        "min_dur_traj": {
+          "dec_arr": "28.830",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "1.687",
+          "dv_total": "11.924",
+          "vrel_arr_neo": "6.738",
+          "dur_total": 98,
+          "dec_dep": "-38.942",
+          "vrel_arr_earth": "0.172",
+          "dur_at": 8,
+          "dur_out": 73,
+          "v_dep_earth": "1.816",
+          "dv_dep_park": "3.327",
+          "dur_ret": 17,
+          "launch": "2035-11-30",
+          "c3": "3.298",
+          "tid": 156
+        }
+      },
+      "request": {
+        "file": "00079-nhats-2008_FC.txt",
+        "sha256": "06f83fb2fec40c3134e5413d2a4c10fb40f29f3bd9af15f42ecccc7b34f65775"
+      }
+    },
+    {
+      "des": "2014 KO2",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2014 KO2)",
+        "orbit_id": "6",
+        "computed": "2021-04-19",
+        "h": "28.2",
+        "occ": "7",
+        "n_via_traj": 5003,
+        "min_dv": {
+          "dv": "9.475",
+          "dur": 394
+        },
+        "min_dur": {
+          "dur": 114,
+          "dv": "11.818"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "2.534",
+          "c3": "6.423",
+          "tid": 996,
+          "dv_total": "9.475",
+          "dur_total": 394,
+          "dur_out": 337,
+          "dec_dep": "-23.827",
+          "dv_dep_park": "3.469",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 49,
+          "vrel_arr_neo": "4.099",
+          "launch": "2036-05-24",
+          "dec_arr": "-26.839",
+          "dur_at": 8,
+          "v_arr_earth": "11.823",
+          "vrel_dep_neo": "1.908"
+        },
+        "min_dur_traj": {
+          "c3": "10.319",
+          "v_dep_earth": "3.212",
+          "dur_out": 65,
+          "tid": 4935,
+          "dur_total": 114,
+          "dv_total": "11.818",
+          "vrel_arr_earth": "0.192",
+          "dur_ret": 41,
+          "dec_dep": "39.198",
+          "dv_dep_park": "3.642",
+          "dur_at": 8,
+          "dec_arr": "-27.310",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "1.914",
+          "vrel_arr_neo": "6.070",
+          "launch": "2037-02-20"
+        }
+      },
+      "request": {
+        "file": "00080-nhats-2014_KO2.txt",
+        "sha256": "d0a04fab3a19acdd8fc99607819cdbe79819e56882394a4f9be2d30cfa076f03"
+      }
+    },
+    {
+      "des": "2004 BV18",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2004 BV18)",
+        "orbit_id": "17",
+        "computed": "2021-04-19",
+        "h": "25.9",
+        "occ": "6",
+        "n_via_traj": 39365,
+        "min_dv": {
+          "dv": "8.061",
+          "dur": 386
+        },
+        "min_dur": {
+          "dur": 50,
+          "dv": "11.964"
+        },
+        "min_dv_traj": {
+          "dur_ret": 337,
+          "dv_dep_park": "3.717",
+          "dur_out": 41,
+          "v_dep_earth": "3.467",
+          "tid": 37090,
+          "c3": "12.019",
+          "launch": "2041-01-06",
+          "vrel_dep_neo": "3.621",
+          "dv_total": "8.061",
+          "vrel_arr_neo": "0.723",
+          "dec_arr": "-0.736",
+          "v_arr_earth": "11.732",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_dep": "-22.631",
+          "dur_total": 386
+        },
+        "min_dur_traj": {
+          "vrel_dep_neo": "4.644",
+          "dv_total": "11.964",
+          "vrel_arr_neo": "3.991",
+          "dec_arr": "-8.526",
+          "v_arr_earth": "11.193",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_total": 50,
+          "dec_dep": "45.141",
+          "dur_ret": 25,
+          "dv_dep_park": "3.329",
+          "dur_out": 17,
+          "v_dep_earth": "1.825",
+          "tid": 34102,
+          "c3": "3.332",
+          "launch": "2040-12-21"
+        }
+      },
+      "request": {
+        "file": "00081-nhats-2004_BV18.txt",
+        "sha256": "9cc7b505896eeef623f25ad283e6c66dc10e1a588b803bf04c71826753fec635"
+      }
+    },
+    {
+      "des": "2005 AJ3",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2005 AJ3)",
+        "orbit_id": "12",
+        "computed": "2021-04-19",
+        "h": "23.2",
+        "occ": "8",
+        "n_via_traj": 3702,
+        "min_dv": {
+          "dv": "9.864",
+          "dur": 362
+        },
+        "min_dur": {
+          "dv": "11.867",
+          "dur": 162
+        },
+        "min_dv_traj": {
+          "dec_arr": "28.155",
+          "dur_total": 362,
+          "dv_total": "9.864",
+          "launch": "2027-07-03",
+          "dur_at": 8,
+          "vrel_arr_neo": "3.163",
+          "dur_ret": 145,
+          "v_arr_earth": "11.864",
+          "vrel_dep_neo": "2.952",
+          "c3": "12.770",
+          "tid": 537,
+          "dur_out": 209,
+          "dv_dep_park": "3.750",
+          "dec_dep": "61.662",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "3.574"
+        },
+        "min_dur_traj": {
+          "dv_dep_park": "4.482",
+          "dec_dep": "-58.398",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "5.479",
+          "v_arr_earth": "11.804",
+          "dur_ret": 89,
+          "vrel_dep_neo": "4.464",
+          "c3": "30.015",
+          "dur_out": 65,
+          "tid": 3255,
+          "vrel_arr_neo": "2.922",
+          "dec_arr": "84.220",
+          "dv_total": "11.867",
+          "dur_total": 162,
+          "launch": "2040-12-21",
+          "dur_at": 8
+        }
+      },
+      "request": {
+        "file": "00082-nhats-2005_AJ3.txt",
+        "sha256": "33c6f0a6e382657850018e083f06b099740473301b54cceb7be6558c5368ff8c"
+      }
+    },
+    {
+      "des": "2024 BH",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 BH)",
+        "orbit_id": "16",
+        "computed": "2024-02-16",
+        "h": "23.2",
+        "occ": "5",
+        "n_via_traj": 1630,
+        "min_dv": {
+          "dv": "10.871",
+          "dur": 378
+        },
+        "min_dur": {
+          "dv": "11.992",
+          "dur": 338
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "6.301",
+          "dur_out": 145,
+          "dv_dep_park": "4.874",
+          "dur_ret": 209,
+          "launch": "2039-08-13",
+          "c3": "39.700",
+          "tid": 1069,
+          "dec_arr": "-52.945",
+          "v_arr_earth": "12.000",
+          "dv_total": "10.871",
+          "vrel_dep_neo": "2.843",
+          "vrel_arr_neo": "1.764",
+          "dur_total": 378,
+          "dec_dep": "-71.054",
+          "dur_at": 24,
+          "vrel_arr_earth": "1.391"
+        },
+        "min_dur_traj": {
+          "tid": 297,
+          "launch": "2022-09-07",
+          "c3": "14.085",
+          "dur_ret": 185,
+          "dv_dep_park": "3.807",
+          "dur_out": 137,
+          "v_dep_earth": "3.753",
+          "vrel_arr_earth": "1.535",
+          "dur_at": 16,
+          "dec_dep": "-57.320",
+          "dur_total": 338,
+          "vrel_arr_neo": "4.744",
+          "vrel_dep_neo": "1.906",
+          "dv_total": "11.992",
+          "v_arr_earth": "12.000",
+          "dec_arr": "-65.419"
+        }
+      },
+      "request": {
+        "file": "00083-nhats-2024_BH.txt",
+        "sha256": "1d6974f13a2cc40cbf2688a91b2bb6197e3a19189363cbd6c9d6236b3cc013e0"
+      }
+    },
+    {
+      "des": "2016 WV7",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2016 WV7)",
+        "orbit_id": "6",
+        "computed": "2021-04-19",
+        "h": "27.2",
+        "occ": "7",
+        "n_via_traj": 158,
+        "min_dv": {
+          "dur": 378,
+          "dv": "10.993"
+        },
+        "min_dur": {
+          "dv": "11.998",
+          "dur": 178
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 337,
+          "dec_dep": "34.617",
+          "dv_dep_park": "3.797",
+          "dur_at": 8,
+          "dec_arr": "41.745",
+          "v_arr_earth": "11.949",
+          "vrel_dep_neo": "5.071",
+          "launch": "2041-11-14",
+          "vrel_arr_neo": "2.125",
+          "c3": "13.849",
+          "v_dep_earth": "3.721",
+          "dur_out": 33,
+          "tid": 132,
+          "dur_total": 378,
+          "dv_total": "10.993"
+        },
+        "min_dur_traj": {
+          "launch": "2041-06-07",
+          "vrel_arr_neo": "6.179",
+          "dur_at": 8,
+          "dec_arr": "35.499",
+          "vrel_dep_neo": "2.459",
+          "v_arr_earth": "11.729",
+          "dec_dep": "-58.702",
+          "dv_dep_park": "3.360",
+          "dur_ret": 25,
+          "vrel_arr_earth": "0.000",
+          "tid": 101,
+          "dur_total": 178,
+          "dv_total": "11.998",
+          "dur_out": 145,
+          "v_dep_earth": "2.004",
+          "c3": "4.015"
+        }
+      },
+      "request": {
+        "file": "00084-nhats-2016_WV7.txt",
+        "sha256": "e1e5c58fa7b2196c38c3fa2fc691f371f93d14897f59076ca76d07ec24066356"
+      }
+    },
+    {
+      "des": "2009 RH",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2009 RH)",
+        "orbit_id": "14",
+        "computed": "2021-04-19",
+        "h": "23.8",
+        "occ": "8",
+        "n_via_traj": 5922,
+        "min_dv": {
+          "dv": "9.022",
+          "dur": 338
+        },
+        "min_dur": {
+          "dv": "11.992",
+          "dur": 242
+        },
+        "min_dv_traj": {
+          "launch": "2034-03-16",
+          "vrel_arr_neo": "2.632",
+          "dec_arr": "35.783",
+          "dur_at": 8,
+          "v_arr_earth": "11.988",
+          "vrel_dep_neo": "2.520",
+          "dv_dep_park": "3.871",
+          "dec_dep": "31.641",
+          "dur_ret": 65,
+          "vrel_arr_earth": "0.000",
+          "tid": 2839,
+          "dv_total": "9.022",
+          "dur_total": 338,
+          "dur_out": 265,
+          "v_dep_earth": "3.943",
+          "c3": "15.551"
+        },
+        "min_dur_traj": {
+          "dur_out": 137,
+          "dv_total": "11.992",
+          "dur_total": 242,
+          "tid": 4316,
+          "c3": "34.394",
+          "v_dep_earth": "5.865",
+          "v_arr_earth": "11.988",
+          "vrel_dep_neo": "2.520",
+          "dec_arr": "35.783",
+          "dur_at": 40,
+          "vrel_arr_neo": "4.812",
+          "launch": "2034-06-20",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 65,
+          "dv_dep_park": "4.661",
+          "dec_dep": "-30.483"
+        }
+      },
+      "request": {
+        "file": "00085-nhats-2009_RH.txt",
+        "sha256": "51c5cbc6b242d8213fb3f05d40bf13d8da73356f4bbf6aecea36713ca86b5ecf"
+      }
+    },
+    {
+      "des": "2013 BS15",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2013 BS15)",
+        "orbit_id": "7",
+        "computed": "2021-04-19",
+        "h": "24.9",
+        "occ": "8",
+        "n_via_traj": 370,
+        "min_dv": {
+          "dur": 370,
+          "dv": "10.187"
+        },
+        "min_dur": {
+          "dur": 338,
+          "dv": "11.844"
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "1.042",
+          "dec_arr": "21.778",
+          "dur_total": 370,
+          "dv_total": "10.187",
+          "launch": "2033-01-16",
+          "dur_at": 8,
+          "dv_dep_park": "5.539",
+          "dec_dep": "20.195",
+          "vrel_arr_earth": "1.062",
+          "v_dep_earth": "7.539",
+          "v_arr_earth": "12.000",
+          "dur_ret": 241,
+          "vrel_dep_neo": "2.544",
+          "c3": "56.835",
+          "tid": 289,
+          "dur_out": 121
+        },
+        "min_dur_traj": {
+          "dec_dep": "21.271",
+          "dv_dep_park": "5.585",
+          "v_dep_earth": "7.618",
+          "vrel_arr_earth": "0.962",
+          "tid": 246,
+          "dur_out": 105,
+          "c3": "58.036",
+          "vrel_dep_neo": "4.044",
+          "v_arr_earth": "12.000",
+          "dur_ret": 177,
+          "vrel_arr_neo": "1.253",
+          "dv_total": "11.844",
+          "dur_total": 338,
+          "dec_arr": "-1.173",
+          "dur_at": 56,
+          "launch": "2033-01-16"
+        }
+      },
+      "request": {
+        "file": "00086-nhats-2013_BS15.txt",
+        "sha256": "2c3b35bc8e3edc7bbb82bc0d49cfd3b6e266797888c88d5485921b58307bb12b"
+      }
+    },
+    {
+      "des": "2020 HB6",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2020 HB6)",
+        "orbit_id": "21",
+        "computed": "2021-04-19",
+        "h": "24.2",
+        "occ": "5",
+        "n_via_traj": 32,
+        "min_dv": {
+          "dv": "11.369",
+          "dur": 346
+        },
+        "min_dur": {
+          "dv": "11.906",
+          "dur": 330
+        },
+        "min_dv_traj": {
+          "dec_dep": "45.835",
+          "dv_dep_park": "5.619",
+          "dur_ret": 305,
+          "vrel_arr_earth": "0.087",
+          "vrel_arr_neo": "1.802",
+          "launch": "2020-05-04",
+          "dec_arr": "54.961",
+          "dur_at": 8,
+          "vrel_dep_neo": "3.861",
+          "v_arr_earth": "12.000",
+          "v_dep_earth": "7.678",
+          "c3": "58.954",
+          "tid": 25,
+          "dv_total": "11.369",
+          "dur_total": 346,
+          "dur_out": 33
+        },
+        "min_dur_traj": {
+          "launch": "2020-05-04",
+          "vrel_arr_neo": "1.802",
+          "dur_at": 8,
+          "dec_arr": "49.512",
+          "v_arr_earth": "11.880",
+          "vrel_dep_neo": "4.485",
+          "dec_dep": "45.835",
+          "dv_dep_park": "5.619",
+          "dur_ret": 289,
+          "vrel_arr_earth": "0.000",
+          "tid": 23,
+          "dur_total": 330,
+          "dv_total": "11.906",
+          "dur_out": 33,
+          "v_dep_earth": "7.678",
+          "c3": "58.954"
+        }
+      },
+      "request": {
+        "file": "00087-nhats-2020_HB6.txt",
+        "sha256": "60cd9feefa678a170a67ab892e47522820287dc86f21cea97118fc144c743bd4"
+      }
+    },
+    {
+      "des": "2023 XU12",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2023 XU12)",
+        "orbit_id": "2",
+        "computed": "2023-12-22",
+        "h": "27.1",
+        "occ": "7",
+        "n_via_traj": 3301,
+        "min_dv": {
+          "dv": "9.232",
+          "dur": 370
+        },
+        "min_dur": {
+          "dur": 98,
+          "dv": "11.887"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "4.001",
+          "c3": "16.011",
+          "tid": 977,
+          "dur_total": 370,
+          "dv_total": "9.232",
+          "dur_out": 321,
+          "dec_dep": "-81.345",
+          "dv_dep_park": "3.891",
+          "dur_ret": 41,
+          "vrel_arr_earth": "0.000",
+          "launch": "2022-12-20",
+          "vrel_arr_neo": "3.705",
+          "dur_at": 8,
+          "dec_arr": "-49.179",
+          "v_arr_earth": "11.788",
+          "vrel_dep_neo": "1.636"
+        },
+        "min_dur_traj": {
+          "tid": 2664,
+          "dv_total": "11.887",
+          "dur_total": 98,
+          "dur_out": 65,
+          "v_dep_earth": "2.022",
+          "c3": "4.090",
+          "vrel_arr_neo": "5.720",
+          "launch": "2023-09-18",
+          "dec_arr": "-51.636",
+          "dur_at": 8,
+          "vrel_dep_neo": "2.804",
+          "v_arr_earth": "11.703",
+          "dv_dep_park": "3.363",
+          "dec_dep": "57.690",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 25
+        }
+      },
+      "request": {
+        "file": "00088-nhats-2023_XU12.txt",
+        "sha256": "ae34c167bcda57fab69db7f2d309bd6f315ee928566351fa7976a1765e7a3029"
+      }
+    },
+    {
+      "des": "2021 AN1",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 AN1)",
+        "orbit_id": "10",
+        "computed": "2021-04-19",
+        "h": "26.9",
+        "occ": "7",
+        "n_via_traj": 47144,
+        "min_dv": {
+          "dv": "7.408",
+          "dur": 346
+        },
+        "min_dur": {
+          "dv": "11.855",
+          "dur": 146
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "5.191",
+          "dv_dep_park": "4.355",
+          "dec_dep": "-43.620",
+          "dur_ret": 297,
+          "v_arr_earth": "11.378",
+          "vrel_dep_neo": "2.361",
+          "c3": "26.949",
+          "tid": 26751,
+          "dur_out": 41,
+          "vrel_arr_neo": "0.692",
+          "launch": "2021-01-15",
+          "dur_at": 8,
+          "dec_arr": "-56.373",
+          "dv_total": "7.408",
+          "dur_total": 346
+        },
+        "min_dur_traj": {
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "4.991",
+          "dec_dep": "-46.273",
+          "dv_dep_park": "4.270",
+          "vrel_dep_neo": "6.327",
+          "v_arr_earth": "11.336",
+          "dur_ret": 113,
+          "dur_out": 25,
+          "tid": 26015,
+          "c3": "24.907",
+          "vrel_arr_neo": "1.258",
+          "launch": "2021-01-15",
+          "dur_at": 8,
+          "dur_total": 146,
+          "dv_total": "11.855",
+          "dec_arr": "45.607"
+        }
+      },
+      "request": {
+        "file": "00089-nhats-2021_AN1.txt",
+        "sha256": "fe4bcdca2964fce91d6e310915e785e6c29e42add8481198926145b5568620c4"
+      }
+    },
+    {
+      "des": "2020 SM4",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2020 SM4)",
+        "orbit_id": "2",
+        "computed": "2021-04-19",
+        "h": "27.7",
+        "occ": "8",
+        "n_via_traj": 35128,
+        "min_dv": {
+          "dur": 370,
+          "dv": "8.907"
+        },
+        "min_dur": {
+          "dur": 314,
+          "dv": "11.969"
+        },
+        "min_dv_traj": {
+          "dur_ret": 265,
+          "dv_dep_park": "4.497",
+          "dur_out": 73,
+          "v_dep_earth": "5.511",
+          "tid": 8124,
+          "c3": "30.375",
+          "launch": "2020-09-17",
+          "vrel_arr_neo": "1.396",
+          "vrel_dep_neo": "0.445",
+          "dv_total": "8.907",
+          "v_arr_earth": "12.000",
+          "dec_arr": "-25.222",
+          "dur_at": 32,
+          "vrel_arr_earth": "2.569",
+          "dec_dep": "-34.640",
+          "dur_total": 370
+        },
+        "min_dur_traj": {
+          "vrel_dep_neo": "0.847",
+          "dv_total": "11.969",
+          "vrel_arr_neo": "3.682",
+          "dec_arr": "22.100",
+          "v_arr_earth": "12.000",
+          "vrel_arr_earth": "3.029",
+          "dur_at": 8,
+          "dec_dep": "-6.528",
+          "dur_total": 314,
+          "dv_dep_park": "4.412",
+          "dur_ret": 153,
+          "v_dep_earth": "5.321",
+          "dur_out": 153,
+          "tid": 15014,
+          "launch": "2022-05-10",
+          "c3": "28.315"
+        }
+      },
+      "request": {
+        "file": "00090-nhats-2020_SM4.txt",
+        "sha256": "6898ee1f86ebb6758006030b356f53921b1ade79b5420b93050962880a129061"
+      }
+    },
+    {
+      "des": "2017 RN16",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2017 RN16)",
+        "orbit_id": "4",
+        "computed": "2021-04-19",
+        "h": "28.9",
+        "occ": "7",
+        "n_via_traj": 20018,
+        "min_dv": {
+          "dur": 354,
+          "dv": "8.440"
+        },
+        "min_dur": {
+          "dur": 266,
+          "dv": "11.990"
+        },
+        "min_dv_traj": {
+          "dur_at": 8,
+          "vrel_arr_earth": "0.051",
+          "dec_dep": "12.875",
+          "dur_total": 354,
+          "vrel_arr_neo": "1.695",
+          "dv_total": "8.440",
+          "vrel_dep_neo": "2.161",
+          "v_arr_earth": "12.000",
+          "dec_arr": "11.808",
+          "tid": 10451,
+          "launch": "2025-03-31",
+          "c3": "31.233",
+          "dv_dep_park": "4.532",
+          "dur_ret": 273,
+          "dur_out": 73,
+          "v_dep_earth": "5.589"
+        },
+        "min_dur_traj": {
+          "vrel_arr_earth": "1.800",
+          "dur_at": 64,
+          "dec_dep": "29.408",
+          "dur_total": 266,
+          "vrel_dep_neo": "1.339",
+          "dv_total": "11.990",
+          "vrel_arr_neo": "3.792",
+          "dec_arr": "-9.653",
+          "v_arr_earth": "12.000",
+          "tid": 18816,
+          "c3": "44.359",
+          "launch": "2041-12-24",
+          "dur_ret": 49,
+          "dv_dep_park": "5.058",
+          "v_dep_earth": "6.660",
+          "dur_out": 153
+        }
+      },
+      "request": {
+        "file": "00091-nhats-2017_RN16.txt",
+        "sha256": "25cdd5c7a76c0bcffec769d75ac5c48e1872d52c9c1d50f100a16fb8f3bc350a"
+      }
+    },
+    {
+      "des": "2025 BT4",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2025 BT4)",
+        "orbit_id": "3",
+        "computed": "2025-02-01",
+        "h": "28.6",
+        "occ": "7",
+        "n_via_traj": 1538,
+        "min_dv": {
+          "dv": "10.091",
+          "dur": 178
+        },
+        "min_dur": {
+          "dv": "11.823",
+          "dur": 82
+        },
+        "min_dv_traj": {
+          "dur_at": 8,
+          "launch": "2024-07-26",
+          "dec_arr": "14.771",
+          "dv_total": "10.091",
+          "dur_total": 178,
+          "vrel_arr_neo": "5.210",
+          "c3": "2.422",
+          "tid": 1341,
+          "dur_out": 153,
+          "dur_ret": 17,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "0.167",
+          "v_dep_earth": "1.556",
+          "vrel_arr_earth": "1.427",
+          "dec_dep": "-72.685",
+          "dv_dep_park": "3.288"
+        },
+        "min_dur_traj": {
+          "dur_out": 65,
+          "tid": 1526,
+          "c3": "3.393",
+          "vrel_dep_neo": "0.304",
+          "v_arr_earth": "12.000",
+          "dur_ret": 9,
+          "v_dep_earth": "1.842",
+          "vrel_arr_earth": "1.550",
+          "dec_dep": "-19.636",
+          "dv_dep_park": "3.332",
+          "dur_at": 8,
+          "launch": "2024-10-30",
+          "dv_total": "11.823",
+          "dur_total": 82,
+          "dec_arr": "14.037",
+          "vrel_arr_neo": "6.637"
+        }
+      },
+      "request": {
+        "file": "00092-nhats-2025_BT4.txt",
+        "sha256": "bce5f629c6a8a746c99ff289e3a6b8a884dfc717638efcdebe1c6bbc6bc7340a"
+      }
+    },
+    {
+      "des": "2014 SF304",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2014 SF304)",
+        "orbit_id": "12",
+        "computed": "2021-04-19",
+        "h": "27.3",
+        "occ": "6",
+        "n_via_traj": 2582,
+        "min_dv": {
+          "dur": 450,
+          "dv": "10.178"
+        },
+        "min_dur": {
+          "dur": 290,
+          "dv": "11.930"
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "1.623",
+          "c3": "2.634",
+          "dv_total": "10.178",
+          "dur_total": 450,
+          "tid": 531,
+          "dur_out": 193,
+          "dv_dep_park": "3.297",
+          "dec_dep": "-16.482",
+          "dur_ret": 249,
+          "vrel_arr_earth": "0.000",
+          "launch": "2020-05-04",
+          "vrel_arr_neo": "3.804",
+          "vrel_dep_neo": "3.077",
+          "v_arr_earth": "11.550",
+          "dec_arr": "34.838",
+          "dur_at": 8
+        },
+        "min_dur_traj": {
+          "dec_arr": "13.415",
+          "dur_at": 8,
+          "vrel_dep_neo": "3.986",
+          "v_arr_earth": "12.000",
+          "vrel_arr_neo": "2.489",
+          "launch": "2020-08-08",
+          "vrel_arr_earth": "0.685",
+          "dur_ret": 169,
+          "dec_dep": "26.569",
+          "dv_dep_park": "4.769",
+          "dur_out": 113,
+          "tid": 1899,
+          "dv_total": "11.930",
+          "dur_total": 290,
+          "c3": "37.090",
+          "v_dep_earth": "6.090"
+        }
+      },
+      "request": {
+        "file": "00093-nhats-2014_SF304.txt",
+        "sha256": "9e9c6af6df3a8e99f04665b1c427d5a5d6f6a2a517e5c7d78733bc0340d01791"
+      }
+    },
+    {
+      "des": "2014 HP2",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2014 HP2)",
+        "orbit_id": "7",
+        "computed": "2021-04-19",
+        "h": "27.3",
+        "occ": "8",
+        "n_via_traj": 736,
+        "min_dv": {
+          "dv": "10.549",
+          "dur": 426
+        },
+        "min_dur": {
+          "dur": 154,
+          "dv": "11.853"
+        },
+        "min_dv_traj": {
+          "dur_ret": 57,
+          "dv_dep_park": "3.448",
+          "dur_out": 361,
+          "v_dep_earth": "2.442",
+          "tid": 65,
+          "launch": "2037-05-03",
+          "c3": "5.964",
+          "vrel_arr_neo": "4.960",
+          "dv_total": "10.549",
+          "vrel_dep_neo": "2.141",
+          "v_arr_earth": "11.992",
+          "dec_arr": "-13.899",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_dep": "-0.532",
+          "dur_total": 426
+        },
+        "min_dur_traj": {
+          "dec_dep": "22.094",
+          "dur_total": 154,
+          "vrel_arr_earth": "0.580",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "dec_arr": "-11.254",
+          "vrel_arr_neo": "5.845",
+          "vrel_dep_neo": "1.958",
+          "dv_total": "11.853",
+          "c3": "6.464",
+          "launch": "2038-01-22",
+          "tid": 732,
+          "v_dep_earth": "2.542",
+          "dur_out": 105,
+          "dv_dep_park": "3.470",
+          "dur_ret": 41
+        }
+      },
+      "request": {
+        "file": "00094-nhats-2014_HP2.txt",
+        "sha256": "aa751b24a1cb7ce2b3a9d1571e447af71089dace7adffc8f452e65b169b5aad1"
+      }
+    },
+    {
+      "des": "2023 BP5",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2023 BP5)",
+        "orbit_id": "4",
+        "computed": "2023-02-02",
+        "h": "27.1",
+        "occ": "7",
+        "n_via_traj": 44642,
+        "min_dv": {
+          "dv": "7.381",
+          "dur": 346
+        },
+        "min_dur": {
+          "dv": "11.991",
+          "dur": 154
+        },
+        "min_dv_traj": {
+          "dv_total": "7.381",
+          "dur_total": 346,
+          "tid": 21783,
+          "dur_out": 41,
+          "v_dep_earth": "5.415",
+          "c3": "29.321",
+          "vrel_arr_neo": "0.785",
+          "launch": "2023-01-29",
+          "vrel_dep_neo": "2.143",
+          "v_arr_earth": "11.540",
+          "dec_arr": "4.127",
+          "dur_at": 8,
+          "dec_dep": "-2.146",
+          "dv_dep_park": "4.453",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 297
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "3.737",
+          "launch": "2036-03-13",
+          "dur_at": 8,
+          "dec_arr": "-16.916",
+          "v_arr_earth": "11.626",
+          "vrel_dep_neo": "4.319",
+          "dec_dep": "9.540",
+          "dv_dep_park": "3.935",
+          "dur_ret": 89,
+          "vrel_arr_earth": "0.000",
+          "tid": 43019,
+          "dur_total": 154,
+          "dv_total": "11.991",
+          "dur_out": 57,
+          "v_dep_earth": "4.126",
+          "c3": "17.021"
+        }
+      },
+      "request": {
+        "file": "00095-nhats-2023_BP5.txt",
+        "sha256": "dca05d378848b1bc764c17e63fa174cd0c2d663c6b1daed101d86fafcb706126"
+      }
+    },
+    {
+      "des": "2021 JS",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 JS)",
+        "orbit_id": "4",
+        "computed": "2021-05-15",
+        "h": "25.9",
+        "occ": "7",
+        "n_via_traj": 38,
+        "min_dv": {
+          "dv": "11.449",
+          "dur": 370
+        },
+        "min_dur": {
+          "dv": "11.911",
+          "dur": 354
+        },
+        "min_dv_traj": {
+          "c3": "14.376",
+          "tid": 26,
+          "dur_out": 49,
+          "dur_ret": 313,
+          "v_arr_earth": "11.910",
+          "vrel_dep_neo": "4.941",
+          "dv_dep_park": "3.820",
+          "dec_dep": "15.838",
+          "v_dep_earth": "3.792",
+          "vrel_arr_earth": "0.000",
+          "dec_arr": "22.622",
+          "dur_total": 370,
+          "dv_total": "11.449",
+          "dur_at": 8,
+          "launch": "2021-04-13",
+          "vrel_arr_neo": "2.688"
+        },
+        "min_dur_traj": {
+          "c3": "14.376",
+          "dur_out": 49,
+          "tid": 24,
+          "dur_ret": 297,
+          "v_arr_earth": "11.656",
+          "vrel_dep_neo": "5.403",
+          "v_dep_earth": "3.792",
+          "vrel_arr_earth": "0.000",
+          "dv_dep_park": "3.820",
+          "dec_dep": "15.838",
+          "dur_at": 8,
+          "launch": "2021-04-13",
+          "dec_arr": "28.497",
+          "dur_total": 354,
+          "dv_total": "11.911",
+          "vrel_arr_neo": "2.688"
+        }
+      },
+      "request": {
+        "file": "00096-nhats-2021_JS.txt",
+        "sha256": "f7606e51cdfd1782e6690295070b40f0ceb68c3867fbf815a0286d9d17e31519"
+      }
+    },
+    {
+      "des": "2021 XF3",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 XF3)",
+        "orbit_id": "3",
+        "computed": "2021-12-13",
+        "h": "24.9",
+        "occ": "8",
+        "n_via_traj": 1221,
+        "min_dv": {
+          "dur": 362,
+          "dv": "10.532"
+        },
+        "min_dur": {
+          "dur": 130,
+          "dv": "11.982"
+        },
+        "min_dv_traj": {
+          "dur_out": 289,
+          "v_dep_earth": "4.054",
+          "dv_dep_park": "3.909",
+          "dur_ret": 65,
+          "launch": "2020-12-22",
+          "c3": "16.433",
+          "tid": 327,
+          "v_arr_earth": "11.913",
+          "dec_arr": "68.613",
+          "vrel_arr_neo": "4.216",
+          "vrel_dep_neo": "2.407",
+          "dv_total": "10.532",
+          "dur_total": 362,
+          "dec_dep": "48.526",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8
+        },
+        "min_dur_traj": {
+          "dec_dep": "-68.774",
+          "dur_total": 130,
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dec_arr": "63.101",
+          "v_arr_earth": "11.909",
+          "vrel_dep_neo": "3.258",
+          "dv_total": "11.982",
+          "vrel_arr_neo": "4.958",
+          "c3": "13.121",
+          "launch": "2021-08-11",
+          "tid": 1091,
+          "v_dep_earth": "3.622",
+          "dur_out": 73,
+          "dv_dep_park": "3.765",
+          "dur_ret": 49
+        }
+      },
+      "request": {
+        "file": "00097-nhats-2021_XF3.txt",
+        "sha256": "2ea28496a81869fbc1aa1ecfa3e2397bfcc312d000a12f2492f73507aa22e788"
+      }
+    },
+    {
+      "des": "2025 RY1",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2025 RY1)",
+        "orbit_id": "31",
+        "computed": "2025-12-23",
+        "h": "21.9",
+        "occ": "4",
+        "n_via_traj": 2150,
+        "min_dv": {
+          "dv": "9.873",
+          "dur": 186
+        },
+        "min_dur": {
+          "dur": 114,
+          "dv": "11.840"
+        },
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 41,
+          "dec_dep": "-38.984",
+          "dv_dep_park": "3.520",
+          "dur_at": 8,
+          "dec_arr": "39.703",
+          "vrel_dep_neo": "2.066",
+          "v_arr_earth": "11.826",
+          "vrel_arr_neo": "4.288",
+          "launch": "2025-03-07",
+          "c3": "7.562",
+          "v_dep_earth": "2.750",
+          "dur_out": 137,
+          "tid": 1391,
+          "dur_total": 186,
+          "dv_total": "9.873"
+        },
+        "min_dur_traj": {
+          "dur_out": 73,
+          "tid": 1878,
+          "dv_total": "11.840",
+          "dur_total": 114,
+          "c3": "11.258",
+          "v_dep_earth": "3.355",
+          "dec_arr": "37.663",
+          "dur_at": 8,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "1.608",
+          "vrel_arr_neo": "6.023",
+          "launch": "2025-05-10",
+          "vrel_arr_earth": "0.525",
+          "dur_ret": 33,
+          "dec_dep": "-33.032",
+          "dv_dep_park": "3.684"
+        }
+      },
+      "request": {
+        "file": "00098-nhats-2025_RY1.txt",
+        "sha256": "3828c7de6f759985d00b790d37bb19f85cb71969496c34794f5b2ab3f0ae6143"
+      }
+    },
+    {
+      "des": "2013 VM13",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2013 VM13)",
+        "orbit_id": "14",
+        "computed": "2026-04-19",
+        "h": "24.2",
+        "occ": "0",
+        "n_via_traj": 84161,
+        "min_dv": {
+          "dv": "9.025",
+          "dur": 402
+        },
+        "min_dur": {
+          "dv": "11.846",
+          "dur": 298
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "11.395",
+          "dec_arr": "-32.196",
+          "vrel_arr_neo": "2.829",
+          "dv_total": "9.025",
+          "vrel_dep_neo": "1.813",
+          "dec_dep": "-7.892",
+          "dur_total": 402,
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_out": 257,
+          "v_dep_earth": "5.255",
+          "dur_ret": 137,
+          "dv_dep_park": "4.382",
+          "launch": "2021-04-05",
+          "c3": "27.610",
+          "tid": 6113
+        },
+        "min_dur_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_dep": "-8.179",
+          "dur_total": 298,
+          "dv_total": "11.846",
+          "vrel_dep_neo": "2.868",
+          "vrel_arr_neo": "4.417",
+          "dec_arr": "-14.758",
+          "v_arr_earth": "11.961",
+          "tid": 11107,
+          "launch": "2021-06-16",
+          "c3": "31.942",
+          "dv_dep_park": "4.561",
+          "dur_ret": 89,
+          "v_dep_earth": "5.652",
+          "dur_out": 201
+        }
+      },
+      "request": {
+        "file": "00099-nhats-2013_VM13.txt",
+        "sha256": "f9f664930f09c8f68f9800c9d3cd5b830b58e2b7e8c8fb8d0be020a9935e86d7"
+      }
+    },
+    {
+      "des": "2025 MX",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2025 MX)",
+        "orbit_id": "3",
+        "computed": "2026-08-27",
+        "h": "26.9",
+        "occ": "7",
+        "n_via_traj": 143,
+        "min_dv": {
+          "dv": "10.807",
+          "dur": 362
+        },
+        "min_dur": {
+          "dv": "11.798",
+          "dur": 178
+        },
+        "min_dv_traj": {
+          "v_dep_earth": "4.654",
+          "c3": "21.662",
+          "dur_total": 362,
+          "dv_total": "10.807",
+          "tid": 32,
+          "dur_out": 201,
+          "dec_dep": "59.212",
+          "dv_dep_park": "4.133",
+          "dur_ret": 153,
+          "vrel_arr_earth": "0.093",
+          "vrel_arr_neo": "3.329",
+          "launch": "2024-12-17",
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "3.251",
+          "dur_at": 8,
+          "dec_arr": "76.227"
+        },
+        "min_dur_traj": {
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "4.074",
+          "dur_at": 8,
+          "dec_arr": "76.579",
+          "vrel_arr_neo": "3.249",
+          "launch": "2025-06-11",
+          "vrel_arr_earth": "0.215",
+          "dur_ret": 129,
+          "dec_dep": "-83.531",
+          "dv_dep_park": "4.260",
+          "dur_out": 41,
+          "dur_total": 178,
+          "dv_total": "11.798",
+          "tid": 74,
+          "c3": "24.665",
+          "v_dep_earth": "4.966"
+        }
+      },
+      "request": {
+        "file": "00100-nhats-2025_MX.txt",
+        "sha256": "ed5730be53460821f4772cd9da8e3c0e6ad6ec3867a514011ddd13b9b9362bee"
+      }
+    },
+    {
+      "des": "2010 XD",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2010 XD)",
+        "orbit_id": "8",
+        "computed": "2021-04-19",
+        "h": "26.8",
+        "occ": "9",
+        "n_via_traj": 334,
+        "min_dv": {
+          "dur": 370,
+          "dv": "10.958"
+        },
+        "min_dur": {
+          "dv": "11.962",
+          "dur": 338
+        },
+        "min_dv_traj": {
+          "dec_dep": "71.901",
+          "dur_total": 370,
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_arr": "52.606",
+          "v_arr_earth": "11.737",
+          "vrel_dep_neo": "3.768",
+          "dv_total": "10.958",
+          "vrel_arr_neo": "3.645",
+          "launch": "2033-05-24",
+          "c3": "8.130",
+          "tid": 147,
+          "v_dep_earth": "2.851",
+          "dur_out": 209,
+          "dur_ret": 153,
+          "dv_dep_park": "3.545"
+        },
+        "min_dur_traj": {
+          "dur_ret": 121,
+          "dv_dep_park": "3.545",
+          "v_dep_earth": "2.851",
+          "dur_out": 209,
+          "tid": 143,
+          "c3": "8.130",
+          "launch": "2033-05-24",
+          "dv_total": "11.962",
+          "vrel_dep_neo": "4.771",
+          "vrel_arr_neo": "3.645",
+          "dec_arr": "37.748",
+          "v_arr_earth": "11.309",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_total": 338,
+          "dec_dep": "71.901"
+        }
+      },
+      "request": {
+        "file": "00101-nhats-2010_XD.txt",
+        "sha256": "f5ef0080d42b50ebd6129ebcac256fc5820ccae5be842d03417e1719a2836f59"
+      }
+    },
+    {
+      "des": "2020 UO4",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "ATE",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2020 UO4)",
+        "orbit_id": "16",
+        "computed": "2022-03-12",
+        "h": "28.6",
+        "occ": "2",
+        "n_via_traj": 1585608,
+        "min_dv": {
+          "dv": "4.269",
+          "dur": 354
+        },
+        "min_dur": {
+          "dur": 34,
+          "dv": "11.142"
+        },
+        "min_dv_traj": {
+          "dec_arr": "-9.412",
+          "dur_at": 8,
+          "vrel_dep_neo": "0.505",
+          "v_arr_earth": "11.344",
+          "launch": "2020-10-19",
+          "vrel_arr_neo": "0.150",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 281,
+          "dec_dep": "-5.203",
+          "dv_dep_park": "3.614",
+          "dur_out": 65,
+          "tid": 255093,
+          "dv_total": "4.269",
+          "dur_total": 354,
+          "c3": "9.679",
+          "v_dep_earth": "3.111"
+        },
+        "min_dur_traj": {
+          "tid": 187463,
+          "dur_total": 34,
+          "dv_total": "11.142",
+          "dur_out": 17,
+          "v_dep_earth": "3.056",
+          "c3": "9.341",
+          "launch": "2020-09-17",
+          "vrel_arr_neo": "6.645",
+          "dur_at": 8,
+          "dec_arr": "-13.536",
+          "vrel_dep_neo": "0.899",
+          "v_arr_earth": "11.480",
+          "dec_dep": "7.051",
+          "dv_dep_park": "3.599",
+          "dur_ret": 9,
+          "vrel_arr_earth": "0.000"
+        }
+      },
+      "request": {
+        "file": "00102-nhats-2020_UO4.txt",
+        "sha256": "1ce70daa169f08ae1904e19a177108c1d2abc5f4d1ded884dbc23e32793aadc8"
+      }
+    },
+    {
+      "des": "2021 HD1",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "AMO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2021 HD1)",
+        "orbit_id": "7",
+        "computed": "2021-05-08",
+        "h": "26.8",
+        "occ": "8",
+        "n_via_traj": 238,
+        "min_dv": {
+          "dv": "11.061",
+          "dur": 378
+        },
+        "min_dur": {
+          "dur": 146,
+          "dv": "11.988"
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "11.862",
+          "dur_ret": 41,
+          "vrel_dep_neo": "1.657",
+          "c3": "17.189",
+          "tid": 36,
+          "dur_out": 329,
+          "dv_dep_park": "3.942",
+          "dec_dep": "-9.763",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "4.146",
+          "dec_arr": "-38.236",
+          "dur_total": 378,
+          "dv_total": "11.061",
+          "launch": "2020-04-10",
+          "dur_at": 8,
+          "vrel_arr_neo": "5.463"
+        },
+        "min_dur_traj": {
+          "vrel_arr_neo": "6.064",
+          "dur_at": 8,
+          "launch": "2020-12-06",
+          "dv_total": "11.988",
+          "dur_total": 146,
+          "dec_arr": "-41.136",
+          "v_dep_earth": "1.049",
+          "vrel_arr_earth": "0.000",
+          "dv_dep_park": "3.227",
+          "dec_dep": "71.720",
+          "tid": 234,
+          "dur_out": 105,
+          "c3": "1.099",
+          "vrel_dep_neo": "2.697",
+          "dur_ret": 33,
+          "v_arr_earth": "11.589"
+        }
+      },
+      "request": {
+        "file": "00103-nhats-2021_HD1.txt",
+        "sha256": "3c54e2c9d58095397e1f9418a9f0358481a9089fcbf590f9bd353de5abc39da6"
+      }
+    },
+    {
+      "des": "2025 QV21",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2025 QV21)",
+        "orbit_id": "2",
+        "computed": "2025-09-03",
+        "h": "27.8",
+        "occ": "8",
+        "n_via_traj": 584,
+        "min_dv": {
+          "dv": "11.080",
+          "dur": 370
+        },
+        "min_dur": {
+          "dur": 330,
+          "dv": "11.977"
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "11.974",
+          "dec_arr": "-5.095",
+          "vrel_arr_neo": "2.983",
+          "dv_total": "11.080",
+          "vrel_dep_neo": "3.554",
+          "dur_total": 370,
+          "dec_dep": "-3.481",
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_out": 289,
+          "v_dep_earth": "5.613",
+          "dur_ret": 73,
+          "dv_dep_park": "4.543",
+          "launch": "2024-09-20",
+          "c3": "31.502",
+          "tid": 180
+        },
+        "min_dur_traj": {
+          "dv_dep_park": "4.577",
+          "dur_ret": 73,
+          "dur_out": 241,
+          "v_dep_earth": "5.687",
+          "tid": 376,
+          "c3": "32.346",
+          "launch": "2024-10-22",
+          "vrel_dep_neo": "2.867",
+          "dv_total": "11.977",
+          "vrel_arr_neo": "3.289",
+          "dec_arr": "-4.331",
+          "v_arr_earth": "12.000",
+          "dur_at": 16,
+          "vrel_arr_earth": "1.244",
+          "dec_dep": "8.754",
+          "dur_total": 330
+        }
+      },
+      "request": {
+        "file": "00104-nhats-2025_QV21.txt",
+        "sha256": "0005484b8e3d1e37bd2e4e6b98a44372a5791e5cd5e16758bde1a494a46d36d3"
+      }
+    },
+    {
+      "des": "2023 TA9",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2023 TA9)",
+        "orbit_id": "3",
+        "computed": "2023-11-08",
+        "h": "26.6",
+        "occ": "7",
+        "n_via_traj": 1603,
+        "min_dv": {
+          "dv": "9.644",
+          "dur": 274
+        },
+        "min_dur": {
+          "dur": 82,
+          "dv": "11.882"
+        },
+        "min_dv_traj": {
+          "dec_dep": "34.723",
+          "dv_dep_park": "3.195",
+          "vrel_arr_earth": "0.576",
+          "dur_ret": 17,
+          "launch": "2023-01-05",
+          "vrel_arr_neo": "4.860",
+          "dur_at": 8,
+          "dec_arr": "27.170",
+          "vrel_dep_neo": "1.012",
+          "v_arr_earth": "12.000",
+          "v_dep_earth": "0.640",
+          "c3": "0.410",
+          "tid": 931,
+          "dur_total": 274,
+          "dv_total": "9.644",
+          "dur_out": 249
+        },
+        "min_dur_traj": {
+          "dv_total": "11.882",
+          "dur_total": 82,
+          "tid": 1584,
+          "dur_out": 65,
+          "v_dep_earth": "1.606",
+          "c3": "2.578",
+          "launch": "2023-07-16",
+          "vrel_arr_neo": "6.477",
+          "vrel_dep_neo": "1.897",
+          "v_arr_earth": "12.000",
+          "dec_arr": "35.717",
+          "dur_at": 8,
+          "dv_dep_park": "3.295",
+          "dec_dep": "-25.949",
+          "vrel_arr_earth": "0.214",
+          "dur_ret": 9
+        }
+      },
+      "request": {
+        "file": "00105-nhats-2023_TA9.txt",
+        "sha256": "2e865ec31e2e04182726e00b73bf8d45bd9cba06b435268c7172a81f496d7ed0"
+      }
+    },
+    {
+      "des": "2024 XZ5",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 XZ5)",
+        "orbit_id": "3",
+        "computed": "2024-12-27",
+        "h": "25.8",
+        "occ": "7",
+        "n_via_traj": 1571,
+        "min_dv": {
+          "dur": 370,
+          "dv": "10.033"
+        },
+        "min_dur": {
+          "dv": "11.899",
+          "dur": 330
+        },
+        "min_dv_traj": {
+          "dur_at": 8,
+          "launch": "2043-06-05",
+          "dur_total": 370,
+          "dv_total": "10.033",
+          "dec_arr": "66.141",
+          "vrel_arr_neo": "2.213",
+          "tid": 1437,
+          "dur_out": 121,
+          "c3": "40.077",
+          "vrel_dep_neo": "2.735",
+          "dur_ret": 241,
+          "v_arr_earth": "12.000",
+          "v_dep_earth": "6.331",
+          "vrel_arr_earth": "0.196",
+          "dec_dep": "60.965",
+          "dv_dep_park": "4.889"
+        },
+        "min_dur_traj": {
+          "dec_arr": "-13.770",
+          "dv_total": "11.899",
+          "dur_total": 330,
+          "dur_at": 8,
+          "launch": "2024-01-16",
+          "vrel_arr_neo": "4.179",
+          "c3": "22.836",
+          "tid": 1252,
+          "dur_out": 273,
+          "v_arr_earth": "12.000",
+          "dur_ret": 49,
+          "vrel_dep_neo": "1.378",
+          "dv_dep_park": "4.183",
+          "dec_dep": "-31.021",
+          "v_dep_earth": "4.779",
+          "vrel_arr_earth": "2.159"
+        }
+      },
+      "request": {
+        "file": "00106-nhats-2024_XZ5.txt",
+        "sha256": "698745100eb1346de489d9de2ecb70768c9987100ce888a671c2b3c954c7afa9"
+      }
+    },
+    {
+      "des": "2022 AA2",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2022 AA2)",
+        "orbit_id": "5",
+        "computed": "2022-01-28",
+        "h": "26.3",
+        "occ": "7",
+        "n_via_traj": 1171,
+        "min_dv": {
+          "dur": 362,
+          "dv": "9.746"
+        },
+        "min_dur": {
+          "dur": 146,
+          "dv": "11.795"
+        },
+        "min_dv_traj": {
+          "vrel_arr_neo": "0.982",
+          "dec_arr": "-79.409",
+          "dv_total": "9.746",
+          "dur_total": 362,
+          "launch": "2022-01-10",
+          "dur_at": 8,
+          "dv_dep_park": "5.098",
+          "dec_dep": "-66.491",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "6.736",
+          "dur_ret": 321,
+          "v_arr_earth": "11.912",
+          "vrel_dep_neo": "3.667",
+          "c3": "45.370",
+          "dur_out": 33,
+          "tid": 717
+        },
+        "min_dur_traj": {
+          "vrel_dep_neo": "5.715",
+          "dur_ret": 105,
+          "v_arr_earth": "11.744",
+          "dur_out": 33,
+          "tid": 703,
+          "c3": "45.370",
+          "vrel_arr_earth": "0.000",
+          "v_dep_earth": "6.736",
+          "dv_dep_park": "5.098",
+          "dec_dep": "-66.491",
+          "launch": "2022-01-10",
+          "dur_at": 8,
+          "dur_total": 146,
+          "dv_total": "11.795",
+          "dec_arr": "72.335",
+          "vrel_arr_neo": "0.982"
+        }
+      },
+      "request": {
+        "file": "00107-nhats-2022_AA2.txt",
+        "sha256": "a8eaa0c661301e9602b9bbee24d631f2298823cf22ebc57f287c21f67589a72e"
+      }
+    },
+    {
+      "des": "2024 DN",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 DN)",
+        "orbit_id": "1",
+        "computed": "2024-02-19",
+        "h": "25.4",
+        "occ": "9",
+        "n_via_traj": 48196,
+        "min_dv": {
+          "dv": "8.307",
+          "dur": 170
+        },
+        "min_dur": {
+          "dv": "11.720",
+          "dur": 82
+        },
+        "min_dv_traj": {
+          "v_arr_earth": "11.850",
+          "dec_arr": "60.531",
+          "vrel_arr_neo": "3.333",
+          "dv_total": "8.307",
+          "vrel_dep_neo": "1.457",
+          "dur_total": 170,
+          "dec_dep": "-87.783",
+          "dur_at": 8,
+          "vrel_arr_earth": "0.000",
+          "dur_out": 121,
+          "v_dep_earth": "2.738",
+          "dv_dep_park": "3.517",
+          "dur_ret": 41,
+          "c3": "7.498",
+          "launch": "2023-07-16",
+          "tid": 17111
+        },
+        "min_dur_traj": {
+          "dec_dep": "-65.613",
+          "dur_total": 82,
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dec_arr": "72.312",
+          "v_arr_earth": "11.928",
+          "vrel_dep_neo": "2.378",
+          "dv_total": "11.720",
+          "vrel_arr_neo": "5.713",
+          "c3": "9.997",
+          "launch": "2023-10-12",
+          "tid": 27008,
+          "v_dep_earth": "3.162",
+          "dur_out": 49,
+          "dur_ret": 25,
+          "dv_dep_park": "3.628"
+        }
+      },
+      "request": {
+        "file": "00108-nhats-2024_DN.txt",
+        "sha256": "e9934572a8c957ac2e729123cfd90db96e8de9bc803b18343986a2ae23229176"
+      }
+    },
+    {
+      "des": "2024 XH9",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2024 XH9)",
+        "orbit_id": "1",
+        "computed": "2024-12-08",
+        "h": "25.6",
+        "occ": "6",
+        "n_via_traj": 868223,
+        "min_dv": {
+          "dur": 394,
+          "dv": "6.479"
+        },
+        "min_dur": {
+          "dv": "11.755",
+          "dur": 98
+        },
+        "min_dv_traj": {
+          "dur_at": 80,
+          "launch": "2044-11-14",
+          "dur_total": 394,
+          "dv_total": "6.479",
+          "dec_arr": "-55.155",
+          "vrel_arr_neo": "1.089",
+          "dur_out": 201,
+          "tid": 603219,
+          "c3": "5.967",
+          "vrel_dep_neo": "1.942",
+          "dur_ret": 113,
+          "v_arr_earth": "11.847",
+          "v_dep_earth": "2.443",
+          "vrel_arr_earth": "0.000",
+          "dec_dep": "-39.757",
+          "dv_dep_park": "3.448"
+        },
+        "min_dur_traj": {
+          "c3": "19.853",
+          "dur_out": 49,
+          "tid": 216776,
+          "dur_ret": 41,
+          "v_arr_earth": "12.000",
+          "vrel_dep_neo": "2.905",
+          "dv_dep_park": "4.056",
+          "dec_dep": "-11.863",
+          "v_dep_earth": "4.456",
+          "vrel_arr_earth": "0.214",
+          "dec_arr": "9.460",
+          "dv_total": "11.755",
+          "dur_total": 98,
+          "dur_at": 8,
+          "launch": "2024-02-09",
+          "vrel_arr_neo": "4.580"
+        }
+      },
+      "request": {
+        "file": "00109-nhats-2024_XH9.txt",
+        "sha256": "c0b004afd77a81493e01a46b2abb207bc0bff1e2f348bfa0f64df15ab0e19021"
+      }
+    },
+    {
+      "des": "2025 XF2",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2025 XF2)",
+        "orbit_id": "3",
+        "computed": "2025-12-14",
+        "h": "28.9",
+        "occ": "6",
+        "n_via_traj": 2323,
+        "min_dv": {
+          "dur": 314,
+          "dv": "9.609"
+        },
+        "min_dur": {
+          "dur": 138,
+          "dv": "11.973"
+        },
+        "min_dv_traj": {
+          "dur_out": 25,
+          "tid": 1727,
+          "dur_total": 314,
+          "dv_total": "9.609",
+          "c3": "43.471",
+          "v_dep_earth": "6.593",
+          "dur_at": 8,
+          "dec_arr": "-9.235",
+          "vrel_dep_neo": "4.282",
+          "v_arr_earth": "11.168",
+          "launch": "2025-12-12",
+          "vrel_arr_neo": "0.304",
+          "dur_ret": 281,
+          "vrel_arr_earth": "0.000",
+          "dv_dep_park": "5.023",
+          "dec_dep": "-15.042"
+        },
+        "min_dur_traj": {
+          "dec_dep": "-15.042",
+          "dv_dep_park": "5.023",
+          "vrel_arr_earth": "0.000",
+          "dur_ret": 105,
+          "vrel_arr_neo": "0.304",
+          "launch": "2025-12-12",
+          "dec_arr": "21.353",
+          "dur_at": 8,
+          "v_arr_earth": "11.423",
+          "vrel_dep_neo": "6.646",
+          "v_dep_earth": "6.593",
+          "c3": "43.471",
+          "tid": 1705,
+          "dv_total": "11.973",
+          "dur_total": 138,
+          "dur_out": 25
+        }
+      },
+      "request": {
+        "file": "00110-nhats-2025_XF2.txt",
+        "sha256": "744ee3f569091d58138ee4408734f0ae1c705f61d6704969d9c30a0dcd046ecb"
+      }
+    },
+    {
+      "des": "2019 LH27",
+      "tier": "L2",
+      "forced": false,
+      "orbitClass": "APO",
+      "supportDateJdTdb": null,
+      "supportDateLabel": null,
+      "asterElementsEpochJdTdb": 2461161.5,
+      "nhats": {
+        "fullname": "       (2019 LH27)",
+        "orbit_id": "2",
+        "computed": "2022-09-08",
+        "h": "26.6",
+        "occ": "9",
+        "n_via_traj": 133,
+        "min_dv": {
+          "dur": 370,
+          "dv": "11.508"
+        },
+        "min_dur": {
+          "dur": 322,
+          "dv": "11.992"
+        },
+        "min_dv_traj": {
+          "tid": 89,
+          "dur_out": 217,
+          "c3": "5.102",
+          "vrel_dep_neo": "3.927",
+          "dur_ret": 145,
+          "v_arr_earth": "11.418",
+          "dv_dep_park": "3.409",
+          "dec_dep": "-58.324",
+          "v_dep_earth": "2.259",
+          "vrel_arr_earth": "0.000",
+          "dv_total": "11.508",
+          "dur_total": 370,
+          "dec_arr": "-56.032",
+          "dur_at": 8,
+          "launch": "2036-11-24",
+          "vrel_arr_neo": "4.172"
+        },
+        "min_dur_traj": {
+          "v_dep_earth": "2.969",
+          "vrel_arr_earth": "0.000",
+          "dv_dep_park": "3.575",
+          "dec_dep": "-59.756",
+          "dur_out": 209,
+          "tid": 112,
+          "c3": "8.813",
+          "vrel_dep_neo": "4.355",
+          "v_arr_earth": "11.229",
+          "dur_ret": 105,
+          "vrel_arr_neo": "4.061",
+          "dur_at": 8,
+          "launch": "2036-12-02",
+          "dur_total": 322,
+          "dv_total": "11.992",
+          "dec_arr": "-41.092"
+        }
+      },
+      "request": {
+        "file": "00111-nhats-2019_LH27.txt",
+        "sha256": "729e35dc2507b0bba6a58505f6b62fe2b9ea0f4fbffd492bbfb2d7dd4bf5a4b8"
+      }
+    }
+  ]
+}

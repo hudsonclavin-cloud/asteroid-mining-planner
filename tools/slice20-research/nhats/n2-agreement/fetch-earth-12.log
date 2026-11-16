@@ -1,0 +1,37 @@
+{"trajectoriesInScope":123,"epochsInScope":402,"stillNeeded":402,"batches":34}
+batch 1: 12 epochs, 00219-n2b-horizons-earth-12-00.txt
+batch 2: 12 epochs, 00220-n2b-horizons-earth-12-01.txt
+batch 3: 12 epochs, 00221-n2b-horizons-earth-12-02.txt
+batch 4: 12 epochs, 00222-n2b-horizons-earth-12-03.txt
+batch 5: 12 epochs, 00223-n2b-horizons-earth-12-04.txt
+batch 6: 12 epochs, 00224-n2b-horizons-earth-12-05.txt
+batch 7: 12 epochs, 00225-n2b-horizons-earth-12-06.txt
+batch 8: 12 epochs, 00226-n2b-horizons-earth-12-07.txt
+batch 9: 12 epochs, 00227-n2b-horizons-earth-12-08.txt
+batch 10: 12 epochs, 00228-n2b-horizons-earth-12-09.txt
+batch 11: 12 epochs, 00229-n2b-horizons-earth-12-10.txt
+batch 12: 12 epochs, 00230-n2b-horizons-earth-12-11.txt
+batch 13: 12 epochs, 00231-n2b-horizons-earth-12-12.txt
+batch 14: 12 epochs, 00232-n2b-horizons-earth-12-13.txt
+batch 15: 12 epochs, 00233-n2b-horizons-earth-12-14.txt
+batch 16: 12 epochs, 00234-n2b-horizons-earth-12-15.txt
+batch 17: 12 epochs, 00235-n2b-horizons-earth-12-16.txt
+batch 18: 12 epochs, 00236-n2b-horizons-earth-12-17.txt
+batch 19: 12 epochs, 00237-n2b-horizons-earth-12-18.txt
+batch 20: 12 epochs, 00238-n2b-horizons-earth-12-19.txt
+batch 21: 12 epochs, 00239-n2b-horizons-earth-12-20.txt
+batch 22: 12 epochs, 00240-n2b-horizons-earth-12-21.txt
+batch 23: 12 epochs, 00241-n2b-horizons-earth-12-22.txt
+batch 24: 12 epochs, 00242-n2b-horizons-earth-12-23.txt
+batch 25: 12 epochs, 00243-n2b-horizons-earth-12-24.txt
+batch 26: 12 epochs, 00244-n2b-horizons-earth-12-25.txt
+batch 27: 12 epochs, 00245-n2b-horizons-earth-12-26.txt
+batch 28: 12 epochs, 00246-n2b-horizons-earth-12-27.txt
+batch 29: 12 epochs, 00247-n2b-horizons-earth-12-28.txt
+batch 30: 12 epochs, 00248-n2b-horizons-earth-12-29.txt
+batch 31: 12 epochs, 00249-n2b-horizons-earth-12-30.txt
+batch 32: 12 epochs, 00250-n2b-horizons-earth-12-31.txt
+batch 33: 12 epochs, 00251-n2b-horizons-earth-12-32.txt
+batch 34: 6 epochs, 00252-n2b-horizons-earth-12-33.txt
+{"done":true,"earthEpochs":402,"n2bRequests":34}
+EXIT 0
