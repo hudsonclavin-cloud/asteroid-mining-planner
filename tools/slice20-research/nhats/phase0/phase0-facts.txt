@@ -1,0 +1,15 @@
+pwd: /home/user/asteroid-mining-planner
+toplevel: /home/user/asteroid-mining-planner
+origin: https://github.com/hudsonclavin-cloud/asteroid-mining-planner
+main.ts: exists
+origin/main: f066cc1 Merge pull request #15 from hudsonclavin-cloud/s20-text-sweep
+status-porcelain-lines: 0
+host: vm
+os: Linux 6.18.44-fc-v470 x86_64 / Ubuntu 24.04.5 LTS
+node: v22.23.4
+python: Python 3.13.18
+npm: 10.9.9
+npm ci:   npm audit fix --force  Run `npm audit` for details. 
+worktree: s20-nhats-research @ f066cc1 Merge pull request #15 from hudsonclavin-cloud/s20-text-sweep
+hooksPath: .githooks
+verify: files discovered: 111;files passed: 111;files failed: 0;tests passed: 370;tests failed: 0;accounting: 111 == 111 + 0 + 0 OK;VERIFY_EXIT 0;

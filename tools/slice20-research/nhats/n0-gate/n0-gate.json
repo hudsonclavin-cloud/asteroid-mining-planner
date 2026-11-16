@@ -1,0 +1,815 @@
+{
+  "schema": "aster-s20-nhats-n0-gate/1",
+  "generatedAtUtc": "2026-11-16T06:32:01.977Z",
+  "host": {
+    "node": "v22.23.4",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "build": {
+    "tscStatus": 0,
+    "sourceSha256": {
+      "boundary/horizons.ts": "6c0008be18f4cf2b633f1004b393168c5b420106066dc189411177c98ca3072e",
+      "boundary/slice9-nea-catalog.ts": "1bb6a74fd28b5ae468637df4c2a99320d6adc3a1dc10c49fbdc67c07f604ad5b",
+      "boundary/tier-assignments.ts": "3051661821c6df0f550cd7e52ebfd59eb5a5e9c60061960ee4b8fcebe6538a26",
+      "core/units.ts": "2f5f874b8613cf2d8a349a8d868f8139ee2ebcbacc1620958c47f9507f22a5d1",
+      "core/interpolators/hermite.ts": "15321cf8c403ad8261d6fb3ab52ba319975ad38f09c76b43b18ada97cf42c6cf",
+      "core/propagators/keplerian.ts": "857ec82e4829776e3b4136c41c47f5319afb47c525d8948279ed52e2aed0c9d8",
+      "core/constants/bodies.ts": "dd7998e3740d1c37717545161e8b2f53ba115e3e570e7838a67a9cb5166cff98",
+      "core/lambert/lambert-multi-rev.ts": "3e8ddd99952dd416e653190530a211754b57b8ed443144b2f494be0dcf94c510",
+      "porkchop/grid-compute.ts": "e80691e61a67a0e86fffa0c9489fac86fcfe70828175210d5b9b74494602eb1c",
+      "porkchop/delta-v.ts": "a58421c647110c0cbe2eea4a4d16ab53eeb7336f21b484c295911c6e63b6a2db",
+      "porkchop/support-boundary.ts": "8c4381c2efae40ab522870760951252e815fd87c1200e437919ea30c070eda8a",
+      "porkchop/propagation-guard.ts": "a385bd3928b89679c962afee84e3d1d6bfddca047bcfc3a4cc15ae75734b6bb8"
+    }
+  },
+  "gate": {
+    "criterion": "each pilot number reproduced: bit-identical to the pilot's full-precision output, or relative difference <= 5e-4 (half a unit in the 4th significant figure)",
+    "pass": true,
+    "literalRoundBoth4sf": "reported per check as literalRoundBoth4sfMatch. It fails for 2000 SG344 C3 only: the dispatch quotes the pilot value 1.506516468... as 1.5065, which is a tie at 4 s.f. (toPrecision(4) gives 1.506 for the binary double nearest 1.5065, and 1.507 for 1.506516...). The criterion above was written after seeing that result, and is disclosed as such."
+  },
+  "horizonsEarthHeader": {
+    "target": "Earth (399)",
+    "center": "Sun (10)                        {source: DE441}",
+    "frame": "ICRF"
+  },
+  "frameCentreCheck_HorizonsEarthVsFixture": [
+    {
+      "jd": 2462237.5,
+      "positionDiffKm": 0,
+      "velocityDiffKmS": 0
+    },
+    {
+      "jd": 2462237.500800741,
+      "positionDiffKm": 5.263216910139506e-7,
+      "velocityDiffKmS": 1.604216515804331e-8
+    },
+    {
+      "jd": 2462238,
+      "positionDiffKm": 0.05428080215040342,
+      "velocityDiffKmS": 8.850837602392002e-9
+    },
+    {
+      "jd": 2462421.5,
+      "positionDiffKm": 0,
+      "velocityDiffKmS": 0
+    },
+    {
+      "jd": 2462421.500800741,
+      "positionDiffKm": 6.301799551782161e-7,
+      "velocityDiffKmS": 1.7262905112918276e-8
+    },
+    {
+      "jd": 2462422,
+      "positionDiffKm": 0.057187457682761525,
+      "velocityDiffKmS": 3.211090768449309e-8
+    },
+    {
+      "jd": 2462591.5,
+      "positionDiffKm": 0,
+      "velocityDiffKmS": 0
+    },
+    {
+      "jd": 2462591.500800741,
+      "positionDiffKm": 5.703710211702437e-7,
+      "velocityDiffKmS": 1.8638181059763732e-8
+    },
+    {
+      "jd": 2462592,
+      "positionDiffKm": 0.06294941510242578,
+      "velocityDiffKmS": 1.6226607662823048e-8
+    },
+    {
+      "jd": 2462791.5,
+      "positionDiffKm": 0,
+      "velocityDiffKmS": 0
+    },
+    {
+      "jd": 2462791.500800741,
+      "positionDiffKm": 3.1654008904469015e-7,
+      "velocityDiffKmS": 9.891605229465462e-9
+    },
+    {
+      "jd": 2462792,
+      "positionDiffKm": 0.033617028831750925,
+      "velocityDiffKmS": 4.6729887515113454e-9
+    }
+  ],
+  "requests": [
+    {
+      "what": "NHATS 99942",
+      "url": "nhats des=99942",
+      "file": "00001-phase0-nhats-99942.txt",
+      "sha256": "59c95fbb81333d173b78998c4af57821d1f2e30599815b7691bd6f43e6a67eb9",
+      "fromCache": true
+    },
+    {
+      "what": "NHATS 2000 SG344",
+      "url": "nhats des=2000 SG344",
+      "file": "00008-nhats-2000_SG344.txt",
+      "sha256": "bf769a2afce9ebe68f6550d5b49b450314475e0491c3b612607a9db6ddf2497e",
+      "fromCache": true
+    },
+    {
+      "what": "Horizons asteroid 99942",
+      "url": null,
+      "file": "00010-n0-horizons-99942.txt",
+      "sha256": "02c496cdef2521ebb4d723e581e54512ac243d3a6d875dfba3cc1595a8fabc79",
+      "fromCache": true
+    },
+    {
+      "what": "Horizons asteroid 2000 SG344",
+      "url": null,
+      "file": "00011-n0-horizons-2000_SG344.txt",
+      "sha256": "353d4a92ee6d2e37e1a0b99b96cc17de60e96c54577d347fdb94442a04d288d1",
+      "fromCache": true
+    },
+    {
+      "what": "Horizons Earth",
+      "url": null,
+      "file": "00012-n0-horizons-earth.txt",
+      "sha256": "43c64c3b7eb846497efc53ec2d21a3e2b5fe0ddac587df960256d18ee5f6cf8f",
+      "fromCache": true
+    }
+  ],
+  "bodies": {
+    "99942": {
+      "nhats": {
+        "orbit_id": "220",
+        "computed": "2024-10-17",
+        "fullname": " 99942 Apophis (2004 MN4)",
+        "min_dv_traj": {
+          "vrel_arr_neo": "0.309",
+          "dur_at": 8,
+          "launch": "2029-04-11",
+          "dec_arr": "19.317",
+          "dur_total": 354,
+          "dv_total": "6.049",
+          "v_dep_earth": "5.419",
+          "vrel_arr_earth": "0.000",
+          "dv_dep_park": "4.455",
+          "dec_dep": "16.671",
+          "c3": "29.361",
+          "tid": 158703,
+          "dur_out": 49,
+          "dur_ret": 297,
+          "v_arr_earth": "11.744",
+          "vrel_dep_neo": "1.285"
+        }
+      },
+      "horizonsAsteroidHeader": {
+        "target": "99942 Apophis (2004 MN4)",
+        "center": "Sun (10)                        {source: DE441}",
+        "frame": "ICRF",
+        "soln": [
+          "Soln.date: 2024-Jun-25",
+          "soln ref.= JPL#220",
+          "JPL#220"
+        ]
+      },
+      "published": {
+        "c3": {
+          "text": "29.361",
+          "value": 29.361,
+          "sigFigs": 5
+        },
+        "v_dep_earth": {
+          "text": "5.419",
+          "value": 5.419,
+          "sigFigs": 4
+        },
+        "dv_dep_park": {
+          "text": "4.455",
+          "value": 4.455,
+          "sigFigs": 4
+        },
+        "vrel_arr_neo": {
+          "text": "0.309",
+          "value": 0.309,
+          "sigFigs": 3
+        },
+        "vrel_dep_neo": {
+          "text": "1.285",
+          "value": 1.285,
+          "sigFigs": 4
+        },
+        "vrel_arr_earth": {
+          "text": "0.000",
+          "value": 0,
+          "sigFigs": 0
+        },
+        "v_arr_earth": {
+          "text": "11.744",
+          "value": 11.744,
+          "sigFigs": 5
+        },
+        "dv_total": {
+          "text": "6.049",
+          "value": 6.049,
+          "sigFigs": 4
+        }
+      },
+      "checks": [
+        {
+          "quantity": "vrel_dep_neo",
+          "ours": 1.2852645014733806,
+          "pilotFullPrecision": 1.2852645014733806,
+          "bitIdenticalToPilot": true,
+          "relDiffVsPilotFull": 0,
+          "dispatchQuotedPilot": 1.2853,
+          "ours4sf": 1.285,
+          "dispatchQuoted4sf": 1.285,
+          "literalRoundBoth4sfMatch": true,
+          "nhatsPublished": "1.285",
+          "oursRoundedToNhatsDecimals": 1.285,
+          "matchesNhatsAtItsDecimals": true
+        },
+        {
+          "quantity": "v_arr_earth_125km",
+          "ours": 11.743951594533165,
+          "pilotFullPrecision": 11.743951594533165,
+          "bitIdenticalToPilot": true,
+          "relDiffVsPilotFull": 0,
+          "dispatchQuotedPilot": 11.744,
+          "ours4sf": 11.74,
+          "dispatchQuoted4sf": 11.74,
+          "literalRoundBoth4sfMatch": true,
+          "nhatsPublished": "11.744",
+          "oursRoundedToNhatsDecimals": 11.744,
+          "matchesNhatsAtItsDecimals": true
+        }
+      ],
+      "variants": [
+        {
+          "convention": "calendar date as TDB 0h (primary)",
+          "epochsJdTdb": {
+            "L": 2462237.5,
+            "A": 2462286.5,
+            "D": 2462294.5,
+            "R": 2462591.5
+          },
+          "ok": true,
+          "q": {
+            "c3": 29.361327214946876,
+            "v_dep_earth": 5.418609343267595,
+            "vrel_arr_neo": 0.30933297797212966,
+            "vrel_dep_neo": 1.2852645014733806,
+            "vinf_ret_earth": 3.915771209296251,
+            "v_arr_earth_125km": 11.743951594533165,
+            "dv_dep_park_400": 4.454762169867651,
+            "dv_dep_park_200": 4.48565223464187,
+            "entry_ctrl_dv_model": 0,
+            "dv_total_400": 6.049359649313161,
+            "dv_total_200": 6.080249714087381
+          },
+          "outbound": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "c3": 29.361327214946876,
+                "vInfEnd": 0.30933297797212966
+              }
+            ]
+          },
+          "return": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "vInfStart": 1.2852645014733806,
+                "vInfEnd": 3.915771209296251
+              }
+            ]
+          }
+        },
+        {
+          "convention": "calendar date as UTC 0h (TDB = UTC + 69.184 s)",
+          "epochsJdTdb": {
+            "L": 2462237.500800741,
+            "A": 2462286.500800741,
+            "D": 2462294.500800741,
+            "R": 2462591.500800741
+          },
+          "ok": true,
+          "q": {
+            "c3": 29.362637550609758,
+            "v_dep_earth": 5.418730252615437,
+            "vrel_arr_neo": 0.3092469174623798,
+            "vrel_dep_neo": 1.2852739224529177,
+            "vinf_ret_earth": 3.9157877487585457,
+            "v_arr_earth_125km": 11.74395710927591,
+            "dv_dep_park_400": 4.45481621169386,
+            "dv_dep_park_200": 4.485705630811294,
+            "entry_ctrl_dv_model": 0,
+            "dv_total_400": 6.049337051609157,
+            "dv_total_200": 6.080226470726592
+          },
+          "outbound": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "c3": 29.362637550609758,
+                "vInfEnd": 0.3092469174623798
+              }
+            ]
+          },
+          "return": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "vInfStart": 1.2852739224529177,
+                "vInfEnd": 3.9157877487585457
+              }
+            ]
+          }
+        },
+        {
+          "convention": "calendar date as TDB 12h",
+          "epochsJdTdb": {
+            "L": 2462238,
+            "A": 2462287,
+            "D": 2462295,
+            "R": 2462592
+          },
+          "ok": true,
+          "q": {
+            "c3": 30.187104193439463,
+            "v_dep_earth": 5.494279224196697,
+            "vrel_arr_neo": 0.25544536153349107,
+            "vrel_dep_neo": 1.2922784067910416,
+            "vinf_ret_earth": 3.9257943266726003,
+            "v_arr_earth_125km": 11.74729739074139,
+            "dv_dep_park_400": 4.488771842843015,
+            "dv_dep_park_200": 4.519256696732997,
+            "entry_ctrl_dv_model": 0,
+            "dv_total_400": 6.036495611167547,
+            "dv_total_200": 6.066980465057529
+          },
+          "outbound": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "c3": 30.187104193439463,
+                "vInfEnd": 0.25544536153349107
+              }
+            ]
+          },
+          "return": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "vInfStart": 1.2922784067910416,
+                "vInfEnd": 3.9257943266726003
+              }
+            ]
+          }
+        }
+      ],
+      "conventionSpread": {
+        "c3": [
+          0,
+          0.0013103356628825225,
+          0.8257769784925877
+        ],
+        "v_dep_earth": [
+          0,
+          0.00012090934784225738,
+          0.07566988092910254
+        ],
+        "vrel_arr_neo": [
+          0,
+          -0.00008606050974985235,
+          -0.0538876164386386
+        ],
+        "vrel_dep_neo": [
+          0,
+          0.000009420979537155816,
+          0.0070139053176609956
+        ],
+        "vinf_ret_earth": [
+          0,
+          0.000016539462294851148,
+          0.010023117376349422
+        ],
+        "v_arr_earth_125km": [
+          0,
+          0.000005514742744239243,
+          0.003345796208224172
+        ],
+        "dv_dep_park_400": [
+          0,
+          0.000054041826208717225,
+          0.034009672975363614
+        ],
+        "dv_dep_park_200": [
+          0,
+          0.00005339616942379166,
+          0.03360446209112666
+        ],
+        "entry_ctrl_dv_model": [
+          0,
+          0,
+          0
+        ],
+        "dv_total_400": [
+          0,
+          -0.000022597704004034824,
+          -0.01286403814561421
+        ],
+        "dv_total_200": [
+          0,
+          -0.000023243360788960388,
+          -0.01326924902985116
+        ]
+      },
+      "asterOwnPositions_notGate": {
+        "vrel_dep_neo": 3.148322037796044,
+        "bitIdenticalToPilot": true,
+        "quantities": {
+          "c3": 28.74926057385153,
+          "v_dep_earth": 5.361833695094574,
+          "vrel_arr_neo": 0.29622107407640913,
+          "vrel_dep_neo": 3.148322037796044,
+          "vinf_ret_earth": 6.13046246556924,
+          "v_arr_earth_125km": 12.655817039327724,
+          "dv_dep_park_400": 4.429492475547267,
+          "dv_dep_park_200": 4.460685066925876,
+          "entry_ctrl_dv_model": 0.6558170393277241,
+          "dv_total_400": 8.529852626747445,
+          "dv_total_200": 8.561045218126054
+        },
+        "asteroidPositionErrorKm": {
+          "arrival": 10089857.874875622,
+          "departure": 11990402.650096294
+        },
+        "pilotClaim": {
+          "value": 3.148,
+          "posErrMkm": 10
+        }
+      },
+      "tier": null
+    },
+    "2000 SG344": {
+      "nhats": {
+        "orbit_id": "17",
+        "computed": "2021-04-19",
+        "fullname": "       (2000 SG344)",
+        "min_dv_traj": {
+          "vrel_arr_earth": "0.000",
+          "dur_at": 8,
+          "dur_total": 370,
+          "dec_dep": "-11.923",
+          "vrel_dep_neo": "0.166",
+          "dv_total": "3.549",
+          "vrel_arr_neo": "0.137",
+          "dec_arr": "-13.060",
+          "v_arr_earth": "11.150",
+          "tid": 2280521,
+          "c3": "1.507",
+          "launch": "2029-10-12",
+          "dv_dep_park": "3.246",
+          "dur_ret": 161,
+          "v_dep_earth": "1.227",
+          "dur_out": 201
+        }
+      },
+      "horizonsAsteroidHeader": {
+        "target": "(2000 SG344)",
+        "center": "Sun (10)                        {source: DE441}",
+        "frame": "ICRF",
+        "soln": [
+          "Soln.date: 2021-Apr-14",
+          "soln ref.= JPL#17",
+          "JPL#17"
+        ]
+      },
+      "published": {
+        "c3": {
+          "text": "1.507",
+          "value": 1.507,
+          "sigFigs": 4
+        },
+        "v_dep_earth": {
+          "text": "1.227",
+          "value": 1.227,
+          "sigFigs": 4
+        },
+        "dv_dep_park": {
+          "text": "3.246",
+          "value": 3.246,
+          "sigFigs": 4
+        },
+        "vrel_arr_neo": {
+          "text": "0.137",
+          "value": 0.137,
+          "sigFigs": 3
+        },
+        "vrel_dep_neo": {
+          "text": "0.166",
+          "value": 0.166,
+          "sigFigs": 3
+        },
+        "vrel_arr_earth": {
+          "text": "0.000",
+          "value": 0,
+          "sigFigs": 0
+        },
+        "v_arr_earth": {
+          "text": "11.150",
+          "value": 11.15,
+          "sigFigs": 5
+        },
+        "dv_total": {
+          "text": "3.549",
+          "value": 3.549,
+          "sigFigs": 4
+        }
+      },
+      "checks": [
+        {
+          "quantity": "c3",
+          "ours": 1.506516468257234,
+          "pilotFullPrecision": 1.506516468257234,
+          "bitIdenticalToPilot": true,
+          "relDiffVsPilotFull": 0,
+          "dispatchQuotedPilot": 1.5065,
+          "ours4sf": 1.507,
+          "dispatchQuoted4sf": 1.506,
+          "literalRoundBoth4sfMatch": false,
+          "nhatsPublished": "1.507",
+          "oursRoundedToNhatsDecimals": 1.507,
+          "matchesNhatsAtItsDecimals": true
+        },
+        {
+          "quantity": "vrel_dep_neo",
+          "ours": 0.16595512631784967,
+          "pilotFullPrecision": 0.16595512631784967,
+          "bitIdenticalToPilot": true,
+          "relDiffVsPilotFull": 0,
+          "dispatchQuotedPilot": 0.166,
+          "ours4sf": 0.166,
+          "dispatchQuoted4sf": 0.166,
+          "literalRoundBoth4sfMatch": true,
+          "nhatsPublished": "0.166",
+          "oursRoundedToNhatsDecimals": 0.166,
+          "matchesNhatsAtItsDecimals": true
+        }
+      ],
+      "variants": [
+        {
+          "convention": "calendar date as TDB 0h (primary)",
+          "epochsJdTdb": {
+            "L": 2462421.5,
+            "A": 2462622.5,
+            "D": 2462630.5,
+            "R": 2462791.5
+          },
+          "ok": true,
+          "q": {
+            "c3": 1.506516468257234,
+            "v_dep_earth": 1.227402325342931,
+            "vrel_arr_neo": 0.13713502620524196,
+            "vrel_dep_neo": 0.16595512631784967,
+            "vinf_ret_earth": 1.3204135265582815,
+            "v_arr_earth_125km": 11.150364423295892,
+            "dv_dep_park_400": 3.245656658810841,
+            "dv_dep_park_200": 3.2925599259320357,
+            "entry_ctrl_dv_model": 0,
+            "dv_total_400": 3.5487468113339324,
+            "dv_total_200": 3.5956500784551273
+          },
+          "outbound": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "c3": 1.506516468257234,
+                "vInfEnd": 0.13713502620524196
+              }
+            ]
+          },
+          "return": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "vInfStart": 0.16595512631784967,
+                "vInfEnd": 1.3204135265582815
+              }
+            ]
+          }
+        },
+        {
+          "convention": "calendar date as UTC 0h (TDB = UTC + 69.184 s)",
+          "epochsJdTdb": {
+            "L": 2462421.500800741,
+            "A": 2462622.500800741,
+            "D": 2462630.500800741,
+            "R": 2462791.500800741
+          },
+          "ok": true,
+          "q": {
+            "c3": 1.506533008717263,
+            "v_dep_earth": 1.2274090633188526,
+            "vrel_arr_neo": 0.13713338530582217,
+            "vrel_dep_neo": 0.16595765402373092,
+            "vinf_ret_earth": 1.3204011203769843,
+            "v_arr_earth_125km": 11.150362954176758,
+            "dv_dep_park_400": 3.2456574165593235,
+            "dv_dep_park_200": 3.2925606725568333,
+            "entry_ctrl_dv_model": 0,
+            "dv_total_400": 3.5487484558888767,
+            "dv_total_200": 3.5956517118863864
+          },
+          "outbound": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "c3": 1.506533008717263,
+                "vInfEnd": 0.13713338530582217
+              }
+            ]
+          },
+          "return": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "vInfStart": 0.16595765402373092,
+                "vInfEnd": 1.3204011203769843
+              }
+            ]
+          }
+        },
+        {
+          "convention": "calendar date as TDB 12h",
+          "epochsJdTdb": {
+            "L": 2462422,
+            "A": 2462623,
+            "D": 2462631,
+            "R": 2462792
+          },
+          "ok": true,
+          "q": {
+            "c3": 1.5169656706280874,
+            "v_dep_earth": 1.2316516027790032,
+            "vrel_arr_neo": 0.13639612593049066,
+            "vrel_dep_neo": 0.1676104182968821,
+            "vinf_ret_earth": 1.3126125168586198,
+            "v_arr_earth_125km": 11.149443327386287,
+            "dv_dep_park_400": 3.246135345248156,
+            "dv_dep_park_200": 3.2930315855928605,
+            "entry_ctrl_dv_model": 0,
+            "dv_total_400": 3.550141889475529,
+            "dv_total_200": 3.597038129820233
+          },
+          "outbound": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "c3": 1.5169656706280874,
+                "vInfEnd": 0.13639612593049066
+              }
+            ]
+          },
+          "return": {
+            "M": 0,
+            "branch": "single",
+            "kernelSelectedInItsM": true,
+            "candidates": [
+              {
+                "M": 0,
+                "branch": "single",
+                "vInfStart": 0.1676104182968821,
+                "vInfEnd": 1.3126125168586198
+              }
+            ]
+          }
+        }
+      ],
+      "conventionSpread": {
+        "c3": [
+          0,
+          0.000016540460028968695,
+          0.010449202370853339
+        ],
+        "v_dep_earth": [
+          0,
+          0.000006737975921655703,
+          0.004249277436072285
+        ],
+        "vrel_arr_neo": [
+          0,
+          -0.0000016408994197858462,
+          -0.0007389002747512918
+        ],
+        "vrel_dep_neo": [
+          0,
+          0.000002527705881244513,
+          0.0016552919790324416
+        ],
+        "vinf_ret_earth": [
+          0,
+          -0.00001240618129716431,
+          -0.007801009699661687
+        ],
+        "v_arr_earth_125km": [
+          0,
+          -0.0000014691191339011311,
+          -0.0009210959096055404
+        ],
+        "dv_dep_park_400": [
+          0,
+          7.577484826271075e-7,
+          0.00047868643731519
+        ],
+        "dv_dep_park_200": [
+          0,
+          7.466247975429496e-7,
+          0.0004716596608247414
+        ],
+        "entry_ctrl_dv_model": [
+          0,
+          0,
+          0
+        ],
+        "dv_total_400": [
+          0,
+          0.0000016445549442245522,
+          0.0013950781415963398
+        ],
+        "dv_total_200": [
+          0,
+          0.0000016334312591403943,
+          0.0013880513651058912
+        ]
+      },
+      "asterOwnPositions_notGate": {
+        "vrel_dep_neo": 2.701001929042895,
+        "bitIdenticalToPilot": true,
+        "quantities": {
+          "c3": 5.531999703701998,
+          "v_dep_earth": 2.3520203450867507,
+          "vrel_arr_neo": 1.126473964691905,
+          "vrel_dep_neo": 2.701001929042895,
+          "vinf_ret_earth": 3.8716303514322625,
+          "v_arr_earth_125km": 11.729307586951421,
+          "dv_dep_park_400": 3.42853913347993,
+          "dv_dep_park_200": 3.4728009963987976,
+          "entry_ctrl_dv_model": 0,
+          "dv_total_400": 7.25601502721473,
+          "dv_total_200": 7.300276890133597
+        },
+        "asteroidPositionErrorKm": {
+          "arrival": 34728564.980801895,
+          "departure": 34864149.900669694
+        },
+        "pilotClaim": {
+          "value": 2.7,
+          "posErrMkm": 35
+        }
+      },
+      "tier": null
+    }
+  }
+}
