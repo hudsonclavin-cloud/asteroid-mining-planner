@@ -16,6 +16,8 @@ export const R_E_DEC20_8_KM = 6378.1366; // DEC-20-8 (IAU 2015 nominal equatoria
 export const ENTRY_LIMIT_KMS = 12; // NHATS entry-speed limit (method assumption, see N4)
 export const entrySpeed = (vInf, altKm = 125, rE = R_E_DEC20_8_KM, mu = MU_E) => Math.sqrt(vInf * vInf + (2 * mu) / (rE + altKm));
 export const injection = (c3, parkRadiusKm) => injectionDvFromC3(c3, MU_E, parkRadiusKm);
+/** v-inf whose inertial entry speed at altKm (DEC-20-8 radius) equals vEntry. */
+export const vinfForEntry = (vEntry, altKm = 125, rE = R_E_DEC20_8_KM, mu = MU_E) => Math.sqrt(Math.max(0, vEntry * vEntry - (2 * mu) / (rE + altKm)));
 const DUMMY_ELEMENTS = Object.freeze({ note: 'unused: the arrival provider below ignores elements' });
 const toCanon = (s) => ({ positionM: { x: s.r[0] * 1000, y: s.r[1] * 1000, z: s.r[2] * 1000 }, velocityMps: { x: s.v[0] * 1000, y: s.v[1] * 1000, z: s.v[2] * 1000 } });
 const tdbS = (jd) => (jd - J2000_TDB_JULIAN_DATE) * SECONDS_PER_DAY; // the kernel's own conversion
@@ -60,6 +62,12 @@ export function evaluateRoundTrip(epochs, durs, states, { parkRadiusKm = PARK_40
   };
   q.dv_total_400 = q.dv_dep_park_400 + q.vrel_arr_neo + q.vrel_dep_neo + q.entry_ctrl_dv_model;
   q.dv_total_200 = q.dv_dep_park_200 + q.vrel_arr_neo + q.vrel_dep_neo + q.entry_ctrl_dv_model;
+  // Model B (added AFTER seeing N2's first results, disclosed): the control dV is the v-inf reduction that
+  // brings the 125 km inertial entry speed down to 12 km/s. Model A above (pre-registered) books the excess
+  // entry speed itself. Neither changes a v-inf or the branch choice.
+  q.entry_ctrl_dv_modelB = Math.max(0, retPick.vInfEnd - vinfForEntry(ENTRY_LIMIT_KMS));
+  q.dv_total_400_modelB = q.dv_dep_park_400 + q.vrel_arr_neo + q.vrel_dep_neo + q.entry_ctrl_dv_modelB;
+  q.dv_total_200_modelB = q.dv_dep_park_200 + q.vrel_arr_neo + q.vrel_dep_neo + q.entry_ctrl_dv_modelB;
   return {
     ok: true, q,
     outbound: { M: outPick.M, branch: outPick.branch, kernelSelectedInItsM: outPick.kernelSelected, candidates: out.map(({ M, branch, c3, vInfEnd }) => ({ M, branch, c3, vInfEnd })) },
