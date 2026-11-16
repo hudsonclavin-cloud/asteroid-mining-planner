@@ -4,7 +4,10 @@
  * The cache is generated offline by tools/build/precompute-lambert-screen.mjs
  * and shipped as tests/fixtures/v2/lambert-screen-cache.json.
  *
- * Cache contract (schemaVersion: 1):
+ * Cache contract (schemaVersion: 1 or 2):
+ *   schemaVersion 2 drops bestWindows per DEC-20-15; it is unrelated to Slice 11's
+ *   deferred M=1 re-screen. Version 1 remains accepted for cached responses during
+ *   the Pages cache window; its extra bestWindows field is ignored at runtime.
  *
  * Status meaning:
  *   low_departure_c3:       Best departure C3 <= feasibleC3MaxKm2S2
@@ -17,13 +20,8 @@
  * depends on arrival delta-v, stay time, and return trajectory terms. Slice 12+
  * adds those dimensions.
  *
- * minC3 and bestWindows values are stored at full f64 precision. Display rounding
- * happens at the UI layer.
- *
- * bestWindows contains up to 5 best (departure date, TOF) windows per body, sorted
- * ascending by C3. ALL bodies with at least one converged Lambert solve get
- * bestWindows, regardless of whether their minC3 falls below the threshold. This
- * decouples planning data from policy classification.
+ * minC3 values are stored at full f64 precision. Display rounding happens at the UI
+ * layer.
  *
  * Downstream consumers:
  *   - Slice 10 Phase C UI: per-body badge / departure-C3 tag rendering
@@ -40,14 +38,6 @@ export type LambertScreenStatus =
   | 'lambert_unconvergeable'
   | 'propagator_failed';
 
-export interface LambertScreenWindow {
-  launchDate: string;
-  tofDays: number;
-  c3: number;
-  vInfDep: number;
-  vInfArr: number;
-}
-
 export interface LambertScreenResult {
   bodyId: string;
   spkId: number;
@@ -56,13 +46,12 @@ export interface LambertScreenResult {
   minC3: number | null;
   minC3Date: string | null;
   minC3TofDays: number | null;
-  bestWindows: LambertScreenWindow[];
   isCoOrbital: boolean;
   isNearZeroC3Degenerate: boolean;
 }
 
 export interface LambertScreenCacheMetadata {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   generatedAt: string;
   catalogSize: number;
   screeningWindow: { startUtc: string; endUtc: string };
@@ -83,6 +72,13 @@ export interface LambertScreenCacheMetadata {
     catalogFixtureSha256: string;
     horizonsFixtureSha256: string;
     precomputeScriptSha256: string;
+    generator?: {
+      node: string;
+      platform: string;
+      arch: string;
+      osRelease: string;
+      treeClean: true;
+    };
   };
 }
 
@@ -102,8 +98,8 @@ export function validateLambertScreenCache(cache: unknown): LambertScreenCache {
   }
 
   const metadata = typedCache.metadata as Record<string, unknown>;
-  if (metadata.schemaVersion !== 1) {
-    throw new Error(`Cache schemaVersion ${metadata.schemaVersion} not supported (expected 1)`);
+  if (metadata.schemaVersion !== 1 && metadata.schemaVersion !== 2) {
+    throw new Error(`Cache schemaVersion ${metadata.schemaVersion} not supported (expected 1 or 2)`);
   }
 
   if (!Array.isArray(typedCache.bodies)) {
