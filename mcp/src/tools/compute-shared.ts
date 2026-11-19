@@ -14,6 +14,7 @@ import {
   deliveredMassKg,
   deterministicMarginMps,
   isBeyondCurve,
+  isNonFiniteC3,
   LAUNCH_VEHICLES,
   payloadAtC3,
   SPACECRAFT_STATIONKEEPING_MPS
@@ -244,6 +245,9 @@ export function buildOneWayMissionCost(vehicle: LaunchVehicle, c3: number, vInfA
   const payload = payloadAtC3(vehicle, c3);
   if (isBeyondCurve(payload)) {
     return null;
+  }
+  if (isNonFiniteC3(payload)) {
+    throw new Error(`Non-finite C3 reached the one-way mission-cost budget for ${makeVehicleId(vehicle)}: C3=${c3}`);
   }
 
   const rendezvousMps = rendezvousDvFromVInf(vInfArrKmps) * 1000;
