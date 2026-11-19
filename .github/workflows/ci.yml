@@ -1,7 +1,7 @@
 name: CI
 
 # First committed workflow in this repo (Slice 14 Phase A / DEC-14-5).
-# Four gates: `typecheck`, `build`, `golden-numbers`, and `full-tests`.
+# Five gates: `typecheck`, `build`, `golden-numbers`, `full-tests`, and `mcp`.
 # `typecheck` runs tsc, `build` rebuilds the committed Pages bundle, and
 # `golden-numbers` pins payloadAtC3 / deliveredMassKg (the df3225f data-literal
 # guard). It is deliberately SEPARATE from the GitHub Pages deploy: it never
@@ -92,3 +92,37 @@ jobs:
 
       - name: Full test suite
         run: node tools/run-tests.mjs
+
+  mcp:
+    name: mcp (build, test, eval)
+    # Added 2026-11-17: mcp/ stopped compiling at 4535df9 (2026-10-14) and no job built it,
+    # so the break sat unseen for a month. mcp/ resolves @types/node from the root install,
+    # hence both installs.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            mcp/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install MCP dependencies
+        run: npm --prefix mcp ci
+
+      - name: MCP build and tests
+        run: npm --prefix mcp test
+
+      - name: MCP eval
+        run: npm --prefix mcp run eval
+
+      - name: MCP eval must pass every pair, from this run
+        run: node mcp/scripts/assert-eval-pass.mjs mcp/eval/slice15-eval-report.json --fresh

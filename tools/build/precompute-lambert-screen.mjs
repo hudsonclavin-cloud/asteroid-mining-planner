@@ -2,12 +2,11 @@
 /**
  * Phase C.1: Precompute Lambert screening cache.
  *
- * Schema: lambert-screen-cache.ts schemaVersion 1.
+ * Schema: lambert-screen-cache.ts schemaVersion 2 (without bestWindows).
  *
  * Per-body output:
  *   - status: low_departure_c3 / high_departure_c3 / lambert_unconvergeable / propagator_failed
  *   - minC3: best departure C3 across the (departure x TOF) grid, full f64 precision
- *   - bestWindows: top-5 windows by C3, regardless of threshold
  *   - isCoOrbital: INV-016 amendment flag
  *
  * Provenance: cache metadata records SHA256 hashes of all input fixtures and this
@@ -27,6 +26,7 @@
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { once } from 'node:events';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -34,6 +34,21 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..', '..');
+
+const gitStatusResult = spawnSync('git', ['status', '--porcelain'], {
+  cwd: repoRoot,
+  encoding: 'utf8',
+});
+if (gitStatusResult.status !== 0) {
+  console.error('Failed to check git status before cache generation');
+  console.error(gitStatusResult.stderr || gitStatusResult.stdout);
+  process.exit(1);
+}
+if (gitStatusResult.stdout.trim() !== '') {
+  console.error('Refusing to generate Lambert screen cache from a dirty tree:');
+  console.error(gitStatusResult.stdout);
+  process.exit(1);
+}
 
 const tempOutDir = path.join(repoRoot, '.tmp-tests', 'lambert-screen-precompute');
 fs.rmSync(tempOutDir, { recursive: true, force: true });
@@ -122,20 +137,6 @@ async function writeChunk(stream, chunk) {
     return;
   }
   await once(stream, 'drain');
-}
-
-function maybeInsertBestWindow(bestWindows, candidate) {
-  let insertAt = 0;
-  while (insertAt < bestWindows.length && bestWindows[insertAt].c3 <= candidate.c3) {
-    insertAt += 1;
-  }
-  if (insertAt >= 5) {
-    return;
-  }
-  bestWindows.splice(insertAt, 0, candidate);
-  if (bestWindows.length > 5) {
-    bestWindows.pop();
-  }
 }
 
 const startTdb = utcStringToTdbSeconds(SCREENING_START_UTC);
@@ -231,7 +232,6 @@ for (const body of bodies) {
   let minC3 = Number.POSITIVE_INFINITY;
   let minC3Date = null;
   let minC3TofDays = null;
-  const bestWindows = [];
   let propagatorFailed = false;
   let lambertFailed = false;
   let anyOk = false;
@@ -272,25 +272,11 @@ for (const body of bodies) {
       const vInfDepZ = result.v1[2] - earth.velocityKmPerS[2];
       const vInfDepMag = magnitude3(vInfDepX, vInfDepY, vInfDepZ);
       const c3 = vInfDepMag * vInfDepMag;
-      const targetVelocityKmPerS = kmpsVectorFromMps(targetState.velocityMps);
-      const vInfArrX = result.v2[0] - targetVelocityKmPerS[0];
-      const vInfArrY = result.v2[1] - targetVelocityKmPerS[1];
-      const vInfArrZ = result.v2[2] - targetVelocityKmPerS[2];
-      const vInfArrMag = magnitude3(vInfArrX, vInfArrY, vInfArrZ);
-
       if (c3 < minC3) {
         minC3 = c3;
         minC3Date = departureDateStrings[depIdx];
         minC3TofDays = tofDays;
       }
-
-      maybeInsertBestWindow(bestWindows, {
-        launchDate: departureDateStrings[depIdx],
-        tofDays,
-        c3,
-        vInfDep: vInfDepMag,
-        vInfArr: vInfArrMag,
-      });
     }
   }
 
@@ -311,7 +297,6 @@ for (const body of bodies) {
     minC3: anyOk ? minC3 : null,
     minC3Date: anyOk ? minC3Date : null,
     minC3TofDays: anyOk ? minC3TofDays : null,
-    bestWindows,
     isCoOrbital,
   };
 
@@ -372,7 +357,7 @@ if (coOrbitalCount !== 130) {
 
 const cache = {
   metadata: {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     catalogSize: bodies.length,
     screeningWindow: { startUtc: SCREENING_START_UTC, endUtc: SCREENING_END_UTC },
@@ -393,6 +378,13 @@ const cache = {
       catalogFixtureSha256,
       horizonsFixtureSha256,
       precomputeScriptSha256,
+      generator: {
+        node: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        osRelease: os.release(),
+        treeClean: true,
+      },
     },
   },
 };

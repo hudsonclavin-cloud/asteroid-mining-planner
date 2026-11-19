@@ -1,7 +1,7 @@
 # STATUS.md — Aster Project Current State
 
 > Updated at the end of each session. Keep it short; agents read this before acting.
-> **Refreshed 2026-11-13 from command output on branch `s20-text-sweep`; this record commits STATUS one commit after `1691d96`.**
+> **Refreshed 2026-11-18 from command output on branch `s20-a-cache`, which carries the MCP fix (`s20-mcp-fix`, merged in) and the DEC-20-15 screening cache; `origin/main` was `da27cb5`. The 2026-11-13 record had gone stale across nine merges and a Codex session-start gate stopped on it (2026-11-18). This STATUS commit is the last commit on its branch.**
 > **Rewritten 2026-08-02 (`S16-CLOSE-2026-08-02-A`); current state corrected 2026-08-04 (`S-STATUS-TRUTHFIX-2026-08-04-A`); truth-refreshed 2026-08-07 (`S-HYGIENE-2026-08-07-A`); truth-refreshed 2026-08-10 after Front A close; truth-refreshed 2026-08-12 after the Front B batch run (`S-S17-FRONTB-BATCH-2026-08-11-A`); truth-refreshed 2026-08-13 after Batch 2 ship (`S-S17-BATCH2-2026-08-12-A`).** If HEAD does not match the table below,
 > update this file before believing it. A stale STATUS forced a session-start stop-gate once
 > already (audit L3-1) — that is why this section exists.
@@ -18,29 +18,32 @@
 
 ## Git State
 
-The following is the command transcript used to rebuild this section (run before
-the STATUS commit itself):
+The following is the command transcript used to rebuild this section (run in the `s20-a-cache` worktree before the
+STATUS commit; `tools/slice20-research/a-cache/write-status.mjs` (dispatch S20_CHAIN) reads every value below from git
+or the tree, except the three test counts, which come from the runs named):
 
 ```text
-git rev-parse HEAD
-git rev-parse origin/main
-git rev-list --count origin/main..HEAD
-Get-ChildItem -Path docs/v2 -Directory | ForEach-Object { rg -o "(?:solarSystemV2|porkchopV2|compareV2|aboutV2)-[A-Za-z0-9_-]+\.js" (Join-Path $_.FullName 'index.html') } | Sort-Object -Unique
-rg -n "legacy|noindex|V2|v2" docs/index.html docs/legacy/index.html
+git rev-parse --short origin/main
+git log --merges --reverse --format=%h 0d31cda..origin/main
+git log --reverse --format='%h %s' da27cb5..s20-mcp-fix
+git log --merges --format='%h %P' da27cb5..HEAD
+git log --first-parent --reverse --format=%h da27cb5..HEAD
+docs/v2/*/index.html entry-bundle names; docs/lambert-screen-cache.json bytes, gzip (Node zlib, default level), schemaVersion
+npm run verify ; npm --prefix mcp test
 ```
 
 | Item | Commit | State |
 |---|---|---|
-| origin/main | `0d31cda` | Read from `git rev-parse origin/main`; no push was performed by this run |
-| Local HEAD before this STATUS commit (branch `s20-text-sweep`) | `1691d96` | Slice 20 W1-W9 sweep commits are landed; this STATUS commit intentionally pins the previous tip |
+| origin/main before this record | `da27cb5` | Merge s20-rulings (SLICE_20 §9.2-§9.6). Read from `git rev-parse origin/main` |
+| This record | branch `s20-a-cache` | From `da27cb5`: DEC-20-15 Steps 1-11 `0d00b54`..`89eea53`; `s20-mcp-fix` (`ca27cb7` fix(mcp), `6ace68c` ci) merged at `87631ae`; evidence `b3b0f0e`; an AGENTS.md §2 gate amendment if Hudson commits it; then this STATUS commit, last |
 
-**Measured pin lag (2026-11-13):** `git rev-list --count 0d31cda..1691d96` was 14 before this edit; this STATUS commit intentionally makes the branch 15 commits ahead. STATUS commits LAST in any sequence.
-**Push state:** origin/main is at `0d31cda`. Branch `s20-text-sweep` is local-only and NOT merged. No push was performed by this run. Hudson's handoff is to commit the protected edits, complete W11/W12, then merge and push only after the handoff gate is satisfied.
-**Rollback for this run:** no rollback ref was created and no existing refs were changed by this record run.
-**Deploy boundary:** the checked-in `docs/` tree is the deploy payload. The command output lists entry bundles `aboutV2-DL_Fcx9X.js`, `compareV2-F3OpNprt.js`, `porkchopV2-V_mxVt_g.js`, and `solarSystemV2-C6dR6zLr.js`. These names are the current checked-in deploy boundary; this branch is live only after Hudson merges and pushes. CI state: local W11 verification is pending; GitHub Actions has not run for this branch.
+**Session-start match rule (worktrees, SLICE_20 §9.6).** Run the AGENTS.md §2 gate in the canonical tree after `git fetch origin`. `origin/main` matches this record when it is (i) the SHA in the first row, (ii) the last commit of the branch in the second row, or (iii) a merge commit whose first parent is the first-row SHA and whose second parent is that last commit. A feature worktree is created from that `origin/main`; its own HEAD is not compared with this file. Every branch that merges to main ends with a STATUS commit, so the record stays current across merges. A merge without one makes the next session stop; the remedy is a STATUS refresh, never a waived gate.
+**Merged since the prior record (`origin/main` was `0d31cda`), oldest first:** `75606da` PR #13 long-run research · `f6ba35d` PR #14 long-run 2 · `f066cc1` PR #15 Front A text sweep · `34716d0` PR #1 K2 momentum bank · `35e63d6` PR #16 mcp-config · `ebc045a` Front A tail (B1, B3, B4, B6, B7) · `c1d88a7` PR #17 NHATS research · `d05fac2` PR #18 MCP scope · `da27cb5` Slice 20 §9 rulings.
+**Open work not on main:** none from the Slice 20 dispatches once this branch is merged.
+**Deploy boundary:** the checked-in `docs/` tree is the deploy payload. Entry bundles on `s20-a-cache`, live once merged: `aboutV2-DL_Fcx9X.js`, `compareV2-Cdr7Y37T.js`, `porkchopV2-CU68GLWB.js`, `solarSystemV2-DMCzKWJd.js`. `docs/lambert-screen-cache.json` is schemaVersion 2 (no `bestWindows`): 8,081,586 bytes raw, 1,112,999 gzipped.
 Solar-system ephemeris window 2026-11-01..2027-03-31 TDB; refresh due before 2027-03-31 (S20_00)
 **Root/legacy boundary:** `docs/index.html` redirects to `/v2/solar-system/`; `docs/legacy/index.html` has `noindex, nofollow` and the Slice 19.5 legacy banner linking to the current v2 tool.
-**Baseline verification (2026-11-13, before the S20 text sweep):** `npm run verify` passed 109/109 files and 363/363 tests, with 0 failures and 0 load-timeouts.
+**Baseline verification (2026-11-18, `s20-a-cache` at `b3b0f0e`, Windows, Node v26.7.0):** `npm run verify` passed 112/112 files and 371 tests, with 0 failures and 0 load-timeouts. MCP tests 29/29 and eval 10/10 against the schemaVersion 2 cache. CI (Linux, Node 24) is the reference count; the Windows-vs-Linux per-file comparison is in `tools/slice20-research/a-cache/REPORT.md`.
 **Additive-only, hook-enforced:** `src/v2/SLICE_16_FOUNDING.md`, `src/v2/SLICE_16_APPENDIX_A_LOCKED.md`. This file is the documented exception and may be rewritten.
 **Invariants:** global `INV-034` + `INV-V1-001`; Slice 16's four local invariants are namespaced `INV-S16-033..036`. Global `INV-037` (frozen-expectation amendment rule) added 2026-08-01.
 
@@ -51,7 +54,7 @@ Solar-system ephemeris window 2026-11-01..2027-03-31 TDB; refresh due before 202
 | Track | Slice | State |
 |---|---|---|
 | Mission planning | **19.5** (Honest Front Door) | **CLOSED 2026-11-02**. F2 remains PARTIAL. The open ephemeris item is separate: common coverage ends 2026-10-16 TDB and the root reports NOT LIVE after that date. |
-| Mission planning | **20** (Front A text sweep) | **IN PROGRESS** on `s20-text-sweep`; W1-W9 landed through `1691d96`; W6 core constant and W9 protected annotations remain unstaged. W10 is this record; W11 verification/build and W12 evidence remain. |
+| Mission planning | **20** (Return Leg) | **IN PROGRESS** (founding `src/v2/SLICE_20_FOUNDING.md`, LOCKED 2026-11-04; DEC-20-1..15). Front A merged: text sweep `f066cc1`, tail `ebc045a`; Clome tail re-gate 7/7 PASS 2026-11-16; close record not yet appended. Rulings §9.2-§9.6, incl. DEC-20-14 (arcs refused at one solar radius) and DEC-20-15 (screening cache), at `da27cb5`. Merged with this record: the MCP compile fix + CI `mcp` job (`s20-mcp-fix`) and the DEC-20-15 schemaVersion 2 screening cache (`s20-a-cache`); end gate A-C pending. Next: Front B (K1 return-leg math; audit before deploy). |
 | Mission planning | 9 (catalog) · 10 (Lambert, C3) | COMPLETE |
 | Mission planning | 11 (porkchop + ΔV) · 12 (DLA overlay) | COMPLETE + DEPLOYED |
 | Mission planning | 13 (mission cost card) | COMPLETE + DEPLOYED (showcase figures labelled unreproducible-pending-regeneration, L3-6) |

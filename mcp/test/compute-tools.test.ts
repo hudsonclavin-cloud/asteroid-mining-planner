@@ -10,7 +10,14 @@ import { runGetValidationReport } from '../src/tools/get-validation-report.js';
 import { porkchopScanInputSchema, runPorkchopScan } from '../src/tools/porkchop-scan.js';
 import { bodySummary, fullBodyRecord, loadCatalogContext } from '../src/tools/catalog-shared.js';
 import { readRepoJson, readRepoText } from '../src/resources/repo.js';
-import { earthSpanLabel, loadComputeContext, utcMidnightToJdTdb, withinEarthSpan } from '../src/tools/compute-shared.js';
+import {
+  LAUNCH_VEHICLES,
+  buildOneWayMissionCost,
+  earthSpanLabel,
+  loadComputeContext,
+  utcMidnightToJdTdb,
+  withinEarthSpan,
+} from '../src/tools/compute-shared.js';
 import {
   NEAR_ZERO_C3_DEGENERACY_THRESHOLD_KM2_S2,
   isNearZeroC3Degenerate,
@@ -530,4 +537,18 @@ test('T24 get_validation_report figures match the committed artifacts', async ()
   assert.equal(sections.cost_oracle.strict.rmsErrorPct.value, oracle.strictRms);
   assert.equal(sections.cost_oracle.observed.maxErrorPct.value, oracle.observedMax);
   assert.equal(sections.cost_oracle.observed.rmsErrorPct.value, oracle.observedRms);
+});
+
+test('one-way mission cost refuses a non-finite C3 by throwing, never as a curve-domain null', () => {
+  const vehicle = LAUNCH_VEHICLES[0];
+  assert.ok(vehicle, 'at least one launch vehicle is committed');
+  for (const c3 of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    assert.throws(
+      () => buildOneWayMissionCost(vehicle, c3, 1),
+      /Non-finite C3 reached the one-way mission-cost budget/,
+      `C3=${c3} must throw the non-finite error`,
+    );
+  }
+  const finite = buildOneWayMissionCost(vehicle, 10, 1);
+  assert.ok(finite === null || Number.isFinite(finite.deliveredMassKg), 'a finite C3 still returns a budget or a curve-domain null');
 });

@@ -4,9 +4,9 @@
 //
 // 1. rev-a-snapshot.js  — Skyhook params/rev_a.json copied VERBATIM, plus its sha256 and the
 //    Skyhook commit it came from. The sim never carries a tether constant from memory.
-// 2. vinf-proxy.js       — per-body minimum Earth-DEPARTURE v-inf from Aster's committed screening
-//    cache (docs/lambert-screen-cache.json). This is an OUTBOUND quantity. It is a population-scale
-//    proxy only; true Earth-ARRIVAL v-inf needs the K1 return-leg porkchop, which does not exist yet.
+// 2. vinf-proxy.js       — per-body minimum Earth-DEPARTURE v-inf = sqrt(minC3) from Aster's
+//    committed screening cache (docs/lambert-screen-cache.json), using the cached minimum-C3 date/TOF.
+//    This is an OUTBOUND quantity. True Earth-ARRIVAL v-inf needs the K1 return-leg porkchop, which does not exist yet.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -53,9 +53,13 @@ const bins = new Array(Math.round(MAXV / BIN)).fill(0);
 let counted = 0, overflow = 0, noWindow = 0;
 const sample = [];
 for (const b of cache.bodies) {
-  const ws = (b.bestWindows || []).filter((w) => Number.isFinite(w.vInfDep) && w.c3 <= c3Max);
-  if (!ws.length) { noWindow++; continue; }
-  const best = ws.reduce((x, y) => (y.vInfDep < x.vInfDep ? y : x));
+  const minC3 = b.minC3;
+  if (!Number.isFinite(minC3) || minC3 > c3Max) { noWindow++; continue; }
+  const best = {
+    vInfDep: Math.sqrt(minC3),
+    launchDate: b.minC3Date,
+    tofDays: b.minC3TofDays,
+  };
   counted++;
   const k = Math.floor(best.vInfDep / BIN);
   if (k >= bins.length) overflow++; else bins[k]++;
@@ -73,7 +77,7 @@ const proxyOut =
       screeningWindow: cache.metadata.screeningWindow,
       feasibleC3MaxKm2S2: c3Max
     },
-    caveat: 'Outbound departure v-inf, min over the cached best windows per body. Earth-arrival v-inf for a body->Earth leg is a different quantity (K1). Shown for population scale only. [Speculative as a proxy]',
+    caveat: 'Outbound departure v-inf = sqrt(minC3) at the cached minimum-C3 departure date/TOF (C3 = vInfDep^2). Earth-arrival v-inf for a body->Earth leg is a different quantity (K1). Shown for population scale only. [Speculative as a proxy]',
     binKms: BIN, bins, overflow, counted, noWindow, catalogSize: cache.bodies.length, lowestSample: sample
   }, null, 1) + ';\n';
 writeFileSync(join(here, 'vinf-proxy.js'), proxyOut);

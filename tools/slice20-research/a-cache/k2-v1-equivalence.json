@@ -1,0 +1,245 @@
+{
+  "cacheSha256": "bd27b9bd882a65343399f772e37218b5fb05644bea5a822aafcb65e81e750206",
+  "schemaVersion": 1,
+  "c3MaxKm2S2": 25,
+  "oldProxy": {
+    "binKms": 0.25,
+    "bins": [
+      2010,
+      5047,
+      5544,
+      5002,
+      4375,
+      3589,
+      2904,
+      2598,
+      2224,
+      1855,
+      1463,
+      1222,
+      915,
+      723,
+      582,
+      461,
+      341,
+      249,
+      184,
+      134,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "overflow": 0,
+    "counted": 41422,
+    "noWindow": 484,
+    "catalogSize": 41906,
+    "lowestSample": [
+      {
+        "designation": "1566",
+        "vInfDep": 0.904,
+        "launchDate": "2033-11-03",
+        "tofDays": 242
+      },
+      {
+        "designation": "1580",
+        "vInfDep": 1.075,
+        "launchDate": "2040-10-25",
+        "tofDays": 242
+      },
+      {
+        "designation": "1620",
+        "vInfDep": 0.944,
+        "launchDate": "2036-11-06",
+        "tofDays": 332
+      },
+      {
+        "designation": "1862",
+        "vInfDep": 0.773,
+        "launchDate": "2030-02-21",
+        "tofDays": 242
+      },
+      {
+        "designation": "1981",
+        "vInfDep": 0.696,
+        "launchDate": "2036-04-03",
+        "tofDays": 332
+      },
+      {
+        "designation": "2061",
+        "vInfDep": 1.187,
+        "launchDate": "2035-02-08",
+        "tofDays": 242
+      },
+      {
+        "designation": "2062",
+        "vInfDep": 1.142,
+        "launchDate": "2031-06-12",
+        "tofDays": 242
+      },
+      {
+        "designation": "2101",
+        "vInfDep": 0.377,
+        "launchDate": "2035-05-10",
+        "tofDays": 272
+      },
+      {
+        "designation": "2102",
+        "vInfDep": 0.914,
+        "launchDate": "2038-04-29",
+        "tofDays": 242
+      },
+      {
+        "designation": "2201",
+        "vInfDep": 0.467,
+        "launchDate": "2040-04-26",
+        "tofDays": 242
+      },
+      {
+        "designation": "2340",
+        "vInfDep": 0.253,
+        "launchDate": "2038-03-04",
+        "tofDays": 242
+      },
+      {
+        "designation": "3122",
+        "vInfDep": 1.056,
+        "launchDate": "2030-11-14",
+        "tofDays": 332
+      }
+    ]
+  },
+  "minC3Proxy": {
+    "binKms": 0.25,
+    "bins": [
+      2010,
+      5047,
+      5544,
+      5002,
+      4375,
+      3589,
+      2904,
+      2598,
+      2224,
+      1855,
+      1463,
+      1222,
+      915,
+      723,
+      582,
+      461,
+      341,
+      249,
+      184,
+      134,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "overflow": 0,
+    "counted": 41422,
+    "noWindow": 484,
+    "catalogSize": 41906,
+    "lowestSample": [
+      {
+        "designation": "1566",
+        "vInfDep": 0.904,
+        "launchDate": "2033-11-03",
+        "tofDays": 242
+      },
+      {
+        "designation": "1580",
+        "vInfDep": 1.075,
+        "launchDate": "2040-10-25",
+        "tofDays": 242
+      },
+      {
+        "designation": "1620",
+        "vInfDep": 0.944,
+        "launchDate": "2036-11-06",
+        "tofDays": 332
+      },
+      {
+        "designation": "1862",
+        "vInfDep": 0.773,
+        "launchDate": "2030-02-21",
+        "tofDays": 242
+      },
+      {
+        "designation": "1981",
+        "vInfDep": 0.696,
+        "launchDate": "2036-04-03",
+        "tofDays": 332
+      },
+      {
+        "designation": "2061",
+        "vInfDep": 1.187,
+        "launchDate": "2035-02-08",
+        "tofDays": 242
+      },
+      {
+        "designation": "2062",
+        "vInfDep": 1.142,
+        "launchDate": "2031-06-12",
+        "tofDays": 242
+      },
+      {
+        "designation": "2101",
+        "vInfDep": 0.377,
+        "launchDate": "2035-05-10",
+        "tofDays": 272
+      },
+      {
+        "designation": "2102",
+        "vInfDep": 0.914,
+        "launchDate": "2038-04-29",
+        "tofDays": 242
+      },
+      {
+        "designation": "2201",
+        "vInfDep": 0.467,
+        "launchDate": "2040-04-26",
+        "tofDays": 242
+      },
+      {
+        "designation": "2340",
+        "vInfDep": 0.253,
+        "launchDate": "2038-03-04",
+        "tofDays": 242
+      },
+      {
+        "designation": "3122",
+        "vInfDep": 1.056,
+        "launchDate": "2030-11-14",
+        "tofDays": 332
+      }
+    ]
+  },
+  "checks": {
+    "binKms": true,
+    "bins": true,
+    "overflow": true,
+    "counted": true,
+    "noWindow": true,
+    "catalogSize": true,
+    "lowestSample": true
+  },
+  "pass": true
+}

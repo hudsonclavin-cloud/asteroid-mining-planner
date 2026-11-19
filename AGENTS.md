@@ -54,8 +54,12 @@ Active-slice founding doc is named in STATUS.md.
 ### Session start (Codex and Claude Code)
 ```
 pwd                       # confirm you are in the canonical repo root (see STATUS.md §Identity)
-git log --oneline -1      # confirm HEAD matches STATUS.md — if not, STOP and report
+git fetch origin
+git log --oneline -1 origin/main   # confirm it matches STATUS.md under its §Git State match rule — if not, STOP and report
 ```
+Work then happens in a worktree created from that `origin/main` (SLICE_20 §9.6); a worktree's own HEAD is not
+compared with STATUS.md. (Amended 2026-11-18: the gate compared the local HEAD, which no feature worktree can match,
+and the record had gone stale across nine merges.)
 
 ### Commit discipline
 - Stage explicitly: `git add src/v2/path/to/file.ts` — **never** `git add -A`, `git add .`

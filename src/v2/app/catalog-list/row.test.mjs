@@ -263,7 +263,7 @@ test('the rule is exactly {L0} x {low, high}: every other tier/status combinatio
       const quality = status === 'low_departure_c3' || status === 'high_departure_c3';
       const screen = {
         bodyId: 'asteroid-synthetic', spkId: 0, designation: 'synthetic', status,
-        minC3: quality ? 12.5 : null, minC3Date: null, minC3TofDays: null, bestWindows: [], isCoOrbital: false,
+        minC3: quality ? 12.5 : null, minC3Date: null, minC3TofDays: null, isCoOrbital: false,
       };
       const data = {
         bodyId: 'asteroid-synthetic', spkId: 0, designation: 'synthetic', name: '', orbitClass: 'APO', H: null,
