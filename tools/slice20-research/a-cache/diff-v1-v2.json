@@ -1,0 +1,73 @@
+{
+  "v1Sha256": "bd27b9bd882a65343399f772e37218b5fb05644bea5a822aafcb65e81e750206",
+  "v2Sha256": "961bd7af7d6dfdea6936b10882302f750860f6d0534d7b425db685e28ac55469",
+  "schemas": {
+    "v1": 1,
+    "v2": 2
+  },
+  "bodyCount": {
+    "v1": 41906,
+    "v2": 41906
+  },
+  "bodyOrderDifferences": 0,
+  "statusMatrix": {
+    "high_departure_c3": {
+      "high_departure_c3": 483,
+      "low_departure_c3": 0,
+      "propagator_failed": 0
+    },
+    "low_departure_c3": {
+      "high_departure_c3": 0,
+      "low_departure_c3": 41422,
+      "propagator_failed": 0
+    },
+    "propagator_failed": {
+      "high_departure_c3": 0,
+      "low_departure_c3": 0,
+      "propagator_failed": 1
+    }
+  },
+  "statusOffDiagonal": 0,
+  "isCoOrbitalChanges": 0,
+  "displayedC3TextChanges": 0,
+  "nearZeroFlagChanges": 0,
+  "screeningColorChanges": 0,
+  "minC3": {
+    "finitePairs": 41905,
+    "mismatchedNullOrNonFiniteValues": 0,
+    "maxRelativeDifference": 2.1173720492082248e-13,
+    "medianRelativeDifference": 0
+  },
+  "minC3DateChanges": 0,
+  "minC3TofDaysChanges": 0,
+  "dateChangeSamples": [],
+  "bestWindowsBodiesV2": 0,
+  "unexpectedMetadataDifferences": [],
+  "sizes": {
+    "v1": {
+      "rawBytes": 34499477,
+      "gzip9Bytes": 8251154,
+      "brotli11Bytes": 6342245
+    },
+    "v2": {
+      "rawBytes": 8081586,
+      "gzip9Bytes": 1054003,
+      "brotli11Bytes": 760328
+    }
+  },
+  "criteria": {
+    "bothCachesValidate": true,
+    "bodyCount41906": true,
+    "sameBodyOrder": true,
+    "statusMatrixDiagonal": true,
+    "isCoOrbitalUnchanged": true,
+    "displayedC3TextUnchanged": true,
+    "nearZeroFlagUnchanged": true,
+    "screeningColorsUnchanged": true,
+    "minC3RelativeDifferenceWithin1e12": true,
+    "noMismatchedMinC3Nulls": true,
+    "noUnexpectedMetadataDifferences": true,
+    "schemaVersion2HasNoBestWindows": true
+  },
+  "pass": true
+}
