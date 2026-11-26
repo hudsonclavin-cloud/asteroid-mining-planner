@@ -14,6 +14,7 @@ The source contracts used for interpretation are `src/v2/core/lambert/lambert-mu
 - Zero shown bodies: `0.000023862931322483654`; zero shown+screen: `0.0741659905502792`; zero shown+support: `0.000023862931322483654`; zero shown+both: `0.09874480981243736`.
 - The selected best return failed the screen for `0.9628922562939983` of bodies with a selected best (`41905` bodies). The distribution of per-body shown-cell screen share had median `0.011152416356877323`, p95 `0.0841813135985199`, min `0`, and max `0.3348751156336725`.
 - The old/new Earth-GM recount changed `0` cells.
+- One catalog body, `2015 D1` (`bodyIndex=7092`, L0), was recorded with `propagationRefused: RangeError: aM must be > 0 for elliptical Kepler propagation`; it has no shown cell and is retained in the per-body table rather than being silently dropped.
 
 By tier, the zero shown / zero shown+screen / zero shown+support / zero shown+both shares were:
 

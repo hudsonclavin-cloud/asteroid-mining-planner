@@ -1,6 +1,6 @@
 {
   "schema": "aster-s20-overnight-on4-summary/1",
-  "generatedAtUtc": "2026-11-26T07:23:49.273Z",
+  "generatedAtUtc": "2026-11-26T07:25:57.845Z",
   "coarseBodies": 41906,
   "fullBodies": 500,
   "coarseSummary": {
@@ -113,6 +113,14 @@
       "max": 4.68414400510126
     }
   },
+  "propagationRefusedBodies": [
+    {
+      "bodyIndex": 7092,
+      "designation": "2015 D1",
+      "bodyId": "asteroid-2015 D1",
+      "reason": "RangeError: aM must be > 0 for elliptical Kepler propagation"
+    }
+  ],
   "screen": {
     "earthMuNewKm3S2": 398600.43550702266,
     "earthMuOldKm3S2": 398600.4418,
