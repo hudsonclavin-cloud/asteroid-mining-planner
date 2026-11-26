@@ -1,0 +1,123 @@
+{
+  "schema": "aster-s20-overnight-on4-summary/1",
+  "generatedAtUtc": "2026-11-26T07:23:49.273Z",
+  "coarseBodies": 41906,
+  "fullBodies": 500,
+  "coarseSummary": {
+    "overall": {
+      "bodies": 41906,
+      "cells": 52382500,
+      "refusedEarth": 7081945,
+      "refusedEarthShare": 0.1351967737316852,
+      "refusedSun": 1593817,
+      "screenChangeCount": 0,
+      "zeroShownShare": 0.000023862931322483654,
+      "zeroShownScreenShare": 0.0741659905502792,
+      "zeroShownSupportShare": 0.000023862931322483654,
+      "zeroShownBothShare": 0.09874480981243736,
+      "shownScreenShareDistribution": {
+        "count": 41905,
+        "min": 0,
+        "median": 0.011152416356877323,
+        "p95": 0.0841813135985199,
+        "max": 0.3348751156336725
+      },
+      "bestFailsScreenShare": 0.9628922562939983,
+      "bestCount": 41905
+    },
+    "byTier": {
+      "L2": {
+        "bodies": 31745,
+        "cells": 39681250,
+        "refusedEarth": 5364905,
+        "refusedEarthShare": 0.1352,
+        "refusedSun": 1098832,
+        "screenChangeCount": 0,
+        "zeroShownShare": 0,
+        "zeroShownScreenShare": 0.09100645770987557,
+        "zeroShownSupportShare": 0,
+        "zeroShownBothShare": 0.09100645770987557,
+        "shownScreenShareDistribution": {
+          "count": 31745,
+          "min": 0,
+          "median": 0.009250693802035153,
+          "p95": 0.04810360777058279,
+          "max": 0.21646623496762257
+        },
+        "bestFailsScreenShare": 0.983493463537565,
+        "bestCount": 31745
+      },
+      "L1": {
+        "bodies": 10150,
+        "cells": 12687500,
+        "refusedEarth": 1715350,
+        "refusedEarthShare": 0.1352,
+        "refusedSun": 494519,
+        "screenChangeCount": 0,
+        "zeroShownShare": 0,
+        "zeroShownScreenShare": 0.021477832512315272,
+        "zeroShownSupportShare": 0,
+        "zeroShownBothShare": 0.12295566502463054,
+        "shownScreenShareDistribution": {
+          "count": 10150,
+          "min": 0,
+          "median": 0.02960222016651249,
+          "p95": 0.12395929694727105,
+          "max": 0.3348751156336725
+        },
+        "bestFailsScreenShare": 0.898423645320197,
+        "bestCount": 10150
+      },
+      "L0": {
+        "bodies": 11,
+        "cells": 13750,
+        "refusedEarth": 1690,
+        "refusedEarthShare": 0.12290909090909091,
+        "refusedSun": 466,
+        "screenChangeCount": 0,
+        "zeroShownShare": 0.09090909090909091,
+        "zeroShownScreenShare": 0.09090909090909091,
+        "zeroShownSupportShare": 0.09090909090909091,
+        "zeroShownBothShare": 0.09090909090909091,
+        "shownScreenShareDistribution": {
+          "count": 10,
+          "min": 0.0037243947858473,
+          "median": 0.015769944341372914,
+          "p95": 0.03700277520814061,
+          "max": 0.03796296296296296
+        },
+        "bestFailsScreenShare": 1,
+        "bestCount": 10
+      }
+    }
+  },
+  "fullResolutionControl": {
+    "bodies": 500,
+    "coarse": {
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.054,
+      "zeroShownSupportShare": 0,
+      "zeroShownBothShare": 0.078
+    },
+    "full": {
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.008,
+      "zeroShownSupportShare": 0,
+      "zeroShownBothShare": 0.014
+    },
+    "bestVEIDifferenceKmS": {
+      "count": 500,
+      "min": -11.521796799207745,
+      "median": -0.011579499295132578,
+      "p95": 1.2273370067419158,
+      "max": 4.68414400510126
+    }
+  },
+  "screen": {
+    "earthMuNewKm3S2": 398600.43550702266,
+    "earthMuOldKm3S2": 398600.4418,
+    "rEIKm": 6503.1366
+  },
+  "datasetParts": 3,
+  "orderPath": "C:\\Users\\hudso\\s20-overnight-store\\on4\\order.json"
+}

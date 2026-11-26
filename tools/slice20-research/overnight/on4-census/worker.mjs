@@ -13,7 +13,8 @@ const tierFixture = JSON.parse(fs.readFileSync(path.join(repoRoot, 'docs/tier-si
 const earthSeries = ingestSlice2Fixture(earthFixture).earth.map((sample) => sample.state);
 const bodyMap = ingestSlice9Fixture(catalogFixture).asteroids;
 const bodies = Object.values(bodyMap);
-const order = JSON.parse(fs.readFileSync(orderPath, 'utf8'));
+const orderData = JSON.parse(fs.readFileSync(orderPath, 'utf8'));
+const order = orderData.order;
 const MU_SUN = 132712440018; const MU_EARTH_NEW = 398600.43550702266; const MU_EARTH_OLD = 398600.4418; const R_EI_KM = 6503.1366;
 const SEC_DAY = 86400; const depStartJd = 2461041.500800741; const depEndJd = 2466154.500800741; const tofMin = 182.5; const tofMax = 1826.25;
 const oldDebug = console.debug; console.debug = () => {};
