@@ -1,0 +1,873 @@
+{
+  "schema": "aster-s20-overnight-on2-summary/1",
+  "generatedAtUtc": "2026-11-26T06:47:37.315Z",
+  "grid": {
+    "depStartJd": 2461041.500800741,
+    "depEndJd": 2466154.500800741,
+    "depCount": 40,
+    "tofMinDays": 182.5,
+    "tofMaxDays": 1826.25,
+    "tofCount": 40,
+    "earthLastSeconds": 1293796800
+  },
+  "selection": {
+    "seed": 20261125,
+    "count": 100,
+    "lr1Count": 40,
+    "extraL0": [
+      "2019 MO",
+      "2022 EB5",
+      "2023 CX1",
+      "2024 RW1",
+      "2024 UQ",
+      "3D",
+      "2015 D1"
+    ],
+    "bodies": [
+      {
+        "designation": "433",
+        "bodyId": "asteroid-433",
+        "tier": "L2"
+      },
+      {
+        "designation": "99942",
+        "bodyId": "asteroid-99942",
+        "tier": "L1"
+      },
+      {
+        "designation": "101955",
+        "bodyId": "asteroid-101955",
+        "tier": "L1"
+      },
+      {
+        "designation": "2000 SG344",
+        "bodyId": "asteroid-2000 SG344",
+        "tier": "L1"
+      },
+      {
+        "designation": "2008 HU4",
+        "bodyId": "asteroid-2008 HU4",
+        "tier": "L1"
+      },
+      {
+        "designation": "1998 KY26",
+        "bodyId": "asteroid-1998 KY26",
+        "tier": "L1"
+      },
+      {
+        "designation": "2024 BX1",
+        "bodyId": "asteroid-2024 BX1",
+        "tier": "L0"
+      },
+      {
+        "designation": "2024 XA1",
+        "bodyId": "asteroid-2024 XA1",
+        "tier": "L0"
+      },
+      {
+        "designation": "2018 LA",
+        "bodyId": "asteroid-2018 LA",
+        "tier": "L0"
+      },
+      {
+        "designation": "2022 WJ1",
+        "bodyId": "asteroid-2022 WJ1",
+        "tier": "L0"
+      },
+      {
+        "designation": "2008 QU3",
+        "bodyId": "asteroid-2008 QU3",
+        "tier": "L1"
+      },
+      {
+        "designation": "2025 PK2",
+        "bodyId": "asteroid-2025 PK2",
+        "tier": "L1"
+      },
+      {
+        "designation": "2019 LB",
+        "bodyId": "asteroid-2019 LB",
+        "tier": "L1"
+      },
+      {
+        "designation": "2026 KA",
+        "bodyId": "asteroid-2026 KA",
+        "tier": "L1"
+      },
+      {
+        "designation": "2024 UK5",
+        "bodyId": "asteroid-2024 UK5",
+        "tier": "L1"
+      },
+      {
+        "designation": "2010 UA7",
+        "bodyId": "asteroid-2010 UA7",
+        "tier": "L1"
+      },
+      {
+        "designation": "2019 NC",
+        "bodyId": "asteroid-2019 NC",
+        "tier": "L1"
+      },
+      {
+        "designation": "2017 UD",
+        "bodyId": "asteroid-2017 UD",
+        "tier": "L1"
+      },
+      {
+        "designation": "2005 YO128",
+        "bodyId": "asteroid-2005 YO128",
+        "tier": "L1"
+      },
+      {
+        "designation": "2020 VY4",
+        "bodyId": "asteroid-2020 VY4",
+        "tier": "L1"
+      },
+      {
+        "designation": "2005 OK3",
+        "bodyId": "asteroid-2005 OK3",
+        "tier": "L1"
+      },
+      {
+        "designation": "2012 XE133",
+        "bodyId": "asteroid-2012 XE133",
+        "tier": "L1"
+      },
+      {
+        "designation": "2020 WG5",
+        "bodyId": "asteroid-2020 WG5",
+        "tier": "L1"
+      },
+      {
+        "designation": "810074",
+        "bodyId": "asteroid-810074",
+        "tier": "L2"
+      },
+      {
+        "designation": "2013 VN13",
+        "bodyId": "asteroid-2013 VN13",
+        "tier": "L2"
+      },
+      {
+        "designation": "138095",
+        "bodyId": "asteroid-138095",
+        "tier": "L2"
+      },
+      {
+        "designation": "2015 HQ11",
+        "bodyId": "asteroid-2015 HQ11",
+        "tier": "L2"
+      },
+      {
+        "designation": "886456",
+        "bodyId": "asteroid-886456",
+        "tier": "L2"
+      },
+      {
+        "designation": "2022 SX7",
+        "bodyId": "asteroid-2022 SX7",
+        "tier": "L2"
+      },
+      {
+        "designation": "2019 AV6",
+        "bodyId": "asteroid-2019 AV6",
+        "tier": "L2"
+      },
+      {
+        "designation": "99248",
+        "bodyId": "asteroid-99248",
+        "tier": "L2"
+      },
+      {
+        "designation": "2026 CV2",
+        "bodyId": "asteroid-2026 CV2",
+        "tier": "L2"
+      },
+      {
+        "designation": "2026 HB",
+        "bodyId": "asteroid-2026 HB",
+        "tier": "L2"
+      },
+      {
+        "designation": "2025 BZ2",
+        "bodyId": "asteroid-2025 BZ2",
+        "tier": "L2"
+      },
+      {
+        "designation": "2019 WM3",
+        "bodyId": "asteroid-2019 WM3",
+        "tier": "L2"
+      },
+      {
+        "designation": "2019 UU4",
+        "bodyId": "asteroid-2019 UU4",
+        "tier": "L2"
+      },
+      {
+        "designation": "2016 LG49",
+        "bodyId": "asteroid-2016 LG49",
+        "tier": "L2"
+      },
+      {
+        "designation": "2023 CK1",
+        "bodyId": "asteroid-2023 CK1",
+        "tier": "L2"
+      },
+      {
+        "designation": "2022 FZ3",
+        "bodyId": "asteroid-2022 FZ3",
+        "tier": "L2"
+      },
+      {
+        "designation": "2013 BD18",
+        "bodyId": "asteroid-2013 BD18",
+        "tier": "L2"
+      },
+      {
+        "designation": "2022 FZ",
+        "bodyId": "asteroid-2022 FZ",
+        "tier": "L1"
+      },
+      {
+        "designation": "2023 WS",
+        "bodyId": "asteroid-2023 WS",
+        "tier": "L1"
+      },
+      {
+        "designation": "2022 QO3",
+        "bodyId": "asteroid-2022 QO3",
+        "tier": "L1"
+      },
+      {
+        "designation": "2002 GR",
+        "bodyId": "asteroid-2002 GR",
+        "tier": "L1"
+      },
+      {
+        "designation": "2016 FL39",
+        "bodyId": "asteroid-2016 FL39",
+        "tier": "L1"
+      },
+      {
+        "designation": "2005 ND63",
+        "bodyId": "asteroid-2005 ND63",
+        "tier": "L1"
+      },
+      {
+        "designation": "2017 TG4",
+        "bodyId": "asteroid-2017 TG4",
+        "tier": "L1"
+      },
+      {
+        "designation": "2019 US",
+        "bodyId": "asteroid-2019 US",
+        "tier": "L1"
+      },
+      {
+        "designation": "2024 CN2",
+        "bodyId": "asteroid-2024 CN2",
+        "tier": "L1"
+      },
+      {
+        "designation": "367789",
+        "bodyId": "asteroid-367789",
+        "tier": "L1"
+      },
+      {
+        "designation": "2016 JX24",
+        "bodyId": "asteroid-2016 JX24",
+        "tier": "L1"
+      },
+      {
+        "designation": "2019 UC9",
+        "bodyId": "asteroid-2019 UC9",
+        "tier": "L1"
+      },
+      {
+        "designation": "2022 WP9",
+        "bodyId": "asteroid-2022 WP9",
+        "tier": "L1"
+      },
+      {
+        "designation": "2024 VX3",
+        "bodyId": "asteroid-2024 VX3",
+        "tier": "L1"
+      },
+      {
+        "designation": "2004 AC",
+        "bodyId": "asteroid-2004 AC",
+        "tier": "L1"
+      },
+      {
+        "designation": "2017 MB3",
+        "bodyId": "asteroid-2017 MB3",
+        "tier": "L1"
+      },
+      {
+        "designation": "2019 GG4",
+        "bodyId": "asteroid-2019 GG4",
+        "tier": "L1"
+      },
+      {
+        "designation": "2026 DX",
+        "bodyId": "asteroid-2026 DX",
+        "tier": "L1"
+      },
+      {
+        "designation": "2022 PX",
+        "bodyId": "asteroid-2022 PX",
+        "tier": "L1"
+      },
+      {
+        "designation": "2025 FV13",
+        "bodyId": "asteroid-2025 FV13",
+        "tier": "L1"
+      },
+      {
+        "designation": "2019 JY7",
+        "bodyId": "asteroid-2019 JY7",
+        "tier": "L1"
+      },
+      {
+        "designation": "2022 BW3",
+        "bodyId": "asteroid-2022 BW3",
+        "tier": "L1"
+      },
+      {
+        "designation": "2019 AO7",
+        "bodyId": "asteroid-2019 AO7",
+        "tier": "L1"
+      },
+      {
+        "designation": "516803",
+        "bodyId": "asteroid-516803",
+        "tier": "L1"
+      },
+      {
+        "designation": "2022 OC17",
+        "bodyId": "asteroid-2022 OC17",
+        "tier": "L1"
+      },
+      {
+        "designation": "2017 VX1",
+        "bodyId": "asteroid-2017 VX1",
+        "tier": "L1"
+      },
+      {
+        "designation": "2012 BV61",
+        "bodyId": "asteroid-2012 BV61",
+        "tier": "L1"
+      },
+      {
+        "designation": "2011 WF44",
+        "bodyId": "asteroid-2011 WF44",
+        "tier": "L2"
+      },
+      {
+        "designation": "2025 CB1",
+        "bodyId": "asteroid-2025 CB1",
+        "tier": "L2"
+      },
+      {
+        "designation": "2020 KF1",
+        "bodyId": "asteroid-2020 KF1",
+        "tier": "L2"
+      },
+      {
+        "designation": "2018 CX2",
+        "bodyId": "asteroid-2018 CX2",
+        "tier": "L2"
+      },
+      {
+        "designation": "2023 JT2",
+        "bodyId": "asteroid-2023 JT2",
+        "tier": "L2"
+      },
+      {
+        "designation": "2017 RY15",
+        "bodyId": "asteroid-2017 RY15",
+        "tier": "L2"
+      },
+      {
+        "designation": "2017 WB",
+        "bodyId": "asteroid-2017 WB",
+        "tier": "L2"
+      },
+      {
+        "designation": "2019 YG",
+        "bodyId": "asteroid-2019 YG",
+        "tier": "L2"
+      },
+      {
+        "designation": "340048",
+        "bodyId": "asteroid-340048",
+        "tier": "L2"
+      },
+      {
+        "designation": "2017 BS5",
+        "bodyId": "asteroid-2017 BS5",
+        "tier": "L2"
+      },
+      {
+        "designation": "2020 UD4",
+        "bodyId": "asteroid-2020 UD4",
+        "tier": "L2"
+      },
+      {
+        "designation": "2006 KL89",
+        "bodyId": "asteroid-2006 KL89",
+        "tier": "L2"
+      },
+      {
+        "designation": "2008 PG7",
+        "bodyId": "asteroid-2008 PG7",
+        "tier": "L2"
+      },
+      {
+        "designation": "2025 DW7",
+        "bodyId": "asteroid-2025 DW7",
+        "tier": "L2"
+      },
+      {
+        "designation": "2021 JN",
+        "bodyId": "asteroid-2021 JN",
+        "tier": "L2"
+      },
+      {
+        "designation": "2021 JK3",
+        "bodyId": "asteroid-2021 JK3",
+        "tier": "L2"
+      },
+      {
+        "designation": "2024 MA1",
+        "bodyId": "asteroid-2024 MA1",
+        "tier": "L2"
+      },
+      {
+        "designation": "2025 DD4",
+        "bodyId": "asteroid-2025 DD4",
+        "tier": "L2"
+      },
+      {
+        "designation": "2006 UD64",
+        "bodyId": "asteroid-2006 UD64",
+        "tier": "L2"
+      },
+      {
+        "designation": "2001 WJ15",
+        "bodyId": "asteroid-2001 WJ15",
+        "tier": "L2"
+      },
+      {
+        "designation": "2013 GV38",
+        "bodyId": "asteroid-2013 GV38",
+        "tier": "L2"
+      },
+      {
+        "designation": "2024 HW5",
+        "bodyId": "asteroid-2024 HW5",
+        "tier": "L2"
+      },
+      {
+        "designation": "189263",
+        "bodyId": "asteroid-189263",
+        "tier": "L2"
+      },
+      {
+        "designation": "2024 YL17",
+        "bodyId": "asteroid-2024 YL17",
+        "tier": "L2"
+      },
+      {
+        "designation": "523593",
+        "bodyId": "asteroid-523593",
+        "tier": "L2"
+      },
+      {
+        "designation": "2016 CC193",
+        "bodyId": "asteroid-2016 CC193",
+        "tier": "L2"
+      },
+      {
+        "designation": "2019 MO",
+        "bodyId": "asteroid-2019 MO",
+        "tier": "L0"
+      },
+      {
+        "designation": "2022 EB5",
+        "bodyId": "asteroid-2022 EB5",
+        "tier": "L0"
+      },
+      {
+        "designation": "2023 CX1",
+        "bodyId": "asteroid-2023 CX1",
+        "tier": "L0"
+      },
+      {
+        "designation": "2024 RW1",
+        "bodyId": "asteroid-2024 RW1",
+        "tier": "L0"
+      },
+      {
+        "designation": "2024 UQ",
+        "bodyId": "asteroid-2024 UQ",
+        "tier": "L0"
+      },
+      {
+        "designation": "3D",
+        "bodyId": "asteroid-3D",
+        "tier": "L0"
+      },
+      {
+        "designation": "2015 D1",
+        "bodyId": "asteroid-2015 D1",
+        "tier": "L0"
+      }
+    ]
+  },
+  "cellStats": {
+    "bodies": 100,
+    "cells": 480000,
+    "refusedEarth": 64449,
+    "asteroidPropagationRefused": 4800,
+    "asterNull": 131507,
+    "asterBranches": {
+      "M0": 136917,
+      "M1": 173250,
+      "M2": 111404
+    }
+  },
+  "existence": {
+    "M0": {
+      "single": {
+        "both": 136917,
+        "asterOnly": 0,
+        "izzoOnly": 0,
+        "neither": 0
+      }
+    },
+    "M1": {
+      "left": {
+        "both": 86625,
+        "asterOnly": 0,
+        "izzoOnly": 0,
+        "neither": 50292
+      },
+      "right": {
+        "both": 86625,
+        "asterOnly": 0,
+        "izzoOnly": 0,
+        "neither": 50292
+      }
+    },
+    "M2": {
+      "left": {
+        "both": 55702,
+        "asterOnly": 0,
+        "izzoOnly": 0,
+        "neither": 81215
+      },
+      "right": {
+        "both": 55702,
+        "asterOnly": 0,
+        "izzoOnly": 0,
+        "neither": 81215
+      }
+    }
+  },
+  "existenceDisagreements": [],
+  "vectorStats": {
+    "M0/single/dv1": {
+      "count": 136917,
+      "max": 2.1316666946643685e-12,
+      "p95": 8.140289677804162e-15,
+      "median": 1.831026719408895e-15
+    },
+    "M0/single/dv2": {
+      "count": 136917,
+      "max": 2.017860837690109e-12,
+      "p95": 1.0087767680389479e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M0/single/dvInfDep": {
+      "count": 136917,
+      "max": 2.1316666946643685e-12,
+      "p95": 8.702335715267317e-15,
+      "median": 1.7763568394002505e-15
+    },
+    "M0/single/dvInfArr": {
+      "count": 136917,
+      "max": 2.0164021072024496e-12,
+      "p95": 1.020439314654103e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M1/left/dv1": {
+      "count": 86625,
+      "max": 2.1316785367965895e-12,
+      "p95": 8.747542958250513e-15,
+      "median": 2.5121479338940403e-15
+    },
+    "M1/left/dv2": {
+      "count": 86625,
+      "max": 2.0164052369761798e-12,
+      "p95": 9.729507111180987e-15,
+      "median": 3.552713678800501e-15
+    },
+    "M1/left/dvInfDep": {
+      "count": 86625,
+      "max": 2.1316785367965895e-12,
+      "p95": 8.881784197001252e-15,
+      "median": 2.6645352591003757e-15
+    },
+    "M1/left/dvInfArr": {
+      "count": 86625,
+      "max": 2.0164052369761798e-12,
+      "p95": 1.0048591735576161e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M1/right/dv1": {
+      "count": 86625,
+      "max": 2.1336966594239728e-12,
+      "p95": 9.565974336450908e-15,
+      "median": 2.6645352591003757e-15
+    },
+    "M1/right/dv2": {
+      "count": 86625,
+      "max": 2.0154011128158504e-12,
+      "p95": 1.0658141036401503e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M1/right/dvInfDep": {
+      "count": 86625,
+      "max": 2.1366139393564457e-12,
+      "p95": 1.0048591735576161e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M1/right/dvInfArr": {
+      "count": 86625,
+      "max": 2.016414626268222e-12,
+      "p95": 1.0658141036401503e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M2/left/dv1": {
+      "count": 55702,
+      "max": 2.131919852169608e-12,
+      "p95": 9.565974336450906e-15,
+      "median": 3.4755478145461824e-15
+    },
+    "M2/left/dv2": {
+      "count": 55702,
+      "max": 2.015391718802059e-12,
+      "p95": 9.565974336450906e-15,
+      "median": 3.552713678800501e-15
+    },
+    "M2/left/dvInfDep": {
+      "count": 55702,
+      "max": 2.1316666946643685e-12,
+      "p95": 1.0048591735576161e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M2/left/dvInfArr": {
+      "count": 55702,
+      "max": 2.015391718802059e-12,
+      "p95": 1.0048591735576161e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M2/right/dv1": {
+      "count": 55702,
+      "max": 2.1336966594239728e-12,
+      "p95": 1.0048591735576161e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M2/right/dv2": {
+      "count": 55702,
+      "max": 2.0161213858623412e-12,
+      "p95": 1.013652469562605e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M2/right/dvInfDep": {
+      "count": 55702,
+      "max": 2.133705532579524e-12,
+      "p95": 1.020439314654103e-14,
+      "median": 3.552713678800501e-15
+    },
+    "M2/right/dvInfArr": {
+      "count": 55702,
+      "max": 2.0143792571445214e-12,
+      "p95": 1.020439314654103e-14,
+      "median": 3.552713678800501e-15
+    }
+  },
+  "maxDvInfArrByM": {
+    "M0": 2.0164021072024496e-12,
+    "M1": 2.016414626268222e-12,
+    "M2": 2.015391718802059e-12
+  },
+  "valladoM0": {
+    "default": {
+      "count": 136494,
+      "maxDvInfArrKmS": 6.018206580500975e-7
+    },
+    "tight": {
+      "count": 136692,
+      "maxDvInfArrKmS": 9.531501341892306e-9
+    }
+  },
+  "closure": {
+    "M0": {
+      "count": 93355,
+      "bins": {
+        "lt0_1Au": {
+          "count": 15700,
+          "maxMissKm": 0.00013207300906474786,
+          "p95MissKm": 0.000012016650790788224,
+          "medianMissKm": 0.0000012944834351080052,
+          "maxEnergyRelDiff": 2.2842412777648434e-13,
+          "p95EnergyRelDiff": 3.1183275323213e-15,
+          "medianEnergyRelDiff": 7.613444987911253e-16,
+          "maxAngularMomentumRelDiff": 6.059598445835118e-14,
+          "p95AngularMomentumRelDiff": 1.7831129460721777e-15,
+          "medianAngularMomentumRelDiff": 3.9164304197180796e-16
+        },
+        "ge0_1Au": {
+          "count": 77655,
+          "maxMissKm": 0.00014576278753497868,
+          "p95MissKm": 0.000011760145116299347,
+          "medianMissKm": 0.0000013061912842346851,
+          "maxEnergyRelDiff": 1.0625463288072052e-12,
+          "p95EnergyRelDiff": 2.9894700537352537e-15,
+          "medianEnergyRelDiff": 7.301434887816259e-16,
+          "maxAngularMomentumRelDiff": 1.0816091950935944e-15,
+          "p95AngularMomentumRelDiff": 5.07069235865278e-16,
+          "medianAngularMomentumRelDiff": 2.0299610267548949e-16
+        },
+        "sunGrazingPass": {
+          "count": 220,
+          "maxMissKm": 0.00006735061469954608,
+          "p95MissKm": 0.000007174320717898512,
+          "medianMissKm": 9.624953963961191e-7,
+          "maxEnergyRelDiff": 1.198389257378983e-14,
+          "p95EnergyRelDiff": 4.0294695510770054e-15,
+          "medianEnergyRelDiff": 8.015274035173888e-16,
+          "maxAngularMomentumRelDiff": 3.2594275770016864e-14,
+          "p95AngularMomentumRelDiff": 5.5030650936870915e-15,
+          "medianAngularMomentumRelDiff": 1.1262747877198232e-15
+        }
+      },
+      "sunGrazingShare": 0.002356595790262975
+    },
+    "M1": {
+      "count": 121694,
+      "bins": {
+        "lt0_1Au": {
+          "count": 22165,
+          "maxMissKm": 0.00011399544488323615,
+          "p95MissKm": 0.000009840513239732749,
+          "medianMissKm": 0.0000013077626154175773,
+          "maxEnergyRelDiff": 1.5465410126071457e-14,
+          "p95EnergyRelDiff": 2.3975643424305213e-15,
+          "medianEnergyRelDiff": 5.84924889886581e-16,
+          "maxAngularMomentumRelDiff": 9.273875119832752e-14,
+          "p95AngularMomentumRelDiff": 1.6501717603568687e-15,
+          "medianAngularMomentumRelDiff": 3.7324111998801116e-16
+        },
+        "ge0_1Au": {
+          "count": 99529,
+          "maxMissKm": 0.00011503284480203896,
+          "p95MissKm": 0.000010327629186127964,
+          "medianMissKm": 0.0000015634329285792773,
+          "maxEnergyRelDiff": 1.2054099306624993e-14,
+          "p95EnergyRelDiff": 2.1675514296123652e-15,
+          "medianEnergyRelDiff": 5.552258639899724e-16,
+          "maxAngularMomentumRelDiff": 1.1473559991403257e-15,
+          "p95AngularMomentumRelDiff": 4.991994860375747e-16,
+          "medianAngularMomentumRelDiff": 2.033759367113441e-16
+        },
+        "sunGrazingPass": {
+          "count": 3185,
+          "maxMissKm": 0.00011399544488323615,
+          "p95MissKm": 0.0000106999194379501,
+          "medianMissKm": 0.0000015015646604658752,
+          "maxEnergyRelDiff": 1.5465410126071457e-14,
+          "p95EnergyRelDiff": 2.4457239662692246e-15,
+          "medianEnergyRelDiff": 6.258102081785487e-16,
+          "maxAngularMomentumRelDiff": 9.273875119832752e-14,
+          "p95AngularMomentumRelDiff": 5.137855373809821e-15,
+          "medianAngularMomentumRelDiff": 1.098351770611489e-15
+        }
+      },
+      "sunGrazingShare": 0.026172202409321742
+    },
+    "M2": {
+      "count": 80242,
+      "bins": {
+        "lt0_1Au": {
+          "count": 15801,
+          "maxMissKm": 0.000052554634781351586,
+          "p95MissKm": 0.000006683532101455655,
+          "medianMissKm": 0.0000011066118894849068,
+          "maxEnergyRelDiff": 7.026069868062278e-15,
+          "p95EnergyRelDiff": 1.4927023151389888e-15,
+          "medianEnergyRelDiff": 3.896602764766281e-16,
+          "maxAngularMomentumRelDiff": 4.8555908520099777e-14,
+          "p95AngularMomentumRelDiff": 1.5276082843766264e-15,
+          "medianAngularMomentumRelDiff": 3.484001233368248e-16
+        },
+        "ge0_1Au": {
+          "count": 64441,
+          "maxMissKm": 0.00009181310883287565,
+          "p95MissKm": 0.000007240281631917516,
+          "medianMissKm": 0.000001510764830081838,
+          "maxEnergyRelDiff": 7.761053058264562e-15,
+          "p95EnergyRelDiff": 1.3741175908669548e-15,
+          "medianEnergyRelDiff": 3.797232241404649e-16,
+          "maxAngularMomentumRelDiff": 1.153974959157755e-15,
+          "p95AngularMomentumRelDiff": 4.931717997015191e-16,
+          "medianAngularMomentumRelDiff": 2.043460827871933e-16
+        },
+        "sunGrazingPass": {
+          "count": 2294,
+          "maxMissKm": 0.000052554634781351586,
+          "p95MissKm": 0.000007526371227277105,
+          "medianMissKm": 0.0000013207927204262496,
+          "maxEnergyRelDiff": 7.026069868062278e-15,
+          "p95EnergyRelDiff": 1.549970609258392e-15,
+          "medianEnergyRelDiff": 4.1168753437707065e-16,
+          "maxAngularMomentumRelDiff": 4.8555908520099777e-14,
+          "p95AngularMomentumRelDiff": 4.771862416072963e-15,
+          "medianAngularMomentumRelDiff": 1.004557741678126e-15
+        }
+      },
+      "sunGrazingShare": 0.028588519727823336
+    }
+  },
+  "closureTotal": 295291,
+  "lr1": {
+    "M0": {
+      "count": 6000,
+      "asterBitIdentical": 5920,
+      "maxAsterAbsKmS": 1.4210854715202004e-14,
+      "maxIzzoAbsKmS": 1.4495071809506044e-12
+    },
+    "M1": {
+      "count": 8124,
+      "asterBitIdentical": 8050,
+      "maxAsterAbsKmS": 5.684341886080802e-14,
+      "maxIzzoAbsKmS": 1.5170087408478139e-12
+    },
+    "failures": [],
+    "verdict": "LR1 DIFFERS",
+    "generatedAtUtc": "2026-11-26T06:46:25.929Z"
+  },
+  "oracle": {
+    "python": "3.12.10",
+    "poliastro": "0.17.0",
+    "wallSeconds": 102.96678495407104,
+    "selfTest": {
+      "circularRadiusErrorM": 1.4901161193847656e-8,
+      "lr1CellId": "433|0|24|M0|single",
+      "lr1MissKm": 0.000003484227989823031
+    }
+  }
+}
