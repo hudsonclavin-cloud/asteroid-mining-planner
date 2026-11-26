@@ -1,0 +1,1509 @@
+{
+  "schema": "aster-s20-overnight2-n3-objective-summary/1",
+  "generatedAtUtc": "2026-11-26T08:58:07.658Z",
+  "bodies": 41906,
+  "cellsPerBody": 1250,
+  "cells": 52382500,
+  "refusedEarth": 7081945,
+  "refusedSun": 1593817,
+  "refusedEarthShare": 0.1351967737316852,
+  "vInfAt12KmS": 4.627403920578161,
+  "objectiveSummary": {
+    "A": {
+      "selected": 41905,
+      "none": 1,
+      "screenPassShare": 0.03710774370600167,
+      "supportedShare": 0.8683450662212147,
+      "M0Share": 0.4566519508411884,
+      "M1Share": 0.5433480491588116,
+      "tofDays": {
+        "count": 41905,
+        "min": 182.5,
+        "median": 867.3958333333334,
+        "p90": 1620.78125,
+        "p95": 1757.7604166666667,
+        "max": 1826.25
+      },
+      "departureSpread": {
+        "minJd": 2461041.500800741,
+        "maxJd": 2466154.500800741,
+        "spreadDays": 5113
+      },
+      "medianVInfDep": {
+        "count": 41905,
+        "min": 0.0043913290742895374,
+        "median": 0.8523071328483016,
+        "p90": 1.9769427125318222,
+        "p95": 2.4037542784096515,
+        "max": 57.87248727327448
+      },
+      "medianVInfArr": {
+        "count": 41905,
+        "min": 0.4244288479292898,
+        "median": 11.325029031369885,
+        "p90": 21.256107554289244,
+        "p95": 24.877199970890146,
+        "max": 67.08215091269345
+      }
+    },
+    "B": {
+      "selected": 38798,
+      "none": 3108,
+      "screenPassShare": 1,
+      "supportedShare": 0.8455075003866178,
+      "M0Share": 0.38040620650548995,
+      "M1Share": 0.61959379349451,
+      "tofDays": {
+        "count": 38798,
+        "min": 182.5,
+        "median": 593.4375,
+        "p90": 1004.375,
+        "p95": 1072.8645833333335,
+        "max": 1278.3333333333333
+      },
+      "departureSpread": {
+        "minJd": 2461041.500800741,
+        "maxJd": 2466154.500800741,
+        "spreadDays": 5113
+      },
+      "medianVInfDep": {
+        "count": 38798,
+        "min": 0.02976602846864666,
+        "median": 6.713355740862134,
+        "p90": 14.728604801695926,
+        "p95": 17.986691696489196,
+        "max": 44.119538962232525
+      },
+      "medianVInfArr": {
+        "count": 38798,
+        "min": 0.4244288479292898,
+        "median": 4.147411512672404,
+        "p90": 4.554270651176477,
+        "p95": 4.591894806126069,
+        "max": 4.627391860935461
+      }
+    },
+    "C": {
+      "selected": 41905,
+      "none": 1,
+      "screenPassShare": 0.13525832239589547,
+      "supportedShare": 0.860446247464503,
+      "M0Share": 0.406180646700871,
+      "M1Share": 0.5938193532991289,
+      "tofDays": {
+        "count": 41905,
+        "min": 182.5,
+        "median": 867.3958333333334,
+        "p90": 1552.2916666666667,
+        "p95": 1689.2708333333333,
+        "max": 1826.25
+      },
+      "departureSpread": {
+        "minJd": 2461041.500800741,
+        "maxJd": 2466154.500800741,
+        "spreadDays": 5113
+      },
+      "medianVInfDep": {
+        "count": 41905,
+        "min": 0.02976602846864666,
+        "median": 2.5198238606912082,
+        "p90": 8.257618896890756,
+        "p95": 10.584040533460552,
+        "max": 58.3666876148512
+      },
+      "medianVInfArr": {
+        "count": 41905,
+        "min": 0.4244288479292898,
+        "median": 6.523632703256439,
+        "p90": 8.738940266392705,
+        "p95": 9.549693467619596,
+        "max": 44.548344118507
+      }
+    },
+    "D": {
+      "selected": 41905,
+      "none": 1,
+      "screenPassShare": 0.9258561030903234,
+      "supportedShare": 0.8448395179572843,
+      "M0Share": 0.414222646462236,
+      "M1Share": 0.585777353537764,
+      "tofDays": {
+        "count": 41905,
+        "min": 182.5,
+        "median": 593.4375,
+        "p90": 798.90625,
+        "p95": 867.3958333333334,
+        "max": 1826.25
+      },
+      "departureSpread": {
+        "minJd": 2461041.500800741,
+        "maxJd": 2466154.500800741,
+        "spreadDays": 5113
+      },
+      "medianVInfDep": {
+        "count": 41905,
+        "min": 0.5806136144322429,
+        "median": 10.659572881884744,
+        "p90": 19.118640435571432,
+        "p95": 22.300814331777204,
+        "max": 71.43776586337165
+      },
+      "medianVInfArr": {
+        "count": 41905,
+        "min": 0.03247702619685594,
+        "median": 2.131883725432356,
+        "p90": 4.224623309083415,
+        "p95": 5.1277903429373195,
+        "max": 44.548344118507
+      }
+    }
+  },
+  "objectiveComparisons": {
+    "bExistsShare": 0.9258340094497208,
+    "bOverA": {
+      "count": 38798,
+      "min": 0,
+      "median": 5.755591214742551,
+      "p90": 13.561295155948056,
+      "p95": 16.820503559688646,
+      "max": 42.59504832998952
+    },
+    "cScreenPassShare": 0.13525832239589547,
+    "AEqualsCShare": 0.09633695263095096,
+    "AEqualsBShareAmongB": 0.040079385535336874
+  },
+  "nhatsSanity": {
+    "bodies": 100,
+    "needsControlShare": 0.39,
+    "medianVInfArr": {
+      "count": 100,
+      "min": 1.3173333079301308,
+      "median": 4.493491742974737,
+      "p90": 5.203403920578161,
+      "p95": 5.719403920578161,
+      "max": 7.196403920578161
+    },
+    "objectiveAFailsScreenShare": 0.83,
+    "objectiveCFailsScreenShare": 0.49,
+    "objectiveAMedianVInfArr": {
+      "count": 100,
+      "min": 1.1863206459170785,
+      "median": 6.617298438416716,
+      "p90": 9.493372829164352,
+      "p95": 10.306633851634269,
+      "max": 11.431775360899813
+    },
+    "objectiveCMedianVInfArr": {
+      "count": 100,
+      "min": 1.1863206459170785,
+      "median": 4.600246221909481,
+      "p90": 5.850313221959757,
+      "p95": 6.756967708741089,
+      "max": 9.493372829164352
+    }
+  },
+  "nhatsSanityRecords": [
+    {
+      "designation": "99942",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.915916628859984,
+      "objectiveA": {
+        "vInfArr": 5.28456508039302,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.28456508039302,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2000 SG344",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 1.3173333079301308,
+      "objectiveA": {
+        "vInfArr": 1.2473626301058645,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 1.2473626301058645,
+        "screen": true
+      }
+    },
+    {
+      "designation": "101955",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.172420286138747,
+      "objectiveA": {
+        "vInfArr": 4.7958712114563635,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.681525455884623,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2008 HU4",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 1.4465210140824574,
+      "objectiveA": {
+        "vInfArr": 1.1863206459170785,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 1.1863206459170785,
+        "screen": true
+      }
+    },
+    {
+      "designation": "1998 KY26",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.7880959655455047,
+      "objectiveA": {
+        "vInfArr": 4.497948279480279,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 4.497948279480279,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2009 DC1",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.614422178797918,
+      "objectiveA": {
+        "vInfArr": 8.137544135102804,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.7838554207863035,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2024 VH1",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.069211599828906,
+      "objectiveA": {
+        "vInfArr": 10.338768732512417,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.3972193402225095,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2007 EE26",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.4641584922784885,
+      "objectiveA": {
+        "vInfArr": 4.986119557086583,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.1990396599514734,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2024 VJ3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.57004934811235,
+      "objectiveA": {
+        "vInfArr": 8.928424732832672,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.408986051367524,
+        "screen": true
+      }
+    },
+    {
+      "designation": "420210",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.8164039205781615,
+      "objectiveA": {
+        "vInfArr": 7.3760981568262265,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.929453458381203,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2023 VF3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.567427727308024,
+      "objectiveA": {
+        "vInfArr": 8.817471241449528,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 6.824605183759899,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2016 TA20",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.244403920578161,
+      "objectiveA": {
+        "vInfArr": 6.756967708741089,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 6.756967708741089,
+        "screen": false
+      }
+    },
+    {
+      "designation": "251732",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.8786224212602316,
+      "objectiveA": {
+        "vInfArr": 4.04877547624319,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 4.04877547624319,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2024 LH3",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.152403920578162,
+      "objectiveA": {
+        "vInfArr": 6.488306482686686,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 6.488306482686686,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2025 DV4",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.950403920578162,
+      "objectiveA": {
+        "vInfArr": 6.712807550262111,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.100295166989773,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2022 XQ1",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.768403920578161,
+      "objectiveA": {
+        "vInfArr": 8.920008373981398,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.047855885693889,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2022 CX6",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.1671158354324613,
+      "objectiveA": {
+        "vInfArr": 3.649802764271225,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 3.649802764271225,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2025 PR1",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.513448881680525,
+      "objectiveA": {
+        "vInfArr": 7.805235776465668,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.146775022119918,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2025 XS3",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.987403920578162,
+      "objectiveA": {
+        "vInfArr": 9.493372829164352,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 9.493372829164352,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2026 AM4",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.308455553867596,
+      "objectiveA": {
+        "vInfArr": 5.792973938685068,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.5539398414954566,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2026 DP15",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.363403920578161,
+      "objectiveA": {
+        "vInfArr": 8.39672820499218,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.374577910502513,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2016 AB9",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.65947920395541,
+      "objectiveA": {
+        "vInfArr": 3.5894683480427108,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 3.5894683480427108,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2024 BM1",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.776403920578161,
+      "objectiveA": {
+        "vInfArr": 8.252855146839657,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.850313221959757,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2024 VP4",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.6146197648137415,
+      "objectiveA": {
+        "vInfArr": 3.325991599610888,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 3.325991599610888,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2006 SP19",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.775403920578161,
+      "objectiveA": {
+        "vInfArr": 8.590816815190175,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.983190468129948,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2022 LW",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.007928647591191,
+      "objectiveA": {
+        "vInfArr": 5.59691995332554,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.696268150600725,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2015 VO105",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.641403920578162,
+      "objectiveA": {
+        "vInfArr": 4.523524578103918,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 4.523524578103918,
+        "screen": true
+      }
+    },
+    {
+      "designation": "452807",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.859403920578162,
+      "objectiveA": {
+        "vInfArr": 9.13425075512195,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.96016421554342,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2002 JR100",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.752403920578161,
+      "objectiveA": {
+        "vInfArr": 8.91384138534321,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.481379938104845,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2021 WN2",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.5385044942339885,
+      "objectiveA": {
+        "vInfArr": 8.603286172917626,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.9853129495188764,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2014 DV110",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.614422178797918,
+      "objectiveA": {
+        "vInfArr": 10.306633851634269,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.591536083220182,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2014 BA3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 1.6144931229900399,
+      "objectiveA": {
+        "vInfArr": 1.903181656284927,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 1.903181656284927,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2021 ES3",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 6.298403920578162,
+      "objectiveA": {
+        "vInfArr": 7.114292615601586,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.018168185848191,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2020 XL6",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.61702101405031,
+      "objectiveA": {
+        "vInfArr": 8.255662981161896,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.729595792652458,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2019 XZ2",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.543774977282891,
+      "objectiveA": {
+        "vInfArr": 7.2686754221071155,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.599249573267956,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2019 JU5",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.7074039205781615,
+      "objectiveA": {
+        "vInfArr": 3.820281850059995,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 3.820281850059995,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2023 XU7",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.450112468338117,
+      "objectiveA": {
+        "vInfArr": 4.2168826003332995,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 4.2168826003332995,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2021 NR3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.161063691435415,
+      "objectiveA": {
+        "vInfArr": 7.652108879472166,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 7.652108879472166,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2011 MJ",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.313403920578161,
+      "objectiveA": {
+        "vInfArr": 8.035337293447231,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.054806856211651,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2020 MO3",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.637403920578161,
+      "objectiveA": {
+        "vInfArr": 5.128798789349966,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.128798789349966,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2016 DB1",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.128403920578162,
+      "objectiveA": {
+        "vInfArr": 7.828613547215522,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.577606256309125,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2023 QS4",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.8555211118838586,
+      "objectiveA": {
+        "vInfArr": 3.6145696725028897,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 3.6145696725028897,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2012 WS3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.416348349361073,
+      "objectiveA": {
+        "vInfArr": 9.659674104171312,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.340076391431023,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2023 EN2",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.669403920578161,
+      "objectiveA": {
+        "vInfArr": 10.446686107586688,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.244612753223656,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2008 FX6",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.766403920578162,
+      "objectiveA": {
+        "vInfArr": 6.543385295831482,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 6.543385295831482,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2019 TB7",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.3995753254356424,
+      "objectiveA": {
+        "vInfArr": 5.600476572664153,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.1869877753578,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2022 QJ50",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.669403920578161,
+      "objectiveA": {
+        "vInfArr": 10.363116651600032,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.600246221909481,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2022 KH3",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.011403920578162,
+      "objectiveA": {
+        "vInfArr": 11.26246292366033,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.947077769126166,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2021 SV1",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.572669684569629,
+      "objectiveA": {
+        "vInfArr": 9.90002067987128,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.9800869633697595,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2023 HG1",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.409238062994633,
+      "objectiveA": {
+        "vInfArr": 3.647306445330453,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 3.647306445330453,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2026 FE7",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.100989642047653,
+      "objectiveA": {
+        "vInfArr": 7.169167916801657,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.49073670932296,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2019 WD3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.469504116138849,
+      "objectiveA": {
+        "vInfArr": 7.555152391170661,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.013364713042222,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2021 XF6",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.754403920578161,
+      "objectiveA": {
+        "vInfArr": 7.725749245696997,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.9604079473537,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2017 YW3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.037470665567344,
+      "objectiveA": {
+        "vInfArr": 3.4211283681609093,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 3.4211283681609093,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2016 XE18",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.659403920578161,
+      "objectiveA": {
+        "vInfArr": 7.252007914132207,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 7.252007914132207,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2022 GB",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.8164039205781615,
+      "objectiveA": {
+        "vInfArr": 7.631987504091318,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.887048156637083,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2020 TS5",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.48017890760873,
+      "objectiveA": {
+        "vInfArr": 6.202275868432795,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 6.202275868432795,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2020 RU7",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.719403920578161,
+      "objectiveA": {
+        "vInfArr": 7.137412903699154,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.264031639396865,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2016 GV221",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.828066358382796,
+      "objectiveA": {
+        "vInfArr": 9.151845034958045,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.343717795916423,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2026 CA2",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 6.245403920578162,
+      "objectiveA": {
+        "vInfArr": 7.627771128901678,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.566257082197864,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2011 GR59",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.685403920578161,
+      "objectiveA": {
+        "vInfArr": 6.453626405649733,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.6803060237838325,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2013 US4",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.421193395926278,
+      "objectiveA": {
+        "vInfArr": 6.291878164316651,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 6.137710764242264,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2016 AT131",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.8341825783577583,
+      "objectiveA": {
+        "vInfArr": 6.852435603458256,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.458733987408133,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2017 DH16",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.6624039205781616,
+      "objectiveA": {
+        "vInfArr": 9.655860773654627,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.498713581456323,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2011 OK45",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.670403920578162,
+      "objectiveA": {
+        "vInfArr": 5.1248183173692645,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.411952432490623,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2020 BZ6",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.8021613165879864,
+      "objectiveA": {
+        "vInfArr": 6.213425888481833,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.6689421993114095,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2015 HW182",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.485508114381485,
+      "objectiveA": {
+        "vInfArr": 8.544277551251001,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.314254780298965,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2008 FC",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.799403920578161,
+      "objectiveA": {
+        "vInfArr": 5.638008818484403,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.638008818484403,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2014 KO2",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.146829637709047,
+      "objectiveA": {
+        "vInfArr": 4.197866001621576,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 4.197866001621576,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2004 BV18",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.879779767484504,
+      "objectiveA": {
+        "vInfArr": 4.2015741708421,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 4.2015741708421,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2005 AJ3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.262318974945699,
+      "objectiveA": {
+        "vInfArr": 4.854788335467394,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.620858555462153,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2024 BH",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 6.018403920578161,
+      "objectiveA": {
+        "vInfArr": 7.590173249448192,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.17403600462931,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2016 WV7",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.493491742974737,
+      "objectiveA": {
+        "vInfArr": 5.089682688602293,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.089682688602293,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2009 RH",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.596195279161029,
+      "objectiveA": {
+        "vInfArr": 9.091086042879137,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.461497010312469,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2013 BS15",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.689403920578162,
+      "objectiveA": {
+        "vInfArr": 8.597594854275705,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.417003419356228,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2020 HB6",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.714403920578161,
+      "objectiveA": {
+        "vInfArr": 9.779234158605432,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.599563910891492,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2023 XU12",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.045962313737256,
+      "objectiveA": {
+        "vInfArr": 5.647501434811897,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.986390332509425,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2021 AN1",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.621402495646586,
+      "objectiveA": {
+        "vInfArr": 5.811082656028228,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.434268861553342,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2020 SM4",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 7.196403920578161,
+      "objectiveA": {
+        "vInfArr": 8.299702811665734,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.339095693125194,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2017 RN16",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.678403920578162,
+      "objectiveA": {
+        "vInfArr": 5.506444656483708,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.0671600620927055,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2025 BT4",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 6.054403920578162,
+      "objectiveA": {
+        "vInfArr": 6.188068140769238,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.673362300887077,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2014 SF304",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.2886725352613233,
+      "objectiveA": {
+        "vInfArr": 5.78184354393128,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.869905209045949,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2014 HP2",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.6066181786840295,
+      "objectiveA": {
+        "vInfArr": 6.617298438416716,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.73906462031238,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2023 BP5",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.2533777899564815,
+      "objectiveA": {
+        "vInfArr": 6.101464845705369,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.447836642507081,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2021 JS",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.3887318264143405,
+      "objectiveA": {
+        "vInfArr": 5.310155018302908,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.310155018302908,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2021 XF3",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.396866616601206,
+      "objectiveA": {
+        "vInfArr": 7.841089641984636,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.540165933555667,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2025 RY1",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.155375198966049,
+      "objectiveA": {
+        "vInfArr": 5.710495912410659,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.782143621348304,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2013 VM13",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.6942331087309674,
+      "objectiveA": {
+        "vInfArr": 2.90811304328939,
+        "screen": true
+      },
+      "objectiveC": {
+        "vInfArr": 2.90811304328939,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2025 MX",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.720403920578161,
+      "objectiveA": {
+        "vInfArr": 7.010509969121644,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 6.757498340501589,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2010 XD",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 3.8948730459646743,
+      "objectiveA": {
+        "vInfArr": 5.910207046626312,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.737665354638998,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2020 UO4",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.469656462786296,
+      "objectiveA": {
+        "vInfArr": 5.665789442756977,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 3.2106458148486627,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2021 HD1",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.25674888197344,
+      "objectiveA": {
+        "vInfArr": 5.604567689831989,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.327457001324834,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2025 QV21",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.559555136653371,
+      "objectiveA": {
+        "vInfArr": 11.431775360899813,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.752389971401188,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2023 TA9",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 5.203403920578161,
+      "objectiveA": {
+        "vInfArr": 5.359215112185367,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.665620679333296,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2024 XZ5",
+      "nhatsNeedsControl": true,
+      "nhatsVInfArr": 4.823403920578161,
+      "objectiveA": {
+        "vInfArr": 9.196105120054785,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.627702857360023,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2022 AA2",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.3941564656008945,
+      "objectiveA": {
+        "vInfArr": 6.815177568624299,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 5.453256186296445,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2024 DN",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.223193938736666,
+      "objectiveA": {
+        "vInfArr": 5.174600342290012,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.207321109614191,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2024 XH9",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 4.214768800798227,
+      "objectiveA": {
+        "vInfArr": 5.06165964063976,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 1.9236912323493316,
+        "screen": true
+      }
+    },
+    {
+      "designation": "2025 XF2",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 1.4618792850923479,
+      "objectiveA": {
+        "vInfArr": 7.192716302939336,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.968784604361123,
+        "screen": false
+      }
+    },
+    {
+      "designation": "2019 LH27",
+      "nhatsNeedsControl": false,
+      "nhatsVInfArr": 2.789908787788972,
+      "objectiveA": {
+        "vInfArr": 6.357570526007715,
+        "screen": false
+      },
+      "objectiveC": {
+        "vInfArr": 4.67195249144905,
+        "screen": false
+      }
+    }
+  ],
+  "datasetParts": 8,
+  "orderPath": "C:\\Users\\hudso\\s20-overnight2-store\\n3-full-v2\\order.json"
+}
