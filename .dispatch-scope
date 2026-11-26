@@ -1,5 +1,4 @@
-# S20-OVERNIGHT2 N5
-tools/slice20-research/overnight2/n5-flake/README.md
-tools/slice20-research/overnight2/n5-flake/REPORT.md
-tools/slice20-research/overnight2/n5-flake/runner.mjs
-tools/slice20-research/overnight2/n5-flake/analyze.mjs
+# S20-OVERNIGHT2 N1
+tools/slice20-research/overnight2/n1-lr1/README.md
+tools/slice20-research/overnight2/n1-lr1/REPORT.md
+tools/slice20-research/overnight2/n1-lr1/input-compare.mjs
