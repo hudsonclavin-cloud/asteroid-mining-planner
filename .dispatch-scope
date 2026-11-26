@@ -1,16 +1,2 @@
-# S20-OVERNIGHT2 N4
-tools/slice20-research/overnight2/n4-paired/README.md
-tools/slice20-research/overnight2/n4-paired/REPORT.md
-tools/slice20-research/overnight2/n4-paired/body-table.part1of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/body-table.part2of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/body-table.part3of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/body-table.part4of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/body-table.part5of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/body-table.part6of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/body-table.part7of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/body-table.part8of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/body-table.part9of9.jsonl.gz
-tools/slice20-research/overnight2/n4-paired/census.mjs
-tools/slice20-research/overnight2/n4-paired/summarize.mjs
-tools/slice20-research/overnight2/n4-paired/summary.json
-tools/slice20-research/overnight2/n4-paired/worker.mjs
+# S20-OVERNIGHT2 PHASE0
+tools/slice20-research/overnight2/phase0-positive-control.mjs
