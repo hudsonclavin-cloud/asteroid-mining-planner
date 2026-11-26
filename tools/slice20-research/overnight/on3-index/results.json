@@ -1,0 +1,119 @@
+{
+  "schema": "aster-s20-overnight-on3-index/1",
+  "generatedAtUtc": "2026-11-26T06:52:37.511Z",
+  "sampleCount": 5479,
+  "spanSeconds": {
+    "min": 820497600,
+    "max": 1293796800
+  },
+  "identity": {
+    "cases": 1021915,
+    "nonzeroDifferences": 0,
+    "maxAbsDifference": 0,
+    "identityCount": 1021913,
+    "mismatches": [],
+    "outside": [
+      {
+        "t": 820497599,
+        "linear": {
+          "name": "AssertError",
+          "message": "INV-008: Requested interpolation time is outside available sample range for body 'earth'"
+        },
+        "indexed": {
+          "name": "AssertError",
+          "message": "INV-008: Requested interpolation time is outside available sample range for body 'earth'"
+        }
+      },
+      {
+        "t": 1293796801,
+        "linear": {
+          "name": "AssertError",
+          "message": "INV-008: Requested interpolation time is outside available sample range for body 'earth'"
+        },
+        "indexed": {
+          "name": "AssertError",
+          "message": "INV-008: Requested interpolation time is outside available sample range for body 'earth'"
+        }
+      },
+      {
+        "t": 820497599.9136,
+        "linear": {
+          "name": "AssertError",
+          "message": "INV-008: Requested interpolation time is outside available sample range for body 'earth'"
+        },
+        "indexed": {
+          "name": "AssertError",
+          "message": "INV-008: Requested interpolation time is outside available sample range for body 'earth'"
+        }
+      },
+      {
+        "t": 1293796800.0864,
+        "linear": {
+          "name": "AssertError",
+          "message": "INV-008: Requested interpolation time is outside available sample range for body 'earth'"
+        },
+        "indexed": {
+          "name": "AssertError",
+          "message": "INV-008: Requested interpolation time is outside available sample range for body 'earth'"
+        }
+      }
+    ]
+  },
+  "timing": {
+    "randomEpochCount": 1000000,
+    "linearMs": [
+      12456.965600000003,
+      13974.615900000004,
+      15446.9672,
+      16334.169999999998,
+      16931.0539
+    ],
+    "indexedMs": [
+      463.6053000000029,
+      354.712400000004,
+      237.0862999999954,
+      423.47639999999956,
+      366.8613999999943
+    ],
+    "linearMedianMs": 15446.9672,
+    "indexedMedianMs": 366.8613999999943,
+    "speedupPerCall": 42.105730393004656,
+    "selectedBodies": [
+      "433",
+      "99942",
+      "101955",
+      "2000 SG344",
+      "2008 HU4",
+      "1998 KY26",
+      "2024 BX1",
+      "2024 XA1",
+      "2018 LA",
+      "2022 WJ1",
+      "2008 QU3",
+      "2025 PK2",
+      "2019 LB",
+      "2026 KA",
+      "2024 UK5",
+      "2010 UA7",
+      "2019 NC",
+      "2017 UD",
+      "2005 YO128",
+      "2020 VY4"
+    ],
+    "returnGrid": {
+      "cells": 400000,
+      "families": 2,
+      "linearSeconds": 12.605558099999994,
+      "indexedSeconds": 0.2045069000000076,
+      "speedup": 61.63879116058933
+    },
+    "outboundGrid": {
+      "cells": 400000,
+      "families": 2,
+      "linearSeconds": 13.093658299999996,
+      "indexedSeconds": 0.14941570000001228,
+      "speedup": 87.63241279195506
+    }
+  },
+  "algorithm": "Production is a linear scan with exact-node return, then strict bracket; the index uses exact-node binary search, then the same production Hermite evaluator and the same INV-008 bounds refusal."
+}

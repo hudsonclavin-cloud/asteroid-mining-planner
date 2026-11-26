@@ -1,0 +1,491 @@
+{
+  "schema": "aster-s20-overnight2-n4-paired-summary/1",
+  "generatedAtUtc": "2026-11-26T09:06:36.864Z",
+  "bodies": 41906,
+  "statusCounts": {
+    "ok": 41905,
+    "outbound-propagation-refused": 1
+  },
+  "grid": {
+    "outbound": {
+      "depStartJd": 2461041.500800741,
+      "depEndJd": 2466154.500800741,
+      "nDep": 50,
+      "nTof": 25,
+      "tofMinDays": 182.5,
+      "tofMaxDays": 1826.25,
+      "M": [
+        0,
+        1
+      ],
+      "selection": "production computePorkchopGrid AMD-2 min-C3 branch per M, then global minimum vInfDep with M=0 retained on exact ties"
+    },
+    "pairedReturn": {
+      "stayMinDays": 8,
+      "stayMaxDays": 730.5,
+      "nDep": 40,
+      "nTof": 25,
+      "tofMinDays": 182.5,
+      "tofMaxDays": 1826.25,
+      "M": [
+        0,
+        1
+      ],
+      "earthRefusal": "arrival after last Earth fixture sample",
+      "sunRefusalPerihelionKm": 695700
+    }
+  },
+  "aggregate": {
+    "bodies": 41906,
+    "pairedBodies": 41905,
+    "totalCells": 41905000,
+    "refusedEarthCells": 13166521,
+    "refusedEarthCellShare": 0.3141992840949767,
+    "refusedSunBranches": 1012740,
+    "noSolutionCells": 100224,
+    "shownCells": 28638255,
+    "shownScreenCells": 632087,
+    "shownSupportCells": 22846400,
+    "shownBothCells": 348139,
+    "zeroShownBodies": 3812,
+    "zeroShownShare": 0.09096549420130769,
+    "zeroShownScreenBodies": 9065,
+    "zeroShownScreenShare": 0.2163174724383143,
+    "zeroShownSupportShare": 0.26490240061089104,
+    "zeroShownBothShare": 0.3798501407912948,
+    "noReturnSolutionShare": 0.09094380145567355
+  },
+  "objective": {
+    "A": {
+      "selected": 38094,
+      "screenPassShare": 0.04893159027668399,
+      "supportedShare": 0.7957158607654748,
+      "M0Share": 0.540846327505644,
+      "M1Share": 0.45915367249435607,
+      "sameAsA": 1,
+      "totalMissionDays": {
+        "count": 38094,
+        "min": 373,
+        "median": 1704.0536858976507,
+        "p90": 2446.7660256411573,
+        "p95": 2633.7091346151815,
+        "max": 4166.305288461658
+      },
+      "crudeTotalVInfKmS": {
+        "count": 38094,
+        "min": 0.04195802721499044,
+        "median": 3.1648461053331056,
+        "p90": 7.170470683509459,
+        "p95": 9.797922112431532,
+        "max": 80.08001569829695
+      },
+      "returnVInfDep": {
+        "count": 38094,
+        "min": 0.021289717370744136,
+        "median": 1.2553893826967149,
+        "p90": 4.051912997678549,
+        "p95": 7.215439172620646,
+        "max": 54.48587223438179
+      },
+      "returnVInfArr": {
+        "count": 38094,
+        "min": 0.3463541096461488,
+        "median": 11.20839162831866,
+        "p90": 21.517001949869158,
+        "p95": 25.09725392180373,
+        "max": 67.8370732310728
+      }
+    },
+    "C": {
+      "selected": 38094,
+      "screenPassShare": 0.16530162230272483,
+      "supportedShare": 0.7944295689609913,
+      "M0Share": 0.5569906021945713,
+      "M1Share": 0.4430093978054287,
+      "sameAsA": 0.13422061216989553,
+      "totalMissionDays": {
+        "count": 38094,
+        "min": 373,
+        "median": 1672.6153846153368,
+        "p90": 2396.249198718152,
+        "p95": 2498.4166666665114,
+        "max": 4068.064102564007
+      },
+      "crudeTotalVInfKmS": {
+        "count": 38094,
+        "min": 0.16208057505830498,
+        "median": 5.202370835673167,
+        "p90": 13.169405287793873,
+        "p95": 16.134140639193014,
+        "max": 81.09402438128117
+      },
+      "returnVInfDep": {
+        "count": 38094,
+        "min": 0.056833203526525704,
+        "median": 3.267158774065467,
+        "p90": 10.331967834859462,
+        "p95": 13.224765037479358,
+        "max": 54.48587223438179
+      },
+      "returnVInfArr": {
+        "count": 38094,
+        "min": 0.3463541096461488,
+        "median": 6.244216439922555,
+        "p90": 9.22150198038986,
+        "p95": 11.192410952133372,
+        "max": 52.47963889070331
+      }
+    }
+  },
+  "byOutboundArrivalYear": {
+    "2026": {
+      "bodies": 447,
+      "pairedBodies": 447,
+      "totalCells": 447000,
+      "refusedEarthCells": 0,
+      "medianTotalMissionDays": {
+        "count": 447,
+        "min": 460.015224358843,
+        "median": 1648.476762820656,
+        "p90": 2114.9911858976507,
+        "p95": 2367.050480769016,
+        "max": 2820.652243589672
+      },
+      "refusedEarthCellShare": 0,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.07158836689038031
+    },
+    "2027": {
+      "bodies": 1549,
+      "pairedBodies": 1549,
+      "totalCells": 1549000,
+      "refusedEarthCells": 0,
+      "medianTotalMissionDays": {
+        "count": 1549,
+        "min": 534.1177884613473,
+        "median": 1729.879006410328,
+        "p90": 2438.913461538342,
+        "p95": 2520.315705128014,
+        "max": 3181.625801281848
+      },
+      "refusedEarthCellShare": 0,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.10329244673983215
+    },
+    "2028": {
+      "bodies": 3101,
+      "pairedBodies": 3101,
+      "totalCells": 3101000,
+      "refusedEarthCells": 0,
+      "medianTotalMissionDays": {
+        "count": 3101,
+        "min": 539.7307692309842,
+        "median": 1832.0464743591533,
+        "p90": 2500.103365384508,
+        "p95": 2798.2003205129877,
+        "max": 3492.6354166666665
+      },
+      "refusedEarthCellShare": 0,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.09190583682683005
+    },
+    "2029": {
+      "bodies": 2967,
+      "pairedBodies": 2967,
+      "totalCells": 2967000,
+      "refusedEarthCells": 0,
+      "medianTotalMissionDays": {
+        "count": 2967,
+        "min": 441.4895833333333,
+        "median": 1940.9607371794991,
+        "p90": 2637.0825320511744,
+        "p95": 2824.0256410256648,
+        "max": 3679.578525641157
+      },
+      "refusedEarthCellShare": 0,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.08459723626558814
+    },
+    "2030": {
+      "bodies": 2888,
+      "pairedBodies": 2888,
+      "totalCells": 2888000,
+      "refusedEarthCells": 0,
+      "medianTotalMissionDays": {
+        "count": 2888,
+        "min": 509.97916666666663,
+        "median": 1917.375,
+        "p90": 2515.2556089744903,
+        "p95": 2811.112980769326,
+        "max": 3711.0168269230053
+      },
+      "refusedEarthCellShare": 0,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.09349030470914127
+    },
+    "2031": {
+      "bodies": 2741,
+      "pairedBodies": 2741,
+      "totalCells": 2741000,
+      "refusedEarthCells": 0,
+      "medianTotalMissionDays": {
+        "count": 2741,
+        "min": 428.5769230769947,
+        "median": 1996.5376602564938,
+        "p90": 2550.0673076923313,
+        "p95": 2818.412660256494,
+        "max": 4040.552083333333
+      },
+      "refusedEarthCellShare": 0,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.10069317767238234
+    },
+    "2032": {
+      "bodies": 2946,
+      "pairedBodies": 2946,
+      "totalCells": 2946000,
+      "refusedEarthCells": 0,
+      "medianTotalMissionDays": {
+        "count": 2946,
+        "min": 509.97916666666663,
+        "median": 1913.4487179488253,
+        "p90": 2603.9575320513295,
+        "p95": 2829.6386217948357,
+        "max": 4166.305288461658
+      },
+      "refusedEarthCellShare": 0,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.10183299389002037
+    },
+    "2033": {
+      "bodies": 2904,
+      "pairedBodies": 2904,
+      "totalCells": 2904000,
+      "refusedEarthCells": 141,
+      "medianTotalMissionDays": {
+        "count": 2904,
+        "min": 497.06650641032803,
+        "median": 1857.8717948718306,
+        "p90": 2507.4030448716753,
+        "p95": 2802.126602564162,
+        "max": 3673.965544871986
+      },
+      "refusedEarthCellShare": 0.00004855371900826446,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.09022038567493113
+    },
+    "2034": {
+      "bodies": 2842,
+      "pairedBodies": 2842,
+      "totalCells": 2842000,
+      "refusedEarthCells": 71252,
+      "medianTotalMissionDays": {
+        "count": 2842,
+        "min": 441.4895833333333,
+        "median": 1785.4559294873227,
+        "p90": 2483.2644230769947,
+        "p95": 2772.3749999998445,
+        "max": 3864.2820512820035
+      },
+      "refusedEarthCellShare": 0.02507107670654469,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.09359605911330049
+    },
+    "2035": {
+      "bodies": 2653,
+      "pairedBodies": 2653,
+      "totalCells": 2653000,
+      "refusedEarthCells": 368645,
+      "medianTotalMissionDays": {
+        "count": 2653,
+        "min": 509.97916666666663,
+        "median": 1787.6955128205009,
+        "p90": 2451.826121794681,
+        "p95": 2507.403044871676,
+        "max": 3337.1306089744903
+      },
+      "refusedEarthCellShare": 0.13895401432340745,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.09498680738786279
+    },
+    "2036": {
+      "bodies": 3057,
+      "pairedBodies": 3057,
+      "totalCells": 3057000,
+      "refusedEarthCells": 1032726,
+      "medianTotalMissionDays": {
+        "count": 3057,
+        "min": 534.1177884613473,
+        "median": 1716.9663461539894,
+        "p90": 2126.217147435993,
+        "p95": 2285.648237179344,
+        "max": 2703.8854166665114
+      },
+      "refusedEarthCellShare": 0.3378233562315996,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.10336931632319267
+    },
+    "2037": {
+      "bodies": 2797,
+      "pairedBodies": 2797,
+      "totalCells": 2797000,
+      "refusedEarthCells": 1560987,
+      "medianTotalMissionDays": {
+        "count": 2797,
+        "min": 428.5769230769947,
+        "median": 1572.687500000155,
+        "p90": 1972.3990384613473,
+        "p95": 2083.5528846153366,
+        "max": 2886.902243589827
+      },
+      "refusedEarthCellShare": 0.5580933142652842,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.09974973185555953
+    },
+    "2038": {
+      "bodies": 2950,
+      "pairedBodies": 2950,
+      "totalCells": 2950000,
+      "refusedEarthCells": 2273373,
+      "medianTotalMissionDays": {
+        "count": 2950,
+        "min": 391.5256410255097,
+        "median": 1331.8541666666665,
+        "p90": 1696.7540064104833,
+        "p95": 1716.9663461539894,
+        "max": 2327.759615384818
+      },
+      "refusedEarthCellShare": 0.7706349152542373,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.1528813559322034
+    },
+    "2039": {
+      "bodies": 2839,
+      "pairedBodies": 2839,
+      "totalCells": 2839000,
+      "refusedEarthCells": 2646532,
+      "medianTotalMissionDays": {
+        "count": 2839,
+        "min": 373,
+        "median": 1007.9318910255097,
+        "p90": 1350.3798076921762,
+        "p95": 1387.4310897436615,
+        "max": 2085.2395833333335
+      },
+      "refusedEarthCellShare": 0.9322057062345896,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0.3430785487847834
+    },
+    "2040": {
+      "bodies": 2888,
+      "pairedBodies": 2888,
+      "totalCells": 2888000,
+      "refusedEarthCells": 2876865,
+      "medianTotalMissionDays": {
+        "count": 1413,
+        "min": 373,
+        "median": 852.4270833333333,
+        "p90": 1057.8958333333333,
+        "p95": 1094.9471153848183,
+        "max": 1916.8221153848183
+      },
+      "refusedEarthCellShare": 0.9961443905817174,
+      "zeroShownShare": 0.5107340720221607,
+      "zeroShownScreenShare": 0.8150969529085873
+    },
+    "2041": {
+      "bodies": 2070,
+      "pairedBodies": 2070,
+      "totalCells": 2070000,
+      "refusedEarthCells": 2070000,
+      "medianTotalMissionDays": {
+        "count": 0,
+        "min": null,
+        "median": null,
+        "p90": null,
+        "p95": null,
+        "max": null
+      },
+      "refusedEarthCellShare": 1,
+      "zeroShownShare": 1,
+      "zeroShownScreenShare": 1
+    },
+    "2042": {
+      "bodies": 245,
+      "pairedBodies": 245,
+      "totalCells": 245000,
+      "refusedEarthCells": 245000,
+      "medianTotalMissionDays": {
+        "count": 0,
+        "min": null,
+        "median": null,
+        "p90": null,
+        "p95": null,
+        "max": null
+      },
+      "refusedEarthCellShare": 1,
+      "zeroShownShare": 1,
+      "zeroShownScreenShare": 1
+    },
+    "2043": {
+      "bodies": 10,
+      "pairedBodies": 10,
+      "totalCells": 10000,
+      "refusedEarthCells": 10000,
+      "medianTotalMissionDays": {
+        "count": 0,
+        "min": null,
+        "median": null,
+        "p90": null,
+        "p95": null,
+        "max": null
+      },
+      "refusedEarthCellShare": 1,
+      "zeroShownShare": 1,
+      "zeroShownScreenShare": 1
+    },
+    "2044": {
+      "bodies": 11,
+      "pairedBodies": 11,
+      "totalCells": 11000,
+      "refusedEarthCells": 11000,
+      "medianTotalMissionDays": {
+        "count": 0,
+        "min": null,
+        "median": null,
+        "p90": null,
+        "p95": null,
+        "max": null
+      },
+      "refusedEarthCellShare": 1,
+      "zeroShownShare": 1,
+      "zeroShownScreenShare": 1
+    },
+    "no-outbound": {
+      "bodies": 1,
+      "pairedBodies": 0,
+      "totalCells": 0,
+      "refusedEarthCells": 0,
+      "medianTotalMissionDays": {
+        "count": 0,
+        "min": null,
+        "median": null,
+        "p90": null,
+        "p95": null,
+        "max": null
+      },
+      "refusedEarthCellShare": null,
+      "zeroShownShare": 0,
+      "zeroShownScreenShare": 0
+    }
+  },
+  "refusalDefinitionComparison": {
+    "priorRun1Share": 0.265,
+    "priorRun1Grid": "723 departure x 100 TOF, M=0",
+    "thisRunGrid": "40 departure x 25 TOF, M=0 and M=1",
+    "definitionsMatch": true,
+    "note": "The refusal condition matches DEC-20-3; the measured share is grid-resolution and M-family dependent."
+  },
+  "datasetParts": 9,
+  "orderPath": "C:\\Users\\hudso\\s20-overnight2-store\\n4-full\\order.json"
+}
