@@ -179,6 +179,14 @@ function createTrackedPorkchopClient(baseClient: PorkchopClient): PorkchopClient
         porkchopComputeBusySignal.value = false;
       }
     },
+    async computeReturnGrid(args) {
+      porkchopComputeBusySignal.value = true;
+      try {
+        return await baseClient.computeReturnGrid(args);
+      } finally {
+        porkchopComputeBusySignal.value = false;
+      }
+    },
     dispose() {
       porkchopComputeBusySignal.value = false;
       baseClient.dispose();

@@ -95,7 +95,35 @@ function makeRecordingClient({ failOn = null } = {}) {
       if (failOn !== null && args.M === failOn) {
         throw new Error(`compute failed for M=${args.M}`);
       }
-      return { type: 'grid-result', bodyId: args.bodyId, M: args.M, cells: [], compute_ms: 1 };
+      return {
+        type: 'grid-result',
+        direction: 'outbound',
+        bodyId: args.bodyId,
+        M: args.M,
+        cells: [],
+        compute_ms: 1,
+      };
+    },
+    async computeReturnGrid(args) {
+      if (inFlight) {
+        overlapped = true;
+      }
+      inFlight = true;
+      calls.push(args);
+      await Promise.resolve();
+      inFlight = false;
+      if (failOn !== null && args.M === failOn) {
+        throw new Error(`compute failed for M=${args.M}`);
+      }
+      return {
+        type: 'grid-result',
+        direction: 'return',
+        bodyId: args.bodyId,
+        M: args.M,
+        cells: [],
+        earthSpanRefusedCount: 0,
+        compute_ms: 1,
+      };
     },
     dispose() {},
   };
@@ -110,6 +138,8 @@ test('computeDualFamilyGrids issues exactly two messages, M=0 then M=1 (AMD-1)',
   assert.equal(client.calls.length, 2, 'expected exactly two compute messages');
   assert.equal(client.calls[0].M, M_ZERO_REV, 'first message must be M=0');
   assert.equal(client.calls[1].M, M_ONE_REV, 'second message must be M=1');
+  assert.equal(client.calls[0].direction, 'outbound');
+  assert.equal(client.calls[1].direction, 'outbound');
   assert.equal(M_ZERO_REV, 0);
   assert.equal(M_ONE_REV, 1);
 });
@@ -138,6 +168,7 @@ test('computeDualFamilyGrids carries the request through unchanged, one M per me
     assert.deepEqual(call.bodyElements, REQUEST.bodyElements);
     assert.deepEqual(call.gridParams, REQUEST.gridParams);
     assert.equal(typeof call.M, 'number', 'M is a single value per message (AMD-1)');
+    assert.equal(call.direction, 'outbound');
     assert.equal(Object.prototype.hasOwnProperty.call(call, 'M'), true);
   }
 });
@@ -165,4 +196,28 @@ test('computeDualFamilyGrids propagates a failure from either family unchanged',
     () => computeDualFamilyGrids(makeRecordingClient({ failOn: 1 }), REQUEST),
     /compute failed for M=1/,
   );
+});
+
+test('computeDualReturnFamilyGrids issues explicit return M=0 then M=1 messages', async () => {
+  const { computeDualReturnFamilyGrids } = await loadModule();
+  const client = makeRecordingClient();
+  const request = {
+    ...REQUEST,
+    gridParams: {
+      ...REQUEST.gridParams,
+      earthMaxTdbSeconds: 2.0e9,
+    },
+  };
+
+  const grids = await computeDualReturnFamilyGrids(client, request);
+
+  assert.equal(client.calls.length, 2);
+  assert.deepEqual(client.calls.map((call) => [call.direction, call.M]), [
+    ['return', 0],
+    ['return', 1],
+  ]);
+  assert.equal(grids.m0.direction, 'return');
+  assert.equal(grids.m1.direction, 'return');
+  assert.equal(grids.m0.earthSpanRefusedCount, 0);
+  assert.equal(grids.m1.earthSpanRefusedCount, 0);
 });

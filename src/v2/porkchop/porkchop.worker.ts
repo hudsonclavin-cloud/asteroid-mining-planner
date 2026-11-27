@@ -4,24 +4,44 @@ import { propagateKeplerianStateVectors } from '../core/propagators/keplerian.js
 import { interpolateIndexedBodyStateSeries } from './earth-index.js';
 import {
   computePorkchopGrid,
+  computeReturnPorkchopGrid,
   type PorkchopBranch,
   type PorkchopCell,
   type PorkchopEphemerisDependencies,
   type PorkchopGridParams,
+  type PorkchopReturnBranch,
+  type PorkchopReturnCell,
+  type PorkchopReturnGridParams,
 } from './grid-compute.js';
+
+export type PorkchopWorkerDirection = 'outbound' | 'return';
 
 export interface PorkchopWorkerInitMessage {
   readonly type: 'init';
   readonly earthStateSeries: readonly CanonicalState[];
 }
 
-export interface PorkchopWorkerComputeMessage {
+interface PorkchopWorkerOutboundComputeMessage {
   readonly type: 'compute-grid';
+  readonly direction: 'outbound';
   readonly bodyId: string;
   readonly bodyElements: AsteroidOrbitalElements;
   readonly gridParams: PorkchopGridParams;
   readonly M: number;
 }
+
+interface PorkchopWorkerReturnComputeMessage {
+  readonly type: 'compute-grid';
+  readonly direction: 'return';
+  readonly bodyId: string;
+  readonly bodyElements: AsteroidOrbitalElements;
+  readonly gridParams: PorkchopReturnGridParams;
+  readonly M: number;
+}
+
+export type PorkchopWorkerComputeMessage =
+  | PorkchopWorkerOutboundComputeMessage
+  | PorkchopWorkerReturnComputeMessage;
 
 export type PorkchopWorkerInboundMessage =
   | PorkchopWorkerInitMessage
@@ -44,13 +64,33 @@ export type PorkchopWorkerCell = Omit<PorkchopCell, 'branches'> & {
   readonly branches: readonly PorkchopWorkerBranch[];
 };
 
-export interface PorkchopWorkerGridResultMessage {
+export type PorkchopWorkerReturnBranch = PorkchopReturnBranch;
+export type PorkchopWorkerReturnCell = Omit<PorkchopReturnCell, 'branches'> & {
+  readonly branches: readonly PorkchopWorkerReturnBranch[];
+};
+
+export interface PorkchopWorkerOutboundGridResultMessage {
   readonly type: 'grid-result';
+  readonly direction: 'outbound';
   readonly bodyId: string;
   readonly M: number;
   readonly cells: readonly PorkchopWorkerCell[];
   readonly compute_ms: number;
 }
+
+export interface PorkchopWorkerReturnGridResultMessage {
+  readonly type: 'grid-result';
+  readonly direction: 'return';
+  readonly bodyId: string;
+  readonly M: number;
+  readonly cells: readonly PorkchopWorkerReturnCell[];
+  readonly earthSpanRefusedCount: number;
+  readonly compute_ms: number;
+}
+
+export type PorkchopWorkerGridResultMessage =
+  | PorkchopWorkerOutboundGridResultMessage
+  | PorkchopWorkerReturnGridResultMessage;
 
 export type PorkchopWorkerOutboundMessage =
   | PorkchopWorkerReadyMessage
@@ -67,6 +107,7 @@ export interface PorkchopWorkerScope {
 
 export interface PorkchopWorkerDependencies {
   readonly computeGrid?: typeof computePorkchopGrid;
+  readonly computeReturnGrid?: typeof computeReturnPorkchopGrid;
   readonly nowMs?: PorkchopEphemerisDependencies['nowMs'];
 }
 
@@ -97,6 +138,50 @@ function stripCell(cell: PorkchopCell): PorkchopWorkerCell {
   };
 }
 
+function stripReturnBranch(branch: PorkchopReturnBranch): PorkchopWorkerReturnBranch {
+  return {
+    branch: branch.branch,
+    converged: branch.converged,
+    asteroidDepartureTdbSeconds: branch.asteroidDepartureTdbSeconds,
+    earthArrivalTdbSeconds: branch.earthArrivalTdbSeconds,
+    vInfE: branch.vInfE,
+    vInfEKmps: branch.vInfEKmps,
+    arrivalC3: branch.arrivalC3,
+    vInfAsteroidDeparture: branch.vInfAsteroidDeparture,
+    vInfAsteroidDepartureKmps: branch.vInfAsteroidDepartureKmps,
+    v1: branch.v1,
+    v2: branch.v2,
+    M: branch.M,
+    muKm3S2: branch.muKm3S2,
+    arrivalDeclinationDeg: branch.arrivalDeclinationDeg,
+    ...(branch.refusalReason === undefined ? {} : { refusalReason: branch.refusalReason }),
+    elementProvenance: branch.elementProvenance,
+    tier: branch.tier,
+    support: branch.support,
+    notEvaluated: branch.notEvaluated,
+  };
+}
+
+function stripReturnCell(cell: PorkchopReturnCell): PorkchopWorkerReturnCell {
+  return {
+    depJD: cell.depJD,
+    tofDays: cell.tofDays,
+    status: cell.status,
+    M: cell.M,
+    asteroidDepartureTdbSeconds: cell.asteroidDepartureTdbSeconds,
+    earthArrivalTdbSeconds: cell.earthArrivalTdbSeconds,
+    ...(cell.earthLastSampleTdbSeconds === undefined
+      ? {}
+      : { earthLastSampleTdbSeconds: cell.earthLastSampleTdbSeconds }),
+    branches: cell.branches.map(stripReturnBranch),
+    selectedBranch: cell.selectedBranch,
+  };
+}
+
+function isWorkerDirection(value: unknown): value is PorkchopWorkerDirection {
+  return value === 'outbound' || value === 'return';
+}
+
 export function installPorkchopWorker(
   scope: PorkchopWorkerScope,
   deps: PorkchopWorkerDependencies = {},
@@ -122,6 +207,14 @@ export function installPorkchopWorker(
       return;
     }
 
+    if (!isWorkerDirection(message.direction)) {
+      scope.postMessage({
+        type: 'error',
+        reason: 'Porkchop worker requires an explicit compute direction',
+      });
+      return;
+    }
+
     if (earthStateSeries.length === 0) {
       scope.postMessage({
         type: 'error',
@@ -130,24 +223,45 @@ export function installPorkchopWorker(
       return;
     }
 
-    const result = (deps.computeGrid ?? computePorkchopGrid)(
+    const depsForGrid: PorkchopEphemerisDependencies = {
+      nowMs: deps.nowMs,
+      getEarthStateAtTdbSeconds: (tdbSeconds) =>
+        interpolateIndexedBodyStateSeries('earth', earthStateSeries, tdbSeconds),
+      propagateTargetStateAtTdbSeconds: (bodyElements, tdbSeconds) =>
+        propagateKeplerianStateVectors(bodyElements, tdbSeconds),
+    };
+
+    if (message.direction === 'outbound') {
+      const result = (deps.computeGrid ?? computePorkchopGrid)(
+        message.bodyElements,
+        message.gridParams,
+        message.M,
+        depsForGrid,
+      );
+      scope.postMessage({
+        type: 'grid-result',
+        direction: 'outbound',
+        bodyId: message.bodyId,
+        M: message.M,
+        cells: result.cells.map(stripCell),
+        compute_ms: result.compute_ms,
+      });
+      return;
+    }
+
+    const result = (deps.computeReturnGrid ?? computeReturnPorkchopGrid)(
       message.bodyElements,
       message.gridParams,
       message.M,
-      {
-        nowMs: deps.nowMs,
-        getEarthStateAtTdbSeconds: (tdbSeconds) =>
-          interpolateIndexedBodyStateSeries('earth', earthStateSeries, tdbSeconds),
-        propagateTargetStateAtTdbSeconds: (bodyElements, tdbSeconds) =>
-          propagateKeplerianStateVectors(bodyElements, tdbSeconds),
-      },
+      depsForGrid,
     );
-
     scope.postMessage({
       type: 'grid-result',
+      direction: 'return',
       bodyId: message.bodyId,
       M: message.M,
-      cells: result.cells.map(stripCell),
+      cells: result.cells.map(stripReturnCell),
+      earthSpanRefusedCount: result.earthSpanRefusedCount,
       compute_ms: result.compute_ms,
     });
   });

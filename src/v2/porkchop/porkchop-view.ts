@@ -753,7 +753,7 @@ export function PorkchopView(props: PorkchopViewProps) {
             }
             return { cells: grids.m0.cells, compute_ms: grids.m0.compute_ms + grids.m1.compute_ms };
           })
-        : props.client.computeGrid({ ...request, M: props.M });
+        : props.client.computeGrid({ ...request, direction: 'outbound', M: props.M });
 
     void pending.then((result) => {
       if (cancelled) {

@@ -760,6 +760,7 @@ test('porkchop worker init bootstraps Earth state and strips velocity internals 
   onMessage({
     data: {
       type: 'compute-grid',
+      direction: 'outbound',
       bodyId: 'asteroid-99942',
       bodyElements: {
         aM: 1,
@@ -787,6 +788,7 @@ test('porkchop worker init bootstraps Earth state and strips velocity internals 
 
   assert.deepEqual(posted.shift(), {
     type: 'grid-result',
+    direction: 'outbound',
     bodyId: 'asteroid-99942',
     M: 1,
     compute_ms: 12.5,
@@ -811,4 +813,188 @@ test('porkchop worker init bootstraps Earth state and strips velocity internals 
       },
     ],
   });
+});
+
+test('porkchop worker return direction preserves vectors, endpoint epochs, and Earth-span count', async () => {
+  const modules = await loadModules();
+  const handlers = new Map();
+  const posted = [];
+  const fakeScope = {
+    addEventListener(type, handler) {
+      handlers.set(type, handler);
+    },
+    postMessage(message) {
+      posted.push(message);
+    },
+  };
+
+  modules.installPorkchopWorker(fakeScope, {
+    computeReturnGrid: (_bodyElements, _gridParams, _M, deps) => {
+      assert.deepEqual(deps.getEarthStateAtTdbSeconds(0), {
+        frame: 'FRAME_HELIO_J2000_ICRF',
+        tdbSeconds: 0,
+        positionM: { x: 1, y: 2, z: 3 },
+        velocityMps: { x: 4, y: 5, z: 6 },
+      });
+      return {
+        earthSpanRefusedCount: 1,
+        compute_ms: 7.5,
+        cells: [
+          {
+            depJD: 2451545,
+            tofDays: 200,
+            status: 'ok',
+            M: 0,
+            asteroidDepartureTdbSeconds: 100,
+            earthArrivalTdbSeconds: 17_280_100,
+            branches: [
+              {
+                branch: 'single',
+                converged: true,
+                asteroidDepartureTdbSeconds: 100,
+                earthArrivalTdbSeconds: 17_280_100,
+                vInfE: [31, 32, 33],
+                vInfEKmps: 55.42562584220407,
+                arrivalC3: 3072,
+                vInfAsteroidDeparture: [41, 42, 43],
+                vInfAsteroidDepartureKmps: 72.06941098690994,
+                v1: [51, 52, 53],
+                v2: [61, 62, 63],
+                M: 0,
+                muKm3S2: 1.32712440018e11,
+                arrivalDeclinationDeg: 27.123,
+                elementProvenance: null,
+                tier: null,
+                support: false,
+                notEvaluated: {
+                  bPlane: null,
+                  entryFlightPathAngle: null,
+                  entryLocation: null,
+                  atmosphereRelativeEntrySpeed: null,
+                  earthMoonCapture: null,
+                  catchFeasibility: null,
+                },
+              },
+            ],
+            selectedBranch: 0,
+          },
+        ],
+      };
+    },
+  });
+
+  const onMessage = handlers.get('message');
+  assert.equal(typeof onMessage, 'function');
+  const earthStateSeries = [
+    {
+      frame: 'FRAME_HELIO_J2000_ICRF',
+      tdbSeconds: 0,
+      positionM: { x: 1, y: 2, z: 3 },
+      velocityMps: { x: 4, y: 5, z: 6 },
+    },
+  ];
+  onMessage({ data: { type: 'init', earthStateSeries } });
+  posted.shift();
+  onMessage({
+    data: {
+      type: 'compute-grid',
+      direction: 'return',
+      bodyId: 'asteroid-99942',
+      bodyElements: {
+        aM: 1,
+        e: 0.1,
+        iRad: 0,
+        omRad: 0,
+        wRad: 0,
+        maRad: 0,
+        epochTdbSeconds: 0,
+      },
+      gridParams: {
+        depStartJD: 2451545,
+        depEndJD: 2451545,
+        tofMinDays: 200,
+        tofMaxDays: 200,
+        nDep: 1,
+        nTof: 1,
+      },
+      M: 0,
+    },
+  });
+
+  assert.deepEqual(posted.shift(), {
+    type: 'grid-result',
+    direction: 'return',
+    bodyId: 'asteroid-99942',
+    M: 0,
+    earthSpanRefusedCount: 1,
+    compute_ms: 7.5,
+    cells: [
+      {
+        depJD: 2451545,
+        tofDays: 200,
+        status: 'ok',
+        M: 0,
+        asteroidDepartureTdbSeconds: 100,
+        earthArrivalTdbSeconds: 17_280_100,
+        branches: [
+          {
+            branch: 'single',
+            converged: true,
+            asteroidDepartureTdbSeconds: 100,
+            earthArrivalTdbSeconds: 17_280_100,
+            vInfE: [31, 32, 33],
+            vInfEKmps: 55.42562584220407,
+            arrivalC3: 3072,
+            vInfAsteroidDeparture: [41, 42, 43],
+            vInfAsteroidDepartureKmps: 72.06941098690994,
+            v1: [51, 52, 53],
+            v2: [61, 62, 63],
+            M: 0,
+            muKm3S2: 1.32712440018e11,
+            arrivalDeclinationDeg: 27.123,
+            elementProvenance: null,
+            tier: null,
+            support: false,
+            notEvaluated: {
+              bPlane: null,
+              entryFlightPathAngle: null,
+              entryLocation: null,
+              atmosphereRelativeEntrySpeed: null,
+              earthMoonCapture: null,
+              catchFeasibility: null,
+            },
+          },
+        ],
+        selectedBranch: 0,
+      },
+    ],
+  });
+});
+
+test('porkchop worker rejects a compute message without an explicit direction', async () => {
+  const modules = await loadModules();
+  const handlers = new Map();
+  const posted = [];
+  const fakeScope = {
+    addEventListener(type, handler) {
+      handlers.set(type, handler);
+    },
+    postMessage(message) {
+      posted.push(message);
+    },
+  };
+  modules.installPorkchopWorker(fakeScope);
+  const onMessage = handlers.get('message');
+  onMessage({
+    data: {
+      type: 'compute-grid',
+      bodyId: 'asteroid-433',
+      bodyElements: {},
+      gridParams: {},
+      M: 0,
+    },
+  });
+  assert.deepEqual(posted, [
+    { type: 'error', reason: 'Porkchop worker requires an explicit compute direction' },
+  ]);
 });
