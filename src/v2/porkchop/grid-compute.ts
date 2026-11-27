@@ -5,6 +5,8 @@ import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../core/units.js';
 import { dlaDegFromVInf } from '../core/lambert/dla.js';
 import { lambertMultiRev, type MultiRevResult } from '../core/lambert/lambert-multi-rev.js';
 import { assessSunArc, type SunArcAssessment } from './sun-arc.js';
+import { isReturnDepartureUnsupported, selectReturnBranch } from './return-selection.js';
+import type { SupportBoundary } from './support-boundary.js';
 
 const METERS_PER_KILOMETER = 1000;
 const MU_SUN_KM3_S2 = GM_SUN_M3_S2 / (METERS_PER_KILOMETER ** 3);
@@ -59,6 +61,8 @@ export interface PorkchopGridResult {
 export interface PorkchopReturnGridParams extends PorkchopGridParams {
   /** Runtime Earth span in TDB seconds; return cells after this epoch refuse. */
   readonly earthMaxTdbSeconds?: number;
+  /** Optional L1 support boundary; it flags asteroid departure, never Earth arrival. */
+  readonly supportBoundary?: SupportBoundary;
 }
 
 export type PorkchopReturnCellStatus = 'ok' | 'no_solution' | 'stall' | 'earth-span';
@@ -244,8 +248,10 @@ function mapReturnBranches(
   earthVelocityKmps: Vec3Km,
   asteroidDepartureTdbSeconds: number,
   earthArrivalTdbSeconds: number,
+  asteroidDepartureJd: number,
   muKm3S2: number,
   M: number,
+  supportBoundary: SupportBoundary | undefined,
 ): readonly PorkchopReturnBranch[] {
   return result.branches.map((branch) => {
     const vInfEX = branch.v2[0] - earthVelocityKmps[0];
@@ -285,7 +291,7 @@ function mapReturnBranches(
       ...(sunArc?.refusalReason === undefined ? {} : { refusalReason: sunArc.refusalReason }),
       elementProvenance: null,
       tier: null,
-      support: null,
+      support: isReturnDepartureUnsupported(asteroidDepartureJd, supportBoundary),
       notEvaluated: notEvaluatedReturnFields(),
     };
   });
@@ -463,8 +469,10 @@ export function computeReturnPorkchopGrid(
         earthVelocityKmps,
         asteroidDepartureTdbSeconds,
         earthArrivalTdbSeconds,
+        depJD,
         MU_SUN_KM3_S2,
         M,
+        gridParams.supportBoundary,
       );
       cells[cellIndex] = {
         depJD,
@@ -474,7 +482,7 @@ export function computeReturnPorkchopGrid(
         asteroidDepartureTdbSeconds,
         earthArrivalTdbSeconds,
         branches,
-        selectedBranch: null,
+        selectedBranch: selectReturnBranch(branches),
       };
       cellIndex += 1;
     }

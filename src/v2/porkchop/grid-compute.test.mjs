@@ -70,6 +70,7 @@ function compileModules() {
       path.join(repoRoot, 'src', 'v2', 'core', 'interpolators', 'hermite.ts'),
       path.join(repoRoot, 'src', 'v2', 'porkchop', 'earth-index.ts'),
       path.join(repoRoot, 'src', 'v2', 'porkchop', 'sun-arc.ts'),
+      path.join(repoRoot, 'src', 'v2', 'porkchop', 'return-selection.ts'),
       path.join(repoRoot, 'src', 'v2', 'boundary', 'slice9-nea-catalog.ts'),
       path.join(repoRoot, 'src', 'v2', 'boundary', 'horizons.ts'),
       path.join(repoRoot, 'src', 'v2', 'app', 'solar-system', 'slice9-runtime-asteroids.ts'),
@@ -100,6 +101,7 @@ async function loadModules() {
         hermite,
         earthIndex,
         sunArc,
+        returnSelection,
         keplerian,
       ] = await Promise.all([
         importJs('porkchop/grid-compute.js'),
@@ -113,6 +115,7 @@ async function loadModules() {
         importJs('core/interpolators/hermite.js'),
         importJs('porkchop/earth-index.js'),
         importJs('porkchop/sun-arc.js'),
+        importJs('porkchop/return-selection.js'),
         importJs('core/propagators/keplerian.js'),
       ]);
 
@@ -136,6 +139,7 @@ async function loadModules() {
         ...hermite,
         ...earthIndex,
         ...sunArc,
+        ...returnSelection,
         ...keplerian,
         earthSeries,
         byDesignation,
@@ -409,6 +413,70 @@ test('return kernel uses asteroid-departure/Earth-arrival endpoints and refuses 
   assert.equal(result.cells[1].status, 'earth-span');
   assert.equal(result.cells[1].earthLastSampleTdbSeconds, earthMaxTdbSeconds);
   assert.equal(result.earthSpanRefusedCount, 1);
+});
+
+test('return selection uses asteroid-departure speed, excludes flags, ties to M=0, and pairs support at departure', async () => {
+  const modules = await loadModules();
+  const selected = modules.selectReturnBranch([
+    { converged: true, refusalReason: 'through-sun', vInfAsteroidDepartureKmps: 1, M: 0 },
+    { converged: true, refusalReason: undefined, vInfAsteroidDepartureKmps: 2, M: 1 },
+    { converged: true, refusalReason: undefined, vInfAsteroidDepartureKmps: 2, M: 0 },
+    { converged: true, refusalReason: undefined, vInfAsteroidDepartureKmps: 9, M: 2 },
+  ]);
+  assert.equal(selected, 2, 'flagged cheapest branch is excluded and an exact tie chooses M=0');
+
+  const outboundArrivalTdbSeconds = 1_000 * secondsPerDay;
+  const paired = modules.pairedReturnGridParams(outboundArrivalTdbSeconds, { nDep: 3, nTof: 4 });
+  assert.equal(paired.depStartJD, modules.J2000_TDB_JULIAN_DATE + 1008);
+  assert.equal(paired.depEndJD, modules.J2000_TDB_JULIAN_DATE + 1730.5);
+  assert.equal(paired.tofMinDays, 182.5);
+  assert.equal(paired.tofMaxDays, 1826.25);
+  assert.equal(paired.nDep, 3);
+  assert.equal(paired.nTof, 4);
+
+  const boundary = { encounterJd: paired.depStartJD, encounterDateLabel: '2028-10-01', encounterBody: '99942' };
+  assert.equal(modules.isReturnDepartureUnsupported(paired.depStartJD - 1, boundary), false);
+  assert.equal(modules.isReturnDepartureUnsupported(paired.depStartJD, boundary), false);
+  assert.equal(modules.isReturnDepartureUnsupported(paired.depStartJD + 1, boundary), true);
+  assert.equal(modules.isReturnDepartureUnsupported(paired.depStartJD, undefined), null);
+
+  const body = modules.byDesignation.get('99942');
+  assert.ok(body, 'Apophis should exist in fixture');
+  const depJD = modules.J2000_TDB_JULIAN_DATE + 1000;
+  const departureSeconds = 1000 * secondsPerDay;
+  const supportedAtDeparture = modules.computeReturnPorkchopGrid(
+    body.elements,
+    {
+      depStartJD: depJD,
+      depEndJD: depJD,
+      tofMinDays: 200,
+      tofMaxDays: 200,
+      nDep: 1,
+      nTof: 1,
+      earthMaxTdbSeconds: departureSeconds + 300 * secondsPerDay,
+      supportBoundary: { encounterJd: depJD + 100, encounterDateLabel: '2002-10-01', encounterBody: '99942' },
+    },
+    0,
+    {
+      getEarthStateAtTdbSeconds: (tdbSeconds) => ({
+        frame: 'FRAME_HELIO_J2000_ICRF',
+        tdbSeconds,
+        positionM: { x: 400_000_000_000, y: 500_000_000_000, z: 600_000_000_000 },
+        velocityMps: { x: 4_000, y: 5_000, z: 6_000 },
+      }),
+      propagateTargetStateAtTdbSeconds: (_elements, tdbSeconds) => ({
+        frame: 'FRAME_HELIO_J2000_ICRF',
+        tdbSeconds,
+        positionM: { x: 100_000_000_000, y: 200_000_000_000, z: 300_000_000_000 },
+        velocityMps: { x: 1_000, y: 2_000, z: 3_000 },
+      }),
+      solveLambert: () => ({
+        M: 0,
+        branches: [{ branch: 'single', converged: true, x: 0, v1: [10, 20, 30], v2: [40, 50, 60] }],
+      }),
+    },
+  );
+  assert.equal(supportedAtDeparture.cells[0].branches[0].support, false);
 });
 
 function buildValidatedReference(modules, body, depUtc, tofDays, M) {
