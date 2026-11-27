@@ -469,3 +469,33 @@ Evidence: `tools/slice20-research/nhats/` (PR #17, merged at `c1d88a7`). 200 tra
    - The tour start waits silently when the cost-card state never arrives (`src/v2/app/porkchop/main.ts`, the effect that follows `tourPendingStart`); no error is logged on that path.
    - `@types/node` resolves for `mcp/` from the root install; add it to `mcp/package.json`.
    - The per-file test counter (`tools/slice20-research/a-cache/`, Stage 0.8) is too slow on Windows to be a gate; a parallel runner or a runner-side per-file log is the fix.
+
+### §9.8 Front B entry rulings and research record — Hudson, 2026-11-26, "all as recommended"
+1. **GM_EARTH LOCKED (DEC-20-8, OQ-20-8).** μ_E = 398600.43550702266 km³/s² (3.9860043550702266e14 m³/s²), DE440.
+   - Primary source: NAIF `gm_de440.tpc`, `BODY399_GM     = ( 3.9860043550702266D+05 )`, retrieved 2026-11-22T05:37:07.712Z, sha256 `924ddf4fb9ead9fe8a1aa55780bcabde40b09d00065d58226e24b68d8092f140`.
+   - Two further publication routes give the same value to the six decimals they print (398600.435507): the JPL SSD astrodynamic-parameters page, and Park et al. 2021 (AJ 161:105), Table 2. They publish one JPL number, so they confirm the citation, not an independent measurement.
+   - Evidence: `tools/slice20-research/front-b-entry/` (PR #22). The constant enters `src/v2/core/constants/` in Front B as a [P] hand-commit carrying this provenance.
+2. **One Earth GM.** `src/v2/porkchop/delta-v.ts:3` holds `EARTH_MU_KM3_PER_S2 = 398_600.4418` (the IAU/WGS-84 nominal). It will import the core constant, in its own atomic commit after the constant lands.
+   - Measured effect (overnight ON1): at most 6.26e-8 km/s on any outbound ΔV quantity across 2,004 records. The ΔV stack displays `toFixed(3)`, so nothing visible changes.
+   - No current test observes the Earth GM: a control at `398600.4418 * 1.01` left every suite green. The unification commit therefore adds a test that fails when the Earth GM changes.
+   - The frozen V1 copies under `src/physics/` and `src/renderer/` are not touched (LEGACY.md).
+3. **DEC-20-1 amended (additive); DEC-20-4 confirmed.**
+   - "The existing grid kernel with injected providers" is not literal: `computePorkchopGrid` fixes Earth at departure and the target at arrival (front-b-entry ENTRY_REPORT §5.7, PARTLY).
+   - K1 is a sibling return kernel in the porkchop layer, asteroid at departure and Earth at arrival, calling the same `lambertMultiRev`. `src/v2/core/lambert/*` is unchanged. DEC-20-9's four-lens audit stands.
+   - DEC-20-4: an indexed Earth lookup reproduced the linear scan exactly (0 nonzero differences over 1,021,915 cases, overnight ON3) and cut a 200×100 return-grid reference from 12.6 s to 0.20 s.
+4. **DEC-20-2 selection kept; DEC-20-8 presentation amended.**
+   - Selection stays the minimum asteroid-departure |v∞| (objective A).
+   - The entry screen is presented as the entry-control ΔV that would meet the NHATS 12 km/s profile, max(0, |v∞,arr| − v∞(v_EI = 12 km/s at 125 km)) (NHATS "model B" bookkeeping: 92 of 92 controlled NHATS trajectories within rounding, `tools/slice20-research/nhats/REPORT.md` Q1), shown next to the natural two-body inertial entry speed. A bare pass/fail label is not shown. DEC-20-8's other wording stands: never "capsule feasible" or "return feasible".
+   - Evidence (coarse 50×25 grid, leads): objective A's window fails the screen for 96.3% of bodies (ON4), reproduced body by body on 2,000 bodies by an independent Python path (N2, 1 of 2,000 disagreeing). Restricting selection to passing cells (B) costs a median 5.76 km/s more departure |v∞| (p90 13.56). The NHATS-style objective (C, departure |v∞| plus entry-control ΔV) picks the same window as A for 9.6% of bodies (N3). On the 100 NHATS bodies: A fails the screen for 0.83 of them, C for 0.49, and NHATS's own trajectories need control for 0.39.
+   - **Why A:** K1 ends at Earth arrival and assumes no capsule (ASTER_TIMELINE §5; DEC-20-8); K2's tether catch does not depend on entry speed. C builds in direct entry. C's window is a candidate secondary line for Front D under OQ-20-1.
+   - **Strongest counterargument:** a sample-return reader sees a "best" window that needs kilometres per second of braking, and C is NHATS's own bookkeeping.
+5. **Correction of a reported figure.** The share of bodies with no screen-passing cell, 7.4% (ON4; 7.85% on N2's 2,000 bodies), is a coarse-grid artefact. ON4's own control, 500 bodies at the production 200×100 grid, gives 0.8% (coarse 5.4% on the same bodies). The 96.3% is stable at full resolution: the median best-cell v_EI change is −0.012 km/s. The prices in item 4 are coarse-grid and may overstate B's cost.
+6. **Paired returns (overnight N4, coarse, leads).** 9.1% of bodies have no paired return shown; 31.4% of paired cells are refused by DEC-20-3 (Earth arrival after 2040-12-31). Median total mission duration: 1,704 d (A), 1,673 d (C). Front D's empty state is common in the paired view; this strengthens Slice 21 H0 (Earth span).
+7. **Holds closed.**
+   - Laptop test count: 369/370 did not reproduce. 371/371 on five per-file repetitions and two verify runs (N5).
+   - LR1 re-derivation: all 14,124 inputs identical; 154 results differ by at most 5.7e-14 km/s, and the old source run under Node 26 reproduces the same 154 (N1). It is the runtime, not the code. LR1 and the M = 2 oracle (ON2: 480,000 cells, 0 existence disagreements, izzo within 2.02e-12 km/s at M = 0, 1 and 2) stand as leads for Front B's oracle.
+8. **Nova reversals and misses, continued from §9.7 item 4:**
+   12. Overnight run 1's dispatch set a 1e-12 km/s line for re-deriving izzo values on another Python build. The measured 1.5e-12 tripped it ("LR1 DIFFERS") with no defect behind it.
+   13. Nova relayed the coarse 7.4% as a catalog finding before reading the run's own full-resolution control (item 5).
+   14. PRs #21 and #22 merged without STATUS commits because Nova had deferred the STATUS step to merge time. The session-start gate failed until this record's STATUS commit.
+   15. Overnight run 2's agent committed `.dispatch-scope` in its commits instead of restoring it after each commit. This record's branch rewrites it.
