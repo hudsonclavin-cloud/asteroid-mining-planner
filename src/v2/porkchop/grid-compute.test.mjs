@@ -355,6 +355,62 @@ test('DEC-20-14 flags only a low-perihelion flown arc and excludes it from selec
   assert.equal(cell.selectedBranch, 1);
 });
 
+test('return kernel uses asteroid-departure/Earth-arrival endpoints and refuses after the runtime Earth span', async () => {
+  const modules = await loadModules();
+  const body = modules.byDesignation.get('99942');
+  assert.ok(body, 'Apophis should exist in fixture');
+  const departureTdbSeconds = 1_000 * secondsPerDay;
+  const depJD = tdbSecondsToJd(departureTdbSeconds, modules.J2000_TDB_JULIAN_DATE);
+  const earthMaxTdbSeconds = departureTdbSeconds + 300 * secondsPerDay;
+  const calls = [];
+  const result = modules.computeReturnPorkchopGrid(
+    body.elements,
+    {
+      depStartJD: depJD,
+      depEndJD: depJD,
+      tofMinDays: 200,
+      tofMaxDays: 400,
+      nDep: 1,
+      nTof: 2,
+      earthMaxTdbSeconds,
+    },
+    0,
+    {
+      getEarthStateAtTdbSeconds: (tdbSeconds) => ({
+        frame: 'FRAME_HELIO_J2000_ICRF',
+        tdbSeconds,
+        positionM: { x: 400_000_000_000, y: 500_000_000_000, z: 600_000_000_000 },
+        velocityMps: { x: 4_000, y: 5_000, z: 6_000 },
+      }),
+      propagateTargetStateAtTdbSeconds: (_elements, tdbSeconds) => ({
+        frame: 'FRAME_HELIO_J2000_ICRF',
+        tdbSeconds,
+        positionM: { x: 100_000_000_000, y: 200_000_000_000, z: 300_000_000_000 },
+        velocityMps: { x: 1_000, y: 2_000, z: 3_000 },
+      }),
+      solveLambert: (r1, r2, tofSeconds, muKm3S2, M, lw) => {
+        calls.push({ r1, r2, tofSeconds, muKm3S2, M, lw });
+        return {
+          M,
+          branches: [{ branch: 'single', converged: true, x: 0, v1: [10, 20, 30], v2: [40, 50, 60] }],
+        };
+      },
+    },
+  );
+
+  assert.equal(calls.length, 1, 'Earth-span refusal must occur before Lambert');
+  assert.deepEqual(calls[0].r1, [100_000_000, 200_000_000, 300_000_000]);
+  assert.deepEqual(calls[0].r2, [400_000_000, 500_000_000, 600_000_000]);
+  assert.equal(calls[0].M, 0);
+  assert.equal(calls[0].lw, true);
+  assert.deepEqual(result.cells[0].branches[0].vInfE, [36, 45, 54]);
+  assert.deepEqual(result.cells[0].branches[0].vInfAsteroidDeparture, [9, 18, 27]);
+  assert.equal(result.cells[0].branches[0].earthArrivalTdbSeconds, departureTdbSeconds + 200 * secondsPerDay);
+  assert.equal(result.cells[1].status, 'earth-span');
+  assert.equal(result.cells[1].earthLastSampleTdbSeconds, earthMaxTdbSeconds);
+  assert.equal(result.earthSpanRefusedCount, 1);
+});
+
 function buildValidatedReference(modules, body, depUtc, tofDays, M) {
   const validatedDepartureTdbSeconds = modules.utcStringToTdbSeconds(depUtc);
   const depJD = tdbSecondsToJd(validatedDepartureTdbSeconds, modules.J2000_TDB_JULIAN_DATE);
