@@ -1,7 +1,7 @@
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import type { CanonicalState } from '../core/types.js';
-import { interpolateBodyStateSeries } from '../core/interpolators/hermite.js';
 import { propagateKeplerianStateVectors } from '../core/propagators/keplerian.js';
+import { interpolateIndexedBodyStateSeries } from './earth-index.js';
 import {
   computePorkchopGrid,
   type PorkchopBranch,
@@ -136,7 +136,7 @@ export function installPorkchopWorker(
       {
         nowMs: deps.nowMs,
         getEarthStateAtTdbSeconds: (tdbSeconds) =>
-          interpolateBodyStateSeries('earth', earthStateSeries, tdbSeconds),
+          interpolateIndexedBodyStateSeries('earth', earthStateSeries, tdbSeconds),
         propagateTargetStateAtTdbSeconds: (bodyElements, tdbSeconds) =>
           propagateKeplerianStateVectors(bodyElements, tdbSeconds),
       },

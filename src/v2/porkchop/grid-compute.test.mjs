@@ -68,6 +68,7 @@ function compileModules() {
       path.join(repoRoot, 'src', 'v2', 'core', 'units', 'utc-to-tdb.ts'),
       path.join(repoRoot, 'src', 'v2', 'core', 'units.ts'),
       path.join(repoRoot, 'src', 'v2', 'core', 'interpolators', 'hermite.ts'),
+      path.join(repoRoot, 'src', 'v2', 'porkchop', 'earth-index.ts'),
       path.join(repoRoot, 'src', 'v2', 'boundary', 'slice9-nea-catalog.ts'),
       path.join(repoRoot, 'src', 'v2', 'boundary', 'horizons.ts'),
       path.join(repoRoot, 'src', 'v2', 'app', 'solar-system', 'slice9-runtime-asteroids.ts'),
@@ -96,6 +97,7 @@ async function loadModules() {
         tdbUnits,
         units,
         hermite,
+        earthIndex,
         keplerian,
       ] = await Promise.all([
         importJs('porkchop/grid-compute.js'),
@@ -107,6 +109,7 @@ async function loadModules() {
         importJs('core/units/utc-to-tdb.js'),
         importJs('core/units.js'),
         importJs('core/interpolators/hermite.js'),
+        importJs('porkchop/earth-index.js'),
         importJs('core/propagators/keplerian.js'),
       ]);
 
@@ -128,6 +131,7 @@ async function loadModules() {
         ...tdbUnits,
         ...units,
         ...hermite,
+        ...earthIndex,
         ...keplerian,
         earthSeries,
         byDesignation,
@@ -169,6 +173,37 @@ function tdbSecondsToJd(tdbSeconds, J2000_TDB_JULIAN_DATE) {
   return tdbSeconds / secondsPerDay + J2000_TDB_JULIAN_DATE;
 }
 
+function mulberry32(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function stateComponents(state) {
+  return [
+    state.positionM.x,
+    state.positionM.y,
+    state.positionM.z,
+    state.velocityMps.x,
+    state.velocityMps.y,
+    state.velocityMps.z,
+  ];
+}
+
+function thrownShape(fn) {
+  try {
+    fn();
+    return null;
+  } catch (error) {
+    return { name: error.name, message: error.message };
+  }
+}
+
 function buildDeps(modules, earthSeries) {
   return {
     getEarthStateAtTdbSeconds: (tdbSeconds) =>
@@ -177,6 +212,53 @@ function buildDeps(modules, earthSeries) {
       modules.propagateKeplerianStateVectors(bodyElements, tdbSeconds),
   };
 }
+
+test('indexed Earth lookup is identity-equivalent to the production linear lookup', async () => {
+  const modules = await loadModules();
+  const samples = modules.earthSeries;
+  const epochs = [];
+  for (const sample of samples) {
+    epochs.push(sample.tdbSeconds);
+    epochs.push(sample.tdbSeconds - 1e-6 * secondsPerDay);
+    epochs.push(sample.tdbSeconds + 1e-6 * secondsPerDay);
+  }
+  for (let index = 0; index < samples.length - 1; index += 1) {
+    epochs.push((samples[index].tdbSeconds + samples[index + 1].tdbSeconds) / 2);
+  }
+  const random = mulberry32(20261125);
+  const minT = samples[0].tdbSeconds;
+  const maxT = samples.at(-1).tdbSeconds;
+  for (let index = 0; index < 1000; index += 1) {
+    epochs.push(minT + random() * (maxT - minT));
+  }
+
+  let maxAbsDifference = 0;
+  for (const tdbSeconds of epochs) {
+    const linearError = thrownShape(() => modules.interpolateBodyStateSeries('earth', samples, tdbSeconds));
+    const indexedError = thrownShape(() => modules.interpolateIndexedBodyStateSeries('earth', samples, tdbSeconds));
+    if (linearError !== null || indexedError !== null) {
+      assert.deepEqual(indexedError, linearError);
+      continue;
+    }
+    const linear = modules.interpolateBodyStateSeries('earth', samples, tdbSeconds);
+    const indexed = modules.interpolateIndexedBodyStateSeries('earth', samples, tdbSeconds);
+    const linearComponents = stateComponents(linear);
+    const indexedComponents = stateComponents(indexed);
+    for (let component = 0; component < linearComponents.length; component += 1) {
+      maxAbsDifference = Math.max(
+        maxAbsDifference,
+        Math.abs(linearComponents[component] - indexedComponents[component]),
+      );
+    }
+  }
+
+  assert.equal(maxAbsDifference, 0);
+  for (const tdbSeconds of [minT - 1, maxT + 1, minT - 1e-6 * secondsPerDay, maxT + 1e-6 * secondsPerDay]) {
+    const linearError = thrownShape(() => modules.interpolateBodyStateSeries('earth', samples, tdbSeconds));
+    const indexedError = thrownShape(() => modules.interpolateIndexedBodyStateSeries('earth', samples, tdbSeconds));
+    assert.deepEqual(indexedError, linearError);
+  }
+});
 
 function buildValidatedReference(modules, body, depUtc, tofDays, M) {
   const validatedDepartureTdbSeconds = modules.utcStringToTdbSeconds(depUtc);
