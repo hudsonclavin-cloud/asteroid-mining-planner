@@ -69,6 +69,7 @@ function compileModules() {
       path.join(repoRoot, 'src', 'v2', 'core', 'units.ts'),
       path.join(repoRoot, 'src', 'v2', 'core', 'interpolators', 'hermite.ts'),
       path.join(repoRoot, 'src', 'v2', 'porkchop', 'earth-index.ts'),
+      path.join(repoRoot, 'src', 'v2', 'porkchop', 'sun-arc.ts'),
       path.join(repoRoot, 'src', 'v2', 'boundary', 'slice9-nea-catalog.ts'),
       path.join(repoRoot, 'src', 'v2', 'boundary', 'horizons.ts'),
       path.join(repoRoot, 'src', 'v2', 'app', 'solar-system', 'slice9-runtime-asteroids.ts'),
@@ -98,6 +99,7 @@ async function loadModules() {
         units,
         hermite,
         earthIndex,
+        sunArc,
         keplerian,
       ] = await Promise.all([
         importJs('porkchop/grid-compute.js'),
@@ -110,6 +112,7 @@ async function loadModules() {
         importJs('core/units.js'),
         importJs('core/interpolators/hermite.js'),
         importJs('porkchop/earth-index.js'),
+        importJs('porkchop/sun-arc.js'),
         importJs('core/propagators/keplerian.js'),
       ]);
 
@@ -132,6 +135,7 @@ async function loadModules() {
         ...units,
         ...hermite,
         ...earthIndex,
+        ...sunArc,
         ...keplerian,
         earthSeries,
         byDesignation,
@@ -258,6 +262,97 @@ test('indexed Earth lookup is identity-equivalent to the production linear looku
     const indexedError = thrownShape(() => modules.interpolateIndexedBodyStateSeries('earth', samples, tdbSeconds));
     assert.deepEqual(indexedError, linearError);
   }
+});
+
+function lowPerihelionEllipseState(trueAnomalyRad) {
+  const muKm3S2 = 1.32712440018e11;
+  const perihelionKm = 100_000;
+  const aphelionKm = 10_000_000;
+  const eccentricity = (aphelionKm - perihelionKm) / (aphelionKm + perihelionKm);
+  const semiLatusRectumKm = perihelionKm * (1 + eccentricity);
+  const radiusKm = semiLatusRectumKm / (1 + eccentricity * Math.cos(trueAnomalyRad));
+  const speedFactorKmps = Math.sqrt(muKm3S2 / semiLatusRectumKm);
+  return {
+    positionKm: [radiusKm * Math.cos(trueAnomalyRad), radiusKm * Math.sin(trueAnomalyRad), 0],
+    velocityKmps: [
+      -speedFactorKmps * Math.sin(trueAnomalyRad),
+      speedFactorKmps * (eccentricity + Math.cos(trueAnomalyRad)),
+      0,
+    ],
+  };
+}
+
+test('DEC-20-14 flags only a low-perihelion flown arc and excludes it from selection', async () => {
+  const modules = await loadModules();
+  const muKm3S2 = 1.32712440018e11;
+  const atApoapsis = lowPerihelionEllipseState(Math.PI);
+  const afterPerihelion = lowPerihelionEllipseState(Math.PI / 2);
+  const beforePerihelion = lowPerihelionEllipseState(Math.PI);
+
+  const throughSun = modules.assessSunArc(
+    atApoapsis.positionKm,
+    atApoapsis.velocityKmps,
+    afterPerihelion.positionKm,
+    muKm3S2,
+    0,
+  );
+  assert.ok(throughSun.perihelionKm < modules.SOLAR_PERIHELION_LIMIT_KM);
+  assert.equal(throughSun.passesPerihelion, true);
+  assert.equal(throughSun.refusalReason, 'through-sun');
+
+  const beforeSun = modules.assessSunArc(
+    afterPerihelion.positionKm,
+    afterPerihelion.velocityKmps,
+    beforePerihelion.positionKm,
+    muKm3S2,
+    0,
+  );
+  assert.ok(beforeSun.perihelionKm < modules.SOLAR_PERIHELION_LIMIT_KM);
+  assert.equal(beforeSun.passesPerihelion, false);
+  assert.equal(beforeSun.refusalReason, undefined);
+
+  const M1 = modules.assessSunArc(
+    afterPerihelion.positionKm,
+    afterPerihelion.velocityKmps,
+    beforePerihelion.positionKm,
+    muKm3S2,
+    1,
+  );
+  assert.equal(M1.passesPerihelion, true);
+  assert.equal(M1.refusalReason, 'through-sun');
+
+  const body = modules.byDesignation.get('99942');
+  assert.ok(body, 'Apophis should exist in fixture');
+  const result = modules.computePorkchopGrid(
+    body.elements,
+    { depStartJD: modules.J2000_TDB_JULIAN_DATE, depEndJD: modules.J2000_TDB_JULIAN_DATE, tofMinDays: 200, tofMaxDays: 200, nDep: 1, nTof: 1 },
+    1,
+    {
+      getEarthStateAtTdbSeconds: (tdbSeconds) => ({
+        frame: 'FRAME_HELIO_J2000_ICRF',
+        tdbSeconds,
+        positionM: { x: 10_000_000_000, y: 0, z: 0 },
+        velocityMps: { x: 0, y: 0, z: 0 },
+      }),
+      propagateTargetStateAtTdbSeconds: (_elements, tdbSeconds) => ({
+        frame: 'FRAME_HELIO_J2000_ICRF',
+        tdbSeconds,
+        positionM: { x: afterPerihelion.positionKm[0] * 1000, y: afterPerihelion.positionKm[1] * 1000, z: 0 },
+        velocityMps: { x: 0, y: 0, z: 0 },
+      }),
+      solveLambert: () => ({
+        M: 1,
+        branches: [
+          { branch: 'left', converged: true, x: -0.2, v1: atApoapsis.velocityKmps, v2: [0, 0, 0] },
+          { branch: 'right', converged: true, x: 0.2, v1: [0, Math.sqrt(muKm3S2 / 10_000_000), 0], v2: [0, 0, 0] },
+        ],
+      }),
+    },
+  );
+  const [cell] = result.cells;
+  assert.equal(cell.branches[0].refusalReason, 'through-sun');
+  assert.equal(cell.branches[1].refusalReason, undefined);
+  assert.equal(cell.selectedBranch, 1);
 });
 
 function buildValidatedReference(modules, body, depUtc, tofDays, M) {

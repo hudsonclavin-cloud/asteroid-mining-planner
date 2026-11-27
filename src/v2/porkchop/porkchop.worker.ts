@@ -82,6 +82,7 @@ function stripBranch(branch: PorkchopBranch): PorkchopWorkerBranch {
     // NaN-transparent).
     dlaDeg: typeof branch.dlaDeg === 'number' && Number.isFinite(branch.dlaDeg) ? branch.dlaDeg : null,
     x: branch.x,
+    ...(branch.refusalReason === undefined ? {} : { refusalReason: branch.refusalReason }),
   };
 }
 

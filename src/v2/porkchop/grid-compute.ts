@@ -4,6 +4,7 @@ import { GM_SUN_M3_S2 } from '../core/propagators/keplerian.js';
 import { J2000_TDB_JULIAN_DATE, SECONDS_PER_DAY } from '../core/units.js';
 import { dlaDegFromVInf } from '../core/lambert/dla.js';
 import { lambertMultiRev, type MultiRevResult } from '../core/lambert/lambert-multi-rev.js';
+import { assessSunArc, type SunArcAssessment } from './sun-arc.js';
 
 const METERS_PER_KILOMETER = 1000;
 const MU_SUN_KM3_S2 = GM_SUN_M3_S2 / (METERS_PER_KILOMETER ** 3);
@@ -38,6 +39,7 @@ export interface PorkchopBranch {
   readonly x: number;
   readonly v1: Vec3Km;
   readonly v2: Vec3Km;
+  readonly refusalReason?: SunArcAssessment['refusalReason'];
 }
 
 export interface PorkchopCell {
@@ -103,8 +105,12 @@ function magnitude3(x: number, y: number, z: number): number {
 
 function mapBranches(
   result: MultiRevResult,
+  earthPositionKm: Vec3Km,
   earthVelocityKmps: Vec3Km,
+  asteroidPositionKm: Vec3Km,
   asteroidVelocityKmps: Vec3Km,
+  muKm3S2: number,
+  M: number,
 ): readonly PorkchopBranch[] {
   const branches = new Array<PorkchopBranch>(result.branches.length);
 
@@ -119,6 +125,9 @@ function mapBranches(
     const vInfDep = magnitude3(vInfDepX, vInfDepY, vInfDepZ);
     const vInfArr = magnitude3(vInfArrX, vInfArrY, vInfArrZ);
     const dlaDeg = branch.converged ? dlaDegFromVInf(vInfDepX, vInfDepY, vInfDepZ) : null;
+    const sunArc = branch.converged
+      ? assessSunArc(earthPositionKm, branch.v1, asteroidPositionKm, muKm3S2, M)
+      : undefined;
 
     branches[index] = {
       branch: branch.branch,
@@ -130,6 +139,7 @@ function mapBranches(
       x: branch.x,
       v1: branch.v1,
       v2: branch.v2,
+      ...(sunArc?.refusalReason === undefined ? {} : { refusalReason: sunArc.refusalReason }),
     };
   }
 
@@ -142,7 +152,7 @@ function resolveSelectedBranch(branches: readonly PorkchopBranch[]): number | nu
 
   for (let index = 0; index < branches.length; index += 1) {
     const branch = branches[index];
-    if (!branch.converged) {
+    if (!branch.converged || branch.refusalReason !== undefined) {
       continue;
     }
     if (branch.c3 < selectedC3) {
@@ -206,7 +216,15 @@ export function computePorkchopGrid(
         continue;
       }
 
-      const branches = mapBranches(lambertResult, earthVelocityKmps, asteroidVelocityKmps);
+      const branches = mapBranches(
+        lambertResult,
+        earthPositionKm,
+        earthVelocityKmps,
+        asteroidPositionKm,
+        asteroidVelocityKmps,
+        MU_SUN_KM3_S2,
+        M,
+      );
       const selectedBranch = resolveSelectedBranch(branches);
       cells[cellIndex] = {
         depJD,
