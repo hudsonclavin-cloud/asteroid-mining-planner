@@ -1,7 +1,10 @@
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
-import type { PorkchopGridParams } from './grid-compute.js';
+import type { PorkchopGridParams, PorkchopReturnGridParams } from './grid-compute.js';
 import type { PorkchopClient } from './porkchop-client.js';
-import type { PorkchopWorkerGridResultMessage } from './porkchop.worker.js';
+import type {
+  PorkchopWorkerOutboundGridResultMessage,
+  PorkchopWorkerReturnGridResultMessage,
+} from './porkchop.worker.js';
 
 /**
  * Dual-family (M=0 + M=1) compute path for the dedicated porkchop view.
@@ -18,8 +21,8 @@ import type { PorkchopWorkerGridResultMessage } from './porkchop.worker.js';
  *   - AMD-1's own budget sentence is sequential arithmetic: "The ~200 ms budget in
  *     DEC-8 already covers the two computes (~98 ms each)."
  *
- * The worker's message contract is untouched: one `M` per message, exactly as
- * AMD-1 states. This module adds no new message type and changes no existing one.
+ * The worker's message contract keeps one `M` and an explicit direction per
+ * message, exactly as AMD-1 states for the outbound family.
  */
 
 /** Single-revolution family. Ruled by DEC-2 for the screening cache; here it is one of DEC-5's two display families. */
@@ -35,8 +38,8 @@ export interface DualFamilyGridRequest {
 }
 
 export interface DualFamilyGrids {
-  readonly m0: PorkchopWorkerGridResultMessage;
-  readonly m1: PorkchopWorkerGridResultMessage;
+  readonly m0: PorkchopWorkerOutboundGridResultMessage;
+  readonly m1: PorkchopWorkerOutboundGridResultMessage;
 }
 
 /**
@@ -50,12 +53,47 @@ export async function computeDualFamilyGrids(
   request: DualFamilyGridRequest,
 ): Promise<DualFamilyGrids> {
   const m0 = await client.computeGrid({
+    direction: 'outbound',
     bodyId: request.bodyId,
     bodyElements: request.bodyElements,
     gridParams: request.gridParams,
     M: M_ZERO_REV,
   });
   const m1 = await client.computeGrid({
+    direction: 'outbound',
+    bodyId: request.bodyId,
+    bodyElements: request.bodyElements,
+    gridParams: request.gridParams,
+    M: M_ONE_REV,
+  });
+  return { m0, m1 };
+}
+
+export interface DualReturnFamilyGridRequest {
+  readonly bodyId: string;
+  readonly bodyElements: AsteroidOrbitalElements;
+  readonly gridParams: PorkchopReturnGridParams;
+}
+
+export interface DualReturnFamilyGrids {
+  readonly m0: PorkchopWorkerReturnGridResultMessage;
+  readonly m1: PorkchopWorkerReturnGridResultMessage;
+}
+
+/** Issue the M=0 and M=1 return kernels sequentially behind the client guard. */
+export async function computeDualReturnFamilyGrids(
+  client: PorkchopClient,
+  request: DualReturnFamilyGridRequest,
+): Promise<DualReturnFamilyGrids> {
+  const m0 = await client.computeReturnGrid({
+    direction: 'return',
+    bodyId: request.bodyId,
+    bodyElements: request.bodyElements,
+    gridParams: request.gridParams,
+    M: M_ZERO_REV,
+  });
+  const m1 = await client.computeReturnGrid({
+    direction: 'return',
     bodyId: request.bodyId,
     bodyElements: request.bodyElements,
     gridParams: request.gridParams,

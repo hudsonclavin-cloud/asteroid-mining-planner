@@ -746,3 +746,8 @@ SUPERSEDED HYPOTHESIS (recorded, per findings-log discipline): during rev D
     never expected to equal synodic count. rev E remains worth its cost —
     it produced better minima, the singleton counts that settled
     connectivity, and the resolution that settled B_min.
+
+### §9.1 DEC-17-10 amendment — Slice 20 DEC-20-3 (2026-11-27)
+The bounds rule applies to every epoch at which Earth is read. For a return leg Earth is read at arrival: a return cell whose
+Earth arrival is after the Earth series' last sample is refused, not clamped and not extrapolated (`SLICE_20_FOUNDING.md`
+DEC-20-3; implemented in Front B).

@@ -2,8 +2,11 @@ import type { CanonicalState } from '../core/types.js';
 import type { AsteroidOrbitalElements } from '../core/constants/asteroids.js';
 import type {
   PorkchopGridParams,
+  PorkchopReturnGridParams,
 } from './grid-compute.js';
 import type {
+  PorkchopWorkerOutboundGridResultMessage,
+  PorkchopWorkerReturnGridResultMessage,
   PorkchopWorkerGridResultMessage,
   PorkchopWorkerInboundMessage,
   PorkchopWorkerOutboundMessage,
@@ -11,11 +14,19 @@ import type {
 
 export interface PorkchopClient {
   computeGrid(args: {
+    readonly direction: 'outbound';
     readonly bodyId: string;
     readonly bodyElements: AsteroidOrbitalElements;
     readonly gridParams: PorkchopGridParams;
     readonly M: number;
-  }): Promise<PorkchopWorkerGridResultMessage>;
+  }): Promise<PorkchopWorkerOutboundGridResultMessage>;
+  computeReturnGrid(args: {
+    readonly direction: 'return';
+    readonly bodyId: string;
+    readonly bodyElements: AsteroidOrbitalElements;
+    readonly gridParams: PorkchopReturnGridParams;
+    readonly M: number;
+  }): Promise<PorkchopWorkerReturnGridResultMessage>;
   dispose(): void;
 }
 
@@ -92,7 +103,7 @@ export async function createPorkchopClient(
   await readyPromise;
 
   return {
-    async computeGrid({ bodyId, bodyElements, gridParams, M }) {
+    async computeGrid({ direction, bodyId, bodyElements, gridParams, M }) {
       if (disposed) {
         throw new Error('Porkchop client has been disposed');
       }
@@ -104,12 +115,44 @@ export async function createPorkchopClient(
         pendingRequest = { resolve, reject };
         const message: PorkchopWorkerInboundMessage = {
           type: 'compute-grid',
+          direction,
           bodyId,
           bodyElements,
           gridParams,
           M,
         };
         worker.postMessage(message);
+      }).then((message) => {
+        if (message.direction !== 'outbound') {
+          throw new Error(`Porkchop client received ${message.direction} result for outbound compute`);
+        }
+        return message;
+      });
+    },
+    async computeReturnGrid({ direction, bodyId, bodyElements, gridParams, M }) {
+      if (disposed) {
+        throw new Error('Porkchop client has been disposed');
+      }
+      if (pendingRequest !== null) {
+        throw new Error('Porkchop client already has a compute in flight');
+      }
+
+      return new Promise<PorkchopWorkerGridResultMessage>((resolve, reject) => {
+        pendingRequest = { resolve, reject };
+        const message: PorkchopWorkerInboundMessage = {
+          type: 'compute-grid',
+          direction,
+          bodyId,
+          bodyElements,
+          gridParams,
+          M,
+        };
+        worker.postMessage(message);
+      }).then((message) => {
+        if (message.direction !== 'return') {
+          throw new Error(`Porkchop client received ${message.direction} result for return compute`);
+        }
+        return message;
       });
     },
     dispose() {

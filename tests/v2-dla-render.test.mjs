@@ -328,6 +328,7 @@ class FakeWorker {
     this.cache.set(key, cells);
     queueMicrotask(() => this.emit({
       type: 'grid-result',
+      direction: message.direction,
       bodyId: message.bodyId,
       M: message.M,
       cells,

@@ -1,6 +1,7 @@
+import { GM_EARTH_M3_S2 } from '../core/constants/physical.js';
 import type { MissionMode } from './launch-vehicles.js';
 
-export const EARTH_MU_KM3_PER_S2 = 398_600.4418;
+export const EARTH_MU_KM3_PER_S2 = GM_EARTH_M3_S2 / 1_000_000_000;
 export const LEO_PARKING_RADIUS_KM = 6_578.137;
 export const STATIONKEEPING_DV_KMPS = 0.150;
 export const DV_MARGIN_FRACTION = 0.10;

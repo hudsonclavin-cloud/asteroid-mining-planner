@@ -1,0 +1,620 @@
+{
+  "schema": "aster-s20-front-b-nhats-w6/1",
+  "generatedAtUtc": "2026-11-27T23:21:51.930Z",
+  "method": "Committed NHATS raw sample and Horizons state table; calendar dates read as 0h TDB. Outbound uses computePorkchopGrid at M=0; return uses computeReturnPorkchopGrid at M=0 with the same endpoint states used by tools/slice20-research/nhats/n2-agreement/agreement.mjs.",
+  "sample": {
+    "selected": [
+      [
+        "99942",
+        "min_dv_traj"
+      ],
+      [
+        "2000 SG344",
+        "min_dv_traj"
+      ],
+      [
+        "101955",
+        "min_dv_traj"
+      ],
+      [
+        "420210",
+        "min_dv_traj"
+      ],
+      [
+        "2023 VF3",
+        "min_dur_traj"
+      ],
+      [
+        "251732",
+        "min_dur_traj"
+      ]
+    ],
+    "uncontrolled": 3,
+    "controlled": 3
+  },
+  "rows": [
+    {
+      "designation": "99942",
+      "kind": "min_dv_traj",
+      "controlled": false,
+      "orbitId": "220",
+      "launch": "2029-04-11",
+      "durations": {
+        "out": 49,
+        "stay": 8,
+        "ret": 297
+      },
+      "earthSource": "fixture-node",
+      "endpointMapping": {
+        "outbound": "Earth at L -> asteroid at A",
+        "return": "asteroid at D -> Earth at R"
+      },
+      "outbound": {
+        "M": 0,
+        "branch": "single",
+        "c3": 29.361327214946876,
+        "vInfDep": 5.418609343267595,
+        "vInfArr": 0.30933297797212966
+      },
+      "return": {
+        "M": 0,
+        "branch": "single",
+        "vInfAsteroidDeparture": 1.2852645014733806,
+        "vInfE": 3.915771209296251,
+        "vInfEVector": [
+          3.679042896790846,
+          0.34647122574470757,
+          1.2953243674297195
+        ]
+      },
+      "entry": {
+        "muEarthKm3S2": 398600.43550702266,
+        "radiusKm": 6378.1366,
+        "altitudeKm": 125,
+        "entryLimitKmS": 12,
+        "vInfStarKmS": 4.627403920578161,
+        "naturalEntrySpeedKmS": 11.743951512134716,
+        "invertedVInfKmS": 3.915916628859984,
+        "modelBDvKmS": 0,
+        "publishedEntryControlled": false
+      },
+      "published": {
+        "c3": "29.361",
+        "v_dep_earth": "5.419",
+        "vrel_arr_neo": "0.309",
+        "vrel_dep_neo": "1.285",
+        "v_arr_earth": "11.744",
+        "vrel_arr_earth": "0.000"
+      },
+      "comparisons": {
+        "c3": {
+          "text": "29.361",
+          "expected": 29.361,
+          "actual": 29.361327214946876,
+          "absDiff": 0.0003272149468749319,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_dep_earth": {
+          "text": "5.419",
+          "expected": 5.419,
+          "actual": 5.418609343267595,
+          "absDiff": 0.0003906567324047927,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_arr_neo": {
+          "text": "0.309",
+          "expected": 0.309,
+          "actual": 0.30933297797212966,
+          "absDiff": 0.0003329779721296666,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_dep_neo": {
+          "text": "1.285",
+          "expected": 1.285,
+          "actual": 1.2852645014733806,
+          "absDiff": 0.00026450147338064056,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_arr_earth": {
+          "text": "11.744",
+          "expected": 11.744,
+          "actual": 11.743951512134716,
+          "absDiff": 0.00004848786528377502,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        }
+      },
+      "allPrinted": true
+    },
+    {
+      "designation": "2000 SG344",
+      "kind": "min_dv_traj",
+      "controlled": false,
+      "orbitId": "17",
+      "launch": "2029-10-12",
+      "durations": {
+        "out": 201,
+        "stay": 8,
+        "ret": 161
+      },
+      "earthSource": "fixture-node",
+      "endpointMapping": {
+        "outbound": "Earth at L -> asteroid at A",
+        "return": "asteroid at D -> Earth at R"
+      },
+      "outbound": {
+        "M": 0,
+        "branch": "single",
+        "c3": 1.506516468257234,
+        "vInfDep": 1.227402325342931,
+        "vInfArr": 0.13713502620524196
+      },
+      "return": {
+        "M": 0,
+        "branch": "single",
+        "vInfAsteroidDeparture": 0.16595512631784967,
+        "vInfE": 1.3204135265582815,
+        "vInfEVector": [
+          -1.1892699881463162,
+          -0.4899830965698442,
+          -0.29840466063445703
+        ]
+      },
+      "entry": {
+        "muEarthKm3S2": 398600.43550702266,
+        "radiusKm": 6378.1366,
+        "altitudeKm": 125,
+        "entryLimitKmS": 12,
+        "vInfStarKmS": 4.627403920578161,
+        "naturalEntrySpeedKmS": 11.150364336510979,
+        "invertedVInfKmS": 1.3173333079301308,
+        "modelBDvKmS": 0,
+        "publishedEntryControlled": false
+      },
+      "published": {
+        "c3": "1.507",
+        "v_dep_earth": "1.227",
+        "vrel_arr_neo": "0.137",
+        "vrel_dep_neo": "0.166",
+        "v_arr_earth": "11.150",
+        "vrel_arr_earth": "0.000"
+      },
+      "comparisons": {
+        "c3": {
+          "text": "1.507",
+          "expected": 1.507,
+          "actual": 1.506516468257234,
+          "absDiff": 0.00048353174276583033,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_dep_earth": {
+          "text": "1.227",
+          "expected": 1.227,
+          "actual": 1.227402325342931,
+          "absDiff": 0.00040232534293083155,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_arr_neo": {
+          "text": "0.137",
+          "expected": 0.137,
+          "actual": 0.13713502620524196,
+          "absDiff": 0.00013502620524194486,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_dep_neo": {
+          "text": "0.166",
+          "expected": 0.166,
+          "actual": 0.16595512631784967,
+          "absDiff": 0.000044873682150337046,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_arr_earth": {
+          "text": "11.150",
+          "expected": 11.15,
+          "actual": 11.150364336510979,
+          "absDiff": 0.0003643365109784469,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        }
+      },
+      "allPrinted": true
+    },
+    {
+      "designation": "101955",
+      "kind": "min_dv_traj",
+      "controlled": false,
+      "orbitId": "118",
+      "launch": "2036-03-21",
+      "durations": {
+        "out": 249,
+        "stay": 8,
+        "ret": 105
+      },
+      "earthSource": "fixture-node",
+      "endpointMapping": {
+        "outbound": "Earth at L -> asteroid at A",
+        "return": "asteroid at D -> Earth at R"
+      },
+      "outbound": {
+        "M": 0,
+        "branch": "single",
+        "c3": 17.628928195417117,
+        "vInfDep": 4.198681721137852,
+        "vInfArr": 1.5010278795385912
+      },
+      "return": {
+        "M": 0,
+        "branch": "single",
+        "vInfAsteroidDeparture": 1.5328470475785947,
+        "vInfE": 4.173228138843153,
+        "vInfEVector": [
+          -2.904967202240206,
+          1.5892622130011453,
+          -2.539929973654333
+        ]
+      },
+      "entry": {
+        "muEarthKm3S2": 398600.43550702266,
+        "radiusKm": 6378.1366,
+        "altitudeKm": 125,
+        "entryLimitKmS": 12,
+        "vInfStarKmS": 4.627403920578161,
+        "naturalEntrySpeedKmS": 11.832284904220746,
+        "invertedVInfKmS": 4.172420286138747,
+        "modelBDvKmS": 0,
+        "publishedEntryControlled": false
+      },
+      "published": {
+        "c3": "17.629",
+        "v_dep_earth": "4.199",
+        "vrel_arr_neo": "1.501",
+        "vrel_dep_neo": "1.533",
+        "v_arr_earth": "11.832",
+        "vrel_arr_earth": "0.000"
+      },
+      "comparisons": {
+        "c3": {
+          "text": "17.629",
+          "expected": 17.629,
+          "actual": 17.628928195417117,
+          "absDiff": 0.00007180458288402747,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_dep_earth": {
+          "text": "4.199",
+          "expected": 4.199,
+          "actual": 4.198681721137852,
+          "absDiff": 0.00031827886214763623,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_arr_neo": {
+          "text": "1.501",
+          "expected": 1.501,
+          "actual": 1.5010278795385912,
+          "absDiff": 0.00002787953859129111,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_dep_neo": {
+          "text": "1.533",
+          "expected": 1.533,
+          "actual": 1.5328470475785947,
+          "absDiff": 0.00015295242140522802,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_arr_earth": {
+          "text": "11.832",
+          "expected": 11.832,
+          "actual": 11.832284904220746,
+          "absDiff": 0.0002849042207451191,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        }
+      },
+      "allPrinted": true
+    },
+    {
+      "designation": "420210",
+      "kind": "min_dv_traj",
+      "controlled": true,
+      "orbitId": "77",
+      "launch": "2033-04-22",
+      "durations": {
+        "out": 137,
+        "stay": 8,
+        "ret": 217
+      },
+      "earthSource": "fixture-node",
+      "endpointMapping": {
+        "outbound": "Earth at L -> asteroid at A",
+        "return": "asteroid at D -> Earth at R"
+      },
+      "outbound": {
+        "M": 0,
+        "branch": "single",
+        "c3": 33.02552073755631,
+        "vInfDep": 5.746783512327249,
+        "vInfArr": 3.831320386290154
+      },
+      "return": {
+        "M": 0,
+        "branch": "single",
+        "vInfAsteroidDeparture": 3.31809099881884,
+        "vInfE": 4.816413253731329,
+        "vInfEVector": [
+          2.17480024459749,
+          -0.3451080266755895,
+          4.283571054242194
+        ]
+      },
+      "entry": {
+        "muEarthKm3S2": 398600.43550702266,
+        "radiusKm": 6378.1366,
+        "altitudeKm": 125,
+        "entryLimitKmS": 12,
+        "vInfStarKmS": 4.627403920578161,
+        "naturalEntrySpeedKmS": 12.074144673082921,
+        "invertedVInfKmS": null,
+        "modelBDvKmS": 0.1890093331531677,
+        "publishedEntryControlled": true
+      },
+      "published": {
+        "c3": "33.026",
+        "v_dep_earth": "5.747",
+        "vrel_arr_neo": "3.831",
+        "vrel_dep_neo": "3.318",
+        "v_arr_earth": "12.000",
+        "vrel_arr_earth": "0.189"
+      },
+      "comparisons": {
+        "c3": {
+          "text": "33.026",
+          "expected": 33.026,
+          "actual": 33.02552073755631,
+          "absDiff": 0.0004792624436902315,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_dep_earth": {
+          "text": "5.747",
+          "expected": 5.747,
+          "actual": 5.746783512327249,
+          "absDiff": 0.0002164876727510645,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_arr_neo": {
+          "text": "3.831",
+          "expected": 3.831,
+          "actual": 3.831320386290154,
+          "absDiff": 0.00032038629015396225,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_dep_neo": {
+          "text": "3.318",
+          "expected": 3.318,
+          "actual": 3.31809099881884,
+          "absDiff": 0.00009099881883978256,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "modelB_entry_control": {
+          "text": "0.189",
+          "expected": 0.189,
+          "actual": 0.1890093331531677,
+          "absDiff": 0.000009333153167701003,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        }
+      },
+      "allPrinted": true
+    },
+    {
+      "designation": "2023 VF3",
+      "kind": "min_dur_traj",
+      "controlled": true,
+      "orbitId": "2",
+      "launch": "2026-01-13",
+      "durations": {
+        "out": 249,
+        "stay": 8,
+        "ret": 73
+      },
+      "earthSource": "fixture-node+horizons",
+      "endpointMapping": {
+        "outbound": "Earth at L -> asteroid at A",
+        "return": "asteroid at D -> Earth at R"
+      },
+      "outbound": {
+        "M": 0,
+        "branch": "single",
+        "c3": 12.315150780224952,
+        "vInfDep": 3.509294912119093,
+        "vInfArr": 4.54622043750797
+      },
+      "return": {
+        "M": 0,
+        "branch": "single",
+        "vInfAsteroidDeparture": 3.375605582337079,
+        "vInfE": 4.957520368976878,
+        "vInfEVector": [
+          0.14132804299680757,
+          -3.9548075863629606,
+          -2.9860561863316146
+        ]
+      },
+      "entry": {
+        "muEarthKm3S2": 398600.43550702266,
+        "radiusKm": 6378.1366,
+        "altitudeKm": 125,
+        "entryLimitKmS": 12,
+        "vInfStarKmS": 4.627403920578161,
+        "naturalEntrySpeedKmS": 12.131122831982145,
+        "invertedVInfKmS": null,
+        "modelBDvKmS": 0.3301164483987167,
+        "publishedEntryControlled": true
+      },
+      "published": {
+        "c3": "12.315",
+        "v_dep_earth": "3.509",
+        "vrel_arr_neo": "4.546",
+        "vrel_dep_neo": "3.376",
+        "v_arr_earth": "12.000",
+        "vrel_arr_earth": "0.330"
+      },
+      "comparisons": {
+        "c3": {
+          "text": "12.315",
+          "expected": 12.315,
+          "actual": 12.315150780224952,
+          "absDiff": 0.00015078022495274013,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_dep_earth": {
+          "text": "3.509",
+          "expected": 3.509,
+          "actual": 3.509294912119093,
+          "absDiff": 0.00029491211909293824,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_arr_neo": {
+          "text": "4.546",
+          "expected": 4.546,
+          "actual": 4.54622043750797,
+          "absDiff": 0.00022043750796996164,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_dep_neo": {
+          "text": "3.376",
+          "expected": 3.376,
+          "actual": 3.375605582337079,
+          "absDiff": 0.0003944176629206986,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "modelB_entry_control": {
+          "text": "0.330",
+          "expected": 0.33,
+          "actual": 0.3301164483987167,
+          "absDiff": 0.00011644839871666202,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        }
+      },
+      "allPrinted": true
+    },
+    {
+      "designation": "251732",
+      "kind": "min_dur_traj",
+      "controlled": true,
+      "orbitId": "53",
+      "launch": "2031-06-12",
+      "durations": {
+        "out": 73,
+        "stay": 8,
+        "ret": 81
+      },
+      "earthSource": "fixture-node",
+      "endpointMapping": {
+        "outbound": "Earth at L -> asteroid at A",
+        "return": "asteroid at D -> Earth at R"
+      },
+      "outbound": {
+        "M": 0,
+        "branch": "single",
+        "c3": 13.141385049052332,
+        "vInfDep": 3.625104832836194,
+        "vInfArr": 4.059602031682971
+      },
+      "return": {
+        "M": 0,
+        "branch": "single",
+        "vInfAsteroidDeparture": 3.983947764200786,
+        "vInfE": 4.766573825596448,
+        "vInfEVector": [
+          -0.8578485219314622,
+          2.8054052171383557,
+          3.7568635210683468
+        ]
+      },
+      "entry": {
+        "muEarthKm3S2": 398600.43550702266,
+        "radiusKm": 6378.1366,
+        "altitudeKm": 125,
+        "entryLimitKmS": 12,
+        "vInfStarKmS": 4.627403920578161,
+        "naturalEntrySpeedKmS": 12.054350210221994,
+        "invertedVInfKmS": null,
+        "modelBDvKmS": 0.13916990501828685,
+        "publishedEntryControlled": true
+      },
+      "published": {
+        "c3": "13.141",
+        "v_dep_earth": "3.625",
+        "vrel_arr_neo": "4.060",
+        "vrel_dep_neo": "3.984",
+        "v_arr_earth": "12.000",
+        "vrel_arr_earth": "0.139"
+      },
+      "comparisons": {
+        "c3": {
+          "text": "13.141",
+          "expected": 13.141,
+          "actual": 13.141385049052332,
+          "absDiff": 0.0003850490523316097,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "v_dep_earth": {
+          "text": "3.625",
+          "expected": 3.625,
+          "actual": 3.625104832836194,
+          "absDiff": 0.0001048328361941131,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_arr_neo": {
+          "text": "4.060",
+          "expected": 4.06,
+          "actual": 4.059602031682971,
+          "absDiff": 0.0003979683170287629,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "vrel_dep_neo": {
+          "text": "3.984",
+          "expected": 3.984,
+          "actual": 3.983947764200786,
+          "absDiff": 0.00005223579921409538,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        },
+        "modelB_entry_control": {
+          "text": "0.139",
+          "expected": 0.139,
+          "actual": 0.13916990501828685,
+          "absDiff": 0.00016990501828684224,
+          "halfUnit": 0.0005,
+          "withinPrintedPrecision": true
+        }
+      },
+      "allPrinted": true
+    }
+  ],
+  "pass": true
+}
