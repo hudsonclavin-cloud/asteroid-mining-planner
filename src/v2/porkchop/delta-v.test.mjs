@@ -65,6 +65,25 @@ test('ΔV stack is mode-aware: one-way omits departure and sample return uses sy
   assert.ok(oneWay.totalKmps < sampleReturn.totalKmps);
 });
 
+test('ΔV stack observes the DE440 Earth GM independently at 1e-12 relative tolerance', async () => {
+  const { buildDeltaVStack } = await loadModule();
+  const muKm3PerS2 = 398600.43550702266;
+  const c3Km2PerS2 = 25;
+  const vInfArrKmps = 4.5;
+  const parkingRadiusKm = 6_578.137;
+  const circularVelocityKmps = Math.sqrt(muKm3PerS2 / parkingRadiusKm);
+  const hyperbolicPerigeeVelocityKmps = Math.sqrt(
+    c3Km2PerS2 + (2 * muKm3PerS2) / parkingRadiusKm,
+  );
+  const expectedInjectionKmps = hyperbolicPerigeeVelocityKmps - circularVelocityKmps;
+  const expectedSubtotalKmps = expectedInjectionKmps + vInfArrKmps + 0.150;
+  const expectedTotalKmps = expectedSubtotalKmps * 1.10;
+  const actual = buildDeltaVStack(c3Km2PerS2, vInfArrKmps, 'one-way');
+  const relativeError = Math.abs(actual.totalKmps - expectedTotalKmps) / expectedTotalKmps;
+
+  assert.ok(relativeError <= 1e-12, `relative error ${relativeError}`);
+});
+
 test('D10 labels name margin bases and preserve the displayed value expressions', () => {
   const source = fs.readFileSync(path.join(repoRoot, 'src', 'v2', 'app', 'porkchop', 'main.ts'), 'utf8');
 
